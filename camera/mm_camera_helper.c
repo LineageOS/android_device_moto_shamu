@@ -102,6 +102,65 @@ int mm_camera_do_munmap(int pmem_fd, void *addr, size_t size)
     return rc;
 }
 
+#ifdef USE_ION
+uint8_t *mm_camera_do_mmap_ion(int ion_fd, struct ion_allocation_data *alloc,
+		     struct ion_fd_data *ion_info_fd, int *mapFd)
+{
+  void *ret; /* returned virtual address */
+  int rc = 0;
+  struct ion_handle_data handle_data;
+
+  /* to make it page size aligned */
+  alloc->len = (alloc->len + 4095) & (~4095);
+
+  rc = ioctl(ion_fd, ION_IOC_ALLOC, alloc);
+  if (rc < 0) {
+    CDBG_ERROR("ION allocation failed\n");
+    goto ION_ALLOC_FAILED;
+  }
+
+  ion_info_fd->handle = alloc->handle;
+  rc = ioctl(ion_fd, ION_IOC_SHARE, ion_info_fd);
+  if (rc < 0) {
+    CDBG_ERROR("ION map failed %s\n", strerror(errno));
+    goto ION_MAP_FAILED;
+  }
+  *mapFd = ion_info_fd->fd;
+  ret = mmap(NULL,
+    alloc->len,
+    PROT_READ  | PROT_WRITE,
+    MAP_SHARED,
+    *mapFd,
+    0);
+
+  if (ret == MAP_FAILED) {
+    CDBG_ERROR("ION_MMAP_FAILED: %s (%d)\n", strerror(errno), errno);
+    goto ION_MAP_FAILED;
+  }
+
+  return ret;
+
+ION_MAP_FAILED:
+  handle_data.handle = ion_info_fd->handle;
+  ioctl(ion_fd, ION_IOC_FREE, &handle_data);
+ION_ALLOC_FAILED:
+  return NULL;
+}
+
+int mm_camera_do_munmap_ion (int ion_fd, struct ion_fd_data *ion_info_fd,
+                   void *addr, size_t size)
+{
+  int rc = 0;
+  rc = munmap(addr, size);
+  close(ion_info_fd->fd);
+
+  struct ion_handle_data handle_data;
+  handle_data.handle = ion_info_fd->handle;
+  ioctl(ion_fd, ION_IOC_FREE, &handle_data);
+  return rc;
+}
+#endif
+
 /*============================================================
    FUNCTION mm_camera_dump_image
    DESCRIPTION:

@@ -582,9 +582,13 @@ int32_t cam_jpeg_register_event_cb(int cam_id, mm_camera_jpeg_cb_t * evt_cb,
 int32_t cam_jpeg_encode(int cam_id, uint8_t start,
   mm_camera_jpeg_encode_t *data);
 
-mm_camera_t * mm_camera_query(uint8_t *num_cameras);
+extern mm_camera_t * mm_camera_query(uint8_t *num_cameras);
 extern uint8_t *mm_camera_do_mmap(uint32_t size, int *pmemFd);
 extern int mm_camera_do_munmap(int pmem_fd, void *addr, size_t size);
+extern uint8_t *mm_camera_do_mmap_ion(int ion_fd, struct ion_allocation_data *alloc,
+		     struct ion_fd_data *ion_info_fd, int *mapFd);
+extern int mm_camera_do_munmap_ion (int ion_fd, struct ion_fd_data *ion_info_fd,
+                   void *addr, size_t size);
 extern int mm_camera_dump_image(void *addr, uint32_t size, char *filename);
 extern uint32_t mm_camera_get_msm_frame_len(cam_format_t fmt_type,
                                             camera_mode_t mode,
