@@ -124,7 +124,7 @@ bool  (*LINK_jpeg_encoder_encode)(const cam_ctrl_dimension_t *dimen,
                 const uint8_t *thumbnailbuf, int thumbnailfd,
                 const uint8_t *snapshotbuf, int snapshotfd,
                 common_crop_t *scaling_parms, exif_tags_info_t *exif_data,
-                int exif_table_numEntries, int jpegPadding, const int32_t cbcroffset);
+                int exif_table_numEntries, int jpegPadding, const int32_t cbcroffset,int zsl_enable);
 void (*LINK_camframe_terminate)(void);
 //for 720p
 // Function pointer , called by camframe when a video frame is available.
@@ -5919,6 +5919,10 @@ status_t QualcommCameraHardware::takePicture()
                 return UNKNOWN_ERROR;
             }
         }
+    }
+    else {
+        int rotation = mParameters.getInt("rotation");
+        native_set_parms(CAMERA_PARM_JPEG_ROTATION, sizeof(int), &rotation);
     }
 #if 0    // TODO for ICS
     if(mCurrentTarget == TARGET_MSM8660) {
