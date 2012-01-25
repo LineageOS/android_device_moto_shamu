@@ -548,6 +548,8 @@ private:
     int32_t createRecord();
     int32_t createSnapshot();
 
+    int getHDRMode();
+
     int           mCameraId;
     camera_mode_t myMode;
 
@@ -615,8 +617,7 @@ private:
     bool mSendMetaData;
     bool mFullLiveshotEnabled;
     bool mRecordingHint;
-    bool mHdrMode;
-    bool mExpBracketMode;
+    int mHdrMode;
 
 /*for histogram*/
     int            mStatsOn;
