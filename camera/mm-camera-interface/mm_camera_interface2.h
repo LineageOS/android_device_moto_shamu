@@ -523,4 +523,5 @@ uint8_t *mm_camera_do_mmap_ion(int ion_fd, struct ion_allocation_data *alloc,
   struct ion_fd_data *ion_info_fd, int *mapFd);
 int mm_camera_do_munmap_ion (int ion_fd, struct ion_fd_data *ion_info_fd,
                    void *addr, size_t size);
+extern void mm_camera_util_profile(const char *str);
 #endif /*__MM_CAMERA_INTERFACE2_H__*/

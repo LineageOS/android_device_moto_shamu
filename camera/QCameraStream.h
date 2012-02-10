@@ -231,6 +231,7 @@ private:
     status_t                 freeBufferNoDisplay();
 
     void                     dumpFrameToFile(struct msm_frame* newFrame);
+    bool                     mFirstFrameRcvd;
 
     int8_t                   my_id;
     mm_camera_op_mode_type_t op_mode;

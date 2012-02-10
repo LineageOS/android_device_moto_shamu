@@ -993,4 +993,3 @@ int32_t cam_jpeg_encode(int cam_id, uint8_t start,
   return rc;
 }
 
-
