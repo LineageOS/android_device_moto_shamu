@@ -636,6 +636,8 @@ status_t QCameraStream_preview::processPreviewFrame(mm_camera_ch_data_buf_t *fra
   mHalCamCtrl->mParameters.getPreviewSize(&previewWidth, &previewHeight);
 
   if (pcb != NULL) {
+       LOGD("%s: mMsgEnabled =0x%x, preview format =%d", __func__,
+            mHalCamCtrl->mMsgEnabled, mHalCamCtrl->mPreviewFormat);
       //Sending preview callback if corresponding Msgs are enabled
       if(mHalCamCtrl->mMsgEnabled & CAMERA_MSG_PREVIEW_FRAME) {
           msgType |=  CAMERA_MSG_PREVIEW_FRAME;
@@ -671,6 +673,7 @@ status_t QCameraStream_preview::processPreviewFrame(mm_camera_ch_data_buf_t *fra
       } else {
           metadata = NULL;
       }
+      LOGD("%s: msgType=0x%x, data =%p, metadata=%p", __func__, msgType, data, metadata);
       if(msgType) {
           mStopCallbackLock.unlock();
           if(mActive)
@@ -679,6 +682,8 @@ status_t QCameraStream_preview::processPreviewFrame(mm_camera_ch_data_buf_t *fra
               previewMem->release(previewMem);
       }
 	  LOGD("end of cb");
+  } else {
+    LOGD("%s PCB is not enabled", __func__);
   }
 
   /* Save the last displayed frame. We'll be using it to fill the gap between

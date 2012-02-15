@@ -1294,6 +1294,8 @@ takePictureZSL(void)
 
     /* Take snapshot */
     LOGE("%s: Call MM_CAMERA_OPS_GET_BUFFERED_FRAME", __func__);
+
+    mNumOfSnapshot = mHalCamCtrl->getNumOfSnapshots();
     if (NO_ERROR != cam_ops_action(mCameraId,
                                           TRUE,
                                           MM_CAMERA_OPS_GET_BUFFERED_FRAME,
@@ -1713,13 +1715,6 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
         #endif
 
         LOGD("%s: Call notifyShutter 2nd time", __func__);
-        mStopCallbackLock.unlock();
-        if(!mHalCamCtrl->mShutterSoundPlayed) {
-            notifyShutter(&crop, TRUE);
-        }
-        notifyShutter(&crop, FALSE);
-        mHalCamCtrl->mShutterSoundPlayed = FALSE;
-
         /* The recvd_frame structre we receive from lower library is a local
            variable. So we'll need to save this structure so that we won't
            be later pointing to garbage data when that variable goes out of
@@ -1729,11 +1724,12 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
         if (frame == NULL) {
             LOGE("%s: Error allocating memory to save received_frame structure.", __func__);
             cam_evt_buf_done(mCameraId, recvd_frame);
+            mStopCallbackLock.unlock();
             return BAD_VALUE;
         }
         memcpy(frame, recvd_frame, sizeof(mm_camera_ch_data_buf_t));
 
-        mStopCallbackLock.lock();
+        //mStopCallbackLock.lock();
 
         // only in ZSL mode and Wavelet Denoise is enabled, we will send frame to deamon to do WDN
         if (isZSLMode() && mHalCamCtrl->isWDenoiseEnabled()) {
@@ -1757,6 +1753,7 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
             rc = encodeDisplayAndSave(frame, 0);
         }
 
+
         // send upperlayer callback for raw image (data or notify, not both)
         if((mHalCamCtrl->mDataCb) && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_RAW_IMAGE)){
           dataCb = mHalCamCtrl->mDataCb;
@@ -1768,6 +1765,14 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
         } else {
           notifyCb = NULL;
         }
+
+        mStopCallbackLock.unlock();
+        if(!mHalCamCtrl->mShutterSoundPlayed) {
+            notifyShutter(&crop, TRUE);
+        }
+        notifyShutter(&crop, FALSE);
+        mHalCamCtrl->mShutterSoundPlayed = FALSE;
+
 
         if (rc != NO_ERROR)
         {
@@ -1784,7 +1789,7 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
               jpgDataCb = NULL;
            	}
             LOGE("%s: encode err so data cb", __func__);
-            mStopCallbackLock.unlock();
+            //mStopCallbackLock.unlock();
             if (dataCb) {
               dataCb(CAMERA_MSG_RAW_IMAGE, mHalCamCtrl->mSnapshotMemory.camera_memory[0],
                                    1, NULL, mHalCamCtrl->mCallbackCookie);
@@ -1803,7 +1808,7 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
             }
         } else {
 
-          mStopCallbackLock.unlock();
+          //mStopCallbackLock.unlock();
           if (dataCb) {
             dataCb(CAMERA_MSG_RAW_IMAGE, mHalCamCtrl->mSnapshotMemory.camera_memory[0],
                                  1, NULL, mHalCamCtrl->mCallbackCookie);

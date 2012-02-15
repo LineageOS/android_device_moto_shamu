@@ -382,10 +382,10 @@ void QCameraHardwareInterface::setCallbacks(
 
 void QCameraHardwareInterface::enableMsgType(int32_t msgType)
 {
-    LOGI("enableMsgType: E");
+    LOGI("enableMsgType: E, msgType =0x%x", msgType);
     Mutex::Autolock lock(mLock);
     mMsgEnabled |= msgType;
-    LOGI("enableMsgType: X");
+    LOGI("enableMsgType: X, msgType =0x%x, mMsgEnabled=0x%x", msgType, mMsgEnabled);
 }
 
 void QCameraHardwareInterface::disableMsgType(int32_t msgType)
@@ -393,7 +393,7 @@ void QCameraHardwareInterface::disableMsgType(int32_t msgType)
     LOGI("disableMsgType: E");
     Mutex::Autolock lock(mLock);
     mMsgEnabled &= ~msgType;
-    LOGI("disableMsgType: X");
+    LOGI("disableMsgType: X, msgType =0x%x, mMsgEnabled=0x%x", msgType, mMsgEnabled);
 }
 
 int QCameraHardwareInterface::msgTypeEnabled(int32_t msgType)
