@@ -275,29 +275,104 @@ status_t QCameraStream_preview::putBufferToSurface() {
 
 void QCameraStream_preview::notifyROIEvent(fd_roi_t roi)
 {
-    int faces_detected = roi.rect_num;
-    if(faces_detected > MAX_ROI)
-      faces_detected = MAX_ROI;
-    LOGI("%s, width = %d height = %d", __func__,
-       mHalCamCtrl->mDimension.display_width,
-       mHalCamCtrl->mDimension.display_height);
-    Mutex::Autolock lock(mStopCallbackLock);
-    for (int i = 0; i < faces_detected; i++) {
-       // top
-       mHalCamCtrl->mFace[i].rect[0] =
-           roi.faces[i].x*2000/mHalCamCtrl->mDimension.display_width - 1000;
-       //right
-       mHalCamCtrl->mFace[i].rect[1] =
-          ((roi.faces[i].y)*2000)/mHalCamCtrl->mDimension.display_height - 1000;
-      //bottom
-      mHalCamCtrl->mFace[i].rect[2] =  mHalCamCtrl->mFace[i].rect[0] +
-          (( roi.faces[i].dx*2000)/mHalCamCtrl->mDimension.display_width);
-      //left
-      mHalCamCtrl->mFace[i].rect[3] = mHalCamCtrl->mFace[i].rect[1] +
-           (roi.faces[i].dy*2000)/mHalCamCtrl->mDimension.display_height;
+    switch (roi.type) {
+    case FD_ROI_TYPE_HEADER:
+        {
+            mDisplayLock.lock();
+            mNumFDRcvd = 0;
+            memset(mHalCamCtrl->mFace, 0, sizeof(mHalCamCtrl->mFace));
+            mHalCamCtrl->mMetadata.faces = mHalCamCtrl->mFace;
+            mHalCamCtrl->mMetadata.number_of_faces = roi.d.hdr.num_face_detected;
+            if(mHalCamCtrl->mMetadata.number_of_faces > MAX_ROI)
+              mHalCamCtrl->mMetadata.number_of_faces = MAX_ROI;
+            mDisplayLock.unlock();
+
+            if (mHalCamCtrl->mMetadata.number_of_faces == 0) {
+                // Clear previous faces
+                mHalCamCtrl->mCallbackLock.lock();
+                camera_data_callback pcb = mHalCamCtrl->mDataCb;
+                mHalCamCtrl->mCallbackLock.unlock();
+
+                if (pcb && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_PREVIEW_METADATA)){
+                    LOGE("%s: Face detection RIO callback", __func__);
+                    pcb(CAMERA_MSG_PREVIEW_METADATA, NULL, 0, &mHalCamCtrl->mMetadata, mHalCamCtrl->mCallbackCookie);
+                }
+            }
+        }
+        break;
+    case FD_ROI_TYPE_DATA:
+        {
+            mDisplayLock.lock();
+            int idx = roi.d.data.idx;
+            if (idx >= mHalCamCtrl->mMetadata.number_of_faces) {
+                mDisplayLock.unlock();
+                LOGE("%s: idx %d out of boundary %d", __func__, idx, mHalCamCtrl->mMetadata.number_of_faces);
+                break;
+            }
+
+            mHalCamCtrl->mFace[idx].id = roi.d.data.face.id;
+            mHalCamCtrl->mFace[idx].score = roi.d.data.face.score / 10; // keep within range 0~100
+
+            // top
+            mHalCamCtrl->mFace[idx].rect[0] =
+               roi.d.data.face.face_boundary.x*2000/mHalCamCtrl->mDimension.display_width - 1000;
+            //right
+            mHalCamCtrl->mFace[idx].rect[1] =
+               roi.d.data.face.face_boundary.y*2000/mHalCamCtrl->mDimension.display_height - 1000;
+            //bottom
+            mHalCamCtrl->mFace[idx].rect[2] =  mHalCamCtrl->mFace[idx].rect[0] +
+               roi.d.data.face.face_boundary.dx*2000/mHalCamCtrl->mDimension.display_width;
+            //left
+            mHalCamCtrl->mFace[idx].rect[3] = mHalCamCtrl->mFace[idx].rect[1] +
+               roi.d.data.face.face_boundary.dy*2000/mHalCamCtrl->mDimension.display_height;
+
+            // Center of left eye
+            mHalCamCtrl->mFace[idx].left_eye[0] =
+              roi.d.data.face.left_eye_center[0]*2000/mHalCamCtrl->mDimension.display_width - 1000;
+            mHalCamCtrl->mFace[idx].left_eye[1] =
+              roi.d.data.face.left_eye_center[1]*2000/mHalCamCtrl->mDimension.display_height - 1000;
+
+            // Center of right eye
+            mHalCamCtrl->mFace[idx].right_eye[0] =
+              roi.d.data.face.right_eye_center[0]*2000/mHalCamCtrl->mDimension.display_width - 1000;
+            mHalCamCtrl->mFace[idx].right_eye[1] =
+              roi.d.data.face.right_eye_center[1]*2000/mHalCamCtrl->mDimension.display_height - 1000;
+
+            // Center of mouth
+            mHalCamCtrl->mFace[idx].mouth[0] =
+              roi.d.data.face.mouth_center[0]*2000/mHalCamCtrl->mDimension.display_width - 1000;
+            mHalCamCtrl->mFace[idx].mouth[1] =
+              roi.d.data.face.mouth_center[1]*2000/mHalCamCtrl->mDimension.display_height - 1000;
+
+            mHalCamCtrl->mFace[idx].smile_degree = roi.d.data.face.smile_degree;
+            mHalCamCtrl->mFace[idx].smile_score = roi.d.data.face.smile_confidence / 10; //Keep within range 1~100
+            mHalCamCtrl->mFace[idx].blink_detected = roi.d.data.face.blink_detected;
+            mHalCamCtrl->mFace[idx].face_recognised = roi.d.data.face.is_face_recognised;
+
+            LOGE("%s: Face(%d, %d, %d, %d), leftEye(%d, %d), rightEye(%d, %d), mouth(%d, %d), smile(%d, %d), blinked(%d)", __func__,
+               mHalCamCtrl->mFace[idx].rect[0],  mHalCamCtrl->mFace[idx].rect[1],
+               mHalCamCtrl->mFace[idx].rect[2],  mHalCamCtrl->mFace[idx].rect[3],
+               mHalCamCtrl->mFace[idx].left_eye[0], mHalCamCtrl->mFace[idx].left_eye[1],
+               mHalCamCtrl->mFace[idx].right_eye[0], mHalCamCtrl->mFace[idx].right_eye[1],
+               mHalCamCtrl->mFace[idx].mouth[0], mHalCamCtrl->mFace[idx].mouth[1],
+               roi.d.data.face.smile_degree, roi.d.data.face.smile_confidence, roi.d.data.face.blink_detected);
+
+             mNumFDRcvd++;
+             mDisplayLock.unlock();
+
+             if (mNumFDRcvd == mHalCamCtrl->mMetadata.number_of_faces) {
+                 mHalCamCtrl->mCallbackLock.lock();
+                 camera_data_callback pcb = mHalCamCtrl->mDataCb;
+                 mHalCamCtrl->mCallbackLock.unlock();
+
+                 if (pcb && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_PREVIEW_METADATA)){
+                     LOGE("%s: Face detection RIO callback with %d faces detected (score=%d)", __func__, mNumFDRcvd, mHalCamCtrl->mFace[idx].score);
+                     pcb(CAMERA_MSG_PREVIEW_METADATA, NULL, 0, &mHalCamCtrl->mMetadata, mHalCamCtrl->mCallbackCookie);
+                 }
+             }
+        }
+        break;
     }
-    mHalCamCtrl->mMetadata.number_of_faces = faces_detected;
-    mHalCamCtrl->mMetadata.faces = mHalCamCtrl->mFace;
 }
 
 status_t QCameraStream_preview::initDisplayBuffers()
@@ -670,14 +745,6 @@ status_t QCameraStream_preview::processPreviewFrame(mm_camera_ch_data_buf_t *fra
       } else {
           data = NULL;
       }
-
-      if(mHalCamCtrl->mMsgEnabled & CAMERA_MSG_PREVIEW_METADATA){
-          msgType  |= CAMERA_MSG_PREVIEW_METADATA;
-          metadata = &mHalCamCtrl->mMetadata;
-      } else {
-          metadata = NULL;
-      }
-      LOGD("%s: msgType=0x%x, data =%p, metadata=%p", __func__, msgType, data, metadata);
       if(msgType) {
           mStopCallbackLock.unlock();
           if(mActive)
@@ -711,7 +778,8 @@ QCameraStream_preview::
 QCameraStream_preview(int cameraId, camera_mode_t mode)
   : QCameraStream(cameraId,mode),
     mLastQueuedFrame(NULL),
-    mbPausedBySnapshot(FALSE)
+    mbPausedBySnapshot(FALSE),
+    mNumFDRcvd(0)
   {
     mHalCamCtrl = NULL;
     LOGE("%s: E", __func__);

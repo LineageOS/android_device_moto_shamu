@@ -637,6 +637,11 @@ private:
     bool mMultiTouch;
 
     int mRecordingState;
+
+    int mNumFDRcvd;
+    int mFacesDetected;
+    int mFaceArray[MAX_ROI * 4 + 1];
+
 };
 
 extern "C" int HAL_getNumberOfCameras();

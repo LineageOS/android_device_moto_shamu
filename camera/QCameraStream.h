@@ -231,6 +231,7 @@ private:
     static const int        kPreviewBufferCount = PREVIEW_BUFFER_COUNT;
     mm_camera_ch_data_buf_t mNotifyBuffer[16];
     bool                    mbPausedBySnapshot; /*TRUE: paused due to snapshot; FALSE: stopped normally*/
+    int8_t                  mNumFDRcvd;
 };
 
 /* Snapshot Class - handle data flow*/

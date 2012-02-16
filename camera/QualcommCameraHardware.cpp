@@ -3185,41 +3185,42 @@ void QualcommCameraHardware::runPreviewThread(void *data)
             mMetaDataWaitLock.lock();
             if (mFaceDetectOn == true && mSendMetaData == true) {
                 mSendMetaData = false;
-                fd_roi_t *fd = (fd_roi_t *)(frame->roi_info.info);
-                int faces_detected = fd->rect_num;
-                int max_faces_detected = MAX_ROI * 4;
-                int array[max_faces_detected + 1];
+                fd_roi_t *roi = (fd_roi_t *)(frame->roi_info.info);
 
-                array[0] = faces_detected * 4;
-                for (int i = 1, j = 0;j < MAX_ROI; j++, i = i + 4) {
-                    if (j < faces_detected) {
-                        array[i]   = fd->faces[j].x;
-                        array[i+1] = fd->faces[j].y;
-                        array[i+2] = fd->faces[j].dx;
-                        array[i+3] = fd->faces[j].dx;
-                    } else {
-                        array[i]   = -1;
-                        array[i+1] = -1;
-                        array[i+2] = -1;
-                        array[i+3] = -1;
+                switch (roi->type) {
+                case FD_ROI_TYPE_HEADER:
+                    {
+                        mNumFDRcvd = 0;
+                        memset(mFaceArray, -1, sizeof(mFaceArray));
+                        mFaceArray[0] = 0; //faces_detected * 4;
+
+                        mFacesDetected = roi->d.hdr.num_face_detected;
+                        if(mFacesDetected > MAX_ROI)
+                          mFacesDetected = MAX_ROI;
                     }
-                }
-                if(mMetaDataHeap != NULL){
-                    LOGV("runPreviewThread mMetaDataHEap is non-NULL");
-                    memcpy((uint32_t *)mMetaDataHeap->mHeap->base(), (uint32_t *)array, (sizeof(int)*(MAX_ROI*4+1)));
-                    mMetaDataWaitLock.unlock();
-#if 0
-                    if  (mcb != NULL && (msgEnabled & CAMERA_MSG_META_DATA)) {
-                        mcb(CAMERA_MSG_META_DATA, mMetaDataHeap->mBuffers[0], mdata);
+                    break;
+                case FD_ROI_TYPE_DATA:
+                    {
+                        int idx = roi->d.data.idx;
+                        if (idx < mFacesDetected) {
+                            mFaceArray[idx*4+1]   = roi->d.data.face.face_boundary.x;
+                            mFaceArray[idx*4+2] = roi->d.data.face.face_boundary.y;
+                            mFaceArray[idx*4+3] = roi->d.data.face.face_boundary.x;
+                            mFaceArray[idx*4+4] = roi->d.data.face.face_boundary.y;
+                            mNumFDRcvd++;
+                            if (mNumFDRcvd == mFacesDetected) {
+                                mFaceArray[0] = mFacesDetected * 4;
+                                if(mMetaDataHeap != NULL){
+                                    LOGV("runPreviewThread mMetaDataHEap is non-NULL");
+                                    memcpy((uint32_t *)mMetaDataHeap->mHeap->base(), (uint32_t *)mFaceArray, sizeof(mFaceArray));
+                                }
+                            }
+                        }
                     }
-#endif
-                } else {
-                    mMetaDataWaitLock.unlock();
-                    LOGE("runPreviewThread mMetaDataHeap is NULL");
+                    break;
                 }
-            } else {
-                mMetaDataWaitLock.unlock();
             }
+            mMetaDataWaitLock.unlock();
         }
         bufferIndex = mapFrame(handle);
         if(bufferIndex >= 0) {
