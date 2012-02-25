@@ -238,7 +238,7 @@ status_t QCameraStream_preview::putBufferToSurface() {
     mHalCamCtrl->mPreviewMemoryLock.lock();
 	for (int cnt = 0; cnt < mHalCamCtrl->mPreviewMemory.buffer_count; cnt++) {
         if (cnt < mHalCamCtrl->mPreviewMemory.buffer_count) {
-            if (NO_ERROR != sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_PREVIEW, cnt)) {
+            if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_PREVIEW, cnt)) {
                 LOGE("%s: sending data Msg Failed", __func__);
             }
         }
@@ -378,7 +378,7 @@ status_t QCameraStream_preview::initDisplayBuffers()
       mHalCamCtrl->mPreviewMemory.addr_offset[i],
       (uint32_t)mDisplayStreamBuf.frame[i].buffer);
 
-    if (NO_ERROR != sendMappingBuf(
+    if (NO_ERROR != mHalCamCtrl->sendMappingBuf(
                         MSM_V4L2_EXT_CAPTURE_MODE_PREVIEW,
                         i,
                         mDisplayStreamBuf.frame[i].fd,
@@ -1001,37 +1001,6 @@ void QCameraStream_preview::deleteInstance(QCameraStream *p)
 void *QCameraStream_preview::getLastQueuedFrame(void)
 {
     return mLastQueuedFrame;
-}
-
-status_t QCameraStream_preview::sendMappingBuf(int ext_mode, int idx, int fd, uint32_t size)
-{
-    cam_sock_packet_t packet;
-    memset(&packet, 0, sizeof(cam_sock_packet_t));
-    packet.msg_type = CAM_SOCK_MSG_TYPE_FD_MAPPING;
-    packet.payload.frame_fd_map.ext_mode = ext_mode;
-    packet.payload.frame_fd_map.frame_idx = idx;
-    packet.payload.frame_fd_map.fd = fd;
-    packet.payload.frame_fd_map.size = size;
-
-    if ( cam_ops_sendmsg(mCameraId, &packet, sizeof(cam_sock_packet_t), packet.payload.frame_fd_map.fd) <= 0 ) {
-        LOGE("%s: sending frame mapping buf msg Failed", __func__);
-        return FAILED_TRANSACTION;
-    }
-    return NO_ERROR;
-}
-
-status_t QCameraStream_preview::sendUnMappingBuf(int ext_mode, int idx)
-{
-    cam_sock_packet_t packet;
-    memset(&packet, 0, sizeof(cam_sock_packet_t));
-    packet.msg_type = CAM_SOCK_MSG_TYPE_FD_UNMAPPING;
-    packet.payload.frame_fd_unmap.ext_mode = ext_mode;
-    packet.payload.frame_fd_unmap.frame_idx = idx;
-    if ( cam_ops_sendmsg(mCameraId, &packet, sizeof(cam_sock_packet_t), 0) <= 0 ) {
-        LOGE("%s: sending frame unmapping buf msg Failed", __func__);
-        return FAILED_TRANSACTION;
-    }
-    return NO_ERROR;
 }
 
 /* Set preview pause flag */

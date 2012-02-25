@@ -215,9 +215,6 @@ public:
     friend class QCameraHardwareInterface;
 
 private:
-    status_t sendMappingBuf(int ext_mode, int idx, int fd, uint32_t size);
-    status_t sendUnMappingBuf(int ext_mode, int idx);
-
     QCameraStream_preview(int cameraId, camera_mode_t);
     status_t                 getBufferFromSurface();
     status_t                 putBufferToSurface();
@@ -304,11 +301,8 @@ private:
     void stopPolling(void);
     bool isFullSizeLiveshot(void);
     status_t doWaveletDenoise(mm_camera_ch_data_buf_t* frame);
-    status_t sendWDenoiseMappingBuf(int ext_mode, mm_camera_ch_data_buf_t* rcvd_frame, cam_ctrl_dimension_t* dim);
-    status_t sendWDenoiseUnMappingBuf(int ext_mode, int idx);
     status_t sendWDenoiseStartMsg(mm_camera_ch_data_buf_t * frame);
     void lauchNextWDenoiseFromQueue();
-    uint32_t fillFrameInfo(int ext_mode, mm_camera_frame_map_type* frame_info, mm_camera_ch_data_buf_t* rcvd_frame, cam_ctrl_dimension_t* dim);
 
     /* Member variables */
 

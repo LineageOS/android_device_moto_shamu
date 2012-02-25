@@ -870,12 +870,25 @@ void QCameraStream_Snapshot::deInitBuffer(void)
     }
 
     if (mSnapshotFormat == PICTURE_FORMAT_RAW) {
-        /* deinit buffer */
-        deinitRawSnapshotBuffers();
+      /* deinit buffer */
+      deinitRawSnapshotBuffers();
     }
     else
     {
-        deinitSnapshotBuffers();
+      if (!isZSLMode() &&
+      ((mHalCamCtrl->getHDRMode() == HDR_MODE) || (mHalCamCtrl->isWDenoiseEnabled()))) {
+        /*register main and thumbnail buffers at back-end for frameproc*/
+        for (int i = 0; i < mHalCamCtrl->mSnapshotMemory.buffer_count; i++) {
+          if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, i)) {
+            LOGE("%s: sending unmapping data Msg Failed", __func__);
+          }
+          if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, i)) {
+            LOGE("%s: sending unmapping data Msg Failed", __func__);
+          }
+        }
+      }
+
+      deinitSnapshotBuffers();
     }
 
 
@@ -983,6 +996,21 @@ status_t QCameraStream_Snapshot::initJPEGSnapshot(int num_of_snapshots)
     if ( NO_ERROR != ret ){
         LOGE("%s: Failure allocating memory for Snapshot buffers", __func__);
         goto end;
+    }
+
+    if (!isZSLMode() &&
+    ((mHalCamCtrl->getHDRMode() == HDR_MODE) || (mHalCamCtrl->isWDenoiseEnabled()))) {
+      /*register main and thumbnail buffers at back-end for frameproc*/
+        for (int i = 0; i < num_of_snapshots; i++) {
+          if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, i,
+          mSnapshotStreamBuf.frame[i].fd, mHalCamCtrl->mSnapshotMemory.size)) {
+            LOGE("%s: sending mapping data Msg Failed", __func__);
+          }
+          if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, i,
+          mPostviewStreamBuf.frame[i].fd, mHalCamCtrl->mThumbnailMemory.size)) {
+            LOGE("%s: sending mapping data Msg Failed", __func__);
+          }
+        }
     }
 
 end:
@@ -2275,8 +2303,8 @@ void QCameraStream_Snapshot::notifyWDenoiseEvent(cam_ctrl_status_t status, void 
         LOGE("%s: cookie is returned NULL", __func__);
     } else {
         // first unmapping the fds
-        sendWDenoiseUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, frame->snapshot.main.idx);
-        sendWDenoiseUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, frame->snapshot.thumbnail.idx);
+        mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, frame->snapshot.main.idx);
+        mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, frame->snapshot.thumbnail.idx);
 
         // then do JPEG encoding
         rc = encodeDisplayAndSave(frame, 0);
@@ -2358,36 +2386,6 @@ void QCameraStream_Snapshot::lauchNextWDenoiseFromQueue()
     } while (TRUE);
 }
 
-uint32_t QCameraStream_Snapshot::fillFrameInfo
-(
-    int                         ext_mode,
-    mm_camera_frame_map_type *  frame_info,
-    mm_camera_ch_data_buf_t *   rcvd_frame,
-    cam_ctrl_dimension_t *      dim
-)
-{
-    uint32_t rc = NO_ERROR;
-    frame_info->ext_mode = ext_mode;
-    switch (ext_mode) {
-    case MSM_V4L2_EXT_CAPTURE_MODE_MAIN:
-        frame_info->frame_idx = rcvd_frame->snapshot.main.idx;
-        frame_info->fd = rcvd_frame->snapshot.main.frame->fd;
-        frame_info->size = dim->picture_frame_offset.frame_len;
-        break;
-    case MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL:
-        frame_info->frame_idx = rcvd_frame->snapshot.thumbnail.idx;
-        frame_info->fd = rcvd_frame->snapshot.thumbnail.frame->fd;
-        frame_info->size = dim->thumb_frame_offset.frame_len;
-        break;
-    default:
-        LOGE("%s: error - wrong ext_mode (%d)!", __func__, ext_mode);
-        rc = BAD_VALUE;
-        break;
-    }
-
-    return rc;
-}
-
 status_t QCameraStream_Snapshot::doWaveletDenoise(mm_camera_ch_data_buf_t* frame)
 {
     status_t ret = NO_ERROR;
@@ -2405,14 +2403,20 @@ status_t QCameraStream_Snapshot::doWaveletDenoise(mm_camera_ch_data_buf_t* frame
     }
 
     // send main frame mapping through domain socket
-    if (NO_ERROR != sendWDenoiseMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, frame, &dim)) {
+    if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN,
+                                                frame->snapshot.main.idx,
+                                                frame->snapshot.main.frame->fd,
+                                                dim.picture_frame_offset.frame_len)) {
         LOGE("%s: sending main frame mapping buf msg Failed", __func__);
         ret = FAILED_TRANSACTION;
         goto end;
     }
 
     // send thumbnail frame mapping through domain socket
-    if (NO_ERROR != sendWDenoiseMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, frame, &dim)) {
+    if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL,
+                                                frame->snapshot.thumbnail.idx,
+                                                frame->snapshot.thumbnail.frame->fd,
+                                                dim.thumb_frame_offset.frame_len)) {
         LOGE("%s: sending thumbnail frame mapping buf msg Failed", __func__);
         ret = FAILED_TRANSACTION;
         goto end;
@@ -2443,41 +2447,6 @@ status_t QCameraStream_Snapshot::sendWDenoiseStartMsg(mm_camera_ch_data_buf_t * 
     packet.payload.wdn_start.frame_idx[1] = frame->snapshot.thumbnail.idx;
     if ( cam_ops_sendmsg(mCameraId, &packet, sizeof(packet), 0) <= 0 ) {
         LOGE("%s: sending start wavelet denoise msg failed", __func__);
-        return FAILED_TRANSACTION;
-    }
-    return NO_ERROR;
-}
-
-status_t QCameraStream_Snapshot::sendWDenoiseMappingBuf
-(
-    int                         ext_mode,
-    mm_camera_ch_data_buf_t *   rcvd_frame,
-    cam_ctrl_dimension_t *      dim
-)
-{
-    cam_sock_packet_t packet;
-    memset(&packet, 0, sizeof(cam_sock_packet_t));
-    packet.msg_type = CAM_SOCK_MSG_TYPE_FD_MAPPING;
-    if (NO_ERROR != fillFrameInfo(ext_mode, &(packet.payload.frame_fd_map), rcvd_frame, dim)) {
-        LOGE("%s: Failure filling wdn frame info", __func__);
-        return FAILED_TRANSACTION;
-    }
-    if ( cam_ops_sendmsg(mCameraId, &packet, sizeof(cam_sock_packet_t), packet.payload.frame_fd_map.fd) <= 0 ) {
-        LOGE("%s: sending frame mapping buf msg Failed", __func__);
-        return FAILED_TRANSACTION;
-    }
-    return NO_ERROR;
-}
-
-status_t QCameraStream_Snapshot::sendWDenoiseUnMappingBuf(int ext_mode, int idx)
-{
-    cam_sock_packet_t packet;
-    memset(&packet, 0, sizeof(cam_sock_packet_t));
-    packet.msg_type = CAM_SOCK_MSG_TYPE_FD_UNMAPPING;
-    packet.payload.frame_fd_unmap.ext_mode = ext_mode;
-    packet.payload.frame_fd_unmap.frame_idx = idx;
-    if ( cam_ops_sendmsg(mCameraId, &packet, sizeof(cam_sock_packet_t), 0) <= 0 ) {
-        LOGE("%s: sending frame unmapping buf msg Failed", __func__);
         return FAILED_TRANSACTION;
     }
     return NO_ERROR;

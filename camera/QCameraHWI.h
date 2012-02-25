@@ -459,6 +459,8 @@ public:
                                 uint32_t *planes);
 
 	int releaseHeapMem( QCameraHalHeap_t *heap);
+    status_t sendMappingBuf(int ext_mode, int idx, int fd, uint32_t size);
+    status_t sendUnMappingBuf(int ext_mode, int idx);
     int allocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt, int ion_type);
     int deallocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt);
     void dumpFrameToFile(const void * data, uint32_t size, char* name, char* ext, int index);

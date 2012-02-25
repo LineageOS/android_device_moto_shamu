@@ -2214,6 +2214,37 @@ int QCameraHardwareInterface::storeMetaDataInBuffers(int enable)
     return 0;
 }
 
+status_t QCameraHardwareInterface::sendMappingBuf(int ext_mode, int idx, int fd, uint32_t size)
+{
+    cam_sock_packet_t packet;
+    memset(&packet, 0, sizeof(cam_sock_packet_t));
+    packet.msg_type = CAM_SOCK_MSG_TYPE_FD_MAPPING;
+    packet.payload.frame_fd_map.ext_mode = ext_mode;
+    packet.payload.frame_fd_map.frame_idx = idx;
+    packet.payload.frame_fd_map.fd = fd;
+    packet.payload.frame_fd_map.size = size;
+
+    if ( cam_ops_sendmsg(mCameraId, &packet, sizeof(cam_sock_packet_t), packet.payload.frame_fd_map.fd) <= 0 ) {
+        LOGE("%s: sending frame mapping buf msg Failed", __func__);
+        return FAILED_TRANSACTION;
+    }
+    return NO_ERROR;
+}
+
+status_t QCameraHardwareInterface::sendUnMappingBuf(int ext_mode, int idx)
+{
+    cam_sock_packet_t packet;
+    memset(&packet, 0, sizeof(cam_sock_packet_t));
+    packet.msg_type = CAM_SOCK_MSG_TYPE_FD_UNMAPPING;
+    packet.payload.frame_fd_unmap.ext_mode = ext_mode;
+    packet.payload.frame_fd_unmap.frame_idx = idx;
+    if ( cam_ops_sendmsg(mCameraId, &packet, sizeof(cam_sock_packet_t), 0) <= 0 ) {
+        LOGE("%s: sending frame unmapping buf msg Failed", __func__);
+        return FAILED_TRANSACTION;
+    }
+    return NO_ERROR;
+}
+
 int QCameraHardwareInterface::allocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt, int ion_type)
 {
   int rc = 0;
