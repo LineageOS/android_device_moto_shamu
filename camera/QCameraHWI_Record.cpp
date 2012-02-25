@@ -462,7 +462,10 @@ status_t QCameraStream_record::initEncodeBuffers()
 	    recordframes[cnt].y_off = 0;
 	    recordframes[cnt].cbcr_off = mHalCamCtrl->mRecordingMemory.cbcr_offset;
 	    recordframes[cnt].path = OUTPUT_TYPE_V;
-			//record_offset[cnt] =  mRecordHeap->mAlignedBufferSize * cnt;
+      recordframes[cnt].fd_data = mHalCamCtrl->mRecordingMemory.ion_info_fd[cnt];
+      recordframes[cnt].ion_alloc = mHalCamCtrl->mRecordingMemory.alloc[cnt];
+
+      //record_offset[cnt] =  mRecordHeap->mAlignedBufferSize * cnt;
 
 	    //record_buffers_tracking_flag[cnt] = false;
 	    //record_offset[cnt] =  0;
