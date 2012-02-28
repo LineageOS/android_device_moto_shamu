@@ -942,6 +942,9 @@ void QCameraHardwareInterface::initDefaultParameters()
         mParameters.set("full-video-snap-supported", "false");
     }
 
+    //Set Live shot support
+    mParameters.set("video-snapshot-supported", "true");
+
     //Set Camera Mode
     mParameters.set(CameraParameters::KEY_CAMERA_MODE,0);
     mParameters.set(CameraParameters::KEY_AE_BRACKET_HDR,"Off");
@@ -2924,6 +2927,15 @@ status_t QCameraHardwareInterface::setDISMode() {
 
   uint32_t value = mRecordingHint && mDisEnabled;
 
+  /* TODO Remove this workaround once the C2D limitation
+   * (32 alignment on width) is fixed. */
+  /* Start workaround */
+  if (mDimension.display_width == QCIF_WIDTH ||
+      mDimension.display_width == D1_WIDTH) {
+    value = 0;
+  }
+  /* End workaround */
+
   LOGI("%s DIS is %s value = %d", __func__,
           value ? "Enabled" : "Disabled", value);
   native_set_parms(MM_CAMERA_PARM_DIS_ENABLE, sizeof(value),
@@ -2934,6 +2946,15 @@ status_t QCameraHardwareInterface::setDISMode() {
 status_t QCameraHardwareInterface::setFullLiveshot()
 {
   uint32_t value = mRecordingHint && mFullLiveshotEnabled;
+
+  /* TODO Remove this workaround once the C2D limitation
+   * (32 alignment on width) is fixed. */
+  /* Start workaround */
+  if (mDimension.display_width == QCIF_WIDTH ||
+      mDimension.display_width == D1_WIDTH) {
+    value = 0;
+  }
+  /* End workaround */
 
   LOGI("%s Full size liveshot %s value = %d", __func__,
           value ? "Enabled" : "Disabled", value);

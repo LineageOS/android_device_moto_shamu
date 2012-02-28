@@ -379,6 +379,7 @@ public:
 
     status_t    takeLiveSnapshot();
     status_t    takeFullSizeLiveshot();
+    bool        canTakeFullSizeLiveshot();
 
     //virtual status_t          getBufferInfo( sp<IMemory>& Frame,
     //size_t *alignedSize);
@@ -590,6 +591,7 @@ private:
     QCameraStream       *mStreamDisplay;
     QCameraStream       *mStreamRecord;
     QCameraStream       *mStreamSnap;
+	QCameraStream       *mStreamLiveSnap;
 
     cam_ctrl_dimension_t mDimension;
     int  previewWidth, previewHeight;
@@ -703,6 +705,7 @@ private:
 	 camera_frame_metadata_t mMetadata;
 	 camera_face_t           mFace[MAX_ROI];
      preview_format_info_t  mPreviewFormatInfo;
+     friend void liveshot_callback(mm_camera_ch_data_buf_t *frame,void *user_data);
 };
 
 }; // namespace android
