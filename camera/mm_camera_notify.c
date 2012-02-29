@@ -818,6 +818,11 @@ void mm_camera_msm_evt_notify(mm_camera_obj_t * my_obj, int fd)
     if (rc >= 0) {
 //        CDBG("%s: VIDIOC_DQEVENT type = 0x%x, app event type = %d\n",
 //            __func__, ev.type, evt->event_type);
+        if(ev.type == V4L2_EVENT_PRIVATE_START+MSM_CAM_APP_NOTIFY_ERROR_EVENT) {
+            evt->event_type = MM_CAMERA_EVT_TYPE_CTRL;
+            evt->e.ctrl.evt = MM_CAMERA_CTRL_EVT_ERROR;
+        }
+
         switch(evt->event_type) {
         case MM_CAMERA_EVT_TYPE_INFO:
             switch(evt->e.info.event_id) {
@@ -843,6 +848,8 @@ void mm_camera_msm_evt_notify(mm_camera_obj_t * my_obj, int fd)
            default:
                break;
            }
+           break;
+        case MM_CAMERA_EVT_TYPE_CTRL:
            break;
         default:
             break;
