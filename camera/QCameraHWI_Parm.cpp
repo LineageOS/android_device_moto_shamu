@@ -1241,15 +1241,15 @@ void QCameraHardwareInterface::initDefaultParameters()
 
 // if(mIs3DModeOn)
 //     mParameters.set("3d-frame-format", "left-right");
+    mParameters.set("no-display-mode", 0);
+    //mUseOverlay = useOverlay();
+    mParameters.set("zoom", 0);
 
-if (setParameters(mParameters) != NO_ERROR) {
-    LOGE("Failed to set default parameters?!");
-}
-
-//mUseOverlay = useOverlay();
-mParameters.set("zoom", 0);
-mInitialized = true;
-strTexturesOn = false;
+    if (setParameters(mParameters) != NO_ERROR) {
+        LOGE("Failed to set default parameters?!");
+    }  
+    mInitialized = true;
+    strTexturesOn = false;
 
     LOGI("%s: X", __func__);
     return;
@@ -1355,7 +1355,7 @@ status_t QCameraHardwareInterface::setParameters(const CameraParameters& params)
     if ((rc = setHighFrameRate(params)))  final_rc = rc;
     if ((rc = setZSLBurstLookBack(params))) final_rc = rc;
     if ((rc = setZSLBurstInterval(params))) final_rc = rc;
-
+    if ((rc = setNoDisplayMode(params))) final_rc = rc;
    LOGI("%s: X", __func__);
    return final_rc;
 }
@@ -3916,5 +3916,28 @@ bool QCameraHardwareInterface::isLowPowerCamcorder() {
 
       return false;
 }
+
+status_t QCameraHardwareInterface::setNoDisplayMode(const CameraParameters& params)
+{
+  char prop[PROPERTY_VALUE_MAX];
+  memset(prop, 0, sizeof(prop));
+  property_get("persist.camera.nodisplay", prop, "0");
+  int prop_val = atoi(prop);
+
+  if (prop_val == 0) {
+    const char *str_val  = params.get("no-display-mode");
+    if(str_val && strlen(str_val) > 0) {
+      mNoDisplayMode = atoi(str_val);
+    } else {
+      mNoDisplayMode = 0;
+    }
+    LOGD("Param mNoDisplayMode =%d", mNoDisplayMode);
+  } else {
+    mNoDisplayMode = prop_val;
+    LOGD("prop mNoDisplayMode =%d", mNoDisplayMode);
+  }
+  return NO_ERROR;
+}
+
 
 }; /*namespace android */

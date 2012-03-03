@@ -517,7 +517,7 @@ status_t QCameraStream_preview::processPreviewFrame(mm_camera_ch_data_buf_t *fra
     /*Call buf done*/
     return BAD_VALUE;
   }
-  
+
   mHalCamCtrl->mCallbackLock.lock();
   camera_data_timestamp_callback rcb = mHalCamCtrl->mDataCbTimestamp;
   void *rdata = mHalCamCtrl->mCallbackCookie;
@@ -878,6 +878,14 @@ void *QCameraStream_preview::getLastQueuedFrame(void)
 void QCameraStream_preview::setPreviewPauseFlag(bool bPaused)
 {
     mbPausedBySnapshot = bPaused;
+}
+
+status_t QCameraStream_preview::initPreviewOnlyBuffers()
+{
+  /*1. for 7x27a, this shall not called;
+    2. this file shall be removed ASAP
+    so put a dummy function to just pass the compile*/
+  return INVALID_OPERATION;
 }
 
 // ---------------------------------------------------------------------------

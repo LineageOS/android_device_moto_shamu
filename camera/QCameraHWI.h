@@ -482,6 +482,8 @@ public:
     exif_tags_info_t* getExifData(){ return mExifData; }
     void resetExifData();
     int getExifTableNumEntries() { return mExifTableNumEntries; }
+    bool isNoDisplayMode();
+
 private:
     int16_t  zoomRatios[MAX_ZOOM_RATIOS];
     struct camera_size_type default_preview_sizes[PREVIEW_TBL_MAX_SIZE];
@@ -609,6 +611,7 @@ private:
     status_t setCaptureBurstExp(void);
     status_t setPowerMode(const CameraParameters& params);
     void takePicturePrepareHardware( );
+    status_t setNoDisplayMode(const CameraParameters& params);
 
     isp3a_af_mode_t getAutoFocusMode(const CameraParameters& params);
     bool isValidDimension(int w, int h);
@@ -778,7 +781,14 @@ private:
 	 preview_stream_ops_t *mPreviewWindow;
      Mutex                mStateLock;
 	 int                  mPreviewState;
+     /*preview memory with display case: memory is allocated and freed via
+     gralloc */
      QCameraHalMemory_t   mPreviewMemory;
+
+     /*preview memory without display case: memory is allocated
+      directly by camera */
+     QCameraHalHeap_t     mNoDispPreviewMemory;
+
      QCameraHalHeap_t     mSnapshotMemory;
      QCameraHalHeap_t     mThumbnailMemory;
      QCameraHalHeap_t     mRecordingMemory;
@@ -793,6 +803,7 @@ private:
      exif_tags_info_t       mExifData[MAX_EXIF_TABLE_ENTRIES];  //Exif tags for JPEG encoder
      exif_values_t          mExifValues;                        //Exif values in usable format
      int                    mExifTableNumEntries;            //NUmber of entries in mExifData
+     int                 mNoDisplayMode;
 };
 
 }; // namespace android

@@ -106,6 +106,7 @@ public:
     }
     virtual sp<IMemoryHeap> getHeap() const{return NULL;}
     virtual status_t    initDisplayBuffers(){return NO_ERROR;}
+    virtual status_t initPreviewOnlyBuffers(){return NO_ERROR;}
     virtual sp<IMemoryHeap> getRawHeap() const {return NULL;}
     virtual void *getLastQueuedFrame(void){return NULL;}
     virtual status_t takePictureZSL(void){return NO_ERROR;}
@@ -207,8 +208,18 @@ public:
     QCameraStream_preview() {};
     virtual             ~QCameraStream_preview();
     void *getLastQueuedFrame(void);
+    /*init preview buffers with display case*/
     status_t initDisplayBuffers();
+    /*init preview buffers without display case*/
+    status_t initPreviewOnlyBuffers();
+
     status_t processPreviewFrame(mm_camera_ch_data_buf_t *frame);
+
+    /*init preview buffers with display case*/
+    status_t processPreviewFrameWithDisplay(mm_camera_ch_data_buf_t *frame);
+    /*init preview buffers without display case*/
+    status_t processPreviewFrameWithOutDisplay(mm_camera_ch_data_buf_t *frame);
+
     int setPreviewWindow(preview_stream_ops_t* window);
     void notifyROIEvent(fd_roi_t roi);
     void setPreviewPauseFlag(bool bPaused);
@@ -217,8 +228,14 @@ public:
 
 private:
     QCameraStream_preview(int cameraId, camera_mode_t);
+    /*allocate and free buffers with display case*/
     status_t                 getBufferFromSurface();
     status_t                 putBufferToSurface();
+
+    /*allocate and free buffers without display case*/
+    status_t                 getBufferNoDisplay();
+    status_t                 freeBufferNoDisplay();
+
     void                     dumpFrameToFile(struct msm_frame* newFrame);
 
     int8_t                   my_id;
