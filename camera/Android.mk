@@ -69,18 +69,8 @@ ifneq ($(USE_CAMERA_STUB),true)
             QCameraStream.cpp QualcommCamera2.cpp
         endif
 
-        MM_CAM_FILES:= \
-          mm_camera_interface2.c \
-          mm_camera_stream.c \
-          mm_camera_channel.c \
-          mm_camera.c \
-          mm_camera_poll_thread.c \
-          mm_camera_notify.c mm_camera_helper.c \
-          mm_omx_jpeg_encoder.c \
-          mm_camera_sock.c
       else
         LOCAL_HAL_FILES := QualcommCamera.cpp QualcommCameraHardware.cpp
-        MM_CAM_FILES:=
       endif
 
       LOCAL_CFLAGS+= -DHW_ENCODE
@@ -114,6 +104,7 @@ ifneq ($(USE_CAMERA_STUB),true)
       ifeq ($(V4L2_BASED_LIBCAM),true)
         LOCAL_C_INCLUDES+= $(TARGET_OUT_HEADERS)/mm-core/omxcore
         LOCAL_C_INCLUDES+= $(TARGET_OUT_HEADERS)/mm-still/mm-omx
+        LOCAL_C_INCLUDES+= $(LOCAL_PATH)/mm-camera-interface
       endif
 
       LOCAL_C_INCLUDES+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media
@@ -127,6 +118,7 @@ ifneq ($(USE_CAMERA_STUB),true)
 
       ifeq ($(V4L2_BASED_LIBCAM),true)
         LOCAL_SHARED_LIBRARIES:= libutils libui libcamera_client liblog libcutils libmmjpeg libmmstillomx libimage-jpeg-enc-omx-comp
+        LOCAL_SHARED_LIBRARIES += libmmcamera_interface2
       else
          LOCAL_SHARED_LIBRARIES:= libutils libui libcamera_client liblog libcutils libmmjpeg
       endif
@@ -148,3 +140,7 @@ ifneq ($(USE_CAMERA_STUB),true)
     endif # BUILD_TINY_ANDROID
   endif # BOARD_USES_QCOM_HARDWARE
 endif # USE_CAMERA_STUB
+
+ifeq ($(V4L2_BASED_LIBCAM),true)
+include $(LOCAL_PATH)/mm-camera-interface/Android.mk
+endif

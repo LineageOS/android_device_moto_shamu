@@ -621,4 +621,8 @@ extern uint32_t mm_camera_get_msm_frame_len(cam_format_t fmt_type,
                                             int image_type,
                                             uint8_t *num_planes,
                                             uint32_t planes[]);
+uint8_t *mm_camera_do_mmap_ion(int ion_fd, struct ion_allocation_data *alloc,
+  struct ion_fd_data *ion_info_fd, int *mapFd);
+int mm_camera_do_munmap_ion (int ion_fd, struct ion_fd_data *ion_info_fd,
+                   void *addr, size_t size);
 #endif /*__MM_CAMERA_INTERFACE2_H__*/
