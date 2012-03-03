@@ -462,13 +462,13 @@ static const str_map hdr_bracket[] = {
 };
 
 typedef enum {
-    LOW_POWER,
-    NORMAL_POWER
+    NORMAL_POWER,
+    LOW_POWER
 } power_mode;
 
 static const str_map power_modes[] = {
-    { CameraParameters::LOW_POWER,LOW_POWER},
-    { CameraParameters::NORMAL_POWER,NORMAL_POWER }
+    { CameraParameters::NORMAL_POWER,NORMAL_POWER },
+    { CameraParameters::LOW_POWER,LOW_POWER }
 };
 
 /**************************************************************************/
@@ -728,7 +728,6 @@ void QCameraHardwareInterface::initDefaultParameters()
 {
     bool ret;
     char prop[PROPERTY_VALUE_MAX];
-    int  snap_format;
     mm_camera_dimension_t maxDim;
     LOGI("%s: E", __func__);
 
@@ -746,8 +745,8 @@ void QCameraHardwareInterface::initDefaultParameters()
 
     memset(prop, 0, sizeof(prop));
     property_get("persist.camera.snap.format", prop, "0");
-    snap_format = atoi(prop);
-    LOGV("%s: prop =(%s), snap_format=%d", __func__, prop, snap_format);
+    mSnapshotFormat = atoi(prop);
+    LOGV("%s: prop =(%s), snap_format=%d", __func__, prop, mSnapshotFormat);
 
     //cam_ctrl_dimension_t dim;
     mHFRLevel = 0;
@@ -770,7 +769,7 @@ void QCameraHardwareInterface::initDefaultParameters()
 
     mDimension.prev_format     = CAMERA_YUV_420_NV21;
     mDimension.enc_format      = CAMERA_YUV_420_NV12;
-    if (snap_format == 1) {
+    if (mSnapshotFormat == 1) {
       mDimension.main_img_format = CAMERA_YUV_422_NV61;
     } else {
       mDimension.main_img_format = CAMERA_YUV_420_NV21;
@@ -2429,25 +2428,36 @@ status_t QCameraHardwareInterface::setCameraMode(const CameraParameters& params)
 }
 
 status_t QCameraHardwareInterface::setPowerMode(const CameraParameters& params) {
-
+    uint32_t value = NORMAL_POWER;
     const char *powermode = NULL;
 
     powermode = params.get(CameraParameters::KEY_POWER_MODE);
     if (powermode != NULL) {
-        int value = attr_lookup(power_modes,
+        value = attr_lookup(power_modes,
                 sizeof(power_modes) / sizeof(str_map), powermode);
-        if(value == 0) {
-            LOGE("Enable Low Power Mode");
+        if(value == LOW_POWER) {
+            LOGI("Enable Low Power Mode");
             mPowerMode = value;
-            mFullLiveshotEnabled = false;
             mParameters.set(CameraParameters::KEY_POWER_MODE,"Low_Power");
-        }else{
+        } else {
             LOGE("Enable Normal Power Mode");
             mPowerMode = value;
-            mFullLiveshotEnabled = true;
             mParameters.set(CameraParameters::KEY_POWER_MODE,"Normal_Power");
         }
     }
+
+    /* TODO Remove this workaround once the C2D limitation
+     * (32 alignment on width) is fixed. */
+    /* Start workaround */
+    if (mDimension.display_width == QCIF_WIDTH ||
+        mDimension.display_width == D1_WIDTH) {
+      value = 1;
+    }
+    /* End workaround */
+    LOGI("%s Low power mode %s value = %d", __func__,
+          value ? "Enabled" : "Disabled", value);
+    native_set_parms(MM_CAMERA_PARM_LOW_POWER_MODE, sizeof(value),
+                                               (void *)&value);
     return NO_ERROR;
 }
 
@@ -3180,11 +3190,12 @@ status_t QCameraHardwareInterface::setRecordingHint(const CameraParameters& para
 }
 
 status_t QCameraHardwareInterface::setDISMode() {
-
-  if(isLowPowerCamcorder())
-      mDisEnabled = 0;
-
-  uint32_t value = mRecordingHint && mDisEnabled;
+  /* Enable DIS only if
+   * - Camcorder mode AND
+   * - DIS property is set AND
+   * - Not in Low power mode. */
+  uint32_t value = mRecordingHint && mDisEnabled
+                   && !isLowPowerCamcorder();
 
   /* TODO Remove this workaround once the C2D limitation
    * (32 alignment on width) is fixed. */
@@ -3207,7 +3218,11 @@ status_t QCameraHardwareInterface::setDISMode() {
 
 status_t QCameraHardwareInterface::setFullLiveshot()
 {
-  uint32_t value = mRecordingHint && mFullLiveshotEnabled;
+  /* Enable full size liveshot only if
+   * - Camcorder mode AND
+   * - Full size liveshot is enabled. */
+  uint32_t value = mRecordingHint && mFullLiveshotEnabled
+                   && !isLowPowerCamcorder();
 
   /* TODO Remove this workaround once the C2D limitation
    * (32 alignment on width) is fixed. */
@@ -3220,6 +3235,13 @@ status_t QCameraHardwareInterface::setFullLiveshot()
     value = 0;
   }
   /* End workaround */
+
+  if (((mDimension.picture_width == mDimension.video_width) &&
+      (mDimension.picture_height == mDimension.video_height))) {
+    /* If video size matches the live snapshot size
+     * turn off full size liveshot to get higher fps. */
+    value = 0;
+  }
 
   LOGI("%s Full size liveshot %s value = %d", __func__,
           value ? "Enabled" : "Disabled", value);
@@ -3803,17 +3825,11 @@ void QCameraHardwareInterface::parseGPSCoordinate(const char *latlonString, rat_
 
 bool QCameraHardwareInterface::isLowPowerCamcorder() {
 
-    if(mPowerMode == LOW_POWER) {
+    if (mPowerMode == LOW_POWER)
         return true;
-    }
+
     if(mHFRLevel > 1) /* hard code the value now. Need to move tgtcommon to camear.h */
       return true;
-
-    /* If Full size liveshot is disabled, always run
-     * in low power camcorder mode to save power. */
-    if (!mFullLiveshotEnabled) {
-      return true;
-    }
 
     /* C2D expects the resolutions to be 32 aligned.
      * Otherwise the preview frames will be corrupted.

@@ -372,6 +372,11 @@ int32_t mm_camera_set_general_parm(mm_camera_obj_t * my_obj, mm_camera_parm_t *p
       return mm_camera_send_native_ctrl_cmd(my_obj,
                   CAMERA_SET_FULL_LIVESHOT, sizeof(uint32_t), (void *)parm->p_value);
     }
+
+    case MM_CAMERA_PARM_LOW_POWER_MODE:
+      return mm_camera_send_native_ctrl_cmd(my_obj,
+                  CAMERA_SET_LOW_POWER_MODE, sizeof(uint32_t), (void *)parm->p_value);
+
     case MM_CAMERA_PARM_HDR:
       return mm_camera_send_native_ctrl_cmd(my_obj,
                         CAMERA_SET_PARM_HDR, sizeof(exp_bracketing_t), (void *)parm->p_value);

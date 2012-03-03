@@ -155,7 +155,7 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mFaceDetectOn(0),
                     mDisEnabled(0),
                     mZoomSupported(false),
-                    mFullLiveshotEnabled(true),
+                    mFullLiveshotEnabled(false),
                     mRecordingHint(0),
                     mStatsOn(0), mCurrentHisto(-1), mSendData(false), mStatHeap(NULL),
                     mZslLookBackMode(0),
@@ -167,7 +167,8 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mHdrMode(HDR_BRACKETING_OFF),
                     mStreamLiveSnap(NULL),
                     mExifTableNumEntries(0),
-                    mDenoiseValue(0)
+                    mDenoiseValue(0),
+                    mSnapshotFormat(0)
 {
     LOGI("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;
@@ -188,8 +189,8 @@ QCameraHardwareInterface(int cameraId, int mode)
     property_get("persist.camera.hal.multitouchaf", value, "0");
     mMultiTouch = atoi(value);
 
-    //property_get("persist.camera.full.liveshot", value, "0");
-    //mFullLiveshotEnabled = atoi(value);
+    property_get("persist.camera.full.liveshot", value, "0");
+    mFullLiveshotEnabled = atoi(value);
 
     property_get("persist.camera.hal.dis", value, "0");
     mDisEnabled = atoi(value);
@@ -935,7 +936,14 @@ bool QCameraHardwareInterface::preview_parm_config (cam_ctrl_dimension_t* dim,
     dim->video_height = mDimension.video_height;
     dim->video_chroma_width = mDimension.video_width;
     dim->video_chroma_height  = mDimension.video_height;
-
+    /* Reset the Main image and thumbnail formats here,
+     * since they might have been changed when video size
+     * livesnapshot was taken. */
+    if (mSnapshotFormat == 1)
+      dim->main_img_format = CAMERA_YUV_422_NV61;
+    else
+      dim->main_img_format = CAMERA_YUV_420_NV21;
+    dim->thumb_format = CAMERA_YUV_420_NV21;
     LOGI("preview_parm_config: X");
     return matching;
 }
@@ -1610,7 +1618,7 @@ void  QCameraHardwareInterface::encodeData()
 
 bool QCameraHardwareInterface::canTakeFullSizeLiveshot() {
     bool ret;
-    if (mFullLiveshotEnabled) {
+    if (mFullLiveshotEnabled && !isLowPowerCamcorder()) {
       /* Full size liveshot enabled. */
 
       /* TODO Remove this workaround once the C2D limitation
@@ -1622,18 +1630,21 @@ bool QCameraHardwareInterface::canTakeFullSizeLiveshot() {
       }
       /* End workaround */
 
+      /* If Picture size is same as video size, switch to Video size
+       * live snapshot */
+      if ((mDimension.picture_width == mDimension.video_width) &&
+          (mDimension.picture_height == mDimension.video_height)) {
+        return FALSE;
+      }
+
       if (mDisEnabled) {
-       /* If DIS is enabled and any of the following conditions is true,
-        * - Picture size is same as video size.
-        * - Picture size is less than (video size + 10% DIS Margin)
+       /* If DIS is enabled and Picture size is
+        * less than (video size + 10% DIS Margin)
         * then fall back to Video size liveshot. */
-        if ((mDimension.picture_width == mDimension.video_width) &&
-            (mDimension.picture_height == mDimension.video_height)) {
-          ret = FALSE;
-        } else if ((mDimension.picture_width <
-                     (int)(mDimension.video_width * 1.1)) ||
-                   (mDimension.picture_height <
-                     (int)(mDimension.video_height * 1.1))) {
+        if ((mDimension.picture_width <
+               (int)(mDimension.video_width * 1.1)) ||
+             (mDimension.picture_height <
+               (int)(mDimension.video_height * 1.1))) {
           ret = FALSE;
         } else {
           /* Go with Full size live snapshot. */

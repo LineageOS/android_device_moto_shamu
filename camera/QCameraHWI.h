@@ -690,6 +690,7 @@ private:
     bool mRecordingHint;
     bool mStartRecording;
     int mHdrMode;
+    int mSnapshotFormat;
 
 /*for histogram*/
     int            mStatsOn;

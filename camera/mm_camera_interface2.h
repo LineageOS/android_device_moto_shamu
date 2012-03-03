@@ -150,6 +150,7 @@ typedef enum {
     MM_CAMERA_PARM_DIS_ENABLE,
     MM_CAMERA_PARM_AF_MTR_AREA,
     MM_CAMERA_PARM_AEC_MTR_AREA,
+    MM_CAMERA_PARM_LOW_POWER_MODE,
     MM_CAMERA_PARM_MAX
 } mm_camera_parm_type_t;
 
