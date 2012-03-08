@@ -1550,6 +1550,7 @@ status_t  QCameraHardwareInterface::takePicture()
         mStreamSnap->setFullSizeLiveshot(false);
         if (isZSLMode()) {
             if (mStreamSnap != NULL) {
+                pausePreviewForZSL();
                 ret = mStreamSnap->takePictureZSL();
                 if (ret != MM_CAMERA_OK) {
                     LOGE("%s: Error taking ZSL snapshot!", __func__);
@@ -2459,5 +2460,28 @@ bool QCameraHardwareInterface::isNoDisplayMode()
   return (mNoDisplayMode != 0);
 }
 
+void QCameraHardwareInterface::pausePreviewForZSL()
+{
+    status_t ret = NO_ERROR;
+    bool matching = TRUE;
+    int width,height;
+    cam_ctrl_dimension_t dim;
+
+    memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
+    ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DIMENSION,&dim);
+
+    getPictureSize(&width, &height);
+
+    if(dim.picture_width != width || dim.picture_height != height) {
+        LOGE("%s : Picture dimension changed.. Restart preview to reconfgure",__func__);
+        matching = false;
+    }
+    if(!matching) {
+        stopPreviewInternal();
+        mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
+        startPreview2();
+        mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
+    }
+}
 }; // namespace android
 

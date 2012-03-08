@@ -313,6 +313,7 @@ end:
         if (!encodedMem || !encodedMem->data) {
             LOGE("%s: mGetMemory failed.\n", __func__);
         }
+        memcpy(encodedMem->data, mHalCamCtrl->mJpegMemory.camera_memory[0]->data, mJpegOffset );
         mStopCallbackLock.unlock( );
         if ((mActive || isLiveSnapshot()) && jpg_data_cb != NULL) {
             LOGV("%s: Calling upperlayer callback to store JPEG image", __func__);

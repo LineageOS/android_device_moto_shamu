@@ -547,7 +547,8 @@ private:
     status_t cancelPictureInternal();
     //status_t startPreviewZSL();
     void pausePreviewForSnapshot();
-	status_t resumePreviewAfterSnapshot();
+    void pausePreviewForZSL();
+    status_t resumePreviewAfterSnapshot();
 
     status_t runFaceDetection();
 
@@ -568,7 +569,7 @@ private:
     status_t setJpegQuality(const CameraParameters& params);
     status_t setNumOfSnapshot(const CameraParameters& params);
     status_t setJpegRotation(int isZSL);
-	int getJpegRotation(void);
+    int getJpegRotation(void);
     int getISOSpeedValue();
     status_t setAntibanding(const CameraParameters& params);
     status_t setEffect(const CameraParameters& params);
