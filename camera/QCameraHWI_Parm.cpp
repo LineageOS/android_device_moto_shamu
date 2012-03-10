@@ -42,6 +42,8 @@
 
 #include "linux/msm_mdp.h"
 #include <linux/fb.h>
+#include <limits>
+
 
 extern "C" {
 #include <fcntl.h>
@@ -1621,15 +1623,22 @@ status_t QCameraHardwareInterface::updateFocusDistances(const char *focusmode)
       &focusDistances) == MM_CAMERA_OK) {
         String8 str;
         char buffer[32];
-        snprintf(buffer, sizeof(buffer), "%f", focusDistances.focus_distance[0]);
-        str.append(buffer);
-        snprintf(buffer, sizeof(buffer), ",%f", focusDistances.focus_distance[1]);
-        str.append(buffer);
-        if(strcmp(focusmode, CameraParameters::FOCUS_MODE_INFINITY) == 0)
-            snprintf(buffer, sizeof(buffer), ",%s", "Infinity");
-        else
+        //set all distances to infinity if focus mode is infinity
+        if(strcmp(focusmode, CameraParameters::FOCUS_MODE_INFINITY) == 0) {
+            snprintf(buffer, sizeof(buffer), "Infinity,");
+            str.append(buffer);
+            snprintf(buffer, sizeof(buffer), "Infinity,");
+            str.append(buffer);
+            snprintf(buffer, sizeof(buffer), "Infinity");
+            str.append(buffer);
+        } else {
+            snprintf(buffer, sizeof(buffer), "%f", focusDistances.focus_distance[0]);
+            str.append(buffer);
+            snprintf(buffer, sizeof(buffer), ",%f", focusDistances.focus_distance[1]);
+            str.append(buffer);
             snprintf(buffer, sizeof(buffer), ",%f", focusDistances.focus_distance[2]);
-        str.append(buffer);
+            str.append(buffer);
+        }
         LOGE("%s: setting KEY_FOCUS_DISTANCES as %s", __FUNCTION__, str.string());
         mParameters.set(CameraParameters::KEY_FOCUS_DISTANCES, str.string());
         return NO_ERROR;
