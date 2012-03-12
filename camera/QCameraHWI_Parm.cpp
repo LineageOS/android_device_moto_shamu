@@ -75,7 +75,7 @@ extern "C" {
 #define EXPOSURE_COMPENSATION_DEFAULT_NUMERATOR 0
 #define EXPOSURE_COMPENSATION_DENOMINATOR 6
 #define EXPOSURE_COMPENSATION_STEP ((float (1))/EXPOSURE_COMPENSATION_DENOMINATOR)
-#define FOCUS_AREA_INIT "(-1000,-1000,1000,1000,1000)"
+#define DEFAULT_CAMERA_AREA "(0, 0, 0, 0, 0)"
 
 #define HDR_HAL_FRAME 2
 
@@ -1077,8 +1077,8 @@ void QCameraHardwareInterface::initDefaultParameters()
        mParameters.set(CameraParameters::KEY_MAX_NUM_METERING_AREAS, "0");
    }
 
-    mParameters.set(CameraParameters::KEY_FOCUS_AREAS, FOCUS_AREA_INIT);
-    mParameters.set(CameraParameters::KEY_METERING_AREAS, FOCUS_AREA_INIT);
+    mParameters.set(CameraParameters::KEY_FOCUS_AREAS, DEFAULT_CAMERA_AREA);
+    mParameters.set(CameraParameters::KEY_METERING_AREAS, DEFAULT_CAMERA_AREA);
 
     //Set Flash
     if (cam_config_is_parm_supported(mCameraId, MM_CAMERA_PARM_LED_MODE)) {
