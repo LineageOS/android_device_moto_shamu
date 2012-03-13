@@ -2167,7 +2167,7 @@ void QCameraHardwareInterface::dumpFrameToFile(struct msm_frame* newFrame,
 status_t QCameraHardwareInterface::setPreviewWindow(preview_stream_ops_t* window)
 {
     status_t retVal = NO_ERROR;
-    LOGE(" %s: E mPreviewState = %d, mStreamDisplay = 0x%p", __FUNCTION__, mPreviewState, mStreamDisplay);
+    LOGE(" %s: E mPreviewState = %d, mStreamDisplay = %p", __FUNCTION__, mPreviewState, mStreamDisplay);
     if( window == NULL) {
         LOGE("%s:Received Setting NULL preview window", __func__);
     }
@@ -2191,6 +2191,7 @@ status_t QCameraHardwareInterface::setPreviewWindow(preview_stream_ops_t* window
         //retVal = UNKNOWN_ERROR;
         break;
     case QCAMERA_HAL_PREVIEW_STOPPED:
+    case QCAMERA_HAL_TAKE_PICTURE:
         mPreviewWindow = window;
         LOGE("%s: mPreviewWindow = 0x%p, mStreamDisplay = 0x%p",
                                     __func__, mPreviewWindow, mStreamDisplay);
