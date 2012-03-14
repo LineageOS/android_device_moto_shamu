@@ -158,6 +158,15 @@ typedef struct {
 } QCameraHalHeap_t;
 
 typedef struct {
+     camera_memory_t*  camera_memory[3];
+     int main_ion_fd[3];
+     struct ion_allocation_data alloc[3];
+     struct ion_fd_data ion_info_fd[3];
+     int fd[3];
+     int size;
+} QCameraStatHeap_t;
+
+typedef struct {
   int32_t msg_type;
   int32_t ext1;
   int32_t ext2;
@@ -459,10 +468,12 @@ public:
                                 uint32_t *planes);
 
 	int releaseHeapMem( QCameraHalHeap_t *heap);
-    status_t sendMappingBuf(int ext_mode, int idx, int fd, uint32_t size);
-    status_t sendUnMappingBuf(int ext_mode, int idx);
+    status_t sendMappingBuf(int ext_mode, int idx, int fd, uint32_t size, int cameraid, mm_camera_socket_msg_type msg_type);
+    status_t sendUnMappingBuf(int ext_mode, int idx, int cameraid, mm_camera_socket_msg_type msg_type);
     int allocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt, int ion_type);
     int deallocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt);
+    int allocate_ion_memory(QCameraStatHeap_t *p_camera_memory, int cnt, int ion_type);
+    int deallocate_ion_memory(QCameraStatHeap_t *p_camera_memory, int cnt);
     void dumpFrameToFile(const void * data, uint32_t size, char* name, char* ext, int index);
     preview_format_info_t  getPreviewFormatInfo( );
     bool isCameraReady();
@@ -685,6 +696,7 @@ private:
     bool           mSendData;
     sp<AshmemPool> mStatHeap;
     camera_memory_t *mStatsMapped[3];
+    QCameraStatHeap_t mHistServer;
     int32_t        mStatSize;
 
     bool mZslLookBackMode;

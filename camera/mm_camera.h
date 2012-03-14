@@ -341,7 +341,6 @@ extern int mm_camera_poll_send_ch_event(mm_camera_obj_t * my_obj, mm_camera_even
 extern void mm_camera_msm_proc_ch_event(mm_camera_obj_t *my_obj, mm_camera_event_t *event);
 extern void mm_camera_dispatch_app_event(mm_camera_obj_t *my_obj, mm_camera_event_t *event);
 extern void mm_camera_dispatch_buffered_frames(mm_camera_obj_t *my_obj, mm_camera_channel_type_t ch_type);
-extern void mm_camera_histo_mmap(mm_camera_obj_t * my_obj, mm_camera_event_t *evt);
 extern void mm_camera_check_pending_zsl_frames(mm_camera_obj_t *my_obj,
                                         mm_camera_channel_type_t ch_type);
 extern int mm_camera_ch_util_get_num_stream(mm_camera_obj_t * my_obj,mm_camera_channel_type_t ch_type);

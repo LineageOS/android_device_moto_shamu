@@ -879,10 +879,12 @@ void QCameraStream_Snapshot::deInitBuffer(void)
       ((mHalCamCtrl->getHDRMode() == HDR_MODE) || (mHalCamCtrl->isWDenoiseEnabled()))) {
         /*register main and thumbnail buffers at back-end for frameproc*/
         for (int i = 0; i < mHalCamCtrl->mSnapshotMemory.buffer_count; i++) {
-          if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, i)) {
+          if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, i, mCameraId,
+                                                        CAM_SOCK_MSG_TYPE_FD_UNMAPPING)) {
             LOGE("%s: sending unmapping data Msg Failed", __func__);
           }
-          if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, i)) {
+          if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, i, mCameraId,
+                                                        CAM_SOCK_MSG_TYPE_FD_UNMAPPING)) {
             LOGE("%s: sending unmapping data Msg Failed", __func__);
           }
         }
@@ -1003,11 +1005,13 @@ status_t QCameraStream_Snapshot::initJPEGSnapshot(int num_of_snapshots)
       /*register main and thumbnail buffers at back-end for frameproc*/
         for (int i = 0; i < num_of_snapshots; i++) {
           if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, i,
-          mSnapshotStreamBuf.frame[i].fd, mHalCamCtrl->mSnapshotMemory.size)) {
+          mSnapshotStreamBuf.frame[i].fd, mHalCamCtrl->mSnapshotMemory.size, mCameraId,
+                                                      CAM_SOCK_MSG_TYPE_FD_MAPPING)) {
             LOGE("%s: sending mapping data Msg Failed", __func__);
           }
           if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, i,
-          mPostviewStreamBuf.frame[i].fd, mHalCamCtrl->mThumbnailMemory.size)) {
+          mPostviewStreamBuf.frame[i].fd, mHalCamCtrl->mThumbnailMemory.size, mCameraId,
+                                                      CAM_SOCK_MSG_TYPE_FD_MAPPING)) {
             LOGE("%s: sending mapping data Msg Failed", __func__);
           }
         }
@@ -2303,8 +2307,10 @@ void QCameraStream_Snapshot::notifyWDenoiseEvent(cam_ctrl_status_t status, void 
         LOGE("%s: cookie is returned NULL", __func__);
     } else {
         // first unmapping the fds
-        mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, frame->snapshot.main.idx);
-        mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, frame->snapshot.thumbnail.idx);
+        mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, frame->snapshot.main.idx, mCameraId,
+                                      CAM_SOCK_MSG_TYPE_FD_UNMAPPING);
+        mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, frame->snapshot.thumbnail.idx, mCameraId,
+                                      CAM_SOCK_MSG_TYPE_FD_UNMAPPING);
 
         // then do JPEG encoding
         rc = encodeDisplayAndSave(frame, 0);
@@ -2406,7 +2412,8 @@ status_t QCameraStream_Snapshot::doWaveletDenoise(mm_camera_ch_data_buf_t* frame
     if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN,
                                                 frame->snapshot.main.idx,
                                                 frame->snapshot.main.frame->fd,
-                                                dim.picture_frame_offset.frame_len)) {
+                                                dim.picture_frame_offset.frame_len, mCameraId,
+                                                CAM_SOCK_MSG_TYPE_FD_MAPPING)) {
         LOGE("%s: sending main frame mapping buf msg Failed", __func__);
         ret = FAILED_TRANSACTION;
         goto end;
@@ -2416,7 +2423,8 @@ status_t QCameraStream_Snapshot::doWaveletDenoise(mm_camera_ch_data_buf_t* frame
     if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL,
                                                 frame->snapshot.thumbnail.idx,
                                                 frame->snapshot.thumbnail.frame->fd,
-                                                dim.thumb_frame_offset.frame_len)) {
+                                                dim.thumb_frame_offset.frame_len, mCameraId,
+                                                CAM_SOCK_MSG_TYPE_FD_MAPPING)) {
         LOGE("%s: sending thumbnail frame mapping buf msg Failed", __func__);
         ret = FAILED_TRANSACTION;
         goto end;

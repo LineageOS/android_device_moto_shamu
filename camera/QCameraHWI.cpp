@@ -819,8 +819,9 @@ void  QCameraHardwareInterface::processStatsEvent(
             LOGE("HAL process Histo: mMsgEnabled=0x%x, mStatsOn=%d, mSendData=%d, mDataCb=%p ",
             (mMsgEnabled & CAMERA_MSG_STATS_DATA), mStatsOn, mSendData, mDataCb);
             int msgEnabled = mMsgEnabled;
+            /*get stats buffer based on index*/
             camera_preview_histogram_info* hist_info =
-                (camera_preview_histogram_info*) event->e.stats_histo.histo_info;
+                (camera_preview_histogram_info*) mHistServer.camera_memory[event->e.stats_histo.index]->data;
 
             if(mStatsOn == QCAMERA_PARM_ENABLE && mSendData &&
                             mDataCb && (msgEnabled & CAMERA_MSG_STATS_DATA) ) {
@@ -2214,31 +2215,34 @@ int QCameraHardwareInterface::storeMetaDataInBuffers(int enable)
     return 0;
 }
 
-status_t QCameraHardwareInterface::sendMappingBuf(int ext_mode, int idx, int fd, uint32_t size)
+status_t QCameraHardwareInterface::sendMappingBuf(int ext_mode, int idx, int fd,
+                                                  uint32_t size, int cameraid,
+                                                  mm_camera_socket_msg_type msg_type)
 {
     cam_sock_packet_t packet;
     memset(&packet, 0, sizeof(cam_sock_packet_t));
-    packet.msg_type = CAM_SOCK_MSG_TYPE_FD_MAPPING;
+    packet.msg_type = msg_type;
     packet.payload.frame_fd_map.ext_mode = ext_mode;
     packet.payload.frame_fd_map.frame_idx = idx;
     packet.payload.frame_fd_map.fd = fd;
     packet.payload.frame_fd_map.size = size;
 
-    if ( cam_ops_sendmsg(mCameraId, &packet, sizeof(cam_sock_packet_t), packet.payload.frame_fd_map.fd) <= 0 ) {
+    if ( cam_ops_sendmsg(cameraid, &packet, sizeof(cam_sock_packet_t), packet.payload.frame_fd_map.fd) <= 0 ) {
         LOGE("%s: sending frame mapping buf msg Failed", __func__);
         return FAILED_TRANSACTION;
     }
     return NO_ERROR;
 }
 
-status_t QCameraHardwareInterface::sendUnMappingBuf(int ext_mode, int idx)
+status_t QCameraHardwareInterface::sendUnMappingBuf(int ext_mode, int idx, int cameraid,
+                                                    mm_camera_socket_msg_type msg_type)
 {
     cam_sock_packet_t packet;
     memset(&packet, 0, sizeof(cam_sock_packet_t));
-    packet.msg_type = CAM_SOCK_MSG_TYPE_FD_UNMAPPING;
+    packet.msg_type = msg_type;
     packet.payload.frame_fd_unmap.ext_mode = ext_mode;
     packet.payload.frame_fd_unmap.frame_idx = idx;
-    if ( cam_ops_sendmsg(mCameraId, &packet, sizeof(cam_sock_packet_t), 0) <= 0 ) {
+    if ( cam_ops_sendmsg(cameraid, &packet, sizeof(cam_sock_packet_t), 0) <= 0 ) {
         LOGE("%s: sending frame unmapping buf msg Failed", __func__);
         return FAILED_TRANSACTION;
     }
@@ -2287,6 +2291,58 @@ ION_OPEN_FAILED:
 }
 
 int QCameraHardwareInterface::deallocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt)
+{
+  struct ion_handle_data handle_data;
+  int rc = 0;
+
+  handle_data.handle = p_camera_memory->ion_info_fd[cnt].handle;
+  ioctl(p_camera_memory->main_ion_fd[cnt], ION_IOC_FREE, &handle_data);
+  close(p_camera_memory->main_ion_fd[cnt]);
+  return rc;
+}
+
+int QCameraHardwareInterface::allocate_ion_memory(QCameraStatHeap_t *p_camera_memory, int cnt, int ion_type)
+{
+  int rc = 0;
+  struct ion_handle_data handle_data;
+
+  p_camera_memory->main_ion_fd[cnt] = open("/dev/ion", O_RDONLY | O_SYNC);
+  if (p_camera_memory->main_ion_fd[cnt] < 0) {
+    LOGE("Ion dev open failed\n");
+    LOGE("Error is %s\n", strerror(errno));
+    goto ION_OPEN_FAILED;
+  }
+  p_camera_memory->alloc[cnt].len = p_camera_memory->size;
+  /* to make it page size aligned */
+  p_camera_memory->alloc[cnt].len = (p_camera_memory->alloc[cnt].len + 4095) & (~4095);
+  p_camera_memory->alloc[cnt].align = 4096;
+  p_camera_memory->alloc[cnt].flags = (0x1 << ion_type | 0x1 << ION_IOMMU_HEAP_ID);
+
+  rc = ioctl(p_camera_memory->main_ion_fd[cnt], ION_IOC_ALLOC, &p_camera_memory->alloc[cnt]);
+  if (rc < 0) {
+    LOGE("ION allocation failed\n");
+    goto ION_ALLOC_FAILED;
+  }
+
+  p_camera_memory->ion_info_fd[cnt].handle = p_camera_memory->alloc[cnt].handle;
+  rc = ioctl(p_camera_memory->main_ion_fd[cnt], ION_IOC_SHARE, &p_camera_memory->ion_info_fd[cnt]);
+  if (rc < 0) {
+    LOGE("ION map failed %s\n", strerror(errno));
+    goto ION_MAP_FAILED;
+  }
+  p_camera_memory->fd[cnt] = p_camera_memory->ion_info_fd[cnt].fd;
+  return 0;
+
+ION_MAP_FAILED:
+  handle_data.handle = p_camera_memory->ion_info_fd[cnt].handle;
+  ioctl(p_camera_memory->main_ion_fd[cnt], ION_IOC_FREE, &handle_data);
+ION_ALLOC_FAILED:
+  close(p_camera_memory->main_ion_fd[cnt]);
+ION_OPEN_FAILED:
+  return -1;
+}
+
+int QCameraHardwareInterface::deallocate_ion_memory(QCameraStatHeap_t *p_camera_memory, int cnt)
 {
   struct ion_handle_data handle_data;
   int rc = 0;
