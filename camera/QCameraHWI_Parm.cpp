@@ -1354,8 +1354,7 @@ status_t QCameraHardwareInterface::setParameters(const CameraParameters& params)
     int32_t value = attr_lookup(scenemode, sizeof(scenemode) / sizeof(str_map), str);
 
     if((value != NOT_FOUND) && (value == CAMERA_BESTSHOT_OFF )) {
-        if ((rc = setPreviewFrameRateMode(params)))     final_rc = rc;
-        /* Fps mode has to be set before fps*/
+        //if ((rc = setPreviewFrameRateMode(params)))     final_rc = rc;
         if ((rc = setPreviewFrameRate(params)))         final_rc = rc;
         if ((rc = setAutoExposure(params)))             final_rc = rc;
         if ((rc = setExposureCompensation(params)))     final_rc = rc;
@@ -2247,30 +2246,14 @@ status_t QCameraHardwareInterface::setAntibanding(const CameraParameters& params
 
 status_t QCameraHardwareInterface::setPreviewFrameRate(const CameraParameters& params)
 {
-    LOGE("%s",__func__);
+    LOGE("%s: E",__func__);
     status_t rc = NO_ERROR;
-    rc = cam_config_is_parm_supported(mCameraId, MM_CAMERA_PARM_FPS);
-    if(!rc) {
-       LOGE("MM_CAMERA_PARM_FPS is not supported for this sensor");
-       return NO_ERROR;
-    }
-    uint16_t previousFps = (uint16_t)mParameters.getPreviewFrameRate();
     uint16_t fps = (uint16_t)params.getPreviewFrameRate();
-    LOGV("requested preview frame rate  is %u", fps);
+    LOGV("%s: requested preview frame rate  is %d", __func__, fps);
 
-    if(mInitialized && (fps == previousFps)){
-        LOGV("No change is FPS Value %d",fps );
-        return NO_ERROR;
-    }
-
-    if(MINIMUM_FPS <= fps && fps <=MAXIMUM_FPS){
-        mParameters.setPreviewFrameRate(fps);
-        bool ret = native_set_parms(MM_CAMERA_PARM_FPS,
-                sizeof(fps), (void *)&fps);
-        return ret ? NO_ERROR : UNKNOWN_ERROR;
-    }
-
-    return BAD_VALUE;
+    mParameters.setPreviewFrameRate(fps);
+    LOGE("%s: X",__func__);
+    return NO_ERROR;
 }
 
 status_t QCameraHardwareInterface::setPreviewFrameRateMode(const CameraParameters& params) {
@@ -2472,21 +2455,70 @@ status_t QCameraHardwareInterface::setPreviewSize(const CameraParameters& params
 }
 status_t QCameraHardwareInterface::setPreviewFpsRange(const CameraParameters& params)
 {
+    LOGV("%s: E", __func__);
     int minFps,maxFps;
+    int prevMinFps, prevMaxFps;
+    int rc = NO_ERROR;
 
+    mParameters.getPreviewFpsRange(&prevMinFps, &prevMaxFps);
+    LOGE("%s: Existing FpsRange Values:(%d, %d)", __func__, prevMinFps, prevMaxFps);
     params.getPreviewFpsRange(&minFps,&maxFps);
-    LOGE("FPS: Range Values: %dx%d", minFps, maxFps);
+    LOGE("%s: Requested FpsRange Values:(%d, %d)", __func__, minFps, maxFps);
 
-    for(size_t i=0;i<FPS_RANGES_SUPPORTED_COUNT;i++)
-    {
+    if(mInitialized && (minFps == prevMinFps && maxFps == prevMaxFps)) {
+        LOGE("%s: No change in FpsRange", __func__);
+        rc = NO_ERROR;
+        goto end;
+    }
+
+    for(size_t i=0; i<FPS_RANGES_SUPPORTED_COUNT; i++) {
+        // if the value is in the supported list
         if(minFps==FpsRangesSupported[i].minFPS && maxFps == FpsRangesSupported[i].maxFPS){
             LOGE("FPS: i=%d : minFps = %d, maxFps = %d ",i,FpsRangesSupported[i].minFPS,FpsRangesSupported[i].maxFPS );
             mParameters.setPreviewFpsRange(minFps,maxFps);
-            return NO_ERROR;
+            // validate the values
+            bool valid = true;
+            // FPS can not be negative
+            if(minFps < 0 || maxFps < 0) valid = false;
+            // minFps must be >= maxFps
+            if(minFps > maxFps) valid = false;
+
+            if(valid) {
+                //Set the FPS mode
+                const char *str = (minFps == maxFps) ?
+                    CameraParameters::KEY_PREVIEW_FRAME_RATE_FIXED_MODE:
+                    CameraParameters::KEY_PREVIEW_FRAME_RATE_AUTO_MODE;
+                LOGE("%s FPS_MODE = %s", __func__, str);
+                int32_t frameRateMode = attr_lookup(frame_rate_modes,
+                        sizeof(frame_rate_modes) / sizeof(str_map),str);
+                bool ret;
+                ret = native_set_parms(MM_CAMERA_PARM_FPS_MODE, sizeof(int32_t),
+                            (void *)&frameRateMode);
+
+                //set FPS values
+                uint32_t fps;  //lower 2 bytes specify maxFps and higher 2 bytes specify minFps
+                fps = ((uint32_t)(minFps/1000) << 16) + ((uint16_t)(maxFps/1000));
+                ret = native_set_parms(MM_CAMERA_PARM_FPS, sizeof(uint32_t), (void *)&fps);
+                mParameters.setPreviewFrameRate(maxFps);
+                mParameters.setPreviewFpsRange(minFps, maxFps);
+                if(ret)
+                    rc = NO_ERROR;
+                else {
+                    rc = BAD_VALUE;
+                    LOGE("%s: error: native_set_params failed", __func__);
+                }
+            } else {
+                LOGE("%s: error: invalid FPS range value", __func__);
+                rc = BAD_VALUE;
+            }
+        } else {
+            LOGE("%s: error: FPS range value not supported", __func__);
+            rc = BAD_VALUE;
         }
     }
-
-    return BAD_VALUE;
+end:
+    LOGV("%s: X", __func__);
+    return rc;
 }
 
 status_t QCameraHardwareInterface::setJpegThumbnailSize(const CameraParameters& params){
