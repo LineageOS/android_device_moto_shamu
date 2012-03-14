@@ -484,6 +484,9 @@ int32_t mm_camera_get_parm(mm_camera_obj_t * my_obj,
              dim->width, dim->height);
     }
         break;
+    case MM_CAMERA_PARM_PREVIEW_FORMAT:
+        *((int *)parm->p_value) = my_obj->properties.preview_format;
+        break;
     case MM_CAMERA_PARM_MAX_PREVIEW_SIZE: {
         mm_camera_dimension_t *dim =
             (mm_camera_dimension_t *)parm->p_value;

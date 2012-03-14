@@ -1436,7 +1436,10 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         set_callbacks(snapshot_jpeg_fragment_cb, snapshot_jpeg_cb, this,
              mHalCamCtrl->mJpegMemory.camera_memory[0]->data, &mJpegOffset);
         omxJpegStart();
-        mm_jpeg_encoder_setMainImageQuality(mHalCamCtrl->getJpegQuality());
+	if (mHalCamCtrl->getJpegQuality())
+          mm_jpeg_encoder_setMainImageQuality(mHalCamCtrl->getJpegQuality());
+	else
+	   mm_jpeg_encoder_setMainImageQuality(85);
 
         LOGD("%s: Dimension to encode: main: %dx%d thumbnail: %dx%d", __func__,
              dimension.orig_picture_dx, dimension.orig_picture_dy,

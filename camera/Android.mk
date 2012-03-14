@@ -14,11 +14,18 @@ include $(CLEAR_VARS)
 
 LOCAL_CFLAGS:= -DDLOPEN_LIBMMCAMERA=$(DLOPEN_LIBMMCAMERA)
 
+#define BUILD_UNIFIED_CODE
+BUILD_UNIFIED_CODE := FALSE
+
+ifeq ($(call is-board-platform,msm7627a),true)
+LOCAL_CFLAGS+= -DVFE_7X27A
+endif
+
 ifeq ($(strip $(TARGET_USES_ION)),true)
 LOCAL_CFLAGS += -DUSE_ION
 endif
 ifeq ($(call is-board-platform,msm8960),true)
-MM_CAM_FILES:= \
+   MM_CAM_FILES:= \
         mm_camera_interface2.c \
         mm_camera_stream.c \
         mm_camera_channel.c \
@@ -27,6 +34,20 @@ MM_CAM_FILES:= \
         mm_camera_notify.c mm_camera_helper.c \
         mm_omx_jpeg_encoder.c \
         mm_camera_sock.c
+endif
+ifeq ($(call is-board-platform,msm7627a),true)
+ifeq ($(BUILD_UNIFIED_CODE), true)
+    MM_CAM_FILES:= \
+         mm_camera_interface2.c \
+         mm_camera_stream.c \
+         mm_camera_channel.c \
+         mm_camera.c \
+         mm_camera_poll_thread.c \
+         mm_camera_notify.c mm_camera_helper.c \
+         mm_omx_jpeg_encoder.c \
+        mm_camera_sock.c
+
+endif
 endif
 
 LOCAL_CFLAGS+= -DHW_ENCODE
@@ -40,6 +61,14 @@ LOCAL_HAL_FILES := QCameraHAL.cpp QCameraHWI_Parm.cpp\
                    QCameraHWI_Record.cpp QCameraHWI_Still.cpp \
                    QCameraHWI_Mem.cpp QCameraHWI_Display.cpp \
                    QCameraStream.cpp QualcommCamera2.cpp
+else ifeq ($(BUILD_UNIFIED_CODE), true)
+       ifeq ($(call is-board-platform,msm7627a),true)
+         LOCAL_HAL_FILES := QCameraHAL.cpp QCameraHWI_Parm.cpp\
+                          QCameraHWI.cpp QCameraHWI_Preview_7x27A.cpp \
+                          QCameraHWI_Record_7x27A.cpp QCameraHWI_Still.cpp \
+                          QCameraHWI_Mem.cpp QCameraHWI_Display.cpp \
+                          QCameraStream.cpp QualcommCamera2.cpp
+       endif
 else
 LOCAL_HAL_FILES := QualcommCamera.cpp QualcommCameraHardware.cpp
 MM_CAM_FILES:=
@@ -74,8 +103,12 @@ LOCAL_C_INCLUDES+= \
 ifeq ($(call is-board-platform,msm8960),true)
 LOCAL_C_INCLUDES+= $(TARGET_OUT_HEADERS)/mm-core/omxcore
 LOCAL_C_INCLUDES+= $(TARGET_OUT_HEADERS)/mm-still/mm-omx
+else ifeq ($(BUILD_UNIFIED_CODE), true)
+       ifeq ($(call is-board-platform,msm7627a),true)
+         LOCAL_C_INCLUDES+= $(TARGET_OUT_HEADERS)/mm-core/omxcore
+         LOCAL_C_INCLUDES+= $(TARGET_OUT_HEADERS)/mm-still/mm-omx
+       endif
 endif
-
 LOCAL_C_INCLUDES+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media
 LOCAL_C_INCLUDES+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
@@ -87,8 +120,12 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(call is-board-platform,msm8960),true)
 LOCAL_SHARED_LIBRARIES:= libutils libui libcamera_client liblog libcutils libmmjpeg libmmstillomx libimage-jpeg-enc-omx-comp
+else ifeq ($(BUILD_UNIFIED_CODE), true)
+       ifeq ($(call is-board-platform,msm7627a),true)
+         LOCAL_SHARED_LIBRARIES:= libutils libui libcamera_client liblog libcutils libmmjpeg libmmstillomx libimage-jpeg-enc-omx-comp
+       endif
 else
-LOCAL_SHARED_LIBRARIES:= libutils libui libcamera_client liblog libcutils libmmjpeg
+   LOCAL_SHARED_LIBRARIES:= libutils libui libcamera_client liblog libcutils libmmjpeg
 endif
 
 LOCAL_SHARED_LIBRARIES+= libgenlock libbinder

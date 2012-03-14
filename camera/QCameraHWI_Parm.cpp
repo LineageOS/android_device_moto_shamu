@@ -135,6 +135,7 @@ static thumbnail_size_type thumbnail_sizes[] = {
     { 6144, 240, 160 },
     { 5006, 176, 144 },
 };
+#ifndef VFE_7X27A
 static camera_size_type jpeg_thumbnail_sizes[]  = {
   { 1920, 1088}, //1080p
   { 1280, 720}, // 720P, reserved
@@ -167,7 +168,6 @@ static camera_size_type default_preview_sizes[] = {
   { 240, 160}, // SQVGA
   { 176, 144}, // QCIF
 };
-
 static camera_size_type supported_video_sizes[] = {
   { 1920, 1088},// 1080p
   { 1280, 720}, // 720p
@@ -179,6 +179,62 @@ static camera_size_type supported_video_sizes[] = {
   { 320, 240},  // QVGA
   { 176, 144},  // QCIF
 };
+#else
+ static camera_size_type jpeg_thumbnail_sizes[]  = {
+  { 1920, 1088}, //1080p
+  { 1280, 720}, // 720P, reserved
+  { 800, 480}, // WVGA
+  { 864, 480},
+  { 768, 432},
+  { 720, 480},
+  { 640, 480}, // VGA
+  { 576, 432},
+  { 480, 320}, // HVGA
+  { 432, 240}, //WQVGA
+  { 384, 288},
+  { 352, 288}, // CIF
+  { 320, 240}, // QVGA
+  { 240, 160}, // SQVGA
+  { 176, 144}, // QCIF
+  {0,0}
+};
+
+static camera_size_type default_preview_sizes[] = {
+  { 1920, 1088}, //1080p
+  { 1280, 720}, // 720P, reserved
+  { 800, 480}, // WVGA
+  { 864, 480},
+  { 768, 432},
+  { 720, 480},
+  { 640, 480}, // VGA
+  { 576, 432},
+  { 480, 320}, // HVGA
+  { 432, 240}, //WQVGA
+  { 384, 288},
+  { 352, 288}, // CIF
+  { 320, 240}, // QVGA
+  { 240, 160}, // SQVGA
+  { 176, 144}, // QCIF
+};
+
+static camera_size_type supported_video_sizes[] = {
+  { 1920, 1088},// 1080p
+  { 1280, 720}, // 720p
+  { 800, 480},  // WVGA
+  { 864, 480},
+  { 768, 432},
+  { 720, 480},  // 480p
+  { 640, 480},  // VGA
+  { 576, 432},
+  { 480, 320},  // HVGA
+  { 432, 240}, //WQVGA
+  { 384, 288},
+  { 352, 288},  // CIF
+  { 320, 240},  // QVGA
+  { 240, 160}, // SQVGA
+  { 176, 144},  // QCIF
+};
+#endif
 #define SUPPORTED_VIDEO_SIZES_COUNT (sizeof(supported_video_sizes)/sizeof(camera_size_type))
 
 static struct camera_size_type zsl_picture_sizes[] = {
@@ -208,11 +264,17 @@ static camera_size_type default_picture_sizes[] = {
   { 320, 240}, // QVGA
   { 176, 144} // QCIF
 };
-
+#ifndef VFE_7X27A
 static camera_size_type hfr_sizes[] = {
   { 800, 480}, // WVGA
   { 640, 480} // VGA
 };
+#else
+ static camera_size_type hfr_sizes[] = {
+  { 432, 240}, //WQVGA
+  { 320, 240}  //QVGA
+};
+#endif
 
 static int iso_speed_values[] = {
     0, 1, 100, 200, 400, 800, 1600
@@ -1952,15 +2014,22 @@ status_t QCameraHardwareInterface::setSceneMode(const CameraParameters& params)
 status_t QCameraHardwareInterface::setSelectableZoneAf(const CameraParameters& params)
 {
     LOGE("%s",__func__);
+    status_t rc = NO_ERROR;
     if(mHasAutoFocusSupport) {
         const char *str = params.get(CameraParameters::KEY_SELECTABLE_ZONE_AF);
         if (str != NULL) {
             int32_t value = attr_lookup(selectable_zone_af, sizeof(selectable_zone_af) / sizeof(str_map), str);
             if (value != NOT_FOUND) {
-                mParameters.set(CameraParameters::KEY_SELECTABLE_ZONE_AF, str);
-                bool ret = native_set_parms(MM_CAMERA_PARM_FOCUS_RECT, sizeof(value),
-                        (void *)&value);
-                return ret ? NO_ERROR : UNKNOWN_ERROR;
+                 rc = cam_config_is_parm_supported(mCameraId, MM_CAMERA_PARM_FOCUS_RECT);
+                 if(!rc) {
+                    LOGE("SelectableZoneAF  is not supported for this sensor");
+                    return NO_ERROR;
+                 }else {
+                    mParameters.set(CameraParameters::KEY_SELECTABLE_ZONE_AF, str);
+                    bool ret = native_set_parms(MM_CAMERA_PARM_FOCUS_RECT, sizeof(value),
+                            (void *)&value);
+                    return ret ? NO_ERROR : UNKNOWN_ERROR;
+                 }
             }
         }
         LOGE("Invalid selectable zone af value: %s", (str == NULL) ? "NULL" : str);

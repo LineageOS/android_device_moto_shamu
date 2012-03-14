@@ -668,6 +668,7 @@ private:
     bool mSendMetaData;
     bool mFullLiveshotEnabled;
     bool mRecordingHint;
+    bool mStartRecording;
     int mHdrMode;
 
 /*for histogram*/
