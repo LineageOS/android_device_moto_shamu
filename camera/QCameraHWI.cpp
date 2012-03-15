@@ -1957,6 +1957,8 @@ void QCameraHardwareInterface::zoomEvent(cam_ctrl_status_t *status, app_notify_c
         break;
     case QCAMERA_HAL_PREVIEW_STARTED:
         handleZoomEventForPreview(app_cb);
+        if (isZSLMode())
+          handleZoomEventForSnapshot();
         break;
     case QCAMERA_HAL_RECORDING_STARTED:
         handleZoomEventForPreview(app_cb);
