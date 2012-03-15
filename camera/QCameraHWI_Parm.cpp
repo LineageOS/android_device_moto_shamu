@@ -1751,6 +1751,7 @@ static int parseCameraAreaString(const char* str, int max_num_areas,
        pAreas[index].x2 = values[2];
        pAreas[index].y2 = values[3];
        pAreas[index].weight = values[4];
+
        index++;
        start = strchr(end, '('); // serach for next '('
     }
@@ -1894,6 +1895,7 @@ status_t QCameraHardwareInterface::setMeteringAreas(const CameraParameters& para
     if(max_num_mtr_areas == 0) {
         return NO_ERROR;
     }
+
     const char *str = params.get(CameraParameters::KEY_METERING_AREAS);
     if (str == NULL) {
         LOGE("%s: Parameter string is null", __func__);
@@ -2582,6 +2584,7 @@ status_t QCameraHardwareInterface::setJpegThumbnailSize(const CameraParameters& 
            return NO_ERROR;
        }
     }
+    LOGE("error: setting jpeg thumbnail size");
     return BAD_VALUE;
 }
 status_t QCameraHardwareInterface::setPictureSize(const CameraParameters& params)
@@ -4017,6 +4020,5 @@ status_t QCameraHardwareInterface::setNoDisplayMode(const CameraParameters& para
   }
   return NO_ERROR;
 }
-
 
 }; /*namespace android */
