@@ -2898,6 +2898,7 @@ void QualcommCameraHardware::runFrameThread(void *data)
                   false,false);
                if(mRecordMapped[cnt]) {
                    mRecordMapped[cnt]->release(mRecordMapped[cnt]);
+                   mRecordMapped[cnt] = NULL;
                    close(mRecordfd[cnt]);
                    if(mStoreMetaDataInFrame && (metadata_memory[cnt] != NULL)){
                        struct encoder_media_buffer_type * packet =
@@ -4246,7 +4247,7 @@ bool QualcommCameraHardware::deinitZslBuffers()
 #endif
         }
     }
-    for (int cnt = 0; cnt < (mZslEnable? (MAX_SNAPSHOT_BUFFERS-2) : numCapture); cnt++) {
+    for (int cnt = 0; cnt < (mZslEnable? (MAX_SNAPSHOT_BUFFERS) : numCapture); cnt++) {
         if(mJpegMapped[cnt]) {
             mJpegMapped[cnt]->release(mJpegMapped[cnt]);
             mJpegMapped[cnt] = NULL;
@@ -5968,12 +5969,6 @@ status_t QualcommCameraHardware::takePicture()
     }
 #endif
 
-    mFrameThreadWaitLock.lock();
-    while (mFrameThreadRunning) {
-        LOGV("release: waiting for old frame thread to complete.");
-        mFrameThreadWait.wait(mFrameThreadWaitLock);
-        LOGV("release: old frame thread completed.");
-    }
 
     mFrameThreadWaitLock.unlock();
 
@@ -6964,7 +6959,7 @@ bool QualcommCameraHardware::initRecord()
 #endif
     LOGE("%s  Record fd is %d ", __func__, mRecordfd[cnt]);
         mRecordMapped[cnt]=mGetMemory(mRecordfd[cnt], mRecordFrameSize,1,mCallbackCookie);
-        if(mRecordMapped==NULL) {
+        if(mRecordMapped[cnt]==NULL) {
             LOGE("Failed to get camera memory for mRecordMapped heap");
         }else{
         LOGE("Received following info for record mapped data:%p,handle:%p, size:%d,release:%p",
@@ -7802,6 +7797,15 @@ status_t  QualcommCameraHardware::setCameraMode(const CameraParameters& params) 
     mParameters.set(CameraParameters::KEY_CAMERA_MODE,value);
 
     LOGI("ZSL is enabled  %d", value);
+    if( value != mZslEnable) {
+        mFrameThreadWaitLock.lock();
+        while (mFrameThreadRunning) {
+          LOGI("initPreview: waiting for old frame thread to complete.");
+          mFrameThreadWait.wait(mFrameThreadWaitLock);
+          LOGI("initPreview: old frame thread completed.");
+        }
+        mFrameThreadWaitLock.unlock();
+    }
     if(value == 1) {
         mZslEnable = true;
        /* mParameters.set(CameraParameters::KEY_SUPPORTED_FOCUS_MODES,
