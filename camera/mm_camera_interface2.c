@@ -35,6 +35,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <linux/media.h>
+
 #include "mm_camera_interface2.h"
 #include "mm_camera.h"
 
@@ -609,66 +611,109 @@ static mm_camera_jpeg_t mm_camera_jpeg =  {
 extern mm_camera_t * mm_camera_query (uint8_t *num_cameras)
 {
     int i = 0, rc = MM_CAMERA_OK;
-    int server_fd = 0;
-    struct msm_camera_info cameraInfo;
-
+    int dev_fd = 0;
+    struct media_device_info mdev_info;
+    int num_media_devices = 0;
     if (!num_cameras)
-            return NULL;
+      return NULL;
     /* lock the mutex */
     pthread_mutex_lock(&g_mutex);
     *num_cameras = 0;
-    for(i = 0; i < MSM_MAX_CAMERA_SENSORS; i++) {
-        cameraInfo.video_dev_name[i] = g_cam_ctrl.video_dev_name[i];
-    }
-    server_fd = open(MSM_CAMERA_SERVER, O_RDWR);
-    if (server_fd <= 0) {
-        CDBG_HIGH("%s: open '%s' failed. err='%s'",
-                  __func__, MSM_CAMERA_SERVER, strerror(errno));
-        goto end;
-    }
+    while (1) {
+      char dev_name[32];
+      snprintf(dev_name, sizeof(dev_name), "/dev/media%d", num_media_devices);
+      dev_fd = open(dev_name, O_RDWR | O_NONBLOCK);
+      if (dev_fd < 0) {
+        CDBG("Done discovering media devices\n");
+        break;
+      }
+      num_media_devices++;
+      rc = ioctl(dev_fd, MEDIA_IOC_DEVICE_INFO, &mdev_info);
+      if (rc < 0) {
+        CDBG_ERROR("Error: ioctl media_dev failed: %s\n", strerror(errno));
+        close(dev_fd);
+        break;
+      }
 
-  rc = ioctl(server_fd, MSM_CAM_IOCTL_GET_CAMERA_INFO, &cameraInfo);
-    if(rc < 0) {
-    CDBG_HIGH("%s: MSM_CAM_IOCTL_GET_CAMERA_INFO err=(%s)",
-                            __func__, strerror(errno));
-    goto end;
-  }
+      if(strncmp(mdev_info.model, QCAMERA_NAME, sizeof(mdev_info.model) != 0)) {
+        close(dev_fd);
+        continue;
+      }
 
-  if(cameraInfo.num_cameras == 0) {
-        CDBG("%s: num_camera_info=%d\n", __func__, cameraInfo.num_cameras);
-        rc = -1;
-        goto end;
+      char * mdev_cfg;
+      int cam_type = 0, mount_angle = 0, info_index = 0;
+      mdev_cfg = strtok(mdev_info.serial, "-");
+      while(mdev_cfg != NULL) {
+          if(info_index == 0) {
+              if(strcmp(mdev_cfg, QCAMERA_NAME))
+                  break;
+          } else if(info_index == 1) {
+              mount_angle = atoi(mdev_cfg);
+          } else if(info_index == 2) {
+              cam_type = atoi(mdev_cfg);
+          }
+          mdev_cfg = strtok(NULL, "-");
+          info_index++;
+      }
+
+      if(info_index == 0) {
+          close(dev_fd);
+          continue;
+      }
+
+      int num_entities = 1;
+      while (1) {
+        struct media_entity_desc entity;
+        memset(&entity, 0, sizeof(entity));
+        entity.id = num_entities++;
+        rc = ioctl(dev_fd, MEDIA_IOC_ENUM_ENTITIES, &entity);
+        if (rc < 0) {
+            CDBG("Done enumerating media entities\n");
+            rc = 0;
+            break;
+        }
+        if(entity.type == MEDIA_ENT_T_DEVNODE_V4L && entity.group_id == QCAMERA_VNODE_GROUP_ID) {
+             strncpy(g_cam_ctrl.camera[*num_cameras].video_dev_name,
+                     entity.name, sizeof(entity.name));
+             break;
+        }
+      }
+
+      g_cam_ctrl.camera[*num_cameras].camera_info.camera_id = *num_cameras;
+
+      g_cam_ctrl.camera[*num_cameras].
+          camera_info.modes_supported = CAMERA_MODE_2D;
+      if(cam_type > 1)
+        g_cam_ctrl.camera[*num_cameras].
+          camera_info.modes_supported |= CAMERA_MODE_3D;
+
+      g_cam_ctrl.camera[*num_cameras].camera_info.position =
+        (cam_type == 1) ? FRONT_CAMERA : BACK_CAMERA;
+      g_cam_ctrl.camera[*num_cameras].camera_info.sensor_mount_angle =
+          mount_angle;
+      g_cam_ctrl.camera[*num_cameras].sensor_type = 0;
+      g_cam_ctrl.camera[*num_cameras].cfg = &mm_camera_cfg;
+      g_cam_ctrl.camera[*num_cameras].ops = &mm_camera_ops;
+      g_cam_ctrl.camera[*num_cameras].evt = &mm_camera_notify;
+      g_cam_ctrl.camera[*num_cameras].jpeg_ops = NULL;
+
+      CDBG("%s: dev_info[id=%d,name='%s',pos=%d,modes=0x%x,sensor=%d]\n",
+        __func__, *num_cameras,
+        g_cam_ctrl.camera[*num_cameras].video_dev_name,
+        g_cam_ctrl.camera[*num_cameras].camera_info.position,
+        g_cam_ctrl.camera[*num_cameras].camera_info.modes_supported,
+        g_cam_ctrl.camera[*num_cameras].sensor_type);
+
+      *num_cameras+=1;
+      if (dev_fd > 0) {
+          close(dev_fd);
+      }
     }
-  CDBG("%s: num_camera_info=%d\n", __func__, cameraInfo.num_cameras);
-    for (i=0; i < cameraInfo.num_cameras; i++) {
-        g_cam_ctrl.camera[i].camera_info.camera_id = i;
-        g_cam_ctrl.camera[i].camera_info.modes_supported =
-          (!cameraInfo.has_3d_support[i]) ? CAMERA_MODE_2D :
-          CAMERA_MODE_2D | CAMERA_MODE_3D;
-        g_cam_ctrl.camera[i].camera_info.position =
-          (cameraInfo.is_internal_cam[i]) ? FRONT_CAMERA : BACK_CAMERA;
-        g_cam_ctrl.camera[i].camera_info.sensor_mount_angle =
-            cameraInfo.s_mount_angle[i];
-        g_cam_ctrl.camera[i].video_dev_name = (char *)cameraInfo.video_dev_name[i];
-        g_cam_ctrl.camera[i].sensor_type = cameraInfo.sensor_type[i];
-        g_cam_ctrl.camera[i].cfg = &mm_camera_cfg;
-        g_cam_ctrl.camera[i].ops = &mm_camera_ops;
-        g_cam_ctrl.camera[i].evt = &mm_camera_notify;
-        g_cam_ctrl.camera[i].jpeg_ops = NULL;
-        CDBG("%s: dev_info[id=%d,name='%s',pos=%d,modes=0x%x,sensor=%d]\n",
-                 __func__, i,
-                 g_cam_ctrl.camera[i].video_dev_name,
-                 g_cam_ctrl.camera[i].camera_info.position,
-                 g_cam_ctrl.camera[i].camera_info.modes_supported,
-                 g_cam_ctrl.camera[i].sensor_type);
-    }
-    *num_cameras = cameraInfo.num_cameras;
+    *num_cameras = *num_cameras;
     g_cam_ctrl.num_cam = *num_cameras;
 end:
     /* unlock the mutex */
     pthread_mutex_unlock(&g_mutex);
-    if (server_fd > 0)
-        close(server_fd);
     CDBG("%s: num_cameras=%d\n", __func__, g_cam_ctrl.num_cam);
     if(rc == 0)
         return &g_cam_ctrl.camera[0];
@@ -899,7 +944,7 @@ int32_t cam_evt_register_buf_notify(int cam_id,
   mm_camera_t * mm_cam = get_camera_by_id(cam_id);
   if (mm_cam) {
     rc = mm_cam->evt->register_buf_notify(
-      mm_cam, ch_type, buf_cb, cb_type, 
+      mm_cam, ch_type, buf_cb, cb_type,
       cb_count, user_data);
   }
   return rc;
