@@ -538,6 +538,7 @@ private:
 	status_t setCameraMode(const CameraParameters& params);
     status_t setPictureSizeTable(void);
     status_t setPreviewSizeTable(void);
+    status_t setVideoSizeTable(void);
     status_t setPreviewSize(const CameraParameters& params);
     status_t setJpegThumbnailSize(const CameraParameters& params);
     status_t setPreviewFpsRange(const CameraParameters& params);
@@ -606,6 +607,7 @@ private:
     void wdenoiseEvent(cam_ctrl_status_t status, void *cookie);
     bool isLowPowerCamcorder();
     void freePictureTable(void);
+    void freeVideoSizeTable(void);
 
     int32_t createPreview();
     int32_t createRecord();
@@ -673,6 +675,7 @@ private:
     unsigned int mPictureSizeCount;
     unsigned int mPreviewSizeCount;
     int mPowerMode;
+    unsigned int mVideoSizeCount;
 
     bool mAutoFocusRunning;
     bool mMultiTouch;
@@ -718,6 +721,7 @@ private:
     String8 mTouchAfAecValues;
     String8 mPreviewSizeValues;
     String8 mPictureSizeValues;
+    String8 mVideoSizeValues;
     String8 mFlashValues;
     String8 mLensShadeValues;
     String8 mMceValues;
@@ -743,6 +747,7 @@ private:
 
     camera_size_type* mPictureSizes;
     camera_size_type* mPreviewSizes;
+    camera_size_type* mVideoSizes;
     const camera_size_type * mPictureSizesPtr;
     HAL_camera_state_type_t mCameraState;
 
