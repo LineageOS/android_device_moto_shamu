@@ -143,8 +143,8 @@ status_t QCameraStream_preview::getBufferFromSurface() {
      goto end;
     }
     err = mPreviewWindow->set_usage(mPreviewWindow,
-        GRALLOC_USAGE_PRIVATE_MM_HEAP |
-        GRALLOC_USAGE_PRIVATE_IOMMU_HEAP);
+        CAMERA_GRALLOC_HEAP_ID |
+        CAMERA_GRALLOC_FALLBACK_HEAP_ID);
 	if(err != 0) {
         /* set_usage error out */
 		LOGE("%s: set_usage rc = %d", __func__, err);
@@ -872,7 +872,7 @@ status_t QCameraStream_preview::start()
             ret = BAD_VALUE;
         }else {
             ret = NO_ERROR;
-            /* all buffers are enqueued to kernel after cam_config_prepare_buf, 
+            /* all buffers are enqueued to kernel after cam_config_prepare_buf,
                so set falg to TRUE */
             for (int cnt = 0; cnt < mDisplayBuf.preview.num; cnt++) {
                 mHalCamCtrl->mPreviewMemory.enqueued_flag[cnt] = TRUE;

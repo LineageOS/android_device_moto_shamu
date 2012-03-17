@@ -2177,7 +2177,7 @@ int QCameraHardwareInterface::allocate_ion_memory(QCameraHalHeap_t *p_camera_mem
   /* to make it page size aligned */
   p_camera_memory->alloc[cnt].len = (p_camera_memory->alloc[cnt].len + 4095) & (~4095);
   p_camera_memory->alloc[cnt].align = 4096;
-  p_camera_memory->alloc[cnt].flags = (0x1 << ion_type | 0x1 << ION_IOMMU_HEAP_ID);
+  p_camera_memory->alloc[cnt].flags = ion_type;
 
   rc = ioctl(p_camera_memory->main_ion_fd[cnt], ION_IOC_ALLOC, &p_camera_memory->alloc[cnt]);
   if (rc < 0) {
@@ -2318,11 +2318,17 @@ int QCameraHardwareInterface::initHeapMem( QCameraHalHeap_t *heap,
 
     for(i = 0; i < num_of_buf; i++) {
 #ifdef USE_ION
-        rc = allocate_ion_memory(heap, i, ION_CP_MM_HEAP_ID);
-        if (rc < 0) {
-            LOGE("%sION allocation failed\n", __func__);
-            break;
-        }
+      if (isZSLMode())
+        rc = allocate_ion_memory(heap, i, ((0x1 << CAMERA_ZSL_ION_HEAP_ID) |
+         (0x1 << CAMERA_ZSL_ION_FALLBACK_HEAP_ID)));
+      else
+        rc = allocate_ion_memory(heap, i, ((0x1 << CAMERA_ION_HEAP_ID) |
+         (0x1 << CAMERA_ION_FALLBACK_HEAP_ID)));
+
+      if (rc < 0) {
+        LOGE("%sION allocation failed\n", __func__);
+        break;
+      }
 #else
         if (pmem_type == MSM_PMEM_MAX)
             heap->fd[i] = -1;
