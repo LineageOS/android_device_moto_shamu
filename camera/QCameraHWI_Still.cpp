@@ -261,6 +261,7 @@ receiveCompleteJpegPicture(jpeg_event_t event)
             LOGE("%s: mGetMemory failed.\n", __func__);
             goto end;
         }
+      memcpy(encodedMem->data, mHalCamCtrl->mJpegMemory.camera_memory[0]->data, mJpegOffset );
       mStopCallbackLock.unlock();
       if(mActive || isLiveSnapshot()){
           jpg_data_cb  = mHalCamCtrl->mDataCb;

@@ -2324,11 +2324,15 @@ int QCameraHardwareInterface::initHeapMem( QCameraHalHeap_t *heap,
             break;
         }
 #else
-        heap->fd[i] = open("/dev/pmem_adsp", O_RDWR|O_SYNC);
-        if ( heap->fd[i] <= 0) {
-            rc = -1;
-            LOGE("Open fail: heap->fd[%d] =%d", i, heap->fd[i]);
-            break;
+        if (pmem_type == MSM_PMEM_MAX)
+            heap->fd[i] = -1;
+        else {
+            heap->fd[i] = open("/dev/pmem_adsp", O_RDWR|O_SYNC);
+            if ( heap->fd[i] <= 0) {
+                rc = -1;
+                LOGE("Open fail: heap->fd[%d] =%d", i, heap->fd[i]);
+                break;
+            }
         }
 #endif
         heap->camera_memory[i] =  mGetMemory( heap->fd[i], buf_len, 1, (void *)this);
