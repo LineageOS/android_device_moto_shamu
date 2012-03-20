@@ -3055,8 +3055,10 @@ status_t QCameraHardwareInterface::setRecordingHintValue(const int32_t value)
 {
     native_set_parms(MM_CAMERA_PARM_RECORDING_HINT, sizeof(value),
                                            (void *)&value);
-    native_set_parms(MM_CAMERA_PARM_CAF_ENABLE, sizeof(value),
+    if (value == TRUE){
+        native_set_parms(MM_CAMERA_PARM_CAF_ENABLE, sizeof(value),
                                            (void *)&value);
+    }
     setDISMode();
     setFullLiveshot();
     return NO_ERROR;
