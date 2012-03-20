@@ -4253,10 +4253,6 @@ bool QualcommCameraHardware::deinitZslBuffers()
             mJpegMapped[cnt] = NULL;
         }
     }
-    if(NULL != mJpegCopyMapped) {
-        mJpegCopyMapped->release(mJpegCopyMapped);
-        mJpegCopyMapped = NULL;
-    }
     LOGE("deinitZslBuffers X");
     return true;
 }
@@ -4684,10 +4680,6 @@ void QualcommCameraHardware::deinitRaw()
             mJpegMapped[cnt]->release(mJpegMapped[cnt]);
             mJpegMapped[cnt] = NULL;
         }
-    }
-    if(NULL != mJpegCopyMapped) {
-        mJpegCopyMapped->release(mJpegCopyMapped);
-        mJpegCopyMapped = NULL;
     }
     if( mPreviewWindow != NULL ) {
         LOGE("deinitRaw , clearing/cancelling thumbnail buffers:");
@@ -7706,6 +7698,10 @@ void QualcommCameraHardware::receiveJpegPicture(status_t status, mm_camera_buffe
             }
             memcpy(mJpegCopyMapped->data, mJpegMapped[index]->data, encoded_buffer->filled_size );
             mDataCallback(CAMERA_MSG_COMPRESSED_IMAGE,mJpegCopyMapped,data_counter,NULL,mCallbackCookie);
+             if(NULL != mJpegCopyMapped) {
+               mJpegCopyMapped->release(mJpegCopyMapped);
+               mJpegCopyMapped = NULL;
+             }
           }
       } else {
         LOGE("JPEG callback was cancelled--not delivering image.");
