@@ -508,29 +508,45 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
           __func__);
     }
   /*case of thumbnail*/
-    if (encode_params->scaling_params->in1_w &&
-        encode_params->scaling_params->in1_h) {
+
+    if ((encode_params->scaling_params->in1_w &&
+        encode_params->scaling_params->in1_h) ||
+        ((encode_params->scaling_params->out1_w !=
+        encode_params->dimension->thumbnail_width) &&
+        (encode_params->scaling_params->out1_h !=
+        encode_params->dimension->thumbnail_height))) {
+
         thumbnail.scaling = 0;
-        thumbnail.cropWidth = CEILING2(encode_params->scaling_params->in1_w);
-        thumbnail.cropHeight = CEILING2(encode_params->scaling_params->in1_h);
+
+        if ((encode_params->scaling_params->out1_w !=
+            encode_params->dimension->thumbnail_width)&&
+            (encode_params->scaling_params->out1_h !=
+            encode_params->dimension->thumbnail_height)) {
+
+            OMX_DBG_INFO("%s:%d/n",__func__,__LINE__);
+            thumbnail.cropWidth = CEILING2(encode_params->dimension->thumbnail_width);
+            thumbnail.cropHeight = CEILING2(encode_params->dimension->thumbnail_height);
+        }
+        if (encode_params->scaling_params->in1_w &&
+            encode_params->scaling_params->in1_h) {
+            OMX_DBG_INFO("%s:%d/n",__func__,__LINE__);
+            thumbnail.cropWidth = CEILING2(encode_params->scaling_params->in1_w);
+            thumbnail.cropHeight = CEILING2(encode_params->scaling_params->in1_h);
+        }
         thumbnail.width  = encode_params->scaling_params->out1_w;
         thumbnail.height = encode_params->scaling_params->out1_h;
 
         if (encode_params->thumb_crop_offset) {
-            OMX_DBG_ERROR("%s:%d/n",__func__,__LINE__);
+            OMX_DBG_INFO("%s:%d/n",__func__,__LINE__);
 
             thumbnail.left = encode_params->thumb_crop_offset->x;
             thumbnail.top = encode_params->thumb_crop_offset->y;
             thumbnail.scaling = 1;
         } else {
-            OMX_DBG_ERROR("%s:%d/n",__func__,__LINE__);
-
             thumbnail.left = 0;
             thumbnail.top = 0;
         }
     } else {
-        OMX_DBG_ERROR("%s:%d/n",__func__,__LINE__);
-
         thumbnail.scaling = 0;
         OMX_DBG_ERROR("%s: There is no thumbnail scaling information",
           __func__);
@@ -546,8 +562,8 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
     OMX_DBG_INFO("%s Thumbnail present? : %d ", __func__,
                  encode_params->hasThumbnail);
     if (encode_params->hasThumbnail) {
-	OMX_GetExtensionIndex(pHandle, "omx.qcom.jpeg.exttype.thumbnail", &type);
-	OMX_SetParameter(pHandle, type, &thumbnail);
+    OMX_GetExtensionIndex(pHandle, "omx.qcom.jpeg.exttype.thumbnail", &type);
+    OMX_SetParameter(pHandle, type, &thumbnail);
     }
     qFactor.nPortIndex = INPUT_PORT;
     OMX_GetParameter(pHandle, OMX_IndexParamQFactor, &qFactor);
