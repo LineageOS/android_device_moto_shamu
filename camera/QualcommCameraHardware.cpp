@@ -1450,8 +1450,7 @@ QualcommCameraHardware::QualcommCameraHardware()
 
     for(int i=0; i<3; i++)
         mStatsMapped[i] = NULL;
-    for (int i = 0; i < kRecordBufferCount; i++)
-        metadata_memory[i] = NULL;
+
     mJpegLiveSnapMapped = NULL;
     if(HAL_currentCameraMode == CAMERA_SUPPORT_MODE_3D){
         mIs3DModeOn = true;
@@ -1488,6 +1487,10 @@ QualcommCameraHardware::QualcommCameraHardware()
         }
     }
     mTotalPreviewBufferCount = kTotalPreviewBufferCount;
+
+    for (int i = 0; i < kRecordBufferCount; i++)
+        metadata_memory[i] = NULL;
+
     switch(mCurrentTarget){
         case TARGET_MSM7627:
         case TARGET_MSM7627A:
@@ -7143,7 +7146,8 @@ status_t QualcommCameraHardware::startRecording()
           mVideoThreadWaitLock.unlock();
       } else if ( mCurrentTarget == TARGET_MSM7627A ) {
         for (int cnt = 0; cnt < mTotalPreviewBufferCount; cnt++) {
-            if(mStoreMetaDataInFrame)
+            if(mStoreMetaDataInFrame
+                && (metadata_memory[cnt] == NULL))
             {
                 LOGE("startRecording : meta data mode enabled filling metadata memory ");
                 metadata_memory[cnt] = mGetMemory(-1,  sizeof(struct encoder_media_buffer_type), 1, mCallbackCookie);
@@ -7274,6 +7278,26 @@ void QualcommCameraHardware::stopRecording()
         pthread_mutex_lock(&(g_busy_frame_queue.mut));
         pthread_cond_signal(&(g_busy_frame_queue.wait));
         pthread_mutex_unlock(&(g_busy_frame_queue.mut));
+      for (int cnt = 0; cnt < kRecordBufferCount; cnt++) {
+        if(mStoreMetaDataInFrame && (metadata_memory[cnt] != NULL)){
+          struct encoder_media_buffer_type * packet =
+              (struct encoder_media_buffer_type  *)metadata_memory[cnt]->data;
+          native_handle_delete(const_cast<native_handle_t *>(packet->meta_handle));
+          metadata_memory[cnt]->release(metadata_memory[cnt]);
+          metadata_memory[cnt] = NULL;
+        }
+      }
+    }
+    else if(mCurrentTarget == TARGET_MSM7627A) {
+       for (int cnt = 0; cnt < mTotalPreviewBufferCount; cnt++) {
+          if(mStoreMetaDataInFrame && (metadata_memory[cnt] != NULL)){
+            struct encoder_media_buffer_type * packet =
+                (struct encoder_media_buffer_type  *)metadata_memory[cnt]->data;
+            native_handle_delete(const_cast<native_handle_t *>(packet->meta_handle));
+            metadata_memory[cnt]->release(metadata_memory[cnt]);
+            metadata_memory[cnt] = NULL;
+          }
+        }
     }
 #if 0
     else  // for other targets where output2 is not enabled
