@@ -522,6 +522,7 @@ private:
     unsigned int        mRecordFrameSize;
     int                 mRawSize;
     int                 mCbCrOffsetRaw;
+    int                 mYOffset;
     int                 mJpegMaxSize;
     int32_t                 mStatSize;
 
