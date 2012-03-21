@@ -342,9 +342,9 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
     status_t ret = NO_ERROR;
     LOGD("%s: E", __func__);
 
-    LOGD("%s:Passed picture size: %d X %d", __func__,
+    LOGI("%s:Passed picture size: %d X %d", __func__,
          dim->picture_width, dim->picture_height);
-    LOGD("%s:Passed postview size: %d X %d", __func__,
+    LOGI("%s:Passed postview size: %d X %d", __func__,
          dim->ui_thumbnail_width, dim->ui_thumbnail_height);
 
     /* First check if the picture resolution is the same, if not, change it*/
@@ -363,11 +363,11 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
        then configure second outout to a default size.
        Jpeg encoder will drop thumbnail as reflected in encodeParams.
     */
-    mDropThumnail = false;
+    mDropThumbnail = false;
     if (mPostviewWidth == 0 && mPostviewHeight == 0) {
          mPostviewWidth = THUMBNAIL_DEFAULT_WIDTH;
          mPostviewHeight = THUMBNAIL_DEFAULT_HEIGHT;
-         mDropThumnail = true;
+         mDropThumbnail = true;
     }
 
     LOGD("%s: Postview size received: %d x %d", __func__,
@@ -429,7 +429,7 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
     mThumbnailFormat = dim->thumb_format;
 
     LOGD("%s: Image Format: %d", __func__, dim->main_img_format);
-    LOGD("%s: Image Sizes: main: %dx%d thumbnail: %dx%d", __func__,
+    LOGI("%s: Image Sizes: main: %dx%d thumbnail: %dx%d", __func__,
          dim->picture_width, dim->picture_height,
          dim->ui_thumbnail_width, dim->ui_thumbnail_height);
 end:
@@ -983,7 +983,7 @@ status_t QCameraStream_Snapshot::initJPEGSnapshot(int num_of_snapshots)
     }
 
     /* config the parmeters and see if we need to re-init the stream*/
-    LOGD("%s: Configure Snapshot Dimension", __func__);
+    LOGI("%s: Configure Snapshot Dimension", __func__);
     ret = configSnapshotDimension(&dim);
     if (ret != NO_ERROR) {
         LOGE("%s: Setting snapshot dimension failed", __func__);
@@ -1294,8 +1294,17 @@ takePictureLiveshot(mm_camera_ch_data_buf_t* recvd_frame,
     memset(&crop_info, 0, sizeof(common_crop_t));
     crop_info.in1_w = mPictureWidth;
     crop_info.in1_h = mPictureHeight;
-    crop_info.out1_w = mThumbnailWidth;
-    crop_info.out1_h = mThumbnailHeight;
+    /* For low power live snapshot the thumbnail output size is set to default size.
+       In case of live snapshot video buffer = thumbnail buffer. For higher resolutions
+       the thumnail will be dropped if its more than 64KB. To avoid thumbnail drop
+       set thumbnail as configured by application. This will be a size lower than video size*/
+    mDropThumbnail = false;
+    if(mHalCamCtrl->thumbnailWidth == 0 &&  mHalCamCtrl->thumbnailHeight == 0) {
+        LOGE("Live Snapshot thumbnail will be dropped as indicated by application");
+        mDropThumbnail = true;
+   }
+    crop_info.out1_w = mHalCamCtrl->thumbnailWidth;
+    crop_info.out1_h =  mHalCamCtrl->thumbnailHeight;
     ret = encodeData(recvd_frame, &crop_info, frame_len, 0);
     if (ret != NO_ERROR) {
         LOGE("%s: Failure configuring JPEG encoder", __func__);
@@ -1452,7 +1461,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         dimension.orig_picture_dx = mPictureWidth;
         dimension.orig_picture_dy = mPictureHeight;
 
-        if(!mDropThumnail) {
+        if(!mDropThumbnail) {
             if(isZSLMode()) {
                 LOGI("Setting input thumbnail size to previewWidth= %d   previewheight= %d in ZSL mode",
                      mHalCamCtrl->mPreviewWidth, mHalCamCtrl->mPreviewHeight);
@@ -1480,7 +1489,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
 	else
 	   mm_jpeg_encoder_setMainImageQuality(85);
 
-        LOGD("%s: Dimension to encode: main: %dx%d thumbnail: %dx%d", __func__,
+        LOGE("%s: Dimension to encode: main: %dx%d thumbnail: %dx%d", __func__,
              dimension.orig_picture_dx, dimension.orig_picture_dy,
              dimension.thumbnail_width, dimension.thumbnail_height);
 
@@ -1510,12 +1519,18 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         main_crop_offset.y=mCrop.snapshot.main_crop.top;
         /*Thumbnail image*/
         if (!isFullSizeLiveshot()) {
-          crop.in1_w=mCrop.snapshot.thumbnail_crop.width; //dimension.thumbnail_width;
-          crop.in1_h=mCrop.snapshot.thumbnail_crop.height; // dimension.thumbnail_height;
-          crop.out1_w = width;
-          crop.out1_h = height;
-          thumb_crop_offset.x=mCrop.snapshot.thumbnail_crop.left;
-          thumb_crop_offset.y=mCrop.snapshot.thumbnail_crop.top;
+            crop.in1_w=mCrop.snapshot.thumbnail_crop.width; //dimension.thumbnail_width;
+            crop.in1_h=mCrop.snapshot.thumbnail_crop.height; // dimension.thumbnail_height;
+            if(isLiveSnapshot()) {
+                crop.out1_w= mHalCamCtrl->thumbnailWidth;
+                crop.out1_h=  mHalCamCtrl->thumbnailHeight;
+                LOGI("Thumbnail width= %d  height= %d for low power livesnapshot", crop.out1_w, crop.out1_h);
+            } else {
+                crop.out1_w = width;
+                crop.out1_h = height;
+            }
+            thumb_crop_offset.x=mCrop.snapshot.thumbnail_crop.left;
+            thumb_crop_offset.y=mCrop.snapshot.thumbnail_crop.top;
         }
 
         //update exif parameters in HAL
@@ -1945,7 +1960,7 @@ QCameraStream_Snapshot(int cameraId, camera_mode_t mode)
     mCurrentFrameEncoded(NULL),
     mJpegSessionId(0),
     mFullLiveshot(false),
-    mDropThumnail(false)
+    mDropThumbnail(false)
   {
     LOGV("%s: E", __func__);
 

@@ -128,6 +128,9 @@ static thumbnail_size_type thumbnail_sizes[] = {
 { 6144, 432, 288 }, //1.5
 { 5461, 512, 384 }, //1.333333
 { 5006, 352, 288 }, //1.222222
+{ 5461, 320, 240 }, //1.33333
+{ 5006, 176, 144 }, //1.222222
+
 };
 
 static struct camera_size_type zsl_picture_sizes[] = {
@@ -2572,6 +2575,8 @@ status_t QCameraHardwareInterface::setJpegThumbnailSize(const CameraParameters& 
     for (unsigned int i = 0; i < thumbnail_sizes_count; ++i) {
        if (width == default_thumbnail_sizes[i].width
          && height == default_thumbnail_sizes[i].height) {
+           thumbnailWidth = width;
+           thumbnailHeight = height;
            mParameters.set(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH, width);
            mParameters.set(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT, height);
            return NO_ERROR;

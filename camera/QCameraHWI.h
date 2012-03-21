@@ -685,6 +685,7 @@ private:
     cam_ctrl_dimension_t mDimension;
     int  mPreviewWidth, mPreviewHeight;
     int  videoWidth, videoHeight;
+    int  thumbnailWidth, thumbnailHeight;
     int  maxSnapshotWidth, maxSnapshotHeight;
     int  mPreviewFormat;
     int  mFps;
