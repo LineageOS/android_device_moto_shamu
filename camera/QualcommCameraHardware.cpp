@@ -3157,16 +3157,19 @@ void QualcommCameraHardware::runPreviewThread(void *data)
            LOGE("Could not find the buffer");
 
         // If output  is NOT enabled (targets otherthan 7x30 , 8x50 and 8x60 currently..)
+
+        nsecs_t timeStamp = nsecs_t(frame->ts.tv_sec)*1000000000LL + frame->ts.tv_nsec;
+
         if( (mCurrentTarget != TARGET_MSM7630 ) &&  (mCurrentTarget != TARGET_QSD8250) && (mCurrentTarget != TARGET_MSM8660)) {
             int flagwait = 1;
             if(rcb != NULL && (msgEnabled & CAMERA_MSG_VIDEO_FRAME) && (record_flag)) {
                 if(mStoreMetaDataInFrame){
                     flagwait = 1;
                     if(metadata_memory[bufferIndex]!= NULL)
-                        rcb(systemTime(), CAMERA_MSG_VIDEO_FRAME, metadata_memory[bufferIndex],0,rdata);
+                        rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME, metadata_memory[bufferIndex],0,rdata);
                     else flagwait = 0;
                 } else {
-                    rcb(systemTime(), CAMERA_MSG_VIDEO_FRAME, mPreviewMapped[bufferIndex],0, rdata);
+                    rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME, mPreviewMapped[bufferIndex],0, rdata);
                 }
                 if(flagwait){
                     Mutex::Autolock rLock(&mRecordFrameLock);
