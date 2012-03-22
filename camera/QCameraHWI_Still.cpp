@@ -526,6 +526,7 @@ setZSLChannelAttribute(void)
     ch_attr.type = MM_CAMERA_CH_ATTR_BUFFERING_FRAME;
     ch_attr.buffering_frame.look_back = mHalCamCtrl->getZSLBackLookCount();
     ch_attr.buffering_frame.water_mark = mHalCamCtrl->getZSLQueueDepth();
+    ch_attr.buffering_frame.interval = mHalCamCtrl->getZSLBurstInterval( );
     LOGE("%s: ZSL queue_depth = %d, back_look_count = %d", __func__,
          ch_attr.buffering_frame.water_mark,
          ch_attr.buffering_frame.look_back);

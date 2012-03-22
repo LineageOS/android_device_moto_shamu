@@ -79,6 +79,10 @@ extern "C" {
 
 #define HDR_HAL_FRAME 2
 
+#define BURST_INTREVAL_MIN 1
+#define BURST_INTREVAL_MAX 10
+#define BURST_INTREVAL_DEFAULT 1
+
 //Default FPS
 #define MINIMUM_FPS 5
 #define MAXIMUM_FPS 31
@@ -1204,7 +1208,10 @@ void QCameraHardwareInterface::initDefaultParameters()
     mParameters.set("num-snaps-per-shutter", 1);
 
     mParameters.set("capture-burst-captures-values", getZSLQueueDepth());
-    mParameters.set("capture-burst-interval-supported", "false");
+    mParameters.set("capture-burst-interval-supported", "true");
+    mParameters.set("capture-burst-interval-max", BURST_INTREVAL_MAX); /*skip frames*/
+    mParameters.set("capture-burst-interval-min", BURST_INTREVAL_MIN); /*skip frames*/
+    mParameters.set("capture-burst-interval", BURST_INTREVAL_DEFAULT); /*skip frames*/
     mParameters.set("capture-burst-retroactive", 0);
     mParameters.set("capture-burst-retroactive-max", getZSLQueueDepth());
     mParameters.set("capture-burst-exposures", "");
@@ -1239,6 +1246,7 @@ void QCameraHardwareInterface::initDefaultParameters()
 if (setParameters(mParameters) != NO_ERROR) {
     LOGE("Failed to set default parameters?!");
 }
+
 //mUseOverlay = useOverlay();
 mParameters.set("zoom", 0);
 mInitialized = true;
@@ -1347,6 +1355,7 @@ status_t QCameraHardwareInterface::setParameters(const CameraParameters& params)
     // be a preview restart, and need to use the updated parameters
     if ((rc = setHighFrameRate(params)))  final_rc = rc;
     if ((rc = setZSLBurstLookBack(params))) final_rc = rc;
+    if ((rc = setZSLBurstInterval(params))) final_rc = rc;
 
    LOGI("%s: X", __func__);
    return final_rc;
@@ -3642,6 +3651,38 @@ status_t QCameraHardwareInterface::setZSLBurstLookBack(const CameraParameters& p
   }
   return NO_ERROR;
 }
+
+status_t QCameraHardwareInterface::setZSLBurstInterval(const CameraParameters& params)
+{
+  mZslInterval = BURST_INTREVAL_DEFAULT;
+  const char *v = params.get("capture-burst-interval");
+  if (v) {
+    int interval = atoi(v);
+    LOGI("%s: Interval =%d", __func__, interval);
+    if(interval < BURST_INTREVAL_MIN ||interval > BURST_INTREVAL_MAX ) {
+      return BAD_VALUE;
+    }
+    mZslInterval =  interval;
+  }
+  return NO_ERROR;
+}
+
+int QCameraHardwareInterface::getZSLBurstInterval( void )
+{
+  int val;
+
+  if (mZslInterval == BURST_INTREVAL_DEFAULT) {
+    char prop[PROPERTY_VALUE_MAX];
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.camera.zsl.interval", prop, "1");
+    val = atoi(prop);
+    LOGD("%s: prop interval = %d", __func__, val);
+  } else {
+    val = mZslInterval;
+  }
+  return val;
+}
+
 
 int QCameraHardwareInterface::getZSLQueueDepth(void) const
 {

@@ -352,6 +352,7 @@ typedef struct {
     /* how deep the circular frame queue */
     int water_mark;
     int look_back;
+    int interval;  /*skipping n-1 frames*/
 } mm_camera_channel_attr_buffering_frame_t;
 
 typedef struct {

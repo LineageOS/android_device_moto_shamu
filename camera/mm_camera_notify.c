@@ -122,7 +122,7 @@ int mm_camera_zsl_frame_cmp_and_enq(mm_camera_obj_t * my_obj,
                                mm_camera_frame_t *node,
                                mm_camera_stream_t *mystream)
 {
-    int watermark;
+    int watermark, interval;
     mm_camera_frame_queue_t *myq;
     mm_camera_frame_queue_t *peerq;
     mm_camera_stream_t *peerstream;
@@ -132,6 +132,7 @@ int mm_camera_zsl_frame_cmp_and_enq(mm_camera_obj_t * my_obj,
     mm_camera_frame_t *peer_frame_prev;
     mm_camera_frame_t *peer_frame_tmp;
     mm_camera_notify_frame_t notify_frame;
+    uint32_t expected_id;
 
     pthread_mutex_t *pSnapshotMutex = &(my_obj->ch[MM_CAMERA_CH_SNAPSHOT].mutex);
     pthread_mutex_t *pPreviewMutex = &(my_obj->ch[MM_CAMERA_CH_PREVIEW].mutex);
@@ -153,11 +154,15 @@ int mm_camera_zsl_frame_cmp_and_enq(mm_camera_obj_t * my_obj,
     myq = &mystream->frame.readyq;
     peerq = &peerstream->frame.readyq;
     watermark = my_obj->ch[MM_CAMERA_CH_SNAPSHOT].buffering_frame.water_mark;
+    interval = my_obj->ch[MM_CAMERA_CH_SNAPSHOT].buffering_frame.interval;
+    expected_id = my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.expected_matching_id;
     /* lock both queues */
 
     peer_frame = peerq->tail;
-    /* for 30-120 fps streaming no need to consider the wrapping back of frame_id */
-    if(!peer_frame || node->frame.frame_id > peer_frame->frame.frame_id) {
+    /* for 30-120 fps streaming no need to consider the wrapping back of frame_id
+       expected_matching_id is used when requires skipping bwtween frames */
+    if(!peer_frame || (node->frame.frame_id > peer_frame->frame.frame_id &&
+        node->frame.frame_id >= expected_id)) {
         /* new frame is newer than all stored peer frames. simply keep the node */
         /* in case the frame_id wraps back, the peer frame's frame_id will be
            larger than the new frame's frame id */
@@ -165,15 +170,16 @@ int mm_camera_zsl_frame_cmp_and_enq(mm_camera_obj_t * my_obj,
         mm_camera_stream_frame_enq_no_lock(myq, node);
         node->valid_entry = 1;
     }
-    CDBG("%s Need to find match for the frame id %d ",
-         __func__, node->frame.frame_id);
+    CDBG("%s Need to find match for the frame id %d ,exped_id =%d, strm type =%d",
+         __func__, node->frame.frame_id, expected_id, mystream->stream_type);
     /* the node is older than the peer, we will either find a match or drop it */
     peer_frame = peerq->head;
     peer_frame_prev = NULL;
     peer_frame_tmp = NULL;
     while(peer_frame) {
-        CDBG("%s peer frame_id = %d node frame_id = %d", __func__,
-             peer_frame->frame.frame_id, node->frame.frame_id);
+        CDBG("%s peer frame_id = %d node frame_id = %d, expected_id =%d, interval=%d", __func__,
+             peer_frame->frame.frame_id, node->frame.frame_id,
+             expected_id, interval);
         if(peer_frame->match) {
             CDBG("%s Peer frame already matched, keep looking in the list ",
                  __func__);
@@ -182,14 +188,18 @@ int mm_camera_zsl_frame_cmp_and_enq(mm_camera_obj_t * my_obj,
             peer_frame = peer_frame->next;
             continue;
         }
-        if(peer_frame->frame.frame_id == node->frame.frame_id) {
+        if(peer_frame->frame.frame_id == node->frame.frame_id &&
+           node->frame.frame_id >= my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.expected_matching_id) {
             /* find a match keep the frame */
             node->match = 1;
             peer_frame->match = 1;
-            CDBG("%s Found match, add to myq ", __func__);
+            CDBG("%s Found match, add to myq, frame_id=%d ", __func__, node->frame.frame_id);
             mm_camera_stream_frame_enq_no_lock(myq, node);
             myq->match_cnt++;
             peerq->match_cnt++;
+            /*set next min matching id*/
+            my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.expected_matching_id =
+              node->frame.frame_id + interval;
             goto water_mark;
         } else {
             /* no match */
