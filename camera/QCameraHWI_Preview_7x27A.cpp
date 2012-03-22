@@ -541,7 +541,6 @@ status_t QCameraStream_preview::processPreviewFrame(mm_camera_ch_data_buf_t *fra
   {
     if (mHalCamCtrl->mStoreMetaDataInFrame)
     {
-          LOGE("sandeep:Metadata enabled");
           mStopCallbackLock.unlock();
           if(mHalCamCtrl->mStartRecording == true &&( mHalCamCtrl->mMsgEnabled & CAMERA_MSG_VIDEO_FRAME))
           rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME,
@@ -550,7 +549,6 @@ status_t QCameraStream_preview::processPreviewFrame(mm_camera_ch_data_buf_t *fra
     }
     else
     {
-        LOGE("sandeep:MetaData is not enabled");
         if(mHalCamCtrl->mStartRecording == true &&( mHalCamCtrl->mMsgEnabled & CAMERA_MSG_VIDEO_FRAME))
         {
             mStopCallbackLock.unlock();

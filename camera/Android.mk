@@ -15,7 +15,11 @@ include $(CLEAR_VARS)
 LOCAL_CFLAGS:= -DDLOPEN_LIBMMCAMERA=$(DLOPEN_LIBMMCAMERA)
 
 #define BUILD_UNIFIED_CODE
-BUILD_UNIFIED_CODE := FALSE
+ifeq ($(call is-board-platform,msm7627a),true)
+   BUILD_UNIFIED_CODE := true
+else
+   BUILD_UNIFIED_CODE := false
+endif
 
 ifeq ($(call is-board-platform,msm7627a),true)
 LOCAL_CFLAGS+= -DVFE_7X27A
