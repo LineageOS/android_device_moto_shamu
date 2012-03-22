@@ -590,7 +590,7 @@ bool QCameraHardwareInterface::supportsRedEyeReduction() {
 
 static String8 create_str(int16_t *arr, int length){
     String8 str;
-    char buffer[32];
+    char buffer[32] = {0};
 
     if(length > 0){
         snprintf(buffer, sizeof(buffer), "%d", arr[0]);
@@ -1370,11 +1370,15 @@ int QCameraHardwareInterface::getParameters(char **parms)
     char* rc = NULL;
     String8 str;
     CameraParameters param = getParameters();
+    //param.dump();
     str = param.flatten( );
     rc = (char *)malloc(sizeof(char)*(str.length()+1));
-    strncpy(rc, str.string(), str.length());
+    if(rc != NULL){
+        memset(rc, 0, sizeof(char)*(str.length()+1));
+        strncpy(rc, str.string(), str.length());
 	rc[str.length()] = 0;
 	*parms = rc;
+    }
     return 0;
 }
 
@@ -1638,7 +1642,7 @@ status_t QCameraHardwareInterface::updateFocusDistances(const char *focusmode)
     if(cam_config_get_parm(mCameraId, MM_CAMERA_PARM_FOCUS_DISTANCES,
       &focusDistances) == MM_CAMERA_OK) {
         String8 str;
-        char buffer[32];
+        char buffer[32] = {0};
         //set all distances to infinity if focus mode is infinity
         if(strcmp(focusmode, CameraParameters::FOCUS_MODE_INFINITY) == 0) {
             snprintf(buffer, sizeof(buffer), "Infinity,");
@@ -1976,10 +1980,9 @@ status_t QCameraHardwareInterface::setMeteringAreas(const CameraParameters& para
 status_t QCameraHardwareInterface::setFocusMode(const CameraParameters& params)
 {
     const char *str = params.get(CameraParameters::KEY_FOCUS_MODE);
+    const char *prev_str = mParameters.get(CameraParameters::KEY_FOCUS_MODE);
     LOGE("%s",__func__);
     if (str != NULL) {
-
-      LOGE("Focus mdoe %s",str);
         int32_t value = attr_lookup(focus_modes,
                                     sizeof(focus_modes) / sizeof(str_map), str);
         if (value != NOT_FOUND) {
@@ -2683,20 +2686,31 @@ status_t QCameraHardwareInterface::setPreviewFormat(const CameraParameters& para
 
 status_t QCameraHardwareInterface::setStrTextures(const CameraParameters& params) {
     const char *str = params.get("strtextures");
+    const char *prev_str = mParameters.get("strtextures");
+
     if(str != NULL) {
-        LOGV("strtextures = %s", str);
-        mParameters.set("strtextures", str);
-        if(!strncmp(str, "on", 2) || !strncmp(str, "ON", 2)) {
-            LOGI("Resetting mUseOverlay to false");
-            strTexturesOn = true;
-            mUseOverlay = false;
-        } else if (!strncmp(str, "off", 3) || !strncmp(str, "OFF", 3)) {
-            strTexturesOn = false;
-            mUseOverlay = true;
+        if(!strcmp(str,prev_str)) {
+            return NO_ERROR;
         }
+        int str_size = strlen(str);
+        mParameters.set("strtextures", str);
+        if(str_size == 2) {
+            if(!strncmp(str, "on", str_size) || !strncmp(str, "ON", str_size)){
+                LOGI("Resetting mUseOverlay to false");
+                strTexturesOn = true;
+                mUseOverlay = false;
+            }
+        }else if(str_size == 3){
+            if (!strncmp(str, "off", str_size) || !strncmp(str, "OFF", str_size)) {
+                strTexturesOn = false;
+                mUseOverlay = true;
+            }
+        }
+
     }
     return NO_ERROR;
 }
+
 status_t QCameraHardwareInterface::setFlash(const CameraParameters& params)
 {
     LOGI("%s: E",__func__);

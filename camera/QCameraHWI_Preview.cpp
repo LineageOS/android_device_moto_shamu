@@ -873,14 +873,13 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
   LOGD("Message enabled = 0x%x", mHalCamCtrl->mMsgEnabled);
 
   camera_memory_t *previewMem = NULL;
-  int previewWidth, previewHeight;
-  mHalCamCtrl->mParameters.getPreviewSize(&previewWidth, &previewHeight);
 
   if (pcb != NULL) {
        LOGD("%s: mMsgEnabled =0x%x, preview format =%d", __func__,
             mHalCamCtrl->mMsgEnabled, mHalCamCtrl->mPreviewFormat);
       //Sending preview callback if corresponding Msgs are enabled
       if(mHalCamCtrl->mMsgEnabled & CAMERA_MSG_PREVIEW_FRAME) {
+          LOGE("Q%s: PCB callback enabled", __func__);
           msgType |=  CAMERA_MSG_PREVIEW_FRAME;
           int previewBufSize;
           /* The preview buffer size sent back in the callback should be (width*height*bytes_per_pixel)
@@ -889,7 +888,7 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
           if((mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_NV21) || (mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_NV12) ||
                     (mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_YV12))
           {
-              previewBufSize = previewWidth * previewHeight * 3/2;
+              previewBufSize = mHalCamCtrl->previewWidth * mHalCamCtrl->previewHeight * 3/2;
               if(previewBufSize != mHalCamCtrl->mPreviewMemory.private_buffer_handle[frame->def.idx]->size) {
                   previewMem = mHalCamCtrl->mGetMemory(mHalCamCtrl->mPreviewMemory.private_buffer_handle[frame->def.idx]->fd,
                   previewBufSize, 1, mHalCamCtrl->mCallbackCookie);
