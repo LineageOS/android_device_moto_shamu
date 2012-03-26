@@ -762,7 +762,7 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
         dim->rotation = rotation;
         ret = cam_config_set_parm(mHalCamCtrl->mCameraId, MM_CAMERA_PARM_DIMENSION, dim);
     }
-    
+
     if(isLiveSnapshot()) {
         ret = cam_config_set_parm(mHalCamCtrl->mCameraId, MM_CAMERA_PARM_DIMENSION, dim);
     }
@@ -1434,6 +1434,11 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
       encode_params.snapshot_buf = (uint8_t *)mainframe->buffer;
       encode_params.snapshot_fd = mainframe->fd;
       encode_params.dimension = &dimension;
+      /*update exif parameters in HAL*/
+      mHalCamCtrl->setExifTags();
+
+      encode_params.exif_data = mHalCamCtrl->getExifData();
+      encode_params.exif_numEntries = mHalCamCtrl->getExifTableNumEntries();
       if (!omxJpegEncodeNext(&encode_params)){
           LOGE("%s: Failure! JPEG encoder returned error.", __func__);
           ret = FAILED_TRANSACTION;
