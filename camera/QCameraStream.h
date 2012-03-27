@@ -286,7 +286,7 @@ private:
     status_t initRawSnapshot(int num_of_snapshots);
     status_t initZSLSnapshot(void);
     status_t initFullLiveshot(void);
-    status_t cancelPicture();
+	status_t cancelPicture();
     void notifyShutter(common_crop_t *crop,
                        bool play_shutter_sound);
     status_t initSnapshotBuffers(cam_ctrl_dimension_t *dim,

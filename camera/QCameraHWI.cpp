@@ -137,7 +137,6 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mCallbackCookie(0),
                     //mPreviewHeap(0),
                     mStreamDisplay (NULL), mStreamRecord(NULL), mStreamSnap(NULL),
-                    mPreviewFormat(0),
                     mFps(0),
                     mDebugFps(0),
                     mMaxZoom(0),
@@ -176,7 +175,10 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mNoDisplayMode(0),
                     mBrightness(0),
                     mHJR(0),
-                    mSkinToneEnhancement(0)
+                    mSkinToneEnhancement(0),
+                    mRotation(0),
+                    mFocusMode(AF_MODE_MAX),
+                    mPreviewFormat(CAMERA_YUV_420_NV21)
 {
     LOGI("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;
@@ -912,7 +914,6 @@ bool QCameraHardwareInterface::preview_parm_config (cam_ctrl_dimension_t* dim,
     int display_height = 0; /* height of display */
     uint16_t video_width = 0;  /* width of the video  */
     uint16_t video_height = 0; /* height of the video */
-    const char *str = parm.getPreviewFormat();
 
     /* First check if the preview resolution is the same, if not, change it*/
     parm.getPreviewSize(&display_width,  &display_height);
@@ -1365,9 +1366,8 @@ status_t QCameraHardwareInterface::autoFocusEvent(cam_ctrl_status_t *status, app
     }
 
     /* update focus distances after autofocus is done */
-    const char * focusMode = mParameters.get(CameraParameters::KEY_FOCUS_MODE);
-    if(updateFocusDistances(focusMode) != NO_ERROR) {
-       LOGE("%s: updateFocusDistances failed for %s", __FUNCTION__, focusMode);
+    if(updateFocusDistances() != NO_ERROR) {
+       LOGE("%s: updateFocusDistances failed for %d", __FUNCTION__, mFocusMode);
     }
 
     /*(Do?) we need to make sure that the call back is the
@@ -1521,6 +1521,8 @@ void liveshot_callback(mm_camera_ch_data_buf_t *recvd_frame,
     pme->mStreamLiveSnap->setHALCameraControl(pme);
     pme->mStreamLiveSnap->initSnapshotBuffers(&dim,1);
     LOGE("Calling live shot");
+
+
     ((QCameraStream_Snapshot*)(pme->mStreamLiveSnap))->takePictureLiveshot(frame,&dim,mJpegMaxSize);
 
 #else
@@ -1614,12 +1616,6 @@ status_t  QCameraHardwareInterface::takePicture()
     }
     LOGI("takePicture: X");
     return ret;
-}
-
-void  QCameraHardwareInterface::encodeData()
-{
-    LOGI("encodeData: E");
-    LOGI("encodeData: X");
 }
 
 bool QCameraHardwareInterface::canTakeFullSizeLiveshot() {

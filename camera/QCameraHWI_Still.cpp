@@ -308,7 +308,7 @@ end:
 
     setSnapshotState(SNAPSHOT_STATE_JPEG_ENCODE_DONE);
     mNumOfRecievedJPEG++;
-    mHalCamCtrl->resetExifData();
+    mHalCamCtrl->deinitExifData();
 
     /* Before leaving check the jpeg queue. If it's not empty give the available
        frame for encoding*/
@@ -339,7 +339,6 @@ end:
     } else {
         LOGD("%s: mNumOfRecievedJPEG(%d), mNumOfSnapshot(%d)", __func__, mNumOfRecievedJPEG, mNumOfSnapshot);
     }
-
     if(fail_cb_flag && mHalCamCtrl->mDataCb &&
         (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_COMPRESSED_IMAGE)) {
         /* get picture failed. Give jpeg callback with NULL data
@@ -1475,12 +1474,10 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
 
         if(!mDropThumnail) {
             if(isZSLMode()) {
-                int mCurrPreviewWidth, mCurrPreviewHeight;
-                mHalCamCtrl->getPreviewSize(&mCurrPreviewWidth, &mCurrPreviewHeight);
                 LOGI("Setting input thumbnail size to previewWidth= %d   previewheight= %d in ZSL mode",
-                     mCurrPreviewWidth, mCurrPreviewHeight);
-                dimension.thumbnail_width = width = mCurrPreviewWidth;
-                dimension.thumbnail_height = height = mCurrPreviewHeight;
+                     mHalCamCtrl->mPreviewWidth, mHalCamCtrl->mPreviewHeight);
+                dimension.thumbnail_width = width = mHalCamCtrl->mPreviewWidth;
+                dimension.thumbnail_height = height = mHalCamCtrl->mPreviewHeight;
             } else {
                 dimension.thumbnail_width = width = mThumbnailWidth;
                 dimension.thumbnail_height = height = mThumbnailHeight;
@@ -1542,7 +1539,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         }
 
         //update exif parameters in HAL
-        mHalCamCtrl->setExifTags();
+        mHalCamCtrl->initExifData();
 
         /*Fill in the encode parameters*/
         encode_params.dimension = (const cam_ctrl_dimension_t *)&dimension;
@@ -2157,6 +2154,7 @@ status_t QCameraStream_Snapshot::start(void) {
             LOGE("%s : Error while Initializing ZSL snapshot",__func__);
             goto end;
         }
+        mHalCamCtrl->setExifTags();
         /* In case of ZSL, start will only start snapshot stream and
            continuously queue the frames in a queue. When user clicks
            shutter we'll call get buffer from the queue and pass it on */
@@ -2180,6 +2178,9 @@ status_t QCameraStream_Snapshot::start(void) {
         LOGE("%s : Error while Initializing snapshot",__func__);
         goto end;
     }
+
+    //Update Exiftag values.
+    mHalCamCtrl->setExifTags();
 
     if (mSnapshotFormat == PICTURE_FORMAT_RAW) {
         ret = takePictureRaw();

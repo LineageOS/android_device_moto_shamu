@@ -927,7 +927,7 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
           if((mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_NV21) || (mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_NV12) ||
                     (mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_YV12))
           {
-              previewBufSize = mHalCamCtrl->previewWidth * mHalCamCtrl->previewHeight * 3/2;
+              previewBufSize = mHalCamCtrl->mPreviewWidth * mHalCamCtrl->mPreviewHeight * 3/2;
               if(previewBufSize != mHalCamCtrl->mPreviewMemory.private_buffer_handle[frame->def.idx]->size) {
                   previewMem = mHalCamCtrl->mGetMemory(mHalCamCtrl->mPreviewMemory.private_buffer_handle[frame->def.idx]->fd,
                   previewBufSize, 1, mHalCamCtrl->mCallbackCookie);
