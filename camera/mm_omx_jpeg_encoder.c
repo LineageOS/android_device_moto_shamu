@@ -310,6 +310,7 @@ int8_t omxJpegEncodeNext(omx_jpeg_encode_params *encode_params)
     encoding = 1;
     if(inputPort == NULL || inputPort1 == NULL || outputPort == NULL) {
       OMX_DBG_INFO("%s:pointer is null: X", __func__);
+      pthread_mutex_unlock(&jpege_mutex);
       return -1;
     }
     inputPort->nPortIndex = INPUT_PORT;
