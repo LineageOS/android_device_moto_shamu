@@ -237,78 +237,34 @@ receiveCompleteJpegPicture(jpeg_event_t event)
     //Mutex::Autolock l(&snapshotLock);
     mStopCallbackLock.lock( );
     if(!mActive && !isLiveSnapshot()) {
-        LOGE("Cancel Picture");
+        LOGE("%s : Cancel Picture",__func__);
+        fail_cb_flag = true;
         goto end;
     }
 
-    if(mCurrentFrameEncoded!=NULL && isLiveSnapshot()){
-        LOGE("<DEBUG>: Calling buf done for liveshot buffer");
-        cam_evt_buf_done(mCameraId, mCurrentFrameEncoded);
-        free(mCurrentFrameEncoded);
-        mCurrentFrameEncoded=NULL;
-    }
-    /* If for some reason jpeg heap is NULL we'll just return */
-
-    LOGE("%s: Calling upperlayer callback to store JPEG image", __func__);
-
-    msg_type = CAMERA_MSG_COMPRESSED_IMAGE;
-    mHalCamCtrl->dumpFrameToFile(mHalCamCtrl->mJpegMemory.camera_memory[0]->data, mJpegOffset, (char *)"marvin", (char *)"jpg", 0);
-    if (mHalCamCtrl->mDataCb && (mHalCamCtrl->mMsgEnabled & msg_type)) {
-        // Create camera_memory_t object backed by the same physical
-        // memory but with actual bitstream size.
-        camera_memory_t *encodedMem = mHalCamCtrl->mGetMemory(
-            mHalCamCtrl->mJpegMemory.fd[0], mJpegOffset, 1,
-            mHalCamCtrl);
-        if (!encodedMem || !encodedMem->data) {
-            LOGE("%s: mGetMemory failed.\n", __func__);
-            goto end;
-        }
-      memcpy(encodedMem->data, mHalCamCtrl->mJpegMemory.camera_memory[0]->data, mJpegOffset );
-      mStopCallbackLock.unlock();
-      if(mActive || isLiveSnapshot()){
-          jpg_data_cb  = mHalCamCtrl->mDataCb;
-      }
-
-      mStopCallbackLock.unlock( );
-      if (jpg_data_cb != NULL) {
-        jpg_data_cb (msg_type,
-                             encodedMem, 0, NULL,
-                             mHalCamCtrl->mCallbackCookie);
-        encodedMem->release( encodedMem );
-        jpg_data_cb = NULL;
-      }
-      mStopCallbackLock.lock( );
-    } else {
-      LOGW("%s: JPEG callback was cancelled--not delivering image.", __func__);
-    }
-
-    //reset jpeg_offset
-    mJpegOffset = 0;
-
-    /* Tell lower layer that we are done with this buffer.
-       If it's live snapshot, we don't need to call it. Recording
-       object will take care of it */
-    if (!isLiveSnapshot()) {
-        LOGD("%s: Calling buf done for frame id %d buffer: %x", __func__,
-             mCurrentFrameEncoded->snapshot.main.idx,
-             (unsigned int)mCurrentFrameEncoded->snapshot.main.frame->buffer);
+    if(mCurrentFrameEncoded!=NULL /*&& !isLiveSnapshot()*/){
+        LOGV("<DEBUG>: Calling buf done for snapshot buffer");
         cam_evt_buf_done(mCameraId, mCurrentFrameEncoded);
     }
+    mHalCamCtrl->dumpFrameToFile(mHalCamCtrl->mJpegMemory.camera_memory[0]->data, mJpegOffset, (char *)"debug", (char *)"jpg", 0);
 
 end:
-
-    /* free the resource we allocated to maintain the structure */
-    //mm_camera_do_munmap(main_fd, (void *)main_buffer_addr, mSnapshotStreamBuf.frame_len);
-    if(! isLiveSnapshot() ) {
-        if(mCurrentFrameEncoded) {
-            free(mCurrentFrameEncoded);
-            mCurrentFrameEncoded = NULL;
-        }
+    msg_type = CAMERA_MSG_COMPRESSED_IMAGE;
+    if (mHalCamCtrl->mDataCb && (mHalCamCtrl->mMsgEnabled & msg_type)) {
+        jpg_data_cb = mHalCamCtrl->mDataCb;
+    }else{
+        LOGE("%s: JPEG callback was cancelled--not delivering image.", __func__);
     }
-
     setSnapshotState(SNAPSHOT_STATE_JPEG_ENCODE_DONE);
     mNumOfRecievedJPEG++;
     mHalCamCtrl->deinitExifData();
+
+    /* free the resource we allocated to maintain the structure */
+    //mm_camera_do_munmap(main_fd, (void *)main_buffer_addr, mSnapshotStreamBuf.frame_len);
+    if(mCurrentFrameEncoded) {
+        free(mCurrentFrameEncoded);
+        mCurrentFrameEncoded = NULL;
+    }
 
     /* Before leaving check the jpeg queue. If it's not empty give the available
        frame for encoding*/
@@ -336,6 +292,11 @@ end:
           LOGD("%s: Resetting the ZSL attributes", __func__);
           setZSLChannelAttribute();
       }
+      if (!isZSLMode() && !isLiveSnapshot()){
+         //Stop polling before calling datacb for if not ZSL mode
+         stopPolling();
+      }
+
     } else {
         LOGD("%s: mNumOfRecievedJPEG(%d), mNumOfSnapshot(%d)", __func__, mNumOfRecievedJPEG, mNumOfSnapshot);
     }
@@ -346,16 +307,31 @@ end:
          */
         jpg_data_cb  = mHalCamCtrl->mDataCb;
     }
-    mStopCallbackLock.unlock( );
-    if(jpg_data_cb != NULL) {
-      jpg_data_cb (CAMERA_MSG_COMPRESSED_IMAGE,
-                   NULL, 0, NULL,
-                   mHalCamCtrl->mCallbackCookie);
+    if(!fail_cb_flag) {
+        camera_memory_t *encodedMem = mHalCamCtrl->mGetMemory(
+            mHalCamCtrl->mJpegMemory.fd[0], mJpegOffset, 1, mHalCamCtrl);
+        if (!encodedMem || !encodedMem->data) {
+            LOGE("%s: mGetMemory failed.\n", __func__);
+        }
+        mStopCallbackLock.unlock( );
+        if ((mActive || isLiveSnapshot()) && jpg_data_cb != NULL) {
+            LOGV("%s: Calling upperlayer callback to store JPEG image", __func__);
+            jpg_data_cb (msg_type,encodedMem, 0, NULL,mHalCamCtrl->mCallbackCookie);
+        }
+        encodedMem->release( encodedMem );
+        jpg_data_cb = NULL;
+    }else{
+        LOGV("Image Encoding Failed... Notify Upper layer");
+        mStopCallbackLock.unlock( );
+        if((mActive || isLiveSnapshot()) && jpg_data_cb != NULL) {
+            jpg_data_cb (CAMERA_MSG_COMPRESSED_IMAGE,NULL, 0, NULL,
+                         mHalCamCtrl->mCallbackCookie);
+        }
     }
-
+    //reset jpeg_offset
+    mJpegOffset = 0;
     LOGD("%s: X", __func__);
 }
-
 
 status_t QCameraStream_Snapshot::
 configSnapshotDimension(cam_ctrl_dimension_t* dim)
@@ -2077,7 +2053,6 @@ status_t QCameraStream_Snapshot::init()
     mm_camera_op_mode_type_t op_mode;
 
     LOGV("%s: E", __func__);
-
     /* Check the state. If we have already started snapshot
        process just return*/
     if (getSnapshotState() != SNAPSHOT_STATE_UNINIT) {

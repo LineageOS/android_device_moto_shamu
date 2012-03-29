@@ -322,6 +322,10 @@ int mm_camera_poll_thread_add_ch(mm_camera_obj_t * my_obj, int ch_type)
     mm_camera_sig_evt_t cmd;
     int len;
 
+    if(poll_cb->data.used == 1){
+        CDBG_ERROR("%s : Thread is Active",__func__);
+        return MM_CAMERA_OK;
+    }
     CDBG("Run thread for ch_type = %d ",ch_type);
     cmd.cmd = MM_CAMERA_PIPE_CMD_ADD_CH;
     poll_cb->data.ch_type = ch_type;
@@ -339,6 +343,10 @@ int mm_camera_poll_thread_del_ch(mm_camera_obj_t * my_obj, int ch_type)
     mm_camera_sig_evt_t cmd;
     int len;
 
+    if(poll_cb->data.used == 0){
+        CDBG_ERROR("%s : Thread is Not Active",__func__);
+        return MM_CAMERA_OK;
+    }
     CDBG("Stop thread for ch_type = %d ",ch_type);
     cmd.cmd = MM_CAMERA_PIPE_CMD_DEL_CH;
     poll_cb->data.ch_type = (mm_camera_channel_type_t)ch_type;

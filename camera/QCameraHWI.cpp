@@ -1473,7 +1473,7 @@ void liveshot_callback(mm_camera_ch_data_buf_t *recvd_frame,
     if (frame == NULL) {
         LOGE("%s: Error allocating memory to save received_frame structure.", __func__);
         cam_evt_buf_done(pme->mCameraId, recvd_frame);
-        return ;
+		return ;
     }
     memcpy(frame, recvd_frame, sizeof(mm_camera_ch_data_buf_t));
 
