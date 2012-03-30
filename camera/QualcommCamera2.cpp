@@ -206,6 +206,10 @@ extern "C" int  camera_device_open(
                 device->priv = (void *)camHal;
                 rc =  0;
             } else {
+                if (camHal->hardware) {
+                    delete camHal->hardware;
+                    camHal->hardware = NULL;
+                }
                 free(camHal);
                 device = NULL;
             }
