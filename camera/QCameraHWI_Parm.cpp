@@ -94,6 +94,10 @@ extern "C" {
 #define DEFAULT_PREVIEW_WIDTH 640
 #define DEFAULT_PREVIEW_HEIGHT 480
 
+//Default Video Width
+#define DEFAULT_VIDEO_WIDTH 1280
+#define DEFAULT_VIDEO_HEIGHT 720
+
 #define THUMBNAIL_SIZE_COUNT (sizeof(thumbnail_sizes)/sizeof(thumbnail_size_type))
 #define DEFAULT_THUMBNAIL_SETTING 4
 #define THUMBNAIL_WIDTH_STR "512"
@@ -740,8 +744,8 @@ void QCameraHardwareInterface::initDefaultParameters()
     mHFRLevel = 0;
     memset(&mDimension, 0, sizeof(cam_ctrl_dimension_t));
     memset(&mPreviewFormatInfo, 0, sizeof(preview_format_info_t));
-    mDimension.video_width     = DEFAULT_STREAM_WIDTH;
-    mDimension.video_height    = DEFAULT_STREAM_HEIGHT;
+    mDimension.video_width     = DEFAULT_VIDEO_WIDTH;
+    mDimension.video_height    = DEFAULT_VIDEO_HEIGHT;
     // mzhu mDimension.picture_width   = DEFAULT_STREAM_WIDTH;
     // mzhu mDimension.picture_height  = DEFAULT_STREAM_HEIGHT;
     mDimension.picture_width   = maxDim.width;
@@ -888,7 +892,7 @@ void QCameraHardwareInterface::initDefaultParameters()
     mParameters.set(CameraParameters::KEY_SUPPORTED_VIDEO_SIZES, videoSizes.string());
 
     //set video size
-    String8 vSize = create_sizes_str(&supported_video_sizes[0], 1);
+    String8 vSize = create_sizes_str(&supported_video_sizes[1], 1);
     mParameters.set(CameraParameters::KEY_VIDEO_SIZE, vSize.string());
 
     //Set Preview size
@@ -3129,9 +3133,7 @@ status_t QCameraHardwareInterface::setRecordingHint(const CameraParameters& para
       int32_t value = attr_lookup(recording_Hints,
                                   sizeof(recording_Hints) / sizeof(str_map), str);
       if(value != NOT_FOUND){
-          if (mRecordingHint == FALSE) {
-              mRecordingHint = value;
-          }
+          mRecordingHint = value;
           setRecordingHintValue(mRecordingHint);
           mParameters.set(CameraParameters::KEY_RECORDING_HINT, str);
           return NO_ERROR;
