@@ -465,9 +465,7 @@ void put_parameters(struct camera_device * device, char *parm)
     LOGE("Q%s: E", __func__);
     QCameraHardwareInterface *hardware = util_get_Hal_obj(device);
     if(hardware != NULL){
-        if(hardware != NULL){
-            hardware->putParameters(parm );
-        }
+      hardware->putParameters(parm);
     }
 }
 
