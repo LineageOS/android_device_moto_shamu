@@ -29,9 +29,10 @@
 #include "QCameraHAL.h"
 
 int HAL_numOfCameras = 0;
-camera_info_t HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
+camera_info_t * HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
 mm_camera_t * HAL_camerahandle[MSM_MAX_CAMERA_SENSORS];
 int HAL_currentCameraMode;
+int HAL_currentCameraId;
 
 namespace android {
 /* HAL function implementation goes here*/
@@ -65,6 +66,7 @@ extern "C" int HAL_getNumberOfCameras()
             LOGI("Handle [%d]=0x%p",i,handle_base+i);
             HAL_camerahandle[i]=handle_base + i;
             p_camera_info = &(HAL_camerahandle[i]->camera_info);
+            HAL_cameraInfo[i] = p_camera_info;
             if (p_camera_info) {
                 LOGI("Camera sensor %d info:", i);
                 LOGI("camera_id: %d", p_camera_info->camera_id);
@@ -103,6 +105,7 @@ extern "C" void HAL_getCameraInfo(int cameraId, struct CameraInfo* cameraInfo)
             CAMERA_FACING_FRONT : CAMERA_FACING_BACK;
 
         cameraInfo->orientation = mm_camer_obj->camera_info.sensor_mount_angle;
+        HAL_currentCameraId = cameraId;
 #if 0
         // TODO: fix me
         /* We always supprot ZSL in our stack*/
