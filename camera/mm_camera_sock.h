@@ -30,6 +30,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __MM_CAMERA_SOCKET_H__
 #define __MM_CAMERA_SOCKET_H__
 
+#include <inttypes.h>
+
 typedef enum {
     MM_CAMERA_SOCK_TYPE_UDP,
     MM_CAMERA_SOCK_TYPE_TCP,

@@ -34,7 +34,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
-#include <sys/un.h>
+#include <linux/un.h>
 
 #include "mm_camera_dbg.h"
 #include "mm_camera_sock.h"
