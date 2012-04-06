@@ -1548,6 +1548,7 @@ status_t  QCameraHardwareInterface::takePicture()
     status_t ret = MM_CAMERA_OK;
     Mutex::Autolock lock(mLock);
 
+    mStreamSnap->resetSnapshotCounters( );
     switch(mPreviewState) {
     case QCAMERA_HAL_PREVIEW_STARTED:
         mStreamSnap->setFullSizeLiveshot(false);
@@ -1601,9 +1602,10 @@ status_t  QCameraHardwareInterface::takePicture()
       break;
     case QCAMERA_HAL_RECORDING_STARTED:
       if (canTakeFullSizeLiveshot()) {
+        LOGD(" Calling takeFullSizeLiveshot");
         takeFullSizeLiveshot();
       }else{
-          LOGV(" Calling register for Live snapshot");
+          LOGD(" Calling register for Live snapshot");
           (void) cam_evt_register_buf_notify(mCameraId, MM_CAMERA_CH_VIDEO,
                                                     liveshot_callback,
                                                     MM_CAMERA_REG_BUF_CB_COUNT,
@@ -1701,6 +1703,7 @@ status_t QCameraHardwareInterface::takeFullSizeLiveshot()
     }
 
     /* call Snapshot start() :*/
+    mStreamLiveSnap->resetSnapshotCounters( );
     ret =  mStreamLiveSnap->start();
     if (MM_CAMERA_OK != ret){
         /* mzhu: fix me, restore preview */

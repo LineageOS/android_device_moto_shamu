@@ -568,6 +568,8 @@ static int mm_camera_channel_skip_frames(mm_camera_obj_t *my_obj,
          count, frame_attr->look_back, mq->match_cnt, sq->match_cnt);
 
     count -= frame_attr->look_back;
+    CDBG("count=%d, frame_attr->look_back=%d,mq->match_cnt=%d, sq->match_cnt=%d",
+               count, frame_attr->look_back, mq->match_cnt,sq->match_cnt);
     for(i=0; i < count; i++) {
         mframe = mm_camera_stream_frame_deq(mq);
         sframe = mm_camera_stream_frame_deq(sq);
@@ -608,7 +610,7 @@ void mm_camera_dispatch_buffered_frames(mm_camera_obj_t *my_obj,
     mm_camera_frame_queue_t *sq = NULL;
     mm_camera_stream_t *stream1 = NULL;
     mm_camera_stream_t *stream2 = NULL;
-LOGE("%s: mzhu, E", __func__);
+    LOGE("%s: E", __func__);
     mm_camera_ch_util_get_stream_objs(my_obj, ch_type, &stream1, &stream2);
     stream2 = &my_obj->ch[MM_CAMERA_CH_PREVIEW].preview.stream;
     if(stream1) {
@@ -617,6 +619,7 @@ LOGE("%s: mzhu, E", __func__);
     if(stream2) {
       sq = &stream2->frame.readyq;
     }
+    CDBG("mq=%p, sq=%p, stream1=%p, stream2=%p", mq, sq, stream1, stream2);
     pthread_mutex_lock(&ch->mutex);
     if (mq && sq && stream1 && stream2) {
         rc = mm_camera_channel_skip_frames(my_obj, mq, sq, stream1, stream2, &ch->buffering_frame);
@@ -626,6 +629,8 @@ LOGE("%s: mzhu, E", __func__);
         }
         num_of_req_frame = ch->snapshot.num_shots;
         ch->snapshot.pending_cnt = num_of_req_frame;
+
+        CDBG("num_of_req_frame =%d", num_of_req_frame);
         for(i = 0; i < num_of_req_frame; i++) {
             mframe = mm_camera_stream_frame_deq(mq);
             sframe = mm_camera_stream_frame_deq(sq);
