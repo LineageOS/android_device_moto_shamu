@@ -51,10 +51,6 @@ extern "C" {
 //Error codes
 #define  NOT_FOUND -1
 #define MAX_ZOOM_RATIOS 62
-#define QCIF_WIDTH      176
-#define QCIF_HEIGHT     144
-#define D1_WIDTH        720
-#define D1_HEIGHT       480
 
 #ifdef Q12
 #undef Q12

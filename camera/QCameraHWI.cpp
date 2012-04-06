@@ -1633,15 +1633,6 @@ bool QCameraHardwareInterface::canTakeFullSizeLiveshot() {
     if (mFullLiveshotEnabled && !isLowPowerCamcorder()) {
       /* Full size liveshot enabled. */
 
-      /* TODO Remove this workaround once the C2D limitation
-       * (32 alignment on width) is fixed. */
-      /* Start workaround */
-      if (mDimension.display_width == QCIF_WIDTH ||
-          mDimension.display_width == D1_WIDTH) {
-        return FALSE;
-      }
-      /* End workaround */
-
       /* If Picture size is same as video size, switch to Video size
        * live snapshot */
       if ((mDimension.picture_width == mDimension.video_width) &&

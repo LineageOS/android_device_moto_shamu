@@ -2479,14 +2479,6 @@ status_t QCameraHardwareInterface::setPowerMode(const CameraParameters& params) 
         }
     }
 
-    /* TODO Remove this workaround once the C2D limitation
-     * (32 alignment on width) is fixed. */
-    /* Start workaround */
-    if (mDimension.display_width == QCIF_WIDTH ||
-        mDimension.display_width == D1_WIDTH) {
-      value = 1;
-    }
-    /* End workaround */
     LOGI("%s Low power mode %s value = %d", __func__,
           value ? "Enabled" : "Disabled", value);
     native_set_parms(MM_CAMERA_PARM_LOW_POWER_MODE, sizeof(value),
@@ -3256,18 +3248,6 @@ status_t QCameraHardwareInterface::setDISMode() {
   uint32_t value = mRecordingHint && mDisEnabled
                    && !isLowPowerCamcorder();
 
-  /* TODO Remove this workaround once the C2D limitation
-   * (32 alignment on width) is fixed. */
-  /* Start workaround */
-  /*
-  * in live effect case Dimension will be reversed.
-  */
-  if (mDimension.display_width == QCIF_WIDTH || mDimension.display_height == QCIF_WIDTH ||
-      mDimension.display_width == D1_WIDTH || mDimension.display_height == D1_WIDTH) {
-      value = 0;
-  }
-  /* End workaround */
-
   LOGI("%s DIS is %s value = %d", __func__,
           value ? "Enabled" : "Disabled", value);
   native_set_parms(MM_CAMERA_PARM_DIS_ENABLE, sizeof(value),
@@ -3282,18 +3262,6 @@ status_t QCameraHardwareInterface::setFullLiveshot()
    * - Full size liveshot is enabled. */
   uint32_t value = mRecordingHint && mFullLiveshotEnabled
                    && !isLowPowerCamcorder();
-
-  /* TODO Remove this workaround once the C2D limitation
-   * (32 alignment on width) is fixed. */
-  /* Start workaround */
-  /*
-  * in live effect case Dimension will be reversed.
-  */
-  if (mDimension.display_width == QCIF_WIDTH || mDimension.display_height == QCIF_WIDTH ||
-      mDimension.display_width == D1_WIDTH || mDimension.display_height == D1_WIDTH) {
-    value = 0;
-  }
-  /* End workaround */
 
   if (((mDimension.picture_width == mDimension.video_width) &&
       (mDimension.picture_height == mDimension.video_height))) {
@@ -3958,14 +3926,6 @@ bool QCameraHardwareInterface::isLowPowerCamcorder() {
     if(mHFRLevel > 1) /* hard code the value now. Need to move tgtcommon to camear.h */
       return true;
 
-    /* C2D expects the resolutions to be 32 aligned.
-     * Otherwise the preview frames will be corrupted.
-     * So for QCIF and D1, run in low power mode.
-     * i.e Bypass the C2D path */
-    if (mDimension.display_width == QCIF_WIDTH ||
-        mDimension.display_width == D1_WIDTH)
-      return true;
-    else
       return false;
 }
 
