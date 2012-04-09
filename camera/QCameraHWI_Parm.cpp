@@ -2463,6 +2463,7 @@ status_t QCameraHardwareInterface::setPreviewFpsRange(const CameraParameters& pa
     int minFps,maxFps;
     int prevMinFps, prevMaxFps;
     int rc = NO_ERROR;
+    bool found = false;
 
     mParameters.getPreviewFpsRange(&prevMinFps, &prevMaxFps);
     LOGE("%s: Existing FpsRange Values:(%d, %d)", __func__, prevMinFps, prevMaxFps);
@@ -2474,10 +2475,10 @@ status_t QCameraHardwareInterface::setPreviewFpsRange(const CameraParameters& pa
         rc = NO_ERROR;
         goto end;
     }
-
     for(size_t i=0; i<FPS_RANGES_SUPPORTED_COUNT; i++) {
         // if the value is in the supported list
         if(minFps==FpsRangesSupported[i].minFPS && maxFps == FpsRangesSupported[i].maxFPS){
+            found = true;
             LOGE("FPS: i=%d : minFps = %d, maxFps = %d ",i,FpsRangesSupported[i].minFPS,FpsRangesSupported[i].maxFPS );
             mParameters.setPreviewFpsRange(minFps,maxFps);
             // validate the values
@@ -2503,7 +2504,6 @@ status_t QCameraHardwareInterface::setPreviewFpsRange(const CameraParameters& pa
                 uint32_t fps;  //lower 2 bytes specify maxFps and higher 2 bytes specify minFps
                 fps = ((uint32_t)(minFps/1000) << 16) + ((uint16_t)(maxFps/1000));
                 ret = native_set_parms(MM_CAMERA_PARM_FPS, sizeof(uint32_t), (void *)&fps);
-                mParameters.setPreviewFrameRate(maxFps);
                 mParameters.setPreviewFpsRange(minFps, maxFps);
                 if(ret)
                     rc = NO_ERROR;
@@ -2515,10 +2515,11 @@ status_t QCameraHardwareInterface::setPreviewFpsRange(const CameraParameters& pa
                 LOGE("%s: error: invalid FPS range value", __func__);
                 rc = BAD_VALUE;
             }
-        } else {
+        }
+    }
+    if(found == false){
             LOGE("%s: error: FPS range value not supported", __func__);
             rc = BAD_VALUE;
-        }
     }
 end:
     LOGV("%s: X", __func__);
