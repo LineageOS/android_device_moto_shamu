@@ -36,12 +36,7 @@
 #include "omx_jpeg_ext.h"
 #include "mm_omx_jpeg_encoder.h"
 
-#ifdef HW_ENCODE
 static uint8_t hw_encode = true;
-#else
-static uint8_t hw_encode = false;
-#endif
-
 static int jpegRotation = 0;
 static int isZSLMode = 0;
 static int jpegThumbnailQuality = 75;
@@ -339,10 +334,7 @@ int8_t omxJpegEncodeNext(omx_jpeg_encode_params *encode_params)
         format_cam2jpeg(encode_params->dimension->main_img_format);
     userpreferences.thumbnail_color_format =
         format_cam2jpeg(encode_params->dimension->thumb_format);
-    if (hw_encode)
-        userpreferences.preference = OMX_JPEG_PREF_HW_ACCELERATED_PREFERRED;
-    else
-        userpreferences.preference = OMX_JPEG_PREF_SOFTWARE_ONLY;
+
 
     pmem_info.fd = encode_params->snapshot_fd;
     pmem_info.offset = 0;
@@ -435,9 +427,28 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
 
     bufferoffset.width = encode_params->dimension->orig_picture_dx;
     bufferoffset.height = encode_params->dimension->orig_picture_dy;
-    mm_jpeg_encoder_get_buffer_offset( bufferoffset.width, bufferoffset.height,&bufferoffset.yOffset,
-                                       &bufferoffset.cbcrOffset,
-                                       &bufferoffset.totalSize,&num_planes,planes);
+
+    if (hw_encode)
+        userpreferences.preference = OMX_JPEG_PREF_HW_ACCELERATED_PREFERRED;
+    else
+        userpreferences.preference = OMX_JPEG_PREF_SOFTWARE_ONLY;
+    if (encode_params->a_cbcroffset > 0) {
+        userpreferences.preference = OMX_JPEG_PREF_SOFTWARE_ONLY;
+        hw_encode = 0;
+    }
+    if (encode_params->scaling_params->in2_w &&
+        encode_params->scaling_params->in2_h) {
+        if (jpegRotation) {
+            userpreferences.preference = OMX_JPEG_PREF_SOFTWARE_ONLY;
+            OMX_DBG_INFO("%s:Scaling and roation true: setting pref to sw\n",
+                __func__);
+            hw_encode = 0;
+        }
+    }
+    mm_jpeg_encoder_get_buffer_offset(bufferoffset.width, bufferoffset.height,
+                    &bufferoffset.yOffset,
+                    &bufferoffset.cbcrOffset,
+                    &bufferoffset.totalSize, &num_planes, planes);
     if (encode_params->a_cbcroffset > 0) {
         bufferoffset.totalSize = encode_params->a_cbcroffset * 1.5;
     }
@@ -490,10 +501,7 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
     userpreferences.thumbnail_color_format =
       get_jpeg_format_from_cam_format(encode_params->thumbnail_format);
 
-    if (hw_encode)
-        userpreferences.preference = OMX_JPEG_PREF_HW_ACCELERATED_PREFERRED;
-    else
-        userpreferences.preference = OMX_JPEG_PREF_SOFTWARE_ONLY;
+
 
 
       OMX_DBG_ERROR("%s:Scaling params in1_w %d in1_h %d out1_w %d out1_h %d"
@@ -512,11 +520,6 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
 
     if (encode_params->scaling_params->in2_w &&
         encode_params->scaling_params->in2_h) {
-        if (jpegRotation) {
-            userpreferences.preference = OMX_JPEG_PREF_SOFTWARE_ONLY;
-            OMX_DBG_INFO("%s:Scaling and roation true: setting pref to sw\n",
-              __func__);
-        }
 
       /* Scaler information  for main image */
         recttype.nWidth = CEILING2(encode_params->scaling_params->in2_w);
