@@ -236,11 +236,15 @@ static int32_t mm_camera_ch_util_release(mm_camera_obj_t * my_obj,
 
     if(!my_obj->ch[ch_type].acquired) return MM_CAMERA_OK;
 
+    pthread_mutex_lock(&my_obj->ch[ch_type].mutex);
     mm_camera_ch_util_get_stream_objs(my_obj,ch_type, &stream1, &stream2);
     if(stream1)
         mm_camera_stream_fsm_fn_vtbl(my_obj, stream1, evt, NULL);
     if(stream2)
         mm_camera_stream_fsm_fn_vtbl(my_obj, stream2, evt, NULL);
+
+    my_obj->ch[ch_type].acquired = FALSE;
+    /*no need to unlock, others waiting on it will be unblocked with EDESTROYED*/
     pthread_mutex_destroy(&my_obj->ch[ch_type].mutex);
     memset(&my_obj->ch[ch_type],0,sizeof(my_obj->ch[ch_type]));
     return 0;
@@ -611,6 +615,8 @@ void mm_camera_dispatch_buffered_frames(mm_camera_obj_t *my_obj,
     mm_camera_stream_t *stream1 = NULL;
     mm_camera_stream_t *stream2 = NULL;
     LOGE("%s: E", __func__);
+    pthread_mutex_lock(&ch->mutex);
+
     mm_camera_ch_util_get_stream_objs(my_obj, ch_type, &stream1, &stream2);
     stream2 = &my_obj->ch[MM_CAMERA_CH_PREVIEW].preview.stream;
     if(stream1) {
@@ -620,7 +626,6 @@ void mm_camera_dispatch_buffered_frames(mm_camera_obj_t *my_obj,
       sq = &stream2->frame.readyq;
     }
     CDBG("mq=%p, sq=%p, stream1=%p, stream2=%p", mq, sq, stream1, stream2);
-    pthread_mutex_lock(&ch->mutex);
     if (mq && sq && stream1 && stream2) {
         rc = mm_camera_channel_skip_frames(my_obj, mq, sq, stream1, stream2, &ch->buffering_frame);
         if(rc != MM_CAMERA_OK) {
