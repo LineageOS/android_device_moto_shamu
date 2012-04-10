@@ -171,6 +171,7 @@ static camera_size_type supported_video_sizes[] = {
   { 720, 480},
   { 640, 480}, // VGA
   { 576, 432},
+  { 512, 384},
   { 480, 320}, // HVGA
   { 432, 240}, //WQVGA
   { 384, 288},
