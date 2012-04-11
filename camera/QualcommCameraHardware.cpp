@@ -6603,6 +6603,7 @@ QualcommCameraHardware* QualcommCameraHardware::createInstance()
     if (!cam->startCamera()) {
         LOGE("%s: startCamera failed!", __FUNCTION__);
         //singleton_lock.unlock();
+        delete cam;
         return NULL;
     }
 
