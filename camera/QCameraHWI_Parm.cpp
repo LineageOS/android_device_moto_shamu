@@ -93,8 +93,8 @@ extern "C" {
 #define DEFAULT_PREVIEW_HEIGHT 480
 
 //Default Video Width
-#define DEFAULT_VIDEO_WIDTH 1280
-#define DEFAULT_VIDEO_HEIGHT 720
+#define DEFAULT_VIDEO_WIDTH 1920
+#define DEFAULT_VIDEO_HEIGHT 1088
 
 #define THUMBNAIL_SIZE_COUNT (sizeof(thumbnail_sizes)/sizeof(thumbnail_size_type))
 #define DEFAULT_THUMBNAIL_SETTING 4
