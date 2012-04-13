@@ -232,7 +232,7 @@ static const str_map scenedetect[] = {
 #define DONT_CARE AF_MODE_MAX
 static const str_map focus_modes[] = {
     { CameraParameters::FOCUS_MODE_AUTO,     AF_MODE_AUTO},
-    { CameraParameters::FOCUS_MODE_INFINITY, DONT_CARE },
+    { CameraParameters::FOCUS_MODE_INFINITY, AF_MODE_INFINITY },
     { CameraParameters::FOCUS_MODE_NORMAL,   AF_MODE_NORMAL },
     { CameraParameters::FOCUS_MODE_MACRO,    AF_MODE_MACRO },
     { CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE, AF_MODE_CAF},
@@ -1989,6 +1989,7 @@ status_t QCameraHardwareInterface::setFocusMode(const CameraParameters& params)
     const char *prev_str = mParameters.get(CameraParameters::KEY_FOCUS_MODE);
     LOGE("%s",__func__);
     if (str != NULL) {
+        LOGE("Focus mode %s",str);
         int32_t value = attr_lookup(focus_modes,
                                     sizeof(focus_modes) / sizeof(str_map), str);
         if (value != NOT_FOUND) {
@@ -2001,13 +2002,17 @@ status_t QCameraHardwareInterface::setFocusMode(const CameraParameters& params)
             }
             mParameters.set(CameraParameters::KEY_FOCUS_DISTANCES, mFocusDistance.string());
             if(mHasAutoFocusSupport){
+                bool ret = native_set_parms(MM_CAMERA_PARM_FOCUS_MODE,
+                                      sizeof(value),
+                                      (void *)&value);
+
                 int cafSupport = FALSE;
                 if(!strcmp(str, CameraParameters::FOCUS_MODE_CONTINUOUS_VIDEO) ||
                    !strcmp(str, CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE)){
                     cafSupport = TRUE;
                 }
                 LOGE("Continuous Auto Focus %d", cafSupport);
-                bool ret = native_set_parms(MM_CAMERA_PARM_CONTINUOUS_AF, sizeof(cafSupport),
+                ret = native_set_parms(MM_CAMERA_PARM_CONTINUOUS_AF, sizeof(cafSupport),
                                        (void *)&cafSupport);
             }
 

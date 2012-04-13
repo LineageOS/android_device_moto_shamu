@@ -282,6 +282,9 @@ int32_t mm_camera_set_general_parm(mm_camera_obj_t * my_obj, mm_camera_parm_t *p
     case MM_CAMERA_PARM_AF_ROI:
         return mm_camera_send_native_ctrl_cmd(my_obj,
                     CAMERA_SET_PARM_AF_ROI, sizeof(roi_info_t), (void *)parm->p_value);
+    case MM_CAMERA_PARM_FOCUS_MODE:
+        return mm_camera_send_native_ctrl_cmd(my_obj,
+                    CAMERA_SET_PARM_AF_MODE, sizeof(int32_t), (void *)parm->p_value);
 #if 0 //to be enabled later: @punits
     case MM_CAMERA_PARM_AF_MTR_AREA:
         return mm_camera_send_native_ctrl_cmd(my_obj,
