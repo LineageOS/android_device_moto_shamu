@@ -585,6 +585,7 @@ private:
     status_t setAEBracket(const CameraParameters& params);
     status_t setFaceDetect(const CameraParameters& params);
     status_t setDenoise(const CameraParameters& params);
+    status_t setAecAwbLock(const CameraParameters & params);
     status_t setHistogram(int histogram_en);
     status_t setRecordingHint(const CameraParameters& params);
     status_t setRecordingHintValue(const int32_t value);
@@ -672,6 +673,7 @@ private:
     int  mFaceDetectOn;
     int  mDumpFrmCnt;
     int  mDumpSkipCnt;
+
     unsigned int mPictureSizeCount;
     unsigned int mPreviewSizeCount;
     int mPowerMode;
