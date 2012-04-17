@@ -2465,7 +2465,7 @@ status_t QCameraStream_Snapshot::doWaveletDenoise(mm_camera_ch_data_buf_t* frame
     if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL,
                                                 frame->snapshot.thumbnail.idx,
                                                 frame->snapshot.thumbnail.frame->fd,
-                                                dim.thumb_frame_offset.frame_len, mCameraId,
+                                                dim.display_frame_offset.frame_len, mCameraId,
                                                 CAM_SOCK_MSG_TYPE_FD_MAPPING)) {
         LOGE("%s: sending thumbnail frame mapping buf msg Failed", __func__);
         ret = FAILED_TRANSACTION;
