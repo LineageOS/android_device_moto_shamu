@@ -1556,7 +1556,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         encode_params.exif_data = mHalCamCtrl->getExifData();
         encode_params.exif_numEntries = mHalCamCtrl->getExifTableNumEntries();
 
-        if (isLiveSnapshot())
+        if (isLiveSnapshot() && !isFullSizeLiveshot())
             encode_params.a_cbcroffset = mainframe->cbcr_off;
         else
             encode_params.a_cbcroffset = -1;
