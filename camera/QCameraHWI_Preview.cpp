@@ -437,7 +437,15 @@ void QCameraStream_preview::notifyROIEvent(fd_roi_t roi)
             mHalCamCtrl->mFace[idx].smile_score = roi.d.data.face.smile_confidence / 10; //Keep within range 1~100
             mHalCamCtrl->mFace[idx].blink_detected = roi.d.data.face.blink_detected;
             mHalCamCtrl->mFace[idx].face_recognised = roi.d.data.face.is_face_recognised;
-
+            mHalCamCtrl->mFace[idx].gaze_angle = roi.d.data.face.gaze_angle;
+            /* newly added */
+            mHalCamCtrl->mFace[idx].updown_dir = roi.d.data.face.updown_dir;
+            mHalCamCtrl->mFace[idx].leftright_dir = roi.d.data.face.leftright_dir;
+            mHalCamCtrl->mFace[idx].roll_dir = roi.d.data.face.roll_dir;
+            mHalCamCtrl->mFace[idx].leye_blink = roi.d.data.face.left_blink;
+            mHalCamCtrl->mFace[idx].reye_blink = roi.d.data.face.right_blink;
+            mHalCamCtrl->mFace[idx].left_right_gaze = roi.d.data.face.left_right_gaze;
+            mHalCamCtrl->mFace[idx].top_bottom_gaze = roi.d.data.face.top_bottom_gaze;
             LOGE("%s: Face(%d, %d, %d, %d), leftEye(%d, %d), rightEye(%d, %d), mouth(%d, %d), smile(%d, %d), blinked(%d)", __func__,
                mHalCamCtrl->mFace[idx].rect[0],  mHalCamCtrl->mFace[idx].rect[1],
                mHalCamCtrl->mFace[idx].rect[2],  mHalCamCtrl->mFace[idx].rect[3],
