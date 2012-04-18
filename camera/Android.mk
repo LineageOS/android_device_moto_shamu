@@ -7,7 +7,7 @@ ifneq ($(USE_CAMERA_STUB),true)
       MM_STILL_V4L2_DRIVER_LIST := msm7627a
       #MM_STILL_V4L2_DRIVER_LIST += msm7630_surf
       #MM_STILL_V4L2_DRIVER_LIST += msm7630_fusion
-      #MM_STILL_V4L2_DRIVER_LIST += msm8660
+      MM_STILL_V4L2_DRIVER_LIST += msm8660
       MM_STILL_V4L2_DRIVER_LIST += msm8960
       ifeq ($(call is-board-platform-in-list,$(MM_STILL_V4L2_DRIVER_LIST)),true)
         V4L2_BASED_LIBCAM := true
