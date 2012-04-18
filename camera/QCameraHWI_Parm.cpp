@@ -3131,7 +3131,7 @@ status_t QCameraHardwareInterface::setRotation(const CameraParameters& params)
     if (rotation != NOT_FOUND) {
         if (rotation == 0 || rotation == 90 || rotation == 180
             || rotation == 270) {
-          rotation = rotation + sensor_mount_angle;
+          rotation = (rotation + sensor_mount_angle) % 360;
           mParameters.set(CameraParameters::KEY_ROTATION, rotation);
           mRotation = rotation;
         } else {
