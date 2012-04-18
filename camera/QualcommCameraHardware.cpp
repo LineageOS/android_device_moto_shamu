@@ -2665,7 +2665,7 @@ bool QualcommCameraHardware::initImageEncodeParameters(int size)
 }
 
 bool QualcommCameraHardware::native_set_parms(
-    mm_camera_parm_type_t type, uint16_t length, void *value)
+    camera_parm_type_t type, uint16_t length, void *value)
 {
     if(mCfgControl.mm_camera_set_parm(type,value) != MM_CAMERA_SUCCESS) {
         LOGE("native_set_parms failed: type %d length %d error %s",
@@ -2676,7 +2676,7 @@ bool QualcommCameraHardware::native_set_parms(
 
 }
 bool QualcommCameraHardware::native_set_parms(
-    mm_camera_parm_type_t type, uint16_t length, void *value, int *result)
+    camera_parm_type_t type, uint16_t length, void *value, int *result)
 {
     mm_camera_status_t status;
     status = mCfgControl.mm_camera_set_parm(type,value);

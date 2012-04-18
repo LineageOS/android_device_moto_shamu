@@ -90,27 +90,6 @@ static uint8_t mm_camera_cfg_is_parm_supported (mm_camera_t * camera,
     int is_parm_supported = 0;
     mm_camera_obj_t * my_obj = NULL;
 
-    /* Temp: These params are not defined in legacy implementation.
-       To be modified later with proper action.*/
-    switch (parm_type) {
-    case MM_CAMERA_PARM_CH_IMAGE_FMT:
-    case MM_CAMERA_PARM_OP_MODE:
-    case MM_CAMERA_PARM_SHARPNESS_CAP:
-    case MM_CAMERA_PARM_SNAPSHOT_BURST_NUM:
-    case MM_CAMERA_PARM_MAXZOOM:
-    case MM_CAMERA_PARM_LUMA_ADAPTATION:
-    case MM_CAMERA_PARM_HDR:
-    case MM_CAMERA_PARM_CROP:
-    case MM_CAMERA_PARM_MAX_PICTURE_SIZE:
-    case MM_CAMERA_PARM_MAX_PREVIEW_SIZE:
-    case MM_CAMERA_PARM_ASD_ENABLE:
-    case MM_CAMERA_PARM_AEC_LOCK:
-    case MM_CAMERA_PARM_AWB_LOCK:
-    case MM_CAMERA_PARM_MAX:
-        return 1;
-    default:
-        break;
-    }
     pthread_mutex_lock(&g_mutex);
     my_obj = g_cam_ctrl.cam_obj[camera->camera_info.camera_id];
     pthread_mutex_unlock(&g_mutex);
