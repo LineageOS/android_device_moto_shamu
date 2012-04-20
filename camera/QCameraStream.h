@@ -233,6 +233,7 @@ private:
     mm_camera_ch_data_buf_t mNotifyBuffer[16];
     bool                    mbPausedBySnapshot; /*TRUE: paused due to snapshot; FALSE: stopped normally*/
     int8_t                  mNumFDRcvd;
+    int                     mVFEOutputs;
 };
 
 /* Snapshot Class - handle data flow*/

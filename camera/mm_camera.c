@@ -498,6 +498,18 @@ int32_t mm_camera_get_parm(mm_camera_obj_t * my_obj,
     case MM_CAMERA_PARM_PREVIEW_FORMAT:
         *((int *)parm->p_value) = my_obj->properties.preview_format;
         break;
+    case MM_CAMERA_PARM_PREVIEW_SIZES_CNT:
+        *((int *)parm->p_value) = my_obj->properties.preview_sizes_cnt;
+        break;
+    case MM_CAMERA_PARM_VIDEO_SIZES_CNT:
+        *((int *)parm->p_value) = my_obj->properties.video_sizes_cnt;
+        break;
+    case MM_CAMERA_PARM_THUMB_SIZES_CNT:
+        *((int *)parm->p_value) = my_obj->properties.thumb_sizes_cnt;
+        break;
+    case MM_CAMERA_PARM_HFR_SIZES_CNT:
+        *((int *)parm->p_value) = my_obj->properties.hfr_sizes_cnt;
+        break;
     case MM_CAMERA_PARM_MAX_PREVIEW_SIZE: {
         mm_camera_dimension_t *dim =
             (mm_camera_dimension_t *)parm->p_value;
@@ -545,11 +557,37 @@ int32_t mm_camera_get_parm(mm_camera_obj_t * my_obj,
         return mm_camera_send_native_ctrl_cmd(my_obj,   CAMERA_GET_PARM_ZOOMRATIOS,
                      sizeof(int16_t)*tbl->size, tbl->zoom_ratio_tbl);
     }
+    case MM_CAMERA_PARM_DEF_PREVIEW_SIZES: {
+        default_sizes_tbl_t *tbl = (default_sizes_tbl_t*)parm->p_value;
+        return mm_camera_send_native_ctrl_cmd(my_obj, CAMERA_GET_PARM_DEF_PREVIEW_SIZES,
+                     sizeof(struct camera_size_type)*tbl->tbl_size, tbl->sizes_tbl);
+    }
+    case MM_CAMERA_PARM_DEF_VIDEO_SIZES: {
+        default_sizes_tbl_t *tbl = (default_sizes_tbl_t*)parm->p_value;
+        return mm_camera_send_native_ctrl_cmd(my_obj, CAMERA_GET_PARM_DEF_VIDEO_SIZES,
+                     sizeof(struct camera_size_type)*tbl->tbl_size, tbl->sizes_tbl);
+    }
+    case MM_CAMERA_PARM_DEF_THUMB_SIZES: {
+        default_sizes_tbl_t *tbl = (default_sizes_tbl_t*)parm->p_value;
+        return mm_camera_send_native_ctrl_cmd(my_obj, CAMERA_GET_PARM_DEF_THUMB_SIZES,
+                     sizeof(struct camera_size_type)*tbl->tbl_size, tbl->sizes_tbl);
+    }
+    case MM_CAMERA_PARM_DEF_HFR_SIZES:{
+        default_sizes_tbl_t *tbl = (default_sizes_tbl_t*)parm->p_value;
+        return mm_camera_send_native_ctrl_cmd(my_obj, CAMERA_GET_PARM_DEF_HFR_SIZES,
+                     sizeof(struct camera_size_type)*tbl->tbl_size, tbl->sizes_tbl);
+    }
     case MM_CAMERA_PARM_OP_MODE:
         *((mm_camera_op_mode_type_t *)parm->p_value) = my_obj->op_mode;
         break;
     case MM_CAMERA_PARM_SNAPSHOT_BURST_NUM:
         *((int *)parm->p_value) = my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.num_shots;
+        break;
+    case MM_CAMERA_PARM_GRALLOC_USAGE:
+        *((int *)parm->p_value) = my_obj->properties.gralloc_usage;
+        break;
+    case MM_CAMERA_PARM_VFE_OUTPUT_ENABLE:
+        *((int *)parm->p_value) = my_obj->properties.vfe_output_enable;
         break;
     default:
         /* needs to add more implementation */

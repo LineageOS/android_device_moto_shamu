@@ -56,7 +56,7 @@ ifneq ($(USE_CAMERA_STUB),true)
       ifeq ($(V4L2_BASED_LIBCAM),true)
         ifeq ($(call is-board-platform,msm7627a),true)
           LOCAL_HAL_FILES := QCameraHAL.cpp QCameraHWI_Parm.cpp\
-            QCameraHWI.cpp QCameraHWI_Preview_7x27A.cpp \
+            QCameraHWI.cpp QCameraHWI_Preview.cpp \
             QCameraHWI_Record_7x27A.cpp QCameraHWI_Still.cpp \
             QCameraHWI_Mem.cpp QCameraHWI_Display.cpp \
             QCameraStream.cpp QualcommCamera2.cpp

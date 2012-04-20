@@ -59,6 +59,10 @@ extern "C" {
 #define Q12 4096
 #define QCAMERA_PARM_ENABLE   1
 #define QCAMERA_PARM_DISABLE  0
+#define PREVIEW_TBL_MAX_SIZE  13
+#define VIDEO_TBL_MAX_SIZE    13
+#define THUMB_TBL_MAX_SIZE    15
+#define HFR_TBL_MAX_SIZE      2
 
 struct str_map {
     const char *const desc;
@@ -478,8 +482,19 @@ public:
     int getExifTableNumEntries() { return mExifTableNumEntries; }
 private:
     int16_t  zoomRatios[MAX_ZOOM_RATIOS];
+    struct camera_size_type default_preview_sizes[PREVIEW_TBL_MAX_SIZE];
+    struct camera_size_type default_video_sizes[VIDEO_TBL_MAX_SIZE];
+    struct camera_size_type default_hfr_sizes[HFR_TBL_MAX_SIZE];
+    struct camera_size_type default_thumbnail_sizes[THUMB_TBL_MAX_SIZE];
+    unsigned int preview_sizes_count;
+    unsigned int video_sizes_count;
+    unsigned int thumbnail_sizes_count;
+    unsigned int hfr_sizes_count;
+
+
     bool mUseOverlay;
 
+    void loadTables();
     void initDefaultParameters();
     bool getMaxPictureDimension(mm_camera_dimension_t *dim);
 

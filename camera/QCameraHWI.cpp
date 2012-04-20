@@ -170,7 +170,8 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mStreamLiveSnap(NULL),
                     mExifTableNumEntries(0),
                     mDenoiseValue(0),
-                    mSnapshotFormat(0)
+                    mSnapshotFormat(0),
+                    mStartRecording(0)
 {
     LOGI("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;
@@ -216,6 +217,7 @@ QCameraHardwareInterface(int cameraId, int mode)
           return;
     }
 
+    loadTables();
     /* Setup Picture Size and Preview size tables */
     setPictureSizeTable();
     LOGD("%s: Picture table size: %d", __func__, mPictureSizeCount);

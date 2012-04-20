@@ -21,7 +21,6 @@
 #include <utils/threads.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-
 #include "QCameraHAL.h"
 #include "QCameraHWI.h"
 #include <gralloc_priv.h>
@@ -93,6 +92,7 @@ status_t QCameraStream_preview::getBufferFromSurface() {
     int numMinUndequeuedBufs = 0;
   int format = 0;
   status_t ret = NO_ERROR;
+  int gralloc_usage;
 
     LOGI(" %s : E ", __FUNCTION__);
 
@@ -142,15 +142,25 @@ status_t QCameraStream_preview::getBufferFromSurface() {
          ret = UNKNOWN_ERROR;
      goto end;
     }
-    err = mPreviewWindow->set_usage(mPreviewWindow,
-        CAMERA_GRALLOC_HEAP_ID |
-        CAMERA_GRALLOC_FALLBACK_HEAP_ID);
-	if(err != 0) {
-        /* set_usage error out */
-		LOGE("%s: set_usage rc = %d", __func__, err);
-		ret = UNKNOWN_ERROR;
-		goto end;
-	}
+    ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_GRALLOC_USAGE, &gralloc_usage);
+    if (ret != MM_CAMERA_OK) {
+        LOGE("get parm MM_CAMERA_PARM_GRALLOC_USAGE failed");
+        ret = BAD_VALUE;
+        goto end;
+    }
+    err = mPreviewWindow->set_usage(mPreviewWindow, gralloc_usage);
+    if(err != 0) {
+    /* set_usage error out */
+        LOGE("%s: set_usage rc = %d", __func__, err);
+        ret = UNKNOWN_ERROR;
+        goto end;
+    }
+    ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_VFE_OUTPUT_ENABLE, &mVFEOutputs);
+    if(ret != MM_CAMERA_OK) {
+        LOGE("get parm MM_CAMERA_PARM_VFE_OUTPUT_ENABLE  failed");
+        ret = BAD_VALUE;
+        goto end;
+    }
 	for (int cnt = 0; cnt < mHalCamCtrl->mPreviewMemory.buffer_count; cnt++) {
 		int stride;
 		err = mPreviewWindow->dequeue_buffer(mPreviewWindow,
@@ -616,6 +626,12 @@ status_t QCameraStream_preview::processPreviewFrame(mm_camera_ch_data_buf_t *fra
     /*Call buf done*/
     return BAD_VALUE;
   }
+  mHalCamCtrl->mCallbackLock.lock();
+  camera_data_timestamp_callback rcb = mHalCamCtrl->mDataCbTimestamp;
+  void *rdata = mHalCamCtrl->mCallbackCookie;
+  mHalCamCtrl->mCallbackLock.unlock();
+  nsecs_t timeStamp = seconds_to_nanoseconds(frame->def.frame->ts.tv_sec) ;
+  timeStamp += frame->def.frame->ts.tv_nsec;
 
   if (UNLIKELY(mHalCamCtrl->mDebugFps)) {
       mHalCamCtrl->debugShowPreviewFPS();
@@ -755,6 +771,31 @@ status_t QCameraStream_preview::processPreviewFrame(mm_camera_ch_data_buf_t *fra
 	  LOGD("end of cb");
   } else {
     LOGD("%s PCB is not enabled", __func__);
+  }
+  if(rcb != NULL && mVFEOutputs == 1)
+  {
+      if (mHalCamCtrl->mStoreMetaDataInFrame)
+      {
+          mStopCallbackLock.unlock();
+          if(mHalCamCtrl->mStartRecording == true &&
+                          ( mHalCamCtrl->mMsgEnabled & CAMERA_MSG_VIDEO_FRAME))
+          {
+              rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME,
+                      mHalCamCtrl->mRecordingMemory.metadata_memory[frame->def.idx],
+                      0, mHalCamCtrl->mCallbackCookie);
+          }
+      }
+      else
+      {
+           mStopCallbackLock.unlock();
+          if(mHalCamCtrl->mStartRecording == true &&
+                          ( mHalCamCtrl->mMsgEnabled & CAMERA_MSG_VIDEO_FRAME))
+          {
+              rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME,
+                      mHalCamCtrl->mPreviewMemory.camera_memory[frame->def.idx],
+                      0, mHalCamCtrl->mCallbackCookie);
+          }
+      }
   }
 
   /* Save the last displayed frame. We'll be using it to fill the gap between

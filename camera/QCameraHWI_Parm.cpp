@@ -102,7 +102,6 @@ extern "C" {
 #define THUMBNAIL_HEIGHT_STR "384"
 #define THUMBNAIL_SMALL_HEIGHT 144
 
-#define JPEG_THUMBNAIL_SIZE_COUNT (sizeof(jpeg_thumbnail_sizes)/sizeof(camera_size_type))
 #define DONT_CARE_COORDINATE -1
 
 //for histogram stats
@@ -129,96 +128,6 @@ static thumbnail_size_type thumbnail_sizes[] = {
 { 5461, 512, 384 }, //1.333333
 { 5006, 352, 288 }, //1.222222
 };
-#ifndef VFE_7X27A
-static camera_size_type jpeg_thumbnail_sizes[]  = {
-{ 512, 288 },
-{ 480, 288 },
-{ 432, 288 },
-{ 512, 384 },
-{ 352, 288 },
-{0,0}
-};
-
-static camera_size_type default_preview_sizes[] = {
-  { 1920, 1088}, //1080p
-  { 1280, 720}, // 720P, reserved
-  { 800, 480}, // WVGA
-  { 768, 432},
-  { 720, 480},
-  { 640, 480}, // VGA
-  { 576, 432},
-  { 480, 320}, // HVGA
-  { 384, 288},
-  { 352, 288}, // CIF
-  { 320, 240}, // QVGA
-  { 240, 160}, // SQVGA
-  { 176, 144}, // QCIF
-};
-static camera_size_type default_video_sizes[] = {
-  { 1920, 1088},// 1080p
-  { 1280, 720}, // 720p
-  { 800, 480},  // WVGA
-  { 720, 480},  // 480p
-  { 640, 480},  // VGA
-  { 480, 320},  // HVGA
-  { 352, 288},  // CIF
-  { 320, 240},  // QVGA
-  { 176, 144},  // QCIF
-};
-#else
- static camera_size_type jpeg_thumbnail_sizes[]  = {
-  { 800, 480}, // WVGA
-  { 864, 480},
-  { 768, 432},
-  { 720, 480},
-  { 640, 480}, // VGA
-  { 576, 432},
-  { 512, 384},
-  { 480, 320}, // HVGA
-  { 432, 240}, //WQVGA
-  { 384, 288},
-  { 352, 288}, // CIF
-  { 320, 240}, // QVGA
-  { 240, 160}, // SQVGA
-  { 176, 144}, // QCIF
-  {0,0}
-};
-
-static camera_size_type default_preview_sizes[] = {
-  { 800, 480}, // WVGA
-  { 864, 480},
-  { 768, 432},
-  { 720, 480},
-  { 640, 480}, // VGA
-  { 576, 432},
-  { 480, 320}, // HVGA
-  { 432, 240}, //WQVGA
-  { 384, 288},
-  { 352, 288}, // CIF
-  { 320, 240}, // QVGA
-  { 240, 160}, // SQVGA
-  { 176, 144}, // QCIF
-};
-
-static camera_size_type default_video_sizes[] = {
-  { 1920, 1088},// 1080p
-  { 1280, 720}, // 720p
-  { 800, 480},  // WVGA
-  { 864, 480},
-  { 768, 432},
-  { 720, 480},  // 480p
-  { 640, 480},  // VGA
-  { 576, 432},
-  { 480, 320},  // HVGA
-  { 432, 240}, //WQVGA
-  { 384, 288},
-  { 352, 288},  // CIF
-  { 320, 240},  // QVGA
-  { 240, 160}, // SQVGA
-  { 176, 144},  // QCIF
-};
-#endif
-#define DEFAULT_VIDEO_SIZES_COUNT (sizeof(default_video_sizes)/sizeof(camera_size_type))
 
 static struct camera_size_type zsl_picture_sizes[] = {
   { 1024, 768}, // 1MP XGA
@@ -247,22 +156,10 @@ static camera_size_type default_picture_sizes[] = {
   { 320, 240}, // QVGA
   { 176, 144} // QCIF
 };
-#ifndef VFE_7X27A
-static camera_size_type hfr_sizes[] = {
-  { 800, 480}, // WVGA
-  { 640, 480} // VGA
-};
-#else
- static camera_size_type hfr_sizes[] = {
-  { 432, 240}, //WQVGA
-  { 320, 240}  //QVGA
-};
-#endif
 
 static int iso_speed_values[] = {
     0, 1, 100, 200, 400, 800, 1600
 };
-
 
 extern int HAL_numOfCameras;
 extern int HAL_currentCameraId;
@@ -728,6 +625,56 @@ bool QCameraHardwareInterface::getMaxPictureDimension(mm_camera_dimension_t *max
           maxDim->width, maxDim->height);
     return ret;
 }
+void QCameraHardwareInterface::loadTables()
+{
+
+    bool ret = NO_ERROR;
+    LOGE("%s: E", __func__);
+
+    ret = cam_config_get_parm(mCameraId,
+            MM_CAMERA_PARM_PREVIEW_SIZES_CNT, &preview_sizes_count);
+
+    default_sizes_tbl_t preview_sizes_tbl;
+    preview_sizes_tbl.tbl_size=preview_sizes_count;
+    preview_sizes_tbl.sizes_tbl=&default_preview_sizes[0];
+    if(MM_CAMERA_OK != cam_config_get_parm(mCameraId,
+                            MM_CAMERA_PARM_DEF_PREVIEW_SIZES, &preview_sizes_tbl)){
+        LOGE("%s:Failed to get default preview sizes",__func__);
+    }
+    ret = cam_config_get_parm(mCameraId,
+                MM_CAMERA_PARM_VIDEO_SIZES_CNT, &video_sizes_count);
+
+    default_sizes_tbl_t video_sizes_tbl;
+    video_sizes_tbl.tbl_size=video_sizes_count;
+    video_sizes_tbl.sizes_tbl=&default_video_sizes[0];
+    if(MM_CAMERA_OK != cam_config_get_parm(mCameraId,
+                            MM_CAMERA_PARM_DEF_VIDEO_SIZES, &video_sizes_tbl)){
+        LOGE("%s:Failed to get default video sizes",__func__);
+    }
+
+    ret = cam_config_get_parm(mCameraId,
+                MM_CAMERA_PARM_THUMB_SIZES_CNT, &thumbnail_sizes_count);
+
+    default_sizes_tbl_t thumbnail_sizes_tbl;
+    thumbnail_sizes_tbl.tbl_size=thumbnail_sizes_count;
+    thumbnail_sizes_tbl.sizes_tbl=&default_thumbnail_sizes[0];
+    if(MM_CAMERA_OK != cam_config_get_parm(mCameraId,
+                            MM_CAMERA_PARM_DEF_THUMB_SIZES, &thumbnail_sizes_tbl)){
+        LOGE("%s:Failed to get default thumbnail sizes",__func__);
+    }
+
+    ret = cam_config_get_parm(mCameraId,
+                MM_CAMERA_PARM_HFR_SIZES_CNT, &hfr_sizes_count);
+
+    default_sizes_tbl_t hfr_sizes_tbl;
+    hfr_sizes_tbl.tbl_size=hfr_sizes_count;
+    hfr_sizes_tbl.sizes_tbl=&default_hfr_sizes[0];
+    if(MM_CAMERA_OK != cam_config_get_parm(mCameraId,
+                            MM_CAMERA_PARM_DEF_HFR_SIZES, &hfr_sizes_tbl)){
+        LOGE("%s:Failed to get default HFR  sizes",__func__);
+    }
+    LOGE("%s: X", __func__);
+}
 void QCameraHardwareInterface::initDefaultParameters()
 {
     bool ret;
@@ -817,7 +764,9 @@ void QCameraHardwareInterface::initDefaultParameters()
         }
         mHfrValues = str;
         mHfrSizeValues = create_sizes_str(
-                hfr_sizes, HFR_SIZE_COUNT);
+                default_hfr_sizes, hfr_sizes_count);
+        mHfrValues = create_values_str(
+            hfr,sizeof(hfr)/sizeof(str_map));
         mFpsRangesSupportedValues = create_fps_str(
             FpsRangesSupported,FPS_RANGES_SUPPORTED_COUNT );
         mParameters.set(
@@ -998,7 +947,7 @@ void QCameraHardwareInterface::initDefaultParameters()
     mDimension.ui_thumbnail_height =
             thumbnail_sizes[DEFAULT_THUMBNAIL_SETTING].height;
     mParameters.set(CameraParameters::KEY_JPEG_THUMBNAIL_QUALITY, "90");
-    String8 valuesStr = create_sizes_str(jpeg_thumbnail_sizes, JPEG_THUMBNAIL_SIZE_COUNT);
+    String8 valuesStr = create_sizes_str(default_thumbnail_sizes, thumbnail_sizes_count);
     mParameters.set(CameraParameters::KEY_SUPPORTED_JPEG_THUMBNAIL_SIZES,
                 valuesStr.string());
     // Define CAMERA_SMOOTH_ZOOM in Android.mk file , to enable smoothzoom
@@ -2443,7 +2392,7 @@ status_t QCameraHardwareInterface::setVideoSize(const CameraParameters& params)
     mDimension.video_width = videoWidth;
     mDimension.video_height = videoHeight;
 
-    LOGE("%s: E", __func__);
+    LOGE("%s: X", __func__);
     return NO_ERROR;
 }
 
@@ -2583,9 +2532,9 @@ status_t QCameraHardwareInterface::setJpegThumbnailSize(const CameraParameters& 
     LOGE("requested jpeg thumbnail size %d x %d", width, height);
 
     // Validate the picture size
-    for (unsigned int i = 0; i < JPEG_THUMBNAIL_SIZE_COUNT; ++i) {
-       if (width == jpeg_thumbnail_sizes[i].width
-         && height == jpeg_thumbnail_sizes[i].height) {
+    for (unsigned int i = 0; i < thumbnail_sizes_count; ++i) {
+       if (width == default_thumbnail_sizes[i].width
+         && height == default_thumbnail_sizes[i].height) {
            mParameters.set(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH, width);
            mParameters.set(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT, height);
            return NO_ERROR;
@@ -3409,8 +3358,8 @@ status_t QCameraHardwareInterface::setPreviewSizeTable(void)
 
     /* Initialize table with default values */
     preview_size_table = default_preview_sizes;
-    preview_table_size = sizeof(default_preview_sizes)/
-        sizeof(default_preview_sizes[0]);
+    preview_table_size = preview_sizes_count;
+
 
     /* Get maximum preview size supported by sensor*/
     memset(&dim, 0, sizeof(mm_camera_dimension_t));
@@ -3459,7 +3408,7 @@ status_t QCameraHardwareInterface::setPictureSizeTable(void)
 
     /* Initialize table with default values */
     picture_table_size = sizeof(default_picture_sizes)/
-        sizeof(default_preview_sizes[0]);
+        sizeof(default_picture_sizes[0]);
     picture_size_table = default_picture_sizes;
     mPictureSizes =
         ( struct camera_size_type *)malloc(picture_table_size *
@@ -3521,7 +3470,7 @@ status_t QCameraHardwareInterface::setVideoSizeTable(void)
     LOGE("%s: E", __func__);
 
     /* Initialize table with default values */
-    video_table_size = DEFAULT_VIDEO_SIZES_COUNT;
+    video_table_size = video_sizes_count;
     video_size_table = default_video_sizes;
     mVideoSizes =
         (struct camera_size_type *)malloc(video_table_size *

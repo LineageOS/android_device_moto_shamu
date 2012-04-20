@@ -154,7 +154,18 @@ typedef enum {
     MM_CAMERA_PARM_AEC_MTR_AREA,
     MM_CAMERA_PARM_LOW_POWER_MODE,
     MM_CAMERA_PARM_MAX_HFR_MODE, /* 80 */
-    MM_CAMERA_PARM_MAX_VIDEO_SIZE, /* 70 */
+    MM_CAMERA_PARM_MAX_VIDEO_SIZE,
+    MM_CAMERA_PARM_DEF_PREVIEW_SIZES,
+    MM_CAMERA_PARM_DEF_VIDEO_SIZES,
+    MM_CAMERA_PARM_DEF_THUMB_SIZES,
+    MM_CAMERA_PARM_DEF_HFR_SIZES,
+    MM_CAMERA_PARM_PREVIEW_SIZES_CNT,
+    MM_CAMERA_PARM_VIDEO_SIZES_CNT,
+    MM_CAMERA_PARM_THUMB_SIZES_CNT,
+    MM_CAMERA_PARM_HFR_SIZES_CNT,
+    MM_CAMERA_PARM_GRALLOC_USAGE,
+    MM_CAMERA_PARM_VFE_OUTPUT_ENABLE, //to check whether both oputputs are
+    //or single output enabled to differentiate 7x27a with others
     MM_CAMERA_PARM_MAX
 } mm_camera_parm_type_t;
 
@@ -525,6 +536,12 @@ typedef enum {
     MM_CAMERA_PAD_2K,
     MM_CAMERA_PAD_MAX
 } mm_camera_pad_type_t;
+
+typedef struct
+{
+    struct camera_size_type *sizes_tbl;
+    uint32_t tbl_size;
+}default_sizes_tbl_t;
 
 /*configure methods*/
 uint8_t cam_config_is_parm_supported(
