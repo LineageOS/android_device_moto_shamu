@@ -329,6 +329,8 @@ end:
       LOGD("%s: Complete JPEG Encoding Done!", __func__);
       setSnapshotState(SNAPSHOT_STATE_JPEG_COMPLETE_ENCODE_DONE);
       mBurstModeFlag = false;
+      mSnapshotQueue.flush();
+      mNumOfRecievedJPEG = 0;
       /* in case of zsl, we need to reset some of the zsl attributes */
       if (isZSLMode()){
           LOGD("%s: Resetting the ZSL attributes", __func__);
