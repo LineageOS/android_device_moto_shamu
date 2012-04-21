@@ -2575,6 +2575,11 @@ status_t QCameraHardwareInterface::setPictureSize(const CameraParameters& params
     for (int i = 0; i < mSupportedPictureSizesCount; ++i) {
         if (width == mPictureSizesPtr[i].width
           && height == mPictureSizesPtr[i].height) {
+            int old_width, old_height;
+            mParameters.getPictureSize(&old_width,&old_height);
+            if(width != old_width || height != old_height) {
+                mRestartPreview = true;
+            }
             mParameters.setPictureSize(width, height);
             mDimension.picture_width = width;
             mDimension.picture_height = height;

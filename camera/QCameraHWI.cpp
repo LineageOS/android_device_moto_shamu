@@ -178,7 +178,8 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mSkinToneEnhancement(0),
                     mRotation(0),
                     mFocusMode(AF_MODE_MAX),
-                    mPreviewFormat(CAMERA_YUV_420_NV21)
+                    mPreviewFormat(CAMERA_YUV_420_NV21),
+                    mRestartPreview(false)
 {
     LOGI("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;
@@ -1175,11 +1176,11 @@ void QCameraHardwareInterface::stopPreviewInternal()
         return;
     }
 
-    mStreamDisplay->stop();
     if(isZSLMode()) {
         /* take care snapshot object for ZSL mode */
         mStreamSnap->stop();
     }
+    mStreamDisplay->stop();
 
     mCameraState = CAMERA_STATE_PREVIEW_STOP_CMD_SENT;
     LOGI("stopPreviewInternal: X");
@@ -2462,25 +2463,12 @@ bool QCameraHardwareInterface::isNoDisplayMode()
 
 void QCameraHardwareInterface::pausePreviewForZSL()
 {
-    status_t ret = NO_ERROR;
-    bool matching = TRUE;
-    int width,height;
-    cam_ctrl_dimension_t dim;
-
-    memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
-    ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DIMENSION,&dim);
-
-    getPictureSize(&width, &height);
-
-    if(dim.picture_width != width || dim.picture_height != height) {
-        LOGE("%s : Picture dimension changed.. Restart preview to reconfgure",__func__);
-        matching = false;
-    }
-    if(!matching) {
+    if(mRestartPreview) {
         stopPreviewInternal();
         mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
         startPreview2();
         mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
+        mRestartPreview = false;
     }
 }
 }; // namespace android

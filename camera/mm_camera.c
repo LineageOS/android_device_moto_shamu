@@ -648,8 +648,10 @@ int32_t mm_camera_prepare_buf(mm_camera_obj_t * my_obj, mm_camera_reg_buf_t *buf
 int32_t mm_camera_unprepare_buf(mm_camera_obj_t * my_obj, mm_camera_channel_type_t ch_type)
 {
     int32_t rc = -MM_CAMERA_E_GENERAL;
+    pthread_mutex_lock(&my_obj->ch[ch_type].mutex);
     rc = mm_camera_ch_fn(my_obj, ch_type,
                     MM_CAMERA_STATE_EVT_UNREG_BUF, NULL);
+    pthread_mutex_unlock(&my_obj->ch[ch_type].mutex);
     return rc;
 }
 
