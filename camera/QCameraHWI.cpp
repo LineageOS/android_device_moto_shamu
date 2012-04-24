@@ -2199,6 +2199,7 @@ ION_MAP_FAILED:
   ioctl(p_camera_memory->main_ion_fd[cnt], ION_IOC_FREE, &handle_data);
 ION_ALLOC_FAILED:
   close(p_camera_memory->main_ion_fd[cnt]);
+  p_camera_memory->main_ion_fd[cnt] = -1;
 ION_OPEN_FAILED:
   return -1;
 }
@@ -2208,9 +2209,12 @@ int QCameraHardwareInterface::deallocate_ion_memory(QCameraHalHeap_t *p_camera_m
   struct ion_handle_data handle_data;
   int rc = 0;
 
-  handle_data.handle = p_camera_memory->ion_info_fd[cnt].handle;
-  ioctl(p_camera_memory->main_ion_fd[cnt], ION_IOC_FREE, &handle_data);
-  close(p_camera_memory->main_ion_fd[cnt]);
+  if (p_camera_memory->main_ion_fd[cnt] > 0) {
+      handle_data.handle = p_camera_memory->ion_info_fd[cnt].handle;
+      ioctl(p_camera_memory->main_ion_fd[cnt], ION_IOC_FREE, &handle_data);
+      close(p_camera_memory->main_ion_fd[cnt]);
+      p_camera_memory->main_ion_fd[cnt] = -1;
+  }
   return rc;
 }
 
@@ -2251,6 +2255,7 @@ ION_MAP_FAILED:
   ioctl(p_camera_memory->main_ion_fd[cnt], ION_IOC_FREE, &handle_data);
 ION_ALLOC_FAILED:
   close(p_camera_memory->main_ion_fd[cnt]);
+  p_camera_memory->main_ion_fd[cnt] = -1;
 ION_OPEN_FAILED:
   return -1;
 }
@@ -2260,9 +2265,12 @@ int QCameraHardwareInterface::deallocate_ion_memory(QCameraStatHeap_t *p_camera_
   struct ion_handle_data handle_data;
   int rc = 0;
 
-  handle_data.handle = p_camera_memory->ion_info_fd[cnt].handle;
-  ioctl(p_camera_memory->main_ion_fd[cnt], ION_IOC_FREE, &handle_data);
-  close(p_camera_memory->main_ion_fd[cnt]);
+  if (p_camera_memory->main_ion_fd[cnt] > 0) {
+      handle_data.handle = p_camera_memory->ion_info_fd[cnt].handle;
+      ioctl(p_camera_memory->main_ion_fd[cnt], ION_IOC_FREE, &handle_data);
+      close(p_camera_memory->main_ion_fd[cnt]);
+      p_camera_memory->main_ion_fd[cnt] = -1;
+  }
   return rc;
 }
 
@@ -2291,6 +2299,10 @@ int QCameraHardwareInterface::initHeapMem( QCameraHalHeap_t *heap,
         return rc;
     }
     memset(heap, 0, sizeof(QCameraHalHeap_t));
+    for (i=0; i<MM_CAMERA_MAX_NUM_FRAMES;i++) {
+        heap->main_ion_fd[i] = -1;
+        heap->fd[i] = -1;
+    }
     heap->buffer_count = num_of_buf;
     heap->size = buf_len;
     heap->y_offset = y_off;

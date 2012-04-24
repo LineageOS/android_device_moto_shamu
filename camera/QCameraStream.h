@@ -174,6 +174,7 @@ public:
   status_t takeLiveSnapshot();
 private:
   QCameraStream_record(int, camera_mode_t);
+  void releaseEncodeBuffer();
 
   cam_ctrl_dimension_t             dim;
   bool mDebugFps;

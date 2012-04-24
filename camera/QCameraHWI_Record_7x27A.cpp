@@ -644,6 +644,20 @@ status_t QCameraStream_record::initEncodeBuffers()
     return NO_ERROR;
 }
 
+void QCameraStream_record::releaseEncodeBuffer() {
+  for(int cnt = 0; cnt < mHalCamCtrl->mPreviewMemory.buffer_count; cnt++) {
+    if (mHalCamCtrl->mStoreMetaDataInFrame) {
+      struct encoder_media_buffer_type * packet =
+          (struct encoder_media_buffer_type  *)
+          mHalCamCtrl->mRecordingMemory.metadata_memory[cnt]->data;
+      native_handle_delete(const_cast<native_handle_t *>(packet->meta_handle));
+      mHalCamCtrl->mRecordingMemory.metadata_memory[cnt]->release(
+        mHalCamCtrl->mRecordingMemory.metadata_memory[cnt]);
+
+    }
+  }
+}
+
 void QCameraStream_record::releaseRecordingFrame(const void *opaque)
 {
     LOGE("%s : BEGIN, opaque = 0x%p",__func__, opaque);

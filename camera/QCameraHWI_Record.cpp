@@ -169,13 +169,14 @@ status_t QCameraStream_record::start()
   ret = initEncodeBuffers();
   if (NO_ERROR!=ret) {
     LOGE("%s ERROR: Buffer Allocation Failed\n",__func__);
-    return ret;
+    goto error;
   }
 
   ret = cam_config_prepare_buf(mCameraId, &mRecordBuf);
   if(ret != MM_CAMERA_OK) {
     LOGV("%s ERROR: Reg Record buf err=%d\n", __func__, ret);
     ret = BAD_VALUE;
+    goto error;
   }else{
     ret = NO_ERROR;
   }
@@ -187,6 +188,7 @@ status_t QCameraStream_record::start()
   if (MM_CAMERA_OK != ret) {
     LOGE ("%s ERROR: Video streaming start err=%d\n", __func__, ret);
     ret = BAD_VALUE;
+    goto error;
   }else{
     LOGE("%s : Video streaming Started",__func__);
     ret = NO_ERROR;
@@ -194,6 +196,38 @@ status_t QCameraStream_record::start()
   mActive = true;
   LOGV("%s: END", __func__);
   return ret;
+
+error:
+  releaseEncodeBuffer();
+  LOGV("%s: END", __func__);
+  return ret;
+}
+
+void QCameraStream_record::releaseEncodeBuffer() {
+  for(int cnt = 0; cnt < mHalCamCtrl->mRecordingMemory.buffer_count; cnt++) {
+    if (mHalCamCtrl->mStoreMetaDataInFrame) {
+      struct encoder_media_buffer_type * packet =
+          (struct encoder_media_buffer_type  *)
+          mHalCamCtrl->mRecordingMemory.metadata_memory[cnt]->data;
+      native_handle_delete(const_cast<native_handle_t *>(packet->meta_handle));
+      mHalCamCtrl->mRecordingMemory.metadata_memory[cnt]->release(
+        mHalCamCtrl->mRecordingMemory.metadata_memory[cnt]);
+
+    }
+    mHalCamCtrl->mRecordingMemory.camera_memory[cnt]->release(
+      mHalCamCtrl->mRecordingMemory.camera_memory[cnt]);
+    close(mHalCamCtrl->mRecordingMemory.fd[cnt]);
+    mHalCamCtrl->mRecordingMemory.fd[cnt] = -1;
+
+#ifdef USE_ION
+    mHalCamCtrl->deallocate_ion_memory(&mHalCamCtrl->mRecordingMemory, cnt);
+#endif
+  }
+  memset(&mHalCamCtrl->mRecordingMemory, 0, sizeof(mHalCamCtrl->mRecordingMemory));
+  //mNumRecordFrames = 0;
+  delete[] recordframes;
+  if (mRecordBuf.video.video.buf.mp)
+    delete[] mRecordBuf.video.video.buf.mp;
 }
 
 // ---------------------------------------------------------------------------
@@ -242,30 +276,7 @@ void QCameraStream_record::stop()
     LOGE("%s ERROR: Ureg video buf \n", __func__);
   }
 
-  for(int cnt = 0; cnt < mHalCamCtrl->mRecordingMemory.buffer_count; cnt++) {
-    if (mHalCamCtrl->mStoreMetaDataInFrame) {
-      struct encoder_media_buffer_type * packet =
-          (struct encoder_media_buffer_type  *)
-          mHalCamCtrl->mRecordingMemory.metadata_memory[cnt]->data;
-      native_handle_delete(const_cast<native_handle_t *>(packet->meta_handle));
-      mHalCamCtrl->mRecordingMemory.metadata_memory[cnt]->release(
-		    mHalCamCtrl->mRecordingMemory.metadata_memory[cnt]);
-
-    }
-	  mHalCamCtrl->mRecordingMemory.camera_memory[cnt]->release(
-		  mHalCamCtrl->mRecordingMemory.camera_memory[cnt]);
-	  close(mHalCamCtrl->mRecordingMemory.fd[cnt]);
-
-#ifdef USE_ION
-    mHalCamCtrl->deallocate_ion_memory(&mHalCamCtrl->mRecordingMemory, cnt);
-#endif
-  }
-  memset(&mHalCamCtrl->mRecordingMemory, 0, sizeof(mHalCamCtrl->mRecordingMemory));
-  //mNumRecordFrames = 0;
-  delete[] recordframes;
-  if (mRecordBuf.video.video.buf.mp)
-    delete[] mRecordBuf.video.video.buf.mp;
-
+  releaseEncodeBuffer();
 
   mActive = false;
   LOGV("%s: END", __func__);
@@ -421,6 +432,11 @@ status_t QCameraStream_record::initEncodeBuffers()
 					 buf_cnt * sizeof(mm_camera_mp_buf_t));
 
     memset(&mHalCamCtrl->mRecordingMemory, 0, sizeof(mHalCamCtrl->mRecordingMemory));
+    for (int i=0; i<MM_CAMERA_MAX_NUM_FRAMES;i++) {
+        mHalCamCtrl->mRecordingMemory.main_ion_fd[i] = -1;
+        mHalCamCtrl->mRecordingMemory.fd[i] = -1;
+    }
+
     mHalCamCtrl->mRecordingMemory.buffer_count = buf_cnt;
 
 		mHalCamCtrl->mRecordingMemory.size = frame_len;
