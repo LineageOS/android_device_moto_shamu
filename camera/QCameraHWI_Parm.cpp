@@ -166,8 +166,7 @@ static int iso_speed_values[] = {
 };
 
 extern int HAL_numOfCameras;
-extern int HAL_currentCameraId;
-extern camera_info_t * HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
+extern camera_info_t HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
 extern mm_camera_t * HAL_camerahandle[MSM_MAX_CAMERA_SENSORS];
 
 namespace android {
@@ -3085,12 +3084,10 @@ status_t QCameraHardwareInterface::setGpsLocation(const CameraParameters& params
 status_t QCameraHardwareInterface::setRotation(const CameraParameters& params)
 {
     status_t rc = NO_ERROR;
-    int sensor_mount_angle = HAL_cameraInfo[HAL_currentCameraId]->sensor_mount_angle;
     int rotation = params.getInt(CameraParameters::KEY_ROTATION);
     if (rotation != NOT_FOUND) {
         if (rotation == 0 || rotation == 90 || rotation == 180
             || rotation == 270) {
-          rotation = rotation + sensor_mount_angle;
           mParameters.set(CameraParameters::KEY_ROTATION, rotation);
           mRotation = rotation;
         } else {
