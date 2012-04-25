@@ -874,12 +874,6 @@ void *QCameraStream_preview::getLastQueuedFrame(void)
     return mLastQueuedFrame;
 }
 
-/* Set preview pause flag */
-void QCameraStream_preview::setPreviewPauseFlag(bool bPaused)
-{
-    mbPausedBySnapshot = bPaused;
-}
-
 status_t QCameraStream_preview::initPreviewOnlyBuffers()
 {
   /*1. for 7x27a, this shall not called;

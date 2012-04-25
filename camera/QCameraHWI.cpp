@@ -356,11 +356,6 @@ void QCameraHardwareInterface::release()
     default:
         break;
     }
-    // when camera is released,
-    // we need to set preview window to NULL
-    // to trigger returning buffers to surface if it's not done yet
-    if(mStreamDisplay)
-        mStreamDisplay->setPreviewWindow(NULL);
 #if 0
     if (isRecordingRunning()) {
         stopRecordingInternal();
@@ -970,6 +965,7 @@ status_t QCameraHardwareInterface::startPreview()
     Mutex::Autolock lock(mLock);
     switch(mPreviewState) {
     case QCAMERA_HAL_PREVIEW_STOPPED:
+    case QCAMERA_HAL_TAKE_PICTURE:
         mPreviewState = QCAMERA_HAL_PREVIEW_START;
         LOGE("%s:  HAL::startPreview begin", __func__);
 
@@ -988,13 +984,6 @@ status_t QCameraHardwareInterface::startPreview()
     break;
     case QCAMERA_HAL_RECORDING_STARTED:
         LOGE("%s: cannot start preview in recording state", __func__);
-        break;
-    case QCAMERA_HAL_TAKE_PICTURE:
-        LOGI("%s: start preview after SNAPSHOT state", __func__);
-        mPreviewState = QCAMERA_HAL_PREVIEW_START;
-        retVal = startPreview2();
-        if(retVal == NO_ERROR)
-            mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
         break;
     default:
         LOGE("%s: unknow state %d received", __func__, mPreviewState);
@@ -1457,9 +1446,6 @@ status_t QCameraHardwareInterface::cancelPictureInternal()
 
 void QCameraHardwareInterface::pausePreviewForSnapshot()
 {
-    if (mStreamDisplay && !isNoDisplayMode()) {
-        mStreamDisplay->setPreviewPauseFlag(TRUE);
-    }
     stopPreviewInternal( );
 }
 status_t QCameraHardwareInterface::resumePreviewAfterSnapshot()
