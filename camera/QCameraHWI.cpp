@@ -171,7 +171,8 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mExifTableNumEntries(0),
                     mDenoiseValue(0),
                     mSnapshotFormat(0),
-                    mStartRecording(0)
+                    mStartRecording(0),
+                    mZslInterval(1)
 {
     LOGI("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;
@@ -1495,7 +1496,7 @@ void liveshot_callback(mm_camera_ch_data_buf_t *recvd_frame,
         LOGE("%s: X", __func__);
     }
 
-#if 1 
+#if 1
     LOGE("Live Snapshot Enabled");
     frame->snapshot.main.frame = frame->video.video.frame;
     frame->snapshot.main.idx = frame->video.video.idx;

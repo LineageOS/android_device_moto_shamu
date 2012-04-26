@@ -452,6 +452,8 @@ public:
     static QCameraHardwareInterface *createInstance(int, int);
 	//QCameraHardwareInterface(int cameraId, int mode);
     status_t setZSLBurstLookBack(const CameraParameters& params);
+    status_t setZSLBurstInterval(const CameraParameters& params);
+    int getZSLBurstInterval(void);
 	int getZSLQueueDepth(void) const;
 	int getZSLBackLookCount(void) const;
     //QCameraHardwareInterface(int  cameraId, int mode);
@@ -707,6 +709,7 @@ private:
     bool mStartRecording;
     int mHdrMode;
     int mSnapshotFormat;
+    int mZslInterval;
 
 /*for histogram*/
     int            mStatsOn;

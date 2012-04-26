@@ -274,6 +274,7 @@ static int32_t mm_camera_ch_util_stream_null_val(mm_camera_obj_t * my_obj,
                                 NULL);
             break;
         case MM_CAMERA_CH_SNAPSHOT:
+            my_obj->ch[ch_type].snapshot.expected_matching_id = 0;
             rc = mm_camera_stream_fsm_fn_vtbl(my_obj,
                             &my_obj->ch[ch_type].snapshot.main, evt,
                             NULL);
