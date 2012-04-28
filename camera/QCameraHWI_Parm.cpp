@@ -844,7 +844,7 @@ void QCameraHardwareInterface::initDefaultParameters()
         denoise_value = create_values_str(
             denoise, sizeof(denoise) / sizeof(str_map));
 
-       if(mHasAutoFocusSupport && supportsFaceDetection()) {
+       if(supportsFaceDetection()) {
             mFaceDetectionValues = create_values_str(
                 facedetection, sizeof(facedetection) / sizeof(str_map));
         }
