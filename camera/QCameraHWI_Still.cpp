@@ -375,8 +375,14 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
     mHalCamCtrl->getPictureSize(&mPictureWidth, &mPictureHeight);
     LOGD("%s: Picture size received: %d x %d", __func__,
          mPictureWidth, mPictureHeight);
-    mPostviewWidth = mHalCamCtrl->mParameters.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
-    mPostviewHeight =  mHalCamCtrl->mParameters.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
+    /*Current VFE software design requires picture size >= display size for ZSL*/
+    if (isZSLMode()){
+      mPostviewWidth = dim->display_width;
+      mPostviewHeight = dim->display_height;
+    } else {
+      mPostviewWidth = mHalCamCtrl->mParameters.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
+      mPostviewHeight =  mHalCamCtrl->mParameters.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
+    }
     /*If application requested thumbnail size to be (0,0) 
        then configure second outout to a default size.
        Jpeg encoder will drop thumbnail as reflected in encodeParams.
