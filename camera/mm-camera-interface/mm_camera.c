@@ -975,17 +975,23 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj,
 
     LOGE("%s:  after while loop for domain socket open", __func__);
     if (my_obj->ds_fd <= 0) {
-        CDBG("%s: cannot open domain socket fd of '%s' Errno = %d\n",
+        CDBG_ERROR("%s: cannot open domain socket fd of '%s' Errno = %d\n",
                  __func__, mm_camera_util_get_dev_name(my_obj),errno);
+        close(my_obj->ctrl_fd);
+        my_obj->ctrl_fd = -1;
         return -MM_CAMERA_E_GENERAL;
     }
 
     /* set ctrl_fd to be the mem_mapping fd */
     rc =  mm_camera_util_s_ctrl(my_obj->ctrl_fd,
                         MSM_V4L2_PID_MMAP_INST, 0);
-    if (rc < 0) {
-        CDBG("error: ioctl VIDIOC_S_CTRL MSM_V4L2_PID_MMAP_INST failed: %s\n",
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("error: ioctl VIDIOC_S_CTRL MSM_V4L2_PID_MMAP_INST failed: %s\n",
         strerror(errno));
+        close(my_obj->ctrl_fd);
+        close(my_obj->ds_fd);
+        my_obj->ctrl_fd = -1;
+        my_obj->ds_fd = -1;
         return -MM_CAMERA_E_GENERAL;
     }
     if(op_mode != MM_CAMERA_OP_MODE_NOTUSED)
@@ -1003,7 +1009,11 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj,
                                         sizeof(cam_prop_t),
                                         (void *)& my_obj->properties);
     if (rc != MM_CAMERA_OK) {
-        CDBG("%s: cannot get camera capabilities\n", __func__);
+        CDBG_ERROR("%s: cannot get camera capabilities\n", __func__);
+        close(my_obj->ctrl_fd);
+        close(my_obj->ds_fd);
+        my_obj->ctrl_fd = -1;
+        my_obj->ds_fd = -1;
         return -MM_CAMERA_E_GENERAL;
     }
 
