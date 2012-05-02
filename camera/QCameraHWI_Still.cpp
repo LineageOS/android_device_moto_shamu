@@ -1572,61 +1572,14 @@ end:
 void QCameraStream_Snapshot::notifyShutter(common_crop_t *crop,
                                            bool mPlayShutterSoundOnly)
 {
-    //image_rect_type size;
-    int32_t ext1 = 0, ext2 = 0;
-    int32_t shutterMsg;
-
-    camera_notify_callback         notifyCb;
     LOGD("%s: E", __func__);
-
-    mStopCallbackLock.lock();
-    ext2 = mPlayShutterSoundOnly;
-    LOGD("%s: Calling callback to play shutter sound", __func__);
-    notifyCb =  mHalCamCtrl->mNotifyCb;
-    shutterMsg = mHalCamCtrl->mMsgEnabled & CAMERA_MSG_SHUTTER;
-    mStopCallbackLock.unlock();
-
-    if( notifyCb ) {
-      notifyCb(CAMERA_MSG_SHUTTER, ext1, ext2,
+    if(!mActive && !isLiveSnapshot()) {
+      LOGE("__debbug: Snapshot thread stopped \n");
+      return;
+    }
+    if(mHalCamCtrl->mNotifyCb)
+      mHalCamCtrl->mNotifyCb(CAMERA_MSG_SHUTTER, 0, mPlayShutterSoundOnly,
                                  mHalCamCtrl->mCallbackCookie);
-      if(mPlayShutterSoundOnly) {
-        /* At this point, invoke Notify Callback to play shutter sound only.
-         * We want to call notify callback again when we have the
-         * yuv picture ready. This is to reduce blanking at the time
-         * of displaying postview frame. Using ext2 to indicate whether
-         * to play shutter sound only or register the postview buffers.
-         */
-         ext2 = mPlayShutterSoundOnly;
-        LOGD("%s: Calling callback to play shutter sound", __func__);
-        notifyCb(CAMERA_MSG_SHUTTER, ext1, ext2,
-                   mHalCamCtrl->mCallbackCookie);
-        return;
-    }
-
-
-    if (shutterMsg ) {
-        mDisplayHeap = mPostviewHeap;
-        if (crop != NULL && (crop->in1_w != 0 && crop->in1_h != 0)) {
-            LOGD("%s: Size from cropinfo: %dX%d", __func__,
-                 crop->in1_w, crop->in1_h);
-        }
-        else {
-            LOGD("%s: Size from global: %dX%d", __func__,
-                 mPostviewWidth, mPostviewHeight);
-        }
-        /*if(strTexturesOn == true) {
-            size.width = mPictureWidth;
-            size.height = mPictureHeight;
-        }*/
-        /* Now, invoke Notify Callback to unregister preview buffer
-         * and register postview buffer with surface flinger. Set ext2
-         * as 0 to indicate not to play shutter sound.
-         */
-
-        notifyCb(CAMERA_MSG_SHUTTER, ext1, ext2,
-                                     mHalCamCtrl->mCallbackCookie);
-      }
-    }
     LOGD("%s: X", __func__);
 }
 
