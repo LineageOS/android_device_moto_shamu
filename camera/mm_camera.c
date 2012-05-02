@@ -255,7 +255,7 @@ int32_t mm_camera_set_general_parm(mm_camera_obj_t * my_obj, mm_camera_parm_t *p
         return mm_camera_ctrl_set_specialEffect (my_obj, *((int *)(parm->p_value)));
     case MM_CAMERA_PARM_FPS:
         return mm_camera_send_native_ctrl_cmd(my_obj,
-                    CAMERA_SET_PARM_FPS, sizeof(uint16_t), (void *)parm->p_value);
+                    CAMERA_SET_PARM_FPS, sizeof(uint32_t), (void *)parm->p_value);
     case MM_CAMERA_PARM_FPS_MODE:
         return mm_camera_send_native_ctrl_cmd(my_obj,
                     CAMERA_SET_FPS_MODE, sizeof(int32_t), (void *)parm->p_value);
