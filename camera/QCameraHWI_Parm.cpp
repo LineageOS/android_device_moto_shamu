@@ -86,6 +86,7 @@ extern "C" {
 //Default FPS
 #define MINIMUM_FPS 5
 #define MAXIMUM_FPS 31
+#define DEFAULT_FIXED_FPS 30
 #define DEFAULT_FPS MAXIMUM_FPS
 
 //Default Picture Width
@@ -891,11 +892,11 @@ void QCameraHardwareInterface::initDefaultParameters()
     if (cam_config_is_parm_supported(mCameraId, MM_CAMERA_PARM_FPS)) {
         mParameters.set(CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES,
                         mPreviewFrameRateValues.string());
-     } /* else {
+     } else {
         mParameters.set(
             CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES,
-            DEFAULT_FPS);
-    }*/
+            DEFAULT_FIXED_FPS);
+    }
 
     //Set Preview Frame Rate Modes
     mParameters.setPreviewFrameRateMode("frame-rate-auto");
