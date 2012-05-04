@@ -367,6 +367,9 @@ private:
     bool                    mIsDoingWDN; // flag to indicate if WDN is going on (one frame is sent out for WDN)
 	bool                    mDropThumbnail;
 	int                     mJpegQuality;
+
+    bool                    mIsRawChAcquired;
+    bool                    mIsJpegChAcquired;
 }; // QCameraStream_Snapshot
 
 

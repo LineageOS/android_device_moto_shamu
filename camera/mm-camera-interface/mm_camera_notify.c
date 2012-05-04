@@ -114,11 +114,20 @@ int mm_camera_zsl_frame_cmp_and_enq(mm_camera_obj_t * my_obj,
         peerstream = &my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.main;
     } else
         peerstream = &my_obj->ch[MM_CAMERA_CH_PREVIEW].preview.stream;
+
     myq = &mystream->frame.readyq;
     peerq = &peerstream->frame.readyq;
     watermark = my_obj->ch[MM_CAMERA_CH_SNAPSHOT].buffering_frame.water_mark;
     interval = my_obj->ch[MM_CAMERA_CH_SNAPSHOT].buffering_frame.interval;
     expected_id = my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.expected_matching_id;
+
+    if(MM_CAMERA_STREAM_STATE_NOTUSED == mystream->state || MM_CAMERA_STREAM_STATE_NOTUSED == peerstream->state) {
+        CDBG_ERROR("%s: one or two streams have been released, not processing here", __func__);
+        pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_SNAPSHOT].mutex);
+        pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_PREVIEW].mutex);
+        return rc;
+    }
+
     peer_frame = peerq->tail;
     /* for 30-120 fps streaming no need to consider the wrapping back of frame_id
        expected_matching_id is used when requires skipping bwtween frames */
@@ -331,6 +340,12 @@ end:
     }
 
     CDBG("%s Dispatching ZSL frame ", __func__);
+    if(MM_CAMERA_STREAM_STATE_NOTUSED == mystream->state || MM_CAMERA_STREAM_STATE_NOTUSED == peerstream->state) {
+        CDBG("%s: one or two streams have been released, not processing here", __func__);
+        pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_SNAPSHOT].mutex);
+        pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_PREVIEW].mutex);
+        return 0;
+    }
     if(my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.pending_cnt > 0) {
         if(!myq->match_cnt || !peerq->match_cnt) {
             pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_SNAPSHOT].mutex);

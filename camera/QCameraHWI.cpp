@@ -1604,6 +1604,13 @@ status_t  QCameraHardwareInterface::takePicture()
     int mNuberOfVFEOutputs = 0;
     Mutex::Autolock lock(mLock);
 
+    // if we have liveSnapshot instance,
+    // we need to delete it here to release teh channel it acquires
+    if (NULL != mStreamLiveSnap) {
+        delete(mStreamLiveSnap);
+        mStreamLiveSnap = NULL;
+    }
+
     mStreamSnap->resetSnapshotCounters( );
     switch(mPreviewState) {
     case QCAMERA_HAL_PREVIEW_STARTED:

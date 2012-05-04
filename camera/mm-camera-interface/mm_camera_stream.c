@@ -154,8 +154,9 @@ void mm_camera_stream_frame_refill_q(mm_camera_frame_queue_t *q, mm_camera_frame
 
 void mm_camera_stream_deinit_frame(mm_camera_stream_frame_t *frame)
 {
-    pthread_mutex_destroy(&frame->mutex);
+    mm_stream_frame_flash_q(&frame->readyq);
     mm_camera_stream_deinit_q(&frame->readyq);
+    pthread_mutex_destroy(&frame->mutex);
     memset(frame, 0, sizeof(mm_camera_stream_frame_t));
 }
 
@@ -168,11 +169,11 @@ void mm_camera_stream_init_frame(mm_camera_stream_frame_t *frame)
 
 void mm_camera_stream_release(mm_camera_stream_t *stream)
 {
+    mm_camera_stream_util_set_state(stream, MM_CAMERA_STREAM_STATE_NOTUSED);
     mm_camera_stream_deinit_frame(&stream->frame);
     if(stream->fd > 0) close(stream->fd);
     memset(stream, 0, sizeof(*stream));
     //stream->fd = -1;
-    mm_camera_stream_util_set_state(stream, MM_CAMERA_STREAM_STATE_NOTUSED);
 }
 
 int mm_camera_stream_is_active(mm_camera_stream_t *stream)
@@ -623,7 +624,7 @@ static int32_t mm_camera_stream_fsm_notused(mm_camera_obj_t * my_obj,
             mm_camera_stream_util_set_state(stream, MM_CAMERA_STREAM_STATE_ACQUIRED);
         } else if(stream->fd > 0) {
             close(stream->fd);
-            stream->fd = 0;
+            stream->fd = -1;
         }
         break;
     default:
@@ -739,7 +740,7 @@ int32_t mm_camera_stream_util_buf_done(mm_camera_obj_t * my_obj,
     pthread_mutex_lock(&stream->frame.mutex);
 
     if(stream->frame.ref_count[frame->idx] == 0) {
-        rc = mm_camera_stream_qbuf(my_obj, stream, frame->idx);
+        //rc = mm_camera_stream_qbuf(my_obj, stream, frame->idx);
         CDBG_ERROR("%s: Error Trying to free second time?(idx=%d) count=%d, stream type=%d\n",
                    __func__, frame->idx, stream->frame.ref_count[frame->idx], stream->stream_type);
         rc = -1;
