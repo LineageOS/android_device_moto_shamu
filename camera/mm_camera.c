@@ -40,7 +40,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mm_camera.h"
 
 static int32_t mm_camera_send_native_ctrl_cmd(mm_camera_obj_t * my_obj,
-                    cam_ctrl_type type, uint32_t length, void *value);
+    cam_ctrl_type type, uint32_t length, void *value);
+static int32_t mm_camera_send_native_ctrl_timeout_cmd(mm_camera_obj_t * my_obj,
+    cam_ctrl_type type, uint32_t length, void *value, int timeout);
 static int32_t mm_camera_ctrl_set_specialEffect (mm_camera_obj_t *my_obj, int effect) {
     struct v4l2_control ctrl;
     if (effect == CAMERA_EFFECT_MAX)
@@ -415,6 +417,29 @@ static int32_t mm_camera_send_native_ctrl_cmd(mm_camera_obj_t * my_obj,
         rc = -1;
     return rc;
 }
+
+static int32_t mm_camera_send_native_ctrl_timeout_cmd(mm_camera_obj_t * my_obj,
+  cam_ctrl_type type, uint32_t length, void *value,int timeout)
+{
+    int rc = -1;
+    struct msm_ctrl_cmd ctrl_cmd;
+    memset(&ctrl_cmd, 0, sizeof(ctrl_cmd));
+    ctrl_cmd.type = type;
+    ctrl_cmd.length = (uint16_t)length;
+    ctrl_cmd.timeout_ms = timeout;
+    ctrl_cmd.value = value;
+    ctrl_cmd.status = CAM_CTRL_SUCCESS;
+    rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, MSM_V4L2_PID_CTRL_CMD,
+        (int)&ctrl_cmd);
+    CDBG("%s: type=%d, rc = %d, status = %d\n",
+        __func__, type, rc, ctrl_cmd.status);
+    if(rc != MM_CAMERA_OK || ((ctrl_cmd.status != CAM_CTRL_ACCEPTED) &&
+        (ctrl_cmd.status != CAM_CTRL_SUCCESS) &&
+        (ctrl_cmd.status != CAM_CTRL_INVALID_PARM)))
+        rc = -1;
+    return rc;
+}
+
 int32_t mm_camera_set_parm(mm_camera_obj_t * my_obj,
     mm_camera_parm_t *parm)
 {
@@ -792,7 +817,7 @@ int32_t mm_camera_action_start(mm_camera_obj_t *my_obj,
             break;
         case MM_CAMERA_OPS_PREPARE_SNAPSHOT:
             send_on_off_evt = 0;
-            rc = mm_camera_send_native_ctrl_cmd(my_obj,CAMERA_PREPARE_SNAPSHOT, 0, NULL);
+            rc = mm_camera_send_native_ctrl_timeout_cmd(my_obj,CAMERA_PREPARE_SNAPSHOT, 0, NULL, 2000);
             CDBG("%s: prepare snapshot done opcode = %d, rc= %d\n", __func__, opcode, rc);
             break;
         default:
