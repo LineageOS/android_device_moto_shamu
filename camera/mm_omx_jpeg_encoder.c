@@ -270,6 +270,7 @@ int8_t omxJpegStart()
 {
     LOGE("%s", __func__);
     pthread_mutex_lock(&jpege_mutex);
+    hw_encode = true;
     callbacks.EmptyBufferDone = etbdone;
     callbacks.FillBufferDone = ftbdone;
     callbacks.EventHandler = eventHandler;
