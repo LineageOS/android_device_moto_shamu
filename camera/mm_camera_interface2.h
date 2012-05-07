@@ -163,7 +163,6 @@ typedef enum {
     MM_CAMERA_PARM_VIDEO_SIZES_CNT,
     MM_CAMERA_PARM_THUMB_SIZES_CNT,
     MM_CAMERA_PARM_HFR_SIZES_CNT,
-    MM_CAMERA_PARM_GRALLOC_USAGE,
     MM_CAMERA_PARM_VFE_OUTPUT_ENABLE, //to check whether both oputputs are
     //or single output enabled to differentiate 7x27a with others
     MM_CAMERA_PARM_MAX

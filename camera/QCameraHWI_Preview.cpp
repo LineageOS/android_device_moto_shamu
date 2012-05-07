@@ -124,12 +124,9 @@ status_t QCameraStream_preview::getBufferFromSurface() {
          ret = UNKNOWN_ERROR;
      goto end;
     }
-    ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_GRALLOC_USAGE, &gralloc_usage);
-    if (ret != MM_CAMERA_OK) {
-        LOGE("get parm MM_CAMERA_PARM_GRALLOC_USAGE failed");
-        ret = BAD_VALUE;
-        goto end;
-    }
+
+    gralloc_usage = CAMERA_GRALLOC_HEAP_ID | CAMERA_GRALLOC_FALLBACK_HEAP_ID |
+                    CAMERA_GRALLOC_CACHING_ID;
     err = mPreviewWindow->set_usage(mPreviewWindow, gralloc_usage);
     if(err != 0) {
     /* set_usage error out */

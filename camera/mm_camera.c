@@ -608,9 +608,6 @@ int32_t mm_camera_get_parm(mm_camera_obj_t * my_obj,
     case MM_CAMERA_PARM_SNAPSHOT_BURST_NUM:
         *((int *)parm->p_value) = my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.num_shots;
         break;
-    case MM_CAMERA_PARM_GRALLOC_USAGE:
-        *((int *)parm->p_value) = my_obj->properties.gralloc_usage;
-        break;
     case MM_CAMERA_PARM_VFE_OUTPUT_ENABLE:
         *((int *)parm->p_value) = my_obj->properties.vfe_output_enable;
         break;
