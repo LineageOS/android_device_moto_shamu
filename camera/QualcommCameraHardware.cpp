@@ -1487,10 +1487,15 @@ QualcommCameraHardware::QualcommCameraHardware()
         }
     }
     mTotalPreviewBufferCount = kTotalPreviewBufferCount;
-
-    for (int i = 0; i < kRecordBufferCount; i++)
-        metadata_memory[i] = NULL;
-
+    if((mCurrentTarget != TARGET_MSM7630 ) &&  (mCurrentTarget != TARGET_QSD8250)
+      && (mCurrentTarget != TARGET_MSM8660)) {
+        for (int i = 0; i < mTotalPreviewBufferCount; i++)
+          metadata_memory[i] = NULL;
+    }
+    else {
+        for (int i = 0; i < kRecordBufferCount; i++)
+          metadata_memory[i] = NULL;
+    }
     switch(mCurrentTarget){
         case TARGET_MSM7627:
         case TARGET_MSM7627A:
