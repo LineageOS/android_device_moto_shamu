@@ -769,8 +769,6 @@ void QCameraHardwareInterface::initDefaultParameters()
         mHfrValues = str;
         mHfrSizeValues = create_sizes_str(
                 default_hfr_sizes, hfr_sizes_count);
-        mHfrValues = create_values_str(
-            hfr,sizeof(hfr)/sizeof(str_map));
         mFpsRangesSupportedValues = create_fps_str(
             FpsRangesSupported,FPS_RANGES_SUPPORTED_COUNT );
         mParameters.set(
