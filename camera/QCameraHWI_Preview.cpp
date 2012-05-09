@@ -64,20 +64,6 @@ status_t QCameraStream_preview::setPreviewWindow(preview_stream_ops_t* window)
        // relinquishBuffers();
     }
     Mutex::Autolock lock(mStopCallbackLock);
-    if(mPreviewWindow != window) {
-        //Display window changed
-        // check if we have flag
-        if (mbPausedBySnapshot) {
-           // Previously paused from snapshot, since display window changed,
-           // we need out previously owned buffer back to surface,
-           // and reset the flag.
-           mbPausedBySnapshot = FALSE;
-
-           LOGV("%s : Preview window changed, previous buffer unprepared",__func__);
-           /*free camera_memory handles and return buffer back to surface*/
-           putBufferToSurface();
-       }
-    }
     mPreviewWindow = window;
     LOGV(" %s : X ", __FUNCTION__ );
     return retVal;
@@ -273,14 +259,14 @@ status_t QCameraStream_preview::putBufferToSurface() {
 
 		LOGD(" put buffer %d successfully", cnt);
 	}
-	memset(&mHalCamCtrl->mPreviewMemory, 0, sizeof(mHalCamCtrl->mPreviewMemory));
 
     if (mDisplayBuf.preview.buf.mp != NULL) {
         delete[] mDisplayBuf.preview.buf.mp;
         mDisplayBuf.preview.buf.mp = NULL;
     }
 
-	mHalCamCtrl->mPreviewMemoryLock.unlock();
+    mHalCamCtrl->mPreviewMemoryLock.unlock();
+	memset(&mHalCamCtrl->mPreviewMemory, 0, sizeof(mHalCamCtrl->mPreviewMemory));
     LOGI(" %s : X ",__FUNCTION__);
     return NO_ERROR;
 }
@@ -615,55 +601,6 @@ error:
     return ret;
 }
 
-status_t QCameraStream_preview::reinitDisplayBuffers()
-{
-    int err = NO_ERROR;
-    buffer_handle_t *buffer_handle = NULL;
-    int tmp_stride = 0, i = 0;
-    LOGI(" %s : E ", __FUNCTION__);
-
-    mHalCamCtrl->mPreviewMemoryLock.lock();
-    if (mDisplayBuf.preview.buf.mp == NULL) {
-        LOGE("%s: preview.buf.mp is NULL, propbably wrong state", __FUNCTION__);
-        mHalCamCtrl->mPreviewMemoryLock.unlock();
-        return BAD_VALUE;
-    }
-
-    while (err == NO_ERROR) {
-        buffer_handle = NULL;
-        tmp_stride = 0;
-        err = this->mPreviewWindow->dequeue_buffer(this->mPreviewWindow,
-                    &buffer_handle, &tmp_stride);
-        if (err == NO_ERROR && buffer_handle != NULL) {
-            LOGD("%s: dequed buf hdl =%p", __func__, *buffer_handle);
-            for(i = 0; i < mHalCamCtrl->mPreviewMemory.buffer_count; i++) {
-                if(mHalCamCtrl->mPreviewMemory.buffer_handle[i] == buffer_handle) {
-                    mHalCamCtrl->mPreviewMemory.local_flag[i] = BUFFER_UNLOCKED;
-                    break;
-                }
-            }
-            if (i < mHalCamCtrl->mPreviewMemory.buffer_count ) {
-                err = this->mPreviewWindow->lock_buffer(this->mPreviewWindow, buffer_handle);
-                LOGD("%s: camera call genlock_lock: hdl =%p", __FUNCTION__, *buffer_handle);
-                if (GENLOCK_FAILURE == genlock_lock_buffer((native_handle_t*)(*buffer_handle), GENLOCK_WRITE_LOCK,
-                                                        GENLOCK_MAX_TIMEOUT)) {
-                   LOGE("%s: genlock_lock_buffer(WRITE) failed", __FUNCTION__);
-                } else  {
-                    mHalCamCtrl->mPreviewMemory.local_flag[i] = BUFFER_LOCKED;
-                }
-            }
-        }
-    }
-
-    for (i=0; i<mDisplayBuf.preview.num; i++) {
-        mHalCamCtrl->mPreviewMemory.enqueued_flag[i] = FALSE;
-    }
-    mHalCamCtrl->mPreviewMemoryLock.unlock();
-
-    LOGI(" %s : X ",__FUNCTION__);
-    return NO_ERROR;
-}
-
 status_t QCameraStream_preview::initPreviewOnlyBuffers()
 {
   status_t ret = NO_ERROR;
@@ -918,24 +855,8 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
       } else  {
         mHalCamCtrl->mPreviewMemory.local_flag[i] = BUFFER_LOCKED;
 
-        if (mHalCamCtrl->mPreviewMemory.enqueued_flag[i]) {
-            // buffer is already queued, so buf_done will take care of the enqueue
-            if(MM_CAMERA_OK != cam_evt_buf_done(mCameraId, &mNotifyBuffer[i])) {
-                LOGE("BUF DONE FAILED");
-            }
-        } else {
-            // Not enqueued before, fresh enqueue
-            LOGD("%s: Not enqueued before, fresh enqueue", __FUNCTION__);
-            mm_camera_reg_buf_t reg_buf;
-            memset(&reg_buf, 0, sizeof(mm_camera_reg_buf_t));
-            reg_buf.ch_type = MM_CAMERA_CH_PREVIEW;
-            reg_buf.preview.num = 1;
-            reg_buf.preview.buf.mp = &mDisplayBuf.preview.buf.mp[i];
-            if(MM_CAMERA_OK != cam_config_enqueue_buf(mCameraId, &reg_buf)) {
-                LOGE("ENQUEUE FAILED");
-            } else {
-                mHalCamCtrl->mPreviewMemory.enqueued_flag[i] = TRUE;
-            }
+        if(MM_CAMERA_OK != cam_evt_buf_done(mCameraId, &mNotifyBuffer[i])) {
+            LOGE("BUF DONE FAILED");
         }
       }
      }
@@ -1150,7 +1071,6 @@ QCameraStream_preview::
 QCameraStream_preview(int cameraId, camera_mode_t mode)
   : QCameraStream(cameraId,mode),
     mLastQueuedFrame(NULL),
-    mbPausedBySnapshot(FALSE),
     mNumFDRcvd(0)
   {
     mHalCamCtrl = NULL;
@@ -1169,12 +1089,6 @@ QCameraStream_preview::~QCameraStream_preview() {
 	if(mInit) {
 		release();
 	}
-    if (mbPausedBySnapshot) {
-       mbPausedBySnapshot = FALSE;
-       LOGV("%s : previous buffer unprepared",__func__);
-       /*free camera_memory handles and return buffer back to surface*/
-       putBufferToSurface();
-    }
 	mInit = false;
 	mActive = false;
     LOGV("%s: X", __func__);
@@ -1222,88 +1136,26 @@ status_t QCameraStream_preview::start()
     //QCameraStream::start ();
     setFormat(MM_CAMERA_CH_PREVIEW_MASK);
 
-    /* We do initDisplayBuffers only it's a clean start.
-     * If preview is stopped because of taking picutre,
-     * and resumed after snapshot is taken,
-     * mbPaused will be set to TRUE already.
-     */
-    if (!mbPausedBySnapshot || mHalCamCtrl->isNoDisplayMode()) {
-        if (mHalCamCtrl->isNoDisplayMode()) {
-          if(NO_ERROR!=initPreviewOnlyBuffers()){
-              return BAD_VALUE;
-          }
-        } else {
-          if(NO_ERROR!=initDisplayBuffers()){
-              return BAD_VALUE;
-          }
-        }
-        LOGE("Debug : %s : initDisplayBuffers",__func__);
-
-        ret = cam_config_prepare_buf(mCameraId, &mDisplayBuf);
-        LOGE("Debug : %s : cam_config_prepare_buf",__func__);
-        if(ret != MM_CAMERA_OK) {
-            LOGV("%s:reg preview buf err=%d\n", __func__, ret);
-            ret = BAD_VALUE;
-            goto error;
-        }else {
-            ret = NO_ERROR;
-            /* all buffers are enqueued to kernel after cam_config_prepare_buf,
-               so set falg to TRUE */
-            for (int cnt = 0; cnt < mDisplayBuf.preview.num; cnt++) {
-                mHalCamCtrl->mPreviewMemory.enqueued_flag[cnt] = TRUE;
-            }
+    if (mHalCamCtrl->isNoDisplayMode()) {
+        if(NO_ERROR!=initPreviewOnlyBuffers()){
+            return BAD_VALUE;
         }
     } else {
-        /* reset the paused flag to FALSE after preview stream started*/
-        mbPausedBySnapshot = FALSE;
-
-        /* This is a start case resumed from snapshot */
-        if(NO_ERROR!=reinitDisplayBuffers()){
-            ret = BAD_VALUE;
-            goto error;
-        }
-
-        /* Request buffer numbers */
-        ret = cam_config_request_buf(mCameraId, &mDisplayBuf);
-        if(ret != MM_CAMERA_OK) {
-            LOGE("%s:request preview buf err=%d\n", __func__, ret);
-            ret = BAD_VALUE;
-            goto error;
-        }else {
-            /* For each buffer that is locked by HAL, if it's not enqueued before,
-             * we need to enquque to kernel
-             */
-            int enqueued_buf_num = 0;
-            for (int cnt = 0; cnt < mHalCamCtrl->mPreviewMemory.buffer_count; cnt++) {
-                if( (mHalCamCtrl->mPreviewMemory.local_flag[cnt] == BUFFER_LOCKED) &&
-                    (mHalCamCtrl->mPreviewMemory.enqueued_flag[cnt] == FALSE) ) {
-                    mm_camera_reg_buf_t reg_buf;
-                    memset(&reg_buf, 0, sizeof(mm_camera_reg_buf_t));
-                    reg_buf.ch_type = MM_CAMERA_CH_PREVIEW;
-                    reg_buf.preview.num = 1;
-                    reg_buf.preview.buf.mp = &mDisplayBuf.preview.buf.mp[cnt];
-                    LOGD("%s:enqueue preview buf (%d) index = %d\n", __func__, cnt, reg_buf.preview.buf.mp[0].idx);
-                    ret = cam_config_enqueue_buf(mCameraId, &reg_buf);
-                    if(ret != MM_CAMERA_OK) {
-                        LOGE("%s:enqueue preview buf err=%d\n", __func__, ret);
-                        ret = BAD_VALUE;
-                        goto error;
-                    }else {
-                        ret = NO_ERROR;
-                        mHalCamCtrl->mPreviewMemory.enqueued_flag[cnt] = TRUE;
-                        enqueued_buf_num++;
-                    }
-                }
-            }
-            if (enqueued_buf_num < 3) {
-                LOGE("%s: enqueued preview buf number = %d , less than 3, return error\n", __func__, enqueued_buf_num);
-                ret = BAD_VALUE;
-                goto error;
-            }
+        if(NO_ERROR!=initDisplayBuffers()){
+            return BAD_VALUE;
         }
     }
-    /* reset the paused flag to FALSE after preview stream started*/
-    mbPausedBySnapshot = FALSE;
+    LOGE("Debug : %s : initDisplayBuffers",__func__);
+
+    ret = cam_config_prepare_buf(mCameraId, &mDisplayBuf);
+    LOGE("Debug : %s : cam_config_prepare_buf",__func__);
+    if(ret != MM_CAMERA_OK) {
+        LOGV("%s:reg preview buf err=%d\n", __func__, ret);
+        ret = BAD_VALUE;
+        goto error;
+    }else {
+        ret = NO_ERROR;
+    }
 
 	/* For preview, the OP_MODE we set is dependent upon whether we are
        starting camera or camcorder. For snapshot, anyway we disable preview.
@@ -1385,15 +1237,13 @@ end:
       //ret = BAD_VALUE;
     }
 
-    if (!mbPausedBySnapshot) {
-        /* In case of a clean stop, we need to clean all buffers*/
-        LOGE("Debug : %s : Buffer Unprepared",__func__);
-        /*free camera_memory handles and return buffer back to surface*/
-        if (! mHalCamCtrl->isNoDisplayMode() ) {
-          putBufferToSurface();
-        } else {
-          freeBufferNoDisplay( );
-        }
+    /* In case of a clean stop, we need to clean all buffers*/
+    LOGE("Debug : %s : Buffer Unprepared",__func__);
+    /*free camera_memory handles and return buffer back to surface*/
+    if (! mHalCamCtrl->isNoDisplayMode() ) {
+      putBufferToSurface();
+    } else {
+      freeBufferNoDisplay( );
     }
 
     LOGE("%s: X", __func__);
@@ -1461,12 +1311,6 @@ void QCameraStream_preview::deleteInstance(QCameraStream *p)
 void *QCameraStream_preview::getLastQueuedFrame(void)
 {
     return mLastQueuedFrame;
-}
-
-/* Set preview pause flag */
-void QCameraStream_preview::setPreviewPauseFlag(bool bPaused)
-{
-    mbPausedBySnapshot = bPaused;
 }
 
 // ---------------------------------------------------------------------------
