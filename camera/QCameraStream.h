@@ -244,6 +244,8 @@ private:
     mm_camera_ch_data_buf_t mNotifyBuffer[16];
     int8_t                  mNumFDRcvd;
     int                     mVFEOutputs;
+    int                     mHFRFrameCnt;
+    int                     mHFRFrameSkip;
 };
 
 /* Snapshot Class - handle data flow*/

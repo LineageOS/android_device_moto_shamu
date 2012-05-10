@@ -140,6 +140,12 @@ status_t QCameraStream_preview::getBufferFromSurface() {
         ret = BAD_VALUE;
         goto end;
     }
+    ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_HFR_FRAME_SKIP, &mHFRFrameSkip);
+    if(ret != MM_CAMERA_OK) {
+        LOGE("get parm MM_CAMERA_PARM_HFR_FRAME_SKIP  failed");
+        ret = BAD_VALUE;
+        goto end;
+    }
 	for (int cnt = 0; cnt < mHalCamCtrl->mPreviewMemory.buffer_count; cnt++) {
 		int stride;
 		err = mPreviewWindow->dequeue_buffer(mPreviewWindow,
@@ -829,6 +835,37 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
     }
   err = this->mPreviewWindow->enqueue_buffer(this->mPreviewWindow,
         (buffer_handle_t *)mHalCamCtrl->mPreviewMemory.buffer_handle[frame->def.idx]);
+  if(mHFRFrameSkip == 1)
+  {
+      const char *str = mHalCamCtrl->mParameters.get(
+                          CameraParameters::KEY_VIDEO_HIGH_FRAME_RATE);
+      if(str != NULL){
+      int is_hfr_off = 0;
+      mHFRFrameCnt++;
+      if(!strcmp(str, CameraParameters::VIDEO_HFR_OFF)) {
+          is_hfr_off = 1;
+          err = this->mPreviewWindow->enqueue_buffer(this->mPreviewWindow,
+            (buffer_handle_t *)mHalCamCtrl->mPreviewMemory.buffer_handle[frame->def.idx]);
+      } else if (!strcmp(str, CameraParameters::VIDEO_HFR_2X)) {
+          mHFRFrameCnt %= 2;
+      } else if (!strcmp(str, CameraParameters::VIDEO_HFR_3X)) {
+          mHFRFrameCnt %= 3;
+      } else if (!strcmp(str, CameraParameters::VIDEO_HFR_4X)) {
+          mHFRFrameCnt %= 4;
+      }
+      if(mHFRFrameCnt == 0)
+          err = this->mPreviewWindow->enqueue_buffer(this->mPreviewWindow,
+            (buffer_handle_t *)mHalCamCtrl->mPreviewMemory.buffer_handle[frame->def.idx]);
+      else if(!is_hfr_off)
+          err = this->mPreviewWindow->cancel_buffer(this->mPreviewWindow,
+            (buffer_handle_t *)mHalCamCtrl->mPreviewMemory.buffer_handle[frame->def.idx]);
+      } else
+          err = this->mPreviewWindow->enqueue_buffer(this->mPreviewWindow,
+            (buffer_handle_t *)mHalCamCtrl->mPreviewMemory.buffer_handle[frame->def.idx]);
+  } else {
+      err = this->mPreviewWindow->enqueue_buffer(this->mPreviewWindow,
+          (buffer_handle_t *)mHalCamCtrl->mPreviewMemory.buffer_handle[frame->def.idx]);
+  }
   if(err != 0) {
     LOGE("%s: enqueue_buffer failed, err = %d", __func__, err);
   } else {
