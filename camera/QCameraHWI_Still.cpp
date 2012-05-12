@@ -387,9 +387,11 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
        then configure second outout to a default size.
        Jpeg encoder will drop thumbnail as reflected in encodeParams.
     */
+    mDropThumnail = false;
     if (mPostviewWidth == 0 && mPostviewHeight == 0) {
          mPostviewWidth = THUMBNAIL_DEFAULT_WIDTH;
          mPostviewHeight = THUMBNAIL_DEFAULT_HEIGHT;
+         mDropThumnail = true;
     }
 
     LOGD("%s: Postview size received: %d x %d", __func__,
@@ -778,56 +780,56 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
     cbcr_off = dim->picture_frame_offset.mp[1].offset;
     LOGE("%s: main image: rotation = %d, yoff = %d, cbcroff = %d, size = %d, width = %d, height = %d",
          __func__, dim->rotation, y_off, cbcr_off, frame_len, dim->picture_width, dim->picture_height);
-	if (mHalCamCtrl->initHeapMem (&mHalCamCtrl->mJpegMemory, 1, frame_len, 0, cbcr_off,
+    if (mHalCamCtrl->initHeapMem (&mHalCamCtrl->mJpegMemory, 1, frame_len, 0, cbcr_off,
                                   MSM_PMEM_MAX, NULL, NULL, num_planes, planes) < 0) {
 		LOGE("%s: Error allocating JPEG memory", __func__);
 		ret = NO_MEMORY;
 		goto end;
-	}
-
-	if (mHalCamCtrl->initHeapMem(&mHalCamCtrl->mSnapshotMemory, num_of_buf,
-	   frame_len, y_off, cbcr_off, MSM_PMEM_MAINIMG, &mSnapshotStreamBuf,
-                                 &reg_buf.snapshot.main, num_planes, planes) < 0) {
-				ret = NO_MEMORY;
-                mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mJpegMemory);
-				goto end;
-	};
-    num_planes = 2;
-    planes[0] = dim->thumb_frame_offset.mp[0].len;
-    planes[1] = dim->thumb_frame_offset.mp[1].len;
-    frame_len = planes[0] + planes[1];
-    if (!isFullSizeLiveshot()) {
-	y_off = dim->thumb_frame_offset.mp[0].offset;
-	cbcr_off = dim->thumb_frame_offset.mp[1].offset;
-	LOGE("%s: thumbnail: rotation = %d, yoff = %d, cbcroff = %d, size = %d, width = %d, height = %d",
-		__func__, dim->rotation, y_off, cbcr_off, frame_len,
-		dim->thumbnail_width, dim->thumbnail_height);
-
-	if (mHalCamCtrl->initHeapMem(&mHalCamCtrl->mThumbnailMemory, num_of_buf,
-		    frame_len, y_off, cbcr_off, MSM_PMEM_THUMBNAIL, &mPostviewStreamBuf,
-		    &reg_buf.snapshot.thumbnail, num_planes, planes) < 0) {
-	    ret = NO_MEMORY;
-        mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mSnapshotMemory);
-        mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mJpegMemory);
-	    goto end;
-	};
     }
-
-    /* register the streaming buffers for the channel*/
-    reg_buf.ch_type = MM_CAMERA_CH_SNAPSHOT;
-    reg_buf.snapshot.main.num = mSnapshotStreamBuf.num;
-
-    if (!isFullSizeLiveshot())
-        reg_buf.snapshot.thumbnail.num = mPostviewStreamBuf.num;
-    else
-        reg_buf.snapshot.thumbnail.num = 0;
-
     if(!isLiveSnapshot()) {
+        if (mHalCamCtrl->initHeapMem(&mHalCamCtrl->mSnapshotMemory, num_of_buf,
+    	   frame_len, y_off, cbcr_off, MSM_PMEM_MAINIMG, &mSnapshotStreamBuf,
+                                     &reg_buf.snapshot.main, num_planes, planes) < 0) {
+    				ret = NO_MEMORY;
+                    mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mJpegMemory);
+    				goto end;
+    	};
+        num_planes = 2;
+        planes[0] = dim->thumb_frame_offset.mp[0].len;
+        planes[1] = dim->thumb_frame_offset.mp[1].len;
+        frame_len = planes[0] + planes[1];
+        if (!isFullSizeLiveshot()) {
+    	    y_off = dim->thumb_frame_offset.mp[0].offset;
+                cbcr_off = dim->thumb_frame_offset.mp[1].offset;
+    	    LOGE("%s: thumbnail: rotation = %d, yoff = %d, cbcroff = %d, size = %d, width = %d, height = %d",
+    		__func__, dim->rotation, y_off, cbcr_off, frame_len,
+    		dim->thumbnail_width, dim->thumbnail_height);
+
+    	    if (mHalCamCtrl->initHeapMem(&mHalCamCtrl->mThumbnailMemory, num_of_buf,
+    		    frame_len, y_off, cbcr_off, MSM_PMEM_THUMBNAIL, &mPostviewStreamBuf,
+    		    &reg_buf.snapshot.thumbnail, num_planes, planes) < 0) {
+    	        ret = NO_MEMORY;
+                    mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mSnapshotMemory);
+                    mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mJpegMemory);
+    	        goto end;
+    	    }
+        } 
+        /* register the streaming buffers for the channel*/
+        reg_buf.ch_type = MM_CAMERA_CH_SNAPSHOT;
+        reg_buf.snapshot.main.num = mSnapshotStreamBuf.num;
+
+        if (!isFullSizeLiveshot())
+            reg_buf.snapshot.thumbnail.num = mPostviewStreamBuf.num;
+        else
+            reg_buf.snapshot.thumbnail.num = 0;
+    
         ret = cam_config_prepare_buf(mCameraId, &reg_buf);
         if(ret != NO_ERROR) {
             LOGV("%s:reg snapshot buf err=%d\n", __func__, ret);
             ret = FAILED_TRANSACTION;
-            mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mThumbnailMemory);
+            if (!isFullSizeLiveshot()){
+                mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mThumbnailMemory);
+            }
             mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mSnapshotMemory);
             mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mJpegMemory);
             goto end;
@@ -870,9 +872,11 @@ deinitSnapshotBuffers(void)
         }
 
         /* Clear main and thumbnail heap*/
-        mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mSnapshotMemory);
-        if (!isFullSizeLiveshot())
-          mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mThumbnailMemory);
+        if(!isLiveSnapshot()) {
+            mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mSnapshotMemory);
+            if (!isFullSizeLiveshot())
+              mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mThumbnailMemory);
+        }
         mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mJpegMemory);
     }
 end:
@@ -1469,23 +1473,21 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         dimension.orig_picture_dx = mPictureWidth;
         dimension.orig_picture_dy = mPictureHeight;
 
-        int width = mHalCamCtrl->mParameters.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
-        int height = mHalCamCtrl->mParameters.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
-        if((width != 0) && (height != 0)) {
+        if(!mDropThumnail) {
             if(isZSLMode()) {
                 int mCurrPreviewWidth, mCurrPreviewHeight;
                 mHalCamCtrl->getPreviewSize(&mCurrPreviewWidth, &mCurrPreviewHeight);
                 LOGI("Setting input thumbnail size to previewWidth= %d   previewheight= %d in ZSL mode",
                      mCurrPreviewWidth, mCurrPreviewHeight);
-                dimension.thumbnail_width = mCurrPreviewWidth;
-                dimension.thumbnail_height = mCurrPreviewHeight;
+                dimension.thumbnail_width = width = mCurrPreviewWidth;
+                dimension.thumbnail_height = height = mCurrPreviewHeight;
             } else {
-                dimension.thumbnail_width = mThumbnailWidth;
-                dimension.thumbnail_height = mThumbnailHeight;
+                dimension.thumbnail_width = width = mThumbnailWidth;
+                dimension.thumbnail_height = height = mThumbnailHeight;
             }
         } else {
-            dimension.thumbnail_width = 0;
-            dimension.thumbnail_height = 0;
+            dimension.thumbnail_width = width = 0;
+            dimension.thumbnail_height = height = 0;
         }
         dimension.main_img_format = mPictureFormat;
         dimension.thumb_format = mThumbnailFormat;
@@ -1533,13 +1535,8 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         if (!isFullSizeLiveshot()) {
           crop.in1_w=mCrop.snapshot.thumbnail_crop.width; //dimension.thumbnail_width;
           crop.in1_h=mCrop.snapshot.thumbnail_crop.height; // dimension.thumbnail_height;
-          if((width != 0) && (height != 0)) {
-              crop.out1_w=mThumbnailWidth;
-              crop.out1_h=mThumbnailHeight;
-          } else {
-              crop.out1_w = 0;
-              crop.out1_h = 0;
-          }
+          crop.out1_w = width;
+          crop.out1_h = height;
           thumb_crop_offset.x=mCrop.snapshot.thumbnail_crop.left;
           thumb_crop_offset.y=mCrop.snapshot.thumbnail_crop.top;
         }
@@ -2017,7 +2014,8 @@ QCameraStream_Snapshot(int cameraId, camera_mode_t mode)
     mPostviewHeap(NULL),
     mCurrentFrameEncoded(NULL),
     mJpegSessionId(0),
-    mFullLiveshot(false)
+    mFullLiveshot(false),
+    mDropThumnail(false)
   {
     LOGV("%s: E", __func__);
 

@@ -173,7 +173,10 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mSnapshotFormat(0),
                     mStartRecording(0),
                     mZslInterval(1),
-                    mNoDisplayMode(0)
+                    mNoDisplayMode(0),
+                    mBrightness(0),
+                    mHJR(0),
+                    mSkinToneEnhancement(0)
 {
     LOGI("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;

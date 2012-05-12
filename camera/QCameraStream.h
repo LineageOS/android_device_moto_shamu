@@ -364,6 +364,7 @@ private:
     bool mFullLiveshot;
     StreamQueue             mWDNQueue; // queue to hold frames while one frame is sent out for WDN
     bool                    mIsDoingWDN; // flag to indicate if WDN is going on (one frame is sent out for WDN)
+	bool                    mDropThumnail;
 }; // QCameraStream_Snapshot
 
 
