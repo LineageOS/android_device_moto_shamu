@@ -150,12 +150,14 @@ status_t QCameraStream_record::start()
 {
   status_t ret = NO_ERROR;
   LOGE("%s: BEGIN", __func__);
-  mHalCamCtrl->mStartRecording  = true;
+
   ret = initEncodeBuffers();
   if (NO_ERROR!=ret) {
     LOGE("%s ERROR: Buffer Allocation Failed\n",__func__);
     return ret;
   }
+
+  mHalCamCtrl->mStartRecording  = true;
 
 #if 0
   Mutex::Autolock lock(mStopCallbackLock);
@@ -589,7 +591,7 @@ status_t QCameraStream_record::initEncodeBuffers()
         struct encoder_media_buffer_type * packet =
           (struct encoder_media_buffer_type  *)
           mHalCamCtrl->mRecordingMemory.metadata_memory[cnt]->data;
-        packet->meta_handle = native_handle_create(1, 2); //1 fd, 1 offset and 1 size
+        packet->meta_handle = native_handle_create(1, 3); //1 fd, 1 offset,1 size and 1 data
         packet->buffer_type = kMetadataBufferTypeCameraSource;
         native_handle_t * nh = const_cast<native_handle_t *>(packet->meta_handle);
         nh->data[0] = mHalCamCtrl->mPreviewMemory.private_buffer_handle[cnt]->fd;
@@ -660,7 +662,6 @@ void QCameraStream_record::releaseEncodeBuffer() {
 
 void QCameraStream_record::releaseRecordingFrame(const void *opaque)
 {
-    LOGE("%s : BEGIN, opaque = 0x%p",__func__, opaque);
 #if 0
     if(!mActive)
     {
@@ -689,7 +690,6 @@ void QCameraStream_record::releaseRecordingFrame(const void *opaque)
       }
     }
 #endif
-	LOGE("%s: cannot find the matched frame with opaue = 0x%p", __func__, opaque);
 }
 
 void QCameraStream_record::debugShowVideoFPS() const
