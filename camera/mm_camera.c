@@ -535,6 +535,9 @@ int32_t mm_camera_get_parm(mm_camera_obj_t * my_obj,
     case MM_CAMERA_PARM_HFR_SIZES_CNT:
         *((int *)parm->p_value) = my_obj->properties.hfr_sizes_cnt;
         break;
+    case MM_CAMERA_PARM_HFR_FRAME_SKIP:
+        *((int *)parm->p_value) = my_obj->properties.hfr_frame_skip;
+        break;
     case MM_CAMERA_PARM_MAX_PREVIEW_SIZE: {
         mm_camera_dimension_t *dim =
             (mm_camera_dimension_t *)parm->p_value;
