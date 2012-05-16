@@ -833,8 +833,6 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
 	    //mHalCamCtrl->mPreviewMemoryLock.unlock();
         //return -EINVAL;
     }
-  err = this->mPreviewWindow->enqueue_buffer(this->mPreviewWindow,
-        (buffer_handle_t *)mHalCamCtrl->mPreviewMemory.buffer_handle[frame->def.idx]);
   if(mHFRFrameSkip == 1)
   {
       const char *str = mHalCamCtrl->mParameters.get(
