@@ -167,6 +167,8 @@ typedef enum {
     //or single output enabled to differentiate 7x27a with others
     MM_CAMERA_PARM_HFR_FRAME_SKIP,
     MM_CAMERA_PARM_FOCUS_MODE,
+    MM_CAMERA_PARM_DEFAULT_PREVIEW_WIDTH,
+    MM_CAMERA_PARM_DEFAULT_PREVIEW_HEIGHT,
     MM_CAMERA_PARM_MAX
 } mm_camera_parm_type_t;
 

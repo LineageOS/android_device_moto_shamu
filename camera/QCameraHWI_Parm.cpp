@@ -93,10 +93,6 @@ extern "C" {
 #define DEFAULT_PICTURE_WIDTH  640
 #define DEFAULT_PICTURE_HEIGHT 480
 
-//Default Preview Width
-#define DEFAULT_PREVIEW_WIDTH 640
-#define DEFAULT_PREVIEW_HEIGHT 480
-
 //Default Video Width
 #define DEFAULT_VIDEO_WIDTH 1920
 #define DEFAULT_VIDEO_HEIGHT 1088
@@ -872,11 +868,16 @@ void QCameraHardwareInterface::initDefaultParameters()
     mParameters.set(CameraParameters::KEY_VIDEO_SIZE, vSize.string());
 
     //Set Preview size
-    mParameters.setPreviewSize(DEFAULT_PREVIEW_WIDTH, DEFAULT_PREVIEW_HEIGHT);
+    int default_preview_width, default_preview_height;
+    cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DEFAULT_PREVIEW_WIDTH,
+            &default_preview_width);
+    cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DEFAULT_PREVIEW_HEIGHT,
+            &default_preview_height);
+    mParameters.setPreviewSize(default_preview_width, default_preview_height);
     mParameters.set(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES,
                     mPreviewSizeValues.string());
-    mDimension.display_width = DEFAULT_PREVIEW_WIDTH;
-    mDimension.display_height = DEFAULT_PREVIEW_HEIGHT;
+    mDimension.display_width = default_preview_width;
+    mDimension.display_height = default_preview_height;
 
     //Set Preview Frame Rate
     if(mFps >= MINIMUM_FPS && mFps <= MAXIMUM_FPS) {
