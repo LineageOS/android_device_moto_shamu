@@ -3730,7 +3730,7 @@ int QCameraHardwareInterface::getZSLBackLookCount(void) const
     int look_back;
     char prop[PROPERTY_VALUE_MAX];
     memset(prop, 0, sizeof(prop));
-    property_get("persist.camera.zsl.backlookcount", prop, "0");
+    property_get("persist.camera.zsl.backlookcnt", prop, "0");
     LOGI("%s: prop = %d", __func__, atoi(prop));
     look_back = atoi(prop);
     if (look_back == 0 ) {
