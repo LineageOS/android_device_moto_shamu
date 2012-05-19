@@ -684,6 +684,7 @@ void QCameraHardwareInterface::initDefaultParameters()
     bool ret;
     char prop[PROPERTY_VALUE_MAX];
     mm_camera_dimension_t maxDim;
+    int rc = MM_CAMERA_OK;
     LOGI("%s: E", __func__);
 
     memset(&maxDim, 0, sizeof(mm_camera_dimension_t));
@@ -984,7 +985,13 @@ void QCameraHardwareInterface::initDefaultParameters()
     //8960 supports Power modes : Low power, Normal Power.
     mParameters.set("power-mode-supported", "true");
     //Set Live shot support
-    mParameters.set("video-snapshot-supported", "true");
+    rc = cam_config_is_parm_supported(mCameraId, MM_CAMERA_PARM_LIVESHOT_MAIN);
+    if(!rc) {
+        LOGE("%s:LIVESHOT is  not supported", __func__);
+        mParameters.set("video-snapshot-supported", "false");
+    } else {
+        mParameters.set("video-snapshot-supported", "true");
+    }
 
     //Set default power mode
     mParameters.set(CameraParameters::KEY_POWER_MODE,"Normal_Power");

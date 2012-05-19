@@ -97,7 +97,6 @@ static uint8_t mm_camera_cfg_is_parm_supported (mm_camera_t * camera,
     case MM_CAMERA_PARM_OP_MODE:
     case MM_CAMERA_PARM_SHARPNESS_CAP:
     case MM_CAMERA_PARM_SNAPSHOT_BURST_NUM:
-    case MM_CAMERA_PARM_LIVESHOT_MAIN:
     case MM_CAMERA_PARM_MAXZOOM:
     case MM_CAMERA_PARM_LUMA_ADAPTATION:
     case MM_CAMERA_PARM_HDR:
