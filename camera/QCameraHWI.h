@@ -453,38 +453,39 @@ public:
                                      int *picture_height);
     bool isRawSnapshot();
     bool mShutterSoundPlayed;
-    void                dumpFrameToFile(struct msm_frame*, HAL_cam_dump_frm_type_t);
+    void dumpFrameToFile(struct msm_frame*, HAL_cam_dump_frm_type_t);
 
     static QCameraHardwareInterface *createInstance(int, int);
-	//QCameraHardwareInterface(int cameraId, int mode);
     status_t setZSLBurstLookBack(const CameraParameters& params);
     status_t setZSLBurstInterval(const CameraParameters& params);
     int getZSLBurstInterval(void);
     int getZSLQueueDepth(void) const;
     int getZSLBackLookCount(void) const;
 
-    //QCameraHardwareInterface(int  cameraId, int mode);
     ~QCameraHardwareInterface();
-    int initHeapMem(QCameraHalHeap_t *heap,
-				int num_of_buf,
-				int pmem_type,
-				int frame_len,
-				int cbcr_off,
-				int y_off,
-				mm_cameara_stream_buf_t *StreamBuf,
-                                mm_camera_buf_def_t *buf_def,
-                                uint8_t num_planes,
-                                uint32_t *planes);
+    int initHeapMem(QCameraHalHeap_t *heap, int num_of_buf, int pmem_type,
+      int frame_len, int cbcr_off, int y_off, mm_cameara_stream_buf_t *StreamBuf,
+      mm_camera_buf_def_t *buf_def, uint8_t num_planes, uint32_t *planes);
 
     int releaseHeapMem( QCameraHalHeap_t *heap);
-    status_t sendMappingBuf(int ext_mode, int idx, int fd, uint32_t size, int cameraid, mm_camera_socket_msg_type msg_type);
-    status_t sendUnMappingBuf(int ext_mode, int idx, int cameraid, mm_camera_socket_msg_type msg_type);
-    int allocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt, int ion_type);
+    status_t sendMappingBuf(int ext_mode, int idx, int fd, uint32_t size,
+      int cameraid, mm_camera_socket_msg_type msg_type);
+    status_t sendUnMappingBuf(int ext_mode, int idx, int cameraid,
+      mm_camera_socket_msg_type msg_type);
+
+    int allocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt,
+      int ion_type);
     int deallocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt);
-    int allocate_ion_memory(QCameraStatHeap_t *p_camera_memory, int cnt, int ion_type);
+
+    int allocate_ion_memory(QCameraStatHeap_t *p_camera_memory, int cnt,
+      int ion_type);
     int deallocate_ion_memory(QCameraStatHeap_t *p_camera_memory, int cnt);
-    void dumpFrameToFile(const void * data, uint32_t size, char* name, char* ext, int index);
-    preview_format_info_t  getPreviewFormatInfo( );
+
+    int cache_ops(struct ion_flush_data *cache_inv_data, int type);
+
+    void dumpFrameToFile(const void * data, uint32_t size, char* name,
+      char* ext, int index);
+    preview_format_info_t getPreviewFormatInfo( );
     bool isCameraReady();
     bool isNoDisplayMode();
 
