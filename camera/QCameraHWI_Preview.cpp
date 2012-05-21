@@ -958,30 +958,39 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
   }
   if(rcb != NULL && mVFEOutputs == 1)
   {
-      if (mHalCamCtrl->mStoreMetaDataInFrame)
+      int flagwait = 1;
+      if(mHalCamCtrl->mStartRecording == true &&
+              ( mHalCamCtrl->mMsgEnabled & CAMERA_MSG_VIDEO_FRAME))
       {
-          mStopCallbackLock.unlock();
-          if(mHalCamCtrl->mStartRecording == true &&
-                          ( mHalCamCtrl->mMsgEnabled & CAMERA_MSG_VIDEO_FRAME))
+        if (mHalCamCtrl->mStoreMetaDataInFrame)
+        {
+          if(mHalCamCtrl->mRecordingMemory.metadata_memory[frame->def.idx])
           {
+              flagwait = 1;
+              mStopCallbackLock.unlock();
               rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME,
                       mHalCamCtrl->mRecordingMemory.metadata_memory[frame->def.idx],
                       0, mHalCamCtrl->mCallbackCookie);
-          }
+          }else
+              flagwait = 0;
       }
       else
       {
-           mStopCallbackLock.unlock();
-          if(mHalCamCtrl->mStartRecording == true &&
-                          ( mHalCamCtrl->mMsgEnabled & CAMERA_MSG_VIDEO_FRAME))
-          {
+              mStopCallbackLock.unlock();
               rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME,
                       mHalCamCtrl->mPreviewMemory.camera_memory[frame->def.idx],
                       0, mHalCamCtrl->mCallbackCookie);
+      }
+
+      if(flagwait){
+          Mutex::Autolock rLock(&mHalCamCtrl->mRecordFrameLock);
+          if (mHalCamCtrl->mReleasedRecordingFrame != true) {
+              mHalCamCtrl->mRecordWait.wait(mHalCamCtrl->mRecordFrameLock);
           }
+          mHalCamCtrl->mReleasedRecordingFrame = false;
+      }
       }
   }
-
   /* Save the last displayed frame. We'll be using it to fill the gap between
      when preview stops and postview start during snapshot.*/
   //mLastQueuedFrame = frame->def.frame;
