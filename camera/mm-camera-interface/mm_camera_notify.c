@@ -597,6 +597,10 @@ static void mm_camera_read_snapshot_thumbnail_frame(mm_camera_obj_t * my_obj)
     mm_camera_stream_t *stream;
     mm_camera_frame_queue_t *q;
 
+    if (!my_obj->ch[MM_CAMERA_CH_SNAPSHOT].acquired) {
+        LOGE("Snapshot channel is not in acquired state \n");
+        return;
+    }
     q = &my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.thumbnail.frame.readyq;
     stream = &my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.thumbnail;
     idx =  mm_camera_read_msm_frame(my_obj,stream);
@@ -621,6 +625,10 @@ static void mm_camera_read_video_frame(mm_camera_obj_t * my_obj)
     mm_camera_buf_cb_t buf_cb[MM_CAMERA_BUF_CB_MAX];
     mm_camera_ch_data_buf_t data[MM_CAMERA_BUF_CB_MAX];
 
+    if (!my_obj->ch[MM_CAMERA_CH_VIDEO].acquired) {
+        LOGE("Snapshot channel is not in acquired state \n");
+        return;
+    }
     stream = &my_obj->ch[MM_CAMERA_CH_VIDEO].video.video;
     idx =  mm_camera_read_msm_frame(my_obj,stream);
     if (idx < 0)
