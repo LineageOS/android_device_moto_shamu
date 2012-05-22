@@ -179,7 +179,8 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mRotation(0),
                     mFocusMode(AF_MODE_MAX),
                     mPreviewFormat(CAMERA_YUV_420_NV21),
-                    mRestartPreview(false)
+                    mRestartPreview(false),
+                    mReleasedRecordingFrame(false)
 {
     LOGI("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;

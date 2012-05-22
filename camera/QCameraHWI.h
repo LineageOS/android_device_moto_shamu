@@ -670,6 +670,9 @@ private:
     Mutex         mRecordingMemoryLock;
     Mutex         mAutofocusLock;
     Mutex         mMetaDataWaitLock;
+    Mutex         mRecordFrameLock;
+    Mutex         mRecordLock;
+    Condition     mRecordWait;
     pthread_mutex_t     mAsyncCmdMutex;
     pthread_cond_t      mAsyncCmdWait;
 
@@ -722,6 +725,7 @@ private:
     bool mFullLiveshotEnabled;
     bool mRecordingHint;
     bool mStartRecording;
+    bool mReleasedRecordingFrame;
     int mHdrMode;
     int mSnapshotFormat;
     int mZslInterval;
