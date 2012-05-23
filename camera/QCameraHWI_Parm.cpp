@@ -85,7 +85,7 @@ extern "C" {
 
 //Default FPS
 #define MINIMUM_FPS 5
-#define MAXIMUM_FPS 121
+#define MAXIMUM_FPS 120
 #define DEFAULT_FIXED_FPS 30
 #define DEFAULT_FPS MAXIMUM_FPS
 
