@@ -205,6 +205,11 @@ error:
 
 void QCameraStream_record::releaseEncodeBuffer() {
   for(int cnt = 0; cnt < mHalCamCtrl->mRecordingMemory.buffer_count; cnt++) {
+    if (NO_ERROR !=
+      mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_VIDEO, cnt,
+      mCameraId, CAM_SOCK_MSG_TYPE_FD_UNMAPPING))
+      LOGE("%s: Unmapping Video Data Failed", __func__);
+
     if (mHalCamCtrl->mStoreMetaDataInFrame) {
       struct encoder_media_buffer_type * packet =
           (struct encoder_media_buffer_type  *)
@@ -482,11 +487,13 @@ status_t QCameraStream_record::initEncodeBuffers()
       recordframes[cnt].fd_data = mHalCamCtrl->mRecordingMemory.ion_info_fd[cnt];
       recordframes[cnt].ion_alloc = mHalCamCtrl->mRecordingMemory.alloc[cnt];
 
-      //record_offset[cnt] =  mRecordHeap->mAlignedBufferSize * cnt;
+      if (NO_ERROR !=
+        mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_VIDEO, cnt,
+        recordframes[cnt].fd, mHalCamCtrl->mRecordingMemory.size, mCameraId,
+        CAM_SOCK_MSG_TYPE_FD_MAPPING))
+        LOGE("%s: sending mapping data Msg Failed", __func__);
 
-	    //record_buffers_tracking_flag[cnt] = false;
-	    //record_offset[cnt] =  0;
-	    LOGE ("initRecord :  record heap , video buffers  buffer=%lu fd=%d y_off=%d cbcr_off=%d\n",
+      LOGE ("initRecord :  record heap , video buffers  buffer=%lu fd=%d y_off=%d cbcr_off=%d\n",
 		    (unsigned long)recordframes[cnt].buffer, recordframes[cnt].fd, recordframes[cnt].y_off,
 		    recordframes[cnt].cbcr_off);
 	    //mNumRecordFrames++;

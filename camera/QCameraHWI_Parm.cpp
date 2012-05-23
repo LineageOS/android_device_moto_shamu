@@ -2450,8 +2450,9 @@ status_t QCameraHardwareInterface::setPowerMode(const CameraParameters& params) 
     if (powermode != NULL) {
         value = attr_lookup(power_modes,
                 sizeof(power_modes) / sizeof(str_map), powermode);
-        if(value == LOW_POWER) {
+        if((value == LOW_POWER) || mHFRLevel > 1) {
             LOGI("Enable Low Power Mode");
+            value = LOW_POWER;
             mPowerMode = value;
             mParameters.set(CameraParameters::KEY_POWER_MODE,"Low_Power");
         } else {
