@@ -1549,6 +1549,18 @@ status_t QCameraHardwareInterface::setContrast(const CameraParameters& params)
         bool ret = native_set_parms(MM_CAMERA_PARM_CONTRAST, sizeof(contrast),
                                    (void *)&contrast);
         LOGE("Lower layer returned %d", ret);
+        int bestshot_reconfigure;
+        cam_config_get_parm(mCameraId, MM_CAMERA_PARM_BESTSHOT_RECONFIGURE,
+                            &bestshot_reconfigure);
+        if(bestshot_reconfigure) {
+             if (mContrast != contrast) {
+                  mContrast = contrast;
+                 if (mPreviewState == QCAMERA_HAL_PREVIEW_STARTED && ret) {
+                      mRestartPreview = 1;
+                      pausePreviewForZSL();
+                  }
+             }
+        }
         return ret ? NO_ERROR : UNKNOWN_ERROR;
     } else {
           LOGI(" Contrast value will not be set " \
@@ -2071,6 +2083,18 @@ status_t QCameraHardwareInterface::setSceneMode(const CameraParameters& params)
             mParameters.set(CameraParameters::KEY_SCENE_MODE, str);
             bool ret = native_set_parms(MM_CAMERA_PARM_BESTSHOT_MODE, sizeof(value),
                                        (void *)&value);
+            int bestshot_reconfigure;
+            cam_config_get_parm(mCameraId, MM_CAMERA_PARM_BESTSHOT_RECONFIGURE,
+                                &bestshot_reconfigure);
+            if(bestshot_reconfigure) {
+                if (mBestShotMode != value) {
+                     mBestShotMode = value;
+                     if (mPreviewState == QCAMERA_HAL_PREVIEW_STARTED && ret) {
+                           mRestartPreview = 1;
+                           pausePreviewForZSL();
+                      }
+                 }
+            }
             return ret ? NO_ERROR : UNKNOWN_ERROR;
         }
     }
@@ -2128,6 +2152,18 @@ status_t QCameraHardwareInterface::setEffect(const CameraParameters& params)
                 if(result != MM_CAMERA_OK) {
                     LOGI("Camera Effect: %s is not set as the selected value is not supported ", str);
                 }
+                int bestshot_reconfigure;
+                cam_config_get_parm(mCameraId, MM_CAMERA_PARM_BESTSHOT_RECONFIGURE,
+                                    &bestshot_reconfigure);
+                if(bestshot_reconfigure) {
+                     if (mEffects != value) {
+                         mEffects = value;
+                         if (mPreviewState == QCAMERA_HAL_PREVIEW_STARTED && ret) {
+                               mRestartPreview = 1;
+                               pausePreviewForZSL();
+                          }
+                   }
+               }
                return ret ? NO_ERROR : UNKNOWN_ERROR;
           }
         }

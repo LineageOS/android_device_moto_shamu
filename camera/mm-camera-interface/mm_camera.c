@@ -547,6 +547,9 @@ int32_t mm_camera_get_parm(mm_camera_obj_t * my_obj,
     case MM_CAMERA_PARM_DEFAULT_PREVIEW_HEIGHT:
         *((int *)parm->p_value) = my_obj->properties.default_preview_height;
         break;
+    case MM_CAMERA_PARM_BESTSHOT_RECONFIGURE:
+        *((int *)parm->p_value) = my_obj->properties.bestshot_reconfigure;
+        break;
     case MM_CAMERA_PARM_MAX_PREVIEW_SIZE: {
         mm_camera_dimension_t *dim =
             (mm_camera_dimension_t *)parm->p_value;
