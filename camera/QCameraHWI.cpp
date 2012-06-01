@@ -1372,7 +1372,7 @@ status_t QCameraHardwareInterface::autoFocusEvent(cam_ctrl_status_t *status, app
     }
 
     /* update focus distances after autofocus is done */
-    if(mHasAutoFocusSupport && (updateFocusDistances() != NO_ERROR)) {
+    if(updateFocusDistances() != NO_ERROR) {
        LOGE("%s: updateFocusDistances failed for %d", __FUNCTION__, mFocusMode);
     }
 

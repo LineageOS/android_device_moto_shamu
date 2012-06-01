@@ -1659,7 +1659,7 @@ status_t QCameraHardwareInterface::updateFocusDistances()
         String8 str;
         char buffer[32] = {0};
         //set all distances to infinity if focus mode is infinity
-        if(mFocusMode == DONT_CARE) {
+        if(mFocusMode == AF_MODE_INFINITY) {
             snprintf(buffer, sizeof(buffer), "Infinity,");
             str.append(buffer);
             snprintf(buffer, sizeof(buffer), "Infinity,");
@@ -2005,7 +2005,7 @@ status_t QCameraHardwareInterface::setFocusMode(const CameraParameters& params)
             mParameters.set(CameraParameters::KEY_FOCUS_MODE, str);
             mFocusMode = value;
 
-            if(mHasAutoFocusSupport && (updateFocusDistances() != NO_ERROR)) {
+            if(updateFocusDistances() != NO_ERROR) {
                LOGE("%s: updateFocusDistances failed for %s", __FUNCTION__, str);
                return UNKNOWN_ERROR;
             }
