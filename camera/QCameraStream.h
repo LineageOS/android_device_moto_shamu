@@ -266,6 +266,7 @@ public:
                                  int frame_len);
     status_t receiveRawPicture(mm_camera_ch_data_buf_t* recvd_frame);
     void receiveCompleteJpegPicture(jpeg_event_t event);
+	void jpegErrorHandler(jpeg_event_t event);
     void receiveJpegFragment(uint8_t *ptr, uint32_t size);
     void deInitBuffer(void);
     sp<IMemoryHeap> getRawHeap() const;

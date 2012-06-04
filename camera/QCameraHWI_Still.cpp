@@ -152,6 +152,28 @@ static void snapshot_jpeg_cb(jpeg_event_t event, void *user_data)
     QCameraStream_Snapshot *pme = (QCameraStream_Snapshot *)user_data;
     LOGE("%s: E ",__func__);
 
+    switch(event) {
+    case JPEG_EVENT_DONE:
+        break;
+    case JPEG_EVENT_THUMBNAIL_DROPPED:
+        LOGE("%s: Error in thumbnail encoding (event: %d) : X !!!",
+            __func__, event);
+        return;
+    case JPEG_EVENT_ERROR:
+    case JPEG_EVENT_ABORTED:
+        if (NULL != pme) {
+            pme->jpegErrorHandler(event);
+            if (!(pme->isZSLMode())) {
+                pme->stop();
+            }
+        }
+        LOGE("Error event handled from JPEG \n");
+        return;
+    default:
+        LOGE("Unsupported JPEG event %d \n", event);
+        break;
+    }
+
     if (event != JPEG_EVENT_DONE) {
         if (event == JPEG_EVENT_THUMBNAIL_DROPPED) {
             LOGE("%s: Error in thumbnail encoding (event: %d)!!!",
@@ -224,6 +246,26 @@ receiveJpegFragment(uint8_t *ptr, uint32_t size)
     LOGD("%s: X", __func__);
 }
 
+void QCameraStream_Snapshot::jpegErrorHandler(jpeg_event_t event)
+{
+    LOGV("%s: E", __func__);
+    mStopCallbackLock.lock( );
+    if(mCurrentFrameEncoded) {
+        free(mCurrentFrameEncoded);
+        mCurrentFrameEncoded = NULL;
+    }
+    setSnapshotState(SNAPSHOT_STATE_ERROR);
+    if (!mSnapshotQueue.isEmpty()) {
+        LOGI("%s: JPEG Queue not empty. flush the queue in "
+             "error case.", __func__);
+        mSnapshotQueue.flush();
+    }
+    mStopCallbackLock.unlock( );
+    if (NULL != mHalCamCtrl->mDataCb)
+        mHalCamCtrl->mDataCb (CAMERA_MSG_COMPRESSED_IMAGE,
+                              NULL, 0, NULL,mHalCamCtrl->mCallbackCookie);
+    LOGV("%s: X", __func__);
+}
 
 void QCameraStream_Snapshot::
 receiveCompleteJpegPicture(jpeg_event_t event)
@@ -669,12 +711,12 @@ end:
 status_t QCameraStream_Snapshot::deinitRawSnapshotBuffers(void)
 {
     int ret = NO_ERROR;
-
     LOGD("%s: E", __func__);
 
-    /* deinit buffers only if we have already allocated */
-    if (getSnapshotState() >= SNAPSHOT_STATE_BUF_INITIALIZED ){
+    int err = getSnapshotState();
 
+    /* deinit buffers only if we have already allocated */
+    if (err >= SNAPSHOT_STATE_BUF_INITIALIZED || err == SNAPSHOT_STATE_ERROR){
         LOGD("%s: Unpreparing Snapshot Buffer", __func__);
         ret = cam_config_unprepare_buf(mCameraId, MM_CAMERA_CH_RAW);
         if(ret != NO_ERROR) {
@@ -834,11 +876,11 @@ status_t QCameraStream_Snapshot::
 deinitSnapshotBuffers(void)
 {
     int ret = NO_ERROR;
-
     LOGD("%s: E", __func__);
 
+    int err = getSnapshotState();
     /* Deinit only if we have already initialized*/
-    if (getSnapshotState() >= SNAPSHOT_STATE_BUF_INITIALIZED ){
+    if (err >= SNAPSHOT_STATE_BUF_INITIALIZED || err == SNAPSHOT_STATE_ERROR){
 
         if(!isLiveSnapshot()) {
             LOGD("%s: Unpreparing Snapshot Buffer", __func__);
@@ -1532,11 +1574,17 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         LOGD(" Passing my obj: %x", (unsigned int) this);
         set_callbacks(snapshot_jpeg_fragment_cb, snapshot_jpeg_cb, this,
              mHalCamCtrl->mJpegMemory.camera_memory[0]->data, &mJpegOffset);
-        omxJpegStart();
-	if (mHalCamCtrl->getJpegQuality())
-          mm_jpeg_encoder_setMainImageQuality(mHalCamCtrl->getJpegQuality());
-	else
-	   mm_jpeg_encoder_setMainImageQuality(85);
+
+        if(omxJpegStart() != NO_ERROR){
+            LOGE("Error In omxJpegStart!!! Return");
+            ret = FAILED_TRANSACTION;
+            goto end;
+        }
+
+        if (mHalCamCtrl->getJpegQuality())
+            mm_jpeg_encoder_setMainImageQuality(mHalCamCtrl->getJpegQuality());
+        else
+            mm_jpeg_encoder_setMainImageQuality(85);
 
         LOGE("%s: Dimension to encode: main: %dx%d thumbnail: %dx%d", __func__,
              dimension.orig_picture_dx, dimension.orig_picture_dy,
@@ -1731,6 +1779,10 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
         LOGD("%s: Stop receiving raw pic ", __func__);
         return NO_ERROR;
     }
+
+    if(getSnapshotState() == SNAPSHOT_STATE_ERROR) {
+        cam_evt_buf_done(mCameraId, recvd_frame);
+	}
 
     mHalCamCtrl->dumpFrameToFile(recvd_frame->snapshot.main.frame, HAL_DUMP_FRM_MAIN);
     if (!isFullSizeLiveshot())
