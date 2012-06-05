@@ -192,6 +192,7 @@ int mm_camera_read_msm_frame(mm_camera_obj_t * my_obj,
                         mm_camera_stream_t *stream)
 {
     int idx = -1, rc = MM_CAMERA_OK;
+    uint32_t i = 0;
     struct v4l2_buffer vb;
     struct v4l2_plane planes[VIDEO_MAX_PLANES];
 
@@ -199,12 +200,23 @@ int mm_camera_read_msm_frame(mm_camera_obj_t * my_obj,
     vb.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     vb.memory = V4L2_MEMORY_USERPTR;
     vb.m.planes = &planes[0];
+    vb.length = stream->fmt.fmt.pix_mp.num_planes;
 
     CDBG("%s: VIDIOC_DQBUF ioctl call\n", __func__);
     rc = ioctl(stream->fd, VIDIOC_DQBUF, &vb);
     if (rc < 0)
         return idx;
     idx = vb.index;
+    for(i = 0; i < vb.length; i++) {
+        CDBG("%s plane %d addr offset: %d data offset:%d\n",
+             __func__, i, vb.m.planes[i].reserved[0],
+             vb.m.planes[i].data_offset);
+        stream->frame.frame[idx].planes[i].reserved[0] =
+            vb.m.planes[i].reserved[0];
+        stream->frame.frame[idx].planes[i].data_offset =
+            vb.m.planes[i].data_offset;
+    }
+
     stream->frame.frame[idx].frame.frame_id = vb.sequence;
     stream->frame.frame[idx].frame.ts.tv_sec  = vb.timestamp.tv_sec;
     stream->frame.frame[idx].frame.ts.tv_nsec = vb.timestamp.tv_usec * 1000;
