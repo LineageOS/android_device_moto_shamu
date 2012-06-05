@@ -1259,6 +1259,19 @@ void QCameraHardwareInterface::initDefaultParameters()
     //mUseOverlay = useOverlay();
     mParameters.set("zoom", 0);
 
+    int mNuberOfVFEOutputs;
+    ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_VFE_OUTPUT_ENABLE, &mNuberOfVFEOutputs);
+    if(ret != MM_CAMERA_OK) {
+        LOGE("get parm MM_CAMERA_PARM_VFE_OUTPUT_ENABLE  failed");
+        ret = BAD_VALUE;
+    }
+    if(mNuberOfVFEOutputs == 1)
+    {
+       mParameters.set(CameraParameters::KEY_SINGLE_ISP_OUTPUT_ENABLED, "true");
+    } else {
+       mParameters.set(CameraParameters::KEY_SINGLE_ISP_OUTPUT_ENABLED, "false");
+    }
+
     if (setParameters(mParameters) != NO_ERROR) {
         LOGE("Failed to set default parameters?!");
     }  

@@ -59,9 +59,9 @@ extern "C" {
 #define Q12 4096
 #define QCAMERA_PARM_ENABLE   1
 #define QCAMERA_PARM_DISABLE  0
-#define PREVIEW_TBL_MAX_SIZE  13
-#define VIDEO_TBL_MAX_SIZE    13
-#define THUMB_TBL_MAX_SIZE    15
+#define PREVIEW_TBL_MAX_SIZE  14
+#define VIDEO_TBL_MAX_SIZE    14
+#define THUMB_TBL_MAX_SIZE    16
 #define HFR_TBL_MAX_SIZE      2
 
 struct str_map {

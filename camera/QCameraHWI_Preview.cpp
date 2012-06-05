@@ -125,19 +125,25 @@ status_t QCameraStream_preview::getBufferFromSurface() {
      goto end;
     }
 
-    gralloc_usage = CAMERA_GRALLOC_HEAP_ID | CAMERA_GRALLOC_FALLBACK_HEAP_ID |
+    ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_VFE_OUTPUT_ENABLE, &mVFEOutputs);
+    if(ret != MM_CAMERA_OK) {
+        LOGE("get parm MM_CAMERA_PARM_VFE_OUTPUT_ENABLE  failed");
+        ret = BAD_VALUE;
+        goto end;
+    }
+
+    //as software encoder is used to encode 720p, to enhance the performance
+    //cashed pmem is used here
+    if(mVFEOutputs == 1 && dim.display_height == 720)
+        gralloc_usage = CAMERA_GRALLOC_HEAP_ID | CAMERA_GRALLOC_FALLBACK_HEAP_ID;
+    else
+        gralloc_usage = CAMERA_GRALLOC_HEAP_ID | CAMERA_GRALLOC_FALLBACK_HEAP_ID |
                     CAMERA_GRALLOC_CACHING_ID;
     err = mPreviewWindow->set_usage(mPreviewWindow, gralloc_usage);
     if(err != 0) {
     /* set_usage error out */
         LOGE("%s: set_usage rc = %d", __func__, err);
         ret = UNKNOWN_ERROR;
-        goto end;
-    }
-    ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_VFE_OUTPUT_ENABLE, &mVFEOutputs);
-    if(ret != MM_CAMERA_OK) {
-        LOGE("get parm MM_CAMERA_PARM_VFE_OUTPUT_ENABLE  failed");
-        ret = BAD_VALUE;
         goto end;
     }
     ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_HFR_FRAME_SKIP, &mHFRFrameSkip);
