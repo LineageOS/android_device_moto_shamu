@@ -235,10 +235,9 @@ extern "C"  int close_camera_device( hw_device_t *hw_dev)
                 if(hardware != NULL) {
                     hardware->release( );
                 }
-            } else {
-                if(hardware != NULL)
-                  delete hardware;
             }
+            if(hardware != NULL)
+                delete hardware;
             free(camHal);
         }
         rc = 0;

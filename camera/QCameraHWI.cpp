@@ -332,6 +332,9 @@ QCameraHardwareInterface::~QCameraHardwareInterface()
         mStreamLiveSnap = NULL;
     }
 
+    pthread_mutex_destroy(&mAsyncCmdMutex);
+    pthread_cond_destroy(&mAsyncCmdWait);
+
     LOGI("~QCameraHardwareInterface: X");
 }
 
