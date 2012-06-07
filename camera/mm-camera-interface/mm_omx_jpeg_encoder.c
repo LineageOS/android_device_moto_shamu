@@ -268,6 +268,7 @@ int8_t omxJpegOpen()
 
 int8_t omxJpegStart()
 {
+    int rc = 0;
     LOGE("%s", __func__);
     pthread_mutex_lock(&jpege_mutex);
     hw_encode = true;
@@ -276,9 +277,9 @@ int8_t omxJpegStart()
     callbacks.EventHandler = eventHandler;
     pthread_mutex_init(&lock, NULL);
     pthread_cond_init(&cond, NULL);
-    OMX_Init();
+    rc = OMX_Init();
     pthread_mutex_unlock(&jpege_mutex);
-    return TRUE;
+    return rc;
 }
 
 static omx_jpeg_color_format format_cam2jpeg(cam_format_t fmt)
