@@ -259,6 +259,24 @@ int32_t mm_camera_util_s_ctrl( int32_t fd,  uint32_t id, int32_t value)
     return rc;
 }
 
+int32_t mm_camera_util_private_s_ctrl(int32_t fd,  uint32_t id, int32_t value)
+{
+    int rc = MM_CAMERA_OK;
+    struct msm_camera_v4l2_ioctl_t v4l2_ioctl;
+
+    memset(&v4l2_ioctl, 0, sizeof(v4l2_ioctl));
+    v4l2_ioctl.id = id;
+    v4l2_ioctl.ioctl_ptr = value;
+    rc = ioctl (fd, MSM_CAM_V4L2_IOCTL_PRIVATE_S_CTRL, &v4l2_ioctl);
+
+    if(rc) {
+        CDBG_ERROR("%s: fd=%d, S_CTRL, id=0x%x, value = 0x%x, rc = %ld\n",
+                 __func__, fd, id, (uint32_t)value, rc);
+        rc = MM_CAMERA_E_GENERAL;
+    }
+    return rc;
+}
+
 int32_t mm_camera_util_g_ctrl( int32_t fd, uint32_t id, int32_t *value)
 {
     int rc = MM_CAMERA_OK;

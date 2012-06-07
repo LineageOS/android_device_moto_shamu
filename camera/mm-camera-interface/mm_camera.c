@@ -409,7 +409,7 @@ static int32_t mm_camera_send_native_ctrl_cmd(mm_camera_obj_t * my_obj,
     ctrl_cmd.timeout_ms = 1000;
     ctrl_cmd.value = value;
     ctrl_cmd.status = CAM_CTRL_SUCCESS;
-    rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, MSM_V4L2_PID_CTRL_CMD,
+    rc = mm_camera_util_private_s_ctrl(my_obj->ctrl_fd, MSM_V4L2_PID_CTRL_CMD,
                                                                             (int)&ctrl_cmd);
     CDBG("%s: type=%d, rc = %d, status = %d\n",
                 __func__, type, rc, ctrl_cmd.status);
@@ -432,7 +432,7 @@ static int32_t mm_camera_send_native_ctrl_timeout_cmd(mm_camera_obj_t * my_obj,
     ctrl_cmd.timeout_ms = timeout;
     ctrl_cmd.value = value;
     ctrl_cmd.status = CAM_CTRL_SUCCESS;
-    rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, MSM_V4L2_PID_CTRL_CMD,
+    rc = mm_camera_util_private_s_ctrl(my_obj->ctrl_fd, MSM_V4L2_PID_CTRL_CMD,
         (int)&ctrl_cmd);
     CDBG("%s: type=%d, rc = %d, status = %d\n",
         __func__, type, rc, ctrl_cmd.status);
