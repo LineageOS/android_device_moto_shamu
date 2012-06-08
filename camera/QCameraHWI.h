@@ -139,6 +139,8 @@ typedef struct {
 	 uint32_t                addr_offset[MM_CAMERA_MAX_NUM_FRAMES];
 	 uint8_t                 local_flag[MM_CAMERA_MAX_NUM_FRAMES];
 	 camera_memory_t        *camera_memory[MM_CAMERA_MAX_NUM_FRAMES];
+     int                     main_ion_fd[MM_CAMERA_MAX_NUM_FRAMES];
+     struct ion_fd_data      ion_info_fd[MM_CAMERA_MAX_NUM_FRAMES];
 } QCameraHalMemory_t;
 
 
@@ -481,7 +483,7 @@ public:
       int ion_type);
     int deallocate_ion_memory(QCameraStatHeap_t *p_camera_memory, int cnt);
 
-    int cache_ops(struct ion_flush_data *cache_inv_data, int type);
+    int cache_ops(int ion_fd, struct ion_flush_data *cache_inv_data, int type);
 
     void dumpFrameToFile(const void * data, uint32_t size, char* name,
       char* ext, int index);

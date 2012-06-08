@@ -1671,20 +1671,19 @@ encodeDisplayAndSave(mm_camera_ch_data_buf_t* recvd_frame,
 #ifdef USE_ION
     /*Clean out(Write-back) cache before sending for JPEG*/
     memset(&cache_inv_data, 0, sizeof(struct ion_flush_data));
-    ion_fd = open("/dev/ion", O_RDONLY);
-    if(ion_fd < 0) {
-        LOGE("%s: Ion device open failed\n", __func__);
-    }
+
     cache_inv_data.vaddr = (void*)recvd_frame->snapshot.main.frame->buffer;
     cache_inv_data.fd = recvd_frame->snapshot.main.frame->fd;
     cache_inv_data.handle = recvd_frame->snapshot.main.frame->fd_data.handle;
     cache_inv_data.length = recvd_frame->snapshot.main.frame->ion_alloc.len;
+    ion_fd = recvd_frame->snapshot.main.frame->ion_dev_fd;
     if(ion_fd > 0) {
       if(ioctl(ion_fd, ION_IOC_CLEAN_INV_CACHES, &cache_inv_data) < 0)
           LOGE("%s: Cache Invalidate failed\n", __func__);
       else {
           LOGD("%s: Successful cache invalidate\n", __func__);
 	  if(!isFullSizeLiveshot()) {
+            ion_fd = recvd_frame->snapshot.thumbnail.frame->ion_dev_fd;
             cache_inv_data.vaddr = (void*)recvd_frame->snapshot.thumbnail.frame->buffer;
             cache_inv_data.fd = recvd_frame->snapshot.thumbnail.frame->fd;
             cache_inv_data.handle = recvd_frame->snapshot.thumbnail.frame->fd_data.handle;
@@ -1695,7 +1694,6 @@ encodeDisplayAndSave(mm_camera_ch_data_buf_t* recvd_frame,
               LOGD("%s: Successful cache invalidate\n", __func__);
           }
       }
-      close(ion_fd);
     }
 #endif
     memset(&dummy_crop,0,sizeof(common_crop_t));

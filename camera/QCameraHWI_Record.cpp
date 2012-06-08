@@ -345,13 +345,14 @@ status_t QCameraStream_record::processRecordFrame(void *data)
 
 #ifdef USE_ION
   struct ion_flush_data cache_inv_data;
-
+  int ion_fd;
+  ion_fd = frame->video.video.frame->ion_dev_fd;
   cache_inv_data.vaddr = (void *)frame->video.video.frame->buffer;
   cache_inv_data.fd = frame->video.video.frame->fd;
   cache_inv_data.handle = frame->video.video.frame->fd_data.handle;
   cache_inv_data.length = frame->video.video.frame->ion_alloc.len;
 
-  if (mHalCamCtrl->cache_ops(&cache_inv_data, ION_IOC_CLEAN_CACHES) < 0)
+  if (mHalCamCtrl->cache_ops(ion_fd, &cache_inv_data, ION_IOC_CLEAN_CACHES) < 0)
     LOGE("%s: Cache clean for Video buffer %p fd = %d failed", __func__,
       cache_inv_data.vaddr, cache_inv_data.fd);
 #endif
@@ -475,6 +476,7 @@ status_t QCameraStream_record::initEncodeBuffers()
 	    recordframes[cnt].path = OUTPUT_TYPE_V;
       recordframes[cnt].fd_data = mHalCamCtrl->mRecordingMemory.ion_info_fd[cnt];
       recordframes[cnt].ion_alloc = mHalCamCtrl->mRecordingMemory.alloc[cnt];
+      recordframes[cnt].ion_dev_fd = mHalCamCtrl->mRecordingMemory.main_ion_fd[cnt];
 
       if (NO_ERROR !=
         mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_VIDEO, cnt,

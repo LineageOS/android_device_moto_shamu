@@ -207,8 +207,21 @@ status_t QCameraStream_preview::getBufferFromSurface() {
             memset(&mHalCamCtrl->mPreviewMemory, 0, sizeof(mHalCamCtrl->mPreviewMemory));
 			goto end;
 		}
+
 		mHalCamCtrl->mPreviewMemory.private_buffer_handle[cnt] =
 		    (struct private_handle_t *)(*mHalCamCtrl->mPreviewMemory.buffer_handle[cnt]);
+#ifdef USE_ION
+        mHalCamCtrl->mPreviewMemory.main_ion_fd[cnt] = open("/dev/ion", O_RDONLY);
+        if (mHalCamCtrl->mPreviewMemory.main_ion_fd[cnt] < 0) {
+            LOGE("%s: failed: could not open ion device\n", __func__);
+        } else {
+            mHalCamCtrl->mPreviewMemory.ion_info_fd[cnt].fd =
+                mHalCamCtrl->mPreviewMemory.private_buffer_handle[cnt]->fd;
+            if (ioctl(mHalCamCtrl->mPreviewMemory.main_ion_fd[cnt],
+              ION_IOC_IMPORT, &mHalCamCtrl->mPreviewMemory.ion_info_fd[cnt]) < 0)
+              LOGE("ION import failed\n");
+        }
+#endif
 		mHalCamCtrl->mPreviewMemory.camera_memory[cnt] =
 		    mHalCamCtrl->mGetMemory(mHalCamCtrl->mPreviewMemory.private_buffer_handle[cnt]->fd,
 			mHalCamCtrl->mPreviewMemory.private_buffer_handle[cnt]->size, 1, (void *)this);
@@ -246,6 +259,14 @@ status_t QCameraStream_preview::putBufferToSurface() {
         }
 
         mHalCamCtrl->mPreviewMemory.camera_memory[cnt]->release(mHalCamCtrl->mPreviewMemory.camera_memory[cnt]);
+#ifdef USE_ION
+        struct ion_handle_data ion_handle;
+        ion_handle.handle = mHalCamCtrl->mPreviewMemory.ion_info_fd[cnt].handle;
+        if (ioctl(mHalCamCtrl->mPreviewMemory.main_ion_fd[cnt], ION_IOC_FREE, &ion_handle)
+            < 0)
+            LOGE("%s: ion free failed\n", __func__);
+        close(mHalCamCtrl->mPreviewMemory.main_ion_fd[cnt]);
+#endif
             if (BUFFER_LOCKED == mHalCamCtrl->mPreviewMemory.local_flag[cnt]) {
                 LOGD("%s: camera call genlock_unlock", __FUNCTION__);
 	        if (GENLOCK_FAILURE == genlock_unlock_buffer((native_handle_t *)
@@ -555,6 +576,8 @@ status_t QCameraStream_preview::initDisplayBuffers()
       mDisplayStreamBuf.frame[i].buffer =
           (long unsigned int)mHalCamCtrl->mPreviewMemory.camera_memory[i]->data;
       mDisplayStreamBuf.frame[i].ion_alloc.len = mHalCamCtrl->mPreviewMemory.private_buffer_handle[i]->size;
+      mDisplayStreamBuf.frame[i].ion_dev_fd = mHalCamCtrl->mPreviewMemory.main_ion_fd[i];
+      mDisplayStreamBuf.frame[i].fd_data = mHalCamCtrl->mPreviewMemory.ion_info_fd[i];
 
     LOGE("%s: idx = %d, fd = %d, size = %d, cbcr_offset = %d, y_offset = %d, "
       "offset = %d, vaddr = 0x%x", __func__, i, mDisplayStreamBuf.frame[i].fd,
@@ -685,6 +708,8 @@ status_t QCameraStream_preview::initPreviewOnlyBuffers()
       mDisplayStreamBuf.frame[i].path = OUTPUT_TYPE_P;
       mDisplayStreamBuf.frame[i].buffer =
           (long unsigned int)mHalCamCtrl->mNoDispPreviewMemory.camera_memory[i]->data;
+      mDisplayStreamBuf.frame[i].ion_dev_fd = mHalCamCtrl->mNoDispPreviewMemory.main_ion_fd[i];
+      mDisplayStreamBuf.frame[i].fd_data = mHalCamCtrl->mNoDispPreviewMemory.ion_info_fd[i];
 
     LOGE("%s: idx = %d, fd = %d, size = %d, cbcr_offset = %d, y_offset = %d, "
       "vaddr = 0x%x", __func__, i, mDisplayStreamBuf.frame[i].fd,
@@ -848,13 +873,14 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
 
 #ifdef USE_ION
   struct ion_flush_data cache_inv_data;
-
+  int ion_fd;
+  ion_fd = frame->def.frame->ion_dev_fd;
   cache_inv_data.vaddr = (void *)frame->def.frame->buffer;
   cache_inv_data.fd = frame->def.frame->fd;
   cache_inv_data.handle = frame->def.frame->fd_data.handle;
   cache_inv_data.length = frame->def.frame->ion_alloc.len;
 
-  if (mHalCamCtrl->cache_ops(&cache_inv_data, ION_IOC_CLEAN_CACHES) < 0)
+  if (mHalCamCtrl->cache_ops(ion_fd, &cache_inv_data, ION_IOC_CLEAN_CACHES) < 0)
     LOGE("%s: Cache clean for Preview buffer %p fd = %d failed", __func__,
       cache_inv_data.vaddr, cache_inv_data.fd);
 #endif
@@ -1077,13 +1103,14 @@ status_t QCameraStream_preview::processPreviewFrameWithOutDisplay(
 
 #ifdef USE_ION
   struct ion_flush_data cache_inv_data;
-
+  int ion_fd;
+  ion_fd = frame->def.frame->ion_dev_fd;
   cache_inv_data.vaddr = (void *)frame->def.frame->buffer;
   cache_inv_data.fd = frame->def.frame->fd;
   cache_inv_data.handle = frame->def.frame->fd_data.handle;
   cache_inv_data.length = frame->def.frame->ion_alloc.len;
 
-  if (mHalCamCtrl->cache_ops(&cache_inv_data, ION_IOC_CLEAN_CACHES) < 0)
+  if (mHalCamCtrl->cache_ops(ion_fd, &cache_inv_data, ION_IOC_CLEAN_CACHES) < 0)
     LOGE("%s: Cache clean for Preview buffer %p fd = %d failed", __func__,
       cache_inv_data.vaddr, cache_inv_data.fd);
 #endif

@@ -2254,23 +2254,16 @@ ION_OPEN_FAILED:
   return -1;
 }
 
-int QCameraHardwareInterface::cache_ops(struct ion_flush_data *cache_data,
-  int type)
+int QCameraHardwareInterface::cache_ops(int ion_fd,
+  struct ion_flush_data *cache_data, int type)
 {
-  int ion_fd, rc = 0;
+  int rc = 0;
 
-  ion_fd = open("/dev/ion", O_RDONLY);
-  if (ion_fd <= 0) {
-    LOGE("%s: ION device open failed\n", __func__);
-    return -ENXIO;
-  } else {
-    rc = ioctl(ion_fd, type, cache_data);
-    if (rc < 0)
-      LOGE("%s: Cache Invalidate failed\n", __func__);
-    else
-      LOGV("%s: Cache OPs type(%d) success", __func__);
-    close(ion_fd);
-  }
+  rc = ioctl(ion_fd, type, cache_data);
+  if (rc < 0)
+    LOGE("%s: Cache Invalidate failed\n", __func__);
+  else
+    LOGV("%s: Cache OPs type(%d) success", __func__);
 
   return rc;
 }
@@ -2386,6 +2379,7 @@ int QCameraHardwareInterface::initHeapMem( QCameraHalHeap_t *heap,
             frame->y_off =  heap->y_offset;
             frame->fd_data = heap->ion_info_fd[i];
             frame->ion_alloc = heap->alloc[i];
+            frame->ion_dev_fd = heap->main_ion_fd[i];
             LOGD("%s: Buffer idx: %d  addr: %x fd: %d phy_offset: %d"
                  "cbcr_off: %d y_off: %d frame_len: %d", __func__,
                  i, (unsigned int)frame->buffer, frame->fd,
