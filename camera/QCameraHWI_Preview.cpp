@@ -888,19 +888,19 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
   if(mHFRFrameSkip == 1)
   {
       const char *str = mHalCamCtrl->mParameters.get(
-                          CameraParameters::KEY_VIDEO_HIGH_FRAME_RATE);
+                          QCameraParameters::KEY_VIDEO_HIGH_FRAME_RATE);
       if(str != NULL){
       int is_hfr_off = 0;
       mHFRFrameCnt++;
-      if(!strcmp(str, CameraParameters::VIDEO_HFR_OFF)) {
+      if(!strcmp(str, QCameraParameters::VIDEO_HFR_OFF)) {
           is_hfr_off = 1;
           err = this->mPreviewWindow->enqueue_buffer(this->mPreviewWindow,
             (buffer_handle_t *)mHalCamCtrl->mPreviewMemory.buffer_handle[frame->def.idx]);
-      } else if (!strcmp(str, CameraParameters::VIDEO_HFR_2X)) {
+      } else if (!strcmp(str, QCameraParameters::VIDEO_HFR_2X)) {
           mHFRFrameCnt %= 2;
-      } else if (!strcmp(str, CameraParameters::VIDEO_HFR_3X)) {
+      } else if (!strcmp(str, QCameraParameters::VIDEO_HFR_3X)) {
           mHFRFrameCnt %= 3;
-      } else if (!strcmp(str, CameraParameters::VIDEO_HFR_4X)) {
+      } else if (!strcmp(str, QCameraParameters::VIDEO_HFR_4X)) {
           mHFRFrameCnt %= 4;
       }
       if(mHFRFrameCnt == 0)

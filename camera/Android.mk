@@ -66,7 +66,7 @@ ifneq ($(USE_CAMERA_STUB),true)
             QCameraHWI.cpp QCameraHWI_Preview.cpp \
             QCameraHWI_Record.cpp QCameraHWI_Still.cpp \
             QCameraHWI_Mem.cpp QCameraHWI_Display.cpp \
-            QCameraStream.cpp QualcommCamera2.cpp
+            QCameraStream.cpp QualcommCamera2.cpp QCameraParameters.cpp
         endif
 
       else

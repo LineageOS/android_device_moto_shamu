@@ -116,7 +116,7 @@ typedef struct {
   QCameraHardwareInterface *hardware;
   int camera_released;
   int cameraId;
-  //CameraParameters parameters;
+  //QCameraParameters parameters;
 } camera_hardware_t;
 
 typedef struct {
@@ -138,9 +138,9 @@ QCameraHardwareInterface *util_get_Hal_obj( struct camera_device * device)
 }
 
 #if 0 //mzhu
-CameraParameters* util_get_HAL_parameter( struct camera_device * device)
+QCameraParameters* util_get_HAL_parameter( struct camera_device * device)
 {
-    CameraParameters *param = NULL;
+    QCameraParameters *param = NULL;
     if(device && device->priv){
         camera_hardware_t *camHal = (camera_hardware_t *)device->priv;
         param = &(camHal->parameters);
@@ -436,7 +436,7 @@ int set_parameters(struct camera_device * device, const char *parms)
     int rc = -1;
     QCameraHardwareInterface *hardware = util_get_Hal_obj(device);
     if(hardware != NULL && parms){
-        //CameraParameters param;// = util_get_HAL_parameter(device);
+        //QCameraParameters param;// = util_get_HAL_parameter(device);
         //String8 str = String8(parms);
 
         //param.unflatten(str);

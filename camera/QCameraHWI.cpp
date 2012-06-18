@@ -916,7 +916,7 @@ void  QCameraHardwareInterface::processEvent(mm_camera_event_t *event)
 }
 
 bool QCameraHardwareInterface::preview_parm_config (cam_ctrl_dimension_t* dim,
-                                   CameraParameters& parm)
+                                   QCameraParameters& parm)
 {
     LOGI("preview_parm_config: E");
     bool matching = true;
@@ -1135,7 +1135,7 @@ void QCameraHardwareInterface::stopPreview()
     mFaceDetectOn = false;
 
     // reset recording hint to the value passed from Apps
-    const char * str = mParameters.get(CameraParameters::KEY_RECORDING_HINT);
+    const char * str = mParameters.get(QCameraParameters::KEY_RECORDING_HINT);
     if((str != NULL) && !strcmp(str, "true")){
         mRecordingHint = TRUE;
     } else {

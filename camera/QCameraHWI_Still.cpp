@@ -398,8 +398,8 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
       mPostviewWidth = dim->display_width;
       mPostviewHeight = dim->display_height;
     } else {
-      mPostviewWidth = mHalCamCtrl->mParameters.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
-      mPostviewHeight =  mHalCamCtrl->mParameters.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
+      mPostviewWidth = mHalCamCtrl->mParameters.getInt(QCameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
+      mPostviewHeight =  mHalCamCtrl->mParameters.getInt(QCameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
     }
     /*If application requested thumbnail size to be (0,0) 
        then configure second outout to a default size.
@@ -1154,8 +1154,8 @@ status_t QCameraStream_Snapshot::initFullLiveshot(void)
         (mPictureHeight == dim.picture_height);
 
     //Actual thumbnail size requested
-    mPostviewWidth = mHalCamCtrl->mParameters.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
-    mPostviewHeight =  mHalCamCtrl->mParameters.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
+    mPostviewWidth = mHalCamCtrl->mParameters.getInt(QCameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
+    mPostviewHeight =  mHalCamCtrl->mParameters.getInt(QCameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
 
     mDropThumbnail = false;
     if (mPostviewWidth == 0 && mPostviewHeight == 0) {

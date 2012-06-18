@@ -102,7 +102,7 @@ namespace android {
 typedef struct {
   QualcommCameraHardware *hardware;
   int camera_released;
-  CameraParameters parameters;
+  QCameraParameters parameters;
   #if 1
   camera_notify_callback notify_cb;
   camera_data_callback data_cb;
@@ -289,9 +289,9 @@ void close_Hal_obj( struct camera_device * device)
 }
 
 
-CameraParameters* util_get_HAL_parameter( struct camera_device * device)
+QCameraParameters* util_get_HAL_parameter( struct camera_device * device)
 {
-  CameraParameters *param = NULL;
+  QCameraParameters *param = NULL;
   if(device && device->priv){
       camera_hardware_t *camHal = (camera_hardware_t *)device->priv;
       param = &(camHal->parameters);
@@ -612,7 +612,7 @@ int cancel_picture(struct camera_device * device)
   return rc;
 }
 
-CameraParameters g_param;
+QCameraParameters g_param;
 String8 g_str;
 int set_parameters(struct camera_device * device, const char *parms)
 
@@ -635,7 +635,7 @@ char* get_parameters(struct camera_device * device)
   LOGE("Q%s: E", __func__);
   char* rc = NULL;
 
-  CameraParameters param;
+  QCameraParameters param;
   QualcommCameraHardware * hardware = util_get_Hal_obj(device);
   if(hardware != NULL){
     g_param = hardware->getParameters( );
