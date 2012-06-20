@@ -23,11 +23,8 @@
 #include <binder/MemoryBase.h>
 #include <binder/MemoryHeapBase.h>
 #include <utils/threads.h>
-
+#include "QCamera_Intf.h"
 extern "C" {
-
-#include <camera.h>
-#include <camera_defs_i.h>
 #include <mm_camera_interface2.h>
 }
 

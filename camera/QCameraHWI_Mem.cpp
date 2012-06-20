@@ -166,6 +166,8 @@ static bool register_buf(int size,
                          bool vfe_can_write,
                          bool register_buffer)
 {
+    /*TODO*/
+    /*
     struct msm_pmem_info pmemBuf;
     CAMERA_HAL_UNUSED(frame_size);
 
@@ -181,8 +183,7 @@ static bool register_buf(int size,
 
     ALOGV("register_buf:  reg = %d buffer = %p",
          !register_buffer, buf);
-    /*TODO*/
-    /*if(native_start_ops(register_buffer ? CAMERA_OPS_REGISTER_BUFFER :
+    if(native_start_ops(register_buffer ? CAMERA_OPS_REGISTER_BUFFER :
         CAMERA_OPS_UNREGISTER_BUFFER ,(void *)&pmemBuf) < 0) {
          ALOGE("register_buf: MSM_CAM_IOCTL_(UN)REGISTER_PMEM  error %s",
                strerror(errno));

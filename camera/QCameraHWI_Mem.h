@@ -22,13 +22,11 @@
 #include <binder/MemoryHeapBase.h>
 #include <utils/threads.h>
 #include <stdint.h>
+#include "QCamera_Intf.h"
 
 extern "C" {
 #include <linux/android_pmem.h>
 #include <linux/ion.h>
-#include <camera.h>
-#include <camera_defs_i.h>
-
 }
 
 

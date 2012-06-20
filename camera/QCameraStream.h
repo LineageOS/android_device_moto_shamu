@@ -27,11 +27,8 @@
 
 #include "QCameraHWI.h"
 #include "QCameraHWI_Mem.h"
-
+#include "QCamera_Intf.h"
 extern "C" {
-
-#include <camera.h>
-#include <camera_defs_i.h>
 #include <mm_camera_interface2.h>
 
 #define DEFAULT_STREAM_WIDTH 320

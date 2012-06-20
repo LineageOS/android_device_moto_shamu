@@ -21,6 +21,7 @@ LOCAL_COPY_HEADERS_TO := mm-camera-interface
 LOCAL_COPY_HEADERS += mm_camera_interface2.h
 LOCAL_COPY_HEADERS += mm_omx_jpeg_encoder.h
 
+LOCAL_C_INCLUDES+= $(LOCAL_PATH)/..
 LOCAL_C_INCLUDES+= \
     $(TARGET_OUT_HEADERS)/mm-camera \
     $(TARGET_OUT_HEADERS)/mm-camera/common \
