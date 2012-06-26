@@ -1236,7 +1236,7 @@ status_t QCameraHardwareInterface::startRecording()
         ret = UNKNOWN_ERROR;
         break;
     case QCAMERA_HAL_PREVIEW_STARTED:
-        if (mRecordingHint == FALSE) {
+        if (mRecordingHint == FALSE || mRestartPreview) {
             ALOGE("%s: start recording when hint is false, stop preview first", __func__);
             stopPreviewInternal();
             mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
@@ -1249,6 +1249,7 @@ status_t QCameraHardwareInterface::startRecording()
             mPreviewState = QCAMERA_HAL_PREVIEW_START;
             if (startPreview2() == NO_ERROR)
                 mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
+            mRestartPreview = false;
         }
         ret =  mStreamRecord->start();
         if (MM_CAMERA_OK != ret){

@@ -2428,8 +2428,11 @@ status_t QCameraHardwareInterface::setWaveletDenoise(const QCameraParameters& pa
 status_t QCameraHardwareInterface::setVideoSize(const QCameraParameters& params)
 {
     const char *str= NULL;
+    const char *str_t= NULL;
+    int old_vid_w = 0, old_vid_h = 0;
     ALOGE("%s: E", __func__);
     str = params.get(QCameraParameters::KEY_VIDEO_SIZE);
+    str_t = mParameters.get(CameraParameters::KEY_VIDEO_SIZE);
     if(!str) {
         mParameters.set(QCameraParameters::KEY_VIDEO_SIZE, "");
         //If application didn't set this parameter string, use the values from
@@ -2441,13 +2444,18 @@ status_t QCameraHardwareInterface::setVideoSize(const QCameraParameters& params)
         //Extract the record witdh and height that application requested.
         ALOGI("%s: requested record size %s", __func__, str);
         if(!parse_size(str, videoWidth, videoHeight)) {
+            parse_size(str_t, old_vid_w, old_vid_h);
+            if(old_vid_w != videoWidth || old_vid_h != videoHeight) {
+                mRestartPreview = true; 
+                ALOGE("%s: Video sizes changes, Restart preview...", __func__, str);
+            }
             mParameters.set(QCameraParameters::KEY_VIDEO_SIZE, str);
             //VFE output1 shouldn't be greater than VFE output2.
             if( (mPreviewWidth > videoWidth) || (mPreviewHeight > videoHeight)) {
                 //Set preview sizes as record sizes.
                 ALOGE("Preview size %dx%d is greater than record size %dx%d,\
-                   resetting preview size to record size",mPreviewWidth,
-                     mPreviewHeight, videoWidth, videoHeight);
+                        resetting preview size to record size",mPreviewWidth,
+                        mPreviewHeight, videoWidth, videoHeight);
                 mPreviewWidth = videoWidth;
                 mPreviewHeight = videoHeight;
                 mParameters.setPreviewSize(mPreviewWidth, mPreviewHeight);
