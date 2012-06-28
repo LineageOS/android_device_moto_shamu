@@ -940,10 +940,10 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj,
     do{
         n_try--;
         my_obj->ctrl_fd = open(dev_name,O_RDWR | O_NONBLOCK);
-		LOGE("%s:  ctrl_fd = %d", __func__, my_obj->ctrl_fd);
-        LOGE("Errno:%d",errno);
+		ALOGE("%s:  ctrl_fd = %d", __func__, my_obj->ctrl_fd);
+        ALOGE("Errno:%d",errno);
         if((my_obj->ctrl_fd > 0) || (errno != EIO) || (n_try <= 0 )) {
-			LOGE("%s:  opened, break out while loop", __func__);
+			ALOGE("%s:  opened, break out while loop", __func__);
 
             break;
 		}
@@ -952,23 +952,23 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj,
         usleep(sleep_msec*1000);
     }while(n_try>0);
 
-	LOGE("%s:  after while loop", __func__);
+	ALOGE("%s:  after while loop", __func__);
     if (my_obj->ctrl_fd <= 0) {
         CDBG("%s: cannot open control fd of '%s' Errno = %d\n",
                  __func__, mm_camera_util_get_dev_name(my_obj),errno);
         return -MM_CAMERA_E_GENERAL;
     }
-	LOGE("%s:  2\n", __func__);
+	ALOGE("%s:  2\n", __func__);
 
     /* open domain socket*/
     n_try=MM_CAMERA_DEV_OPEN_TRIES;
     do{
         n_try--;
         my_obj->ds_fd = mm_camera_socket_create(my_obj->my_id, MM_CAMERA_SOCK_TYPE_UDP); // TODO: UDP for now, change to TCP
-        LOGE("%s:  ds_fd = %d", __func__, my_obj->ds_fd);
-        LOGE("Errno:%d",errno);
+        ALOGE("%s:  ds_fd = %d", __func__, my_obj->ds_fd);
+        ALOGE("Errno:%d",errno);
         if((my_obj->ds_fd > 0) || (n_try <= 0 )) {
-            LOGE("%s:  opened, break out while loop", __func__);
+            ALOGE("%s:  opened, break out while loop", __func__);
             break;
         }
         CDBG("%s:failed with I/O error retrying after %d milli-seconds",
@@ -976,7 +976,7 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj,
         usleep(sleep_msec*1000);
     }while(n_try>0);
 
-    LOGE("%s:  after while loop for domain socket open", __func__);
+    ALOGE("%s:  after while loop for domain socket open", __func__);
     if (my_obj->ds_fd <= 0) {
         CDBG_ERROR("%s: cannot open domain socket fd of '%s' Errno = %d\n",
                  __func__, mm_camera_util_get_dev_name(my_obj),errno);

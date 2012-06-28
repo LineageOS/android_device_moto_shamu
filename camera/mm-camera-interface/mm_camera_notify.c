@@ -43,7 +43,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if 0
 #undef CDBG
 #undef LOG_TAG
-#define CDBG LOGE
+#define CDBG ALOGE
 #define LOG_TAG "NotifyLogs"
 #endif
 
@@ -395,7 +395,7 @@ static void mm_camera_read_preview_frame(mm_camera_obj_t * my_obj)
     mm_camera_ch_data_buf_t data[MM_CAMERA_BUF_CB_MAX];
 
     if (!my_obj->ch[MM_CAMERA_CH_PREVIEW].acquired) {
-        LOGE("Preview channel is not in acquired state \n");
+        ALOGE("Preview channel is not in acquired state \n");
         return;
     }
     stream = &my_obj->ch[MM_CAMERA_CH_PREVIEW].preview.stream;
@@ -565,7 +565,7 @@ static void mm_camera_read_snapshot_main_frame(mm_camera_obj_t * my_obj)
     mm_camera_stream_t *stream;
     mm_camera_frame_queue_t *q;
     if (!my_obj->ch[MM_CAMERA_CH_SNAPSHOT].acquired) {
-        LOGE("Snapshot channel is not in acquired state \n");
+        ALOGE("Snapshot channel is not in acquired state \n");
         return;
     }
     q = &my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.main.frame.readyq;
@@ -598,7 +598,7 @@ static void mm_camera_read_snapshot_thumbnail_frame(mm_camera_obj_t * my_obj)
     mm_camera_frame_queue_t *q;
 
     if (!my_obj->ch[MM_CAMERA_CH_SNAPSHOT].acquired) {
-        LOGE("Snapshot channel is not in acquired state \n");
+        ALOGE("Snapshot channel is not in acquired state \n");
         return;
     }
     q = &my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.thumbnail.frame.readyq;
@@ -626,14 +626,14 @@ static void mm_camera_read_video_frame(mm_camera_obj_t * my_obj)
     mm_camera_ch_data_buf_t data[MM_CAMERA_BUF_CB_MAX];
 
     if (!my_obj->ch[MM_CAMERA_CH_VIDEO].acquired) {
-        LOGE("Snapshot channel is not in acquired state \n");
+        ALOGE("Snapshot channel is not in acquired state \n");
         return;
     }
     stream = &my_obj->ch[MM_CAMERA_CH_VIDEO].video.video;
     idx =  mm_camera_read_msm_frame(my_obj,stream);
     if (idx < 0)
         return;
-    LOGE("Video thread locked");
+    ALOGE("Video thread locked");
     pthread_mutex_lock(&my_obj->ch[MM_CAMERA_CH_VIDEO].mutex);
     for( i=0;i<MM_CAMERA_BUF_CB_MAX;i++) {
         if((my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i].cb) &&
@@ -645,14 +645,14 @@ static void mm_camera_read_video_frame(mm_camera_obj_t * my_obj)
             data[i].video.video.frame = &my_obj->ch[MM_CAMERA_CH_VIDEO].video.video.
                 frame.frame[idx].frame;
             my_obj->ch[MM_CAMERA_CH_VIDEO].video.video.frame.ref_count[idx]++;
-            LOGE("Video thread callback issued");
+            ALOGE("Video thread callback issued");
             //my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i].cb(&data,
             //                        my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i].user_data);
             memcpy(&buf_cb[i], &my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i],
                    sizeof(mm_camera_buf_cb_t) * MM_CAMERA_BUF_CB_MAX);
-            LOGE("Video thread callback returned");
+            ALOGE("Video thread callback returned");
             if( my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i].cb_type==MM_CAMERA_BUF_CB_COUNT ) {
-                LOGE("<DEBUG>:%s: Additional cb called for buffer %p:%d",__func__,stream,idx);
+                ALOGE("<DEBUG>:%s: Additional cb called for buffer %p:%d",__func__,stream,idx);
                 if(--(my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i].cb_count) == 0 )
                     my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i].cb=NULL;
             }
@@ -665,13 +665,13 @@ static void mm_camera_read_video_frame(mm_camera_obj_t * my_obj)
             buf_cb[i].cb(&data[i],buf_cb[i].user_data);
         }
         /*if( buf_cb[i].cb_type==MM_CAMERA_BUF_CB_COUNT ) {
-                LOGE("<DEBUG>:%s: Additional cb called for buffer %p:%d",__func__,stream,idx);
+                ALOGE("<DEBUG>:%s: Additional cb called for buffer %p:%d",__func__,stream,idx);
                 if(--(buf_cb[i].cb_count) == 0 )
                     buf_cb[i].cb=NULL;
         }*/
     }
 
-    LOGE("Video thread unlocked");
+    ALOGE("Video thread unlocked");
 }
 
 static void mm_camera_read_video_main_frame(mm_camera_obj_t * my_obj)

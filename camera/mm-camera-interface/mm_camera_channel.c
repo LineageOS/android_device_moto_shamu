@@ -40,7 +40,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if 0
 #undef CDBG
-#define CDBG LOGE
+#define CDBG ALOGE
 #endif
 /* static functions prototype declarations */
 static int mm_camera_channel_skip_frames(mm_camera_obj_t *my_obj,
@@ -375,7 +375,7 @@ static int32_t mm_camera_ch_util_reg_buf_cb(mm_camera_obj_t *my_obj,
      * but the rc value needs to be thread safe
      */
     int i;
-    LOGE("%s: Trying to register",__func__);
+    ALOGE("%s: Trying to register",__func__);
 //    pthread_mutex_lock(&my_obj->ch[ch_type].mutex);
     for( i=0 ;i < MM_CAMERA_BUF_CB_MAX; i++ ) {
         if(my_obj->ch[ch_type].buf_cb[i].cb==NULL) {
@@ -384,7 +384,7 @@ static int32_t mm_camera_ch_util_reg_buf_cb(mm_camera_obj_t *my_obj,
         }
     }
 //    pthread_mutex_unlock(&my_obj->ch[ch_type].mutex);
-    LOGE("%s: Done register",__func__);
+    ALOGE("%s: Done register",__func__);
     return MM_CAMERA_OK;
 }
 
@@ -516,7 +516,7 @@ static int mm_camera_ch_util_get_crop(mm_camera_obj_t *my_obj,
                           &my_obj->ch[ch_type].snapshot.main, evt,
                           &crop->snapshot.main_crop);
             if(!rc && !my_obj->full_liveshot) {
-              LOGE("%s: should not come here for Live Shot", __func__);
+              ALOGE("%s: should not come here for Live Shot", __func__);
               rc = mm_camera_stream_fsm_fn_vtbl(my_obj,
                               &my_obj->ch[ch_type].snapshot.thumbnail, evt,
                               &crop->snapshot.thumbnail_crop);
@@ -604,7 +604,7 @@ void mm_camera_dispatch_buffered_frames(mm_camera_obj_t *my_obj,
     mm_camera_frame_queue_t *sq = NULL;
     mm_camera_stream_t *stream1 = NULL;
     mm_camera_stream_t *stream2 = NULL;
-    LOGE("%s: E", __func__);
+    ALOGE("%s: E", __func__);
     mm_camera_ch_util_get_stream_objs(my_obj, ch_type, &stream1, &stream2);
     stream2 = &my_obj->ch[MM_CAMERA_CH_PREVIEW].preview.stream;
     if(stream1) {

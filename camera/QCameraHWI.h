@@ -23,7 +23,7 @@
 #include <hardware/camera.h>
 #include <binder/MemoryBase.h>
 #include <binder/MemoryHeapBase.h>
-#include <binder/MemoryHeapPmem.h>
+//#include <binder/MemoryHeapPmem.h>
 #include <utils/threads.h>
 #include <cutils/properties.h>
 #include <camera/Camera.h>

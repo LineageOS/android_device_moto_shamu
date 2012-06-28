@@ -16,9 +16,9 @@
 
 /*#error uncomment this for compiler test!*/
 
-#define LOG_NDEBUG 0
-#define LOG_NIDEBUG 0
-#define LOG_TAG "QCameraHWI_Display"
+#define ALOG_NDEBUG 0
+#define ALOG_NIDEBUG 0
+#define ALOG_TAG "QCameraHWI_Display"
 #include <utils/Log.h>
 #include <utils/threads.h>
 #include <fcntl.h>

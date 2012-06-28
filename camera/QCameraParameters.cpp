@@ -15,7 +15,7 @@
 ** limitations under the License.
 */
 
-#define LOG_TAG "QCameraParams"
+#define ALOG_TAG "QCameraParams"
 #include <utils/Log.h>
 #include <string.h>
 #include <stdlib.h>
@@ -209,10 +209,10 @@ void QCameraParameters::setOrientation(int orientation)
     }
 }
 
-        //XXX LOGE("Key \"%s\"contains invalid character (= or ;)", key);
-        //XXX LOGE("Value \"%s\"contains invalid character (= or ;)", value);
+        //XXX ALOGE("Key \"%s\"contains invalid character (= or ;)", key);
+        //XXX ALOGE("Value \"%s\"contains invalid character (= or ;)", value);
     //snprintf(str, sizeof(str), "%d", value);
-        //LOGE("Cannot find delimeter (%c) in str=%s", delim, str);
+        //ALOGE("Cannot find delimeter (%c) in str=%s", delim, str);
 		
 		
 // Parse string like "(1, 2, 3, 4, ..., N)"
@@ -221,12 +221,12 @@ static int parseNDimVector(const char *str, int *num, int N, char delim = ',')
 {
     char *start, *end;
     if(num == NULL) {
-        LOGE("Invalid output array (num == NULL)");
+        ALOGE("Invalid output array (num == NULL)");
         return -1;
     }
     //check if string starts and ends with parantheses
     if(str[0] != '(' || str[strlen(str)-1] != ')') {
-        LOGE("Invalid format of string %s, valid format is (n1, n2, n3, n4 ...)", str);
+        ALOGE("Invalid format of string %s, valid format is (n1, n2, n3, n4 ...)", str);
         return -1;
     }
     start = (char*) str;
@@ -234,7 +234,7 @@ static int parseNDimVector(const char *str, int *num, int N, char delim = ',')
     for(int i=0; i<N; i++) {
         *(num+i) = (int) strtol(start, &end, 10);
         if(*end != delim && i < N-1) {
-            LOGE("Cannot find delimeter '%c' in string \"%s\". end = %c", delim, str, *end);
+            ALOGE("Cannot find delimeter '%c' in string \"%s\". end = %c", delim, str, *end);
             return -1;
         }
         start = end+1;
@@ -243,7 +243,7 @@ static int parseNDimVector(const char *str, int *num, int N, char delim = ',')
 }
 
 
-            //LOGE("Picture sizes string \"%s\" contains invalid character.", sizesStr);
+            //ALOGE("Picture sizes string \"%s\" contains invalid character.", sizesStr);
     //snprintf(str, sizeof(str), "%dx%d", width, height);
 	
 	
@@ -257,7 +257,7 @@ static int parse_pair(const char *str, int *first, int *second, char delim,
     int w = (int)strtol(str, &end, 10);
     // If a delimeter does not immediately follow, give up.
     if (*end != delim) {
-        LOGE("Cannot find delimeter (%c) in str=%s", delim, str);
+        ALOGE("Cannot find delimeter (%c) in str=%s", delim, str);
         return -1;
     }
 
@@ -287,7 +287,7 @@ static void parseSizesList(const char *sizesStr, Vector<Size> &sizes)
         int success = parse_pair(sizeStartPtr, &width, &height, 'x',
                                  &sizeStartPtr);
         if (success == -1 || (*sizeStartPtr != ',' && *sizeStartPtr != '\0')) {
-            LOGE("Picture sizes string \"%s\" contains invalid character.", sizesStr);
+            ALOGE("Picture sizes string \"%s\" contains invalid character.", sizesStr);
             return;
         }
         sizes.push(Size(width, height));
@@ -324,8 +324,8 @@ const char *QCameraParameters::getPreviewFrameRateMode() const
 }
 
 
-    //LOGD("dump: mMap.size = %d", mMap.size());
-        //LOGD("%s: %s\n", k.string(), v.string());
+    //ALOGD("dump: mMap.size = %d", mMap.size());
+        //ALOGD("%s: %s\n", k.string(), v.string());
     
 
 

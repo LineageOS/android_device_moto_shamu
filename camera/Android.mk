@@ -1,5 +1,4 @@
 ifneq ($(USE_CAMERA_STUB),true)
-  ifeq ($(strip $(BOARD_USES_QCOM_HARDWARE)), true)
     # When zero we link against libmmcamera; when 1, we dlopen libmmcamera.
     DLOPEN_LIBMMCAMERA:=1
     ifneq ($(BUILD_TINY_ANDROID),true)
@@ -75,9 +74,6 @@ ifneq ($(USE_CAMERA_STUB),true)
 
       LOCAL_CFLAGS+= -DHW_ENCODE
 
-      LOCAL_C_INCLUDES+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
-      LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
-
       # if debug service layer and up , use stub camera!
       LOCAL_C_INCLUDES += \
         frameworks/base/services/camera/libcameraservice #
@@ -95,26 +91,22 @@ ifneq ($(USE_CAMERA_STUB),true)
       # Uncomment below line to enable smooth zoom
       #LOCAL_CFLAGS+= -DCAMERA_SMOOTH_ZOOM
 
-      LOCAL_C_INCLUDES+= \
+       LOCAL_C_INCLUDES+= \
         $(TARGET_OUT_HEADERS)/mm-camera \
         $(TARGET_OUT_HEADERS)/mm-camera/common \
         $(TARGET_OUT_HEADERS)/mm-still \
         $(TARGET_OUT_HEADERS)/mm-still/jpeg \
 
       ifeq ($(V4L2_BASED_LIBCAM),true)
-        LOCAL_C_INCLUDES+= $(TARGET_OUT_HEADERS)/mm-core/omxcore
+        LOCAL_C_INCLUDES+= hardware/qcom/media/mm-core/inc
         LOCAL_C_INCLUDES+= $(TARGET_OUT_HEADERS)/mm-still/mm-omx
         LOCAL_C_INCLUDES+= $(LOCAL_PATH)/mm-camera-interface
       endif
 
-      LOCAL_C_INCLUDES+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media
-      LOCAL_C_INCLUDES+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
-      LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
-      LOCAL_C_INCLUDES += hardware/qcom/display/libgralloc \
-        hardware/qcom/display/libgenlock \
-        hardware/qcom/media/libstagefrighthw
+      LOCAL_C_INCLUDES+= hardware/qcom/display/libgralloc
+      LOCAL_C_INCLUDES+= hardware/qcom/display/libgenlock
+      LOCAL_C_INCLUDES+= hardware/qcom/media/libstagefrighthw
 
-      LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
       ifeq ($(V4L2_BASED_LIBCAM),true)
         LOCAL_SHARED_LIBRARIES:= libutils libui libcamera_client liblog libcutils libmmjpeg libmmstillomx libimage-jpeg-enc-omx-comp
@@ -138,7 +130,6 @@ ifneq ($(USE_CAMERA_STUB),true)
       include $(BUILD_SHARED_LIBRARY)
 
     endif # BUILD_TINY_ANDROID
-  endif # BOARD_USES_QCOM_HARDWARE
 endif # USE_CAMERA_STUB
 
 ifeq ($(V4L2_BASED_LIBCAM),true)

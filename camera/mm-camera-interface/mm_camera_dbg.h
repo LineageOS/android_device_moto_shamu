@@ -41,7 +41,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #include <utils/Log.h>
   #else
     #include <stdio.h>
-    #define LOGE CDBG
+    #define ALOGE CDBG
   #endif
   #undef CDBG
   #define CDBG(fmt, args...) do{}while(0)
@@ -52,17 +52,17 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #define LOG_NIDEBUG 0
     #define LOG_TAG "mm-libcamera2"
     #include <utils/Log.h>
-    #define CDBG(fmt, args...) LOGE(fmt, ##args)
+    #define CDBG(fmt, args...) ALOGE(fmt, ##args)
   #else
     #include <stdio.h>
     #define CDBG(fmt, args...) fprintf(stderr, fmt, ##args)
-    #define LOGE(fmt, args...) fprintf(stderr, fmt, ##args)
+    #define ALOGE(fmt, args...) fprintf(stderr, fmt, ##args)
   #endif
 #endif
 
 #ifdef _ANDROID_
-  #define CDBG_HIGH(fmt, args...)  LOGE(fmt, ##args)
-  #define CDBG_ERROR(fmt, args...)  LOGE(fmt, ##args)
+  #define CDBG_HIGH(fmt, args...)  ALOGE(fmt, ##args)
+  #define CDBG_ERROR(fmt, args...)  ALOGE(fmt, ##args)
 #else
   #define CDBG_HIGH(fmt, args...) fprintf(stderr, fmt, ##args)
   #define CDBG_ERROR(fmt, args...) fprintf(stderr, fmt, ##args)
