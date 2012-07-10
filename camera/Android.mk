@@ -74,9 +74,6 @@ ifneq ($(USE_CAMERA_STUB),true)
 
       LOCAL_CFLAGS+= -DHW_ENCODE
 
-      LOCAL_C_INCLUDES+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
-      LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
-
       # if debug service layer and up , use stub camera!
       LOCAL_C_INCLUDES += \
         frameworks/base/services/camera/libcameraservice #
