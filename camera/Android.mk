@@ -71,7 +71,7 @@ ifneq ($(USE_CAMERA_STUB),true)
         endif
 
       else
-        LOCAL_HAL_FILES := QualcommCamera.cpp QualcommCameraHardware.cpp
+        LOCAL_HAL_FILES := QualcommCamera.cpp QualcommCameraHardware.cpp QCameraParameters.cpp
       endif
 
       LOCAL_CFLAGS+= -DHW_ENCODE

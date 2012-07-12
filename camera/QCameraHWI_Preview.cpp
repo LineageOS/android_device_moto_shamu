@@ -414,7 +414,6 @@ void QCameraStream_preview::notifyROIEvent(fd_roi_t roi)
         break;
     case FD_ROI_TYPE_DATA:
         {
-        #if 0
             mDisplayLock.lock();
             int idx = roi.d.data.idx;
             if (idx >= mHalCamCtrl->mMetadata.number_of_faces) {
@@ -498,7 +497,6 @@ void QCameraStream_preview::notifyROIEvent(fd_roi_t roi)
                      pcb(CAMERA_MSG_PREVIEW_METADATA, NULL, 0, &mHalCamCtrl->mMetadata, mHalCamCtrl->mCallbackCookie);
                  }
              }
-        #endif
         }
         break;
     }
@@ -890,7 +888,7 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
   if(mHFRFrameSkip == 1)
   {
       const char *str = mHalCamCtrl->mParameters.get(
-                          QCameraParameters::KEY_VIDEO_HIGH_FRAME_RATE);
+                          QCameraParameters::KEY_QC_VIDEO_HIGH_FRAME_RATE);
       if(str != NULL){
       int is_hfr_off = 0;
       mHFRFrameCnt++;

@@ -462,7 +462,6 @@ status_t QCameraHardwareInterface::sendCommand(int32_t command, int32_t arg1,
     Mutex::Autolock l(&mLock);
 
     switch (command) {
-    #if 0
         case CAMERA_CMD_HISTOGRAM_ON:
             ALOGE("histogram set to on");
             rc = setHistogram(1);
@@ -490,6 +489,7 @@ status_t QCameraHardwareInterface::sendCommand(int32_t command, int32_t arg1,
            }
            setFaceDetection("off");
            return runFaceDetection();
+#if 0
         case CAMERA_CMD_SEND_META_DATA:
            mMetaDataWaitLock.lock();
            if(mFaceDetectOn == true) {
@@ -558,18 +558,18 @@ status_t QCameraHardwareInterface::sendCommand(int32_t command, int32_t arg1,
 void QCameraHardwareInterface::setMyMode(int mode)
 {
     ALOGI("setMyMode: E");
-    //if (mode & CAMERA_SUPPORT_MODE_3D) {
-    //    myMode = CAMERA_MODE_3D;
-    //}else {
+    if (mode & CAMERA_SUPPORT_MODE_3D) {
+        myMode = CAMERA_MODE_3D;
+    }else {
         /* default mode is 2D */
         myMode = CAMERA_MODE_2D;
-    //}
+    }
 
-    //if (mode & CAMERA_SUPPORT_MODE_ZSL) {
-    //    myMode = (camera_mode_t)(myMode |CAMERA_ZSL_MODE);
-    //}else {
+    if (mode & CAMERA_SUPPORT_MODE_ZSL) {
+        myMode = (camera_mode_t)(myMode |CAMERA_ZSL_MODE);
+    }else {
        myMode = (camera_mode_t) (myMode | CAMERA_NONZSL_MODE);
-    //}
+    }
     ALOGI("setMyMode: Set mode to %d (passed mode: %d)", myMode, mode);
     ALOGI("setMyMode: X");
 }
@@ -828,7 +828,6 @@ void  QCameraHardwareInterface::processStatsEvent(
 
         case MM_CAMERA_STATS_EVT_HISTO:
         {
-        #if 0
             ALOGE("HAL process Histo: mMsgEnabled=0x%x, mStatsOn=%d, mSendData=%d, mDataCb=%p ",
             (mMsgEnabled & CAMERA_MSG_STATS_DATA), mStatsOn, mSendData, mDataCb);
             int msgEnabled = mMsgEnabled;
@@ -853,7 +852,6 @@ void  QCameraHardwareInterface::processStatsEvent(
                 app_cb->argm_data_cb.metadata = NULL;
                 app_cb->argm_data_cb.cookie =  mCallbackCookie;
             }
-        #endif
             break;
 
         }

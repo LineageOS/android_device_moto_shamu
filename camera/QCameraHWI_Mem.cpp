@@ -35,7 +35,7 @@
 #include <linux/android_pmem.h>
 #endif
 #include <linux/ioctl.h>
-#include "QCameraParameters.h"
+#include <camera/QCameraParameters.h>
 #include <media/mediarecorder.h>
 #include <gralloc_priv.h>
 
