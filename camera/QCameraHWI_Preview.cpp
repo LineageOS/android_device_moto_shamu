@@ -1185,9 +1185,9 @@ status_t QCameraStream_preview::processPreviewFrame (
 QCameraStream_preview::
 QCameraStream_preview(int cameraId, camera_mode_t mode)
   : QCameraStream(cameraId,mode),
+    mFirstFrameRcvd(false),
     mLastQueuedFrame(NULL),
-    mNumFDRcvd(0),
-    mFirstFrameRcvd(false)
+    mNumFDRcvd(0)
   {
     mHalCamCtrl = NULL;
     ALOGE("%s: E", __func__);
@@ -1394,8 +1394,8 @@ end:
     (void)cam_evt_register_buf_notify(mCameraId, MM_CAMERA_CH_PREVIEW,
                                       NULL,
                                       (mm_camera_register_buf_cb_type_t)NULL,
-                                      NULL,
-                                      NULL);
+                                      0,
+                                      (void*)NULL);
     mInit = false;
     ALOGE("%s: END", __func__);
 

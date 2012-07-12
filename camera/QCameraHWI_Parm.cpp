@@ -2447,7 +2447,7 @@ status_t QCameraHardwareInterface::setVideoSize(const QCameraParameters& params)
             parse_size(str_t, old_vid_w, old_vid_h);
             if(old_vid_w != videoWidth || old_vid_h != videoHeight) {
                 mRestartPreview = true; 
-                ALOGE("%s: Video sizes changes, Restart preview...", __func__, str);
+                ALOGE("%s: Video sizes changes to %s, Restart preview...", __func__, str);
             }
             mParameters.set(QCameraParameters::KEY_VIDEO_SIZE, str);
             //VFE output1 shouldn't be greater than VFE output2.

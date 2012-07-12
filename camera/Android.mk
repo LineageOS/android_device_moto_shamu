@@ -54,6 +54,8 @@ ifneq ($(USE_CAMERA_STUB),true)
       endif
 
       ifeq ($(V4L2_BASED_LIBCAM),true)
+
+        LOCAL_CFLAGS+= -Werror
         ifeq ($(call is-board-platform,msm7627a),true)
           LOCAL_HAL_FILES := QCameraHAL.cpp QCameraHWI_Parm.cpp\
             QCameraHWI.cpp QCameraHWI_Preview.cpp \

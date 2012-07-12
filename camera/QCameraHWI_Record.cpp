@@ -310,7 +310,7 @@ void QCameraStream_record::release()
   (void)cam_evt_register_buf_notify(mCameraId, MM_CAMERA_CH_VIDEO,
                                             NULL,
                                             (mm_camera_register_buf_cb_type_t)NULL,
-                                            NULL,
+                                            0,
                                             NULL);
   mInit = false;
   ALOGV("%s: END", __func__);

@@ -624,7 +624,7 @@ deinitSnapshotChannel(mm_camera_channel_type_t ch_type)
     /* unreg buf notify*/
     if (getSnapshotState() >= SNAPSHOT_STATE_BUF_NOTIF_REGD){
         if (NO_ERROR != cam_evt_register_buf_notify(mCameraId,
-                        ch_type, NULL,(mm_camera_register_buf_cb_type_t)NULL,NULL, this)) {
+                        ch_type, NULL,(mm_camera_register_buf_cb_type_t)NULL,0, this)) {
             ALOGE("%s: Failure to unregister buf notification", __func__);
         }
     }
@@ -2298,7 +2298,7 @@ void QCameraStream_Snapshot::stop(void)
         (void)cam_evt_register_buf_notify(mCameraId, MM_CAMERA_CH_RAW,
                                             NULL,
                                             (mm_camera_register_buf_cb_type_t)NULL,
-                                            NULL,
+                                            0,
                                             NULL);
     } else {
         ret= QCameraStream::deinitChannel(mCameraId, MM_CAMERA_CH_SNAPSHOT);
@@ -2308,7 +2308,7 @@ void QCameraStream_Snapshot::stop(void)
         (void)cam_evt_register_buf_notify(mCameraId, MM_CAMERA_CH_SNAPSHOT,
                                             NULL,
                                             (mm_camera_register_buf_cb_type_t)NULL,
-                                            NULL,
+                                            0,
                                             NULL);
     }
 
