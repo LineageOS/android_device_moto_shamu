@@ -438,15 +438,6 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
         userpreferences.preference = OMX_JPEG_PREF_SOFTWARE_ONLY;
         hw_encode = 0;
     }
-    if (encode_params->scaling_params->in2_w &&
-        encode_params->scaling_params->in2_h) {
-        if (jpegRotation) {
-            userpreferences.preference = OMX_JPEG_PREF_SOFTWARE_ONLY;
-            ALOGI("%s:Scaling and roation true: setting pref to sw\n",
-                __func__);
-            hw_encode = 0;
-        }
-    }
     mm_jpeg_encoder_get_buffer_offset(bufferoffset.width, bufferoffset.height,
                     &bufferoffset.yOffset,
                     &bufferoffset.cbcrOffset,
@@ -635,6 +626,7 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
     ALOGE("isZSLMode is %d\n",isZSLMode);
     if(!isZSLMode){
     //Pass rotation if not ZSL mode
+
     rotType.nPortIndex = OUTPUT_PORT;
     rotType.nRotation = jpegRotation;
     OMX_SetConfig(pHandle, OMX_IndexConfigCommonRotate, &rotType);
@@ -769,7 +761,7 @@ int8_t mm_jpeg_encoder_setThumbnailQuality(uint32_t quality)
 {
     pthread_mutex_lock(&jpege_mutex);
     ALOGE("%s: current thumbnail quality %d ," \
-    " new quality : %d\n", __func__, jpegThumbnailQuality, quality);
+     "new quality : %d\n", __func__, jpegThumbnailQuality, quality);
     if (quality <= 100)
         jpegThumbnailQuality = quality;
     pthread_mutex_unlock(&jpege_mutex);
