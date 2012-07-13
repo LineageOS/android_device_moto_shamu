@@ -1479,9 +1479,17 @@ void liveshot_callback(mm_camera_ch_data_buf_t *recvd_frame,
     QCameraHardwareInterface *pme = (QCameraHardwareInterface *)user_data;
     cam_ctrl_dimension_t dim;
     int mJpegMaxSize;
+    int mNuberOfVFEOutputs = 0;
     status_t ret;
     ALOGE("%s: E", __func__);
 
+    ret = cam_config_get_parm(pme->mCameraId,MM_CAMERA_PARM_VFE_OUTPUT_ENABLE,
+                       &mNuberOfVFEOutputs);
+    if (ret != MM_CAMERA_OK) {
+       ALOGE("get parm MM_CAMERA_PARM_VFE_OUTPUT_ENABLE  failed");
+       cam_evt_buf_done(pme->mCameraId, recvd_frame);
+       return ;
+    }
 
     mm_camera_ch_data_buf_t* frame =
          (mm_camera_ch_data_buf_t *)malloc(sizeof(mm_camera_ch_data_buf_t));
@@ -1492,7 +1500,10 @@ void liveshot_callback(mm_camera_ch_data_buf_t *recvd_frame,
     }
     memcpy(frame, recvd_frame, sizeof(mm_camera_ch_data_buf_t));
 
-   ALOGE("<DEBUG> Liveshot buffer idx:%d",frame->video.video.idx);
+    if (mNuberOfVFEOutputs == 1)
+        ALOGE("<DEBUG> Liveshot buffer idx:%d",frame->def.idx);
+    else
+        ALOGE("<DEBUG> Liveshot buffer idx:%d",frame->video.video.idx);
     memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
     ret = cam_config_get_parm(pme->mCameraId, MM_CAMERA_PARM_DIMENSION, &dim);
     if (MM_CAMERA_OK != ret) {
@@ -1502,17 +1513,29 @@ void liveshot_callback(mm_camera_ch_data_buf_t *recvd_frame,
 
 #if 1
     ALOGE("Live Snapshot Enabled");
-    frame->snapshot.main.frame = frame->video.video.frame;
-    frame->snapshot.main.idx = frame->video.video.idx;
-    frame->snapshot.thumbnail.frame = frame->video.video.frame;
-    frame->snapshot.thumbnail.idx = frame->video.video.idx;
+    if (mNuberOfVFEOutputs == 1){
+       frame->snapshot.main.frame = frame->def.frame;
+       frame->snapshot.main.idx = frame->def.idx;
+       frame->snapshot.thumbnail.frame = frame->def.frame;
+       frame->snapshot.thumbnail.idx = frame->def.idx;
+    } else {
+       frame->snapshot.main.frame = frame->video.video.frame;
+       frame->snapshot.main.idx = frame->video.video.idx;
+       frame->snapshot.thumbnail.frame = frame->video.video.frame;
+       frame->snapshot.thumbnail.idx = frame->video.video.idx;
+    }
 
     dim.picture_width = pme->mDimension.video_width;
     dim.picture_height = pme->mDimension.video_height;
     dim.ui_thumbnail_width = pme->mDimension.video_width;
     dim.ui_thumbnail_height = pme->mDimension.video_height;
-    dim.main_img_format = pme->mDimension.enc_format;
-    dim.thumb_format = pme->mDimension.enc_format;
+    if (mNuberOfVFEOutputs == 1){
+       dim.main_img_format = pme->mDimension.prev_format;
+       dim.thumb_format = pme->mDimension.prev_format;
+    } else {
+       dim.main_img_format = pme->mDimension.enc_format;
+       dim.thumb_format = pme->mDimension.enc_format;
+    }
 
     mJpegMaxSize = pme->mDimension.video_width * pme->mDimension.video_width * 1.5;
 
@@ -1555,6 +1578,7 @@ status_t  QCameraHardwareInterface::takePicture()
 {
     ALOGI("takePicture: E");
     status_t ret = MM_CAMERA_OK;
+    int mNuberOfVFEOutputs = 0;
     Mutex::Autolock lock(mLock);
 
     mStreamSnap->resetSnapshotCounters( );
@@ -1615,11 +1639,25 @@ status_t  QCameraHardwareInterface::takePicture()
         ALOGD(" Calling takeFullSizeLiveshot");
         takeFullSizeLiveshot();
       }else{
-          (void) cam_evt_register_buf_notify(mCameraId, MM_CAMERA_CH_VIDEO,
+        ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_VFE_OUTPUT_ENABLE,
+                     &mNuberOfVFEOutputs);
+        if (ret != MM_CAMERA_OK) {
+           ALOGE("get parm MM_CAMERA_PARM_VFE_OUTPUT_ENABLE  failed");
+           ret = BAD_VALUE;
+        }
+        if (mNuberOfVFEOutputs == 1){
+           (void) cam_evt_register_buf_notify(mCameraId, MM_CAMERA_CH_PREVIEW,
                                                     liveshot_callback,
                                                     MM_CAMERA_REG_BUF_CB_COUNT,
                                                     1,
                                                     this);
+        } else {
+           (void) cam_evt_register_buf_notify(mCameraId, MM_CAMERA_CH_VIDEO,
+                                                    liveshot_callback,
+                                                    MM_CAMERA_REG_BUF_CB_COUNT,
+                                                    1,
+                                                    this);
+        }
       }
 
       break;
