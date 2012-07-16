@@ -504,8 +504,6 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
       get_jpeg_format_from_cam_format(encode_params->thumbnail_format);
 
 
-
-
       ALOGI("%s:Scaling params in1_w %d in1_h %d out1_w %d out1_h %d"
                   "main_img in2_w %d in2_h %d out2_w %d out2_h %d\n", __func__,
       encode_params->scaling_params->in1_w,
