@@ -279,7 +279,7 @@ extern const char *mm_camera_util_get_dev_name(mm_camera_obj_t * my_obj);
 extern int32_t mm_camera_util_s_ctrl( int32_t fd,
                                             uint32_t id, int32_t value);
 extern int32_t mm_camera_util_private_s_ctrl( int32_t fd,
-                                            uint32_t id, int32_t value);
+                                            uint32_t id, void __user *value);
 extern int32_t mm_camera_util_g_ctrl( int32_t fd,
                                             uint32_t id, int32_t *value);
 extern int32_t mm_camera_ch_fn(mm_camera_obj_t * my_obj,
