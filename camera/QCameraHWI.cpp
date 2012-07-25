@@ -2350,8 +2350,11 @@ int QCameraHardwareInterface::initHeapMem( QCameraHalHeap_t *heap,
          (0x1 << CAMERA_ION_FALLBACK_HEAP_ID)));
 
       if (rc < 0) {
-        ALOGE("%sION allocation failed\n", __func__);
-        break;
+        ALOGE("%sION allocation failed..fallback to ashmem\n", __func__);
+        if ( pmem_type == MSM_PMEM_MAX ) {
+            heap->fd[i] = -1;
+            rc = 1;
+        }
       }
 #else
         if (pmem_type == MSM_PMEM_MAX)
