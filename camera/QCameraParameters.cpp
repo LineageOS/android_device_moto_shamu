@@ -136,6 +136,8 @@ const char QCameraParameters::KEY_QC_SATURATION[] = "saturation";
 const char QCameraParameters::KEY_QC_MAX_SATURATION[] = "max-saturation";
 
 const char QCameraParameters::KEY_QC_SINGLE_ISP_OUTPUT_ENABLED[] = "single-isp-output-enabled";
+const char QCameraParameters::KEY_QC_SUPPORTED_CAMERA_FEATURES[] = "qc-camera-features";
+const char QCameraParameters::KEY_QC_MAX_NUM_REQUESTED_FACES[] = "qc-max-num-requested-faces";
 
 //Values for DENOISE
 const char QCameraParameters::DENOISE_OFF[] = "denoise-off";
