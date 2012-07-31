@@ -523,6 +523,9 @@ int32_t mm_camera_get_parm(mm_camera_obj_t * my_obj,
              dim->width, dim->height);
     }
         break;
+    case MM_CAMERA_PARM_RAW_SNAPSHOT_FMT:
+        *((cam_format_t *)parm->p_value) = my_obj->properties.pxlcode;
+        break;
     case MM_CAMERA_PARM_PREVIEW_FORMAT:
         *((int *)parm->p_value) = my_obj->properties.preview_format;
         break;

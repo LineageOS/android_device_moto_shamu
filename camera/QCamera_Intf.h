@@ -81,7 +81,8 @@ typedef enum {
   CAMERA_RDI,
   CAMERA_YUV_420_YV12,
   CAMERA_YUV_422_NV16,
-  CAMERA_YUV_422_NV61
+  CAMERA_YUV_422_NV61,
+  CAMERA_YUV_422_YUYV,
 } cam_format_t;
 
 typedef enum {
@@ -208,6 +209,7 @@ typedef struct {
   uint32_t default_preview_width;
   uint32_t default_preview_height;
   uint32_t bestshot_reconfigure;
+  uint32_t pxlcode;
 }cam_prop_t;
 
 typedef struct {
@@ -242,6 +244,7 @@ typedef struct {
   cam_format_t    main_img_format;
   cam_format_t    rdi0_format;
   cam_format_t    rdi1_format;
+  cam_format_t    raw_img_format;
   cam_pad_format_t prev_padding_format;
   cam_pad_format_t enc_padding_format;
   cam_pad_format_t thumb_padding_format;
@@ -404,6 +407,7 @@ typedef enum {
     MM_CAMERA_PARM_FPS_RANGE,
     MM_CAMERA_PARM_CID,
     MM_CAMERA_PARM_FRAME_RESOLUTION,
+    MM_CAMERA_PARM_RAW_SNAPSHOT_FMT,
     MM_CAMERA_PARM_MAX
 } mm_camera_parm_type_t;
 
