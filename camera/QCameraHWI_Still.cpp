@@ -781,10 +781,7 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
     /* Set the JPEG Rotation here since get_buffer_offset needs
      * the value of rotation.*/
     mHalCamCtrl->setJpegRotation(isZSLMode());
-    if(!isZSLMode())
-        rotation = mHalCamCtrl->getJpegRotation();
-    else
-        rotation = 0;
+    rotation = mHalCamCtrl->getJpegRotation();
     if(rotation != dim->rotation) {
         dim->rotation = rotation;
         ret = cam_config_set_parm(mHalCamCtrl->mCameraId, MM_CAMERA_PARM_DIMENSION, dim);
