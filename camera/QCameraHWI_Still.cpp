@@ -1492,6 +1492,8 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
     int width, height;
     uint8_t *thumbnail_buf;
     uint32_t thumbnail_fd;
+    uint8_t hw_encode = true;
+    int mNuberOfVFEOutputs = 0;
 
     omx_jpeg_encode_params encode_params;
 
@@ -1582,7 +1584,25 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         set_callbacks(snapshot_jpeg_fragment_cb, snapshot_jpeg_cb, this,
              mHalCamCtrl->mJpegMemory.camera_memory[0]->data, &mJpegOffset);
 
-        if(omxJpegStart() != NO_ERROR){
+        if (isLiveSnapshot() || isFullSizeLiveshot()) {
+            /* determine the target type */
+            ret = cam_config_get_parm(mCameraId,MM_CAMERA_PARM_VFE_OUTPUT_ENABLE,
+                                 &mNuberOfVFEOutputs);
+            if (ret != MM_CAMERA_OK) {
+                ALOGE("get parm MM_CAMERA_PARM_VFE_OUTPUT_ENABLE  failed");
+                ret = BAD_VALUE;
+            }
+            /* VFE 2x has hardware limitation:
+             * It can't support concurrent
+             * video encoding and jpeg encoding
+             * So switch to software for liveshot
+             */
+            if (mNuberOfVFEOutputs == 1)
+                hw_encode = false;
+        }
+        ALOGD("%s: hw_encode: %d\n",__func__, hw_encode);
+
+        if(omxJpegStart(hw_encode) != NO_ERROR){
             ALOGE("Error In omxJpegStart!!! Return");
             ret = FAILED_TRANSACTION;
             goto end;
