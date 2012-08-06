@@ -18,7 +18,7 @@
 
 #define ALOG_NIDEBUG 0
 
-#define ALOG_TAG "QCameraHWI"
+#define LOG_TAG "QCameraHWI"
 #include <utils/Log.h>
 #include <utils/threads.h>
 #include <cutils/properties.h>
