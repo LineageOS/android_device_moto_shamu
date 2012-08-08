@@ -39,8 +39,12 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mm_qcamera_main_menu.h"
 #include "mm_qcamera_app.h"
 
-
 mm_camera_app_t my_cam_app;
+
+extern uint8_t *mm_camera_do_mmap_ion(int ion_fd, struct ion_allocation_data *alloc,
+                                      struct ion_fd_data *ion_info_fd, int *mapFd);
+extern int mm_camera_do_munmap_ion (int ion_fd, struct ion_fd_data *ion_info_fd,
+                                    void *addr, size_t size);
 
 static pthread_mutex_t app_mutex;
 static int thread_status = 0;
@@ -157,7 +161,8 @@ int mm_app_load_hal()
    my_cam_app.hal_lib.ptr = dlopen("/usr/lib/hw/camera.msm7627A.so", RTLD_LAZY);
 #else
   //my_cam_app.hal_lib.ptr = dlopen("hw/camera.msm8960.so", RTLD_NOW);
-   my_cam_app.hal_lib.ptr = dlopen("libmmcamera_interface_badger.so", RTLD_NOW);
+   my_cam_app.hal_lib.ptr = dlopen("libmmcamera_interface.so", RTLD_NOW);
+   my_cam_app.hal_lib.ptr_jpeg = dlopen("libmmjpeg_interface.so", RTLD_NOW);
 #endif
   if (!my_cam_app.hal_lib.ptr) {
     CDBG_ERROR("%s Error opening HAL library %s\n", __func__, dlerror());
@@ -169,6 +174,9 @@ int mm_app_load_hal()
   *(void **)&(my_cam_app.hal_lib.mm_camera_open) =
         dlsym(my_cam_app.hal_lib.ptr,
               "camera_open");
+  *(void **)&(my_cam_app.hal_lib.jpeg_open) =
+        dlsym(my_cam_app.hal_lib.ptr_jpeg,
+              "jpeg_open");
   return 0;
 }
 
@@ -199,7 +207,10 @@ static void notify_evt_cb(uint32_t camera_handle,
         case MM_CAMERA_EVT_TYPE_STATS:
             break;
         case MM_CAMERA_EVT_TYPE_INFO:
-        break;
+            break;
+        case MM_CAMERA_EVT_TYPE_PRIVATE_EVT:
+            CDBG("%s: private evt (%s)", __func__, (char *)evt->e.pri_evt.evt_data);
+            break;
         default:
             break;
     }
@@ -234,7 +245,9 @@ int mm_app_open(uint8_t cam_id)
         memset(pme,0, sizeof(pme));
         return -1;
     }
-    CDBG("Open Camera id = %d handle = %d",cam_id,pme->cam->camera_handle);
+    CDBG("Open Camera id = %d handle = %d", cam_id, pme->cam->camera_handle);
+
+    pme->cam->ops->sync(pme->cam->camera_handle);
 
     pme->ch_id = cam_id;
     pme->open_flag = TRUE;
@@ -242,7 +255,7 @@ int mm_app_open(uint8_t cam_id)
 
     for (i = 0; i < MM_CAMERA_EVT_TYPE_MAX; i++) {
         evt = (mm_camera_event_type_t) i;
-        pme->cam->ops->register_event_notify(pme->cam->camera_handle,notify_evt_cb,pme,evt);
+        pme->cam->ops->register_event_notify(pme->cam->camera_handle, notify_evt_cb, pme,evt);
     }
     pme->cam_state = CAMERA_STATE_OPEN;
     pme->cam_mode = CAMERA_MODE;
@@ -250,6 +263,22 @@ int mm_app_open(uint8_t cam_id)
 
     pme->ch_id = pme->cam->ops->ch_acquire(pme->cam->camera_handle);
     CDBG("Channel Acquired Successfully %d",pme->ch_id);
+
+    memset(&pme->jpeg_ops, 0, sizeof(mm_jpeg_ops_t));
+    pme->jpeg_hdl = my_cam_app.hal_lib.jpeg_open(&pme->jpeg_ops);
+    if (pme->jpeg_hdl == 0) {
+        CDBG_ERROR("%s: jpeg lib open err", __func__);
+        rc = -1;
+        goto end;
+    }
+
+    pme->ionfd = open("/dev/ion", O_RDONLY);
+    if (pme->ionfd < 0) {
+        CDBG_ERROR("Ion dev open failed\n");
+        CDBG_ERROR("Error is %s\n", strerror(errno));
+        rc = -1;
+    }
+
 end:
     CDBG("%s:END, rc=%d\n", __func__, rc); 
     return rc;
@@ -274,7 +303,13 @@ int mm_app_close(int8_t cam_id)
     free(pme->mem_cam);
     pme->mem_cam = NULL;
     memset(&pme->dim, 0, sizeof(pme->dim));
-    memset(&pme->dim, 0, sizeof(pme->dim));
+
+    /* close jpeg client */
+    if (pme->jpeg_hdl && pme->jpeg_ops.close) {
+        pme->jpeg_ops.close(pme->jpeg_hdl);
+        pme->jpeg_hdl = 0;
+    }
+    close(pme->ionfd);
 
     free(pme);
     pme = NULL;
@@ -293,12 +328,12 @@ void switchRes(int cam_id)
     case CAMERA_STATE_RECORD:
     if(MM_CAMERA_OK != stopRecording(cam_id)){
         CDBG_ERROR("%s:Cannot stop video err=%d\n", __func__, rc);
-        return -1;
+        return;
     }
     case CAMERA_STATE_PREVIEW:
         if(MM_CAMERA_OK !=  mm_app_stop_preview(cam_id)){
-            CDBG_ERROR("%s: Cannot switch to camera mode=%d\n", __func__);
-            return -1;
+            CDBG_ERROR("%s: Cannot switch to camera mode\n", __func__);
+            return;
         }
         break;
     case CAMERA_STATE_SNAPSHOT:
@@ -319,12 +354,12 @@ void switchCamera(int cam_id)
         case CAMERA_STATE_RECORD:
             if(MM_CAMERA_OK != stopRecording(cam_id)){
                 CDBG_ERROR("%s:Cannot stop video err=%d\n", __func__, rc);
-                return -1;
+                return;
             }
         case CAMERA_STATE_PREVIEW:
             if(MM_CAMERA_OK !=  mm_app_stop_preview(cam_id)){
-                CDBG_ERROR("%s: Cannot switch to camera mode=%d\n", __func__);
-                return -1;
+                CDBG_ERROR("%s: Cannot switch to camera mode\n", __func__);
+                return;
             }
             break;
         case CAMERA_STATE_SNAPSHOT:
@@ -403,3 +438,70 @@ int mm_app_dual_test()
     mm_app_dual_test_entry(&my_cam_app);
     return 0;
 }
+
+int mm_stream_alloc_bufs(mm_camera_app_obj_t *pme,
+                         mm_camear_app_buf_t* app_bufs,
+                         mm_camera_frame_len_offset *frame_offset_info,
+                         uint8_t num_bufs)
+{
+    int i, num_planes;
+
+    num_planes = frame_offset_info->num_planes;
+    CDBG("%s: num_planes = %d",__func__,num_planes);
+
+    app_bufs->num = num_bufs;
+    for (i = 0; i < num_bufs ; i++) {
+        int j;
+
+        app_bufs->alloc[i].len = frame_offset_info->frame_len;
+        app_bufs->alloc[i].flags =
+        (0x1 << CAMERA_ION_HEAP_ID | 0x1 << ION_IOMMU_HEAP_ID);
+        app_bufs->alloc[i].align = 4096;
+
+        app_bufs->bufs[i].buffer = mm_camera_do_mmap_ion(pme->ionfd,
+                                                         &app_bufs->alloc[i],
+                                                         &app_bufs->ion_info_fd[i],
+                                                         &app_bufs->bufs[i].fd);
+        CDBG(" %s : Buffer allocated fd = %d, length = %d",
+             __func__,app_bufs->bufs[i].fd,app_bufs->alloc[i].len);
+
+        app_bufs->bufs[i].frame_len = app_bufs->alloc[i].len;
+        app_bufs->bufs[i].num_planes = num_planes;
+
+        /* Plane 0 needs to be set seperately. Set other planes
+             * in a loop. */
+        app_bufs->bufs[i].planes[0].length = frame_offset_info->mp[0].len;
+        app_bufs->bufs[i].planes[0].m.userptr = app_bufs->bufs[i].fd;
+        app_bufs->bufs[i].planes[0].data_offset = frame_offset_info->mp[0].offset;
+        app_bufs->bufs[i].planes[0].reserved[0] = 0;
+        for (j = 1; j < num_planes; j++) {
+            app_bufs->bufs[i].planes[j].length = frame_offset_info->mp[j].len;
+            app_bufs->bufs[i].planes[j].m.userptr = app_bufs->bufs[i].fd;
+            app_bufs->bufs[i].planes[j].data_offset = frame_offset_info->mp[j].offset;
+            app_bufs->bufs[i].planes[j].reserved[0] =
+                app_bufs->bufs[i].planes[j-1].reserved[0] +
+                app_bufs->bufs[i].planes[j-1].length;
+        }
+    }
+    CDBG("%s: X",__func__);
+    return MM_CAMERA_OK;
+}
+
+int mm_stream_release_bufs(mm_camera_app_obj_t *pme,
+                        mm_camear_app_buf_t* app_bufs)
+{
+    int i, rc = MM_CAMERA_OK;
+
+    CDBG("%s: E",__func__);
+
+    for (i = 0; i < app_bufs->num; i++) {
+        rc = mm_camera_do_munmap_ion (pme->ionfd,
+                                      &app_bufs->ion_info_fd[i],
+                                      (void *)app_bufs->bufs[i].buffer,
+                                      app_bufs->bufs[i].frame_len);
+    }
+    memset(app_bufs, 0, sizeof(mm_camear_app_buf_t));
+    CDBG("%s: X",__func__);
+    return rc;
+}
+

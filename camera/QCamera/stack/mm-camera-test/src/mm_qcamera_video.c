@@ -40,6 +40,11 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define BUFF_SIZE_128 128
 static int num_run = 0;
 
+extern int mm_app_set_live_snapshot_fmt(int cam_id,mm_camera_image_fmt_t *fmt);
+extern void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422);
+extern int initDisplay();
+extern int mm_app_prepare_preview(int cam_id);
+
 static int mm_app_dump_video_frame(struct msm_frame *frame,
 								   uint32_t len)
 {
@@ -300,7 +305,7 @@ end:
 
 static int mm_app_streamon_video(int cam_id)
 {
-	int stream[2];
+	uint32_t stream;
 	int rc = MM_CAMERA_OK;
 
 	mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
@@ -310,8 +315,8 @@ static int mm_app_streamon_video(int cam_id)
 		CDBG_ERROR("%s:Video config err=%d\n", __func__, rc);
 	}
 
-	stream[MM_CAMERA_VIDEO] = pme->stream[MM_CAMERA_VIDEO].id;
-	if(MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,&stream[1])))
+	stream = pme->stream[MM_CAMERA_VIDEO].id;
+	if(MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,&stream)))
 	{
 		CDBG_ERROR("%s : Start Stream video Error",__func__);
 		return -1;
@@ -323,12 +328,12 @@ static int mm_app_streamon_video(int cam_id)
 
 static int mm_app_streamoff_video(int cam_id)
 {
-	int stream[2];
+	uint32_t stream;
 	int rc = MM_CAMERA_OK;
 
 	mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
 
-	stream[0] = pme->stream[MM_CAMERA_VIDEO].id;
+	stream = pme->stream[MM_CAMERA_VIDEO].id;
 
 	if(MM_CAMERA_OK != (rc =pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,&stream)))
 	{

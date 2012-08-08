@@ -46,6 +46,12 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static mm_app_tc_t mm_app_tc[MM_QCAM_APP_TEST_NUM];
 static int num_test_cases = 0;
 
+extern int system_dimension_set(int cam_id);
+extern int stopPreview(int cam_id);
+extern int takePicture_yuv(int cam_id);
+extern int startRdi(int cam_id);
+extern int stopRdi(int cam_id);
+
 int mm_app_dtc_0(mm_camera_app_t *cam_apps)
 {
     int rc = MM_CAMERA_OK;

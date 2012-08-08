@@ -924,14 +924,31 @@ typedef struct  {
   } e;
 } mm_camera_info_event_t;
 
+typedef struct  {
+  uint32_t trans_id;   /* transaction id */
+  int32_t data_length; /* the length of valid data */
+  uint8_t evt_data[1]; /* buffer that holds the content of private event, must be flatten */
+} mm_camera_private_event_t;
 
 typedef enum {
   MM_CAMERA_EVT_TYPE_CH,
   MM_CAMERA_EVT_TYPE_CTRL,
   MM_CAMERA_EVT_TYPE_STATS,
   MM_CAMERA_EVT_TYPE_INFO,
+  MM_CAMERA_EVT_TYPE_PRIVATE_EVT,
   MM_CAMERA_EVT_TYPE_MAX
 } mm_camera_event_type_t;
+
+typedef struct {
+  mm_camera_event_type_t event_type;
+  union {
+    mm_camera_ch_event_t ch;
+    mm_camera_ctrl_event_t ctrl;
+    mm_camera_stats_event_t stats;
+    mm_camera_info_event_t info;
+    mm_camera_private_event_t pri_evt;
+  } e;
+} mm_camera_event_t;
 
 /******************************************************************************
  * Function: exif_set_tag

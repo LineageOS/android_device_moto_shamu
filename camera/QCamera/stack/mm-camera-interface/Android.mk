@@ -15,7 +15,7 @@ MM_CAM_FILES := \
         src/mm_camera_helper.c
 
 LOCAL_CFLAGS += -D_ANDROID_
-LOCAL_COPY_HEADERS_TO := mm-camera-interface_badger
+LOCAL_COPY_HEADERS_TO := mm-camera-interface
 LOCAL_COPY_HEADERS := inc/mm_camera_interface.h
 
 LOCAL_C_INCLUDES := \
@@ -43,7 +43,7 @@ LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/un.h
 
 LOCAL_SRC_FILES := $(MM_CAM_FILES)
 
-LOCAL_MODULE           := libmmcamera_interface_badger
+LOCAL_MODULE           := libmmcamera_interface
 LOCAL_PRELINK_MODULE   := false
 LOCAL_SHARED_LIBRARIES := libdl libcutils liblog
 LOCAL_MODULE_TAGS := optional

@@ -50,7 +50,7 @@ typedef struct {
     pthread_mutex_t lock;
 } mm_jpeg_queue_t;
 
-typedef enum 
+typedef enum
 {
     MM_JPEG_CMD_TYPE_JOB,          /* job cmd */
     MM_JPEG_CMD_TYPE_EXIT,         /* EXIT cmd for exiting jobMgr thread */
@@ -120,8 +120,8 @@ typedef struct mm_jpeg_obj_t {
     mm_jpeg_client_t clnt_mgr[MAX_JPEG_CLIENT_NUM]; /* client manager */
 
     /* JobMkr */
-    pthread_mutex_t job_lock;                       /* job lock */   
-    mm_jpeg_job_cmd_thread_t job_mgr;               /* job mgr thread including todo_q*/            
+    pthread_mutex_t job_lock;                       /* job lock */
+    mm_jpeg_job_cmd_thread_t job_mgr;               /* job mgr thread including todo_q*/
     mm_jpeg_queue_t ongoing_job_q;                  /* queue for ongoing jobs */
 
     /* Notifier */
@@ -129,6 +129,7 @@ typedef struct mm_jpeg_obj_t {
 
     /* OMX related */
     OMX_HANDLETYPE omx_handle;                      /* handle to omx engine */
+    OMX_CALLBACKTYPE omx_callbacks;                 /* callbacks to omx engine */
 
     pthread_mutex_t omx_evt_lock;
     pthread_cond_t omx_evt_cond;

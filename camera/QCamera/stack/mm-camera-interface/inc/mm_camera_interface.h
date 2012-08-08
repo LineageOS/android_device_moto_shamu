@@ -120,7 +120,7 @@ typedef enum {
      * ready dispatch it to HAL */
     MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS,
     MM_CAMERA_SUPER_BUF_NOTIFY_MAX
-}mm_camera_super_buf_notify_mode_t;
+} mm_camera_super_buf_notify_mode_t;
 
 typedef enum {
     /* save the frame. No matter focused or not */
@@ -131,7 +131,7 @@ typedef enum {
     /* after shutter, only queue matched exposure index */
     MM_CAMERA_SUPER_BUF_PRIORITY_EXPOSURE_BRACKETING,
     MM_CAMERA_SUPER_BUF_PRIORITY_MAX
-}mm_camera_super_buf_priority_t;
+} mm_camera_super_buf_priority_t;
 
 typedef struct {
     mm_camera_super_buf_notify_mode_t notify_mode;
@@ -218,9 +218,15 @@ typedef struct {
     uint8_t sensor_idxs[MM_CAMERA_MAX_2ND_SENSORS];
 } mm_camera_2nd_sensor_t;
 
+typedef enum {
+    MM_CAMERA_MSG_TYPE_CMD, /* for private communication through ioctl */
+    MM_CAMERA_MSG_TYPE_SOCK /* for private communication through sock */
+} mm_camera_msg_type_t;
+
 typedef struct {
-	int32_t (*sync) (uint32_t camera_handle);
-	uint8_t (*is_event_supported) (uint32_t camera_handle,
+    /* to sync the internal camera settings */
+    int32_t (*sync) (uint32_t camera_handle);
+    uint8_t (*is_event_supported) (uint32_t camera_handle,
                                  mm_camera_event_type_t evt_type);
     int32_t (*register_event_notify) (uint32_t camera_handle,
                                  mm_camera_event_notify_t evt_cb,
@@ -299,18 +305,23 @@ typedef struct {
     int32_t (*prepare_snapshot) (uint32_t camera_handle,
                                  uint32_t ch_id,
                                  uint32_t sensor_idx);
-    /* set a parm’s current value */
+    /* set a parm current value of a stream */
     int32_t (*set_stream_parm) (uint32_t camera_handle,
                                 uint32_t ch_id,
                                 uint32_t s_id,
                                 mm_camera_stream_parm_t parm_type,
                                 void* p_value);
-    /* get a parm’s current value */
+    /* get a parm current value of a stream */
     int32_t (*get_stream_parm) (uint32_t camera_handle,
                                 uint32_t ch_id,
                                 uint32_t s_id,
                                 mm_camera_stream_parm_t parm_type,
                                 void* p_value);
+    /* private communication tunnel */
+    int32_t (*send_command) (uint32_t camera_handle,
+                             mm_camera_msg_type_t cmd_type,
+                             void *cmd,
+                             int32_t cmd_length);
 } mm_camera_ops_t;
 
 typedef struct {

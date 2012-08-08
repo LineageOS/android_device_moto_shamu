@@ -88,7 +88,7 @@ static int32_t mm_jpeg_intf_start_job(uint32_t client_hdl, mm_jpeg_job* job, uin
     pthread_mutex_unlock(&g_intf_lock);
     return rc;
 }
-    
+
 static int32_t mm_jpeg_intf_abort_job(uint32_t client_hdl, uint32_t jobId)
 {
     int32_t rc = -1;

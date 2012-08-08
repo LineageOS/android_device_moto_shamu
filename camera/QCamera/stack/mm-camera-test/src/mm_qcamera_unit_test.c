@@ -44,6 +44,13 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static mm_app_tc_t mm_app_tc[MM_QCAM_APP_TEST_NUM];
 static int num_test_cases = 0;
+static mm_jpeg_ops_t jpeg_ops;
+
+extern int system_dimension_set(int cam_id);
+extern int stopPreview(int cam_id);
+extern int takePicture_yuv(int cam_id);
+extern int startRdi(int cam_id);
+extern int stopRdi(int cam_id);
 
 int mm_app_tc_0(mm_camera_app_t *cam_apps)
 {
@@ -304,8 +311,7 @@ int mm_app_tc_3(mm_camera_app_t *cam_apps)
 int mm_app_tc_4(mm_camera_app_t *cam_apps)
 {
     int rc = MM_CAMERA_OK;
-    int i;
-    printf("Running %s - open/close ,video0, open/close preview channel only\n", __func__); 
+
 #if 0
     for (i = 0; i < MM_QCAMERA_APP_UTEST_MAX_MAIN_LOOP; i++) {
         if ( 0 != (rc = mm_app_open(cam_id, MM_CAMERA_OP_MODE_NOTUSED))) {

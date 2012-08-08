@@ -147,9 +147,75 @@ static void mm_camera_event_notify(void* user_data)
             if(ev.type == V4L2_EVENT_PRIVATE_START+MSM_CAM_APP_NOTIFY_ERROR_EVENT) {
                 evt->event_type = MM_CAMERA_EVT_TYPE_CTRL;
                 evt->e.ctrl.evt = MM_CAMERA_CTRL_EVT_ERROR;
-            }
+                node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
+                if (NULL != node) {
+                    memset(node, 0, sizeof(mm_camera_cmdcb_t));
+                    node->cmd_type = MM_CAMERA_CMD_TYPE_EVT_CB;
+                    memcpy(&node->u.evt, evt, sizeof(mm_camera_event_t));
+                }
+            } else {
+                switch (evt->event_type) {
+                case MM_CAMERA_EVT_TYPE_CH:
+                case MM_CAMERA_EVT_TYPE_CTRL:
+                case MM_CAMERA_EVT_TYPE_STATS:
+                case MM_CAMERA_EVT_TYPE_INFO:
+                    {
+                        node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
+                        if (NULL != node) {
+                            memset(node, 0, sizeof(mm_camera_cmdcb_t));
+                            node->cmd_type = MM_CAMERA_CMD_TYPE_EVT_CB;
+                            memcpy(&node->u.evt, evt, sizeof(mm_camera_event_t));
+                        }
+                    }
+                    break;
+                case MM_CAMERA_EVT_TYPE_PRIVATE_EVT:
+                    {
+                        CDBG("%s: MM_CAMERA_EVT_TYPE_PRIVATE_EVT", __func__);
+                        struct msm_camera_v4l2_ioctl_t v4l2_ioctl;
+                        int32_t length =
+                            sizeof(mm_camera_cmdcb_t) + evt->e.pri_evt.data_length;
+                        node = (mm_camera_cmdcb_t *)malloc(length);
+                        if (NULL != node) {
+                            memset(node, 0, length);
+                            node->cmd_type = MM_CAMERA_CMD_TYPE_EVT_CB;
+                            memcpy(&node->u.evt, evt, sizeof(mm_camera_event_t));
 
-            mm_camera_enqueue_evt(my_obj, evt);
+                            if (evt->e.pri_evt.data_length > 0) {
+                                CDBG("%s: data_length =%d (trans_id=%d), dequeue payload",
+                                     __func__, evt->e.pri_evt.data_length,
+                                     node->u.evt.e.pri_evt.trans_id);
+                                /* dequeue event payload if length > 0 */
+                                memset(&v4l2_ioctl, 0, sizeof(v4l2_ioctl));
+                                v4l2_ioctl.trans_code = node->u.evt.e.pri_evt.trans_id;
+                                v4l2_ioctl.len = node->u.evt.e.pri_evt.data_length;
+                                v4l2_ioctl.ioctl_ptr = &(node->u.evt.e.pri_evt.evt_data[0]);
+                                rc = ioctl(my_obj->ctrl_fd, MSM_CAM_V4L2_IOCTL_GET_EVENT_PAYLOAD,
+                                           &v4l2_ioctl);
+                                if (rc < 0) {
+                                    CDBG_ERROR("%s: get event payload returns error = %d",
+                                               __func__, rc);
+                                    free(node);
+                                    node = NULL;
+                                } else {
+                                    CDBG("%s: data_length =%d (trans_id=%d) (payload=%s)",
+                                         __func__, evt->e.pri_evt.data_length,
+                                         node->u.evt.e.pri_evt.trans_id,
+                                         (char*)&node->u.evt.e.pri_evt.evt_data[0]);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+            if (NULL != node) {
+                /* enqueue to evt cmd thread */
+                mm_camera_queue_enq(&(my_obj->evt_thread.cmd_queue), node);
+                /* wake up evt cmd thread */
+                sem_post(&(my_obj->evt_thread.cmd_sem));
+            }
         }
     }
 }
@@ -264,12 +330,6 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
 
     /* set geo mode to 2D by default */
     my_obj->current_mode = CAMERA_MODE_2D;
-
-    /* TODO:
-    * We need to remove function call once we consider sync as saperate API 
-    * and HAL needs to call after each camera open call. 
-    */
-    mm_camera_sync(my_obj);
 
     pthread_mutex_init(&my_obj->cb_lock, NULL);
 
@@ -459,11 +519,7 @@ int32_t mm_camera_sync(mm_camera_obj_t *my_obj)
     my_obj->need_pp = 0;
 
 on_error:
-    /* TODO:
-    * We need to enable below lock once we consider sync as saperate API 
-    * and HAL needs to call after each camera open call. 
-    */
-    //pthread_mutex_unlock(&my_obj->cam_lock);
+    pthread_mutex_unlock(&my_obj->cam_lock);
     return rc;
 
 }
@@ -1205,6 +1261,45 @@ int32_t mm_camera_get_stream_parm(mm_camera_obj_t *my_obj,
     return rc;
 }
 
+int32_t mm_camera_send_sock_command(mm_camera_obj_t *my_obj,
+                                    void *cmd,
+                                    int32_t cmd_length)
+{
+    int32_t rc = -1;
+
+    rc = mm_camera_socket_sendmsg(my_obj->ds_fd, cmd, cmd_length, 0);
+
+    /* unlock cam_lock */
+    pthread_mutex_unlock(&my_obj->cam_lock);
+
+    return rc;
+}
+
+int32_t mm_camera_send_private_ioctl(mm_camera_obj_t *my_obj,
+                                     void *cmd,
+                                     int32_t cmd_length)
+{
+    int32_t rc = -1;
+
+    struct msm_camera_v4l2_ioctl_t v4l2_ioctl;
+
+    CDBG("%s: cmd = %p, length = %d",
+               __func__, cmd, cmd_length);
+    memset(&v4l2_ioctl, 0, sizeof(v4l2_ioctl));
+    v4l2_ioctl.len = cmd_length;
+    v4l2_ioctl.ioctl_ptr = cmd;
+    rc = ioctl (my_obj->ctrl_fd, MSM_CAM_V4L2_IOCTL_PRIVATE_GENERAL, &v4l2_ioctl);
+
+    if(rc < 0) {
+        CDBG_ERROR("%s: cmd = %p, length = %d, rc = %d\n",
+                   __func__, cmd, cmd_length, rc);
+    } else {
+        rc = 0;
+    }
+
+    return rc;
+}
+
 int32_t mm_camera_ctrl_set_specialEffect (mm_camera_obj_t *my_obj, int32_t effect) {
     struct v4l2_control ctrl;
     if (effect == CAMERA_EFFECT_MAX)
@@ -1214,7 +1309,7 @@ int32_t mm_camera_ctrl_set_specialEffect (mm_camera_obj_t *my_obj, int32_t effec
     ctrl.id = MSM_V4L2_PID_EFFECT;
     ctrl.value = effect;
     rc = ioctl(my_obj->ctrl_fd, VIDIOC_S_CTRL, &ctrl);
-    return rc;
+    return (rc >= 0)? 0: -1;;
 }
 
 int32_t mm_camera_ctrl_set_auto_focus (mm_camera_obj_t *my_obj, int32_t value)
@@ -1607,10 +1702,12 @@ int32_t mm_camera_util_private_s_ctrl(int32_t fd, uint32_t id, void* value)
     v4l2_ioctl.ioctl_ptr = value;
     rc = ioctl (fd, MSM_CAM_V4L2_IOCTL_PRIVATE_S_CTRL, &v4l2_ioctl);
 
-    if(rc) {
+    if(rc < 0) {
         CDBG_ERROR("%s: fd=%d, S_CTRL, id=0x%x, value = 0x%x, rc = %d\n",
                    __func__, fd, id, (uint32_t)value, rc);
-        rc = 1;
+        rc = -1;
+    } else {
+        rc = 0;
     }
     return rc;
 }
@@ -1750,11 +1847,9 @@ int32_t mm_camera_util_s_ctrl(int32_t fd,  uint32_t id, int32_t value)
     control.value = value;
     rc = ioctl (fd, VIDIOC_S_CTRL, &control);
 
-    if(rc) {
-        CDBG("%s: fd=%d, S_CTRL, id=0x%x, value = 0x%x, rc = %d\n",
-                 __func__, fd, id, (uint32_t)value, rc);
-    }
-    return rc;
+    CDBG("%s: fd=%d, S_CTRL, id=0x%x, value = 0x%x, rc = %d\n",
+         __func__, fd, id, (uint32_t)value, rc);
+    return (rc >= 0)? 0 : -1;
 }
 
 int32_t mm_camera_util_g_ctrl( int32_t fd, uint32_t id, int32_t *value)
@@ -1766,9 +1861,7 @@ int32_t mm_camera_util_g_ctrl( int32_t fd, uint32_t id, int32_t *value)
     control.id = id;
     control.value = (int32_t)value;
     rc = ioctl (fd, VIDIOC_G_CTRL, &control);
-    if(rc) {
-        CDBG("%s: fd=%d, G_CTRL, id=0x%x, rc = %d\n", __func__, fd, id, rc);
-    }
     *value = control.value;
-    return rc;
+    CDBG("%s: fd=%d, G_CTRL, id=0x%x, rc = %d\n", __func__, fd, id, rc);
+    return (rc >= 0)? 0 : -1;
 }

@@ -30,14 +30,10 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __MM_QCAMERA_APP_H__
 #define __MM_QCAMERA_APP_H__
 
-#define DISABLE_JPEG_ENCODING
-
 #include "camera.h"
 #include "mm_qcamera_main_menu.h"
 #include "mm_camera_interface.h"
-#ifndef DISABLE_JPEG_ENCODING
-#include "mm_omx_jpeg_encoder.h"
-#endif
+#include "mm_jpeg_interface.h"
 
 #define MM_APP_MAX_DUMP_FRAME_NUM 1000
 
@@ -60,19 +56,15 @@ typedef enum {
 
 typedef struct {
     int num;
-    uint32_t frame_len;
-    struct msm_frame frame[MM_CAMERA_MAX_NUM_FRAMES];
-
-    uint32_t fd[MM_CAMERA_MAX_NUM_FRAMES];
-    int main_ion_fd[MM_CAMERA_MAX_NUM_FRAMES];
+    mm_camera_buf_def_t bufs[MM_CAMERA_MAX_NUM_FRAMES];
     struct ion_allocation_data alloc[MM_CAMERA_MAX_NUM_FRAMES];
     struct ion_fd_data ion_info_fd[MM_CAMERA_MAX_NUM_FRAMES];
-    int reg[MM_CAMERA_MAX_NUM_FRAMES];
 } mm_camear_app_buf_t;
 
 typedef struct {
-    int id;
+    uint32_t id;
     mm_camera_stream_config_t str_config;
+    mm_camear_app_buf_t app_bufs;
 }mm_camear_stream_t;
 
 typedef enum{
@@ -90,6 +82,8 @@ typedef enum{
     RDI_MODE
 }camera_mode;
 
+#define MM_QCAM_APP_MAX_STREAM_NUM 8
+
 typedef struct {
     mm_camera_vtbl_t *cam;
     mm_camear_mem_vtbl_t *mem_cam;
@@ -99,17 +93,26 @@ typedef struct {
     cam_ctrl_dimension_t dim;
     int open_flag;
     int ionfd;
-    mm_camear_stream_t stream[8];
+    mm_camear_stream_t stream[MM_QCAM_APP_MAX_STREAM_NUM];
     camera_mode cam_mode;
     camera_state cam_state;
     int fullSizeSnapshot;
+
+    mm_jpeg_ops_t jpeg_ops;
+    uint32_t jpeg_hdl;
+    mm_camera_super_buf_t* current_job_frames;
+    uint32_t current_job_id;
+    mm_camear_app_buf_t jpeg_buf;
 } mm_camera_app_obj_t;
 
 typedef struct {
   void *ptr;
+  void* ptr_jpeg;
+
   mm_camera_info_t *(*mm_camera_query) (uint8_t *num_cameras);
   mm_camera_vtbl_t *(*mm_camera_open) (uint8_t camera_idx,
                                mm_camear_mem_vtbl_t *mem_vtbl);
+  uint32_t (*jpeg_open) (mm_jpeg_ops_t *ops);
 
   /*uint8_t *(*mm_camera_do_mmap)(uint32_t size, int *pmemFd);
   int (*mm_camera_do_munmap)(int pmem_fd, void *addr, size_t size);

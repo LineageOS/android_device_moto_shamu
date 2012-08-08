@@ -126,7 +126,8 @@ int32_t mm_channel_fsm_fn_paused(mm_channel_t *my_obj,
 
 /* channel super queue functions */
 int32_t mm_channel_superbuf_queue_init(mm_channel_queue_t * queue);
-int32_t mm_channel_superbuf_queue_deinit(mm_channel_queue_t * queue);
+int32_t mm_channel_superbuf_queue_deinit(mm_channel_t *my_obj,
+                                         mm_channel_queue_t * queue);
 int32_t mm_channel_superbuf_comp_and_enqueue(mm_channel_t *ch_obj,
                                              mm_channel_queue_t * queue,
                                              mm_camera_buf_info_t *buf);
@@ -148,6 +149,27 @@ mm_stream_t * mm_channel_util_get_stream_by_handler(
         }
     }
     return s_obj;
+}
+
+static void mm_channel_dispatch_super_buf(mm_camera_cmdcb_t *cmd_cb,
+                                          void* user_data)
+{
+    int i;
+    mm_channel_t * my_obj = (mm_channel_t *)user_data;
+
+    if (NULL == my_obj) {
+        return;
+    }
+
+    if (MM_CAMERA_CMD_TYPE_SUPER_BUF_DATA_CB != cmd_cb->cmd_type) {
+        CDBG_ERROR("%s: Wrong cmd_type (%d) for super buf dataCB",
+                   __func__, cmd_cb->cmd_type);
+        return;
+    }
+
+    if (my_obj->bundle.super_buf_notify_cb) {
+        my_obj->bundle.super_buf_notify_cb(&cmd_cb->u.superbuf, my_obj->bundle.user_data);
+    }
 }
 
 /* CB for handling post processing result from ctrl evt */
@@ -212,19 +234,30 @@ static void mm_channel_pp_result_notify(uint32_t camera_handler,
             if (pp_done) {
                 /* send super buf to CB */
                 if (NULL != ch_obj->bundle.super_buf_notify_cb) {
-                    mm_camera_super_buf_t super_buf;
                     uint8_t i;
+                    mm_camera_cmdcb_t* cb_node = NULL;
 
-                    memset(&super_buf, 0, sizeof(mm_camera_super_buf_t));
-                    super_buf.num_bufs = node->num_of_bufs;
-                    for (i=0; i<node->num_of_bufs; i++) {
-                        super_buf.bufs[i] = node->super_buf[i].buf;
+                    /* send sem_post to wake up cb thread to dispatch super buffer */
+                    cb_node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
+                    if (NULL != cb_node) {
+                        memset(cb_node, 0, sizeof(mm_camera_cmdcb_t));
+                        cb_node->cmd_type = MM_CAMERA_CMD_TYPE_SUPER_BUF_DATA_CB;
+                        cb_node->u.superbuf.num_bufs = node->num_of_bufs;
+                        for (i=0; i<node->num_of_bufs; i++) {
+                            cb_node->u.superbuf.bufs[i] = node->super_buf[i].buf;
+                        }
+                        cb_node->u.superbuf.camera_handle = ch_obj->cam_obj->my_hdl;
+                        cb_node->u.superbuf.ch_id = ch_obj->my_hdl;
+
+                        /* enqueue to cb thread */
+                        mm_camera_queue_enq(&(ch_obj->cb_thread.cmd_queue), cb_node);
+
+                        /* wake up cb thread */
+                        sem_post(&(ch_obj->cb_thread.cmd_sem));
+                    } else {
+                        CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
                     }
-                    super_buf.camera_handle = ch_obj->cam_obj->my_hdl;
-                    super_buf.ch_id = ch_obj->my_hdl;
 
-                    ch_obj->bundle.super_buf_notify_cb(&super_buf,
-                                                       ch_obj->bundle.user_data);
                     ch_obj->pending_pp_cnt--;
                 } else {
                     /* buf done with the nonuse super buf */
@@ -294,19 +327,29 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
             } else {
                 /* dispatch superbuf */
                 if (NULL != ch_obj->bundle.super_buf_notify_cb) {
-                    mm_camera_super_buf_t super_buf;
                     uint8_t i;
+                    mm_camera_cmdcb_t* cb_node = NULL;
 
-                    memset(&super_buf, 0, sizeof(mm_camera_super_buf_t));
-                    super_buf.num_bufs = node->num_of_bufs;
-                    for (i=0; i<node->num_of_bufs; i++) {
-                        super_buf.bufs[i] = node->super_buf[i].buf;
+                    /* send sem_post to wake up cb thread to dispatch super buffer */
+                    cb_node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
+                    if (NULL != cb_node) {
+                        memset(cb_node, 0, sizeof(mm_camera_cmdcb_t));
+                        cb_node->cmd_type = MM_CAMERA_CMD_TYPE_SUPER_BUF_DATA_CB;
+                        cb_node->u.superbuf.num_bufs = node->num_of_bufs;
+                        for (i=0; i<node->num_of_bufs; i++) {
+                            cb_node->u.superbuf.bufs[i] = node->super_buf[i].buf;
+                        }
+                        cb_node->u.superbuf.camera_handle = ch_obj->cam_obj->my_hdl;
+                        cb_node->u.superbuf.ch_id = ch_obj->my_hdl;
+
+                        /* enqueue to cb thread */
+                        mm_camera_queue_enq(&(ch_obj->cb_thread.cmd_queue), cb_node);
+
+                        /* wake up cb thread */
+                        sem_post(&(ch_obj->cb_thread.cmd_sem));
+                    } else {
+                        CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
                     }
-                    super_buf.camera_handle = ch_obj->cam_obj->my_hdl;
-                    super_buf.ch_id = ch_obj->my_hdl;
-
-                    ch_obj->bundle.super_buf_notify_cb(&super_buf,
-                                                       ch_obj->bundle.user_data);
                 } else {
                     /* buf done with the nonuse super buf */
                     uint8_t i;
@@ -769,6 +812,11 @@ int32_t mm_channel_bundle_stream(mm_channel_t *my_obj,
         my_obj->bundle.superbuf_queue.bundled_streams[i] = stream_ids[i];
     }
 
+    /* launch cb thread for dispatching super buf through cb */
+    mm_camera_cmd_thread_launch(&my_obj->cb_thread,
+                                mm_channel_dispatch_super_buf,
+                                (void*)my_obj);
+
     /* launch cmd thread for super buf dataCB */
     mm_camera_cmd_thread_launch(&my_obj->cmd_thread,
                                 mm_channel_process_stream_buf,
@@ -790,11 +838,28 @@ int32_t mm_channel_bundle_stream(mm_channel_t *my_obj,
 /* bundled streams must all be stopped before bundle can be destroyed */
 int32_t mm_channel_destroy_bundle(mm_channel_t *my_obj)
 {
+    mm_stream_t* s_obj = NULL;
+    uint8_t i;
+
+    /* first check all bundled streams should be stopped already */
+    for (i=0; i < my_obj->bundle.superbuf_queue.num_streams; i++) {
+        s_obj = mm_channel_util_get_stream_by_handler(my_obj,
+                        my_obj->bundle.superbuf_queue.bundled_streams[i]);
+        if (NULL != s_obj) {
+            if (MM_STREAM_STATE_ACTIVE_STREAM_ON == s_obj->state ||
+                MM_STREAM_STATE_ACTIVE_STREAM_OFF == s_obj->state) {
+                CDBG_ERROR("%s: at least one of the bundled streams (%d) is still active",
+                           __func__, my_obj->bundle.superbuf_queue.bundled_streams[i]);
+                return -1;
+            }
+        }
+    }
 
     mm_camera_cmd_thread_release(&my_obj->cmd_thread);
+    mm_camera_cmd_thread_release(&my_obj->cb_thread);
 
     /* deinit superbuf queue */
-    mm_channel_superbuf_queue_deinit(&my_obj->bundle.superbuf_queue);
+    mm_channel_superbuf_queue_deinit(my_obj, &my_obj->bundle.superbuf_queue);
 
     /* memset bundle info */
     memset(&my_obj->bundle, 0, sizeof(mm_channel_bundle_t));
@@ -1050,11 +1115,6 @@ int32_t mm_channel_qbuf(mm_channel_t *my_obj,
                         mm_camera_buf_def_t *buf)
 {
     int32_t rc = -1;
-    struct ion_flush_data cache_inv_data;
-    int ion_fd;
-    struct msm_frame *cache_frame;
-    struct msm_frame *cache_frame1 = NULL;
-
     mm_stream_t* s_obj = mm_channel_util_get_stream_by_handler(my_obj, buf->stream_id);
 
     if (NULL != s_obj) {
@@ -1063,32 +1123,6 @@ int32_t mm_channel_qbuf(mm_channel_t *my_obj,
                               (void *)buf,
                               NULL);
     }
-
-#ifdef USE_ION
-    cache_inv_data.vaddr = cache_frame->buffer;
-    cache_inv_data.fd = cache_frame->fd;
-    cache_inv_data.handle = cache_frame->fd_data.handle;
-    cache_inv_data.length = cache_frame->ion_alloc.len;
-    ion_fd = cache_frame->ion_dev_fd;
-    if(ion_fd > 0) {
-        if(ioctl(ion_fd, ION_IOC_INV_CACHES, &cache_inv_data) < 0)
-            CDBG_ERROR("%s: Cache Invalidate failed\n", __func__);
-        else {
-            CDBG("%s: Successful cache invalidate\n", __func__);
-            if(cache_frame1) {
-                ion_fd = cache_frame1->ion_dev_fd;
-                cache_inv_data.vaddr = cache_frame1->buffer;
-                cache_inv_data.fd = cache_frame1->fd;
-                cache_inv_data.handle = cache_frame1->fd_data.handle;
-                cache_inv_data.length = cache_frame1->ion_alloc.len;
-                if(ioctl(ion_fd, ION_IOC_INV_CACHES, &cache_inv_data) < 0)
-                    CDBG_ERROR("%s: Cache Invalidate failed\n", __func__);
-                else
-                    CDBG("%s: Successful cache invalidate\n", __func__);
-            }
-        }
-    }
-#endif
 
     return rc;
 }
@@ -1250,8 +1284,23 @@ int32_t mm_channel_superbuf_queue_init(mm_channel_queue_t * queue)
     return mm_camera_queue_init(&queue->que);
 }
 
-int32_t mm_channel_superbuf_queue_deinit(mm_channel_queue_t * queue)
+int32_t mm_channel_superbuf_queue_deinit(mm_channel_t *my_obj,
+                                         mm_channel_queue_t * queue)
 {
+    mm_channel_queue_node_t* node = NULL;
+    /* dequeue */
+    node = mm_channel_superbuf_dequeue(queue);
+    while (NULL != node) {
+        /* buf done with the nonuse super buf */
+        uint8_t i;
+        for (i=0; i<node->num_of_bufs; i++) {
+            mm_channel_qbuf(my_obj, node->super_buf[i].buf);
+        }
+        free(node);
+
+        node = mm_channel_superbuf_dequeue(queue);
+    }
+
     return mm_camera_queue_deinit(&queue->que);
 }
 

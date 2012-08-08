@@ -28,16 +28,20 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <pthread.h>
-#include "mm_camera_dbg.h"
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <poll.h>
+#include "mm_camera_dbg.h"
 #include "mm_qcamera_app.h"
 
 #define BUFF_SIZE_128 128
+
+#ifdef TEST_ABORT_JPEG_ENCODE
+static uint8_t aborted_flag = 1;
+#endif
 
 //static mm_camera_ch_data_buf_t *mCurrentFrameEncoded;
 static int JpegOffset = 0;
@@ -47,6 +51,16 @@ static pthread_mutex_t g_s_mutex;
 static int g_status = 0;
 static pthread_cond_t g_s_cond_v;
 
+extern void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422);
+extern int mm_app_open_zsl(int cam_id);
+extern int mm_app_open_camera(int cam_id);
+extern int mm_app_start_preview(int cam_id);
+extern int mm_stream_alloc_bufs(mm_camera_app_obj_t *pme,
+                                mm_camear_app_buf_t* app_bufs,
+                                mm_camera_frame_len_offset *frame_offset_info,
+                                uint8_t num_bufs);
+extern int mm_stream_release_bufs(mm_camera_app_obj_t *pme,
+                                  mm_camear_app_buf_t* app_bufs);
 
 static void mm_app_snapshot_done()
 {
@@ -103,7 +117,7 @@ static void mm_app_dump_jpeg_frame(const void * data, uint32_t size, char* name,
     }
 }
 
-static int mm_app_set_thumbnail_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
+static int mm_app_set_thumbnail_fmt(int cam_id, mm_camera_image_fmt_t *fmt)
 {
     int rc = MM_CAMERA_OK;
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
@@ -116,7 +130,7 @@ static int mm_app_set_thumbnail_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
     return rc;
 }
 
-int mm_app_set_snapshot_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
+int mm_app_set_snapshot_fmt(int cam_id, mm_camera_image_fmt_t *fmt)
 {
 
     int rc = MM_CAMERA_OK;
@@ -129,7 +143,7 @@ int mm_app_set_snapshot_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
     return rc;
 }
 
-int mm_app_set_live_snapshot_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
+int mm_app_set_live_snapshot_fmt(int cam_id, mm_camera_image_fmt_t *fmt)
 {
     int rc = MM_CAMERA_OK;
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
@@ -271,7 +285,6 @@ static int mm_app_unprepare_raw_snapshot_buf(int cam_id)
     return rc;
 }
 
-#ifndef DISABLE_JPEG_ENCODING
 /* Once we give frame for encoding, we get encoded jpeg image
    fragments by fragment. We'll need to store them in a buffer
    to form complete JPEG image */
@@ -290,8 +303,169 @@ static void snapshot_jpeg_fragment_cb(uint8_t *ptr,
     CDBG("%s: X",__func__);
 #endif
 }
-#endif
 /* This callback is received once the complete JPEG encoding is done */
+static void jpeg_encode_cb(jpeg_job_status_t status,
+                           uint8_t thumbnailDroppedFlag,
+                           uint32_t client_hdl,
+                           uint32_t jobId,
+                           uint8_t* out_data,
+                           uint32_t data_size,
+                           void *userData)
+{
+    int rc;
+    int i = 0;
+    mm_camera_buf_def_t *main_frame = NULL;
+    mm_camera_buf_def_t *thumb_frame = NULL;
+    mm_camera_app_obj_t *pme = NULL;
+    CDBG("%s: BEGIN\n", __func__);
+
+    pme = (mm_camera_app_obj_t *)userData;
+    if (jobId != pme->current_job_id || !pme->current_job_frames) {
+        CDBG_ERROR("%s: NULL current job frames or not matching job ID (%d, %d)",
+                   __func__, jobId, pme->current_job_id);
+        return;
+    }
+
+    /* dump jpeg img */
+    CDBG_ERROR("%s: job %d, status=%d, thumbnail_dropped=%d",
+               __func__, jobId, status, thumbnailDroppedFlag);
+    if (status == JPEG_JOB_STATUS_DONE) {
+        mm_app_dump_jpeg_frame(out_data, data_size, "jpeg_dump", "jpg", pme->current_job_id);
+    }
+
+    /* buf done current encoding frames */
+    pme->current_job_id = 0;
+    for (i=0; i<pme->current_job_frames->num_bufs; i++) {
+        if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->current_job_frames->camera_handle,
+                                                pme->current_job_frames->ch_id,
+                                                pme->current_job_frames->bufs[i])) {
+            CDBG_ERROR("%s: Failed in Qbuf\n", __func__);
+        }
+    }
+    free(pme->current_job_frames);
+    pme->current_job_frames = NULL;
+
+    /* signal snapshot is done */
+    mm_app_snapshot_done();
+}
+
+static int encodeData(mm_camera_app_obj_t *pme,
+                      mm_camera_super_buf_t* recvd_frame)
+{
+    int rc = -1;
+    int i;
+    mm_jpeg_job job;
+    mm_camera_buf_def_t *main_frame = NULL;
+    mm_camera_buf_def_t *thumb_frame = NULL;
+    src_image_buffer_info* main_buf_info = NULL;
+    src_image_buffer_info* thumb_buf_info = NULL;
+    mm_camera_frame_len_offset main_offset;
+    mm_camera_frame_len_offset thumb_offset;
+
+    /* dump raw img for debug purpose */
+    CDBG("%s : total streams = %d",__func__,recvd_frame->num_bufs);
+    for (i=0; i<recvd_frame->num_bufs; i++) {
+        if (pme->stream[MM_CAMERA_SNAPSHOT_MAIN].id == recvd_frame->bufs[i]->stream_id) {
+            main_frame = recvd_frame->bufs[i];
+            CDBG("mainframe frame_idx = %d fd = %d frame length = %d",main_frame->frame_idx,main_frame->fd,main_frame->frame_len);
+            dumpFrameToFile(main_frame,pme->dim.picture_width,pme->dim.picture_height,"main", 1);
+        } else if (pme->stream[MM_CAMERA_SNAPSHOT_THUMBNAIL].id == recvd_frame->bufs[i]->stream_id){
+            thumb_frame = recvd_frame->bufs[1];
+            CDBG("thumnail frame_idx = %d fd = %d frame length = %d",thumb_frame->frame_idx,thumb_frame->fd,thumb_frame->frame_len);
+            dumpFrameToFile(thumb_frame,pme->dim.thumbnail_width,pme->dim.thumbnail_height,"thumb", 1);
+        }
+    }
+
+    if (main_frame == NULL) {
+        CDBG_ERROR("%s: Main frame is NULL", __func__);
+        return rc;
+    }
+
+    /* remember current frames being encoded */
+    pme->current_job_frames =
+        (mm_camera_super_buf_t *)malloc(sizeof(mm_camera_super_buf_t));
+    if (!pme->current_job_frames) {
+        CDBG_ERROR("%s: No memory for current_job_frames", __func__);
+        return rc;
+    }
+    memcpy(pme->current_job_frames, recvd_frame, sizeof(mm_camera_super_buf_t));
+
+    memset(&job, 0, sizeof(job));
+    job.job_type = JPEG_JOB_TYPE_ENCODE;
+    job.encode_job.jpeg_cb = jpeg_encode_cb;
+    job.encode_job.userdata = (void*)pme;
+    job.encode_job.encode_parm.exif_data = NULL;
+    job.encode_job.encode_parm.exif_numEntries = 0;
+    job.encode_job.encode_parm.rotation = 0;
+    job.encode_job.encode_parm.buf_info.src_imgs.src_img_num = recvd_frame->num_bufs;
+
+    /* fill in main src img encode param */
+    main_buf_info = &job.encode_job.encode_parm.buf_info.src_imgs.src_img[JPEG_SRC_IMAGE_TYPE_MAIN];
+    main_buf_info->type = JPEG_SRC_IMAGE_TYPE_MAIN;
+    main_buf_info->color_format = MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2; //TODO
+    main_buf_info->quality = 85;
+    main_buf_info->src_dim.width = pme->dim.picture_width;
+    main_buf_info->src_dim.height = pme->dim.picture_height;
+    main_buf_info->out_dim.width = pme->dim.picture_width;
+    main_buf_info->out_dim.height = pme->dim.picture_height;
+    main_buf_info->crop.width = pme->dim.picture_width;
+    main_buf_info->crop.height = pme->dim.picture_height;
+    main_buf_info->crop.offset_x = 0;
+    main_buf_info->crop.offset_y = 0;
+    main_buf_info->img_fmt = JPEG_SRC_IMAGE_FMT_YUV;
+    main_buf_info->num_bufs = 1;
+    main_buf_info->src_image[0].fd = main_frame->fd;
+    main_buf_info->src_image[0].buf_vaddr = main_frame->buffer;
+    pme->cam->ops->get_stream_parm(pme->cam->camera_handle,
+                                   pme->ch_id,
+                                   pme->stream[MM_CAMERA_SNAPSHOT_MAIN].id,
+                                   MM_CAMERA_STREAM_OFFSET,
+                                   &main_buf_info->src_image[0].offset);
+    CDBG("%s: main offset: num_planes=%d, frame length=%d, y_offset=%d, cbcr_offset=%d",
+         __func__, main_buf_info->src_image[0].offset.num_planes,
+         main_buf_info->src_image[0].offset.frame_len,
+         main_buf_info->src_image[0].offset.mp[0].offset,
+         main_buf_info->src_image[0].offset.mp[1].offset);
+
+    if (thumb_frame) {
+        /* fill in thumbnail src img encode param */
+        thumb_buf_info = &job.encode_job.encode_parm.buf_info.src_imgs.src_img[JPEG_SRC_IMAGE_TYPE_THUMB];
+        thumb_buf_info->type = JPEG_SRC_IMAGE_TYPE_THUMB;
+        thumb_buf_info->color_format = MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2; //TODO
+        thumb_buf_info->quality = 85;
+        thumb_buf_info->src_dim.width = pme->dim.thumbnail_width;
+        thumb_buf_info->src_dim.height = pme->dim.thumbnail_height;
+        thumb_buf_info->out_dim.width = pme->dim.thumbnail_width;
+        thumb_buf_info->out_dim.height = pme->dim.thumbnail_height;
+        thumb_buf_info->crop.width = pme->dim.thumbnail_width;
+        thumb_buf_info->crop.height = pme->dim.thumbnail_height;
+        thumb_buf_info->crop.offset_x = 0;
+        thumb_buf_info->crop.offset_y = 0;
+        thumb_buf_info->img_fmt = JPEG_SRC_IMAGE_FMT_YUV;
+        thumb_buf_info->num_bufs = 1;
+        thumb_buf_info->src_image[0].fd = thumb_frame->fd;
+        thumb_buf_info->src_image[0].buf_vaddr = thumb_frame->buffer;
+        pme->cam->ops->get_stream_parm(pme->cam->camera_handle,
+                                       pme->ch_id,
+                                       pme->stream[MM_CAMERA_SNAPSHOT_THUMBNAIL].id,
+                                       MM_CAMERA_STREAM_OFFSET,
+                                       &thumb_buf_info->src_image[0].offset);
+    }
+
+    /* fill in sink img param */
+    job.encode_job.encode_parm.buf_info.sink_img.buf_len = pme->jpeg_buf.bufs[0].frame_len;
+    job.encode_job.encode_parm.buf_info.sink_img.buf_vaddr = pme->jpeg_buf.bufs[0].buffer;
+    job.encode_job.encode_parm.buf_info.sink_img.fd = pme->jpeg_buf.bufs[0].fd;
+
+    rc = pme->jpeg_ops.start_job(pme->jpeg_hdl, &job, &pme->current_job_id);
+    if ( 0 != rc ) {
+        free(pme->current_job_frames);
+        pme->current_job_frames = NULL;
+    }
+
+    return rc;
+}
+
 static void snapshot_raw_cb(mm_camera_super_buf_t *bufs,
                             void *user_data)
 {
@@ -301,106 +475,51 @@ static void snapshot_raw_cb(mm_camera_super_buf_t *bufs,
     mm_camera_buf_def_t *main_frame = NULL;
     mm_camera_buf_def_t *thumb_frame = NULL;
     mm_camera_app_obj_t *pme = NULL;
-    CDBG("%s: BEGIN\n", __func__); 
+
+    CDBG("%s: BEGIN\n", __func__);
 
     pme = (mm_camera_app_obj_t *)user_data;
 
-    CDBG("%s : total streams = %d",__func__,bufs->num_bufs);
-    main_frame = bufs->bufs[0];
-    thumb_frame = bufs->bufs[1];
+    /* start jpeg encoding job */
+    rc = encodeData(pme, bufs);
 
-    CDBG("mainframe frame_idx = %d fd = %d frame length = %d",main_frame->frame_idx,main_frame->fd,main_frame->frame_len);
-    CDBG("thumnail frame_idx = %d fd = %d frame length = %d",thumb_frame->frame_idx,thumb_frame->fd,thumb_frame->frame_len);
-
-    //dumpFrameToFile(main_frame->frame,pme->dim.picture_width,pme->dim.picture_height,"main", 1);
-    //dumpFrameToFile(thumb_frame->frame,pme->dim.thumbnail_width,pme->dim.thumbnail_height,"thumb", 1);
-
-    dumpFrameToFile(main_frame,pme->dim.picture_width,pme->dim.picture_height,"main", 1);
-    dumpFrameToFile(thumb_frame,pme->dim.thumbnail_width,pme->dim.thumbnail_height,"thumb", 1);
-
-    if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,main_frame)) {
-        CDBG_ERROR("%s: Failed in thumbnail Qbuf\n", __func__); 
+    /* buf done rcvd frames in error case */
+    if ( 0 != rc ) {
+        for (i=0; i<bufs->num_bufs; i++) {
+            if (MM_CAMERA_OK != pme->cam->ops->qbuf(bufs->camera_handle,
+                                                    bufs->ch_id,
+                                                    bufs->bufs[i])) {
+                CDBG_ERROR("%s: Failed in Qbuf\n", __func__); 
+            }
+        }
     }
-    if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,thumb_frame)) {
-        CDBG_ERROR("%s: Failed in thumbnail Qbuf\n", __func__); 
-    }
+#ifdef TEST_ABORT_JPEG_ENCODE
+    else {
+        if (aborted_flag) {
+            aborted_flag = 0;
+            /* abort the job */
+            CDBG("%s: abort jpeg encode job  here", __func__);
+            rc = pme->jpeg_ops.abort_job(pme->jpeg_hdl, pme->current_job_id);
+            if (NULL != pme->current_job_frames) {
+                free(pme->current_job_frames);
+                pme->current_job_frames = NULL;
+            }
+            CDBG("%s: abort jpeg encode job returns %d", __func__, rc);
+            for (i=0; i<bufs->num_bufs; i++) {
+                if (MM_CAMERA_OK != pme->cam->ops->qbuf(bufs->camera_handle,
+                                                        bufs->ch_id,
+                                                        bufs->bufs[i])) {
+                    CDBG_ERROR("%s: Failed in Qbuf\n", __func__);
+                }
+            }
 
-    mm_app_snapshot_done();
+            /* signal snapshot is done */
+            mm_app_snapshot_done();
+        }
+    }
+#endif
+
     CDBG("%s: END\n", __func__); 
-
-
-}
-
-#ifndef DISABLE_JPEG_ENCODING
-static int encodeData(mm_camera_super_buf_t* recvd_frame,
-                      int frame_len,
-                      int enqueued,
-                      mm_camera_app_obj_t *pme)
-{
-    int ret = -1;
-#if 0
-
-    cam_ctrl_dimension_t dimension;
-    struct msm_frame *postviewframe;
-    struct msm_frame *mainframe;
-    common_crop_t crop;
-    cam_point_t main_crop_offset;
-    cam_point_t thumb_crop_offset;
-    int width, height;
-    uint8_t *thumbnail_buf;
-    uint32_t thumbnail_fd;
-
-    omx_jpeg_encode_params encode_params;
-    postviewframe = recvd_frame->snapshot.thumbnail.frame;
-    mainframe = recvd_frame->snapshot.main.frame;
-    dimension.orig_picture_dx = pme->dim.picture_width;
-    dimension.orig_picture_dy = pme->dim.picture_height;
-    dimension.thumbnail_width = pme->dim.ui_thumbnail_width;
-    dimension.thumbnail_height = pme->dim.ui_thumbnail_height;
-    dimension.main_img_format = pme->dim.main_img_format;
-    dimension.thumb_format = pme->dim.thumb_format;
-
-    CDBG("Setting callbacks, initializing encoder and start encoding.");
-    my_cam_app.hal_lib.set_callbacks(snapshot_jpeg_fragment_cb, snapshot_jpeg_cb, pme,
-                                     (void *)pme->jpeg_buf.frame[0].buffer, &JpegOffset);
-    my_cam_app.hal_lib.omxJpegStart();
-    my_cam_app.hal_lib.mm_jpeg_encoder_setMainImageQuality(85);
-
-    /*TBD: Pass 0 as cropinfo for now as v4l2 doesn't provide
-      cropinfo. It'll be changed later.*/
-    memset(&crop,0,sizeof(common_crop_t));
-    memset(&main_crop_offset,0,sizeof(cam_point_t));
-    memset(&thumb_crop_offset,0,sizeof(cam_point_t));
-
-    /*Fill in the encode parameters*/
-    encode_params.dimension = (const cam_ctrl_dimension_t *)&dimension;
-    encode_params.thumbnail_buf = (uint8_t *)postviewframe->buffer;
-    encode_params.thumbnail_fd = postviewframe->fd;
-    encode_params.thumbnail_offset = postviewframe->phy_offset;
-    encode_params.snapshot_buf = (uint8_t *)mainframe->buffer;
-    encode_params.snapshot_fd = mainframe->fd;
-    encode_params.snapshot_offset = mainframe->phy_offset;
-    encode_params.scaling_params = &crop;
-    encode_params.exif_data = NULL;
-    encode_params.exif_numEntries = 0;
-    encode_params.a_cbcroffset = -1;
-    encode_params.main_crop_offset = &main_crop_offset;
-    encode_params.thumb_crop_offset = &thumb_crop_offset;
-
-    if (!my_cam_app.hal_lib.omxJpegEncode(&encode_params)) {
-        CDBG_ERROR("%s: Failure! JPEG encoder returned error.", __func__);
-        ret = -1;
-        goto end;
-    }
-
-    /* Save the pointer to the frame sent for encoding. we'll need it to
-       tell kernel that we are done with the frame.*/
-    mCurrentFrameEncoded = recvd_frame;
-
-    end:
-    CDBG("%s: X", __func__); 
-#endif 
-    return ret;
 }
 
 static int encodeDisplayAndSave(mm_camera_super_buf_t* recvd_frame,
@@ -421,7 +540,7 @@ static int encodeDisplayAndSave(mm_camera_super_buf_t* recvd_frame,
 #endif 
     return ret;
 }
-#endif //DISABLE_JPEG_ENCODING
+
 static void mm_app_snapshot_notify_cb(mm_camera_super_buf_t *bufs,
                                       void *user_data)
 {
@@ -630,7 +749,7 @@ int mm_app_config_snapshot_format(int cam_id)
 int mm_app_streamon_snapshot(int cam_id)
 {
     int rc = MM_CAMERA_OK;
-    int stream[2];
+    uint32_t stream[2];
     mm_camera_bundle_attr_t attr;
 
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
@@ -669,14 +788,14 @@ int mm_app_streamon_snapshot(int cam_id)
 int mm_app_streamoff_snapshot(int cam_id)
 {
     int rc = MM_CAMERA_OK;
-    int stream[2];
+    uint32_t stream[2];
 
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
 
     stream[0] = pme->stream[MM_CAMERA_SNAPSHOT_MAIN].id;
     stream[1] = pme->stream[MM_CAMERA_SNAPSHOT_THUMBNAIL].id;
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,2,&stream))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,2,stream))) {
         CDBG_ERROR("%s : Snapshot Stream off Error",__func__);
         goto end;
     }
@@ -708,6 +827,8 @@ int mm_app_start_snapshot(int cam_id)
     int rc = MM_CAMERA_OK;
     int stream[2];
     int op_mode = 0; 
+    uint8_t initial_reg_flag;
+    mm_camera_frame_len_offset frame_offset_info;
 
     mm_camera_bundle_attr_t attr;
 
@@ -726,26 +847,36 @@ int mm_app_start_snapshot(int cam_id)
 
     if (MM_CAMERA_OK != (rc = mm_app_add_snapshot_stream(cam_id))) {
         CDBG_ERROR("%s : Add Snapshot stream err",__func__);
+        return rc;
     }
 
     if (MM_CAMERA_OK != (rc = mm_app_config_snapshot_format(cam_id))) {
         CDBG_ERROR("%s : Config Snapshot stream err",__func__);
+        return rc;
     }
 
     if (MM_CAMERA_OK != (rc = mm_app_streamon_snapshot(cam_id))) {
         CDBG_ERROR("%s : Stream on Snapshot stream err",__func__);
+        return rc;
     }
 
-#if 0
-    /*start OMX Jpeg encoder*/
-#ifndef DISABLE_JPEG_ENCODING
-    my_cam_app.hal_lib.omxJpegOpen();
-#endif
+    /* init jpeg buf */
+    pme->cam->ops->get_stream_parm(pme->cam->camera_handle,
+                                   pme->ch_id,
+                                   pme->stream[MM_CAMERA_SNAPSHOT_MAIN].id,
+                                   MM_CAMERA_STREAM_OFFSET,
+                                   &frame_offset_info);
+    CDBG_ERROR("%s : alloc jpeg buf (len=%d)",__func__, frame_offset_info.frame_len);
+    rc = mm_stream_alloc_bufs(pme,
+                              &pme->jpeg_buf,
+                              &frame_offset_info,
+                              1);
+    if (0 != rc) {
+        CDBG_ERROR("%s : mm_stream_alloc_bufs err",__func__);
+        return rc;
+    }
 
-#endif 
-    end:
     CDBG("%s: END, rc=%d\n", __func__, rc);
-
     return rc;
 }
 
@@ -753,23 +884,39 @@ int mm_app_start_snapshot(int cam_id)
 int mm_app_stop_snapshot(int cam_id)
 {
     int rc = MM_CAMERA_OK;
-    int stream[2];
+    int i;
 
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
 
-    stream[0] = pme->stream[MM_CAMERA_SNAPSHOT_MAIN].id;
-    stream[1] = pme->stream[MM_CAMERA_SNAPSHOT_THUMBNAIL].id;
+    if (pme->current_job_id) {
+        /* have current jpeg encoding running, abort the job */
+        if (pme->jpeg_ops.abort_job) {
+            pme->jpeg_ops.abort_job(pme->jpeg_hdl, pme->current_job_id);
+            pme->current_job_id = 0;
+        }
+
+        if (pme->current_job_frames) {
+            for (i=0; i<pme->current_job_frames->num_bufs; i++) {
+                if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->current_job_frames->camera_handle,
+                                                        pme->current_job_frames->ch_id,
+                                                        pme->current_job_frames->bufs[i])) {
+                    CDBG_ERROR("%s: Failed in Qbuf\n", __func__);
+                }
+            }
+            free(pme->current_job_frames);
+            pme->current_job_frames = NULL;
+        }
+    }
 
     if (MM_CAMERA_OK != (rc = mm_app_streamoff_snapshot(cam_id))) {
         CDBG_ERROR("%s : Stream off Snapshot stream err",__func__);
     }
     pme->cam_state = CAMERA_STATE_OPEN;
-#if 0
-#ifndef DISABLE_JPEG_ENCODING
-    my_cam_app.hal_lib.omxJpegClose();
-#endif
-#endif 
-    end:
+
+    /* deinit jpeg buf */
+    rc = mm_stream_release_bufs(pme,
+                                &pme->jpeg_buf);
+end:
     CDBG("%s: END, rc=%d\n", __func__, rc);
 
     return rc;
@@ -1127,7 +1274,7 @@ static void mm_app_live_notify_cb(mm_camera_super_buf_t *bufs,
 int mm_app_prepare_live_snapshot(int cam_id)
 {
     int rc = 0;
-    int stream[1];
+    uint32_t stream[1];
     mm_camera_bundle_attr_t attr;
     int value = 0;
 
@@ -1172,13 +1319,13 @@ int mm_app_prepare_live_snapshot(int cam_id)
 int mm_app_unprepare_live_snapshot(int cam_id)
 {
     int rc = 0;
-    int stream[2];
+    uint32_t stream[2];
 
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
     CDBG("%s:BEGIN, cam_id=%d\n",__func__,cam_id);
 
     stream[0] = pme->stream[MM_CAMERA_SNAPSHOT_MAIN].id;
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,&stream))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,stream))) {
         CDBG_ERROR("%s : Snapshot Stream off Error",__func__);
         return -1;
     }
@@ -1293,7 +1440,7 @@ int mm_app_take_zsl(int cam_id)
             }
         case CAMERA_STATE_PREVIEW:
             if (MM_CAMERA_OK != mm_app_open_zsl(cam_id)) {
-                CDBG_ERROR("%s: Cannot switch to camera mode=%d\n", __func__);
+                CDBG_ERROR("%s: Cannot switch to camera mode\n", __func__);
                 return -1;
             }
             break;
@@ -1371,7 +1518,7 @@ int mm_app_take_picture(int cam_id)
 
 int mm_app_take_raw_picture(int cam_id)
 {
-    int rc;
+    int rc = 0;
 #if 0
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
 

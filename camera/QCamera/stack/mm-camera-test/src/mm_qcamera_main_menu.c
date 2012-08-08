@@ -59,6 +59,15 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define VIDEO_BUFFER_SIZE       (PREVIEW_WIDTH * PREVIEW_HEIGHT * 3/2)
 #define THUMBNAIL_BUFFER_SIZE   (THUMBNAIL_WIDTH * THUMBNAIL_HEIGHT * 3/2)
 #define SNAPSHOT_BUFFER_SIZE    (PICTURE_WIDTH * PICTURE_HEIGHT * 3/2)
+
+extern int mm_app_take_zsl(int cam_id);
+extern int mm_app_take_live_snapshot(int cam_id);
+extern int stopPreview(int cam_id);
+extern void switchRes(int cam_id);
+extern void switchCamera(int cam_id);
+extern int startRdi(int cam_id);
+extern int stopRdi(int cam_id);
+
 /*===========================================================================
  * Macro
  *===========================================================================*/
@@ -293,7 +302,7 @@ int keypress_to_event(char keypress)
 
 int next_menu(menu_id_change_t current_menu_id, char keypress, camera_action_t * action_id_ptr, int * action_param)
 {
-  char output_to_event;
+  int output_to_event;
   menu_id_change_t next_menu_id = MENU_ID_INVALID;
   * action_id_ptr = ACTION_NO_ACTION;
 
@@ -1579,8 +1588,7 @@ static int submain()
       case ACTION_SWITCH_CAMERA:
         CDBG("Toggle Camera action\n");
         back_mainflag = 1;
-        if (switchCamera(action_param - 1) < 0)
-          goto ERROR;
+        switchCamera(action_param - 1);
         break;
 
       case ACTION_TAKE_ZSL_SNAPSHOT:

@@ -49,7 +49,10 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RDI_MASK STREAM_RAW
 mm_camera_channel_stream_info_t rdi_mode;
 
-static int mm_app_set_rdi_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
+extern int stopPreview(int cam_id);
+extern void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422);
+
+static int mm_app_set_rdi_fmt(int cam_id, mm_camera_image_fmt_t *fmt)
 {
     int rc = MM_CAMERA_OK;
     cam_ctrl_dimension_t dim;
@@ -62,7 +65,7 @@ static int mm_app_set_rdi_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
     fmt->height = 0;
     fmt->rotation = 0;
 
-    CDBG("%s: RDI Dimensions = %d X %d",__func__,fmt->width,fmt->height);
+    CDBG("%s: RDI Dimensions = %d X %d", __func__, fmt->width, fmt->height);
     return rc;
 }
 
@@ -108,7 +111,9 @@ static void mm_app_rdi_notify_cb(mm_camera_super_buf_t *bufs,
     //dumpFrameToFile(frame->frame,pme->dim.display_width,pme->dim.display_height,"preview", 1);
     dumpFrameToFile(frame,pme->dim.rdi0_width,pme->dim.rdi0_height,"rdi", 1);
 
-    if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,frame)) {
+    if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,
+                                            pme->ch_id,
+                                            frame)) {
         CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
         return;
     }
@@ -135,9 +140,12 @@ int mm_app_prepare_rdi(int cam_id)
     //pme->cam->ops->set_parm(pme->cam->camera_handle,MM_CAMERA_PARM_CH_INTERFACE, &value);
     //pme->cam->ops->get_parm(pme->cam->camera_handle,MM_CAMERA_PARM_CH_INTERFACE, &rdi_mode);
 
-    pme->stream[MM_CAMERA_RDI].id = pme->cam->ops->add_stream(pme->cam->camera_handle,pme->ch_id,
-                                                              mm_app_rdi_notify_cb,pme,
-                                                              MM_CAMERA_RDI, 0);
+    pme->stream[MM_CAMERA_RDI].id = pme->cam->ops->add_stream(pme->cam->camera_handle,
+                                                              pme->ch_id,
+                                                              mm_app_rdi_notify_cb,
+                                                              pme,
+                                                              MM_CAMERA_RDI,
+                                                              0);
 
     if (!pme->stream[MM_CAMERA_RDI].id) {
         CDBG_ERROR("%s:Add RDI error =%d\n", __func__, rc);
@@ -150,7 +158,9 @@ int mm_app_prepare_rdi(int cam_id)
     pme->stream[MM_CAMERA_RDI].str_config.need_stream_on = 1;
     pme->stream[MM_CAMERA_RDI].str_config.num_of_bufs = 7;
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->config_stream(pme->cam->camera_handle,pme->ch_id,pme->stream[MM_CAMERA_RDI].id,
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->config_stream(pme->cam->camera_handle,
+                                                           pme->ch_id,
+                                                           pme->stream[MM_CAMERA_RDI].id,
                                                            &pme->stream[MM_CAMERA_RDI].str_config))) {
         CDBG_ERROR("%s:RDI streaming err=%d\n", __func__, rc);
         goto end;
@@ -193,7 +203,7 @@ int mm_app_unprepare_rdi(int cam_id)
 int mm_app_streamon_rdi(int cam_id)
 {
     int rc = MM_CAMERA_OK;
-    int stream[2];
+    uint32_t stream[2];
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
     int num_of_streams;
 
@@ -206,7 +216,10 @@ int mm_app_streamon_rdi(int cam_id)
         stream[0] = pme->stream[MM_CAMERA_RDI].id;
     }
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,num_of_streams,&stream))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,
+                                                           pme->ch_id,
+                                                           num_of_streams,
+                                                           stream))) {
         CDBG_ERROR("%s : Start RDI Stream preview Error",__func__);
         goto end;
     }
@@ -248,7 +261,7 @@ int mm_app_start_rdi(int cam_id)
 static int mm_app_streamoff_rdi(int cam_id)
 {
     int rc = MM_CAMERA_OK;
-    int stream[2];
+    uint32_t stream[2];
     int num_of_streams;
 
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
@@ -262,7 +275,10 @@ static int mm_app_streamoff_rdi(int cam_id)
         stream[0] = pme->stream[MM_CAMERA_RDI].id;
     }
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,num_of_streams,&stream))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,
+                                                          pme->ch_id,
+                                                          num_of_streams,
+                                                          stream))) {
         CDBG_ERROR("%s : RDI Stream off Error",__func__);
         goto end;
     }
@@ -274,7 +290,9 @@ static int mm_app_streamoff_rdi(int cam_id)
             goto end;
         }
     }*/
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->del_stream(pme->cam->camera_handle,pme->ch_id,pme->stream[MM_CAMERA_RDI].id))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->del_stream(pme->cam->camera_handle,
+                                                        pme->ch_id,
+                                                        pme->stream[MM_CAMERA_RDI].id))) {
         CDBG_ERROR("%s : Delete Stream RDI error",__func__);
         goto end;
     }
@@ -303,7 +321,7 @@ int startRdi(int cam_id)
             }
         case CAMERA_STATE_PREVIEW:
             if (MM_CAMERA_OK != mm_app_open_rdi(cam_id)) {
-                CDBG_ERROR("%s: Cannot switch to camera mode=%d\n", __func__);
+                CDBG_ERROR("%s: Cannot switch to camera mode\n", __func__);
                 return -1;
             }
         case CAMERA_STATE_SNAPSHOT:

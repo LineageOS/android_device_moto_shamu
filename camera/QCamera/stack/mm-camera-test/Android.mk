@@ -1,3 +1,4 @@
+OLD_LOCAL_PATH := $(LOCAL_PATH)
 LOCAL_PATH:=$(call my-dir)
 include $(CLEAR_VARS)
 
@@ -6,9 +7,9 @@ LOCAL_CFLAGS:= \
         -DAMSS_VERSION=$(AMSS_VERSION) \
         $(mmcamera_debug_defines) \
         $(mmcamera_debug_cflags) \
-        $(USE_SERVER_TREE) \
-        -include camera_defs_i.h
+        $(USE_SERVER_TREE)
 
+LOCAL_CFLAGS += -include $(TARGET_OUT_INTERMEDIATES)/include/mm-camera/camera_defs_i.h
 LOCAL_CFLAGS += -include $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/linux/ion.h
 
 ifeq ($(strip $(TARGET_USES_ION)),true)
@@ -30,10 +31,10 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_C_INCLUDES:=$(LOCAL_PATH)/inc
 LOCAL_C_INCLUDES+= \
-        $(TARGET_OUT_INTERMEDIATES)/include/mm-camera-interface_badger \
-	      $(TARGET_OUT_INTERMEDIATES)/include/mm-still/jpeg \
+        $(TARGET_OUT_INTERMEDIATES)/include/mm-still/jpeg \
         $(TARGET_OUT_INTERMEDIATES)/include/mm-camera \
         $(LOCAL_PATH)/../mm-camera-interface/inc \
+        $(LOCAL_PATH)/../mm-jpeg-interface/inc \
         $(LOCAL_PATH)/../common \
         $(LOCAL_PATH)/../../../ \
 
@@ -50,9 +51,11 @@ endif
 LOCAL_SHARED_LIBRARIES:= \
          libcutils libdl
 
-LOCAL_MODULE:= mm-qcamera-app-badger
+LOCAL_MODULE:= mm-qcamera-app
 
 LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_EXECUTABLE)
 endif
+
+LOCAL_PATH := $(OLD_LOCAL_PATH)

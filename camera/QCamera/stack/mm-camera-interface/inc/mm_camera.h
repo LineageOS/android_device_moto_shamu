@@ -92,6 +92,7 @@ typedef enum
     MM_CAMERA_CMD_TYPE_ASYNC_CB,   /* asyncCB CMD */
     MM_CAMERA_CMD_TYPE_EXIT,       /* EXIT */
     MM_CAMERA_CMD_TYPE_REQ_DATA_CB,/* request data */
+    MM_CAMERA_CMD_TYPE_SUPER_BUF_DATA_CB,    /* superbuf dataB CMD */
     MM_CAMERA_CMD_TYPE_MAX
 } mm_camera_cmdcb_type_t;
 
@@ -108,6 +109,7 @@ typedef struct {
         mm_camera_buf_info_t buf;    /* frame buf if dataCB */
         mm_camera_event_t evt;       /* evt if evtCB */
         mm_camera_async_cmd_t async; /* async cmd */
+        mm_camera_super_buf_t superbuf; /* superbuf if superbuf dataCB*/
     } u;
 } mm_camera_cmdcb_t;
 
@@ -355,6 +357,9 @@ typedef struct mm_channel {
     /* cmd thread for superbuffer dataCB and async stop*/
     mm_camera_cmd_thread_t cmd_thread;
 
+    /* cb thread for sending data cb */
+    mm_camera_cmd_thread_t cb_thread;
+
     /* data poll thread
     * currently one data poll thread per channel
     * could extended to support one data poll thread per stream in the channel */
@@ -546,6 +551,12 @@ extern int32_t mm_camera_send_ch_event(mm_camera_obj_t *my_obj,
                                        uint32_t ch_id,
                                        uint32_t stream_id,
                                        mm_camera_ch_event_type_t evt);
+extern int32_t mm_camera_send_sock_command(mm_camera_obj_t *my_obj,
+                                           void *cmd,
+                                           int32_t cmd_length);
+extern int32_t mm_camera_send_private_ioctl(mm_camera_obj_t *my_obj,
+                                            void *cmd,
+                                            int32_t cmd_length);
 
 
 /* mm_channel */

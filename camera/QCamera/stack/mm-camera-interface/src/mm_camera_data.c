@@ -165,6 +165,7 @@ static void *mm_camera_cmd_thread(void *data)
             case MM_CAMERA_CMD_TYPE_DATA_CB:
             case MM_CAMERA_CMD_TYPE_ASYNC_CB:
             case MM_CAMERA_CMD_TYPE_REQ_DATA_CB:
+            case MM_CAMERA_CMD_TYPE_SUPER_BUF_DATA_CB:
                 if (NULL != cmd_thread->cb) {
                     cmd_thread->cb(node, cmd_thread->user_data);
                 }

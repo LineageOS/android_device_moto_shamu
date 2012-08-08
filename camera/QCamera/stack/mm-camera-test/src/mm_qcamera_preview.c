@@ -38,6 +38,17 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <linux/ion.h>
 #include "mm_qcamera_app.h"
 
+int mm_app_start_preview(int cam_id);
+int mm_app_start_preview_zsl(int cam_id);
+int mm_app_stop_preview_zsl(int cam_id);
+
+extern int mm_stream_alloc_bufs(mm_camera_app_obj_t *pme,
+                                mm_camear_app_buf_t* app_bufs,
+                                mm_camera_frame_len_offset *frame_offset_info,
+                                uint8_t num_bufs);
+extern int mm_stream_release_bufs(mm_camera_app_obj_t *pme,
+                                  mm_camear_app_buf_t* app_bufs);
+extern int mm_app_unprepare_video(int cam_id);
 
 /*===========================================================================
  * FUNCTION    - mm_camera_do_mmap_ion -
@@ -150,9 +161,9 @@ void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, in
         if (file_fd < 0) {
             CDBG_ERROR("%s: cannot open file\n", __func__);
         } else {
-            int y_off = newFrame->buffer + newFrame->planes[0].data_offset;
+            void* y_off = newFrame->buffer + newFrame->planes[0].data_offset;
             //int cbcr_off = newFrame->buffer + newFrame->planes[1].data_offset;//newFrame->buffer + newFrame->planes[0].length;
-            int cbcr_off = newFrame->buffer + newFrame->planes[0].length;
+            void* cbcr_off = newFrame->buffer + newFrame->planes[0].length;
             CDBG("%s: Y_off = %p cbcr_off = %p", __func__, y_off,cbcr_off);
             CDBG("%s: Y_off length = %d cbcr_off length = %d", __func__, newFrame->planes[0].length,newFrame->planes[1].length);
 
@@ -328,76 +339,44 @@ int mm_stream_initbuf(uint32_t camera_handle,
                       uint8_t *initial_reg_flag,
                       mm_camera_buf_def_t *bufs)
 {
-    int i,y_off, cbcr_off,num_planes;
-    int plane_len;
-    struct ion_allocation_data ion_alloc;
-    struct ion_fd_data ion_info_fd;
-    uint32_t pmem_addr = 0;
-    uint32_t planes[VIDEO_MAX_PLANES];
-
     mm_camera_app_obj_t *pme = (mm_camera_app_obj_t *)user_data;
+    mm_camear_app_buf_t* app_bufs = NULL;
+    int i, rc;
 
-    num_planes = frame_offset_info->num_planes;
-    if (num_planes == 1) {
-        y_off = frame_offset_info->mp[0].offset;;
-        cbcr_off = 0;
-    } else {
-        y_off = frame_offset_info->mp[0].offset;
-        cbcr_off = frame_offset_info->mp[1].offset;
+    if (MM_CAMERA_MAX_NUM_FRAMES < num_bufs) {
+        CDBG_ERROR("%s: num_bufs (%d) exceeds max (%d)",
+                   __func__, num_bufs, MM_CAMERA_MAX_NUM_FRAMES);
+        return -1;
     }
-
-    CDBG("%s: y_off = %d,cbcr_off = %d,num_planes = %d",__func__,y_off,
-         cbcr_off,num_planes);
-
-    pme->ionfd = open("/dev/ion", O_RDONLY);
-    if (pme->ionfd < 0) {
-        ALOGE("Ion dev open failed\n");
-        ALOGE("Error is %s\n", strerror(errno));
-    }
-
-    for (i = 0; i < num_bufs ; i++) {
-        int j;
-
-        //if(pme->cam_mode != RECORDER_MODE || pme->fullSizeSnapshot) {
-        initial_reg_flag[i] = 1;
-        //}else{
-        //initial_reg_flag[i] = 0;
-        //}
-
-        ion_alloc.len = frame_offset_info->frame_len;
-        ion_alloc.flags =
-        (0x1 << CAMERA_ION_HEAP_ID | 0x1 << ION_IOMMU_HEAP_ID);
-        ion_alloc.align = 4096;
-
-        /*bufs[i].buffer = my_cam_app.hal_lib.mm_camera_do_mmap_ion(pme->ionfd,
-                       &ion_alloc, &ion_info_fd,
-                       &bufs[i].fd);*/
-
-        bufs[i].buffer = mm_camera_do_mmap_ion(pme->ionfd,
-                                               &ion_alloc, &ion_info_fd,
-                                               &bufs[i].fd);
-        CDBG(" %s : Buffer allocated fd = %d, length = %d, y_off = %d cdcr_off = %d",
-             __func__,bufs[i].fd,ion_alloc.len,y_off,cbcr_off);
-
-        bufs[i].frame_len = ion_alloc.len;
-        bufs[i].num_planes = num_planes;
-
-        /* Plane 0 needs to be set seperately. Set other planes
-             * in a loop. */
-        bufs[i].planes[0].length = frame_offset_info->mp[0].len;
-        bufs[i].planes[0].m.userptr = bufs[i].fd;
-        bufs[i].planes[0].data_offset = y_off;
-        bufs[i].planes[0].reserved[0] = 0;
-        //buf_def->buf.mp[i].frame_offset;
-        for (j = 1; j < num_planes; j++) {
-            bufs[i].planes[j].length = frame_offset_info->mp[j].len;
-            bufs[i].planes[j].m.userptr = bufs[i].fd;
-            bufs[i].planes[j].data_offset = cbcr_off;
-            bufs[i].planes[j].reserved[0] =
-            bufs[i].planes[j-1].reserved[0] +
-            bufs[i].planes[j-1].length;
+    for (i = 0; i < MM_QCAM_APP_MAX_STREAM_NUM; i++) {
+        if (pme->stream[i].id == stream_id) {
+            app_bufs = &pme->stream [i].app_bufs;
+            break;
         }
     }
+
+    if (app_bufs == NULL) {
+        CDBG_ERROR("%s: no matching stream for stream_id %d", __func__, stream_id);
+        return -1;
+    }
+
+    CDBG("%s: alloc buf for stream_id %d, len=%d",
+         __func__, stream_id, frame_offset_info->frame_len);
+    rc = mm_stream_alloc_bufs(pme,
+                              app_bufs,
+                              frame_offset_info,
+                              num_bufs);
+
+    if (rc != 0) {
+        CDBG_ERROR("%s: mm_stream_alloc_bufs err = %d", __func__, rc);
+        return rc;
+    }
+
+    memcpy(bufs, app_bufs->bufs, sizeof(mm_camera_buf_def_t) * num_bufs);
+    for (i = 0; i < num_bufs ; i++) {
+        initial_reg_flag[i] = 1;
+    }
+
     CDBG("%s: X",__func__);
     return MM_CAMERA_OK;
 }
@@ -479,17 +458,26 @@ int mm_stream_deinitbuf(uint32_t camera_handle,
 {
     int i, rc = MM_CAMERA_OK;
     mm_camera_app_obj_t *pme = (mm_camera_app_obj_t *)user_data;
+    mm_camear_app_buf_t* app_bufs = NULL;
 
-    CDBG("%s: E",__func__);
-
-    for (i = 0; i < num_bufs; i++) {
-        /*rc = my_cam_app.hal_lib.mm_camera_do_munmap_ion (pme->ionfd, &bufs[i].fd,
-                   (void *)bufs[i].buffer, bufs[i].frame_len);*/
-        rc = mm_camera_do_munmap_ion (pme->ionfd, &bufs[i].fd,
-                                      (void *)bufs[i].buffer, bufs[i].frame_len);
+    for (i = 0; i < MM_QCAM_APP_MAX_STREAM_NUM; i++) {
+        if (pme->stream[i].id == stream_id) {
+            app_bufs = &pme->stream [i].app_bufs;
+            break;
+        }
     }
-    close(pme->ionfd);
-    CDBG("%s: X",__func__);
+
+    if (app_bufs == NULL) {
+        CDBG_ERROR("%s: no matching stream for stream_id %d", __func__, stream_id);
+        return -1;
+    }
+
+    rc = mm_stream_release_bufs(pme, app_bufs);
+
+    if (rc != 0) {
+        CDBG_ERROR("%s: mm_stream_release_bufs err = %d", __func__, rc);
+    }
+
     return rc;
 }
 
@@ -687,12 +675,11 @@ int mm_app_unprepare_preview(int cam_id)
 int mm_app_streamon_preview(int cam_id)
 {
     int rc = MM_CAMERA_OK;
-    int stream[2];
+    uint32_t stream;
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
     mm_camera_frame_len_offset frame_offset_info;
 
-    stream[0] = pme->stream[MM_CAMERA_PREVIEW].id;
-    stream[1] = 0;
+    stream = pme->stream[MM_CAMERA_PREVIEW].id;
 
     pme->cam->ops->get_stream_parm(pme->cam->camera_handle,pme->ch_id,pme->stream[MM_CAMERA_PREVIEW].id,MM_CAMERA_STREAM_OFFSET,&frame_offset_info);
     ALOGE("DEBUG : length = %d",frame_offset_info.frame_len);
@@ -774,7 +761,7 @@ int mm_app_streamon_preview_zsl(int cam_id)
 {
     int rc = MM_CAMERA_OK;
     mm_camera_bundle_attr_t attr;
-    int stream[3];
+    uint32_t stream[2];
 
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
     int op_mode = 0;
@@ -908,12 +895,11 @@ int mm_app_start_preview_zsl(int cam_id)
 static int mm_app_streamoff_preview(int cam_id)
 {
     int rc = MM_CAMERA_OK;
-    int stream[2];
+    uint32_t stream;
 
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
 
-    stream[0] = pme->stream[MM_CAMERA_PREVIEW].id;
-    stream[1] = 0;
+    stream = pme->stream[MM_CAMERA_PREVIEW].id;
 
     if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,&stream))) {
         CDBG_ERROR("%s : Preview Stream off Error",__func__);
@@ -935,7 +921,7 @@ static int mm_app_streamoff_preview(int cam_id)
 static int mm_app_streamoff_preview_zsl(int cam_id)
 {
     int rc = MM_CAMERA_OK;
-    int stream[2];
+    uint32_t stream[2];
 
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
 
@@ -947,7 +933,7 @@ static int mm_app_streamoff_preview_zsl(int cam_id)
         goto end;
     }
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,2,&stream))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,2,stream))) {
         CDBG_ERROR("%s : Preview Stream off Error",__func__);
         goto end;
     }
@@ -986,7 +972,7 @@ int startPreview(int cam_id)
             }
         case CAMERA_STATE_PREVIEW:
             if (MM_CAMERA_OK != mm_app_open_camera(cam_id)) {
-                CDBG_ERROR("%s: Cannot switch to camera mode=%d\n", __func__);
+                CDBG_ERROR("%s: Cannot switch to camera mode\n", __func__);
                 return -1;
             }
             break;
