@@ -2023,13 +2023,15 @@ void QCameraHardwareInterface::dumpFrameToFile(const void * data, uint32_t size,
 {
     char buf[32];
     int file_fd;
+    static int i = 0 ;
     if ( data != NULL) {
         char * str;
-        snprintf(buf, sizeof(buf), "/data/%s_%d.%s", name, index, ext);
+        snprintf(buf, sizeof(buf), "/data/%s_%d.%s", name, index + i, ext);
         ALOGE("marvin, %s size =%d", buf, size);
         file_fd = open(buf, O_RDWR | O_CREAT, 0777);
         write(file_fd, data, size);
         close(file_fd);
+        i++;
     }
 }
 
