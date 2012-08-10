@@ -168,7 +168,8 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mParamStringInitialized(false),
                     mZoomSupported(false),
                     mFullLiveshotEnabled(true),
-                    mRecordingHint(0),
+                    mRecordingHint(false),
+                    mAppRecordingHint(false),
     mStartRecording(0),
     mReleasedRecordingFrame(false),
     mHdrMode(HDR_BRACKETING_OFF),
@@ -1235,6 +1236,8 @@ status_t QCameraHardwareInterface::startRecording()
         ret = UNKNOWN_ERROR;
         break;
     case QCAMERA_HAL_PREVIEW_STARTED:
+        //remember recordinghint value set by app
+        mAppRecordingHint = mRecordingHint;
         if (mRecordingHint == FALSE || mRestartPreview) {
             ALOGE("%s: start recording when hint is false, stop preview first", __func__);
             stopPreviewInternal();
@@ -1284,6 +1287,7 @@ void QCameraHardwareInterface::stopRecording()
     case QCAMERA_HAL_PREVIEW_STARTED:
         break;
     case QCAMERA_HAL_RECORDING_STARTED:
+        mRecordingHint = mAppRecordingHint;
         stopRecordingInternal();
         mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
         break;
@@ -1584,6 +1588,9 @@ status_t  QCameraHardwareInterface::takePicture()
     mStreamSnap->resetSnapshotCounters( );
     switch(mPreviewState) {
     case QCAMERA_HAL_PREVIEW_STARTED:
+          //set the fullsize liveshot to FALSE
+        mFullLiveshotEnabled = FALSE;
+        setFullLiveshot();
         mStreamSnap->setFullSizeLiveshot(false);
         if (isZSLMode()) {
             if (mStreamSnap != NULL) {
