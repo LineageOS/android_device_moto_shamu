@@ -511,13 +511,6 @@ int32_t mm_camera_sync(mm_camera_obj_t *my_obj)
         goto on_error;
     }
 
-    /* TODO */
-    /* after kernel/backend support query of offline pp capability
-     * we can get the value from capabilities.
-     * for now, hard-coded to 1, meaning always need post processing */
-    //my_obj->need_pp = 1;
-    my_obj->need_pp = 0;
-
 on_error:
     pthread_mutex_unlock(&my_obj->cam_lock);
     return rc;
@@ -1261,23 +1254,10 @@ int32_t mm_camera_get_stream_parm(mm_camera_obj_t *my_obj,
     return rc;
 }
 
-int32_t mm_camera_send_sock_command(mm_camera_obj_t *my_obj,
-                                    void *cmd,
-                                    int32_t cmd_length)
-{
-    int32_t rc = -1;
-
-    rc = mm_camera_socket_sendmsg(my_obj->ds_fd, cmd, cmd_length, 0);
-
-    /* unlock cam_lock */
-    pthread_mutex_unlock(&my_obj->cam_lock);
-
-    return rc;
-}
-
 int32_t mm_camera_send_private_ioctl(mm_camera_obj_t *my_obj,
-                                     void *cmd,
-                                     int32_t cmd_length)
+                                     uint32_t cmd_id,
+                                     uint32_t cmd_length,
+                                     void *cmd)
 {
     int32_t rc = -1;
 
@@ -1286,13 +1266,14 @@ int32_t mm_camera_send_private_ioctl(mm_camera_obj_t *my_obj,
     CDBG("%s: cmd = %p, length = %d",
                __func__, cmd, cmd_length);
     memset(&v4l2_ioctl, 0, sizeof(v4l2_ioctl));
+    v4l2_ioctl.id = cmd_id;
     v4l2_ioctl.len = cmd_length;
     v4l2_ioctl.ioctl_ptr = cmd;
     rc = ioctl (my_obj->ctrl_fd, MSM_CAM_V4L2_IOCTL_PRIVATE_GENERAL, &v4l2_ioctl);
 
     if(rc < 0) {
-        CDBG_ERROR("%s: cmd = %p, length = %d, rc = %d\n",
-                   __func__, cmd, cmd_length, rc);
+        CDBG_ERROR("%s: cmd = %p, id = %d, length = %d, rc = %d\n",
+                   __func__, cmd, cmd_id, cmd_length, rc);
     } else {
         rc = 0;
     }
@@ -1636,9 +1617,6 @@ int32_t mm_camera_set_general_parm(mm_camera_obj_t * my_obj,
                                             sizeof(int8_t),
                                             p_value);
         break;
-    /* Moved to mm-jpeg-interface */
-    /* case MM_CAMERA_PARM_JPEG_ROTATION:
-        break; */
     case MM_CAMERA_PARM_ASD_ENABLE:
         rc = mm_camera_send_native_ctrl_cmd(my_obj,
                                           CAMERA_SET_ASD_ENABLE,
@@ -1865,3 +1843,23 @@ int32_t mm_camera_util_g_ctrl( int32_t fd, uint32_t id, int32_t *value)
     CDBG("%s: fd=%d, G_CTRL, id=0x%x, rc = %d\n", __func__, fd, id, rc);
     return (rc >= 0)? 0 : -1;
 }
+
+uint8_t mm_camera_util_get_pp_mask(mm_camera_obj_t *my_obj)
+{
+    uint8_t pp_mask = 0;
+    int32_t rc = 0;
+
+    /* query pp mask from mctl */
+    rc = mm_camera_send_native_ctrl_cmd(my_obj,
+                                        CAMERA_GET_PP_MASK,
+                                        sizeof(uint8_t),
+                                        (void *)&pp_mask);
+    if (0 != rc) {
+        CDBG_ERROR("%s: error getting post processing mask (rc=%d)",
+                   __func__, rc);
+    }
+
+    return pp_mask;
+}
+
+

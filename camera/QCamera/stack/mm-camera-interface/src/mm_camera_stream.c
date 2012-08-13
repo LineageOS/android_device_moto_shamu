@@ -77,7 +77,6 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
                                  mm_camera_buf_info_t* buf_info);
 int32_t mm_stream_config(mm_stream_t *my_obj,
                          mm_camera_stream_config_t *config);
-uint8_t mm_stream_need_stream_on(mm_stream_t *my_obj);
 int32_t mm_stream_reg_buf(mm_stream_t * my_obj);
 int32_t mm_stream_buf_done(mm_stream_t * my_obj,
                            mm_camera_buf_def_t *frame);
@@ -590,7 +589,7 @@ int32_t mm_stream_fsm_reg(mm_stream_t * my_obj,
 
             }
 
-            if(mm_stream_need_stream_on(my_obj)) {
+            if(my_obj->need_stream_on) {
                 rc = mm_stream_streamon(my_obj);
                 if (0 != rc) {
                     /* failed stream on, need to release cmd thread if it's launched */
@@ -715,7 +714,7 @@ int32_t mm_stream_config(mm_stream_t *my_obj,
         CDBG_ERROR("%s: Error in offset query",__func__);
         return rc;
     }
-    if(mm_stream_need_stream_on(my_obj)) {
+    if(my_obj->need_stream_on) {
         /* only send fmt to backend if we need streamon */
         rc = mm_stream_set_fmt(my_obj);
     }
@@ -741,11 +740,6 @@ int32_t mm_stream_release(mm_stream_t *my_obj)
     my_obj->fd = -1;
 
     return 0;
-}
-
-uint8_t mm_stream_need_stream_on(mm_stream_t *my_obj)
-{
-    return my_obj->need_stream_on;
 }
 
 int32_t mm_stream_streamon(mm_stream_t *my_obj)
@@ -849,7 +843,6 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
         buf_info->buf = &my_obj->buf[idx];
         buf_info->frame_idx = vb.sequence;
         buf_info->stream_id = my_obj->my_hdl;
-        buf_info->need_pp = my_obj->is_pp_needed;
 
         buf_info->buf->stream_id = my_obj->my_hdl;
         buf_info->buf->buf_idx = idx;
@@ -1182,8 +1175,8 @@ int32_t mm_stream_init_bufs(mm_stream_t * my_obj)
     }
 
     my_obj->buf_num = my_obj->hal_requested_num_bufs;
-    /* if stream needs do pp, allocate extra one buf for pp*/
-    if (my_obj->is_pp_needed) {
+    if (mm_camera_util_get_pp_mask(my_obj->ch_obj->cam_obj) > 0) {
+        /* reserve extra one buf for pp */
         my_obj->buf_num++;
     }
 
@@ -1433,12 +1426,18 @@ int32_t mm_stream_get_offset(mm_stream_t *my_obj)
     memset(&my_obj->frame_offset,0,sizeof(mm_camera_frame_len_offset));
 
     frame_offset.format = my_obj->fmt.fmt;
-    frame_offset.image_mode = my_obj->ext_image_mode;
     frame_offset.rotation = my_obj->fmt.rotation;
     frame_offset.width = my_obj->fmt.width;
     frame_offset.height = my_obj->fmt.height;
+    frame_offset.image_mode = my_obj->ext_image_mode;
+    if (!my_obj->need_stream_on &&
+        my_obj->ext_image_mode == MSM_V4L2_EXT_CAPTURE_MODE_MAIN) {
+        /* in case of video-sized snapshot,
+         * image_mode should be video when querying frame offset*/
+        frame_offset.image_mode = MSM_V4L2_EXT_CAPTURE_MODE_VIDEO;
+    }
 
-    switch (my_obj->ext_image_mode) {
+    switch (frame_offset.image_mode) {
     case MSM_V4L2_EXT_CAPTURE_MODE_PREVIEW:
     case MSM_V4L2_EXT_CAPTURE_MODE_MAIN:
     case MSM_V4L2_EXT_CAPTURE_MODE_RAW:

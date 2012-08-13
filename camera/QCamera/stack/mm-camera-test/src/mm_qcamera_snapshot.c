@@ -109,8 +109,8 @@ static void mm_app_dump_jpeg_frame(const void * data, uint32_t size, char* name,
     int file_fd;
     if ( data != NULL) {
         char * str;
-        snprintf(buf, sizeof(buf), "/data/%s_%d.%s", name, index, ext);
-        CDBG("%s size =%d", buf, size);
+        snprintf(buf, sizeof(buf), "/data/%s.%s", name, ext);
+        CDBG("%s: %s size =%d, jobId=%d", __func__, buf, size, index);
         file_fd = open(buf, O_RDWR | O_CREAT, 0777);
         write(file_fd, data, size);
         close(file_fd);
@@ -475,10 +475,18 @@ static void snapshot_raw_cb(mm_camera_super_buf_t *bufs,
     mm_camera_buf_def_t *main_frame = NULL;
     mm_camera_buf_def_t *thumb_frame = NULL;
     mm_camera_app_obj_t *pme = NULL;
+    char* cmd = "This is a private cmd from test app";
 
     CDBG("%s: BEGIN\n", __func__);
 
     pme = (mm_camera_app_obj_t *)user_data;
+
+    CDBG("%s: send private ioctl here", __func__);
+    pme->cam->ops->send_command(bufs->camera_handle,
+                                MM_CAMERA_CMD_TYPE_PRIVATE,
+                                0,
+                                strlen(cmd) + 1,
+                                (void *)cmd);
 
     /* start jpeg encoding job */
     rc = encodeData(pme, bufs);
@@ -709,9 +717,15 @@ int mm_app_add_snapshot_stream(int cam_id)
 
 void mm_app_set_snapshot_mode(int cam_id,int op_mode)
 {
+    denoise_param_t wnr;
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
     pme->cam->ops->set_parm(pme->cam->camera_handle,MM_CAMERA_PARM_OP_MODE, &op_mode);
 
+    /* set wnr enabled */
+    memset(&wnr, 0, sizeof(denoise_param_t));
+    wnr.denoise_enable = 1;
+    wnr.process_plates = 0;
+    pme->cam->ops->set_parm(pme->cam->camera_handle, MM_CAMERA_PARM_WAVELET_DENOISE, &wnr);
 }
 
 int mm_app_config_snapshot_format(int cam_id)

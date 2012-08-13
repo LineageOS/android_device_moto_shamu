@@ -136,7 +136,6 @@ typedef struct {
   } payload;
 } cam_sock_packet_t;
 
-
 typedef enum {
   CAM_VIDEO_FRAME,
   CAM_SNAPSHOT_FRAME,
@@ -297,6 +296,20 @@ typedef struct {
   uint16_t height;                     /* input/output */
   cam_frame_len_offset_t frame_offset; /* output */
 } cam_frame_resolution_t;
+
+typedef struct {
+  uint32_t instance_hdl; /* instance handler of the stream */
+  uint32_t frame_idx;    /* frame index */
+  uint16_t frame_width;
+  uint16_t frame_height;
+  cam_frame_len_offset_t frame_offset;
+} mm_camera_wnr_frame_info_t;
+
+#define MM_CAMEAR_MAX_STRAEM_BUNDLE 4
+typedef struct {
+    uint8_t num_frames;
+    mm_camera_wnr_frame_info_t frames[MM_CAMEAR_MAX_STRAEM_BUNDLE];
+} mm_camera_wnr_info_t;
 
 /* Add enumenrations at the bottom but before MM_CAMERA_PARM_MAX */
 typedef enum {
@@ -552,6 +565,8 @@ typedef enum {
   CAMERA_SET_PARM_CID, /*125*/
   CAMERA_GET_PARM_FRAME_RESOLUTION,
   CAMERA_GET_FACIAL_FEATURE_INFO,
+  CAMERA_GET_PP_MASK, /* get post-processing mask */
+  CAMERA_DO_PP_WNR,   /* do post-process WNR */
   CAMERA_CTRL_PARM_MAX
 } cam_ctrl_type;
 
@@ -593,6 +608,10 @@ typedef enum {
 #if defined CAMERA_ANTIBANDING_AUTO
 #undef CAMERA_ANTIBANDING_AUTO
 #endif
+
+typedef enum {
+  CAMERA_PP_MASK_TYPE_WNR = 0x01
+} camera_pp_mask_type;
 
 typedef enum {
   CAMERA_ANTIBANDING_OFF,
@@ -926,6 +945,7 @@ typedef struct  {
 
 typedef struct  {
   uint32_t trans_id;   /* transaction id */
+  uint32_t evt_type;   /* event type */
   int32_t data_length; /* the length of valid data */
   uint8_t evt_data[1]; /* buffer that holds the content of private event, must be flatten */
 } mm_camera_private_event_t;

@@ -96,11 +96,8 @@ int32_t mm_channel_set_stream_parm(mm_channel_t *my_obj,
 int32_t mm_channel_get_stream_parm(mm_channel_t *my_obj,
                                    uint32_t s_id,
                                    void *value);
-uint8_t mm_channel_need_do_pp(mm_channel_t *my_obj,
-                              mm_channel_queue_node_t *super_buf);
 int32_t mm_channel_do_post_processing(mm_channel_t *my_obj,
                                       mm_channel_queue_node_t *super_buf);
-int32_t mm_channel_cancel_post_processing(mm_channel_t *my_obj);
 int32_t mm_channel_superbuf_bufdone_overflow(mm_channel_t* my_obj,
                                              mm_channel_queue_t * queue);
 int32_t mm_channel_superbuf_skip(mm_channel_t* my_obj,
@@ -172,109 +169,6 @@ static void mm_channel_dispatch_super_buf(mm_camera_cmdcb_t *cmd_cb,
     }
 }
 
-/* CB for handling post processing result from ctrl evt */
-static void mm_channel_pp_result_notify(uint32_t camera_handler,
-                                        mm_camera_event_t *evt,
-                                        void *user_data)
-{
-    uint32_t ch_hdl = (uint32_t)user_data;
-    mm_camera_obj_t *cam_obj = NULL;
-    mm_channel_t *ch_obj = NULL;
-    mm_channel_queue_node_t * node = NULL;
-    mm_channel_pp_info_t* pp_info = NULL;
-
-    cam_obj = mm_camera_util_get_camera_by_handler(camera_handler);
-    if (NULL == cam_obj) {
-        CDBG("%s: No matching camera handler", __func__);
-        return;
-    }
-
-    ch_obj = mm_camera_util_get_channel_by_handler(cam_obj, ch_hdl);
-    if (NULL == ch_obj) {
-        CDBG("%s: No matching channel handler", __func__);
-        return;
-    }
-
-    pthread_mutex_lock(&ch_obj->ch_lock);
-    if (ch_obj->pending_pp_cnt > 0) {
-        if (MM_CAMERA_EVT_TYPE_CTRL == evt->event_type) {
-            /* PP result is sent as CTRL event
-             * currently we only have WNR */
-            if (MM_CAMERA_CTRL_EVT_WDN_DONE == evt->e.ctrl.evt) {
-                /* WNR result */
-                pp_info = (mm_channel_pp_info_t *)evt->e.ctrl.cookie;
-                if (NULL != pp_info) {
-                    node = pp_info->super_buf;
-                }
-            }
-        }
-
-        if (NULL != node) {
-            uint8_t pp_done = 1;
-            if (CAM_CTRL_SUCCESS == evt->e.ctrl.status) {
-                uint8_t i;
-                /* 1) update need_pp flag as action done */
-                for (i=0; i<node->num_of_bufs; i++) {
-                    if (node->super_buf[i].stream_id == pp_info->stream_hdl) {
-                        /* stream pp is done, set the flag to 0*/
-                        node->super_buf[i].need_pp = 0;
-                        break;
-                    }
-                }
-
-                /* 2) check if all bufs done with pp */
-                for (i=0; i<node->num_of_bufs; i++) {
-                    if (node->super_buf[i].need_pp) {
-                        pp_done = 0;
-                        break;
-                    }
-                }
-            }
-
-            if (pp_done) {
-                /* send super buf to CB */
-                if (NULL != ch_obj->bundle.super_buf_notify_cb) {
-                    uint8_t i;
-                    mm_camera_cmdcb_t* cb_node = NULL;
-
-                    /* send sem_post to wake up cb thread to dispatch super buffer */
-                    cb_node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
-                    if (NULL != cb_node) {
-                        memset(cb_node, 0, sizeof(mm_camera_cmdcb_t));
-                        cb_node->cmd_type = MM_CAMERA_CMD_TYPE_SUPER_BUF_DATA_CB;
-                        cb_node->u.superbuf.num_bufs = node->num_of_bufs;
-                        for (i=0; i<node->num_of_bufs; i++) {
-                            cb_node->u.superbuf.bufs[i] = node->super_buf[i].buf;
-                        }
-                        cb_node->u.superbuf.camera_handle = ch_obj->cam_obj->my_hdl;
-                        cb_node->u.superbuf.ch_id = ch_obj->my_hdl;
-
-                        /* enqueue to cb thread */
-                        mm_camera_queue_enq(&(ch_obj->cb_thread.cmd_queue), cb_node);
-
-                        /* wake up cb thread */
-                        sem_post(&(ch_obj->cb_thread.cmd_sem));
-                    } else {
-                        CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
-                    }
-
-                    ch_obj->pending_pp_cnt--;
-                } else {
-                    /* buf done with the nonuse super buf */
-                    uint8_t i;
-                    for (i=0; i<node->num_of_bufs; i++) {
-                        mm_channel_qbuf(ch_obj, node->super_buf[i].buf);
-                    }
-                }
-
-                /* done with node, free it */
-                free(node);
-            }
-        }
-    }
-    pthread_mutex_unlock(&ch_obj->ch_lock);
-}
-
 /* CB for processing stream buffer */
 static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
                                           void *user_data)
@@ -318,50 +212,49 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
                 ch_obj->pending_cnt--;
             }
 
-            if (mm_channel_need_do_pp(ch_obj, node)) {
-                /* do post processing */
-                ch_obj->pending_pp_cnt++;
-                mm_channel_do_post_processing(ch_obj, node);
-                /* no need to free node here
-                 * node will be as cookie sent to backend doing pp */
-            } else {
-                /* dispatch superbuf */
-                if (NULL != ch_obj->bundle.super_buf_notify_cb) {
-                    uint8_t i;
-                    mm_camera_cmdcb_t* cb_node = NULL;
+            /* do post processing if needed */
+            /* this is a blocking call */
+            mm_channel_do_post_processing(ch_obj, node);
 
-                    /* send sem_post to wake up cb thread to dispatch super buffer */
-                    cb_node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
-                    if (NULL != cb_node) {
-                        memset(cb_node, 0, sizeof(mm_camera_cmdcb_t));
-                        cb_node->cmd_type = MM_CAMERA_CMD_TYPE_SUPER_BUF_DATA_CB;
-                        cb_node->u.superbuf.num_bufs = node->num_of_bufs;
-                        for (i=0; i<node->num_of_bufs; i++) {
-                            cb_node->u.superbuf.bufs[i] = node->super_buf[i].buf;
-                        }
-                        cb_node->u.superbuf.camera_handle = ch_obj->cam_obj->my_hdl;
-                        cb_node->u.superbuf.ch_id = ch_obj->my_hdl;
+            /* dispatch superbuf */
+            if (NULL != ch_obj->bundle.super_buf_notify_cb) {
+                uint8_t i;
+                mm_camera_cmdcb_t* cb_node = NULL;
 
-                        /* enqueue to cb thread */
-                        mm_camera_queue_enq(&(ch_obj->cb_thread.cmd_queue), cb_node);
-
-                        /* wake up cb thread */
-                        sem_post(&(ch_obj->cb_thread.cmd_sem));
-                    } else {
-                        CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
+                /* send sem_post to wake up cb thread to dispatch super buffer */
+                cb_node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
+                if (NULL != cb_node) {
+                    memset(cb_node, 0, sizeof(mm_camera_cmdcb_t));
+                    cb_node->cmd_type = MM_CAMERA_CMD_TYPE_SUPER_BUF_DATA_CB;
+                    cb_node->u.superbuf.num_bufs = node->num_of_bufs;
+                    for (i=0; i<node->num_of_bufs; i++) {
+                        cb_node->u.superbuf.bufs[i] = node->super_buf[i].buf;
                     }
+                    cb_node->u.superbuf.camera_handle = ch_obj->cam_obj->my_hdl;
+                    cb_node->u.superbuf.ch_id = ch_obj->my_hdl;
+
+                    /* enqueue to cb thread */
+                    mm_camera_queue_enq(&(ch_obj->cb_thread.cmd_queue), cb_node);
+
+                    /* wake up cb thread */
+                    sem_post(&(ch_obj->cb_thread.cmd_sem));
                 } else {
+                    CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
                     /* buf done with the nonuse super buf */
-                    uint8_t i;
                     for (i=0; i<node->num_of_bufs; i++) {
                         mm_channel_qbuf(ch_obj, node->super_buf[i].buf);
                     }
                 }
-                free(node);
+            } else {
+                /* buf done with the nonuse super buf */
+                uint8_t i;
+                for (i=0; i<node->num_of_bufs; i++) {
+                    mm_channel_qbuf(ch_obj, node->super_buf[i].buf);
+                }
             }
+            free(node);
         } else {
             /* no superbuf avail, break the loop */
-            CDBG_ERROR("%s : Superbuffer not available",__func__);
             break;
         }
     }
@@ -679,6 +572,26 @@ void mm_channel_release(mm_channel_t *my_obj)
     my_obj->state = MM_CHANNEL_STATE_NOTUSED;
 }
 
+uint32_t mm_channel_get_ext_mode_from_img_mode(uint32_t img_mode)
+{
+    switch (img_mode) {
+    case MM_CAMERA_PREVIEW:
+        return MSM_V4L2_EXT_CAPTURE_MODE_PREVIEW;
+    case MM_CAMERA_VIDEO:
+        return MSM_V4L2_EXT_CAPTURE_MODE_VIDEO;
+    case MM_CAMERA_SNAPSHOT_MAIN:
+        return MSM_V4L2_EXT_CAPTURE_MODE_MAIN;
+    case MM_CAMERA_SNAPSHOT_THUMBNAIL:
+        return MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL;
+    case MM_CAMERA_SNAPSHOT_RAW:
+        return MSM_V4L2_EXT_CAPTURE_MODE_RAW;
+    case MM_CAMERA_RDI:
+        return MSM_V4L2_EXT_CAPTURE_MODE_RDI;
+    default:
+        return MSM_V4L2_EXT_CAPTURE_MODE_DEFAULT;
+    }
+}
+
 uint32_t mm_channel_add_stream(mm_channel_t *my_obj,
                               mm_camera_buf_notify_t buf_cb, void *user_data,
                               uint32_t ext_image_mode, uint32_t sensor_idx)
@@ -709,7 +622,8 @@ uint32_t mm_channel_add_stream(mm_channel_t *my_obj,
     stream_obj->buf_cb[0].cb = buf_cb;
     stream_obj->buf_cb[0].user_data = user_data;
     stream_obj->buf_cb[0].cb_count = -1; /* infinite by default */
-    stream_obj->ext_image_mode = ext_image_mode + 1;
+    stream_obj->ext_image_mode =
+        mm_channel_get_ext_mode_from_img_mode(ext_image_mode);
     stream_obj->sensor_idx = sensor_idx;
     stream_obj->fd = -1;
     pthread_mutex_init(&stream_obj->buf_lock, NULL);
@@ -822,16 +736,6 @@ int32_t mm_channel_bundle_stream(mm_channel_t *my_obj,
                                 mm_channel_process_stream_buf,
                                 (void*)my_obj);
 
-    /* check if we need to do post-processing */
-    if (my_obj->cam_obj->need_pp) {
-        /* register postProcessingCB at camera evt polling thread
-         * because pp result is coming from ctrl evt */
-        mm_camera_register_event_notify_internal(my_obj->cam_obj,
-                                                 mm_channel_pp_result_notify,
-                                                 (void *)my_obj->my_hdl,
-                                                 MM_CAMERA_EVT_TYPE_CTRL);
-    }
-
     return rc;
 }
 
@@ -937,18 +841,6 @@ int32_t mm_channel_start_streams(mm_channel_t *my_obj,
         if (0 != rc) {
             CDBG_ERROR("%s: reg buf failed at idx(%d)", __func__, i);
             break;
-        }
-
-        /* TODO */
-        /* for now, hard-coded to 1 for main image stream */
-        /* Query if stream need to do pp under current hardware configuration,
-         * when camera has offline pp capability */
-        if (my_obj->cam_obj->need_pp) {
-            if (MSM_V4L2_EXT_CAPTURE_MODE_MAIN == s_objs[i]->ext_image_mode) {
-                s_objs[i]->is_pp_needed = 1;
-            } else {
-                s_objs[i]->is_pp_needed = 0;
-            }
         }
 
         /* start stream */
@@ -1104,10 +996,6 @@ int32_t mm_channel_cancel_super_buf_request(mm_channel_t *my_obj)
     /* reset pending_cnt */
     my_obj->pending_cnt = 0;
 
-    if (my_obj->pending_pp_cnt > 0) {
-        rc = mm_channel_cancel_post_processing(my_obj);
-    }
-    my_obj->pending_pp_cnt = 0;
     return rc;
 }
 
@@ -1182,72 +1070,43 @@ int32_t mm_channel_get_stream_parm(mm_channel_t *my_obj,
     return rc;
 }
 
-uint8_t mm_channel_need_do_pp(mm_channel_t *my_obj,
-                              mm_channel_queue_node_t *super_buf)
-{
-    uint8_t need_pp = 0;
-    uint8_t i;
-
-    for (i=0; i<super_buf->num_of_bufs; i++) {
-        if (super_buf->super_buf[i].need_pp) {
-            need_pp = 1;
-            break;
-        }
-    }
-    return need_pp;
-}
-
 int32_t mm_channel_do_post_processing(mm_channel_t *my_obj,
                                       mm_channel_queue_node_t *super_buf)
 {
     int32_t rc = 0;
-    cam_sock_packet_t packet;
-    uint8_t i;
-    mm_stream_t* s_obj = NULL;
-    mm_channel_pp_info_t *cookie = NULL;
+    uint8_t pp_mask = 0;
 
-    /* TODO : currently we only do WNR, may need extended PP */
-    /* send cmd to backend to start pp */
-    for (i=0; i<super_buf->num_of_bufs; i++) {
-        if (super_buf->super_buf[i].need_pp) {
+    pp_mask = mm_camera_util_get_pp_mask(my_obj->cam_obj);
+
+    if (pp_mask & CAMERA_PP_MASK_TYPE_WNR) {
+        mm_camera_wnr_info_t wnr_info;
+        uint8_t i, j = 0;
+        mm_stream_t* s_obj = NULL;
+
+        memset(&wnr_info, 0, sizeof(mm_camera_wnr_info_t));
+        for (i = 0; i < super_buf->num_of_bufs; i++) {
             s_obj = mm_channel_util_get_stream_by_handler(my_obj, super_buf->super_buf[i].stream_id);
             if (NULL != s_obj) {
-                cookie = (mm_channel_pp_info_t*)malloc(sizeof(mm_channel_pp_info_t));
-                if (NULL != cookie) {
-                    memset(&packet, 0, sizeof(cam_sock_packet_t));
-                    memset(cookie, 0, sizeof(mm_channel_pp_info_t));
-                    cookie->cam_hdl = my_obj->cam_obj->my_hdl;
-                    cookie->ch_hdl = my_obj->my_hdl;
-                    cookie->stream_hdl = s_obj->my_hdl;
-                    cookie->super_buf = super_buf;
-
-                    packet.msg_type = CAM_SOCK_MSG_TYPE_WDN_START;
-                    packet.payload.wdn_start.cookie = (unsigned long)cookie;
-                    packet.payload.wdn_start.num_frames = 1;
-                    packet.payload.wdn_start.ext_mode[0] = s_obj->ext_image_mode;
-                    packet.payload.wdn_start.frame_idx[0] = super_buf->super_buf[i].buf->buf_idx;
-                    rc = mm_camera_util_sendmsg(my_obj->cam_obj, &packet, sizeof(packet), 0);
-                    if (0 != rc) {
-                        CDBG_ERROR("%s: Send DoPP msg failed (rc=%d)", __func__, rc);
-                        free(cookie);
-                        break;
-                    }
-                } else {
-                    CDBG_ERROR("%s: No memory for mm_channel_pp_info_t", __func__);
-                    break;
-                }
+                wnr_info.frames[j].instance_hdl = s_obj->inst_hdl;
+                wnr_info.frames[j].frame_idx = super_buf->super_buf[i].buf->buf_idx;
+                wnr_info.frames[j].frame_width = s_obj->fmt.width;
+                wnr_info.frames[j].frame_height = s_obj->fmt.height;
+                memcpy(&wnr_info.frames[j].frame_offset,
+                       &s_obj->frame_offset,
+                       sizeof(cam_frame_len_offset_t));
+                j++;
             }
         }
+        wnr_info.num_frames = j;
+
+        rc = mm_camera_send_native_ctrl_cmd(my_obj->cam_obj,
+                                            CAMERA_DO_PP_WNR,
+                                            sizeof(mm_camera_wnr_info_t),
+                                            (void *)&wnr_info);
+        if (0 != rc) {
+            CDBG_ERROR("%s: do_pp_wnr failed (rc=%d)", __func__, rc);
+        }
     }
-
-    return rc;
-}
-
-int32_t mm_channel_cancel_post_processing(mm_channel_t *my_obj)
-{
-    int32_t rc = 0;
-    /* TODO */
-    /* need send cmd to backend to cancel all pp request */
 
     return rc;
 }

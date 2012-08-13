@@ -35,7 +35,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cam_list.h"
 
 #define MM_CAMERA_MAX_NUM_FRAMES 16
-#define MM_CAMEAR_MAX_STRAEM_BUNDLE 4
 #define MM_CAMERA_MAX_2ND_SENSORS 4
 
 typedef enum {
@@ -219,9 +218,9 @@ typedef struct {
 } mm_camera_2nd_sensor_t;
 
 typedef enum {
-    MM_CAMERA_MSG_TYPE_CMD, /* for private communication through ioctl */
-    MM_CAMERA_MSG_TYPE_SOCK /* for private communication through sock */
-} mm_camera_msg_type_t;
+    MM_CAMERA_CMD_TYPE_PRIVATE,   /* OEM private ioctl */
+    MM_CAMERA_CMD_TYPE_NATIVE     /* native ctrl cmd through ioctl */
+} mm_camera_cmd_type_t;
 
 typedef struct {
     /* to sync the internal camera settings */
@@ -310,18 +309,19 @@ typedef struct {
                                 uint32_t ch_id,
                                 uint32_t s_id,
                                 mm_camera_stream_parm_t parm_type,
-                                void* p_value);
+                                void *p_value);
     /* get a parm current value of a stream */
     int32_t (*get_stream_parm) (uint32_t camera_handle,
                                 uint32_t ch_id,
                                 uint32_t s_id,
                                 mm_camera_stream_parm_t parm_type,
-                                void* p_value);
+                                void *p_value);
     /* private communication tunnel */
     int32_t (*send_command) (uint32_t camera_handle,
-                             mm_camera_msg_type_t cmd_type,
-                             void *cmd,
-                             int32_t cmd_length);
+                             mm_camera_cmd_type_t cmd_type,
+                             uint32_t cmd_id,
+                             uint32_t cmd_length,
+                             void *cmd);
 } mm_camera_ops_t;
 
 typedef struct {

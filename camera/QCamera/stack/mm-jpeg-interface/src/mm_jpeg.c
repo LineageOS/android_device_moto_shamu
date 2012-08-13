@@ -745,7 +745,7 @@ static void *mm_jpeg_jobmgr_thread(void *data)
         /* check ongoing q size */
         num_ongoing_jobs = mm_jpeg_queue_get_size(&my_obj->ongoing_job_q);
         if (num_ongoing_jobs >= NUM_MAX_JPEG_CNCURRENT_JOBS) {
-            CDBG("%s: ongoing job already reach max", __func__, num_ongoing_jobs);
+            CDBG("%s: ongoing job already reach max %d", __func__, num_ongoing_jobs);
             continue;
         }
 

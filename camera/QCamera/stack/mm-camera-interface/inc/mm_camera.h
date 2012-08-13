@@ -99,7 +99,6 @@ typedef enum
 typedef struct {
     uint32_t stream_id;
     uint32_t frame_idx;
-    uint8_t need_pp; /* flag if pp needed on this buf */
     mm_camera_buf_def_t *buf; /* ref to buf */
 } mm_camera_buf_info_t;
 
@@ -240,7 +239,6 @@ typedef struct mm_stream {
     struct mm_channel* ch_obj;
 
     uint8_t is_bundled; /* flag if stream is bundled */
-    uint8_t is_pp_needed; /* flag if need to do post processing, set when streamon */
     uint8_t is_local_buf; /* flag if buf is local copy, no need to qbuf to kernel */
     uint8_t hal_requested_num_bufs;
     uint8_t need_stream_on; /* flag if stream need streamon when start */
@@ -352,7 +350,6 @@ typedef struct mm_channel {
 
     /* num of pending suferbuffers */
     uint32_t pending_cnt;
-    uint32_t pending_pp_cnt; /*pending cnt for post processing frames */
 
     /* cmd thread for superbuffer dataCB and async stop*/
     mm_camera_cmd_thread_t cmd_thread;
@@ -415,7 +412,6 @@ typedef struct mm_camera_obj {
     /* some local variables */
     uint32_t snap_burst_num_by_user;
     camera_mode_t current_mode;
-    uint8_t need_pp;
     uint32_t op_mode;
     cam_ctrl_dimension_t dim;
 } mm_camera_obj_t;
@@ -551,13 +547,11 @@ extern int32_t mm_camera_send_ch_event(mm_camera_obj_t *my_obj,
                                        uint32_t ch_id,
                                        uint32_t stream_id,
                                        mm_camera_ch_event_type_t evt);
-extern int32_t mm_camera_send_sock_command(mm_camera_obj_t *my_obj,
-                                           void *cmd,
-                                           int32_t cmd_length);
 extern int32_t mm_camera_send_private_ioctl(mm_camera_obj_t *my_obj,
-                                            void *cmd,
-                                            int32_t cmd_length);
-
+                                            uint32_t cmd_id,
+                                            uint32_t cmd_length,
+                                            void *cmd);
+extern uint8_t mm_camera_util_get_pp_mask(mm_camera_obj_t *my_obj);
 
 /* mm_channel */
 extern int32_t mm_channel_fsm_fn(mm_channel_t *my_obj,

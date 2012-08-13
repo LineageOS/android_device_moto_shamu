@@ -39,6 +39,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "mm_camera_dbg.h"
 #include "mm_camera_interface.h"
+#include "mm_camera_sock.h"
 #include "mm_camera.h"
 
 static pthread_mutex_t g_intf_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -48,6 +49,11 @@ static mm_camera_ctrl_t g_cam_ctrl = {{{0, {0, 0, 0, 0}, 0, 0}}, 0, {{0}}, {0}};
 
 static pthread_mutex_t g_handler_lock = PTHREAD_MUTEX_INITIALIZER;
 static uint16_t g_handler_history_count = 0; /* history count for handler */
+
+extern int32_t mm_camera_send_native_ctrl_cmd(mm_camera_obj_t * my_obj,
+                                       cam_ctrl_type type,
+                                       uint32_t length,
+                                       void *value);
 
 /* utility function to generate handler */
 uint32_t mm_camera_util_generate_handler(uint8_t index)
@@ -751,8 +757,9 @@ static int32_t mm_camera_intf_get_stream_parm(
 }
 
 static int32_t mm_camera_intf_send_private_ioctl(uint32_t camera_handle,
-                                                 void *cmd,
-                                                 int32_t cmd_length)
+                                                 uint32_t cmd_id,
+                                                 uint32_t cmd_length,
+                                                 void *cmd)
 {
     int32_t rc = -1;
     mm_camera_obj_t *my_obj = NULL;
@@ -761,7 +768,7 @@ static int32_t mm_camera_intf_send_private_ioctl(uint32_t camera_handle,
     my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
 
     if (my_obj) {
-        rc = mm_camera_send_private_ioctl(my_obj, cmd, cmd_length);
+        rc = mm_camera_send_private_ioctl(my_obj, cmd_id, cmd_length, cmd);
     }
 
     pthread_mutex_unlock(&g_oem_lock);
@@ -769,9 +776,10 @@ static int32_t mm_camera_intf_send_private_ioctl(uint32_t camera_handle,
     return rc;
 }
 
-static int32_t mm_camera_intf_send_sock_cmd(uint32_t camera_handle,
-                                            void *cmd,
-                                            int32_t cmd_length)
+static int32_t mm_camera_intf_send_native_cmd(uint32_t camera_handle,
+                                              uint32_t cmd_id,
+                                              uint32_t cmd_length,
+                                              void *cmd)
 {
     int32_t rc = -1;
     mm_camera_obj_t *my_obj = NULL;
@@ -782,7 +790,13 @@ static int32_t mm_camera_intf_send_sock_cmd(uint32_t camera_handle,
     if (my_obj) {
         pthread_mutex_lock(&my_obj->cam_lock);
         pthread_mutex_unlock(&g_intf_lock);
-        rc = mm_camera_send_sock_command(my_obj, cmd, cmd_length);
+        rc = mm_camera_socket_sendmsg(my_obj->ds_fd, cmd, cmd_length, 0);
+        /* may switch to send through native ctrl cmd ioctl */
+        /* rc = mm_camera_send_native_ctrl_cmd(my_obj,
+                                            cmd_id,
+                                            cmd_length,
+                                            cmd); */
+        pthread_mutex_unlock(&my_obj->cam_lock);
     } else {
         pthread_mutex_unlock(&g_intf_lock);
     }
@@ -792,20 +806,20 @@ static int32_t mm_camera_intf_send_sock_cmd(uint32_t camera_handle,
 }
 
 static int32_t mm_camera_intf_send_cmd(uint32_t camera_handle,
-                                       mm_camera_msg_type_t cmd_type,
-                                       void *cmd,
-                                       int32_t cmd_length)
+                                       mm_camera_cmd_type_t cmd_type,
+                                       uint32_t cmd_id,
+                                       uint32_t cmd_length,
+                                       void *cmd)
 {
     int32_t rc = -1;
 
     switch (cmd_type) {
-    case MM_CAMERA_MSG_TYPE_CMD:
-        /* OEM private ioctl, special treatment here */
-        rc = mm_camera_intf_send_private_ioctl(camera_handle, cmd, cmd_length);
+    case MM_CAMERA_CMD_TYPE_PRIVATE:
+        /* OEM private ioctl */
+        rc = mm_camera_intf_send_private_ioctl(camera_handle, cmd_id, cmd_length, cmd);
         break;
-    case MM_CAMERA_MSG_TYPE_SOCK:
-        /* regular cmd through domain sock */
-        rc = mm_camera_intf_send_sock_cmd(camera_handle, cmd, cmd_length);
+    case MM_CAMERA_CMD_TYPE_NATIVE:
+        rc = mm_camera_intf_send_native_cmd(camera_handle, cmd_id, cmd_length, cmd);
         break;
     }
 
