@@ -36,7 +36,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * Data structure declare
 ***********************************************************************************/
 /* num of streams allowed in a channel obj */
-#define MM_CAMEAR_STRAEM_NUM_MAX 8
+//TODO: change for Stats
+#define MM_CAMEAR_STRAEM_NUM_MAX (16)
 /* num of channels allowed in a camera obj */
 #define MM_CAMERA_CHANNEL_MAX 1
 /* num of callbacks allowed for an event type */

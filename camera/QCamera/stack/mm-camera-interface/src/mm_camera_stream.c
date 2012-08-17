@@ -203,6 +203,7 @@ static void mm_stream_data_notify(void* user_data)
         return;
     }
 
+    CDBG("%s: stream hdl : %d\n", __func__, my_obj->my_hdl);
     if (MM_STREAM_STATE_ACTIVE_STREAM_ON != my_obj->state) {
         /* this Cb will only received in active_stream_on state
          * if not so, return here */
@@ -636,7 +637,7 @@ int32_t mm_stream_fsm_active_stream_on(mm_stream_t * my_obj,
                                               void * out_val)
 {
     int32_t rc = 0;
-    CDBG("%s :E evt = %d",__func__,evt);
+    CDBG("%s :E evt = %d, image_mode: %d",__func__,evt, my_obj->ext_image_mode);
     switch(evt) {
     case MM_STREAM_EVT_QBUF:
         rc = mm_stream_buf_done(my_obj, (mm_camera_buf_def_t *)in_val);
@@ -807,6 +808,22 @@ static uint32_t mm_stream_util_get_v4l2_fmt(cam_format_t fmt,
     case CAMERA_YUV_422_NV61:
         val= V4L2_PIX_FMT_NV61;
         *num_planes = 2;
+        break;
+    case CAMERA_SAEC:
+        val = V4L2_PIX_FMT_STATS_AE;
+        *num_planes = 1;
+        break;
+   case CAMERA_SAWB:
+        val = V4L2_PIX_FMT_STATS_AWB;
+        *num_planes = 1;
+        break;
+   case CAMERA_SAFC:
+        val = V4L2_PIX_FMT_STATS_AF;
+        *num_planes = 1;
+        break;
+   case CAMERA_SHST:
+        val = V4L2_PIX_FMT_STATS_IHST;
+        *num_planes = 1;
         break;
     default:
         val = 0;
@@ -1412,9 +1429,9 @@ int32_t mm_stream_set_fmt(mm_stream_t *my_obj)
             mm_stream_util_get_v4l2_fmt(my_obj->fmt.fmt,
                                       &(fmt.fmt.pix_mp.num_planes));
     rc = ioctl(my_obj->fd, VIDIOC_S_FMT, &fmt);
-    CDBG("%s:fd=%d, ext_image_mode=%d, rc=%d\n",
-             __func__, my_obj->fd, my_obj->ext_image_mode, rc);
-
+    CDBG("%s:fd=%d, ext_image_mode=%d, rc=%d, fmt.fmt.pix_mp.pixelformat : 0x%x\n",
+       __func__, my_obj->fd, my_obj->ext_image_mode, rc,
+       fmt.fmt.pix_mp.pixelformat);
     return rc;
 }
 
@@ -1444,6 +1461,11 @@ int32_t mm_stream_get_offset(mm_stream_t *my_obj)
     case MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL:
     case MSM_V4L2_EXT_CAPTURE_MODE_RDI:
         frame_offset.padding_format = CAMERA_PAD_TO_WORD;
+        break;
+    case MSM_V4L2_EXT_CAPTURE_MODE_AEC:
+    case MSM_V4L2_EXT_CAPTURE_MODE_AWB:
+    case MSM_V4L2_EXT_CAPTURE_MODE_AF:
+    case MSM_V4L2_EXT_CAPTURE_MODE_IHIST:
         break;
     case MSM_V4L2_EXT_CAPTURE_MODE_VIDEO:
     default:

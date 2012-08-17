@@ -92,6 +92,11 @@ typedef enum {
     MM_CAMERA_CH_VIDEO,
     MM_CAMERA_CH_SNAPSHOT,
     MM_CAMERA_CH_RAW,
+    MM_CAMERA_CH_SAEC,
+    MM_CAMERA_CH_SAWB,
+    MM_CAMERA_CH_SAFC,
+    MM_CAMERA_CH_IHST,
+    MM_CAMERA_CH_CSTA,
     MM_CAMERA_CH_MAX
 } mm_camera_channel_type_t;
 

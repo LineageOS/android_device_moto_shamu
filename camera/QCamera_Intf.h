@@ -83,6 +83,10 @@ typedef enum {
   CAMERA_YUV_422_NV16,
   CAMERA_YUV_422_NV61,
   CAMERA_YUV_422_YUYV,
+  CAMERA_SAEC,
+  CAMERA_SAWB,
+  CAMERA_SAFC,
+  CAMERA_SHST,
 } cam_format_t;
 
 typedef enum {
@@ -271,6 +275,12 @@ typedef struct {
   cam_frame_len_offset_t thumb_frame_offset;
   uint32_t channel_interface_mask;
 } cam_ctrl_dimension_t;
+
+typedef struct {
+  uint16_t type;
+  uint16_t width;
+  uint16_t height;
+} cam_stats_buf_dimension_t;
 
 typedef struct {
   uint8_t cid;

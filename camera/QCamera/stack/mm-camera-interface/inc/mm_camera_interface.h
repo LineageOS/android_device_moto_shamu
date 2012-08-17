@@ -340,7 +340,16 @@ typedef enum {
     MM_CAMERA_SNAPSHOT_MAIN,
     MM_CAMERA_SNAPSHOT_THUMBNAIL,
     MM_CAMERA_SNAPSHOT_RAW,
-    MM_CAMERA_RDI
+    MM_CAMERA_RDI,
+    MM_CAMERA_RDII,
+    MM_CAMERA_RDI2,
+    MM_CAMERA_SAEC,
+    MM_CAMERA_SAWB,
+    MM_CAMERA_SAFC,
+    MM_CAMERA_IHST,
+    MM_CAMERA_CS,
+    MM_CAMERA_RS,
+    MM_CAMERA_CSTA,
 }mm_camera_img_mode;
 
 /* may remove later */

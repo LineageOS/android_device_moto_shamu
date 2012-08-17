@@ -130,6 +130,55 @@ int mm_app_set_preview_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
     return rc;
 }
 
+int mm_app_set_aec_stats_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
+{
+    int rc = MM_CAMERA_OK;
+    mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
+
+    fmt->meta_header = MM_CAMEAR_META_DATA_TYPE_DEF;
+    fmt->fmt = CAMERA_SAEC;
+    fmt->width = 1060; //hard code for testing
+    fmt->height = 1;
+    return rc;
+}
+
+int mm_app_set_awb_stats_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
+{
+    int rc = MM_CAMERA_OK;
+    mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
+
+    fmt->meta_header = MM_CAMEAR_META_DATA_TYPE_DEF;
+    fmt->fmt = CAMERA_SAWB;
+    fmt->width = 1060; //hard code for testing
+    fmt->height = 1;
+    return rc;
+}
+
+int mm_app_set_af_stats_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
+{
+    int rc = MM_CAMERA_OK;
+    mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
+
+    fmt->meta_header = MM_CAMEAR_META_DATA_TYPE_DEF;
+    fmt->fmt = CAMERA_SAFC;
+    fmt->width = 1060; //hard code for testing
+    fmt->height = 1;
+    return rc;
+}
+
+
+int mm_app_set_ihist_stats_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
+{
+    int rc = MM_CAMERA_OK;
+    mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
+
+    fmt->meta_header = MM_CAMEAR_META_DATA_TYPE_DEF;
+    fmt->fmt = CAMERA_SHST;
+    fmt->width = 1060; //hard code for testing
+    fmt->height = 1;
+    return rc;
+}
+
 //void dumpFrameToFile(struct msm_frame* newFrame, int w, int h, char* name, int main_422)
 void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422)
 {
@@ -209,6 +258,33 @@ int mm_app_open_camera(int cam_id)
     return rc;
 }
 
+int mm_app_open_camera_stats(int cam_id)
+{
+    int rc = MM_CAMERA_OK;
+    int value = 0;
+    mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
+
+    if (pme->cam_mode == CAMERA_MODE) {
+        return rc;
+    }
+
+    if (MM_CAMERA_OK != (rc = mm_app_stop_preview_stats(cam_id))) {
+        CDBG_ERROR("%s:Stop preview err=%d\n", __func__, rc);
+        goto end;
+    }
+
+    pme->cam->ops->set_parm(pme->cam->camera_handle,MM_CAMERA_PARM_RECORDING_HINT, &value);
+
+    if (MM_CAMERA_OK != (rc = mm_app_start_preview_stats(cam_id))) {
+        CDBG_ERROR("%s:Start preview err=%d\n", __func__, rc);
+        goto end;
+    }
+
+    pme->cam_mode = CAMERA_MODE;
+    end:
+    CDBG("%s: END, rc=%d\n", __func__, rc);
+    return rc;
+}
 
 int mm_app_open_zsl(int cam_id)
 {
@@ -549,13 +625,14 @@ void mm_app_preview_notify_cb(mm_camera_super_buf_t *bufs,
     mm_camera_buf_def_t *frame = NULL;
     mm_camera_app_obj_t *pme = NULL;
     CDBG("%s: BEGIN\n", __func__); 
-    frame = bufs->bufs[MM_CAMERA_PREVIEW] ;
+    frame = bufs->bufs[MM_CAMERA_PREVIEW];
     pme = (mm_camera_app_obj_t *)user_data;
 
     CDBG("%s: BEGIN - length=%d, frame idx = %d\n", __func__, frame->frame_len, frame->frame_idx);
 
     //dumpFrameToFile(frame->frame,pme->dim.display_width,pme->dim.display_height,"preview", 1);
     dumpFrameToFile(frame,pme->dim.display_width,pme->dim.display_height,"preview", 1);
+
     if (!my_cam_app.run_sanity) {
         if (0 != (rc = mm_app_dl_render(frame->fd, NULL))) {
             CDBG("%s:DL rendering err=%d, frame fd=%d,frame idx = %d\n",
@@ -574,6 +651,98 @@ void mm_app_preview_notify_cb(mm_camera_super_buf_t *bufs,
     }
     CDBG("%s: END\n", __func__); 
 
+}
+
+void mm_app_aec_stats_notify_cb(mm_camera_super_buf_t *bufs,
+                              void *user_data)
+{
+    int rc;
+    mm_camera_buf_def_t *frame = NULL;
+    mm_camera_app_obj_t *pme = NULL;
+    CDBG("%s: BEGIN\n", __func__);
+    frame = bufs->bufs[0];
+    pme = (mm_camera_app_obj_t *)user_data;
+
+    CDBG("%s: BEGIN - length=%d, frame idx = %d\n", __func__, frame->frame_len, frame->frame_idx);
+
+    CDBG("%s:DL rendering err=%d, frame fd=%d,frame idx = %d\n",
+                 __func__, rc, frame->fd, frame->frame_idx);
+    CDBG("In CB function i/p = %p o/p = %p",bufs->bufs[MM_CAMERA_SAEC],frame);
+
+    if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,frame)) {
+        CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
+        return;
+    }
+    CDBG("%s: END\n", __func__);
+}
+
+void mm_app_awb_stats_notify_cb(mm_camera_super_buf_t *bufs,
+                              void *user_data)
+{
+    int rc;
+    mm_camera_buf_def_t *frame = NULL;
+    mm_camera_app_obj_t *pme = NULL;
+    CDBG("%s: BEGIN\n", __func__);
+    frame = bufs->bufs[0];
+    pme = (mm_camera_app_obj_t *)user_data;
+
+    CDBG("%s: BEGIN - length=%d, frame idx = %d\n", __func__, frame->frame_len, frame->frame_idx);
+
+    CDBG("%s:DL rendering err=%d, frame fd=%d,frame idx = %d\n",
+                 __func__, rc, frame->fd, frame->frame_idx);
+    CDBG("In CB function i/p = %p o/p = %p",bufs->bufs[MM_CAMERA_SAWB],frame);
+
+    if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,frame)) {
+        CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
+        return;
+    }
+    CDBG("%s: END\n", __func__);
+}
+
+void mm_app_af_stats_notify_cb(mm_camera_super_buf_t *bufs,
+                              void *user_data)
+{
+    int rc;
+    mm_camera_buf_def_t *frame = NULL;
+    mm_camera_app_obj_t *pme = NULL;
+    CDBG("%s: BEGIN\n", __func__);
+    frame = bufs->bufs[0] ;
+    pme = (mm_camera_app_obj_t *)user_data;
+
+    CDBG("%s: BEGIN - length=%d, frame idx = %d\n", __func__, frame->frame_len, frame->frame_idx);
+
+    CDBG("%s:DL rendering err=%d, frame fd=%d,frame idx = %d\n",
+                 __func__, rc, frame->fd, frame->frame_idx);
+    CDBG("In CB function i/p = %p o/p = %p",bufs->bufs[MM_CAMERA_SAFC],frame);
+
+    if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,frame)) {
+        CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
+        return;
+    }
+    CDBG("%s: END\n", __func__);
+}
+
+void mm_app_ihist_stats_notify_cb(mm_camera_super_buf_t *bufs,
+                              void *user_data)
+{
+    int rc;
+    mm_camera_buf_def_t *frame = NULL;
+    mm_camera_app_obj_t *pme = NULL;
+    CDBG("%s: BEGIN\n", __func__);
+    frame = bufs->bufs[0] ;
+    pme = (mm_camera_app_obj_t *)user_data;
+
+    CDBG("%s: BEGIN - length=%d, frame idx = %d\n", __func__, frame->frame_len, frame->frame_idx);
+
+    CDBG("%s:DL rendering err=%d, frame fd=%d,frame idx = %d\n",
+                 __func__, rc, frame->fd, frame->frame_idx);
+    CDBG("In CB function i/p = %p o/p = %p",bufs->bufs[MM_CAMERA_IHST],frame);
+
+    if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,frame)) {
+        CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
+        return;
+    }
+    CDBG("%s: END\n", __func__);
 }
 
 static void mm_app_zsl_notify_cb(mm_camera_super_buf_t *bufs,
@@ -620,6 +789,112 @@ static void mm_app_zsl_notify_cb(mm_camera_super_buf_t *bufs,
         CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__); 
     }
     CDBG("%s: END\n", __func__);
+}
+
+int mm_app_prepare_stats(int cam_id)
+{
+    int rc = MM_CAMERA_OK;
+    int op_mode;
+
+    CDBG("%s: E",__func__);
+    mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
+
+    pme->mem_cam->get_buf = mm_stream_initbuf;
+    pme->mem_cam->put_buf = mm_stream_deinitbuf;
+    pme->mem_cam->user_data = pme;
+    // AEC Stream
+    pme->stream[MM_CAMERA_SAEC].id =
+        pme->cam->ops->add_stream(pme->cam->camera_handle, pme->ch_id,
+                                  mm_app_aec_stats_notify_cb, pme,
+                                  MM_CAMERA_SAEC, 0);
+    if (!pme->stream[MM_CAMERA_SAEC].id) {
+        CDBG_ERROR("%s:Add MM_CAMERA_SAEC error =%d\n", __func__, rc);
+        rc = -1;
+        goto end;
+    }
+
+    CDBG_ERROR("%s :Add stream is successful stream ID = %d",__func__,pme->stream[MM_CAMERA_SAEC].id);
+
+    mm_app_set_aec_stats_fmt(cam_id,&pme->stream[MM_CAMERA_SAEC].str_config.fmt);
+    pme->stream[MM_CAMERA_SAEC].str_config.need_stream_on = 1;
+    pme->stream[MM_CAMERA_SAEC].str_config.num_of_bufs = STATS_BUF_NUM;
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->config_stream(pme->cam->camera_handle,pme->ch_id,pme->stream[MM_CAMERA_SAEC].id,
+                                                           &pme->stream[MM_CAMERA_SAEC].str_config))) {
+        CDBG_ERROR("%s:preview streaming err=%d\n", __func__, rc);
+        goto end;
+    }
+    // AWB Stream
+    pme->stream[MM_CAMERA_SAWB].id =
+        pme->cam->ops->add_stream(pme->cam->camera_handle, pme->ch_id,
+                                  mm_app_awb_stats_notify_cb, pme,
+                                  MM_CAMERA_SAWB, 0);
+    if (!pme->stream[MM_CAMERA_SAWB].id) {
+        CDBG_ERROR("%s:Add MM_CAMERA_SAWB error =%d\n", __func__, rc);
+        rc = -1;
+        goto end;
+    }
+
+    CDBG_ERROR("%s :Add stream is successful stream ID = %d",__func__,pme->stream[MM_CAMERA_SAWB].id);
+
+    mm_app_set_awb_stats_fmt(cam_id,&pme->stream[MM_CAMERA_SAWB].str_config.fmt);
+    pme->stream[MM_CAMERA_SAWB].str_config.need_stream_on = 1;
+    pme->stream[MM_CAMERA_SAWB].str_config.num_of_bufs = STATS_BUF_NUM;
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->config_stream(pme->cam->camera_handle,pme->ch_id,pme->stream[MM_CAMERA_SAWB].id,
+                                                           &pme->stream[MM_CAMERA_SAWB].str_config))) {
+        CDBG_ERROR("%s:preview streaming err=%d\n", __func__, rc);
+        goto end;
+    }
+
+    // AF Stream
+    pme->stream[MM_CAMERA_SAFC].id =
+        pme->cam->ops->add_stream(pme->cam->camera_handle, pme->ch_id,
+                                  mm_app_af_stats_notify_cb, pme,
+                                  MM_CAMERA_SAFC, 0);
+    if (!pme->stream[MM_CAMERA_SAFC].id) {
+        CDBG_ERROR("%s:Add MM_CAMERA_SAFC error =%d\n", __func__, rc);
+        rc = -1;
+        goto end;
+    }
+
+    CDBG_ERROR("%s :Add stream is successful stream ID = %d",__func__,pme->stream[MM_CAMERA_SAFC].id);
+
+    mm_app_set_af_stats_fmt(cam_id,&pme->stream[MM_CAMERA_SAFC].str_config.fmt);
+    pme->stream[MM_CAMERA_SAFC].str_config.need_stream_on = 1;
+    pme->stream[MM_CAMERA_SAFC].str_config.num_of_bufs = STATS_BUF_NUM;
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->config_stream(pme->cam->camera_handle,pme->ch_id,pme->stream[MM_CAMERA_SAFC].id,
+                                                           &pme->stream[MM_CAMERA_SAFC].str_config))) {
+        CDBG_ERROR("%s:preview streaming err=%d\n", __func__, rc);
+        goto end;
+    }
+
+    // HIST Stream
+    pme->stream[MM_CAMERA_IHST].id =
+        pme->cam->ops->add_stream(pme->cam->camera_handle, pme->ch_id,
+                                  mm_app_ihist_stats_notify_cb, pme,
+                                  MM_CAMERA_IHST, 0);
+    if (!pme->stream[MM_CAMERA_IHST].id) {
+        CDBG_ERROR("%s:Add MM_CAMERA_IHST error =%d\n", __func__, rc);
+        rc = -1;
+        goto end;
+    }
+
+    CDBG_ERROR("%s :Add stream is successful stream ID = %d",__func__,pme->stream[MM_CAMERA_IHST].id);
+
+    mm_app_set_ihist_stats_fmt(cam_id,&pme->stream[MM_CAMERA_IHST].str_config.fmt);
+    pme->stream[MM_CAMERA_IHST].str_config.need_stream_on = 1;
+    pme->stream[MM_CAMERA_IHST].str_config.num_of_bufs = STATS_BUF_NUM;
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->config_stream(pme->cam->camera_handle,pme->ch_id,pme->stream[MM_CAMERA_IHST].id,
+                                                           &pme->stream[MM_CAMERA_IHST].str_config))) {
+        CDBG_ERROR("%s:preview streaming err=%d\n", __func__, rc);
+        goto end;
+    }
+
+    end:
+    return rc;
 }
 
 int mm_app_prepare_preview(int cam_id)
@@ -671,6 +946,50 @@ int mm_app_unprepare_preview(int cam_id)
     int rc = MM_CAMERA_OK;
     return rc;
 }
+
+int mm_app_streamon_stats(int cam_id)
+{
+    int rc = MM_CAMERA_OK;
+    int stream_aec[2], stream_af[2], stream_awb[2], stream_ihist[2];
+    mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
+    mm_camera_frame_len_offset frame_offset_info;
+
+    stream_aec[0] = pme->stream[MM_CAMERA_SAEC].id;
+    stream_aec[1] = 0;
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_aec))) {
+        CDBG_ERROR("%s : Start Stats Stream Error",__func__);
+        goto end;
+    }
+    stream_awb[0] = pme->stream[MM_CAMERA_SAWB].id;
+    stream_awb[1] = 0;
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_awb))) {
+        CDBG_ERROR("%s : Start Stats Stream Error",__func__);
+        goto end;
+    }
+
+    stream_af[0] = pme->stream[MM_CAMERA_SAFC].id;
+    stream_af[1] = 0;
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_af))) {
+        CDBG_ERROR("%s : Start Stats Stream Error",__func__);
+        goto end;
+    }
+
+    stream_ihist[0] = pme->stream[MM_CAMERA_IHST].id;
+    stream_ihist[1] = 0;
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_ihist))) {
+        CDBG_ERROR("%s : Start Stats Stream Error",__func__);
+        goto end;
+    }
+
+    end:
+    CDBG("%s: X rc = %d",__func__,rc);
+    return rc;
+}
+
 
 int mm_app_streamon_preview(int cam_id)
 {
@@ -766,7 +1085,6 @@ int mm_app_streamon_preview_zsl(int cam_id)
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
     int op_mode = 0;
 
-
     stream[0] = pme->stream[MM_CAMERA_PREVIEW].id;
     stream[1] = pme->stream[MM_CAMERA_SNAPSHOT_MAIN].id;
 
@@ -846,11 +1164,56 @@ int mm_app_start_preview(int cam_id)
         CDBG_ERROR("%s:Stream On Preview failed rc=%d\n", __func__, rc);
         goto end;
     }
-
     end:
     CDBG("%s: END, rc=%d\n", __func__, rc); 
     return rc;
 }
+
+int mm_app_start_preview_stats(int cam_id)
+{
+    int rc = MM_CAMERA_OK;
+
+    mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
+    int op_mode = 0;
+
+    CDBG("pme = %p, pme->cam =%p, pme->cam->camera_handle = %d",
+         pme,pme->cam,pme->cam->camera_handle);
+
+    if (pme->cam_state == CAMERA_STATE_PREVIEW) {
+        return rc;
+    }
+
+    if (!my_cam_app.run_sanity) {
+        if (MM_CAMERA_OK != initDisplay()) {
+            CDBG_ERROR("%s : Could not initalize display",__func__);
+            goto end;
+        }
+    }
+
+    if (MM_CAMERA_OK != (rc = mm_app_prepare_stats(cam_id))) {
+        CDBG_ERROR("%s:Prepare On Stats failed rc=%d\n", __func__, rc);
+        goto end;
+    }
+
+    if (MM_CAMERA_OK != (rc = mm_app_prepare_preview(cam_id))) {
+        CDBG_ERROR("%s:Stream On Preview failed rc=%d\n", __func__, rc);
+        goto end;
+    }
+
+    if (MM_CAMERA_OK != (rc = mm_app_streamon_stats(cam_id))) {
+        CDBG_ERROR("%s:Stream On Stats failed rc=%d\n", __func__, rc);
+        goto end;
+	}
+
+    if (MM_CAMERA_OK != (rc = mm_app_streamon_preview(cam_id))) {
+        CDBG_ERROR("%s:Stream On Preview failed rc=%d\n", __func__, rc);
+        goto end;
+    }
+    end:
+    CDBG("%s: END, rc=%d\n", __func__, rc); 
+    return rc;
+}
+
 
 int mm_app_start_preview_zsl(int cam_id)
 {
@@ -889,6 +1252,75 @@ int mm_app_start_preview_zsl(int cam_id)
 
     end:
     CDBG("%s: END, rc=%d\n", __func__, rc); 
+    return rc;
+}
+
+static int mm_app_streamoff_stats(int cam_id)
+{
+    int rc = MM_CAMERA_OK;
+    int stream_aec[2], stream_af[2],stream_awb[2], stream_ihist[2];
+
+    mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
+
+    stream_aec[0] = pme->stream[MM_CAMERA_SAEC].id;
+    stream_aec[1] = 0;
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_aec))) {
+        CDBG_ERROR("%s : Stats Stream off Error",__func__);
+        goto end;
+    }
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->del_stream(pme->cam->camera_handle,pme->ch_id,pme->stream[MM_CAMERA_SAEC].id))) {
+        CDBG_ERROR("%s : Delete Stats Stream error",__func__);
+        goto end;
+    }
+    CDBG("AEC: del_stream successfull");
+    stream_awb[0] = pme->stream[MM_CAMERA_SAWB].id;
+    stream_awb[1] = 0;
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_awb))) {
+        CDBG_ERROR("%s : Stats Stream off Error",__func__);
+        goto end;
+    }
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->del_stream(pme->cam->camera_handle,pme->ch_id,pme->stream[MM_CAMERA_SAWB].id))) {
+        CDBG_ERROR("%s : Delete Stats Stream error",__func__);
+        goto end;
+    }
+    CDBG("AWB: del_stream successfull");
+
+    stream_af[0] = pme->stream[MM_CAMERA_SAFC].id;
+    stream_af[1] = 0;
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_af))) {
+        CDBG_ERROR("%s : Stats Stream off Error",__func__);
+        goto end;
+    }
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->del_stream(pme->cam->camera_handle,pme->ch_id,pme->stream[MM_CAMERA_SAFC].id))) {
+        CDBG_ERROR("%s : Delete Stats Stream error",__func__);
+        goto end;
+    }
+    CDBG("AF: del_stream successfull");
+
+
+    stream_ihist[0] = pme->stream[MM_CAMERA_IHST].id;
+    stream_ihist[1] = 0;
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_ihist))) {
+        CDBG_ERROR("%s : Stats Stream off Error",__func__);
+        goto end;
+    }
+
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->del_stream(pme->cam->camera_handle,pme->ch_id,pme->stream[MM_CAMERA_IHST].id))) {
+        CDBG_ERROR("%s : Delete Stats Stream error",__func__);
+        goto end;
+    }
+    CDBG("IHIST: del_stream successfull");
+
+    end:
+    CDBG("%s: END, rc=%d\n", __func__, rc);
+
     return rc;
 }
 
@@ -1019,6 +1451,70 @@ int stopPreview(int cam_id)
     return rc;
 }
 
+int startStats(int cam_id)
+{
+    int rc = MM_CAMERA_OK;
+
+    mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
+
+    CDBG("%s: Start Preview",__func__);
+
+    if (pme->cam_mode == ZSL_MODE || pme->cam_mode == RECORDER_MODE) {
+        switch (pme->cam_state) {
+        case CAMERA_STATE_RECORD:
+            if (MM_CAMERA_OK != mm_app_stop_video(cam_id)) {
+                CDBG_ERROR("%s:Cannot stop video err=%d\n", __func__, rc);
+                return -1;
+            }
+        case CAMERA_STATE_PREVIEW:
+            if (MM_CAMERA_OK != mm_app_open_camera_stats(cam_id)) {
+                CDBG_ERROR("%s: Cannot switch to camera mode\n", __func__);
+                return -1;
+            }
+            break;
+        case CAMERA_STATE_SNAPSHOT:
+        default:
+            break;
+        }
+    } else if (pme->cam_mode == CAMERA_MODE && pme->cam_state == CAMERA_STATE_OPEN) {
+
+        if (MM_CAMERA_OK != (rc = mm_app_start_preview_stats(cam_id))) {
+            CDBG_ERROR("%s:preview streaming on err=%d\n", __func__, rc);
+            return -1;
+        }
+    }
+    CDBG("%s: END, rc=%d\n", __func__, rc);
+    return rc;
+}
+
+int stopStats(int cam_id)
+{
+    int rc = MM_CAMERA_OK;
+    mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
+
+    CDBG("%s : pme->cam_mode = %d, pme->cam_state = %d",__func__,pme->cam_mode,pme->cam_state);
+
+    if (pme->cam_mode == CAMERA_MODE && pme->cam_state == CAMERA_STATE_PREVIEW) {
+        if (MM_CAMERA_OK != (rc = mm_app_stop_preview_stats(cam_id))) {
+            CDBG("%s:streamoff preview err=%d\n", __func__, rc);
+            goto end;
+        }
+    } else if (pme->cam_mode == ZSL_MODE && pme->cam_state == CAMERA_STATE_PREVIEW) {
+        if (MM_CAMERA_OK != (rc = mm_app_stop_preview_zsl(cam_id))) {
+            CDBG("%s:streamoff preview err=%d\n", __func__, rc);
+            goto end;
+        }
+    } else if (pme->cam_mode == RECORDER_MODE && pme->cam_state == CAMERA_STATE_PREVIEW) {
+        if (MM_CAMERA_OK != (rc = mm_app_stop_preview_stats(cam_id))) {
+            CDBG("%s:streamoff preview err=%d\n", __func__, rc);
+            goto end;
+        }
+        mm_app_unprepare_video(cam_id);
+    }
+    end:
+    return rc;
+}
+
 int mm_app_stop_preview(int cam_id)
 {
     int rc = MM_CAMERA_OK;
@@ -1029,7 +1525,30 @@ int mm_app_stop_preview(int cam_id)
         CDBG_ERROR("%s : Delete Stream Preview error",__func__);
         goto end;
     }
+    CDBG("Stop Preview successfull");
 
+    if (!my_cam_app.run_sanity) {
+        deinitDisplay();
+    }
+    end:
+    CDBG("%s: END, rc=%d\n", __func__, rc);
+    return rc;
+}
+
+int mm_app_stop_preview_stats(int cam_id)
+{
+    int rc = MM_CAMERA_OK;
+
+    mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
+
+    if (MM_CAMERA_OK != (rc = mm_app_streamoff_stats(cam_id))) {
+        CDBG_ERROR("%s : Delete Stream Stats error",__func__);
+        goto end;
+    }
+    if (MM_CAMERA_OK != (rc = mm_app_streamoff_preview(cam_id))) {
+        CDBG_ERROR("%s : Delete Stream Preview error",__func__);
+        goto end;
+    }
     CDBG("Stop Preview successfull");
 
     if (!my_cam_app.run_sanity) {

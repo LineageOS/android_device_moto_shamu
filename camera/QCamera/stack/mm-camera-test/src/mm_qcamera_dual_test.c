@@ -51,6 +51,9 @@ extern int stopPreview(int cam_id);
 extern int takePicture_yuv(int cam_id);
 extern int startRdi(int cam_id);
 extern int stopRdi(int cam_id);
+extern int startStats(int cam_id);
+extern int stopStats(int cam_id);
+
 
 int mm_app_dtc_0(mm_camera_app_t *cam_apps)
 {
@@ -527,6 +530,53 @@ end:
     return rc;
 }
 
+int mm_app_dtc_9(mm_camera_app_t *cam_apps)
+{
+    int rc = MM_CAMERA_OK;
+    int i,j;
+    int result = 0;
+    int front_camera = 1;
+    int back_camera = 0;
+
+    printf("\n Verifying Preview on back Camera and RDI on Front camera...\n");
+
+    if(mm_app_open(back_camera) != MM_CAMERA_OK) {
+        CDBG_ERROR("%s:mm_app_open() back camera err=%d\n",__func__, rc);
+        rc = -1;
+        goto end;
+    }
+    if(system_dimension_set(back_camera) != MM_CAMERA_OK){
+    CDBG_ERROR("%s:system_dimension_set() err=%d\n",__func__, rc);
+        rc = -1;
+        goto end;
+    }
+
+    if( MM_CAMERA_OK != (rc = startStats(back_camera))) {
+        CDBG_ERROR("%s: back camera startPreview() err=%d\n", __func__, rc);
+        goto end;
+    }
+
+    mm_camera_app_wait();
+
+    if( MM_CAMERA_OK != (rc = stopStats(my_cam_app.cam_open))) {
+        CDBG("%s: startPreview() err=%d\n", __func__, rc);
+        goto end;
+    }
+
+    if( mm_app_close(my_cam_app.cam_open) != MM_CAMERA_OK) {
+        CDBG_ERROR("%s:mm_app_close() err=%d\n",__func__, rc);
+        rc = -1;
+        goto end;
+    }
+end:
+    if(rc == 0) {
+        printf("\nPassed\n");
+    }else{
+        printf("\nFailed\n");
+    }
+    CDBG("%s:END, rc = %d\n", __func__, rc);
+    return rc;
+}
 
 int mm_app_gen_dual_test_cases()
 {
@@ -540,7 +590,8 @@ int mm_app_gen_dual_test_cases()
     if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_dtc_5;
     if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_dtc_6;
     if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_dtc_7;
-    if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_dtc_8;*/
+    if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_dtc_8;
+    if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_dtc_9;*/
     return tc;
 }
 

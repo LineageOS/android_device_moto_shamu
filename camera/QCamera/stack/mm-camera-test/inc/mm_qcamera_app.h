@@ -40,6 +40,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PREVIEW_BUF_NUM 7
 #define VIDEO_BUF_NUM 7
 
+#define STATS_BUF_NUM 4
+
 typedef enum {
     MM_CAMERA_OK,
     MM_CAMERA_E_GENERAL,
@@ -82,7 +84,7 @@ typedef enum{
     RDI_MODE
 }camera_mode;
 
-#define MM_QCAM_APP_MAX_STREAM_NUM 8
+#define MM_QCAM_APP_MAX_STREAM_NUM 16 
 
 typedef struct {
     mm_camera_vtbl_t *cam;

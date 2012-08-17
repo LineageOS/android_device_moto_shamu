@@ -697,7 +697,7 @@ int mm_app_add_snapshot_stream(int cam_id)
 
     CDBG("Add Snapshot main is successfull stream ID = %d",pme->stream[MM_CAMERA_SNAPSHOT_MAIN].id);
     if (!pme->stream[MM_CAMERA_SNAPSHOT_MAIN].id) {
-        CDBG_ERROR("%s:preview streaming err=%d\n", __func__, rc);
+        CDBG_ERROR("%s:snapshot main streaming err=%d\n", __func__, rc);
         rc = -1;
         goto end;
     }
@@ -706,7 +706,7 @@ int mm_app_add_snapshot_stream(int cam_id)
                                                                              NULL,pme,
                                                                              MM_CAMERA_SNAPSHOT_THUMBNAIL, 0);
     if (!pme->stream[MM_CAMERA_SNAPSHOT_THUMBNAIL].id) {
-        CDBG_ERROR("%s:preview streaming err=%d\n", __func__, rc);
+        CDBG_ERROR("%s:snapshot thumbnail streaming err=%d\n", __func__, rc);
         rc = -1;
         goto end;
     }

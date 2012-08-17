@@ -587,6 +587,20 @@ uint32_t mm_channel_get_ext_mode_from_img_mode(uint32_t img_mode)
         return MSM_V4L2_EXT_CAPTURE_MODE_RAW;
     case MM_CAMERA_RDI:
         return MSM_V4L2_EXT_CAPTURE_MODE_RDI;
+	case MM_CAMERA_SAEC:
+		return MSM_V4L2_EXT_CAPTURE_MODE_AEC;
+	case MM_CAMERA_SAWB:
+		return MSM_V4L2_EXT_CAPTURE_MODE_AWB;
+	case MM_CAMERA_SAFC:
+		return MSM_V4L2_EXT_CAPTURE_MODE_AF;
+	case MM_CAMERA_IHST:
+		return MSM_V4L2_EXT_CAPTURE_MODE_IHIST;
+	case MM_CAMERA_CS:
+		return MSM_V4L2_EXT_CAPTURE_MODE_CS;
+	case MM_CAMERA_RS:
+		return MSM_V4L2_EXT_CAPTURE_MODE_RS;
+	case MM_CAMERA_CSTA:
+		return MSM_V4L2_EXT_CAPTURE_MODE_CSTA;
     default:
         return MSM_V4L2_EXT_CAPTURE_MODE_DEFAULT;
     }

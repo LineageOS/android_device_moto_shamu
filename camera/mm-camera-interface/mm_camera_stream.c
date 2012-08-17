@@ -352,6 +352,18 @@ static int mm_camera_stream_util_set_ext_mode(mm_camera_stream_t *stream)
         case MM_CAMERA_STREAM_RAW:
                 s_parm.parm.capture.extendedmode = MSM_V4L2_EXT_CAPTURE_MODE_MAIN; //MSM_V4L2_EXT_CAPTURE_MODE_RAW;
                 break;
+        case MM_CAMERA_STREAM_AEC:
+                s_parm.parm.capture.extendedmode = MSM_V4L2_EXT_CAPTURE_MODE_AEC;
+                break;
+	case MM_CAMERA_STREAM_AWB:
+		s_parm.parm.capture.extendedmode = MSM_V4L2_EXT_CAPTURE_MODE_AWB;
+        	break;
+	case MM_CAMERA_STREAM_AF:
+		s_parm.parm.capture.extendedmode = MSM_V4L2_EXT_CAPTURE_MODE_AF;
+		break;
+        case MM_CAMERA_STREAM_IHIST:
+                s_parm.parm.capture.extendedmode = MSM_V4L2_EXT_CAPTURE_MODE_IHIST;
+                break;
         case MM_CAMERA_STREAM_VIDEO_MAIN:
         default:
             return 0;
