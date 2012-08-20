@@ -3992,7 +3992,6 @@ void QCameraHardwareInterface::initExifData(){
                   3, 1, (void *)mExifValues.gpsTimeStamp);
         ALOGE("EXIFTAGID_GPS_TIMESTAMP set");
     }
-
 }
 
 //Add all exif tags in this function
@@ -4016,6 +4015,17 @@ void QCameraHardwareInterface::setExifTags()
     //Set ISO Speed
     mExifValues.isoSpeed = getISOSpeedValue();
 
+    //get time and date from system
+    time_t rawtime;
+    struct tm * timeinfo;
+    time(&rawtime);
+    timeinfo = localtime (&rawtime);
+    //Write datetime according to EXIF Spec
+    //"YYYY:MM:DD HH:MM:SS" (20 chars including \0)
+    snprintf(mExifValues.dateTime, 20, "%04d:%02d:%02d %02d:%02d:%02d",
+                timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
+                timeinfo->tm_mday, timeinfo->tm_hour,
+                timeinfo->tm_min, timeinfo->tm_sec);
     //set gps tags
     setExifTagsGPS();
 }
