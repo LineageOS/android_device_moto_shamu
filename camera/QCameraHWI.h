@@ -710,6 +710,8 @@ private:
     int  mDumpSkipCnt;
     int  mFocusMode;
 
+    cam_sensor_fps_range_t mSensorFpsRange;
+
     unsigned int mPictureSizeCount;
     unsigned int mPreviewSizeCount;
     int mPowerMode;
@@ -828,6 +830,8 @@ private:
      exif_values_t          mExifValues;                        //Exif values in usable format
      int                    mExifTableNumEntries;            //NUmber of entries in mExifData
      int                 mNoDisplayMode;
+     android :: FPSRange* mSupportedFpsRanges;
+     int mSupportedFpsRangesCount;
 };
 
 }; // namespace android

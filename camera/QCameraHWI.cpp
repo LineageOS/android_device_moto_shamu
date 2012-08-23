@@ -186,7 +186,9 @@ QCameraHardwareInterface(int cameraId, int mode)
     mCameraState(CAMERA_STATE_UNINITED),
     mPostPreviewHeap(NULL),
     mExifTableNumEntries(0),
-                    mNoDisplayMode(0)
+                    mNoDisplayMode(0),
+    mSupportedFpsRanges(NULL),
+    mSupportedFpsRangesCount(0)
 {
     ALOGI("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;
@@ -310,6 +312,10 @@ QCameraHardwareInterface::~QCameraHardwareInterface()
         break;
     }
     mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
+
+    if(mSupportedFpsRanges != NULL)
+        delete mSupportedFpsRanges;
+
 
     freePictureTable();
     freeVideoSizeTable();

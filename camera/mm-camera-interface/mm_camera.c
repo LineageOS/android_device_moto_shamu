@@ -592,6 +592,9 @@ int32_t mm_camera_get_parm(mm_camera_obj_t * my_obj,
   case MM_CAMERA_PARM_3D_FRAME_FORMAT:
         return mm_camera_send_native_ctrl_cmd(my_obj,   CAMERA_GET_PARM_3D_FRAME_FORMAT,
                      sizeof(camera_3d_frame_t), (void *)parm->p_value);
+  case MM_CAMERA_PARM_FPS_RANGE:
+        return mm_camera_send_native_ctrl_cmd(my_obj, CAMERA_GET_PARM_FPS_RANGE,
+                     sizeof(cam_sensor_fps_range_t), (void *)parm->p_value);
     case MM_CAMERA_PARM_MAXZOOM:
         return mm_camera_send_native_ctrl_cmd(my_obj,   CAMERA_GET_PARM_MAXZOOM,
                      sizeof(int), (void *)parm->p_value);
