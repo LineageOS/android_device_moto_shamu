@@ -458,7 +458,6 @@ int32_t mm_stream_fsm_inited(mm_stream_t *my_obj,
     default:
         CDBG_ERROR("%s: Invalid evt=%d, stream_state=%d",
                    __func__,evt,my_obj->state);
-        rc = -1;
         break;
     }
     return rc;
@@ -502,7 +501,6 @@ int32_t mm_stream_fsm_acquired(mm_stream_t *my_obj,
     default:
         CDBG_ERROR("%s: Invalid evt=%d, stream_state=%d",
                    __func__, evt, my_obj->state);
-        rc = -1;
     }
     CDBG("%s :X rc = %d",__func__,rc);
     return rc;
@@ -551,7 +549,6 @@ int32_t mm_stream_fsm_cfg(mm_stream_t * my_obj,
     default:
         CDBG_ERROR("%s: Invalid evt=%d, stream_state=%d",
                    __func__, evt, my_obj->state);
-        rc = -1;
     }
     CDBG("%s :X rc = %d",__func__,rc);
     return rc;
@@ -591,7 +588,6 @@ int32_t mm_stream_fsm_buffed(mm_stream_t * my_obj,
     default:
         CDBG_ERROR("%s: Invalid evt=%d, stream_state=%d",
                    __func__, evt, my_obj->state);
-        rc = -1;
     }
     CDBG("%s :X rc = %d",__func__,rc);
     return rc;
@@ -660,7 +656,6 @@ int32_t mm_stream_fsm_reg(mm_stream_t * my_obj,
     default:
         CDBG_ERROR("%s: Invalid evt=%d, stream_state=%d",
                    __func__, evt, my_obj->state);
-        rc = -1;
     }
     CDBG("%s :X rc = %d",__func__,rc);
     return rc;
@@ -699,7 +694,6 @@ int32_t mm_stream_fsm_active_stream_on(mm_stream_t * my_obj,
     default:
         CDBG_ERROR("%s: Invalid evt=%d, stream_state=%d",
                    __func__, evt, my_obj->state);
-        return -1;
     }
     CDBG("%s :X rc = %d",__func__,rc);
     return rc;
@@ -737,7 +731,6 @@ int32_t mm_stream_fsm_active_stream_off(mm_stream_t * my_obj,
     default:
         CDBG_ERROR("%s: Invalid evt=%d, stream_state=%d",
                    __func__, evt, my_obj->state);
-        return -1;
     }
     CDBG("%s :X rc = %d",__func__,rc);
     return rc;

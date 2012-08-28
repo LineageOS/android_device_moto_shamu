@@ -1085,7 +1085,9 @@ int32_t mm_camera_async_teardown_streams(mm_camera_obj_t *my_obj,
     return rc;
 }
 
-int32_t mm_camera_request_super_buf(mm_camera_obj_t *my_obj, uint32_t ch_id)
+int32_t mm_camera_request_super_buf(mm_camera_obj_t *my_obj,
+                                    uint32_t ch_id,
+                                    uint32_t num_buf_requested)
 {
     int32_t rc = -1;
     mm_channel_t * ch_obj =
@@ -1097,7 +1099,7 @@ int32_t mm_camera_request_super_buf(mm_camera_obj_t *my_obj, uint32_t ch_id)
 
         rc = mm_channel_fsm_fn(ch_obj,
                                MM_CHANNEL_EVT_REQUEST_SUPER_BUF,
-                               NULL,
+                               (void*)num_buf_requested,
                                NULL);
     } else {
         pthread_mutex_unlock(&my_obj->cam_lock);

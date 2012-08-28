@@ -584,7 +584,8 @@ static int32_t mm_camera_intf_async_teardown_streams(
 
 static int32_t mm_camera_intf_request_super_buf(
                                     uint32_t camera_handler,
-                                    uint32_t ch_id)
+                                    uint32_t ch_id,
+                                    uint32_t num_buf_requested)
 {
     int32_t rc = -1;
     CDBG("%s :E camera_handler = %d,ch_id = %d",
@@ -597,7 +598,7 @@ static int32_t mm_camera_intf_request_super_buf(
     if(my_obj) {
         pthread_mutex_lock(&my_obj->cam_lock);
         pthread_mutex_unlock(&g_intf_lock);
-        rc = mm_camera_request_super_buf(my_obj, ch_id);
+        rc = mm_camera_request_super_buf(my_obj, ch_id, num_buf_requested);
     } else {
         pthread_mutex_unlock(&g_intf_lock);
     }
@@ -863,18 +864,13 @@ static int32_t mm_camera_intf_send_cmd(uint32_t camera_handle,
     return rc;
 }
 
-static int32_t mm_camera_intf_open_repro_isp(uint32_t camera_handle,
-                                             uint32_t ch_id,
-                                             mm_camera_repro_isp_type_t repro_isp_type,
-                                             uint32_t *repro_isp_handle)
+static uint32_t mm_camera_intf_open_repro_isp(uint32_t camera_handle,
+                                              uint32_t ch_id,
+                                              mm_camera_repro_isp_type_t repro_isp_type)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;
-
-    if (NULL == repro_isp_handle) {
-        CDBG_ERROR("%s: NULL pointer for repro_isp_handle", __func__);
-        return rc;
-    }
+    uint32_t repro_isp_handle = 0;
 
     pthread_mutex_lock(&g_intf_lock);
     my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
@@ -885,13 +881,13 @@ static int32_t mm_camera_intf_open_repro_isp(uint32_t camera_handle,
         rc = mm_camera_open_repro_isp(my_obj,
                                      ch_id,
                                      repro_isp_type,
-                                     repro_isp_handle);
+                                     &repro_isp_handle);
     }else{
         pthread_mutex_unlock(&g_intf_lock);
     }
 
     CDBG("%s :X rc = %d",__func__,rc);
-    return rc;
+    return repro_isp_handle;
 }
 
 static int32_t mm_camera_intf_config_repro_isp(uint32_t camera_handle,

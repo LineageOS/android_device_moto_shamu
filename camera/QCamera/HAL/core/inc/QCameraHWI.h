@@ -269,6 +269,57 @@ namespace android {
 
 class QCameraStream;
 
+class QCameraQueue {
+public:
+    QCameraQueue();
+    virtual ~QCameraQueue();
+    bool enqueue(void *data);
+    void flush();
+    void* dequeue();
+private:
+    void init();
+    void deinit();
+
+private:
+    typedef struct {
+        struct cam_list list;
+        void* data;
+    } camera_q_node;
+
+    camera_q_node mhead; /* dummy head */
+    uint32_t msize;
+    pthread_mutex_t mlock;
+};
+
+typedef enum
+{
+    CAMERA_CMD_TYPE_NONE,
+    CAMERA_CMD_TYPE_START_DATA_PROC,
+    CAMERA_CMD_TYPE_STOP_DATA_PROC,
+    CAMERA_CMD_TYPE_DO_NEXT_JOB,
+    CAMERA_CMD_TYPE_EXIT,
+    CAMERA_CMD_TYPE_MAX
+} camera_cmd_type_t;
+
+typedef struct {
+    camera_cmd_type_t cmd;
+} camera_cmd_t;
+
+class QCameraCmdThread {
+public:
+    QCameraCmdThread();
+    ~QCameraCmdThread();
+
+    int32_t launch(void *(*start_routine)(void *), void* user_data);
+    int32_t exit();
+    int32_t sendCmd(camera_cmd_type_t cmd);
+    camera_cmd_type_t getCmd();
+
+    QCameraQueue cmd_queue;       /* cmd queue */
+    pthread_t cmd_pid;           /* cmd thread ID */
+    sem_t cmd_sem;               /* semaphore for cmd thread */
+};
+
 class QCameraHardwareInterface : public virtual RefBase {
 public:
 
@@ -707,6 +758,7 @@ private:
     void hdrEvent(cam_ctrl_status_t status, void *cookie);
     status_t initHistogramBuffers();
     status_t deInitHistogramBuffers();
+    mm_jpeg_color_format getColorfmtFromImgFmt(uint32_t img_fmt);
 
     int           mCameraId;
     camera_mode_t myMode;
@@ -894,12 +946,30 @@ private:
      preview_format_info_t  mPreviewFormatInfo;
     // friend void liveshot_callback(mm_camera_ch_data_buf_t *frame,void *user_data);
      friend void stream_cb_routine(mm_camera_super_buf_t *bufs, void *userdata);
-     friend void superbuf_cb_routine(mm_camera_super_buf_t *bufs, void *userdata);
      //EXIF
      exif_tags_info_t       mExifData[MAX_EXIF_TABLE_ENTRIES];  //Exif tags for JPEG encoder
      exif_values_t          mExifValues;                        //Exif values in usable format
      int                    mExifTableNumEntries;            //NUmber of entries in mExifData
      int                 mNoDisplayMode;
+     QCameraQueue mSuperBufQueue;     /* queue for raw super buf */
+     QCameraQueue mJpegDataQueue;     /* queue for encoded jpeg frame */
+     QCameraCmdThread *mNotifyTh;     /* thread for data notify */
+     QCameraCmdThread *mDataProcTh;   /* thread for data process (jpeg encoding) */
+     mm_jpeg_ops_t mJpegHandle;
+     uint32_t mJpegClientHandle;
+
+     static void *dataNotifyRoutine(void *data);
+     static void *dataProcessRoutine(void *data);
+     static void snapshot_jpeg_cb(jpeg_job_status_t status,
+                             uint8_t thumbnailDroppedFlag,
+                             uint32_t client_hdl,
+                             uint32_t jobId,
+                             uint8_t* out_data,
+                             uint32_t data_size,
+                             void *userdata);
+     static void superbuf_cb_routine(mm_camera_super_buf_t *recvd_frame,
+                                     void *userdata);
+
 };
 
 }; // namespace android

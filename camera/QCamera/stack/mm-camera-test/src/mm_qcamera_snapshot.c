@@ -183,8 +183,8 @@ int mm_app_set_raw_snapshot_fmt(int cam_id)
         CDBG("%s:set raw snapshot format err=%d\n", __func__, rc);
     }
     end:
-    CDBG("%s: END, rc=%d\n", __func__, rc); 
-#endif 
+    CDBG("%s: END, rc=%d\n", __func__, rc);
+#endif
     return rc;
 }
 
@@ -205,14 +205,14 @@ int mm_app_prepare_raw_snapshot_buf(int cam_id)
     reg_buf.def.buf.mp = malloc(sizeof(mm_camera_mp_buf_t));
     if (!reg_buf.def.buf.mp) {
         CDBG_ERROR("%s Error allocating memory for mplanar struct ", __func__);
-        rc = -MM_CAMERA_E_NO_MEMORY; 
+        rc = -MM_CAMERA_E_NO_MEMORY;
         goto end;
     }
 
     // setup main buffer
     memset(&pme->raw_snapshot_buf, 0, sizeof(pme->raw_snapshot_buf));
     pme->raw_snapshot_buf.num = 1;
-    pme->raw_snapshot_buf.frame_len = 
+    pme->raw_snapshot_buf.frame_len =
     my_cam_app.hal_lib.mm_camera_get_msm_frame_len(CAMERA_BAYER_SBGGR10,
                                                    CAMERA_MODE_2D,
                                                    pme->dim.raw_picture_width,
@@ -263,8 +263,8 @@ int mm_app_prepare_raw_snapshot_buf(int cam_id)
         goto end;
     }
     end:
-    CDBG("%s: END, rc=%d\n", __func__, rc); 
-#endif 
+    CDBG("%s: END, rc=%d\n", __func__, rc);
+#endif
     return rc;
 }
 
@@ -510,7 +510,7 @@ static void snapshot_raw_cb(mm_camera_super_buf_t *bufs,
             if (MM_CAMERA_OK != pme->cam->ops->qbuf(bufs->camera_handle,
                                                     bufs->ch_id,
                                                     bufs->bufs[i])) {
-                CDBG_ERROR("%s: Failed in Qbuf\n", __func__); 
+                CDBG_ERROR("%s: Failed in Qbuf\n", __func__);
             }
         }
     }
@@ -540,7 +540,7 @@ static void snapshot_raw_cb(mm_camera_super_buf_t *bufs,
     }
 #endif
 
-    CDBG("%s: END\n", __func__); 
+    CDBG("%s: END\n", __func__);
 }
 
 static int encodeDisplayAndSave(mm_camera_super_buf_t* recvd_frame,
@@ -557,8 +557,8 @@ static int encodeDisplayAndSave(mm_camera_super_buf_t* recvd_frame,
         CDBG_ERROR("%s: Failure configuring JPEG encoder", __func__);
     }
 
-    LOGD("%s: X", __func__); 
-#endif 
+    LOGD("%s: X", __func__);
+#endif
     return ret;
 }
 
@@ -605,8 +605,8 @@ scope */
       free(frame);*/
     error1:
     pme->cam->evt->buf_done(pme->cam, bufs);
-    mm_app_snapshot_done();   
-#endif 
+    mm_app_snapshot_done();
+#endif
     return;
 }
 
@@ -624,8 +624,8 @@ static void mm_app_raw_snapshot_notify_cb(mm_camera_super_buf_t *bufs,
     pme->cam->evt->buf_done(pme->cam, bufs);
     CDBG("%s: calling mm_app_snapshot_done()\n", __func__);
     mm_app_snapshot_done();
-    CDBG("%s: END\n", __func__); 
-#endif 
+    CDBG("%s: END\n", __func__);
+#endif
 }
 static int mm_app_reg_snapshot_data_cb(int cam_id, int is_reg)
 {
@@ -659,8 +659,8 @@ static int mm_app_reg_snapshot_data_cb(int cam_id, int is_reg)
         }
     }
     end:
-    CDBG("%s: END, rc=%d\n", __func__, rc); 
-#endif 
+    CDBG("%s: END, rc=%d\n", __func__, rc);
+#endif
     return rc;
 }
 static int mm_app_reg_raw_snapshot_data_cb(int cam_id, int is_reg)
@@ -694,8 +694,8 @@ static int mm_app_reg_raw_snapshot_data_cb(int cam_id, int is_reg)
         }
     }
     end:
-    CDBG("%s: END, rc=%d\n", __func__, rc); 
-#endif 
+    CDBG("%s: END, rc=%d\n", __func__, rc);
+#endif
     return rc;
 }
 
@@ -802,7 +802,7 @@ int mm_app_streamon_snapshot(int cam_id)
         goto end;
     }
 
-    if (MM_CAMERA_OK != (rc =pme->cam->ops->request_super_buf(pme->cam->camera_handle,pme->ch_id))) {
+    if (MM_CAMERA_OK != (rc =pme->cam->ops->request_super_buf(pme->cam->camera_handle,pme->ch_id, attr.burst_num))) {
         CDBG_ERROR("%s:request_super_buf err=%d\n", __func__, rc);
         goto end;
     }
@@ -853,7 +853,7 @@ int mm_app_start_snapshot(int cam_id)
 {
     int rc = MM_CAMERA_OK;
     int stream[2];
-    int op_mode = 0; 
+    int op_mode = 0;
     uint8_t initial_reg_flag;
     mm_camera_frame_len_offset frame_offset_info;
 
@@ -1268,7 +1268,7 @@ static void mm_app_live_notify_cb(mm_camera_super_buf_t *bufs,
     int i = 0;
     mm_camera_buf_def_t *main_frame = NULL;
     mm_camera_app_obj_t *pme = NULL;
-    CDBG("%s: BEGIN\n", __func__); 
+    CDBG("%s: BEGIN\n", __func__);
 
     pme = (mm_camera_app_obj_t *)user_data;
 
@@ -1284,15 +1284,15 @@ static void mm_app_live_notify_cb(mm_camera_super_buf_t *bufs,
     dumpFrameToFile(main_frame,pme->dim.picture_width,pme->dim.picture_height,"liveshot_main", 1);
 
     if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,main_frame)) {
-        CDBG_ERROR("%s: Failed in thumbnail Qbuf\n", __func__); 
+        CDBG_ERROR("%s: Failed in thumbnail Qbuf\n", __func__);
     }
     /*if(MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,thumb_frame))
     {
-            CDBG_ERROR("%s: Failed in thumbnail Qbuf\n", __func__); 
+            CDBG_ERROR("%s: Failed in thumbnail Qbuf\n", __func__);
     }*/
 
     mm_app_snapshot_done();
-    CDBG("%s: END\n", __func__); 
+    CDBG("%s: END\n", __func__);
 
 
 }
@@ -1374,14 +1374,14 @@ int mm_app_take_live_snapshot(int cam_id)
 
     CDBG("%s:BEGIN, cam_id=%d\n",__func__,cam_id);
 
-    if (pme->cam_mode == RECORDER_MODE && 
+    if (pme->cam_mode == RECORDER_MODE &&
         pme->cam_state == CAMERA_STATE_RECORD) {
         //Code to get live shot
         if (mm_app_prepare_live_snapshot(cam_id) != MM_CAMERA_OK) {
             CDBG_ERROR("%s: Failed prepare liveshot",__func__);
             return -1;
         }
-        if (MM_CAMERA_OK != (rc =pme->cam->ops->request_super_buf(pme->cam->camera_handle,pme->ch_id))) {
+        if (MM_CAMERA_OK != (rc =pme->cam->ops->request_super_buf(pme->cam->camera_handle,pme->ch_id, 1))) {
             CDBG_ERROR("%s:request_super_buf err=%d\n", __func__, rc);
             return -1;
         }
@@ -1408,7 +1408,7 @@ int mm_app_take_picture_zsl(int cam_id)
 
     CDBG("%s: Take picture ZSL",__func__);
 
-    if (MM_CAMERA_OK != (rc =pme->cam->ops->request_super_buf(pme->cam->camera_handle,pme->ch_id))) {
+    if (MM_CAMERA_OK != (rc =pme->cam->ops->request_super_buf(pme->cam->camera_handle,pme->ch_id, 1))) {
         CDBG_ERROR("%s:request_super_buf err=%d\n", __func__, rc);
         goto end;
     }
@@ -1428,7 +1428,7 @@ int mm_app_take_picture_yuv(int cam_id)
     CDBG("%s:BEGIN, cam_id=%d\n",__func__,cam_id);
 
     if (MM_CAMERA_OK != mm_app_start_snapshot(cam_id)) {
-        CDBG_ERROR("%s: cam_id=%d\n",__func__,cam_id);      
+        CDBG_ERROR("%s: cam_id=%d\n",__func__,cam_id);
         rc = -1;
         goto end;
     }
@@ -1473,7 +1473,7 @@ int mm_app_take_zsl(int cam_id)
         case CAMERA_STATE_SNAPSHOT:
         default:
             CDBG("%s: Cannot normal pciture in record mode\n", __func__);
-            break; 
+            break;
         }
     } else if (pme->cam_mode == CAMERA_MODE) {
         switch (pme->cam_state) {
@@ -1485,7 +1485,7 @@ int mm_app_take_zsl(int cam_id)
         case CAMERA_STATE_RECORD:
         default:
             CDBG("%s: Cannot normal pciture in record mode\n", __func__);
-            break; 
+            break;
         }
     }
 
@@ -1519,7 +1519,7 @@ int mm_app_take_picture(int cam_id)
         case CAMERA_STATE_SNAPSHOT:
         default:
             CDBG("%s: Cannot normal pciture in record mode\n", __func__);
-            break; 
+            break;
         }
     } else if (pme->cam_mode == ZSL_MODE) {
         switch (pme->cam_state) {
@@ -1531,7 +1531,7 @@ int mm_app_take_picture(int cam_id)
         case CAMERA_STATE_RECORD:
         default:
             CDBG("%s: Cannot normal pciture in record mode\n", __func__);
-            break; 
+            break;
         }
     }
 

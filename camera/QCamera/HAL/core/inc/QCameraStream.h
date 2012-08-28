@@ -21,12 +21,11 @@
 #define ANDROID_HARDWARE_QCAMERA_STREAM_H
 
 
-#include <utils/threads.h>
-
 #include <binder/MemoryBase.h>
 #include <binder/MemoryHeapBase.h>
-#include <utils/threads.h>
-
+//#include <utils/threads.h>
+#include <pthread.h>
+#include <semaphore.h>
 
 
 #include "QCameraHWI.h"
@@ -55,30 +54,25 @@ typedef struct snap_hdr_record_t_ {
     mm_camera_super_buf_t *recvd_frame[MAX_HDR_EXP_FRAME_NUM];
 } snap_hdr_record_t;
 
+typedef struct {
+    jpeg_job_status_t status;
+    uint8_t thumbnailDroppedFlag;
+    uint32_t client_hdl;
+    uint32_t jobId;
+    uint8_t* out_data;
+    uint32_t data_size;
+    mm_camera_super_buf_t* src_frame;
+} camera_jpeg_data_t;
+
+typedef struct {
+    mm_camera_super_buf_t* src_frame;
+    void* userdata;
+} camera_jpeg_encode_cookie_t;
+
+
 namespace android {
 
 class QCameraHardwareInterface;
-
-class StreamQueue {
-private:
-    Mutex mQueueLock;
-    Condition mQueueWait;
-    bool mInitialized;
-
-    //Vector<struct msm_frame *> mContainer;
-    Vector<void *> mContainer;
-public:
-    StreamQueue();
-    virtual ~StreamQueue();
-    bool enqueue(void *element);
-    void flush();
-    void* dequeue();
-    void init();
-    void deinit();
-    bool isInitialized();
-bool isEmpty();
-};
-
 
 class QCameraStream { //: public virtual RefBase
 
@@ -111,8 +105,8 @@ public:
 
     //static status_t     openChannel(mm_camera_t *, mm_camera_channel_type_t ch_type);
     void dataCallback(mm_camera_super_buf_t *bufs);
-    int32_t streamOn();
-    int32_t streamOff(bool aSync);
+    virtual int32_t streamOn();
+    virtual int32_t streamOff(bool aSync);
     virtual status_t    initStream(int no_cb_needed);
     virtual status_t    deinitStream();
     virtual void releaseRecordingFrame(const void *opaque)
@@ -145,9 +139,9 @@ public:
     virtual void resetSnapshotCounters(void ){};
     virtual void initHdrInfoForSnapshot(bool HDR_on, int number_frames, int *exp){};
     virtual void notifyHdrEvent(cam_ctrl_status_t status, void * cookie){};
-    virtual status_t receiveRawPicture(mm_camera_super_buf_t* recvd_frame){return NO_ERROR;};
-    virtual status_t encodeData(mm_camera_super_buf_t* recvd_frame){return NO_ERROR;};
-    virtual void receiveCompleteJpegPicture(uint8_t* out_data, uint32_t data_size){};
+    virtual status_t receiveRawPicture(mm_camera_super_buf_t* recvd_frame, uint32_t *jobId){return NO_ERROR;};
+    virtual status_t encodeData(mm_camera_super_buf_t* recvd_frame, uint32_t *jobId){return NO_ERROR;};
+    virtual void receiveCompleteJpegPicture(uint32_t jobId, uint8_t* out_data, uint32_t data_size){};
     QCameraStream();
     QCameraStream(uint32_t CameraHandle,
                         uint32_t ChannelId,
@@ -160,14 +154,11 @@ public:
                         camera_mode_t mode);
     virtual             ~QCameraStream();
     QCameraHardwareInterface*  mHalCamCtrl;
-    mm_camera_rect_t mCrop;
+    image_crop_t mCrop;
 
     camera_mode_t myMode;
 
     mutable Mutex mStopCallbackLock;
-private:
-   StreamQueue mBusyQueue;
-   StreamQueue mFreeQueue;
 public:
 //     friend void liveshot_callback(mm_camera_ch_data_buf_t *frame,void *user_data);
 };
@@ -374,8 +365,8 @@ public:
     void        initHdrInfoForSnapshot(bool HDR_on, int number_frames, int *exp);
     void        notifyHdrEvent(cam_ctrl_status_t status, void * cookie);
     static void            deleteInstance(QCameraStream *p);
-    status_t receiveRawPicture(mm_camera_super_buf_t* recvd_frame);
-    void receiveCompleteJpegPicture(uint8_t* out_data, uint32_t data_size);
+    status_t receiveRawPicture(mm_camera_super_buf_t* recvd_frame, uint32_t *jobId);
+    void receiveCompleteJpegPicture(camera_jpeg_data_t* jpeg_data);
     mm_camera_buf_def_t mSnapshotStreamBuf[MM_CAMERA_MAX_NUM_FRAMES];
     static QCameraStream* createInstance(uint32_t CameraHandle,
                         uint32_t ChannelId,
@@ -399,17 +390,12 @@ public:
 
 private:
     status_t doHdrProcessing();
-    status_t encodeData(mm_camera_super_buf_t* recvd_frame);
+    status_t encodeData(mm_camera_super_buf_t* recvd_frame, uint32_t *jobId);
     void notifyShutter(bool play_shutter_sound);
 
     /*Member variables*/
     snap_hdr_record_t    mHdrInfo;
-    mm_jpeg_ops_t mJpegHandle;
-    uint32_t mJpegClientHandle;
     int mSnapshotState;
-    StreamQueue mSnapshotQueue;
-    mm_camera_super_buf_t *mCurrentFrameEncoded;
-    uint32_t jpeg_jobId;
 };
 
 class QCameraStream_SnapshotThumbnail : public QCameraStream {

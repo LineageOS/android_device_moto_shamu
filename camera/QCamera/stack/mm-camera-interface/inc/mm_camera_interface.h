@@ -255,11 +255,11 @@ typedef struct {
                                  mm_camera_parm_type_t parm_type,
                                  uint8_t *support_set_parm,
                                  uint8_t *support_get_parm);
-    /* set a parm’s current value */
+    /* set a parm current value */
     int32_t (*set_parm) (uint32_t camera_handle,
                          mm_camera_parm_type_t parm_type,
                          void* p_value);
-    /* get a parm’s current value */
+    /* get a parm current value */
     int32_t (*get_parm) (uint32_t camera_handle,
                          mm_camera_parm_type_t parm_type,
                          void* p_value);
@@ -282,7 +282,7 @@ typedef struct {
     int32_t (*config_stream) (uint32_t camera_handle, uint32_t ch_id,
                               uint32_t stream_id,
                               mm_camera_stream_config_t *config);
-    /* setup super buf bundle for ZSL */
+    /* setup super buf bundle for ZSL(with burst mode) or other use cases */
     int32_t (*init_stream_bundle) (uint32_t camera_handle, uint32_t ch_id,
                                    mm_camera_buf_notify_t super_frame_notify_cb,
                                    void *user_data,  mm_camera_bundle_attr_t *attr,
@@ -299,7 +299,9 @@ typedef struct {
     int32_t (*async_teardown_streams) (uint32_t camera_handle, uint32_t ch_id,
                                        uint8_t num_streams, uint32_t *stream_ids);
     /* get super bufs. for burst mode only */
-    int32_t (*request_super_buf) (uint32_t camera_handle, uint32_t ch_id);
+    int32_t (*request_super_buf) (uint32_t camera_handle,
+                                  uint32_t ch_id,
+                                  uint32_t num_buf_requested);
     /* abort the super buf dispatching. for burst mode only  */
     int32_t (*cancel_super_buf_request) (uint32_t camera_handle,
                                          uint32_t ch_id);
@@ -335,11 +337,11 @@ typedef struct {
                              uint32_t cmd_id,
                              uint32_t cmd_length,
                              void *cmd);
-    /* open a re-process isp */
-    int32_t (*open_repro_isp) (uint32_t camera_handle,
+    /* open a re-process isp, return handler for repro isp (>0).
+     * if failed, reutrn 0 */
+    uint32_t (*open_repro_isp) (uint32_t camera_handle,
                                uint32_t ch_id,
-                               mm_camera_repro_isp_type_t repro_isp_type,
-                               uint32_t *repro_isp_handle);
+                               mm_camera_repro_isp_type_t repro_isp_type);
     /* config the re-process isp */
     int32_t (*config_repro_isp) (uint32_t camera_handle,
                                  uint32_t ch_id,

@@ -38,8 +38,248 @@ namespace android {
 
 extern void stream_cb_routine(mm_camera_super_buf_t *bufs,
                        void *userdata);
-extern void superbuf_cb_routine(mm_camera_super_buf_t *bufs,
-                       void *userdata);
+
+void QCameraHardwareInterface::superbuf_cb_routine(mm_camera_super_buf_t *recvd_frame, void *userdata)
+{
+    ALOGE("%s: E",__func__);
+    QCameraHardwareInterface *pme = (QCameraHardwareInterface *)userdata;
+    if(pme == NULL){
+       ALOGE("%s: pme is null", __func__);
+       return;
+    }
+
+    mm_camera_super_buf_t* frame =
+           (mm_camera_super_buf_t *)malloc(sizeof(mm_camera_super_buf_t));
+    if (frame == NULL) {
+        ALOGE("%s: Error allocating memory to save received_frame structure.", __func__);
+        for (int i=0; i<recvd_frame->num_bufs; i++) {
+             if (recvd_frame->bufs[i] != NULL) {
+                 pme->mCameraHandle->ops->qbuf(recvd_frame->camera_handle,
+                                               recvd_frame->ch_id,
+                                               recvd_frame->bufs[i]);
+             }
+        }
+        return;
+    }
+    memcpy(frame, recvd_frame, sizeof(mm_camera_super_buf_t));
+
+    /* enqueu to superbuf queue */
+    pme->mSuperBufQueue.enqueue(frame);
+
+    /* notify dataNotify thread that new super buf is avail
+     * check if it's done with current JPEG notification and
+     * a new encoding job could be conducted*/
+    pme->mNotifyTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB);
+
+   ALOGE("%s: X", __func__);
+
+}
+
+void QCameraHardwareInterface::snapshot_jpeg_cb(jpeg_job_status_t status,
+                             uint8_t thumbnailDroppedFlag,
+                             uint32_t client_hdl,
+                             uint32_t jobId,
+                             uint8_t* out_data,
+                             uint32_t data_size,
+                             void *userdata)
+{
+    ALOGE("%s: E", __func__);
+    camera_jpeg_encode_cookie_t *cookie =
+        (camera_jpeg_encode_cookie_t *)userdata;
+    if(cookie == NULL){
+       ALOGE("%s: userdata is null", __func__);
+       return;
+    }
+    QCameraHardwareInterface *pme = (QCameraHardwareInterface *)cookie->userdata;
+    if(pme == NULL){
+       ALOGE("%s: pme is null", __func__);
+       return;
+    }
+
+    camera_jpeg_data_t * jpeg_data =
+        (camera_jpeg_data_t *)malloc(sizeof(camera_jpeg_data_t));
+    if (NULL == jpeg_data) {
+        ALOGE("%s: ERROR: no mem for jpeg_data", __func__);
+        /* buf done */
+        if (cookie->src_frame != NULL) {
+            for (int i=0; i<cookie->src_frame->num_bufs; i++) {
+                 if (cookie->src_frame->bufs[i] != NULL) {
+                     pme->mCameraHandle->ops->qbuf(cookie->src_frame->camera_handle,
+                                                   cookie->src_frame->ch_id,
+                                                   cookie->src_frame->bufs[i]);
+                 }
+            }
+        }
+        /* free sink frame */
+        free(out_data);
+        return;
+    }
+
+    jpeg_data->client_hdl = client_hdl;
+    jpeg_data->data_size = data_size;
+    jpeg_data->jobId = jobId;
+    jpeg_data->out_data = out_data;
+    jpeg_data->src_frame = cookie->src_frame;
+    jpeg_data->status = status;
+    jpeg_data->thumbnailDroppedFlag = thumbnailDroppedFlag;
+
+    /* enqueue jpeg_data into jpeg data queue */
+    pme->mJpegDataQueue.enqueue((void *)jpeg_data);
+
+    /* notify thread to process */
+    pme->mNotifyTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB);
+
+    free(cookie);
+
+    ALOGE("%s: X", __func__);
+}
+
+void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
+{
+    int running = 1;
+    int ret;
+    QCameraHardwareInterface *pme = (QCameraHardwareInterface *)data;
+    QCameraCmdThread *cmdThread = pme->mNotifyTh;
+
+    ALOGD("%s: E", __func__);
+    do {
+        do {
+            ret = sem_wait(&cmdThread->cmd_sem);
+            if (ret != 0 && errno != EINVAL) {
+                ALOGE("%s: sem_wait error (%s)",
+                           __func__, strerror(errno));
+                return NULL;
+            }
+        } while (ret != 0);
+
+        /* we got notified about new cmd avail in cmd queue */
+        camera_cmd_type_t cmd = cmdThread->getCmd();
+        ALOGD("%s: get cmd %d", __func__, cmd);
+        switch (cmd) {
+        case CAMERA_CMD_TYPE_DO_NEXT_JOB:
+            {
+                /* first check if there is any pending jpeg notify */
+                camera_jpeg_data_t *jpeg_data =
+                    (camera_jpeg_data_t *)pme->mJpegDataQueue.dequeue();
+                if (NULL != jpeg_data) {
+                    QCameraStream_SnapshotMain *mainStream =
+                        (QCameraStream_SnapshotMain *)pme->mStreamSnapMain;
+                    if (mainStream != NULL) {
+                        mainStream->receiveCompleteJpegPicture(jpeg_data);
+                    }
+                    /* free jpeg_data */
+                    if (jpeg_data->src_frame != NULL) {
+                        for(int i = 0; i< jpeg_data->src_frame->num_bufs; i++) {
+                            if(MM_CAMERA_OK !=
+                               pme->mCameraHandle->ops->qbuf(jpeg_data->src_frame->camera_handle,
+                                                             jpeg_data->src_frame->ch_id,
+                                                             jpeg_data->src_frame->bufs[i])){
+                                    ALOGE("%s : Buf done failed for buffer[%d]", __func__, i);
+                            }
+
+                        }
+                        free(jpeg_data->src_frame);
+                        jpeg_data->src_frame = NULL;
+                    }
+                    if (jpeg_data->out_data != NULL) {
+                        free(jpeg_data->out_data);
+                        jpeg_data->out_data = NULL;
+                    }
+                    free(jpeg_data);
+                }
+
+                /* notify processData thread to do next encoding job */
+                pme->mDataProcTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB);
+            }
+            break;
+        case CAMERA_CMD_TYPE_EXIT:
+            /* flush jpeg data queue */
+            pme->mJpegDataQueue.flush();
+            running = 0;
+            break;
+        default:
+            break;
+        }
+    } while (running);
+    ALOGD("%s: X", __func__);
+    return NULL;
+}
+
+void *QCameraHardwareInterface::dataProcessRoutine(void *data)
+{
+    int running = 1;
+    int ret;
+    uint8_t is_active = FALSE;
+    QCameraHardwareInterface *pme = (QCameraHardwareInterface *)data;
+    QCameraCmdThread *cmdThread = pme->mDataProcTh;
+    uint32_t current_jobId = 0;
+
+    ALOGD("%s: E", __func__);
+    do {
+        do {
+            ret = sem_wait(&cmdThread->cmd_sem);
+            if (ret != 0 && errno != EINVAL) {
+                ALOGE("%s: sem_wait error (%s)",
+                           __func__, strerror(errno));
+                return NULL;
+            }
+        } while (ret != 0);
+
+        /* we got notified about new cmd avail in cmd queue */
+        camera_cmd_type_t cmd = cmdThread->getCmd();
+        ALOGD("%s: get cmd %d", __func__, cmd);
+        switch (cmd) {
+        case CAMERA_CMD_TYPE_START_DATA_PROC:
+            is_active = TRUE;
+            break;
+        case CAMERA_CMD_TYPE_STOP_DATA_PROC:
+            is_active = FALSE;
+            /* abort current job if it's running */
+            if (current_jobId > 0) {
+                pme->mJpegHandle.abort_job(pme->mJpegClientHandle, current_jobId);
+                current_jobId = 0;
+            }
+            break;
+        case CAMERA_CMD_TYPE_DO_NEXT_JOB:
+            {
+                ALOGD("%s: active is %d", __func__, is_active);
+                if (is_active == TRUE) {
+                    /* first check if there is any pending jpeg notify */
+                    mm_camera_super_buf_t *super_buf =
+                        (mm_camera_super_buf_t *)pme->mSuperBufQueue.dequeue();
+                    if (NULL != super_buf) {
+                        QCameraStream_SnapshotMain *mainStream =
+                            (QCameraStream_SnapshotMain *)pme->mStreamSnapMain;
+                        if (mainStream != NULL) {
+                            mainStream->receiveRawPicture(super_buf, &current_jobId);
+                        } else {
+                            for(int i = 0; i< super_buf->num_bufs; i++) {
+                                if(MM_CAMERA_OK !=
+                                   pme->mCameraHandle->ops->qbuf(super_buf->camera_handle,
+                                                                 super_buf->ch_id,
+                                                                 super_buf->bufs[i])){
+                                        ALOGE("%s : Buf done failed for buffer[%d]", __func__, i);
+                                }
+
+                            }
+                            free(super_buf);
+                        }
+                    }
+                }
+            }
+            break;
+        case CAMERA_CMD_TYPE_EXIT:
+            /* flush super buf queue */
+            pme->mSuperBufQueue.flush();
+            running = 0;
+            break;
+        default:
+            break;
+        }
+    } while (running);
+    ALOGD("%s: X", __func__);
+    return NULL;
+}
 
 static void HAL_event_cb(uint32_t camera_handle, mm_camera_event_t *evt, void *user_data)
 {
@@ -558,6 +798,30 @@ QCameraHardwareInterface(int cameraId, int mode)
         ALOGE("%s X: Failed to create Record Object",__func__);
         return;
     }
+
+    memset(&mJpegHandle, 0, sizeof(mJpegHandle));
+    mJpegClientHandle = jpeg_open(&mJpegHandle);
+    if(!mJpegClientHandle) {
+        ALOGE("%s : jpeg_open did not work", __func__);
+        return;
+    }
+
+    /* launch jpeg notify thread and raw data proc thread */
+    mNotifyTh = new QCameraCmdThread();
+    if (mNotifyTh != NULL) {
+        mNotifyTh->launch(dataNotifyRoutine, this);
+    } else {
+        ALOGE("%s : no mem for mNotifyTh", __func__);
+        return;
+    }
+    mDataProcTh = new QCameraCmdThread();
+    if (mDataProcTh != NULL) {
+        mDataProcTh->launch(dataProcessRoutine, this);
+    } else {
+        ALOGE("%s : no mem for mDataProcTh", __func__);
+        return;
+    }
+
     mCameraState = CAMERA_STATE_READY;
 
     ALOGI("QCameraHardwareInterface: X");
@@ -605,6 +869,34 @@ QCameraHardwareInterface::~QCameraHardwareInterface()
     if(mStreamRecord) {
         QCameraStream_record::deleteInstance (mStreamRecord);
         mStreamRecord = NULL;
+    }
+    if(mStreamSnapMain){
+        QCameraStream_SnapshotMain::deleteInstance (mStreamSnapMain);
+        mStreamSnapMain = NULL;
+    }
+    if(mStreamSnapThumb){
+        QCameraStream_SnapshotThumbnail::deleteInstance (mStreamSnapThumb);
+        mStreamSnapThumb = NULL;
+    }
+
+    int rc = 0;
+    if(mJpegClientHandle > 0) {
+        rc = mJpegHandle.close(mJpegClientHandle);
+        ALOGE("%s: Jpeg closed, rc = %d, mJpegClientHandle = %x",
+              __func__, rc, mJpegClientHandle);
+        mJpegClientHandle = 0;
+        memset(&mJpegHandle, 0, sizeof(mJpegHandle));
+    }
+
+    if (mNotifyTh != NULL) {
+        mNotifyTh->exit();
+        delete mNotifyTh;
+        mNotifyTh = NULL;
+    }
+    if (mDataProcTh != NULL) {
+        mDataProcTh->exit();
+        delete mDataProcTh;
+        mDataProcTh = NULL;
     }
 
     mCameraHandle->ops->ch_release(mCameraHandle->camera_handle,
@@ -1311,6 +1603,7 @@ status_t QCameraHardwareInterface::startPreview()
 
     ALOGE("%s: mPreviewState =%d", __func__, mPreviewState);
     Mutex::Autolock lock(mLock);
+
     switch(mPreviewState) {
     case QCAMERA_HAL_PREVIEW_STOPPED:
     case QCAMERA_HAL_TAKE_PICTURE:
@@ -1356,7 +1649,6 @@ status_t QCameraHardwareInterface::startPreview2()
     mm_camera_dimension_t maxDim;
     uint32_t stream[2];
     mm_camera_bundle_attr_t attr;
-    bool initPreview = false;
 
     if (mPreviewState == QCAMERA_HAL_PREVIEW_STARTED) { //isPreviewRunning()){
         ALOGE("%s:Preview already started  mCameraState = %d!", __func__, mCameraState);
@@ -1365,7 +1657,7 @@ status_t QCameraHardwareInterface::startPreview2()
     }
 
     /* config the parmeters and see if we need to re-init the stream*/
-    initPreview = setDimension();
+    ret = setDimension();
     if (MM_CAMERA_OK != ret) {
       ALOGE("%s: error - can't Set Dimensions!", __func__);
       return BAD_VALUE;
@@ -1374,7 +1666,7 @@ status_t QCameraHardwareInterface::startPreview2()
     mStreamDisplay->setMode(myMode & CAMERA_ZSL_MODE);
     mStreamSnapMain->setMode(myMode & CAMERA_ZSL_MODE);
     mStreamRecord->setMode(myMode & CAMERA_ZSL_MODE);
-//    mStreamRdi->setMode(myMode & CAMERA_ZSL_MODE);
+    //mStreamRdi->setMode(myMode & CAMERA_ZSL_MODE);
     ALOGE("%s: myMode = %d", __func__, myMode);
 
     ALOGE("%s: setPreviewWindow", __func__);
@@ -1391,9 +1683,8 @@ status_t QCameraHardwareInterface::startPreview2()
                              MM_CAMERA_PARM_OP_MODE,
                              &op_mode);
         ALOGE("OP Mode Set");
-        //createSnapshot();
         /* Start preview streaming */
-    /*now init all the buffers and send to steam object*/
+        /*now init all the buffers and send to steam object*/
         ret = mStreamDisplay->initStream(0);
         if (MM_CAMERA_OK != ret){
             ALOGE("%s: error - can't init Preview channel!", __func__);
@@ -1407,24 +1698,18 @@ status_t QCameraHardwareInterface::startPreview2()
             mStreamDisplay->deinitStream();
             return BAD_VALUE;
         }
-#if 0
-        ret =  mStreamSnapThumb->initStream(1);
-        if (MM_CAMERA_OK != ret){
-            ALOGE("%s: error - can't init Snapshot stream!", __func__);
-            mStreamSnapMain->deinitStream();
-            mStreamDisplay->deinitStream();
-            return BAD_VALUE;
-        }
-#endif
 
         stream[0]=mStreamDisplay->mStreamId;
         stream[1]=mStreamSnapMain->mStreamId;
 
-	attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_BURST;
-	attr.burst_num = 1;
-	attr.look_back = 2;
-	attr.post_frame_skip = 0;
-	attr.water_mark = 2;
+        attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_BURST;
+        attr.burst_num = getNumOfSnapshots();
+        attr.look_back = getZSLBackLookCount();
+        attr.post_frame_skip = getZSLBurstInterval();
+        attr.water_mark = getZSLQueueDepth();
+        ALOGE("%s: burst_num=%d, look_back=%d, frame_skip=%d, water_mark=%d",
+              __func__, attr.burst_num, attr.look_back,
+              attr.post_frame_skip, attr.water_mark);
 
         ret = mCameraHandle->ops->init_stream_bundle(
                   mCameraHandle->camera_handle,
@@ -1436,75 +1721,79 @@ status_t QCameraHardwareInterface::startPreview2()
                   stream);
         if (MM_CAMERA_OK != ret){
             ALOGE("%s: error - can't init zsl preview streams!", __func__);
+            mStreamDisplay->deinitStream();
+            mStreamSnapMain->deinitStream();
             return BAD_VALUE;
         }
-        mStreamDisplay->mActive=true;
-        mStreamSnapMain->mActive=true;
-        ret = mCameraHandle->ops->start_streams(
-                  mCameraHandle->camera_handle,
-                  mChannelId,
-                  2,
-                  stream);
+
+        ret = mStreamDisplay->streamOn();
         if (MM_CAMERA_OK != ret){
-            ALOGE("%s: error - can't start Snapshot streams!", __func__);
-            mStreamDisplay->mActive=false;
-            mStreamSnapMain->mActive=false;
+            ALOGE("%s: error - can't start preview stream!", __func__);
+            mStreamDisplay->deinitStream();
+            mStreamSnapMain->deinitStream();
             return BAD_VALUE;
         }
 
+        ret = mStreamSnapMain->streamOn();
+        if (MM_CAMERA_OK != ret){
+            ALOGE("%s: error - can't start snapshot stream!", __func__);
+            mStreamDisplay->streamOff(0);
+            mStreamDisplay->deinitStream();
+            mStreamSnapMain->deinitStream();
+            return BAD_VALUE;
+        }
     }else{
-    /*now init all the buffers and send to steam object*/
-            ALOGE("Setting OP MODE to MM_CAMERA_OP_MODE_VIDEO");
-            mm_camera_op_mode_type_t op_mode=MM_CAMERA_OP_MODE_VIDEO;
-            ret = mCameraHandle->ops->set_parm(
-                             mCameraHandle->camera_handle,
-                             MM_CAMERA_PARM_OP_MODE,
-                             &op_mode);
-            ALOGE("OP Mode Set");
+        /*now init all the buffers and send to steam object*/
+        ALOGE("Setting OP MODE to MM_CAMERA_OP_MODE_VIDEO");
+        mm_camera_op_mode_type_t op_mode=MM_CAMERA_OP_MODE_VIDEO;
+        ret = mCameraHandle->ops->set_parm(
+                         mCameraHandle->camera_handle,
+                         MM_CAMERA_PARM_OP_MODE,
+                         &op_mode);
+        ALOGE("OP Mode Set");
 
+        if (MM_CAMERA_OK != ret){
+            ALOGE("%s: X :set mode MM_CAMERA_OP_MODE_VIDEO err=%d\n", __func__, ret);
+            return BAD_VALUE;
+        }
+        /*now init all the buffers and send to steam object*/
+        ret = mStreamDisplay->initStream(0);
+        ALOGE("%s : called initStream from Preview and ret = %d", __func__, ret);
+        if (MM_CAMERA_OK != ret){
+            ALOGE("%s: error - can't init Preview channel!", __func__);
+            return BAD_VALUE;
+        }
+        if(mRecordingHint == true) {
+            ret = mStreamRecord->initStream(0);
             if (MM_CAMERA_OK != ret){
-                ALOGE("%s: X :set mode MM_CAMERA_OP_MODE_VIDEO err=%d\n", __func__, ret);
-                return BAD_VALUE;
+                 ALOGE("%s: error - can't init Record channel!", __func__);
+                 mStreamDisplay->deinitStream();
+                 return BAD_VALUE;
             }
-    /*now init all the buffers and send to steam object*/
-            ret = mStreamDisplay->initStream(0);
-            ALOGE("%s : called initStream from Preview and ret = %d", __func__, ret);
+
+            //createSnapshot();
+            ret = mStreamSnapMain->initStream(1);
             if (MM_CAMERA_OK != ret){
-                ALOGE("%s: error - can't init Preview channel!", __func__);
-                return BAD_VALUE;
+                 ALOGE("%s: error - can't init Snapshot Main!", __func__);
+                 mStreamDisplay->deinitStream();
+                 mStreamRecord->deinitStream();
+                 return BAD_VALUE;
             }
-            if(mRecordingHint == true) {
-                ret = mStreamRecord->initStream(0);
-                if (MM_CAMERA_OK != ret){
-                     ALOGE("%s: error - can't init Record channel!", __func__);
-                     return BAD_VALUE;
-                }
 
-                //createSnapshot();
-                ret = mStreamSnapMain->initStream(1);
-                if (MM_CAMERA_OK != ret){
-                     ALOGE("%s: error - can't init Snapshot Main!", __func__);
-                     return BAD_VALUE;
-                }
-
+        }
+        ret = mStreamDisplay->streamOn();
+        if (MM_CAMERA_OK != ret){
+            ALOGE("%s: error - can't start preview stream!", __func__);
+            if (mRecordingHint == true) {
+                mStreamSnapMain->deinitStream();
+                mStreamRecord->deinitStream();
+                mStreamDisplay->deinitStream();
             }
-            ret = mStreamDisplay->streamOn();
+            return BAD_VALUE;
+        }
     }
 
-    /*call QCameraStream_noneZSL::start() */
-    if (MM_CAMERA_OK != ret){
-      ALOGE("%s: X error - can't start stream!", __func__);
-      return BAD_VALUE;
-    }
-    if(MM_CAMERA_OK == ret)
-        mCameraState = CAMERA_STATE_PREVIEW_START_CMD_SENT;
-    else
-        mCameraState = CAMERA_STATE_ERROR;
-
-    if(mPostPreviewHeap != NULL) {
-        mPostPreviewHeap.clear();
-        mPostPreviewHeap = NULL;
-    }
+    mCameraState = CAMERA_STATE_PREVIEW_START_CMD_SENT;
 
     ALOGI("startPreview: X");
     return ret;
@@ -1841,6 +2130,9 @@ status_t QCameraHardwareInterface::cancelPicture()
     status_t ret = MM_CAMERA_OK;
     Mutex::Autolock lock(mLock);
 
+    /* set rawdata proc thread and jpeg notify thread to active state */
+    mDataProcTh->sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC);
+
     switch(mPreviewState) {
         case QCAMERA_HAL_PREVIEW_STOPPED:
         case QCAMERA_HAL_PREVIEW_START:
@@ -2026,175 +2318,132 @@ status_t  QCameraHardwareInterface::takePicture()
     mm_camera_op_mode_type_t op_mode=MM_CAMERA_OP_MODE_CAPTURE;
     Mutex::Autolock lock(mLock);
 
-    //added to support hdr
-    bool hdr;
-    int frm_num = 1;
-    int exp[MAX_HDR_EXP_FRAME_NUM];
-    hdr = getHdrInfoAndSetExp(MAX_HDR_EXP_FRAME_NUM, &frm_num, exp);
-    ALOGE("%s : frm_num right before hardcoding = %d, mPreviewState=%d", __func__, frm_num, mPreviewState);
-    //just to check if we get hdr callbacks
-    //hdr = true;
-    frm_num = 3;
-//    mStreamSnap->resetSnapshotCounters( );
-    //ALOGE("%s : just before calling initHdrInfoForSnapshot", __func__);
-    //mStreamSnapMain->initHdrInfoForSnapshot(hdr, frm_num, exp); // - for hdr figure out equivalent of mStreamSnap
+    /* set rawdata proc thread and jpeg notify thread to active state */
+    mDataProcTh->sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC);
+
     switch(mPreviewState) {
     case QCAMERA_HAL_PREVIEW_STARTED:
-        //mStreamSnap->setFullSizeLiveshot(false);
-        if (isZSLMode()) {
-#if 0
-            if (mStreamSnap != NULL) {
-                pausePreviewForZSL();
-                ret = mStreamSnap->takePictureZSL();
-                if (ret != MM_CAMERA_OK) {
-                    ALOGE("%s: Error taking ZSL snapshot!", __func__);
-                    ret = BAD_VALUE;
+        {
+            if (isZSLMode()) {
+                ALOGE("ZSL: takePicture");
+
+                ret = mCameraHandle->ops->request_super_buf(
+                          mCameraHandle->camera_handle,
+                          mChannelId,
+                          getNumOfSnapshots());
+                if (MM_CAMERA_OK != ret){
+                    ALOGE("%s: error - can't start Snapshot streams!", __func__);
+                    return BAD_VALUE;
                 }
+                return ret;
             }
-            else {
-                ALOGE("%s: ZSL stream not active! Failure!!", __func__);
-                ret = BAD_VALUE;
+
+            /* stop preview */
+            pausePreviewForSnapshot();
+            /*Currently concurrent streaming is not enabled for snapshot
+            So in snapshot mode, we turn of the RDI channel and configure backend
+            for only pixel stream*/
+
+            /*prepare snapshot, e.g LED*/
+            takePicturePrepareHardware( );
+            /* There's an issue where we have a glimpse of corrupted data between
+               a time we stop a preview and display the postview. It happens because
+               when we call stopPreview we deallocate the preview buffers hence overlay
+               displays garbage value till we enqueue postview buffer to be displayed.
+               Hence for temporary fix, we'll do memcopy of the last frame displayed and
+               queue it to overlay*/
+
+            op_mode=MM_CAMERA_OP_MODE_CAPTURE;
+            ret = mCameraHandle->ops->set_parm(mCameraHandle->camera_handle, MM_CAMERA_PARM_OP_MODE, &op_mode);
+
+            if(MM_CAMERA_OK != ret) {
+                ALOGE("%s: X :set mode MM_CAMERA_OP_MODE_CAPTURE err=%d\n", __func__, ret);
+                return BAD_VALUE;
             }
-            return ret;
-#endif
-        ALOGE("ZSL: takePicture");
-        ret = mCameraHandle->ops->request_super_buf(
-                  mCameraHandle->camera_handle,
-                  mChannelId);
-        if (MM_CAMERA_OK != ret){
-            ALOGE("%s: error - can't start Snapshot streams!", __func__);
-            return BAD_VALUE;
-        }
-        return ret;
 
-        }
+            ALOGE("OP Mode Capture Set");
 
-        /* stop preview */
-        pausePreviewForSnapshot();
-        /*Currently concurrent streaming is not enabled for snapshot
-        So in snapshot mode, we turn of the RDI channel and configure backend
-        for only pixel stream*/
+            mStreamSnapMain->initStream(1);
+            if (NO_ERROR!=ret) {
+                ALOGE("%s E: can't init native camera snapshot main ch\n",__func__);
+                return ret;
+            }
+            mStreamSnapThumb->initStream(1);
+            if (NO_ERROR!=ret) {
+                ALOGE("%s E: can't init native camera snapshot thumb ch\n",__func__);
+                return ret;
+            }
 
-        /*prepare snapshot, e.g LED*/
+            stream[0]=mStreamSnapMain->mStreamId;
+            stream[1]=mStreamSnapThumb->mStreamId;
 
+            //added to support hdr
+            bool hdr;
+            int frm_num = 1;
+            int exp[MAX_HDR_EXP_FRAME_NUM];
+            hdr = getHdrInfoAndSetExp(MAX_HDR_EXP_FRAME_NUM, &frm_num, exp);
+            mStreamSnapMain->initHdrInfoForSnapshot(hdr, frm_num, exp); // - for hdr figure out equivalent of mStreamSnap
+            ALOGE("%s : just after calling initHdrInfoForSnapshot, frm_num=%d", __func__, frm_num);
+            attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
+            if(hdr) {
+                ALOGE("%s in hdr mode, burst_num will be set to %d", __func__, frm_num);
+                attr.burst_num = frm_num;
+            } else{
+                attr.burst_num = 1;
+            }
+            attr.look_back = 2;
+            attr.post_frame_skip = 0;
+            attr.water_mark = 2;
 
-
-        takePicturePrepareHardware( );
-        /* There's an issue where we have a glimpse of corrupted data between
-           a time we stop a preview and display the postview. It happens because
-           when we call stopPreview we deallocate the preview buffers hence overlay
-           displays garbage value till we enqueue postview buffer to be displayed.
-           Hence for temporary fix, we'll do memcopy of the last frame displayed and
-           queue it to overlay*/
-
-        //createSnapshot();
-
-
-        op_mode=MM_CAMERA_OP_MODE_CAPTURE;
-        ret = mCameraHandle->ops->set_parm (mCameraHandle->camera_handle, MM_CAMERA_PARM_OP_MODE, &op_mode);
-
-        if(MM_CAMERA_OK != ret) {
-            ALOGE("%s: X :set mode MM_CAMERA_OP_MODE_CAPTURE err=%d\n", __func__, ret);
-            return BAD_VALUE;
-        }
-
-        ALOGE("OP Mode Capture Set");
-
-        mStreamSnapMain->initStream(1);
-        if (NO_ERROR!=ret) {
-            ALOGE("%s E: can't init native camera snapshot main ch\n",__func__);
-            return ret;
-        }
-        mStreamSnapThumb->initStream(1);
-        if (NO_ERROR!=ret) {
-            ALOGE("%s E: can't init native camera snapshot thumb ch\n",__func__);
-            return ret;
-        }
-
-        stream[0]=mStreamSnapMain->mStreamId;
-        stream[1]=mStreamSnapThumb->mStreamId;
-
-        mStreamSnapMain->initHdrInfoForSnapshot(hdr, frm_num, exp); // - for hdr figure out equivalent of mStreamSnap
-        ALOGE("%s : just after calling initHdrInfoForSnapshot", __func__);
-        attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_BURST;
-        if(hdr) {
-            ALOGE("%s in hdr mode, burst_num will be set to %d", __func__, frm_num);
-            attr.burst_num = frm_num;
-        } else{
-            attr.burst_num = 1;
-        }
-    	attr.look_back = 2;
-    	attr.post_frame_skip = 0;
-    	attr.water_mark = 2;
-            // mzhu storePreviewFrameForPostview();
-
-#if 0
-        if (mChannelInterfaceMask != STREAM_IMAGE) {
-          stream_info = STREAM_IMAGE;
-          mCameraHandle->ops->set_parm(mCameraHandle->camera_handle,
-            MM_CAMERA_PARM_CH_INTERFACE, &stream_info);
-          mCameraHandle->ops->get_parm(mCameraHandle->camera_handle,
-            MM_CAMERA_PARM_CH_INTERFACE, &stream_info);
-          setChannelInterface(stream_info);
-        }
-#endif
-        /* call Snapshot start() :*/
-        ret = mCameraHandle->ops->init_stream_bundle(
-                  mCameraHandle->camera_handle,
-                  mChannelId,
-                  superbuf_cb_routine,
-                  this,
-                  &attr,
-                  2,
-                  stream);
-        ALOGE("%s : just after calling suberbuf_cb_routine, ret = %d", __func__, ret);
-        if (MM_CAMERA_OK != ret){
-            ALOGE("%s: error - can't init Snapshot streams!", __func__);
-            return BAD_VALUE;
-        }
-        ret = mCameraHandle->ops->start_streams(
-                  mCameraHandle->camera_handle,
-                  mChannelId,
-                  2,
-                  stream);
-        if (MM_CAMERA_OK != ret){
-            ALOGE("%s: error - can't start Snapshot streams!", __func__);
-            return BAD_VALUE;
-        }
-        mStreamSnapMain->mActive = true;
-        mStreamSnapThumb->mActive = true;
-        ALOGE("%s: started bundle", __func__);
-        ret = mCameraHandle->ops->request_super_buf(
-                  mCameraHandle->camera_handle,
-                  mChannelId);
-        if (MM_CAMERA_OK != ret){
-            ALOGE("%s: error - can't start Snapshot streams!", __func__);
-            return BAD_VALUE;
-        }
-
-
-        if(MM_CAMERA_OK == ret)
+            ALOGE("%s : just before calling superbuf_cb_routine", __func__);
+            ret = mCameraHandle->ops->init_stream_bundle(
+                      mCameraHandle->camera_handle,
+                      mChannelId,
+                      superbuf_cb_routine,
+                      this,
+                      &attr,
+                      2,
+                      stream);
+            ALOGE("%s : just after calling suberbuf_cb_routine, ret = %d", __func__, ret);
+            if (MM_CAMERA_OK != ret){
+                ALOGE("%s: error - can't init Snapshot streams!", __func__);
+                return BAD_VALUE;
+            }
+            ret = mStreamSnapMain->streamOn();
+            if (MM_CAMERA_OK != ret){
+                ALOGE("%s: error - can't start Snapshot streams!", __func__);
+                mStreamSnapMain->deinitStream();
+                mStreamSnapThumb->deinitStream();
+                return BAD_VALUE;
+            }
+            ret = mStreamSnapThumb->streamOn();
+            if (MM_CAMERA_OK != ret){
+                ALOGE("%s: error - can't start Thumbnail streams!", __func__);
+                mStreamSnapMain->streamOff(0);
+                mStreamSnapMain->deinitStream();
+                mStreamSnapThumb->deinitStream();
+                return BAD_VALUE;
+            }
             mCameraState = CAMERA_STATE_SNAP_START_CMD_SENT;
-        else
-            mCameraState = CAMERA_STATE_ERROR;
-        mPreviewState = QCAMERA_HAL_TAKE_PICTURE;
+            mPreviewState = QCAMERA_HAL_TAKE_PICTURE;
+        }
         break;
-      case QCAMERA_HAL_TAKE_PICTURE:
+    case QCAMERA_HAL_TAKE_PICTURE:
           break;
     case QCAMERA_HAL_PREVIEW_STOPPED:
     case QCAMERA_HAL_PREVIEW_START:
-      ret = UNKNOWN_ERROR;
-      break;
+        ret = UNKNOWN_ERROR;
+        break;
     case QCAMERA_HAL_RECORDING_STARTED:
-
+        /* if livesnapshot stream is previous on, need to stream off first */
+        mStreamSnapMain->streamOff(0);
 
         stream[0]=mStreamSnapMain->mStreamId;
-
-	attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_BURST;
-	attr.burst_num = 1;
-	attr.look_back = 2;
-	attr.post_frame_skip = 0;
-	attr.water_mark = 2;
+    	attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_BURST;
+    	attr.burst_num = 1;
+    	attr.look_back = 2;
+    	attr.post_frame_skip = 0;
+    	attr.water_mark = 2;
         ret = mCameraHandle->ops->init_stream_bundle(
                   mCameraHandle->camera_handle,
                   mChannelId,
@@ -2207,55 +2456,20 @@ status_t  QCameraHardwareInterface::takePicture()
             ALOGE("%s: error - can't init Snapshot streams!", __func__);
             return BAD_VALUE;
         }
-        ret = mStreamSnapMain->streamOn( );
-        #if 0
-        ret = mCameraHandle->ops->start_streams(
-                  mCameraHandle->camera_handle,
-                  mChannelId,
-                  1,
-                  stream);
+        ret = mStreamSnapMain->streamOn();
         if (MM_CAMERA_OK != ret){
             ALOGE("%s: error - can't start Snapshot streams!", __func__);
             return BAD_VALUE;
         }
-
-        #endif
         ret = mCameraHandle->ops->request_super_buf(
                   mCameraHandle->camera_handle,
-                  mChannelId);
+                  mChannelId,
+                  attr.burst_num);
 
         if (MM_CAMERA_OK != ret){
             ALOGE("%s: error - can't start Snapshot streams!", __func__);
             return BAD_VALUE;
         }
-
-#if 0
-      if (canTakeFullSizeLiveshot()) {
-        ALOGD(" Calling takeFullSizeLiveshot");
-        takeFullSizeLiveshot();
-      }else{
-        ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_VFE_OUTPUT_ENABLE,
-                     &mNuberOfVFEOutputs);
-        if (ret != MM_CAMERA_OK) {
-           ALOGE("get parm MM_CAMERA_PARM_VFE_OUTPUT_ENABLE  failed");
-           ret = BAD_VALUE;
-        }
-        if (mNuberOfVFEOutputs == 1){
-           (void) cam_evt_register_buf_notify(mCameraId, MM_CAMERA_CH_PREVIEW,
-                                                    liveshot_callback,
-                                                    MM_CAMERA_REG_BUF_CB_COUNT,
-                                                    1,
-                                                    this);
-        } else {
-           (void) cam_evt_register_buf_notify(mCameraId, MM_CAMERA_CH_VIDEO,
-                                                    liveshot_callback,
-                                                    MM_CAMERA_REG_BUF_CB_COUNT,
-                                                    1,
-                                                    this);
-        }
-      }
-#endif
-
       break;
     default:
         ret = UNKNOWN_ERROR;
@@ -2528,40 +2742,44 @@ void QCameraHardwareInterface::roiEvent(fd_roi_t roi,app_notify_cb_t *app_cb)
 
 void QCameraHardwareInterface::handleZoomEventForSnapshot(void)
 {
-#if 0
     mm_camera_rect_t v4l2_crop;
-
 
     ALOGI("%s: E", __func__);
 
-    memset(&v4l2_crop,0,sizeof(v4l2_crop));
-
-    ALOGI("%s: Fetching crop info", __func__);
-    mCameraHandle->ops->get_stream_crop(mCameraHandle->camera_handle,
-                                 mStreamSnapMain->mChannelId,
+    if (mStreamSnapMain != NULL) {
+        memset(&v4l2_crop,0,sizeof(v4l2_crop));
+        mCameraHandle->ops->get_stream_parm(mCameraHandle->camera_handle,
+                                mStreamSnapMain->mChannelId,
                                 mStreamSnapMain->mStreamId,
+                                MM_CAMERA_STREAM_CROP,
                                 &v4l2_crop);
-
-    ALOGI("%s: Crop info received for main: %d, %d, %d, %d ", __func__,
-         v4l2_crop.left,
-         v4l2_crop.top,
-         v4l2_crop.width,
-         v4l2_crop.height);
-    ALOGI("%s: Crop info received for thumbnail: %d, %d, %d, %d ",__func__,
-         v4l2_crop.left,
-         v4l2_crop.top,
-         v4l2_crop.width,
-         v4l2_crop.height);
-
-    if(mStreamSnap) {
-        ALOGD("%s: Setting crop info for snapshot", __func__);
-        memcpy(&(mStreamSnap->mCrop), &v4l2_crop, sizeof(v4l2_crop));
+        ALOGI("%s: Crop info received for main: %d, %d, %d, %d ", __func__,
+             v4l2_crop.left,
+             v4l2_crop.top,
+             v4l2_crop.width,
+             v4l2_crop.height);
+        mStreamSnapMain->mCrop.offset_x = v4l2_crop.left;
+        mStreamSnapMain->mCrop.offset_y = v4l2_crop.top;
+        mStreamSnapMain->mCrop.width = v4l2_crop.width;
+        mStreamSnapMain->mCrop.height = v4l2_crop.height;
     }
-    if(mFullLiveshotEnabled && mStreamLiveSnap){
-        ALOGD("%s: Setting crop info for snapshot", __func__);
-        memcpy(&(mStreamLiveSnap->mCrop), &v4l2_crop, sizeof(v4l2_crop));
+    if (mStreamSnapThumb != NULL) {
+        memset(&v4l2_crop,0,sizeof(v4l2_crop));
+        mCameraHandle->ops->get_stream_parm(mCameraHandle->camera_handle,
+                                mStreamSnapThumb->mChannelId,
+                                mStreamSnapThumb->mStreamId,
+                                MM_CAMERA_STREAM_CROP,
+                                &v4l2_crop);
+        ALOGI("%s: Crop info received for thumbnail: %d, %d, %d, %d ", __func__,
+             v4l2_crop.left,
+             v4l2_crop.top,
+             v4l2_crop.width,
+             v4l2_crop.height);
+        mStreamSnapThumb->mCrop.offset_x = v4l2_crop.left;
+        mStreamSnapThumb->mCrop.offset_y = v4l2_crop.top;
+        mStreamSnapThumb->mCrop.width = v4l2_crop.width;
+        mStreamSnapThumb->mCrop.height = v4l2_crop.height;
     }
-#endif
     ALOGD("%s: X", __func__);
 }
 
@@ -2587,6 +2805,10 @@ void QCameraHardwareInterface::handleZoomEventForPreview(app_notify_cb_t *app_cb
              v4l2_crop.top,
              v4l2_crop.width,
              v4l2_crop.height);
+        mStreamDisplay->mCrop.offset_x = v4l2_crop.left;
+        mStreamDisplay->mCrop.offset_y = v4l2_crop.top;
+        mStreamDisplay->mCrop.width = v4l2_crop.width;
+        mStreamDisplay->mCrop.height = v4l2_crop.height;
 
         mPreviewWindow->set_crop(mPreviewWindow,
                         v4l2_crop.left,
@@ -2672,19 +2894,19 @@ void QCameraHardwareInterface::dumpFrameToFile(mm_camera_buf_def_t* newFrame,
           case  HAL_DUMP_FRM_PREVIEW:
             w = mDimension.display_width;
             h = mDimension.display_height;
-            snprintf(buf, sizeof(buf), "/data/%dp_%dx%d.yuv", mDumpFrmCnt, w, h);
+            snprintf(buf, sizeof(buf), "/data/%dp_%dx%d_%d.yuv", mDumpFrmCnt, w, h, newFrame->frame_idx);
             file_fd = open(buf, O_RDWR | O_CREAT, 0777);
             break;
           case HAL_DUMP_FRM_VIDEO:
             w = mDimension.video_width;
             h = mDimension.video_height;
-            snprintf(buf, sizeof(buf),"/data/%dv_%dx%d.yuv", mDumpFrmCnt, w, h);
+            snprintf(buf, sizeof(buf),"/data/%dv_%dx%d_%d.yuv", mDumpFrmCnt, w, h, newFrame->frame_idx);
             file_fd = open(buf, O_RDWR | O_CREAT, 0777);
             break;
           case HAL_DUMP_FRM_MAIN:
             w = mDimension.picture_width;
             h = mDimension.picture_height;
-            snprintf(buf, sizeof(buf), "/data/%dm_%dx%d.yuv", mDumpFrmCnt, w, h);
+            snprintf(buf, sizeof(buf), "/data/%dm_%dx%d_%d.yuv", mDumpFrmCnt, w, h, newFrame->frame_idx);
             file_fd = open(buf, O_RDWR | O_CREAT, 0777);
             if (mDimension.main_img_format == CAMERA_YUV_422_NV16 ||
                 mDimension.main_img_format == CAMERA_YUV_422_NV61)
@@ -2693,7 +2915,7 @@ void QCameraHardwareInterface::dumpFrameToFile(mm_camera_buf_def_t* newFrame,
           case HAL_DUMP_FRM_THUMBNAIL:
             w = mDimension.ui_thumbnail_width;
             h = mDimension.ui_thumbnail_height;
-            snprintf(buf, sizeof(buf),"/data/%dt_%dx%d.yuv", mDumpFrmCnt, w, h);
+            snprintf(buf, sizeof(buf),"/data/%dt_%dx%d_%d.yuv", mDumpFrmCnt, w, h, newFrame->frame_idx);
             file_fd = open(buf, O_RDWR | O_CREAT, 0777);
             break;
           default:
@@ -3310,6 +3532,189 @@ status_t QCameraHardwareInterface::deInitHistogramBuffers()
     mHistServer.active = FALSE;
     ALOGI("%s X", __func__);
     return NO_ERROR;
+}
+
+mm_jpeg_color_format QCameraHardwareInterface::getColorfmtFromImgFmt(uint32_t img_fmt)
+{
+    switch (img_fmt) {
+    case CAMERA_YUV_420_NV21:
+        return MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2;
+    case CAMERA_YUV_420_NV21_ADRENO:
+        return MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2;
+    case CAMERA_YUV_420_NV12:
+        return MM_JPEG_COLOR_FORMAT_YCBCRLP_H2V2;
+    case CAMERA_YUV_420_YV12:
+        return MM_JPEG_COLOR_FORMAT_YCBCRLP_H2V2;
+    case CAMERA_YUV_422_NV61:
+        return MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V1;
+    case CAMERA_YUV_422_NV16:
+        return MM_JPEG_COLOR_FORMAT_YCBCRLP_H2V1;
+    default:
+        return MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2;
+    }
+}
+
+QCameraQueue::QCameraQueue()
+{
+    init();
+}
+
+QCameraQueue::~QCameraQueue()
+{
+    deinit();
+}
+
+void QCameraQueue::init()
+{
+    pthread_mutex_init(&mlock, NULL);
+    cam_list_init(&mhead.list);
+    msize = 0;
+}
+
+void QCameraQueue::deinit()
+{
+    flush();
+    pthread_mutex_destroy(&mlock);
+}
+
+bool QCameraQueue::enqueue(void *data)
+{
+    camera_q_node *node =
+        (camera_q_node *)malloc(sizeof(camera_q_node));
+    if (NULL == node) {
+        ALOGE("%s: No memory for camera_q_node", __func__);
+        return false;
+    }
+
+    memset(node, 0, sizeof(camera_q_node));
+    node->data = data;
+
+    pthread_mutex_lock(&mlock);
+    cam_list_add_tail_node(&node->list, &mhead.list);
+    msize++;
+    ALOGE("%s: queue size = %d", __func__, msize);
+    pthread_mutex_unlock(&mlock);
+    return true;
+}
+
+void* QCameraQueue::dequeue()
+{
+    camera_q_node* node = NULL;
+    void* data = NULL;
+    struct cam_list *head = NULL;
+    struct cam_list *pos = NULL;
+
+    pthread_mutex_lock(&mlock);
+    head = &mhead.list;
+    pos = head->next;
+    if (pos != head) {
+        node = member_of(pos, camera_q_node, list);
+        cam_list_del_node(&node->list);
+        msize--;
+    }
+    pthread_mutex_unlock(&mlock);
+
+    if (NULL != node) {
+        data = node->data;
+        free(node);
+    }
+
+    return data;
+}
+
+void QCameraQueue::flush(){
+    camera_q_node* node = NULL;
+    void* data = NULL;
+    struct cam_list *head = NULL;
+    struct cam_list *pos = NULL;
+
+    pthread_mutex_lock(&mlock);
+    head = &mhead.list;
+    pos = head->next;
+
+    while(pos != head) {
+        node = member_of(pos, camera_q_node, list);
+        pos = pos->next;
+        cam_list_del_node(&node->list);
+        msize--;
+
+        if (NULL != node->data) {
+            free(node->data);
+        }
+        free(node);
+
+    }
+    msize = 0;
+    pthread_mutex_unlock(&mlock);
+}
+
+QCameraCmdThread::QCameraCmdThread()
+{
+    sem_init(&cmd_sem, 0, 0);
+}
+
+QCameraCmdThread::~QCameraCmdThread()
+{
+    sem_destroy(&cmd_sem);
+}
+
+int32_t QCameraCmdThread::launch(void *(*start_routine)(void *),
+                                 void* user_data)
+{
+    /* launch the thread */
+    pthread_create(&cmd_pid,
+                   NULL,
+                   start_routine,
+                   user_data);
+    return 0;
+}
+
+int32_t QCameraCmdThread::sendCmd(camera_cmd_type_t cmd)
+{
+    camera_cmd_t *node = (camera_cmd_t *)malloc(sizeof(camera_cmd_t));
+    if (NULL == node) {
+        ALOGE("%s: No memory for camera_cmd_t", __func__);
+        return -1;
+    }
+    memset(node, 0, sizeof(camera_cmd_t));
+    node->cmd = cmd;
+
+    ALOGD("%s: enqueue cmd %d", __func__, cmd);
+    cmd_queue.enqueue((void *)node);
+    sem_post(&cmd_sem);
+    return 0;
+}
+
+camera_cmd_type_t QCameraCmdThread::getCmd()
+{
+    camera_cmd_type_t cmd = CAMERA_CMD_TYPE_NONE;
+    camera_cmd_t *node = (camera_cmd_t *)cmd_queue.dequeue();
+    if (NULL == node) {
+        ALOGD("%s: No notify avail", __func__);
+        return CAMERA_CMD_TYPE_NONE;
+    } else {
+        cmd = node->cmd;
+        free(node);
+    }
+    return cmd;
+}
+
+int32_t QCameraCmdThread::exit()
+{
+    int32_t rc = 0;
+
+    rc = sendCmd(CAMERA_CMD_TYPE_EXIT);
+    if (0 != rc) {
+        ALOGE("%s: Error during exit, rc = %d", __func__, rc);
+        return rc;
+    }
+
+    /* wait until cmd thread exits */
+    if (pthread_join(cmd_pid, NULL) != 0) {
+        ALOGD("%s: pthread dead already\n", __func__);
+    }
+    cmd_pid = 0;
+    return rc;
 }
 
 }; // namespace android

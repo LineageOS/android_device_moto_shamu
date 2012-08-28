@@ -67,7 +67,7 @@ typedef struct {
     pthread_mutex_t lock;
 } mm_camera_queue_t;
 
-typedef enum 
+typedef enum
 {
     MM_CAMERA_ASYNC_CMD_TYPE_STOP,    /* async stop */
     MM_CAMERA_ASYNC_CMD_TYPE_MAX
@@ -86,7 +86,7 @@ typedef struct {
     } u;
 } mm_camera_async_cmd_t;
 
-typedef enum 
+typedef enum
 {
     MM_CAMERA_CMD_TYPE_DATA_CB,    /* dataB CMD */
     MM_CAMERA_CMD_TYPE_EVT_CB,     /* evtCB CMD */
@@ -539,7 +539,8 @@ extern int32_t mm_camera_async_teardown_streams(mm_camera_obj_t *my_obj,
                                                 uint8_t num_streams,
                                                 uint32_t *stream_ids);
 extern int32_t mm_camera_request_super_buf(mm_camera_obj_t *my_obj,
-                                           uint32_t ch_id);
+                                           uint32_t ch_id,
+                                           uint32_t num_buf_requested);
 extern int32_t mm_camera_cancel_super_buf_request(mm_camera_obj_t *my_obj,
                                                   uint32_t ch_id);
 extern int32_t mm_camera_start_focus(mm_camera_obj_t *my_obj,

@@ -23,7 +23,6 @@
 #define ALOG_NIDEBUG 0
 #define LOG_TAG __FILE__
 #include <utils/Log.h>
-#include <utils/threads.h>
 
 #include "QCameraHWI.h"
 #include "QCameraStream.h"
@@ -33,96 +32,9 @@
 
 namespace android {
 
-StreamQueue::StreamQueue(){
-    mInitialized = false;
-}
-
-StreamQueue::~StreamQueue(){
-    flush();
-}
-
-void StreamQueue::init(){
-    Mutex::Autolock l(&mQueueLock);
-    mInitialized = true;
-    mQueueWait.signal();
-}
-
-void StreamQueue::deinit(){
-    Mutex::Autolock l(&mQueueLock);
-    mInitialized = false;
-    mQueueWait.signal();
-}
-
-bool StreamQueue::isInitialized(){
-   Mutex::Autolock l(&mQueueLock);
-   return mInitialized;
-}
-
-bool StreamQueue::enqueue(
-                 void * element){
-    Mutex::Autolock l(&mQueueLock);
-    if(mInitialized == false)
-        return false;
-
-    mContainer.add(element);
-    mQueueWait.signal();
-    return true;
-}
-
-bool StreamQueue::isEmpty(){
-    return (mInitialized && mContainer.isEmpty());
-}
-void* StreamQueue::dequeue(){
-
-    void *frame;
-    mQueueLock.lock();
-    while(mInitialized && mContainer.isEmpty()){
-        mQueueWait.wait(mQueueLock);
-    }
-
-    if(!mInitialized){
-        mQueueLock.unlock();
-        return NULL;
-    }
-
-    frame = mContainer.itemAt(0);
-    mContainer.removeAt(0);
-    mQueueLock.unlock();
-    return frame;
-}
-
-void StreamQueue::flush(){
-    Mutex::Autolock l(&mQueueLock);
-    mContainer.clear();
-}
-
-
 // ---------------------------------------------------------------------------
 // QCameraStream
 // ---------------------------------------------------------------------------
-
-void superbuf_cb_routine(mm_camera_super_buf_t *bufs,
-                       void *userdata)
-{
-    QCameraHardwareInterface *p_obj=(QCameraHardwareInterface*) userdata;
-    ALOGE("%s: E",__func__);
-
-    //Implement call to JPEG routine in Snapshot here
-    ALOGE("%s : jpeg callback for MM_CAMERA_SNAPSHOT_MAIN", __func__);
-    p_obj->mStreamSnapMain->receiveRawPicture(bufs);
-    //p_obj->mStreamSnapMain->encodeData(bufs);
-
-
-    /*for(int i=0;i<bufs->num_bufs;i++) {
-
-        p_obj->mCameraHandle->ops->qbuf(p_obj->mCameraHandle->camera_handle,
-                                       p_obj->mChannelId,
-                                       bufs->bufs[i]);
-
-    }*/
-   ALOGE("%s: X", __func__);
-
-}
 
 void stream_cb_routine(mm_camera_super_buf_t *bufs,
                        void *userdata)

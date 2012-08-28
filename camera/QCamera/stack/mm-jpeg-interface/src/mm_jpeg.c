@@ -993,7 +993,6 @@ int32_t mm_jpeg_abort_job(mm_jpeg_obj *my_obj,
         free(node);
         goto abort_done;
     }
-
     /* abort job if in cb queue */
     node = mm_jpeg_queue_remove_job_by_job_id(&my_obj->cb_q, jobId);
     if (NULL != node) {
@@ -1004,7 +1003,6 @@ int32_t mm_jpeg_abort_job(mm_jpeg_obj *my_obj,
         }
         free(node);
     }
-
 abort_done:
     pthread_mutex_unlock(&my_obj->job_lock);
 
@@ -1028,10 +1026,13 @@ int32_t mm_jpeg_close(mm_jpeg_obj *my_obj, uint32_t client_hdl)
         return rc;
     }
 
+    CDBG("%s: E", __func__);
+
     /* abort all jobs from the client */
     pthread_mutex_lock(&my_obj->job_lock);
 
     /* abort job if in ongoing queue */
+    CDBG("%s: abort ongoing jobs", __func__);
     node = mm_jpeg_queue_remove_job_by_client_id(&my_obj->ongoing_job_q, client_hdl);
     while (NULL != node) {
         /* find job that is OMX ongoing, ask OMX to abort the job */
@@ -1044,6 +1045,7 @@ int32_t mm_jpeg_close(mm_jpeg_obj *my_obj, uint32_t client_hdl)
     }
 
     /* abort job if in todo queue */
+    CDBG("%s: abort todo jobs", __func__);
     node = mm_jpeg_queue_remove_job_by_client_id(&my_obj->job_mgr.job_queue, client_hdl);
     while (NULL != node) {
         /* simply delete the job if in todo queue */
@@ -1054,6 +1056,7 @@ int32_t mm_jpeg_close(mm_jpeg_obj *my_obj, uint32_t client_hdl)
     }
 
     /* abort job if in cb queue */
+    CDBG("%s: abort done jobs in cb threads", __func__);
     node = mm_jpeg_queue_remove_job_by_client_id(&my_obj->cb_q, client_hdl);
     while (NULL != node) {
         /* join cb thread */
@@ -1072,6 +1075,8 @@ int32_t mm_jpeg_close(mm_jpeg_obj *my_obj, uint32_t client_hdl)
     /* invalidate client entry */
     memset(&my_obj->clnt_mgr[clnt_idx], 0, sizeof(mm_jpeg_client_t));
 
+    rc = 0;
+    CDBG("%s: X", __func__);
     return rc;
 }
 

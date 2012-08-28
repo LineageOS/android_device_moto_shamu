@@ -81,7 +81,7 @@ int32_t mm_channel_stop_streams(mm_channel_t *my_obj,
                                 uint8_t num_streams,
                                 uint32_t *stream_ids,
                                 uint8_t tear_down_flag);
-int32_t mm_channel_request_super_buf(mm_channel_t *my_obj);
+int32_t mm_channel_request_super_buf(mm_channel_t *my_obj, uint32_t num_buf_requested);
 int32_t mm_channel_cancel_super_buf_request(mm_channel_t *my_obj);
 int32_t mm_channel_start_focus(mm_channel_t *my_obj,
                                uint32_t sensor_idx,
@@ -223,7 +223,8 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
         node = mm_channel_superbuf_dequeue(&ch_obj->bundle.superbuf_queue);
         if (NULL != node) {
             /* decrease pending_cnt */
-            CDBG("%s: Super Buffer received, Call client callback",__func__);
+            CDBG("%s: Super Buffer received, Call client callback, pending_cnt=%d",
+                 __func__, ch_obj->pending_cnt);
             if (MM_CAMERA_SUPER_BUF_NOTIFY_BURST == notify_mode) {
                 ch_obj->pending_cnt--;
             }
@@ -236,6 +237,9 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
             if (NULL != ch_obj->bundle.super_buf_notify_cb) {
                 uint8_t i;
                 mm_camera_cmdcb_t* cb_node = NULL;
+
+                CDBG("%s: Send superbuf to HAL, pending_cnt=%d",
+                     __func__, ch_obj->pending_cnt);
 
                 /* send sem_post to wake up cb thread to dispatch super buffer */
                 cb_node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
@@ -331,7 +335,7 @@ int32_t mm_channel_fsm_fn_stopped(mm_channel_t *my_obj,
                           void * in_val,
                           void * out_val)
 {
-    int32_t rc = -1;
+    int32_t rc = 0;
     CDBG("%s : E evt = %d",__func__,evt);
     switch (evt) {
     case MM_CHANNEL_EVT_ADD_STREAM:
@@ -482,7 +486,7 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
                           void * in_val,
                           void * out_val)
 {
-    int32_t rc = -1;
+    int32_t rc = 0;
 
     CDBG("%s : E evt = %d",__func__,evt);
     switch (evt) {
@@ -550,7 +554,10 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
         rc = mm_channel_destroy_bundle(my_obj);
         break;
     case MM_CHANNEL_EVT_REQUEST_SUPER_BUF:
-        rc = mm_channel_request_super_buf(my_obj);
+        {
+            uint32_t num_buf_requested = (uint32_t)in_val;
+            rc = mm_channel_request_super_buf(my_obj, num_buf_requested);
+        }
         break;
     case MM_CHANNEL_EVT_CANCEL_REQUEST_SUPER_BUF:
         rc = mm_channel_cancel_super_buf_request(my_obj);
@@ -630,7 +637,7 @@ int32_t mm_channel_fsm_fn_paused(mm_channel_t *my_obj,
                           void * in_val,
                           void * out_val)
 {
-    int32_t rc = -1;
+    int32_t rc = 0;
 
     /* currently we are not supporting pause/resume channel */
     CDBG_ERROR("%s: evt (%d) not supported in state (%d)",
@@ -926,6 +933,12 @@ int32_t mm_channel_start_streams(mm_channel_t *my_obj,
     }
 
     for (i=0; i<num_streams_to_start; i++) {
+        /* if stream is already started, there is no need to start it */
+        if (s_objs[i]->state == MM_STREAM_STATE_ACTIVE_STREAM_ON ||
+            s_objs[i]->state == MM_STREAM_STATE_ACTIVE_STREAM_OFF) {
+            continue;
+        }
+
         /* allocate buf */
         rc = mm_stream_fsm_fn(s_objs[i],
                               MM_STREAM_EVT_GET_BUF,
@@ -1076,7 +1089,7 @@ int32_t mm_channel_stop_streams(mm_channel_t *my_obj,
     return rc;
 }
 
-int32_t mm_channel_request_super_buf(mm_channel_t *my_obj)
+int32_t mm_channel_request_super_buf(mm_channel_t *my_obj, uint32_t num_buf_requested)
 {
     int32_t rc = 0;
     mm_camera_cmdcb_t* node = NULL;
@@ -1302,6 +1315,7 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
     mm_channel_queue_node_t* super_buf = NULL;
     uint8_t buf_s_idx, i;
 
+    CDBG("%s: E", __func__);
     for (buf_s_idx=0; buf_s_idx < queue->num_streams; buf_s_idx++) {
         if (buf_info->stream_id == queue->bundled_streams[buf_s_idx]) {
             break;
@@ -1346,6 +1360,7 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
     }
 
     if (pos == head) {
+        CDBG("%s: all nodes in queue are mtached, or no node in queue, create a new node", __func__);
         /* all nodes in queue are mtached, or no node in queue
          * create a new node */
         mm_channel_queue_node_t *new_buf = NULL;
@@ -1386,6 +1401,7 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
             mm_channel_qbuf(ch_obj, buf_info->buf);
         }
     } else {
+        CDBG("%s: find an unmatched super buf", __func__);
         /* find an unmatched super buf */
         if (super_buf->super_buf[buf_s_idx].frame_idx == 0) {
             /* new frame from the stream_id */
@@ -1415,6 +1431,8 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
                 }
             }
             if (is_new) {
+                CDBG("%s: add stream = %d frame id = %d ",
+                     __func__, buf_info->stream_id, buf_info->frame_idx);
                 memcpy(&super_buf->super_buf[buf_s_idx], buf_info, sizeof(mm_camera_buf_info_t));
 
                 /* check if superbuf is all matched */
@@ -1429,12 +1447,14 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
                 if (super_buf->matched) {
                     queue->expected_frame_id = buf_info->frame_idx + queue->attr.post_frame_skip;
                     queue->match_cnt++;
+                    CDBG("%s, match_cnt = %d", __func__, queue->match_cnt);
                 }
             } else {
                 mm_channel_qbuf(ch_obj, buf_info->buf);
             }
         } else {
             if (super_buf->super_buf[buf_s_idx].frame_idx < buf_info->frame_idx) {
+                CDBG("%s: new frame is newer, add into superbuf", __func__);
                 /* current frames in superbuf are older than the new frame
                  * qbuf all current frames */
                 for (i=0; i<super_buf->num_of_bufs; i++) {
@@ -1453,6 +1473,7 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
     }
     pthread_mutex_unlock(&queue->que.lock);
 
+    CDBG("%s: X", __func__);
     return 0;
 }
 
@@ -1509,6 +1530,8 @@ int32_t mm_channel_superbuf_bufdone_overflow(mm_channel_t* my_obj,
         return 0;
     }
 
+    CDBG("%s: before match_cnt=%d, water_mark=%d",
+         __func__, queue->match_cnt, queue->attr.water_mark);
     /* bufdone overflowed bufs */
     pthread_mutex_lock(&queue->que.lock);
     while (queue->match_cnt > queue->attr.water_mark) {
@@ -1523,6 +1546,8 @@ int32_t mm_channel_superbuf_bufdone_overflow(mm_channel_t* my_obj,
         }
     }
     pthread_mutex_unlock(&queue->que.lock);
+    CDBG("%s: after match_cnt=%d, water_mark=%d",
+         __func__, queue->match_cnt, queue->attr.water_mark);
 
     return rc;
 }
