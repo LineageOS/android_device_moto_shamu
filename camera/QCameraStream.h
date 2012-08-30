@@ -132,6 +132,8 @@ public:
     camera_mode_t myMode;
 
     mutable Mutex mStopCallbackLock;
+    int     mSnapshotDataCallingBack;
+    int     mFreeSnapshotBufAfterDataCb;
 private:
    StreamQueue mBusyQueue;
    StreamQueue mFreeQueue;
