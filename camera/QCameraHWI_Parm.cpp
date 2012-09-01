@@ -3656,8 +3656,13 @@ status_t QCameraHardwareInterface::setHistogram(int histogram_en)
     if(mStatsOn == histogram_en) {
         return NO_ERROR;
     }
-
-    mSendData = histogram_en;
+    status_t rc = NO_ERROR;
+    rc = cam_config_is_parm_supported(mCameraId, MM_CAMERA_PARM_HISTOGRAM);
+	if(!rc) {
+		ALOGE(" Histogram is not supported for this");
+		return NO_ERROR;
+	}
+	mSendData = histogram_en;
     mStatsOn = histogram_en;
     mCurrentHisto = -1;
     mStatSize = sizeof(uint32_t)* HISTOGRAM_STATS_SIZE;
