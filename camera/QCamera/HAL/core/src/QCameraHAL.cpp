@@ -103,19 +103,7 @@ extern "C" void HAL_getCameraInfo(int cameraId, struct CameraInfo* cameraInfo)
         cameraInfo->facing =
             (FRONT_CAMERA == mm_camer_obj->camera_info.position)?
             CAMERA_FACING_FRONT : CAMERA_FACING_BACK;
-
         cameraInfo->orientation = mm_camer_obj->camera_info.sensor_mount_angle;
-#if 0
-        // TODO: fix me
-        /* We always supprot ZSL in our stack*/
-        cameraInfo->mode = CAMERA_SUPPORT_MODE_ZSL;
-        if (mm_camer_obj->camera_info.modes_supported & CAMERA_MODE_2D) {
-            cameraInfo->mode |= CAMERA_SUPPORT_MODE_2D;
-        }
-        if (mm_camer_obj->camera_info.modes_supported & CAMERA_MODE_3D) {
-            cameraInfo->mode |= CAMERA_SUPPORT_MODE_3D;
-        }
-#endif
     }
    ALOGV("%s: X", __func__);
    return;

@@ -58,9 +58,6 @@ void stream_cb_routine(mm_camera_super_buf_t *bufs,
                 }
 
                 ALOGE("%s : callback for MM_CAMERA_SNAPSHOT_MAIN", __func__);
-               /* p_obj->p_mm_ops->ops->qbuf(p_obj->mCameraHandle,
-                                           p_obj->mChannelId,
-                                           bufs->bufs[0]);*/
                 break;
          case MM_CAMERA_SNAPSHOT_THUMBNAIL:
                 break;
@@ -73,7 +70,6 @@ void stream_cb_routine(mm_camera_super_buf_t *bufs,
 
 void QCameraStream::dataCallback(mm_camera_super_buf_t *bufs)
 {
-    //mHelpOps->dataCallback(mm_camera_super_buf_t *bufs,this);
 }
 
 
@@ -99,7 +95,6 @@ int32_t QCameraStream::streamOn()
    status_t rc=NO_ERROR;
    mm_camera_stream_config_t stream_config;
    ALOGE("%s: mActive = %d, streamid = %d, image_mode = %d",__func__, mActive, mStreamId, mExtImgMode);
-   //Mutex::Autolock lock(mStopCallbackLock);
    if(mActive){
        ALOGE("%s: Stream:%d is already active",
             __func__,mStreamId);
@@ -137,7 +132,6 @@ int32_t QCameraStream::streamOff(bool isAsyncCmd)
 {
     status_t rc=NO_ERROR;
     ALOGE("%s: mActive = %d, streamid = %d, image_mode = %d",__func__, mActive, mStreamId, mExtImgMode);
-    //Mutex::Autolock lock(mStopCallbackLock);
     if(!mActive) {
         ALOGE("%s: Stream:%d is not active",
               __func__,mStreamId);
@@ -167,7 +161,8 @@ status_t QCameraStream::initStream(int no_stream_cb)
     int rotation = mHalCamCtrl->getJpegRotation();
     mm_camera_stream_config_t stream_config;
 
-    ALOGE("%s: E, mActive = %d, mInit = %d, streamid = %d, image_mode = %d",__func__, mActive, mInit, mStreamId, mExtImgMode);
+    ALOGE("%s: E, mActive = %d, mInit = %d, streamid = %d, image_mode = %d",
+          __func__, mActive, mInit, mStreamId, mExtImgMode);
 
     if(mInit == true) {
         ALOGE("%s: alraedy initted, mActive = %d, mInit = %d, streamid = %d, image_mode = %d",
@@ -221,9 +216,6 @@ status_t QCameraStream::initStream(int no_stream_cb)
             break;
         case MM_CAMERA_SNAPSHOT_THUMBNAIL:
             setJpegRotation = 1;
-            //mWidth = dim.ui_thumbnail_width;
-            //mHeight = dim.ui_thumbnail_height;
-            //rotation = mHalCamCtrl->getJpegRotation();
             break;
         default:
             break;
@@ -349,19 +341,6 @@ QCameraStream::QCameraStream(uint32_t CameraHandle,
 }
 
 QCameraStream::~QCameraStream () {;}
-
-
-//status_t QCameraStream::init() {
-//    return NO_ERROR;
-//}
-
-//status_t QCameraStream::start() {
-//    return NO_ERROR;
-//}
-
-//void QCameraStream::stop() {
-//    return;
-//}
 
 void QCameraStream::release() {
     return;

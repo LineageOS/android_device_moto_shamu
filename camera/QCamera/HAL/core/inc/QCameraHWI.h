@@ -22,11 +22,9 @@
 
 
 #include <utils/threads.h>
-//#include <camera/CameraHardwareInterface.h>
 #include <hardware/camera.h>
 #include <binder/MemoryBase.h>
 #include <binder/MemoryHeapBase.h>
-//#include <binder/MemoryHeapPmem.h>
 #include <utils/threads.h>
 #include <cutils/properties.h>
 #include <camera/Camera.h>
@@ -507,28 +505,12 @@ public:
      * Dump state of the camera hardware
      */
     int dump(int fd);
-
-    //virtual sp<IMemoryHeap> getPreviewHeap() const;
-    //virtual sp<IMemoryHeap> getRawHeap() const;
-
-
-    status_t    takeLiveSnapshot();
-    status_t    takeFullSizeLiveshot();
-    bool        canTakeFullSizeLiveshot();
-
-    //virtual status_t          getBufferInfo( sp<IMemory>& Frame,
-    //size_t *alignedSize);
     void         getPictureSize(int *picture_width, int *picture_height) const;
     void         getPreviewSize(int *preview_width, int *preview_height) const;
 	void         getVideoSize(int *video_width,int *video_height) const;
 	void         getThumbnailSize(int *thumb_width, int *thumb_height) const;
-
     cam_format_t getPreviewFormat() const;
-
     cam_pad_format_t getPreviewPadding() const;
-
-    //bool     useOverlay(void);
-    //virtual status_t setOverlay(const sp<Overlay> &overlay);
     void processEvent(mm_camera_event_t *);
     int  getJpegQuality() const;
     int  getNumOfSnapshots(void) const;
@@ -558,11 +540,6 @@ public:
                             uint8_t num_planes,
                             uint32_t *planes);
     int releaseHeapMem( QCameraHalHeap_t *heap);
-    status_t sendMappingBuf(int ext_mode, int idx, int fd, uint32_t size,
-      int cameraid, mm_camera_socket_msg_type msg_type);
-    status_t sendUnMappingBuf(int ext_mode, int idx, int cameraid,
-      mm_camera_socket_msg_type msg_type);
-
     int allocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt,
       int ion_type);
     int deallocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt);
@@ -854,8 +831,7 @@ private:
     int mSnapshotFormat;
     int mZslInterval;
     bool mRestartPreview;
-
-/*for histogram*/
+    /*for histogram*/
     int            mStatsOn;
     int            mCurrentHisto;
     bool           mSendData;
@@ -944,7 +920,6 @@ private:
      camera_frame_metadata_t mMetadata;
      camera_face_t           mFace[MAX_ROI];
      preview_format_info_t  mPreviewFormatInfo;
-    // friend void liveshot_callback(mm_camera_ch_data_buf_t *frame,void *user_data);
      friend void stream_cb_routine(mm_camera_super_buf_t *bufs, void *userdata);
      //EXIF
      exif_tags_info_t       mExifData[MAX_EXIF_TABLE_ENTRIES];  //Exif tags for JPEG encoder
