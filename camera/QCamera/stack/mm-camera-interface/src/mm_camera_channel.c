@@ -809,6 +809,7 @@ int32_t mm_channel_bundle_stream(mm_channel_t *my_obj,
 {
     int32_t rc = 0;
     int i;
+    cam_stream_bundle_t bundle;
     mm_stream_t* s_objs[MM_CAMEAR_MAX_STRAEM_BUNDLE] = {NULL};
 
     /* first check if all streams to be bundled are valid */
@@ -824,6 +825,7 @@ int32_t mm_channel_bundle_stream(mm_channel_t *my_obj,
     /* init superbuf queue */
     mm_channel_superbuf_queue_init(&my_obj->bundle.superbuf_queue);
 
+    memset(&bundle, 0, sizeof(bundle));
     /* save bundle config */
     memcpy(&my_obj->bundle.superbuf_queue.attr, attr, sizeof(mm_camera_bundle_attr_t));
     my_obj->bundle.super_buf_notify_cb = super_frame_notify_cb;
@@ -835,8 +837,20 @@ int32_t mm_channel_bundle_stream(mm_channel_t *my_obj,
         /* set bundled flag to streams */
         s_objs[i]->is_bundled = 1;
         /* init bundled streams to invalid value -1 */
-        //my_obj->bundle.superbuf_queue.bundled_streams[i] = -1;
         my_obj->bundle.superbuf_queue.bundled_streams[i] = stream_ids[i];
+        bundle.stream_handles[bundle.num++] =
+            s_objs[i]->inst_hdl;
+    }
+    /* in the case of 1 bundle , current implementation is nop */
+    if (bundle.num > 1) {
+        rc = mm_camera_send_native_ctrl_cmd(my_obj->cam_obj,
+                                                    CAMERA_SET_BUNDLE,
+                                                    sizeof(bundle),
+                                                    (void *)&bundle);
+        if (0 != rc) {
+            CDBG_ERROR("%s: set_bundle failed (rc=%d)", __func__, rc);
+            return -1;
+        }
     }
 
     /* launch cb thread for dispatching super buf through cb */
