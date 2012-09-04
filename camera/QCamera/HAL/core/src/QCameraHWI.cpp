@@ -112,6 +112,8 @@ void QCameraHardwareInterface::snapshot_jpeg_cb(jpeg_job_status_t status,
         }
         /* free sink frame */
         free(out_data);
+        /* free cookie */
+        free(cookie);
         return;
     }
 
@@ -140,6 +142,7 @@ void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
     int ret;
     QCameraHardwareInterface *pme = (QCameraHardwareInterface *)data;
     QCameraCmdThread *cmdThread = pme->mNotifyTh;
+    uint8_t isEncoding = FALSE;
 
     ALOGD("%s: E", __func__);
     do {
@@ -156,12 +159,18 @@ void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
         camera_cmd_type_t cmd = cmdThread->getCmd();
         ALOGD("%s: get cmd %d", __func__, cmd);
         switch (cmd) {
+        case CAMERA_CMD_TYPE_START_DATA_PROC:
+        case CAMERA_CMD_TYPE_STOP_DATA_PROC:
+            isEncoding = FALSE;
+            break;
         case CAMERA_CMD_TYPE_DO_NEXT_JOB:
             {
                 /* first check if there is any pending jpeg notify */
                 camera_jpeg_data_t *jpeg_data =
                     (camera_jpeg_data_t *)pme->mJpegDataQueue.dequeue();
                 if (NULL != jpeg_data) {
+                    isEncoding = FALSE;
+
                     QCameraStream_SnapshotMain *mainStream =
                         (QCameraStream_SnapshotMain *)pme->mStreamSnapMain;
                     if (mainStream != NULL) {
@@ -188,8 +197,11 @@ void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
                     free(jpeg_data);
                 }
 
-                /* notify processData thread to do next encoding job */
-                pme->mDataProcTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB);
+                if (FALSE == isEncoding) {
+                    isEncoding = TRUE;
+                    /* notify processData thread to do next encoding job */
+                    pme->mDataProcTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB);
+                }
             }
             break;
         case CAMERA_CMD_TYPE_EXIT:
@@ -248,11 +260,14 @@ void *QCameraHardwareInterface::dataProcessRoutine(void *data)
                     mm_camera_super_buf_t *super_buf =
                         (mm_camera_super_buf_t *)pme->mSuperBufQueue.dequeue();
                     if (NULL != super_buf) {
+                        ret = -1;
                         QCameraStream_SnapshotMain *mainStream =
                             (QCameraStream_SnapshotMain *)pme->mStreamSnapMain;
                         if (mainStream != NULL) {
-                            mainStream->receiveRawPicture(super_buf, &current_jobId);
-                        } else {
+                            ret = mainStream->receiveRawPicture(super_buf, &current_jobId);
+                        }
+
+                        if (NO_ERROR != ret) {
                             for(int i = 0; i< super_buf->num_bufs; i++) {
                                 if(MM_CAMERA_OK !=
                                    pme->mCameraHandle->ops->qbuf(super_buf->camera_handle,
@@ -1910,6 +1925,7 @@ status_t QCameraHardwareInterface::cancelPicture()
 
     /* set rawdata proc thread and jpeg notify thread to active state */
     mDataProcTh->sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC);
+    mNotifyTh->sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC);
 
     switch(mPreviewState) {
         case QCAMERA_HAL_PREVIEW_STOPPED:
@@ -1984,6 +2000,7 @@ status_t  QCameraHardwareInterface::takePicture()
     Mutex::Autolock lock(mLock);
 
     /* set rawdata proc thread and jpeg notify thread to active state */
+    mNotifyTh->sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC);
     mDataProcTh->sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC);
 
     switch(mPreviewState) {
@@ -2049,17 +2066,8 @@ status_t  QCameraHardwareInterface::takePicture()
             hdr = getHdrInfoAndSetExp(MAX_HDR_EXP_FRAME_NUM, &frm_num, exp);
             mStreamSnapMain->initHdrInfoForSnapshot(hdr, frm_num, exp); // - for hdr figure out equivalent of mStreamSnap
             ALOGE("%s : just after calling initHdrInfoForSnapshot, frm_num=%d", __func__, frm_num);
+            memset(&attr, 0, sizeof(mm_camera_bundle_attr_t));
             attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
-            if(hdr) {
-                ALOGE("%s in hdr mode, burst_num will be set to %d", __func__, frm_num);
-                attr.burst_num = frm_num;
-            } else{
-                attr.burst_num = 1;
-            }
-            attr.look_back = 2;
-            attr.post_frame_skip = 0;
-            attr.water_mark = 2;
-
             ALOGE("%s : just before calling superbuf_cb_routine", __func__);
             ret = mCameraHandle->ops->init_stream_bundle(
                       mCameraHandle->camera_handle,
@@ -2077,6 +2085,9 @@ status_t  QCameraHardwareInterface::takePicture()
             ret = mStreamSnapMain->streamOn();
             if (MM_CAMERA_OK != ret){
                 ALOGE("%s: error - can't start Snapshot streams!", __func__);
+                mCameraHandle->ops->destroy_stream_bundle(
+                   mCameraHandle->camera_handle,
+                   mChannelId);
                 mStreamSnapMain->deinitStream();
                 mStreamSnapThumb->deinitStream();
                 return BAD_VALUE;
@@ -2085,6 +2096,9 @@ status_t  QCameraHardwareInterface::takePicture()
             if (MM_CAMERA_OK != ret){
                 ALOGE("%s: error - can't start Thumbnail streams!", __func__);
                 mStreamSnapMain->streamOff(0);
+                mCameraHandle->ops->destroy_stream_bundle(
+                   mCameraHandle->camera_handle,
+                   mChannelId);
                 mStreamSnapMain->deinitStream();
                 mStreamSnapThumb->deinitStream();
                 return BAD_VALUE;
@@ -2104,11 +2118,8 @@ status_t  QCameraHardwareInterface::takePicture()
         mStreamSnapMain->streamOff(0);
 
         stream[0]=mStreamSnapMain->mStreamId;
-    	attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_BURST;
-    	attr.burst_num = 1;
-    	attr.look_back = 2;
-    	attr.post_frame_skip = 0;
-    	attr.water_mark = 2;
+        memset(&attr, 0, sizeof(mm_camera_bundle_attr_t));
+        attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
         ret = mCameraHandle->ops->init_stream_bundle(
                   mCameraHandle->camera_handle,
                   mChannelId,
@@ -2124,18 +2135,12 @@ status_t  QCameraHardwareInterface::takePicture()
         ret = mStreamSnapMain->streamOn();
         if (MM_CAMERA_OK != ret){
             ALOGE("%s: error - can't start Snapshot streams!", __func__);
+            mCameraHandle->ops->destroy_stream_bundle(
+               mCameraHandle->camera_handle,
+               mChannelId);
             return BAD_VALUE;
         }
-        ret = mCameraHandle->ops->request_super_buf(
-                  mCameraHandle->camera_handle,
-                  mChannelId,
-                  attr.burst_num);
-
-        if (MM_CAMERA_OK != ret){
-            ALOGE("%s: error - can't start Snapshot streams!", __func__);
-            return BAD_VALUE;
-        }
-      break;
+        break;
     default:
         ret = UNKNOWN_ERROR;
         break;

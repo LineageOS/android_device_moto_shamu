@@ -231,14 +231,11 @@ status_t QCameraStream_SnapshotMain::encodeData(mm_camera_super_buf_t* recvd_fra
     ALOGV("%s : E", __func__);
     status_t ret = NO_ERROR;
     mm_jpeg_job jpg_job;
-    cam_ctrl_dimension_t dimension;
     mm_camera_buf_def_t *main_frame = NULL;
     mm_camera_buf_def_t *thumb_frame = NULL;
     src_image_buffer_info* main_buf_info = NULL;
     src_image_buffer_info* thumb_buf_info = NULL;
-    p_mm_ops->ops->get_parm(p_mm_ops->camera_handle, MM_CAMERA_PARM_DIMENSION, &dimension);
     uint8_t src_img_num = recvd_frame->num_bufs;
-
     int i;
 
     *jobId = 0;
@@ -324,13 +321,14 @@ status_t QCameraStream_SnapshotMain::encodeData(mm_camera_super_buf_t* recvd_fra
         main_buf_info->crop.width = main_stream->mWidth;
         main_buf_info->crop.height = main_stream->mHeight;
     }
-    ALOGE("%s : Main Image :Input Dimension %d x %d output Dimension = %d X %d",
+    ALOGD("%s : Main Image :Input Dimension %d x %d output Dimension = %d X %d",
           __func__, main_buf_info->src_dim.width, main_buf_info->src_dim.height,
           main_buf_info->out_dim.width, main_buf_info->out_dim.height);
     main_buf_info->img_fmt = JPEG_SRC_IMAGE_FMT_YUV;
     main_buf_info->num_bufs = 1;
     main_buf_info->src_image[0].offset = mFrameOffsetInfo;
-    ALOGE("%s : setting main image offset info, len = %d, offset = %d", __func__, mFrameOffsetInfo.mp[0].len, mFrameOffsetInfo.mp[0].offset);
+    ALOGD("%s : setting main image offset info, len = %d, offset = %d",
+          __func__, mFrameOffsetInfo.mp[0].len, mFrameOffsetInfo.mp[0].offset);
 
     if (thumb_frame && thumb_stream) {
         /* fill in thumbnail src img encode param */
@@ -347,7 +345,7 @@ status_t QCameraStream_SnapshotMain::encodeData(mm_camera_super_buf_t* recvd_fra
             thumb_buf_info->crop.width = thumb_stream->mWidth;
             thumb_buf_info->crop.height = thumb_stream->mHeight;
         }
-        ALOGE("%s : Thumanail :Input Dimension %d x %d output Dimension = %d X %d",
+        ALOGD("%s : Thumanail :Input Dimension %d x %d output Dimension = %d X %d",
           __func__, thumb_buf_info->src_dim.width, thumb_buf_info->src_dim.height,
               thumb_buf_info->out_dim.width,thumb_buf_info->out_dim.height);
         thumb_buf_info->img_fmt = JPEG_SRC_IMAGE_FMT_YUV;
@@ -355,7 +353,8 @@ status_t QCameraStream_SnapshotMain::encodeData(mm_camera_super_buf_t* recvd_fra
         thumb_buf_info->src_image[0].fd = thumb_frame->fd;
         thumb_buf_info->src_image[0].buf_vaddr = (uint8_t*) thumb_frame->buffer;
         thumb_buf_info->src_image[0].offset = thumb_stream->mFrameOffsetInfo;
-         ALOGE("%s : setting thumb image offset info, len = %d, offset = %d", __func__, mHalCamCtrl->mStreamSnapThumb->mFrameOffsetInfo.mp[0].len, mHalCamCtrl->mStreamSnapThumb->mFrameOffsetInfo.mp[0].offset);
+        ALOGD("%s : setting thumb image offset info, len = %d, offset = %d",
+              __func__, thumb_stream->mFrameOffsetInfo.mp[0].len, thumb_stream->mFrameOffsetInfo.mp[0].offset);
     }
 
     //fill in the sink img info
@@ -364,6 +363,8 @@ status_t QCameraStream_SnapshotMain::encodeData(mm_camera_super_buf_t* recvd_fra
         (uint8_t *)malloc(mHalCamCtrl->mJpegMemory.size);
     if (NULL == jpg_job.encode_job.encode_parm.buf_info.sink_img.buf_vaddr) {
         ALOGE("%s: ERROR: no memory for sink_img buf", __func__);
+        free(cookie);
+        cookie = NULL;
         return -1;
     }
 
@@ -371,6 +372,9 @@ status_t QCameraStream_SnapshotMain::encodeData(mm_camera_super_buf_t* recvd_fra
         ret = mHalCamCtrl->mJpegHandle.start_job(mHalCamCtrl->mJpegClientHandle, &jpg_job, jobId);
     } else {
         ALOGE("%s: Error: bug here, mJpegClientHandle is 0", __func__);
+        free(cookie);
+        cookie = NULL;
+        return -1;
     }
 
     ALOGV("%s : X", __func__);
