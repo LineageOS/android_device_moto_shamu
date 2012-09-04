@@ -78,7 +78,6 @@ int mm_app_tc_0(mm_camera_app_t *cam_apps)
             rc = -1;
             goto end;
         }
-
         for (j = 0; j < MM_QCAMERA_APP_INTERATION; j++) {
             if ( MM_CAMERA_OK != (rc = startPreview(my_cam_app.cam_open))) {
                 CDBG_ERROR("%s: startPreview() err=%d\n", __func__, rc);
@@ -215,6 +214,7 @@ int mm_app_tc_2(mm_camera_app_t *cam_apps)
                     break;
             }*/
             mm_camera_app_wait();
+            usleep(10*1000);
             if ( MM_CAMERA_OK != (rc = stopRecording(my_cam_app.cam_open))) {
                 CDBG_ERROR("%s: Stopvideorecording() err=%d\n", __func__, rc);
                 break;
@@ -260,7 +260,8 @@ int mm_app_tc_3(mm_camera_app_t *cam_apps)
         rc = -1;
         goto end;
     }
-    for (i = 0; i < cam_apps->num_cameras; i++) {
+    CDBG_ERROR("SINGLE open RDI ");
+    for (i = 1; i < cam_apps->num_cameras; i++) {
         if ( mm_app_open(i) != MM_CAMERA_OK) {
             CDBG_ERROR("%s:mm_app_open() err=%d\n",__func__, rc);
             rc = -1;
@@ -271,6 +272,7 @@ int mm_app_tc_3(mm_camera_app_t *cam_apps)
             rc = -1;
             goto end;
         }
+        CDBG_ERROR("SINGLE start RDI case");
         for (j = 0; j < MM_QCAMERA_APP_INTERATION; j++) {
             if ( MM_CAMERA_OK != (rc = startRdi(my_cam_app.cam_open))) {
                 CDBG_ERROR("%s: StartVideorecording() err=%d\n", __func__, rc);
@@ -282,12 +284,15 @@ int mm_app_tc_3(mm_camera_app_t *cam_apps)
                     break;
             }*/
             mm_camera_app_wait();
+            usleep(10*1000);
+            CDBG_ERROR("SINGLE stop RDI");
             if ( MM_CAMERA_OK != (rc = stopRdi(my_cam_app.cam_open))) {
                 CDBG_ERROR("%s: Stopvideorecording() err=%d\n", __func__, rc);
                 break;
             }
             result++;
         }
+        CDBG_ERROR("SINGLE close RDI");
         if ( mm_app_close(my_cam_app.cam_open) != MM_CAMERA_OK) {
             CDBG_ERROR("%s:mm_app_close() err=%d\n",__func__, rc);
             rc = -1;
@@ -314,27 +319,62 @@ int mm_app_tc_3(mm_camera_app_t *cam_apps)
 int mm_app_tc_4(mm_camera_app_t *cam_apps)
 {
     int rc = MM_CAMERA_OK;
+    int i,j;
+    int result = 0;
 
-#if 0
-    for (i = 0; i < MM_QCAMERA_APP_UTEST_MAX_MAIN_LOOP; i++) {
-        if ( 0 != (rc = mm_app_open(cam_id, MM_CAMERA_OP_MODE_NOTUSED))) {
-            CDBG("%s: open cam %d at opmode = %d err, loop=%d, rc=%d\n", __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc); 
+    printf("\n Verifying ZSL Snapshot on front and back camera...\n");
+    for (i = 0; i < cam_apps->num_cameras; i++) {
+        if ( mm_app_open(i) != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:mm_app_open() err=%d\n",__func__, rc);
+            rc = -1;
             goto end;
         }
-        if (0 != (rc = mm_app_open_preview(cam_id))) {
+        if (system_dimension_set(my_cam_app.cam_open) != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:system_dimension_set() err=%d\n",__func__, rc);
+            rc = -1;
             goto end;
         }
-        if (0 != (rc = mm_app_close_preview(cam_id))) {
+
+        if ( MM_CAMERA_OK != (rc = startPreview(my_cam_app.cam_open))) {
+            CDBG_ERROR("%s: startPreview() err=%d\n", __func__, rc);
+            break;
+        }
+        for (j = 0; j < MM_QCAMERA_APP_INTERATION; j++) {
+            if ( MM_CAMERA_OK != (rc = takePicture_zsl(my_cam_app.cam_open))) {
+                CDBG_ERROR("%s: TakePicture() ZSL err=%d\n", __func__, rc);
+                break;
+            }
+            /*if(mm_camera_app_timedwait() == ETIMEDOUT) {
+                    CDBG_ERROR("%s: Snapshot/Preview Callback not received in time or qbuf Faile\n", __func__);
+                    break;
+            }*/
+            mm_camera_app_wait();
+            result++;
+        }
+        if ( MM_CAMERA_OK != (rc = stopPreview(my_cam_app.cam_open))) {
+            CDBG("%s: startPreview() err=%d\n", __func__, rc);
+            break;
+        }
+        if ( mm_app_close(my_cam_app.cam_open) != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:mm_app_close() err=%d\n",__func__, rc);
+            rc = -1;
             goto end;
         }
-        if ( 0 != (rc = mm_app_close(cam_id))) {
-            CDBG("%s: close cam %d at opmode = %d err,loop=%d, rc=%d\n", __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc); 
-            goto end;
+        if (result != MM_QCAMERA_APP_INTERATION) {
+            printf("%s: Snapshot ZSL Start/Stop Fails for Camera %d in %d iteration", __func__, i,j);
+            rc = -1;
+            break;
         }
+
+        result = 0;
     }
-end:
-#endif 
-    CDBG("%s:END, rc=%d\n", __func__, rc);
+    end:
+    if (rc == 0) {
+        printf("\t***Passed***\n");
+    } else {
+        printf("\t***Failed***\n");
+    }
+    CDBG("%s:END, rc = %d\n", __func__, rc);
     return rc;
 }
 
@@ -524,6 +564,76 @@ end:
     return rc;
 }
 
+int mm_app_tc_9(mm_camera_app_t *cam_apps) /*RDI snapshot*/
+{
+    int rc = MM_CAMERA_OK;
+    int i,j,k;
+    int result = 0;
+
+    printf("\n Verifying RDI Stream on front and back camera...\n");
+    if (cam_apps->num_cameras == 0) {
+        CDBG_ERROR("%s:Query Failed: Num of cameras = %d\n",__func__, cam_apps->num_cameras);
+        rc = -1;
+        goto end;
+    }
+    CDBG_ERROR("SINGLE open RDI snapshot test case");
+    for (i = 1; i < cam_apps->num_cameras; i++) {
+        if ( mm_app_open(i) != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:mm_app_open() err=%d\n",__func__, rc);
+            rc = -1;
+            goto end;
+        }
+        if (system_dimension_set(my_cam_app.cam_open) != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:system_dimension_set() err=%d\n",__func__, rc);
+            rc = -1;
+            goto end;
+        }
+        CDBG_ERROR("SINGLE start RDI case");
+        for (j = 0; j < MM_QCAMERA_APP_INTERATION; j++) {
+            if ( MM_CAMERA_OK != (rc = startRdi(my_cam_app.cam_open))) {
+                CDBG_ERROR("%s: StartVideorecording() err=%d\n", __func__, rc);
+                break;
+            }
+            usleep(10*1000);
+            CDBG_ERROR("SINGLE start RDI snapshot");
+            for (k = 0; k < MM_QCAMERA_APP_INTERATION; k++) {
+              if ( MM_CAMERA_OK != (rc = takePicture_rdi(my_cam_app.cam_open))) {
+                CDBG_ERROR("%s: TakePicture() err=%d\n", __func__, rc);
+                break;
+              }
+              usleep(10*1000);
+              mm_camera_app_wait();
+              result++;
+            }
+            CDBG_ERROR("SINGLE stop RDI");
+            if ( MM_CAMERA_OK != (rc = stopRdi(my_cam_app.cam_open))) {
+                CDBG_ERROR("%s: Stopvideorecording() err=%d\n", __func__, rc);
+                break;
+            }
+        }
+        CDBG_ERROR("SINGLE close RDI");
+        if ( mm_app_close(my_cam_app.cam_open) != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:mm_app_close() err=%d\n",__func__, rc);
+            rc = -1;
+            goto end;
+        }
+        if (result != (MM_QCAMERA_APP_INTERATION * MM_QCAMERA_APP_INTERATION)) {
+            printf("%s: Video Start/Stop Fails for Camera %d in %d iteration", __func__, i,j);
+            rc = -1;
+            break;
+        }
+
+        result = 0;
+    }
+    end:
+    if (rc == 0) {
+        printf("\nPassed\n");
+    } else {
+        printf("\nFailed\n");
+    }
+    CDBG("%s:END, rc = %d\n", __func__, rc);
+    return rc;
+}
 
 int mm_app_gen_test_cases()
 {
@@ -532,12 +642,13 @@ int mm_app_gen_test_cases()
     if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_0;
     if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_1;
     if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_2;
-    if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_3;
-    /*if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_4;
-    if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_5;
-    if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_6;
-    if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_7;
-    if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_8;*/
+    //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_3; /*Enable only when RDI enabled for front camera*/
+    //if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_4;
+    /*if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_5;
+      if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_6;
+      if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_7;
+      if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_8;*/
+    //if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_9;  /*Enable only when rdi enabled for front camera*/
     return tc;
 }
 

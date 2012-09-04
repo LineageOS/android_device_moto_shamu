@@ -170,8 +170,10 @@ int32_t mm_jpeg_omx_config_main_buffer_offset(mm_jpeg_obj* my_obj, src_image_buf
             } else {
                 buffer_offset.yOffset =
                     src_buf->src_image[i].offset.mp[0].offset;
-                buffer_offset.cbcrOffset =
+                /*buffer_offset.cbcrOffset =
                     src_buf->src_image[i].offset.mp[0].len +
+                    src_buf->src_image[i].offset.mp[1].offset;*/
+                buffer_offset.cbcrOffset =
                     src_buf->src_image[i].offset.mp[1].offset;
                 buffer_offset.totalSize =
                     src_buf->src_image[i].offset.frame_len;
@@ -295,6 +297,10 @@ int32_t mm_jpeg_omx_config_thumbnail(mm_jpeg_obj* my_obj, mm_jpeg_encode_job* jo
     omx_jpeg_thumbnail thumbnail;
     omx_jpeg_thumbnail_quality quality;
 
+    if (job->encode_parm.buf_info.src_imgs.src_img_num < 2) {
+        /*No thumbnail is required*/
+        return 0;
+    }
     src_image_buffer_info *src_buf =
         &(job->encode_parm.buf_info.src_imgs.src_img[JPEG_SRC_IMAGE_TYPE_THUMB]);
 
@@ -549,10 +555,12 @@ int32_t mm_jpeg_omx_encode(mm_jpeg_obj* my_obj, mm_jpeg_job_entry* job_entry)
     }
 
     /* config thumbnail */
-    rc = mm_jpeg_omx_config_thumbnail(my_obj, job);
-    if (0 != rc) {
-        CDBG_ERROR("%s: config thumbnail img failed", __func__);
-        return rc;
+    if (has_thumbnail) {
+        rc = mm_jpeg_omx_config_thumbnail(my_obj, job);
+        if (0 != rc) {
+            CDBG_ERROR("%s: config thumbnail img failed", __func__);
+            return rc;
+        }
     }
 
     /* common config */
@@ -1287,6 +1295,7 @@ mm_jpeg_job_q_node_t* mm_jpeg_queue_remove_job_by_client_id(mm_jpeg_queue_t* que
             job_node = data;
             cam_list_del_node(&node->list);
             queue->size--;
+            free(node);
             CDBG_ERROR("%s: queue size = %d", __func__, queue->size);
             break;
         }
@@ -1318,6 +1327,7 @@ mm_jpeg_job_q_node_t* mm_jpeg_queue_remove_job_by_job_id(mm_jpeg_queue_t* queue,
             job_node = data;
             cam_list_del_node(&node->list);
             queue->size--;
+            free(node);
             break;
         }
         pos = pos->next;

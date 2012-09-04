@@ -205,6 +205,7 @@ static void mm_app_video_notify_cb(mm_camera_super_buf_t *bufs,
 	CDBG("In CB function i/p = %p o/p = %p",bufs->bufs[MM_CAMERA_PREVIEW],frame);
 
 	dumpFrameToFile(frame,pme->dim.orig_video_width,pme->dim.orig_video_height,"video", 1);
+
 	if(MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,frame))
 	{
 		CDBG_ERROR("%s: Failed in Snapshot Qbuf\n", __func__);
@@ -404,6 +405,7 @@ int mm_app_open_recorder(int cam_id)
 		CDBG_ERROR("%s:Stop preview err=%d\n", __func__, rc);
 		goto end;
 	}
+	usleep(10*1000);
 
 	if(MM_CAMERA_OK != initDisplay())
 	{

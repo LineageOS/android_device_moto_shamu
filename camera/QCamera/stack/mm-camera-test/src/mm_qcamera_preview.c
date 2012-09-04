@@ -613,10 +613,18 @@ static int mm_stream_deinitbuf_1(uint32_t camera_handle,
 
 void preview_cb_signal(mm_camera_app_obj_t *pme)
 {
-    if (pme->cam_state == CAMERA_STATE_PREVIEW) {
+    if (pme->cam_state == CAMERA_STATE_PREVIEW && pme->cam_mode == CAMERA_MODE) {
         mm_camera_app_done();
     }
 }
+
+void previewzsl_cb_signal(mm_camera_app_obj_t *pme)
+{
+    if (pme->cam_state == CAMERA_STATE_PREVIEW && pme->cam_mode == ZSL_MODE) {
+        mm_camera_app_done();
+    }
+}
+
 
 void mm_app_preview_notify_cb(mm_camera_super_buf_t *bufs,
                               void *user_data)
@@ -787,6 +795,9 @@ static void mm_app_zsl_notify_cb(mm_camera_super_buf_t *bufs,
 
     if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,preview_frame)) {
         CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__); 
+    }
+	if (my_cam_app.run_sanity) {
+        previewzsl_cb_signal(pme);
     }
     CDBG("%s: END\n", __func__);
 }
@@ -1258,7 +1269,7 @@ int mm_app_start_preview_zsl(int cam_id)
 static int mm_app_streamoff_stats(int cam_id)
 {
     int rc = MM_CAMERA_OK;
-    int stream_aec[2], stream_af[2],stream_awb[2], stream_ihist[2];
+    uint32_t stream_aec[2], stream_af[2],stream_awb[2], stream_ihist[2];
 
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
 
@@ -1360,13 +1371,13 @@ static int mm_app_streamoff_preview_zsl(int cam_id)
     stream[0] = pme->stream[MM_CAMERA_PREVIEW].id;
     stream[1] = pme->stream[MM_CAMERA_SNAPSHOT_MAIN].id;
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->destroy_stream_bundle(pme->cam->camera_handle,pme->ch_id))) {
-        CDBG_ERROR("%s : ZSL Snapshot destroy_stream_bundle Error",__func__);
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,2,stream))) {
+        CDBG_ERROR("%s : Preview Stream off Error",__func__);
         goto end;
     }
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,2,stream))) {
-        CDBG_ERROR("%s : Preview Stream off Error",__func__);
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->destroy_stream_bundle(pme->cam->camera_handle,pme->ch_id))) {
+        CDBG_ERROR("%s : ZSL Snapshot destroy_stream_bundle Error",__func__);
         goto end;
     }
 

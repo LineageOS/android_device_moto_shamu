@@ -787,15 +787,52 @@ static int32_t mm_camera_intf_send_native_cmd(uint32_t camera_handle,
     pthread_mutex_lock(&g_intf_lock);
     my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
 
+    if (!cmd) {
+        CDBG_ERROR("%s Null cmd ", __func__);
+        return -EINVAL;
+    }
+
     if (my_obj) {
         pthread_mutex_lock(&my_obj->cam_lock);
         pthread_mutex_unlock(&g_intf_lock);
-        rc = mm_camera_socket_sendmsg(my_obj->ds_fd, cmd, cmd_length, 0);
-        /* may switch to send through native ctrl cmd ioctl */
-        /* rc = mm_camera_send_native_ctrl_cmd(my_obj,
-                                            cmd_id,
-                                            cmd_length,
-                                            cmd); */
+        switch(cmd_id) {
+        case NATIVE_CMD_ID_SOCKET_MAP: {
+            cam_sock_packet_t packet;
+            mm_camera_frame_map_type *frame_map =
+              (mm_camera_frame_map_type *)cmd;
+
+            memset(&packet, 0, sizeof(cam_sock_packet_t));
+            packet.msg_type = CAM_SOCK_MSG_TYPE_HIST_MAPPING;
+            packet.payload.frame_fd_map = *frame_map;
+            rc = mm_camera_util_sendmsg(my_obj, &packet,
+                                      sizeof(cam_sock_packet_t),
+                                      packet.payload.frame_fd_map.fd);
+          }
+          break;
+        case NATIVE_CMD_ID_SOCKET_UNMAP: {
+            cam_sock_packet_t packet;
+            mm_camera_frame_unmap_type *frame_unmap =
+              (mm_camera_frame_unmap_type *)cmd;
+
+            memset(&packet, 0, sizeof(cam_sock_packet_t));
+            packet.msg_type = CAM_SOCK_MSG_TYPE_FD_UNMAPPING;
+            packet.payload.frame_fd_unmap = *frame_unmap;
+            rc = mm_camera_util_sendmsg(my_obj, &packet,
+                                      sizeof(cam_sock_packet_t), 0);
+          }
+          break;
+       case NATIVE_CMD_ID_IOCTL_CTRL:
+           /* may switch to send through native ctrl cmd ioctl */
+           /* rc = mm_camera_send_native_ctrl_cmd(my_obj,
+                                                cmd_id,
+                                                cmd_length,
+                                                cmd); */
+          break;
+       default:
+          CDBG_ERROR("%s Invalid native cmd id %d ", __func__, cmd_id);
+          rc = -EINVAL;
+          break;
+        }
         pthread_mutex_unlock(&my_obj->cam_lock);
     } else {
         pthread_mutex_unlock(&g_intf_lock);
@@ -823,6 +860,217 @@ static int32_t mm_camera_intf_send_cmd(uint32_t camera_handle,
         break;
     }
 
+    return rc;
+}
+
+static int32_t mm_camera_intf_open_repro_isp(uint32_t camera_handle,
+                                             uint32_t ch_id,
+                                             mm_camera_repro_isp_type_t repro_isp_type,
+                                             uint32_t *repro_isp_handle)
+{
+    int32_t rc = -1;
+    mm_camera_obj_t * my_obj = NULL;
+
+    if (NULL == repro_isp_handle) {
+        CDBG_ERROR("%s: NULL pointer for repro_isp_handle", __func__);
+        return rc;
+    }
+
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
+
+    if(my_obj) {
+        pthread_mutex_lock(&my_obj->cam_lock);
+        pthread_mutex_unlock(&g_intf_lock);
+        rc = mm_camera_open_repro_isp(my_obj,
+                                     ch_id,
+                                     repro_isp_type,
+                                     repro_isp_handle);
+    }else{
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+
+    CDBG("%s :X rc = %d",__func__,rc);
+    return rc;
+}
+
+static int32_t mm_camera_intf_config_repro_isp(uint32_t camera_handle,
+                                               uint32_t ch_id,
+                                               uint32_t repro_isp_handle,
+                                               mm_camera_repro_isp_config_t *config)
+{
+    int32_t rc = -1;
+    mm_camera_obj_t * my_obj = NULL;
+
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
+
+    if(my_obj) {
+        pthread_mutex_lock(&my_obj->cam_lock);
+        pthread_mutex_unlock(&g_intf_lock);
+        rc = mm_camera_config_repro_isp(my_obj,
+                                        ch_id,
+                                        repro_isp_handle,
+                                        config);
+    }else{
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+
+    CDBG("%s :X rc = %d",__func__,rc);
+    return rc;
+}
+
+static int32_t mm_camera_intf_attach_stream_to_repro_isp(uint32_t camera_handle,
+                                                         uint32_t ch_id,
+                                                         uint32_t repro_isp_handle,
+                                                         uint32_t stream_id)
+{
+    int32_t rc = -1;
+    mm_camera_obj_t * my_obj = NULL;
+
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
+
+    if(my_obj) {
+        pthread_mutex_lock(&my_obj->cam_lock);
+        pthread_mutex_unlock(&g_intf_lock);
+        rc = mm_camera_attach_stream_to_repro_isp(my_obj,
+                                                  ch_id,
+                                                  repro_isp_handle,
+                                                  stream_id);
+    }else{
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+
+    CDBG("%s :X rc = %d",__func__,rc);
+    return rc;
+}
+
+static int32_t mm_camera_intf_start_repro_isp(uint32_t camera_handle,
+                                              uint32_t ch_id,
+                                              uint32_t repro_isp_handle,
+                                              uint32_t stream_id)
+{
+    int32_t rc = -1;
+    mm_camera_obj_t * my_obj = NULL;
+
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
+
+    if(my_obj) {
+        pthread_mutex_lock(&my_obj->cam_lock);
+        pthread_mutex_unlock(&g_intf_lock);
+        rc = mm_camera_start_repro_isp(my_obj,
+                                       ch_id,
+                                       repro_isp_handle,
+                                       stream_id);
+    }else{
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+
+    CDBG("%s :X rc = %d",__func__,rc);
+    return rc;
+}
+
+static int32_t mm_camera_intf_reprocess(uint32_t camera_handle,
+                                        uint32_t ch_id,
+                                        uint32_t repro_isp_handle,
+                                        mm_camera_repro_data_t *repro_data)
+{
+    int32_t rc = -1;
+    mm_camera_obj_t * my_obj = NULL;
+
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
+
+    if(my_obj) {
+        pthread_mutex_lock(&my_obj->cam_lock);
+        pthread_mutex_unlock(&g_intf_lock);
+        rc = mm_camera_reprocess(my_obj,
+                                 ch_id,
+                                 repro_isp_handle,
+                                 repro_data);
+    }else{
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+
+    CDBG("%s :X rc = %d",__func__,rc);
+    return rc;
+}
+
+static int32_t mm_camera_intf_stop_repro_isp(uint32_t camera_handle,
+                                             uint32_t ch_id,
+                                             uint32_t repro_isp_handle,
+                                             uint32_t stream_id)
+{
+    int32_t rc = -1;
+    mm_camera_obj_t * my_obj = NULL;
+
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
+
+    if(my_obj) {
+        pthread_mutex_lock(&my_obj->cam_lock);
+        pthread_mutex_unlock(&g_intf_lock);
+        rc = mm_camera_stop_repro_isp(my_obj,
+                                      ch_id,
+                                      repro_isp_handle,
+                                      stream_id);
+    }else{
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+
+    CDBG("%s :X rc = %d",__func__,rc);
+    return rc;
+}
+
+static int32_t mm_camera_intf_detach_stream_from_repro_isp(uint32_t camera_handle,
+                                                           uint32_t ch_id,
+                                                           uint32_t repro_isp_handle,
+                                                           uint32_t stream_id)
+{
+    int32_t rc = -1;
+    mm_camera_obj_t * my_obj = NULL;
+
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
+
+    if(my_obj) {
+        pthread_mutex_lock(&my_obj->cam_lock);
+        pthread_mutex_unlock(&g_intf_lock);
+        rc = mm_camera_detach_stream_from_repro_isp(my_obj,
+                                                    ch_id,
+                                                    repro_isp_handle,
+                                                    stream_id);
+    }else{
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+
+    CDBG("%s :X rc = %d",__func__,rc);
+    return rc;
+}
+
+static int32_t mm_camera_intf_close_repro_isp(uint32_t camera_handle,
+                                              uint32_t ch_id,
+                                              uint32_t repro_isp_handle)
+{
+    int32_t rc = -1;
+    mm_camera_obj_t * my_obj = NULL;
+
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
+
+    if(my_obj) {
+        pthread_mutex_lock(&my_obj->cam_lock);
+        pthread_mutex_unlock(&g_intf_lock);
+        rc = mm_camera_close_repro_isp(my_obj,
+                                       ch_id,
+                                       repro_isp_handle);
+    }else{
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+
+    CDBG("%s :X rc = %d",__func__,rc);
     return rc;
 }
 
@@ -975,7 +1223,15 @@ static mm_camera_ops_t mm_camera_ops = {
     .prepare_snapshot = mm_camera_intf_prepare_snapshot,
     .set_stream_parm = mm_camera_intf_set_stream_parm,
     .get_stream_parm = mm_camera_intf_get_stream_parm,
-    .send_command = mm_camera_intf_send_cmd
+    .send_command = mm_camera_intf_send_cmd,
+    .open_repro_isp = mm_camera_intf_open_repro_isp,
+    .config_repro_isp = mm_camera_intf_config_repro_isp,
+    .attach_stream_to_repro_isp = mm_camera_intf_attach_stream_to_repro_isp,
+    .start_repro_isp = mm_camera_intf_start_repro_isp,
+    .reprocess =  mm_camera_intf_reprocess,
+    .stop_repro_isp = mm_camera_intf_stop_repro_isp,
+    .detach_stream_from_repro_isp = mm_camera_intf_detach_stream_from_repro_isp,
+    .close_repro_isp = mm_camera_intf_close_repro_isp
 };
 
 /* open camera. */

@@ -348,7 +348,7 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
     CDBG("%s : Launch evt Poll Thread in Cam Open",__func__);
     mm_camera_poll_thread_launch(&my_obj->evt_poll_thread,
                                  MM_CAMERA_POLL_TYPE_EVT);
-   
+
     CDBG("%s:  end (rc = %d)\n", __func__, rc);
     /* we do not need to unlock cam_lock here before return
      * because for open, it's done within intf_lock */
@@ -782,6 +782,12 @@ int32_t mm_camera_get_parm(mm_camera_obj_t *my_obj,
     case MM_CAMERA_PARM_OP_MODE:
         *((mm_camera_op_mode_type_t *)p_value) = my_obj->op_mode;
         break;
+    case MM_CAMERA_PARM_MAX_NUM_FACES_DECT:
+        rc = mm_camera_send_native_ctrl_cmd(my_obj,
+                                            CAMERA_GET_MAX_NUM_FACES_DECT,
+                                            sizeof(int),
+                                            p_value);
+        break;
     default:
         /* needs to add more implementation */
         rc = -1;
@@ -852,7 +858,6 @@ uint32_t mm_camera_add_stream(mm_camera_obj_t *my_obj,
     mm_channel_t * ch_obj =
         mm_camera_util_get_channel_by_handler(my_obj, ch_id);
     mm_evt_paylod_add_stream_t payload;
-    void* out_val = NULL;
 
     if (NULL != ch_obj) {
         pthread_mutex_lock(&ch_obj->ch_lock);
@@ -1535,7 +1540,7 @@ int32_t mm_camera_set_general_parm(mm_camera_obj_t * my_obj,
     case MM_CAMERA_PARM_FD:
         rc = mm_camera_send_native_ctrl_cmd(my_obj,
                                             CAMERA_SET_PARM_FD,
-                                            sizeof(int32_t),
+                                            sizeof(fd_set_parm_t),
                                             p_value);
         break;
     case MM_CAMERA_PARM_AEC_LOCK:
@@ -1862,4 +1867,229 @@ uint8_t mm_camera_util_get_pp_mask(mm_camera_obj_t *my_obj)
     return pp_mask;
 }
 
+int32_t mm_camera_open_repro_isp(mm_camera_obj_t *my_obj,
+                                 uint32_t ch_id,
+                                 mm_camera_repro_isp_type_t repro_isp_type,
+                                 uint32_t *repro_isp_handle)
+{
+    int32_t rc = -1;
+    uint32_t repro_hdl = 0;
+    mm_channel_t * ch_obj =
+        mm_camera_util_get_channel_by_handler(my_obj, ch_id);
 
+    if (NULL != ch_obj) {
+        pthread_mutex_lock(&ch_obj->ch_lock);
+        pthread_mutex_unlock(&my_obj->cam_lock);
+
+        rc = mm_channel_fsm_fn(ch_obj,
+                               MM_CHANNEL_EVT_OPEN_REPRO_ISP,
+                               (void*)repro_isp_type,
+                               (void*)&repro_hdl);
+    } else {
+        pthread_mutex_unlock(&my_obj->cam_lock);
+        CDBG_ERROR("%s: no channel obj exist", __func__);
+    }
+
+    if (NULL != repro_isp_handle) {
+        *repro_isp_handle = repro_hdl;
+    }
+    return rc;
+}
+
+int32_t mm_camera_config_repro_isp(mm_camera_obj_t *my_obj,
+                                   uint32_t ch_id,
+                                   uint32_t repro_isp_handle,
+                                   mm_camera_repro_isp_config_t *config)
+{
+    int32_t rc = -1;
+    mm_channel_t * ch_obj =
+        mm_camera_util_get_channel_by_handler(my_obj, ch_id);
+    mm_evt_paylod_config_repro_isp_t payload;
+
+    if (NULL != ch_obj) {
+        pthread_mutex_lock(&ch_obj->ch_lock);
+        pthread_mutex_unlock(&my_obj->cam_lock);
+
+        memset(&payload, 0, sizeof(mm_evt_paylod_config_repro_isp_t));
+        payload.repro_isp_handle = repro_isp_handle;
+        payload.config = config;
+        rc = mm_channel_fsm_fn(ch_obj,
+                               MM_CHANNEL_EVT_CONFIG_REPRO_ISP,
+                               (void*)&payload,
+                               NULL);
+    } else {
+        pthread_mutex_unlock(&my_obj->cam_lock);
+        CDBG_ERROR("%s: no channel obj exist", __func__);
+    }
+
+    return rc;
+}
+
+int32_t mm_camera_attach_stream_to_repro_isp(mm_camera_obj_t *my_obj,
+                                             uint32_t ch_id,
+                                             uint32_t repro_isp_handle,
+                                             uint32_t stream_id)
+{
+    int32_t rc = -1;
+    mm_channel_t * ch_obj =
+        mm_camera_util_get_channel_by_handler(my_obj, ch_id);
+    mm_evt_paylod_stream_to_repro_isp_t payload;
+
+    if (NULL != ch_obj) {
+        pthread_mutex_lock(&ch_obj->ch_lock);
+        pthread_mutex_unlock(&my_obj->cam_lock);
+
+        memset(&payload, 0, sizeof(mm_evt_paylod_stream_to_repro_isp_t));
+        payload.repro_isp_handle = repro_isp_handle;
+        payload.stream_id = stream_id;
+        rc = mm_channel_fsm_fn(ch_obj,
+                               MM_CHANNEL_EVT_ATTACH_STREAM_TO_REPRO_ISP,
+                               (void*)&payload,
+                               NULL);
+    } else {
+        pthread_mutex_unlock(&my_obj->cam_lock);
+        CDBG_ERROR("%s: no channel obj exist", __func__);
+    }
+
+    return rc;
+}
+
+int32_t mm_camera_start_repro_isp(mm_camera_obj_t *my_obj,
+                                  uint32_t ch_id,
+                                  uint32_t repro_isp_handle,
+                                  uint32_t stream_id)
+{
+    int32_t rc = -1;
+    mm_evt_paylod_repro_start_stop_t payload;
+    mm_channel_t * ch_obj =
+        mm_camera_util_get_channel_by_handler(my_obj, ch_id);
+
+    if (NULL != ch_obj) {
+        pthread_mutex_lock(&ch_obj->ch_lock);
+        pthread_mutex_unlock(&my_obj->cam_lock);
+
+        memset(&payload, 0, sizeof(mm_evt_paylod_repro_start_stop_t));
+        payload.repro_isp_handle = repro_isp_handle;
+        payload.stream_id = stream_id;
+        rc = mm_channel_fsm_fn(ch_obj,
+                               MM_CHANNEL_EVT_START_REPRO_ISP,
+                               (void*)&payload,
+                               NULL);
+    } else {
+        pthread_mutex_unlock(&my_obj->cam_lock);
+        CDBG_ERROR("%s: no channel obj exist", __func__);
+    }
+
+    return rc;
+}
+
+int32_t mm_camera_reprocess(mm_camera_obj_t *my_obj,
+                            uint32_t ch_id,
+                            uint32_t repro_isp_handle,
+                            mm_camera_repro_data_t *repro_data)
+{
+    int32_t rc = -1;
+    mm_channel_t * ch_obj =
+        mm_camera_util_get_channel_by_handler(my_obj, ch_id);
+    mm_evt_paylod_reprocess_t payload;
+
+    if (NULL != ch_obj) {
+        pthread_mutex_lock(&ch_obj->ch_lock);
+        pthread_mutex_unlock(&my_obj->cam_lock);
+
+        memset(&payload, 0, sizeof(mm_evt_paylod_reprocess_t));
+        payload.repro_isp_handle = repro_isp_handle;
+        payload.repro_data = repro_data;
+        rc = mm_channel_fsm_fn(ch_obj,
+                               MM_CHANNEL_EVT_ATTACH_STREAM_TO_REPRO_ISP,
+                               (void*)&payload,
+                               NULL);
+    } else {
+        pthread_mutex_unlock(&my_obj->cam_lock);
+        CDBG_ERROR("%s: no channel obj exist", __func__);
+    }
+
+    return rc;
+}
+
+int32_t mm_camera_stop_repro_isp(mm_camera_obj_t *my_obj,
+                                 uint32_t ch_id,
+                                 uint32_t repro_isp_handle,
+                                 uint32_t stream_id)
+{
+    int32_t rc = -1;
+    mm_evt_paylod_repro_start_stop_t payload;
+    mm_channel_t * ch_obj =
+        mm_camera_util_get_channel_by_handler(my_obj, ch_id);
+
+    if (NULL != ch_obj) {
+        pthread_mutex_lock(&ch_obj->ch_lock);
+        pthread_mutex_unlock(&my_obj->cam_lock);
+
+        memset(&payload, 0, sizeof(mm_evt_paylod_repro_start_stop_t));
+        payload.repro_isp_handle = repro_isp_handle;
+        payload.stream_id = stream_id;
+        rc = mm_channel_fsm_fn(ch_obj,
+                               MM_CHANNEL_EVT_STOP_REPRO_ISP,
+                               (void*)&payload,
+                               NULL);
+    } else {
+        pthread_mutex_unlock(&my_obj->cam_lock);
+        CDBG_ERROR("%s: no channel obj exist", __func__);
+    }
+
+    return rc;
+}
+
+int32_t mm_camera_detach_stream_from_repro_isp(mm_camera_obj_t *my_obj,
+                                               uint32_t ch_id,
+                                               uint32_t repro_isp_handle,
+                                               uint32_t stream_id)
+{
+    int32_t rc = -1;
+    mm_channel_t * ch_obj =
+        mm_camera_util_get_channel_by_handler(my_obj, ch_id);
+    mm_evt_paylod_stream_to_repro_isp_t payload;
+
+    if (NULL != ch_obj) {
+        pthread_mutex_lock(&ch_obj->ch_lock);
+        pthread_mutex_unlock(&my_obj->cam_lock);
+
+        memset(&payload, 0, sizeof(mm_evt_paylod_stream_to_repro_isp_t));
+        payload.repro_isp_handle = repro_isp_handle;
+        payload.stream_id = stream_id;
+        rc = mm_channel_fsm_fn(ch_obj,
+                               MM_CHANNEL_EVT_DETACH_STREAM_FROM_REPRO_ISP,
+                               (void*)&payload,
+                               NULL);
+    } else {
+        pthread_mutex_unlock(&my_obj->cam_lock);
+        CDBG_ERROR("%s: no channel obj exist", __func__);
+    }
+
+    return rc;
+}
+
+int32_t mm_camera_close_repro_isp(mm_camera_obj_t *my_obj,
+                                  uint32_t ch_id,
+                                  uint32_t repro_isp_handle)
+{
+    int32_t rc = -1;
+    mm_channel_t * ch_obj =
+        mm_camera_util_get_channel_by_handler(my_obj, ch_id);
+
+    if (NULL != ch_obj) {
+        pthread_mutex_lock(&ch_obj->ch_lock);
+        pthread_mutex_unlock(&my_obj->cam_lock);
+
+        rc = mm_channel_fsm_fn(ch_obj,
+                               MM_CHANNEL_EVT_CLOSE_REPRO_ISP,
+                               (void*)repro_isp_handle,
+                               NULL);
+    } else {
+        pthread_mutex_unlock(&my_obj->cam_lock);
+        CDBG_ERROR("%s: no channel obj exist", __func__);
+    }
+
+    return rc;
+}
