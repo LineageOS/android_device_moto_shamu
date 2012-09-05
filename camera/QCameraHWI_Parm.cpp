@@ -2144,6 +2144,15 @@ status_t QCameraHardwareInterface::setSceneMode(const QCameraParameters& params)
         int32_t value = attr_lookup(scenemode, sizeof(scenemode) / sizeof(str_map), str);
         ALOGE("Setting Scenemode value = %d",value );
         if (value != NOT_FOUND) {
+            if((value != CAMERA_BESTSHOT_OFF ) && (mColorEffects != CAMERA_EFFECT_OFF )) {
+               int result;
+               mColorEffects = CAMERA_EFFECT_OFF;
+               native_set_parms(MM_CAMERA_PARM_EFFECT, sizeof(mColorEffects),
+                                (void *)&mColorEffects,(int *)&result);
+               if(result != MM_CAMERA_OK) {
+                  ALOGI("Camera Effect is not set as the EFFECT_NONE and result is not OK");
+               }
+            }
             mParameters.set(QCameraParameters::KEY_SCENE_MODE, str);
             bool ret = native_set_parms(MM_CAMERA_PARM_BESTSHOT_MODE, sizeof(value),
                                        (void *)&value);
@@ -2200,6 +2209,7 @@ status_t QCameraHardwareInterface::setEffect(const QCameraParameters& params)
     status_t rc = NO_ERROR;
     const char *str = params.get(QCameraParameters::KEY_EFFECT);
     int result;
+    mColorEffects = CAMERA_EFFECT_OFF;
     if (str != NULL) {
         ALOGE("Setting effect %s",str);
         int32_t value = attr_lookup(effects, sizeof(effects) / sizeof(str_map), str);
@@ -2211,6 +2221,7 @@ status_t QCameraHardwareInterface::setEffect(const QCameraParameters& params)
            }else {
                mParameters.set(QCameraParameters::KEY_EFFECT, str);
                ALOGE("Setting effect to lower HAL : %d",value);
+               mColorEffects = value;
                bool ret = native_set_parms(MM_CAMERA_PARM_EFFECT, sizeof(value),
                                            (void *)&value,(int *)&result);
                 if(result != MM_CAMERA_OK) {
