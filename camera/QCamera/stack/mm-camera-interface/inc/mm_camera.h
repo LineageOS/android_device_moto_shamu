@@ -104,12 +104,17 @@ typedef struct {
 } mm_camera_buf_info_t;
 
 typedef struct {
+    uint32_t num_buf_requested;
+} mm_camera_req_buf_t;
+
+typedef struct {
     mm_camera_cmdcb_type_t cmd_type;
     union {
         mm_camera_buf_info_t buf;    /* frame buf if dataCB */
         mm_camera_event_t evt;       /* evt if evtCB */
         mm_camera_async_cmd_t async; /* async cmd */
         mm_camera_super_buf_t superbuf; /* superbuf if superbuf dataCB*/
+        mm_camera_req_buf_t req_buf; /* num of buf requested */
     } u;
 } mm_camera_cmdcb_t;
 
@@ -275,6 +280,14 @@ typedef enum {
     MM_CHANNEL_EVT_SET_STREAM_PARM,
     MM_CHANNEL_EVT_GET_STREAM_PARM,
     MM_CHANNEL_EVT_DELETE,
+    MM_CHANNEL_EVT_OPEN_REPRO_ISP,
+    MM_CHANNEL_EVT_CONFIG_REPRO_ISP,
+    MM_CHANNEL_EVT_ATTACH_STREAM_TO_REPRO_ISP,
+    MM_CHANNEL_EVT_START_REPRO_ISP,
+    MM_CHANNEL_EVT_REPROCESS,
+    MM_CHANNEL_EVT_STOP_REPRO_ISP,
+    MM_CHANNEL_EVT_DETACH_STREAM_FROM_REPRO_ISP,
+    MM_CHANNEL_EVT_CLOSE_REPRO_ISP,
     MM_CHANNEL_EVT_MAX
 } mm_channel_evt_type_t;
 
@@ -317,6 +330,26 @@ typedef struct {
     uint32_t sensor_idx;
     uint32_t focus_mode;
 } mm_evt_payload_start_focus_t;
+
+typedef struct {
+    uint32_t repro_isp_handle;
+    mm_camera_repro_isp_config_t *config;
+} mm_evt_paylod_config_repro_isp_t;
+
+typedef struct {
+    uint32_t repro_isp_handle;
+    uint32_t stream_id;
+} mm_evt_paylod_stream_to_repro_isp_t;
+
+typedef struct {
+    uint32_t repro_isp_handle;
+    mm_camera_repro_data_t *repro_data;
+} mm_evt_paylod_reprocess_t;
+
+typedef struct {
+    uint32_t repro_isp_handle;
+    uint32_t stream_id;
+} mm_evt_paylod_repro_start_stop_t;
 
 typedef struct {
     uint8_t num_of_bufs;
@@ -552,6 +585,38 @@ extern int32_t mm_camera_send_private_ioctl(mm_camera_obj_t *my_obj,
                                             uint32_t cmd_id,
                                             uint32_t cmd_length,
                                             void *cmd);
+extern int32_t mm_camera_open_repro_isp(mm_camera_obj_t *my_obj,
+                                        uint32_t ch_id,
+                                        mm_camera_repro_isp_type_t repro_isp_type,
+                                        uint32_t *repro_isp_handle);
+extern int32_t mm_camera_config_repro_isp(mm_camera_obj_t *my_obj,
+                                          uint32_t ch_id,
+                                          uint32_t repro_isp_handle,
+                                          mm_camera_repro_isp_config_t *config);
+extern int32_t mm_camera_attach_stream_to_repro_isp(mm_camera_obj_t *my_obj,
+                                                    uint32_t ch_id,
+                                                    uint32_t repro_isp_handle,
+                                                    uint32_t stream_id);
+extern int32_t mm_camera_start_repro_isp(mm_camera_obj_t *my_obj,
+                                         uint32_t ch_id,
+                                         uint32_t repro_isp_handle,
+                                         uint32_t stream_id);
+extern int32_t mm_camera_reprocess(mm_camera_obj_t *my_obj,
+                                   uint32_t ch_id,
+                                   uint32_t repro_isp_handle,
+                                   mm_camera_repro_data_t *repo_data);
+extern int32_t mm_camera_stop_repro_isp(mm_camera_obj_t *my_obj,
+                                        uint32_t ch_id,
+                                        uint32_t repro_isp_handle,
+                                        uint32_t stream_id);
+extern int32_t mm_camera_detach_stream_from_repro_isp(mm_camera_obj_t *my_obj,
+                                                      uint32_t ch_id,
+                                                      uint32_t repro_isp_handle,
+                                                      uint32_t stream_id);
+extern int32_t mm_camera_close_repro_isp(mm_camera_obj_t *my_obj,
+                                         uint32_t ch_id,
+                                         uint32_t repro_isp_handle);
+
 extern uint8_t mm_camera_util_get_pp_mask(mm_camera_obj_t *my_obj);
 
 /* mm_channel */

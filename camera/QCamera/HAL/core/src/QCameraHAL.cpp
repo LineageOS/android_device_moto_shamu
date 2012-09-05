@@ -1,5 +1,8 @@
 /*
-** Copyright (c) 2011 Code Aurora Forum. All rights reserved.
+** Copyright (c) 2011-2012 Code Aurora Forum. All rights reserved.
+**
+** Not a Contribution, Apache license notifications and license are retained
+** for attribution purposes only.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -16,8 +19,8 @@
 
 /*#error uncomment this for compiler test!*/
 
-//#define LOG_NDEBUG 0
-#define LOG_NIDEBUG 0
+//#define ALOG_NDEBUG 0
+#define ALOG_NIDEBUG 0
 #define LOG_TAG "QCameraHAL"
 #include <utils/Log.h>
 #include <utils/threads.h>
@@ -29,8 +32,7 @@
 #include "QCameraHAL.h"
 
 int HAL_numOfCameras = 0;
-camera_info_t HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
-mm_camera_t * HAL_camerahandle[MSM_MAX_CAMERA_SENSORS];
+mm_camera_info_t * HAL_camerahandle[MSM_MAX_CAMERA_SENSORS];
 int HAL_currentCameraMode;
 
 namespace android {
@@ -46,36 +48,36 @@ extern "C" int HAL_getNumberOfCameras()
 {
     /* try to query every time we get the call!*/
     uint8_t num_camera = 0;
-    mm_camera_t * handle_base = 0;
-    LOGV("%s: E", __func__);
+    mm_camera_info_t * handle_base = 0;
+    ALOGV("%s: E", __func__);
 
-    handle_base= mm_camera_query(&num_camera);
+    handle_base= camera_query(&num_camera);
 
     if (!handle_base) {
         HAL_numOfCameras = 0;
     }
     else
     {
-        camera_info_t* p_camera_info = 0;
+        camera_info_t* p_camera_info = NULL;
         HAL_numOfCameras=num_camera;
 
-        LOGI("Handle base =0x%p",handle_base);
-        LOGI("getCameraInfo: numOfCameras = %d", HAL_numOfCameras);
+        ALOGI("Handle base =0x%p",handle_base);
+        ALOGI("getCameraInfo: numOfCameras = %d", HAL_numOfCameras);
         for(int i = 0; i < HAL_numOfCameras; i++) {
-            LOGI("Handle [%d]=0x%p",i,handle_base+i);
+            ALOGI("Handle [%d]=0x%p",i,handle_base+i);
             HAL_camerahandle[i]=handle_base + i;
             p_camera_info = &(HAL_camerahandle[i]->camera_info);
             if (p_camera_info) {
-                LOGI("Camera sensor %d info:", i);
-                LOGI("camera_id: %d", p_camera_info->camera_id);
-                LOGI("modes_supported: %x", p_camera_info->modes_supported);
-                LOGI("position: %d", p_camera_info->position);
-                LOGI("sensor_mount_angle: %d", p_camera_info->sensor_mount_angle);
+                ALOGI("Camera sensor %d info:", i);
+                ALOGI("camera_id: %d", p_camera_info->camera_id);
+                ALOGI("modes_supported: %x", p_camera_info->modes_supported);
+                ALOGI("position: %d", p_camera_info->position);
+                ALOGI("sensor_mount_angle: %d", p_camera_info->sensor_mount_angle);
             }
         }
     }
 
-    LOGV("%s: X", __func__);
+    ALOGV("%s: X", __func__);
 
     return HAL_numOfCameras;
 }
@@ -87,8 +89,8 @@ extern "C" int HAL_isIn3DMode()
 
 extern "C" void HAL_getCameraInfo(int cameraId, struct CameraInfo* cameraInfo)
 {
-    mm_camera_t *mm_camer_obj = 0;
-    LOGV("%s: E", __func__);
+    mm_camera_info_t *mm_camer_obj = 0;
+    ALOGV("%s: E", __func__);
 
     if (!HAL_numOfCameras || HAL_numOfCameras < cameraId || !cameraInfo)
         return;
@@ -115,14 +117,14 @@ extern "C" void HAL_getCameraInfo(int cameraId, struct CameraInfo* cameraInfo)
         }
 #endif
     }
-   LOGV("%s: X", __func__);
+   ALOGV("%s: X", __func__);
    return;
 }
 
 /* HAL should return NULL if it fails to open camera hardware. */
 extern "C" void * HAL_openCameraHardware(int cameraId, int mode)
 {
-    LOGV("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     if (!HAL_numOfCameras || HAL_numOfCameras < cameraId ||cameraId < 0) {
       return NULL;
     }

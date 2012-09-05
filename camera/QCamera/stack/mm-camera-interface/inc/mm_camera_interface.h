@@ -31,7 +31,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __MM_CAMERA_INTERFACE_H__
 #include <linux/ion.h>
 #include <camera.h>
-#include <QCamera_Intf.h>
+#include "QCamera_Intf.h"
 #include "cam_list.h"
 
 #define MM_CAMERA_MAX_NUM_FRAMES 16
@@ -218,9 +218,22 @@ typedef struct {
 } mm_camera_2nd_sensor_t;
 
 typedef enum {
+    NATIVE_CMD_ID_SOCKET_MAP,
+    NATIVE_CMD_ID_SOCKET_UNMAP,
+    NATIVE_CMD_ID_IOCTL_CTRL,
+    NATIVE_CMD_ID_MAX
+} mm_camera_native_cmd_id_t;
+
+typedef enum {
     MM_CAMERA_CMD_TYPE_PRIVATE,   /* OEM private ioctl */
     MM_CAMERA_CMD_TYPE_NATIVE     /* native ctrl cmd through ioctl */
 } mm_camera_cmd_type_t;
+
+typedef struct {
+    mm_camera_buf_def_t *src_frame; /* src frame */
+} mm_camera_repro_data_t;
+
+typedef mm_camera_repro_cmd_config_t mm_camera_repro_isp_config_t;
 
 typedef struct {
     /* to sync the internal camera settings */
@@ -322,6 +335,48 @@ typedef struct {
                              uint32_t cmd_id,
                              uint32_t cmd_length,
                              void *cmd);
+    /* open a re-process isp */
+    int32_t (*open_repro_isp) (uint32_t camera_handle,
+                               uint32_t ch_id,
+                               mm_camera_repro_isp_type_t repro_isp_type,
+                               uint32_t *repro_isp_handle);
+    /* config the re-process isp */
+    int32_t (*config_repro_isp) (uint32_t camera_handle,
+                                 uint32_t ch_id,
+                                 uint32_t repro_isp_handle,
+                                 mm_camera_repro_isp_config_t *config);
+    /* attach output stream to the re-process isp */
+    int32_t (*attach_stream_to_repro_isp) (uint32_t camera_handle,
+                                           uint32_t ch_id,
+                                           uint32_t repro_isp_handle,
+                                           uint32_t stream_id);
+    /* start a re-process isp. */
+    int32_t (*start_repro_isp) (uint32_t camera_handle,
+                                uint32_t ch_id,
+                                uint32_t repro_isp_handle,
+                                uint32_t stream_id);
+    /* start a reprocess job for a src frame.
+     * Only after repo_isp is started, reprocess API can be called */
+    int32_t (*reprocess) (uint32_t camera_handle,
+                          uint32_t ch_id,
+                          uint32_t repro_isp_handle,
+                          mm_camera_repro_data_t *repo_data);
+    /* stop a re-process isp */
+    int32_t (*stop_repro_isp) (uint32_t camera_handle,
+                               uint32_t ch_id,
+                               uint32_t repro_isp_handle,
+                               uint32_t stream_id);
+    /* detach an output stream from the re-process isp.
+     * Can only be called after the re-process isp is stopped */
+    int32_t (*detach_stream_from_repro_isp) (uint32_t camera_handle,
+                                             uint32_t ch_id,
+                                             uint32_t repro_isp_handle,
+                                             uint32_t stream_id);
+    /* close a re-process isp.
+     * Can only close after all dest streams are detached from it */
+    int32_t (*close_repro_isp) (uint32_t camera_handle,
+                                uint32_t ch_id,
+                                uint32_t repro_isp_handle);
 } mm_camera_ops_t;
 
 typedef struct {
@@ -334,6 +389,8 @@ mm_camera_info_t * camera_query(uint8_t *num_cameras);
 mm_camera_vtbl_t * camera_open(uint8_t camera_idx,
                                mm_camear_mem_vtbl_t *mem_vtbl);
 
+//extern void mm_camera_util_profile(const char *str);
+
 typedef enum {
     MM_CAMERA_PREVIEW,
     MM_CAMERA_VIDEO,
@@ -341,7 +398,7 @@ typedef enum {
     MM_CAMERA_SNAPSHOT_THUMBNAIL,
     MM_CAMERA_SNAPSHOT_RAW,
     MM_CAMERA_RDI,
-    MM_CAMERA_RDII,
+    MM_CAMERA_RDI1,
     MM_CAMERA_RDI2,
     MM_CAMERA_SAEC,
     MM_CAMERA_SAWB,
@@ -350,7 +407,7 @@ typedef enum {
     MM_CAMERA_CS,
     MM_CAMERA_RS,
     MM_CAMERA_CSTA,
-}mm_camera_img_mode;
+} mm_camera_img_mode;
 
 /* may remove later */
 typedef enum {

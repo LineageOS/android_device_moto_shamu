@@ -118,10 +118,19 @@ typedef enum {
   CAM_SOCK_MSG_TYPE_FD_MAPPING,
   CAM_SOCK_MSG_TYPE_FD_UNMAPPING,
   CAM_SOCK_MSG_TYPE_WDN_START,
+  CAM_SOCK_MSG_TYPE_HDR_START,
   CAM_SOCK_MSG_TYPE_HIST_MAPPING,
   CAM_SOCK_MSG_TYPE_HIST_UNMAPPING,
   CAM_SOCK_MSG_TYPE_MAX
 }mm_camera_socket_msg_type;
+#define MAX_HDR_EXP_FRAME_NUM 5
+typedef struct {
+  unsigned long cookie;
+  int num_hdr_frames;
+  int hdr_main_idx[MAX_HDR_EXP_FRAME_NUM];
+  int hdr_thm_idx[MAX_HDR_EXP_FRAME_NUM];
+  int exp[MAX_HDR_EXP_FRAME_NUM];
+} mm_camera_hdr_start_type;
 
 #define MM_MAX_WDN_NUM 2
 typedef struct {
@@ -137,6 +146,7 @@ typedef struct {
     mm_camera_frame_map_type frame_fd_map;
     mm_camera_frame_unmap_type frame_fd_unmap;
     mm_camera_wdn_start_type wdn_start;
+    mm_camera_hdr_start_type hdr_pkg;
   } payload;
 } cam_sock_packet_t;
 
@@ -577,6 +587,8 @@ typedef enum {
   CAMERA_GET_FACIAL_FEATURE_INFO,
   CAMERA_GET_PP_MASK, /* get post-processing mask */
   CAMERA_DO_PP_WNR,   /* do post-process WNR */
+  CAMERA_GET_PARM_HDR,
+  CAMERA_SEND_PP_PIPELINE_CMD, /* send offline pp cmd */
   CAMERA_CTRL_PARM_MAX
 } cam_ctrl_type;
 
@@ -852,6 +864,7 @@ typedef enum {
   MM_CAMERA_CTRL_EVT_PREP_SNAPSHOT,
   MM_CAMERA_CTRL_EVT_SNAPSHOT_CONFIG_DONE,
   MM_CAMERA_CTRL_EVT_WDN_DONE, // wavelet denoise done
+  MM_CAMERA_CTRL_EVT_HDR_DONE,
   MM_CAMERA_CTRL_EVT_ERROR,
   MM_CAMERA_CTRL_EVT_MAX
 }mm_camera_ctrl_event_type_t;
@@ -979,6 +992,99 @@ typedef struct {
     mm_camera_private_event_t pri_evt;
   } e;
 } mm_camera_event_t;
+
+typedef enum {
+  MM_CAMERA_REPRO_CMD_INVALID,
+  MM_CAMERA_REPRO_CMD_OPEN,
+  MM_CAMERA_REPRO_CMD_CONFIG,
+  MM_CAMERA_REPRO_CMD_ATTACH_DETACH,
+  MM_CAMERA_REPRO_CMD_START_STOP,
+  MM_CAMERA_REPRO_CMD_REPROCESS,
+  MM_CAMERA_REPRO_CMD_CLOSE,
+  MM_CAMERA_REPRO_CMD_MAX
+} mmcam_repro_cmd_type_t;
+
+/* re-process isp type defintion */
+typedef enum {
+  MM_CAMERA_REPRO_ISP_NOT_USED,
+  MM_CAMERA_REPRO_ISP_PIX,
+  MM_CAMERA_REPRO_ISP_CROP_AND_SCALING,
+  MM_CAMERA_REPRO_ISP_COLOR_CONVERSION,
+  MM_CAMERA_REPRO_ISP_DNOISE_AND_SHARPNESS,
+  MM_CAMERA_REPRO_ISP_MAX_NUM
+} mm_camera_repro_isp_type_t;
+
+typedef struct {
+  uint32_t addr_offset;
+  uint32_t length;
+  uint32_t data_offset;
+} mm_camera_repro_plane_t;
+
+typedef struct {
+  uint32_t repro_handle;  /* repo isp handle */
+  uint32_t inst_handle; /* instance handle */
+  int8_t   buf_idx;     /* buffer index    */
+  uint32_t frame_id;    /* frame id        */
+  uint32_t frame_len;   /* frame length    */
+  int8_t   num_planes;
+  mm_camera_repro_plane_t planes[VIDEO_MAX_PLANES];
+  struct timeval timestamp;
+} mm_camera_repro_cmd_reprocess_t;
+
+#define MM_CAMERA_MAX_NUM_REPROCESS_DEST 2
+
+typedef struct {
+  uint8_t  isp_type;      /* in: mm_camera_repro_isp_type_t */
+  uint32_t repro_handle;  /* out */
+} mm_camera_repro_cmd_open_t;
+
+typedef struct {
+  int image_mode;
+  int width;
+  int height;
+  cam_format_t format;
+  uint32_t inst_handle; /* stream handler */
+} mm_camera_repro_config_data_t;
+
+typedef struct {
+  uint32_t repro_handle;
+  int num_dest;
+  mm_camera_repro_config_data_t src;
+  mm_camera_repro_config_data_t dest[MM_CAMERA_MAX_NUM_REPROCESS_DEST];
+} mm_camera_repro_cmd_config_t;
+
+typedef struct {
+  uint32_t repro_handle;   /* repro isp handle */
+  uint32_t inst_handle;    /* instance handle of dest stream */
+  uint8_t  attach_flag;    /* flag: attach(TRUE)/detach(FALSE) */
+} mm_camera_repro_cmd_attach_detach_t;
+
+typedef struct {
+  uint32_t repro_handle;   /* repo isp handle */
+  uint32_t dest_handle;    /* Which destination to start/stop */
+  uint8_t  start_flag;     /* flag: start isp(TRUE)/stop isp(FALSE) */
+} mm_camera_repro_cmd_start_stop_t;
+
+typedef struct {
+  /* mm_camera_repro_cmd_type_t */
+  int cmd;
+  /* Union of the possible payloads for
+   * this reprocess command. */
+  union {
+    /* MM_CAMERA_REPRO_CMD_OPEN */
+    mm_camera_repro_cmd_open_t open;
+    /* MM_CAMERA_REPRO_CMD_CONFIG */
+    mm_camera_repro_cmd_config_t config;
+    /* MM_CAMERA_REPRO_CMD_ATTACH_DETACH */
+    mm_camera_repro_cmd_attach_detach_t attach_detach;
+    /* MM_CAMERA_REPRO_CMD_REPROCESS */
+    mm_camera_repro_cmd_reprocess_t reprocess;
+    /* MM_CAMERA_REPRO_CMD_START_STOP */
+    mm_camera_repro_cmd_start_stop_t start_stop;
+    /* MM_CAMERA_REPRO_CMD_CLOSE */
+    uint32_t repro_handle;
+  } payload;
+} mm_camera_repro_cmd_t;
 
 /******************************************************************************
  * Function: exif_set_tag

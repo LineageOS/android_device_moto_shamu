@@ -109,7 +109,7 @@ static void mm_app_dump_jpeg_frame(const void * data, uint32_t size, char* name,
     int file_fd;
     if ( data != NULL) {
         char * str;
-        snprintf(buf, sizeof(buf), "/data/%s.%s", name, ext);
+        snprintf(buf, sizeof(buf), "/data/%s_%d.%s", name, index, ext);
         CDBG("%s: %s size =%d, jobId=%d", __func__, buf, size, index);
         file_fd = open(buf, O_RDWR | O_CREAT, 0777);
         write(file_fd, data, size);
@@ -126,6 +126,10 @@ static int mm_app_set_thumbnail_fmt(int cam_id, mm_camera_image_fmt_t *fmt)
     fmt->fmt = pme->dim.thumb_format;
     fmt->width = pme->dim.thumbnail_width;
     fmt->height = pme->dim.thumbnail_height;
+    if (cam_id == 0) {
+        /* back camera, rotate 90 */
+        fmt->rotation = 90;
+    }
     CDBG("Thumbnail Dimension = %dX%d",fmt->width,fmt->height);
     return rc;
 }
@@ -139,6 +143,10 @@ int mm_app_set_snapshot_fmt(int cam_id, mm_camera_image_fmt_t *fmt)
     fmt->fmt = pme->dim.main_img_format;
     fmt->width = pme->dim.picture_width;
     fmt->height = pme->dim.picture_height;
+    if (cam_id == 0) {
+        /* back camera, rotate 90 */
+        fmt->rotation = 90;
+    }
     CDBG("Snapshot Dimension = %dX%d",fmt->width,fmt->height);
     return rc;
 }
@@ -330,7 +338,7 @@ static void jpeg_encode_cb(jpeg_job_status_t status,
     CDBG_ERROR("%s: job %d, status=%d, thumbnail_dropped=%d",
                __func__, jobId, status, thumbnailDroppedFlag);
     if (status == JPEG_JOB_STATUS_DONE) {
-        mm_app_dump_jpeg_frame(out_data, data_size, "jpeg_dump", "jpg", pme->current_job_id);
+        mm_app_dump_jpeg_frame(out_data, data_size, "jpeg_dump", "jpg", pme->my_id);
     }
 
     /* buf done current encoding frames */
@@ -398,6 +406,11 @@ static int encodeData(mm_camera_app_obj_t *pme,
     job.encode_job.encode_parm.exif_numEntries = 0;
     job.encode_job.encode_parm.rotation = 0;
     job.encode_job.encode_parm.buf_info.src_imgs.src_img_num = recvd_frame->num_bufs;
+    job.encode_job.encode_parm.rotation = 0;
+    if (pme->my_id == 0) {
+        /* back camera, rotate 90 */
+        job.encode_job.encode_parm.rotation = 90;
+    }
 
     /* fill in main src img encode param */
     main_buf_info = &job.encode_job.encode_parm.buf_info.src_imgs.src_img[JPEG_SRC_IMAGE_TYPE_MAIN];
@@ -723,9 +736,9 @@ void mm_app_set_snapshot_mode(int cam_id,int op_mode)
 
     /* set wnr enabled */
     memset(&wnr, 0, sizeof(denoise_param_t));
-    wnr.denoise_enable = 1;
+    wnr.denoise_enable = 0;
     wnr.process_plates = 0;
-    pme->cam->ops->set_parm(pme->cam->camera_handle, MM_CAMERA_PARM_WAVELET_DENOISE, &wnr);
+ //   pme->cam->ops->set_parm(pme->cam->camera_handle, MM_CAMERA_PARM_WAVELET_DENOISE, &wnr);
 }
 
 int mm_app_config_snapshot_format(int cam_id)
@@ -853,11 +866,10 @@ int mm_app_start_snapshot(int cam_id)
         CDBG_ERROR("%s: Stop preview Failed cam_id=%d\n",__func__,cam_id);
         return -1;
     }
-
     op_mode = MM_CAMERA_OP_MODE_CAPTURE;
     mm_app_set_snapshot_mode(cam_id,op_mode);
-
-    pme->cam->ops->prepare_snapshot(pme->cam->camera_handle,pme->ch_id,0);
+    usleep(20*1000);
+//    pme->cam->ops->prepare_snapshot(pme->cam->camera_handle,pme->ch_id,0);
 
     if (MM_CAMERA_OK != (rc = mm_app_add_snapshot_stream(cam_id))) {
         CDBG_ERROR("%s : Add Snapshot stream err",__func__);
