@@ -886,6 +886,9 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
   if (mHalCamCtrl->cache_ops(ion_fd, &cache_inv_data, ION_IOC_CLEAN_CACHES) < 0)
     ALOGE("%s: Cache clean for Preview buffer %p fd = %d failed", __func__,
       cache_inv_data.vaddr, cache_inv_data.fd);
+  if (mHalCamCtrl->cache_ops(ion_fd, &cache_inv_data,  ION_IOC_CLEAN_INV_CACHES) < 0)
+    ALOGE("%s: Cache clean for Preview buffer %p fd = %d failed", __func__,
+      cache_inv_data.vaddr, cache_inv_data.fd);
 #endif
 
   if(mHFRFrameSkip == 1)
