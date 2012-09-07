@@ -331,6 +331,11 @@ typedef struct {
     mm_camera_wnr_frame_info_t frames[MM_CAMEAR_MAX_STRAEM_BUNDLE];
 } mm_camera_wnr_info_t;
 
+typedef struct {
+  uint8_t num;
+  uint32_t stream_handles[MM_CAMEAR_MAX_STRAEM_BUNDLE]; /* instance handler */
+} cam_stream_bundle_t;
+
 /* Add enumenrations at the bottom but before MM_CAMERA_PARM_MAX */
 typedef enum {
     MM_CAMERA_PARM_PICT_SIZE,
@@ -589,6 +594,7 @@ typedef enum {
   CAMERA_DO_PP_WNR,   /* do post-process WNR */
   CAMERA_GET_PARM_HDR,
   CAMERA_SEND_PP_PIPELINE_CMD, /* send offline pp cmd */
+  CAMERA_SET_BUNDLE, /* set stream bundle */
   CAMERA_CTRL_PARM_MAX
 } cam_ctrl_type;
 
