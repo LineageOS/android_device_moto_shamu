@@ -282,13 +282,13 @@ static void mm_stream_buf_notify(mm_camera_super_buf_t *super_buf,
         return;
     }
 
-    my_obj->buf[0].buf_idx = 0;
-    my_obj->buf[0].stream_id = my_obj->my_hdl;
-    my_obj->buf[0].frame_idx = buf->frame_idx;
+    my_obj->buf[my_obj->local_buf_idx].buf_idx = 0;
+    my_obj->buf[my_obj->local_buf_idx].stream_id = my_obj->my_hdl;
+    my_obj->buf[my_obj->local_buf_idx].frame_idx = buf->frame_idx;
 
-    memcpy(&my_obj->buf[0].ts, &buf->ts, sizeof(buf->ts));
+    memcpy(&my_obj->buf[my_obj->local_buf_idx].ts, &buf->ts, sizeof(buf->ts));
 
-    memcpy(&my_obj->buf[0].planes,&buf->planes,buf->num_planes * sizeof(struct v4l2_plane));
+    memcpy(&my_obj->buf[my_obj->local_buf_idx].planes, &buf->planes, buf->num_planes * sizeof(struct v4l2_plane));
 
     /* set flag to indicate buf be to sent out is from local */
     my_obj->is_local_buf = 1;
@@ -298,9 +298,14 @@ static void mm_stream_buf_notify(mm_camera_super_buf_t *super_buf,
 
     /* 3) handle received buf */
     memset(&buf_info, 0, sizeof(mm_camera_buf_info_t));
-    buf_info.frame_idx =my_obj->buf[0].frame_idx;
-    buf_info.buf = &my_obj->buf[0];
+    buf_info.frame_idx =my_obj->buf[my_obj->local_buf_idx].frame_idx;
+    buf_info.buf = &my_obj->buf[my_obj->local_buf_idx];
     buf_info.stream_id = my_obj->my_hdl;
+
+    my_obj->local_buf_idx++;
+    if (my_obj->local_buf_idx >= my_obj->buf_num) {
+        my_obj->local_buf_idx = 0;
+    }
     mm_stream_handle_rcvd_buf(my_obj, &buf_info);
 }
 
@@ -633,11 +638,14 @@ int32_t mm_stream_fsm_reg(mm_stream_t * my_obj,
                 }
                 my_obj->state = MM_STREAM_STATE_ACTIVE_STREAM_ON;
             } else {
-                /* register one time CB at video fd */
+                /* register CB at video fd */
                 CDBG("%s : Video Size snapshot Enabled",__func__);
                 mm_stream_data_cb_t cb;
                 memset(&cb, 0, sizeof(mm_stream_data_cb_t));
-                cb.cb_count = 1; /* one time reigstration */
+                cb.cb_count = my_obj->num_stream_cb_times; /* reigstration cb times */
+                if (cb.cb_count == 0) {
+                    cb.cb_count = 1;
+                }
                 cb.user_data = (void*)my_obj;
                 cb.cb = mm_stream_buf_notify;
                 rc = mm_channel_reg_stream_cb(my_obj->ch_obj, &cb,
@@ -747,6 +755,7 @@ int32_t mm_stream_config(mm_stream_t *my_obj,
     memcpy(&my_obj->fmt, &config->fmt, sizeof(mm_camera_image_fmt_t));
     my_obj->hal_requested_num_bufs = config->num_of_bufs;
     my_obj->need_stream_on = config->need_stream_on;
+    my_obj->num_stream_cb_times = config->num_stream_cb_times;
 
     rc = mm_stream_get_offset(my_obj);
     if(rc != 0) {

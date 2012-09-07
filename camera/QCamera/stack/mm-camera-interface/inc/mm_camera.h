@@ -248,6 +248,8 @@ typedef struct mm_stream {
     uint8_t is_local_buf; /* flag if buf is local copy, no need to qbuf to kernel */
     uint8_t hal_requested_num_bufs;
     uint8_t need_stream_on; /* flag if stream need streamon when start */
+    uint8_t num_stream_cb_times; /* how many times to register for other stream data CB */
+    uint8_t local_buf_idx; /* idx to local buf that can be used for non-stream-on cb */
 
     mm_camera_frame_len_offset frame_offset; /*Stream buffer offset information*/
 } mm_stream_t;

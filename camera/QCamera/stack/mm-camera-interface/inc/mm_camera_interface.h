@@ -97,6 +97,11 @@ typedef struct {
 
     /* flag to indicate if this stream need stream on */
     uint8_t need_stream_on;
+
+    /* num of CB needs to be registered on other stream,
+     * this field is valid only when need_stream_on is 0.
+     * When need_stream_on = 1, num_stream_cb_times will be ignored. */
+    uint8_t num_stream_cb_times;
 } mm_camera_stream_config_t;
 
 typedef struct {

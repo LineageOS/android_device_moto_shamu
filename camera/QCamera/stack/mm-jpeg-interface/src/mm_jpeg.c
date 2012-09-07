@@ -1143,14 +1143,14 @@ OMX_ERRORTYPE mm_jpeg_ftbdone(OMX_HANDLETYPE hComponent,
     if (NULL != node) {
         job_entry = &(((mm_jpeg_job_q_node_t *)node)->entry);
 
-        /* clean omx job */
-        mm_jpeg_clean_omx_job(my_obj, job_entry);
-
         /* update status in job entry */
         job_entry->jpeg_size = pBuffer->nFilledLen;
         job_entry->job_status = JPEG_JOB_STATUS_DONE;
         CDBG("%s:filled len = %u, status = %d",
              __func__, job_entry->jpeg_size, job_entry->job_status);
+
+        /* clean omx job */
+        mm_jpeg_clean_omx_job(my_obj, job_entry);
 
         if (NULL != job_entry->job.encode_job.jpeg_cb) {
             /* has callback, create a thread to send CB */
