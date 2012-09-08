@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
+Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -10,7 +10,7 @@ met:
       copyright notice, this list of conditions and the following
       disclaimer in the documentation and/or other materials provided
       with the distribution.
-    * Neither the name of Code Aurora Forum, Inc. nor the names of its
+    * Neither the name of The Linux Foundation nor the names of its
       contributors may be used to endorse or promote products derived
       from this software without specific prior written permission.
 
@@ -179,51 +179,30 @@ int mm_app_set_ihist_stats_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
     return rc;
 }
 
-//void dumpFrameToFile(struct msm_frame* newFrame, int w, int h, char* name, int main_422)
 void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422)
 {
-    char buf[32];
+    char buf[50];
     int file_fd;
     int i;
     char *ext = "yuv";
-#if 0
+
     if ( newFrame != NULL) {
         char * str;
-        snprintf(buf, sizeof(buf), "/data/%s.%s", name,ext);
+        snprintf(buf, sizeof(buf), "/data/%s.%s", name, ext);
         file_fd = open(buf, O_RDWR | O_CREAT, 0777);
         if (file_fd < 0) {
-            CDBG_ERROR("%s: cannot open file\n", __func__);
-        } else {
-            CDBG("%s: %d %d", __func__, newFrame->y_off, newFrame->cbcr_off);
-            write(file_fd, (const void *)(newFrame->buffer+newFrame->y_off), w * h);
-            write(file_fd, (const void *)
-                  (newFrame->buffer + newFrame->cbcr_off), w * h / 2 * main_422);
-            close(file_fd);
-            CDBG("dump %s", buf);
-        }
-    }
-#endif
-    if ( newFrame != NULL) {
-        char * str;
-        snprintf(buf, sizeof(buf), "/data/%s.%s", name,ext);
-        file_fd = open(buf, O_RDWR | O_CREAT, 0777);
-        if (file_fd < 0) {
-            CDBG_ERROR("%s: cannot open file\n", __func__);
+            CDBG_ERROR("%s: cannot open file %s \n", __func__, buf);
         } else {
             void* y_off = newFrame->buffer + newFrame->planes[0].data_offset;
-            //int cbcr_off = newFrame->buffer + newFrame->planes[1].data_offset;//newFrame->buffer + newFrame->planes[0].length;
             void* cbcr_off = newFrame->buffer + newFrame->planes[0].length;
-            CDBG("%s: Y_off = %p cbcr_off = %p", __func__, y_off,cbcr_off);
+
+            CDBG("%s: %s Y_off = %p cbcr_off = %p", __func__, name, y_off,cbcr_off);
             CDBG("%s: Y_off length = %d cbcr_off length = %d", __func__, newFrame->planes[0].length,newFrame->planes[1].length);
 
-            write(file_fd, (const void *)(y_off), newFrame->planes[0].length);
-            write(file_fd, (const void *)(cbcr_off), 
-                  (newFrame->planes[1].length * newFrame->num_planes));
-            /*for(i = 1; i < newFrame->num_planes; i++) {
-                CDBG("%s: CBCR = %d", __func__, newFrame->planes[j].data_offset);
-                write(file_fd, (const void *)
-                  (newFrame->planes[i].data_offset), w * h / 2 * main_422);
-            }*/
+            write(file_fd, (const void *)(y_off), (w * h));
+            if (newFrame->num_planes > 1)
+                write(file_fd, (const void *)(cbcr_off), (w * h/2 * main_422));
+
             close(file_fd);
             CDBG("dump %s", buf);
         }
@@ -629,7 +608,8 @@ void previewzsl_cb_signal(mm_camera_app_obj_t *pme)
 void mm_app_preview_notify_cb(mm_camera_super_buf_t *bufs,
                               void *user_data)
 {
-    int rc;
+    int rc, cam = 0;
+    char buf[32];
     mm_camera_buf_def_t *frame = NULL;
     mm_camera_app_obj_t *pme = NULL;
     CDBG("%s: BEGIN\n", __func__); 
@@ -638,8 +618,11 @@ void mm_app_preview_notify_cb(mm_camera_super_buf_t *bufs,
 
     CDBG("%s: BEGIN - length=%d, frame idx = %d\n", __func__, frame->frame_len, frame->frame_idx);
 
-    //dumpFrameToFile(frame->frame,pme->dim.display_width,pme->dim.display_height,"preview", 1);
-    dumpFrameToFile(frame,pme->dim.display_width,pme->dim.display_height,"preview", 1);
+    snprintf(buf, sizeof(buf), "P_%dx%d_C%d", pme->dim.display_width,
+        pme->dim.display_height, pme->cam->camera_info->camera_id);
+
+    dumpFrameToFile(frame, pme->dim.display_width,
+        pme->dim.display_height, buf, 1);
 
     if (!my_cam_app.run_sanity) {
         if (0 != (rc = mm_app_dl_render(frame->fd, NULL))) {

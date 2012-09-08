@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+Copyright (c) 2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -10,7 +10,7 @@ met:
       copyright notice, this list of conditions and the following
       disclaimer in the documentation and/or other materials provided
       with the distribution.
-    * Neither the name of Code Aurora Forum, Inc. nor the names of its
+    * Neither the name of The Linux Foundation nor the names of its
       contributors may be used to endorse or promote products derived
       from this software without specific prior written permission.
 
@@ -128,7 +128,7 @@ int mm_app_dtc_0(mm_camera_app_t *cam_apps)
         mm_camera_app_wait();
         sleep(1);
 
-        CDBG_ERROR("DUAL stop camera Preview for front \n");
+        CDBG_ERROR("DUAL stop camera Rdi for front \n");
         if( MM_CAMERA_OK != (rc = stopRdi(front_camera))) {
                 CDBG_ERROR("%s: startPreview() backcamera err=%d\n", __func__, rc);
                 goto end;
@@ -1095,6 +1095,119 @@ end:
         return rc;
 }
 
+/*  Test case 2413(ab)5768
+ *  Test the dual camera usecase. We startPreview on front camera,
+ *  but backend will allocate RDI buffers and start front camera in
+ *  RDI streaming mode. It then diverts RDI frames, converts them into YUV 420
+ *  through C2D and generate preview data in the buffers allocated here.
+ *  Back camera will use the pixel interface as usual.
+ */
+
+int mm_app_dtc_13(mm_camera_app_t *cam_apps)
+{
+        int rc = MM_CAMERA_OK;
+        int i,j,k;
+        int result = 0;
+        int front_camera = 1;
+        int back_camera = 0;
+
+        printf("\n 13. Verifying Preview + Recording on back Camera and Preview(through RDI) on Front camera\n");
+        CDBG_ERROR("DUAL open front camera \n");
+        if(mm_app_open(front_camera) != MM_CAMERA_OK) {
+                CDBG_ERROR("%s:mm_app_open() front camera err=%d\n",__func__, rc);
+                rc = -1;
+                goto end;
+        }
+        if(system_dimension_set(front_camera) != MM_CAMERA_OK){
+                CDBG_ERROR("%s:system_dimension_set() err=%d\n",__func__, rc);
+                rc = -1;
+                goto end;
+        }
+
+        CDBG_ERROR("DUAL start camera Preview for front \n");
+        if( MM_CAMERA_OK != (rc = startPreview(front_camera))) {
+               CDBG_ERROR("%s: front camera startPreview() err=%d\n", __func__, rc);
+               goto end;
+        }
+        mm_camera_app_wait();
+        usleep(20*1000);
+
+        for (k = 0; k < MM_QCAMERA_APP_INTERATION ; k++){
+          CDBG_ERROR("DUAL open back camera %d \n",k);
+          if(mm_app_open(back_camera) != MM_CAMERA_OK) {
+                 CDBG_ERROR("%s:mm_app_open() back camera err=%d\n",__func__, rc);
+                 rc = -1;
+                 goto end;
+          }
+
+          if(system_dimension_set(back_camera) != MM_CAMERA_OK){
+                 CDBG_ERROR("%s:system_dimension_set() err=%d\n",__func__, rc);
+                 rc = -1;
+                 goto end;
+          }
+
+          CDBG_ERROR("DUAL start camera Preview for back \n");
+          if( MM_CAMERA_OK != (rc = startPreview(back_camera))) {
+                CDBG_ERROR("%s: back camera startPreview() err=%d\n", __func__, rc);
+                 goto end;
+          }
+          usleep(30*1000);
+
+          for (j = 0; j < MM_QCAMERA_APP_INTERATION; j++) {
+             CDBG_ERROR("DUAL start camera record for back Iteration %d \n", j);
+             if ( MM_CAMERA_OK != (rc = startRecording(back_camera))) {
+                 CDBG_ERROR("%s: StartVideorecording() err=%d\n", __func__, rc);
+                 break;
+             }
+
+             mm_camera_app_wait();
+             usleep(10*1000*1000);
+             CDBG_ERROR("DUAL stop camera record for back Iteration %d\n", j);
+             if ( MM_CAMERA_OK != (rc = stopRecording(back_camera))) {
+                 CDBG_ERROR("%s: Stopvideorecording() err=%d\n", __func__, rc);
+                 break;
+             }
+          }
+          usleep(10*1000);
+
+          CDBG_ERROR("DUAL stop camera Preview for back \n");
+          if( MM_CAMERA_OK != (rc = stopPreview(back_camera))) {
+                 CDBG_ERROR("%s: stopPreview() backcamera err=%d\n", __func__, rc);
+                 goto end;
+          }
+          usleep(10*1000);
+
+          CDBG_ERROR("DUAL close back camera\n");
+          if( mm_app_close(back_camera) != MM_CAMERA_OK) {
+                 CDBG_ERROR("%s:mm_app_close() err=%d\n",__func__, rc);
+                 rc = -1;
+                 goto end;
+          }
+          usleep(20*1000);
+        }
+        CDBG_ERROR("DUAL stop camera Preview for Rdi \n");
+        if( MM_CAMERA_OK != (rc = stopPreview(front_camera))) {
+                CDBG_ERROR("%s: stopPreview() frontcamera err=%d\n", __func__, rc);
+                goto end;
+        }
+        usleep(10*1000);
+        CDBG_ERROR("DUAL close front camera \n");
+        if( mm_app_close(front_camera) != MM_CAMERA_OK) {
+                CDBG_ERROR("%s:mm_app_close() err=%d\n",__func__, rc);
+                rc = -1;
+                goto end;
+        }
+        CDBG_ERROR("DUAL end \n");
+
+end:
+        if(rc == 0) {
+                printf("\nPassed\n");
+        }else{
+                printf("\nFailed\n");
+        }
+        CDBG("%s:END, rc = %d\n", __func__, rc);
+        return rc;
+}
 
 /*Below 6  are reference test cases just to test the open path for dual camera*/
 int mm_app_dtc_1243(mm_camera_app_t *cam_apps)
@@ -1791,7 +1904,9 @@ int mm_app_gen_dual_test_cases()
     if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_dtc_9;
     if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_dtc_10;
     if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_dtc_11;
-	if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_dtc_12;
+    if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_dtc_12;
+    if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_dtc_13;
+
     return tc;
 }
 
