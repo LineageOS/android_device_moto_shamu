@@ -17,6 +17,7 @@ MM_CAM_FILES := \
 LOCAL_CFLAGS += -D_ANDROID_
 LOCAL_COPY_HEADERS_TO := mm-camera-interface
 LOCAL_COPY_HEADERS := inc/mm_camera_interface.h
+LOCAL_COPY_HEADERS += ../common/cam_list.h
 
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/inc \
