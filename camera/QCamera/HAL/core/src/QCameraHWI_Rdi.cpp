@@ -42,10 +42,7 @@ status_t   QCameraStream_Rdi::freeBufferRdi()
     status_t ret = NO_ERROR;
 
     ALOGE(" %s : E ", __FUNCTION__);
-    mHalCamCtrl->mRdiMemoryLock.lock();
     mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mRdiMemory);
-    memset(&mHalCamCtrl->mRdiMemory, 0, sizeof(mHalCamCtrl->mRdiMemory));
-    mHalCamCtrl->mRdiMemoryLock.unlock();
 
     ALOGI(" %s : X ",__FUNCTION__);
     return NO_ERROR;
@@ -54,84 +51,27 @@ status_t   QCameraStream_Rdi::freeBufferRdi()
 status_t QCameraStream_Rdi::initRdiBuffers()
 {
     status_t ret = NO_ERROR;
-    int width = 0;  /* width of channel  */
-    int height = 0; /* height of channel */
-    const char *pmem_region;
-    uint8_t num_planes = 0;
-    mm_camera_frame_len_offset offset;
-    uint32_t planes[VIDEO_MAX_PLANES];
-    int i,  frame_len, y_off, cbcr_off;
+    int buf_count = kRdiBufferCount;
 
     ALOGE("%s:BEGIN",__func__);
 
-    width = mHalCamCtrl->mRdiWidth;
-    height = mHalCamCtrl->mRdiHeight;
-
-    mHalCamCtrl->mRdiMemoryLock.lock();
-    memset(&mHalCamCtrl->mRdiMemory, 0, sizeof(mHalCamCtrl->mRdiMemory));
-    mHalCamCtrl->mRdiMemory.buffer_count = kRdiBufferCount;
     if(mHalCamCtrl->isZSLMode()) {
-    if(mHalCamCtrl->getZSLQueueDepth() > kRdiBufferCount - 3)
-      mHalCamCtrl->mRdiMemory.buffer_count =
-      mHalCamCtrl->getZSLQueueDepth() + 3;
+        if(mHalCamCtrl->getZSLQueueDepth() > kRdiBufferCount - 3) {
+            buf_count = mHalCamCtrl->getZSLQueueDepth() + 3;
+        }
     }
 
-    frame_len = mFrameOffsetInfo.frame_len;
-    num_planes = mFrameOffsetInfo.num_planes;
+    memset(mRdiBuf, 0, sizeof(mRdiBuf));
+    ret = mHalCamCtrl->initHeapMem(&mHalCamCtrl->mRdiMemory,
+                                   buf_count,
+                                   mFrameOffsetInfo.frame_len,
+                                   MSM_PMEM_MAINIMG,
+                                   &mFrameOffsetInfo,
+                                   mRdiBuf);
 
-    for ( i = 0; i < num_planes; i++) {
-    planes[i] = mFrameOffsetInfo.mp[i].len;
-    }
-    y_off = 0;
-    cbcr_off = planes[0];
-
-    if (mHalCamCtrl->initHeapMem(&mHalCamCtrl->mRdiMemory,
-     mHalCamCtrl->mRdiMemory.buffer_count,
-     frame_len, y_off, cbcr_off, MSM_PMEM_MAINIMG,
-     NULL,num_planes, planes) < 0) {
-              ret = NO_MEMORY;
-              return ret;
-    };
-    mHalCamCtrl->mRdiMemoryLock.unlock();
-
-    for ( i = 0; i < num_planes; i++) {
-    planes[i] = mFrameOffsetInfo.mp[i].len;
-    }
-
-    ALOGE("DEBUG: buffer count = %d",mHalCamCtrl->mRdiMemory.buffer_count);
-    for (i = 0; i < mHalCamCtrl->mRdiMemory.buffer_count ; i++) {
-      int j;
-
-      mRdiBuf[i].fd = mHalCamCtrl->mRdiMemory.fd[i];
-      mRdiBuf[i].frame_len = mHalCamCtrl->mRdiMemory.alloc[i].len;
-      mRdiBuf[i].num_planes = num_planes;
-
-      /* Plane 0 needs to be set seperately. Set other planes
-      * in a loop. */
-      mFrameOffsetInfo.mp[0].len = mHalCamCtrl->mRdiMemory.alloc[i].len;
-
-      mRdiBuf[i].planes[0].length = mFrameOffsetInfo.mp[0].len;
-      mRdiBuf[i].planes[0].m.userptr = mRdiBuf[i].fd;
-      mRdiBuf[i].planes[0].data_offset = mFrameOffsetInfo.mp[0].offset;
-      mRdiBuf[i].planes[0].reserved[0] = 0;
-      for (j = 1; j < num_planes; j++) {
-          mRdiBuf[i].planes[j].length = mFrameOffsetInfo.mp[j].len;
-          mRdiBuf[i].planes[j].m.userptr = mRdiBuf[i].fd;
-          mRdiBuf[i].planes[j].data_offset = mFrameOffsetInfo.mp[j].offset;
-          mRdiBuf[i].planes[j].reserved[0] =
-              mRdiBuf[i].planes[j-1].reserved[0] +
-              mRdiBuf[i].planes[j-1].length;
-      }
-      ALOGE(" %s : Buffer allocated fd = %d, length = %d num_planes = %d,"
-            "mRdiBuf[i].planes[0].length = %d,mRdiBuf[i].planes[0].m.userptr = %d, mRdiBuf[i].planes[0].data_offset = %d",
-             __func__,mRdiBuf[i].fd,mRdiBuf[i].frame_len,num_planes,mRdiBuf[i].planes[0].length,
-            mRdiBuf[i].planes[0].m.userptr,mRdiBuf[i].planes[0].data_offset);
-    }
-
-    end:
     if (MM_CAMERA_OK == ret ) {
-    ALOGV("%s: X - NO_ERROR ", __func__);
-    return NO_ERROR;
+        ALOGV("%s: X - NO_ERROR ", __func__);
+        return NO_ERROR;
     }
     ALOGV("%s: X - BAD_VALUE ", __func__);
     return BAD_VALUE;
@@ -174,7 +114,7 @@ status_t QCameraStream_Rdi::processRdiFrame(
   mm_camera_super_buf_t *frame)
 {
     ALOGE("%s",__func__);
-    int err = 0;
+    status_t err = NO_ERROR;
     int msgType = 0;
     int i;
     camera_memory_t *data = NULL;
@@ -210,10 +150,13 @@ status_t QCameraStream_Rdi::processRdiFrame(
     if (MM_CAMERA_OK != p_mm_ops->ops->qbuf(mCameraHandle, mChannelId,
                                             frame->bufs[0])) {
         ALOGE("%s: Failed in Preview Qbuf\n", __func__);
-        return BAD_VALUE;
+        err = BAD_VALUE;
     }
+    mHalCamCtrl->cache_ops((QCameraHalMemInfo_t *)(frame->bufs[0]->mem_info),
+                           frame->bufs[0]->buffer,
+                           ION_IOC_CLEAN_CACHES);
 
-    return NO_ERROR;
+    return err;
 }
 
 

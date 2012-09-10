@@ -282,7 +282,7 @@ int mm_app_open(uint8_t cam_id)
     }
 
 end:
-    CDBG("%s:END, rc=%d\n", __func__, rc); 
+    CDBG("%s:END, rc=%d\n", __func__, rc);
     return rc;
 }
 
@@ -316,7 +316,7 @@ int mm_app_close(int8_t cam_id)
     free(pme);
     pme = NULL;
     my_cam_app.obj[cam_id] = NULL;
-    
+
 end:
     CDBG("%s:END, rc=%d\n", __func__, rc);
     return rc;
@@ -441,6 +441,115 @@ int mm_app_dual_test()
     return 0;
 }
 
+int mm_stream_invalid_cache(mm_camera_app_obj_t *pme,mm_camera_buf_def_t *frame)
+{
+    struct ion_flush_data cache_inv_data;
+    struct ion_custom_data custom_data;
+    mm_camear_app_buf_t* app_bufs = NULL;
+    int ion_fd;
+    int index = -1;
+    int i;
+
+    if(frame == NULL) {
+        CDBG_ERROR("%s: Invalid input",__func__);
+        return -1;
+    }
+#ifdef USE_ION
+    for (i = 0; i < MM_QCAM_APP_MAX_STREAM_NUM; i++) {
+        if (pme->stream[i].id == frame->stream_id) {
+            app_bufs = &pme->stream [i].app_bufs;
+            break;
+        }
+    }
+    if(app_bufs == NULL) {
+        CDBG_ERROR("Failed to match Stream");
+        return -1;
+    }
+    for (i = 0; i < MM_CAMERA_MAX_NUM_FRAMES; i++) {
+        if (app_bufs->bufs[i].buf_idx == frame->buf_idx) {
+            index = i;
+            break;
+        }
+    }
+    if(index < 0) {
+        CDBG_ERROR("Failed to match Frame");
+        return -1;
+    }
+
+    cache_inv_data.vaddr = app_bufs->bufs[index].buffer;
+    cache_inv_data.fd = app_bufs->bufs[index].fd;
+    cache_inv_data.handle = app_bufs->ion_info_fd[index].handle;
+    cache_inv_data.length = app_bufs->alloc[index].len;
+    custom_data.cmd = ION_IOC_INV_CACHES;
+    custom_data.arg = (unsigned long)&cache_inv_data;
+    ion_fd = pme->ionfd;
+
+    CDBG("addr = %p, fd = %d, handle = %p length = %d, ION Fd = %d",
+         cache_inv_data.vaddr,cache_inv_data.fd,cache_inv_data.handle,cache_inv_data.length,ion_fd);
+    if(ion_fd > 0) {
+        if(ioctl(ion_fd, ION_IOC_CUSTOM, &custom_data) < 0)
+            CDBG_ERROR("%s: Cache Invalidate failed\n", __func__);
+        else {
+            CDBG("%s: Successful cache invalidate\n", __func__);
+        }
+    }
+#endif
+    return MM_CAMERA_OK;
+}
+
+int mm_stream_clear_invalid_cache(mm_camera_app_obj_t *pme,mm_camera_buf_def_t *frame)
+{
+
+#ifdef USE_ION
+    int i,index = -1;
+    struct ion_flush_data cache_inv_data;
+    struct ion_custom_data custom_data;
+    mm_camear_app_buf_t* app_bufs = NULL;
+    int ion_fd;
+
+    if (frame) {
+        memset(&cache_inv_data, 0, sizeof(struct ion_flush_data));
+
+        for (i = 0; i < MM_QCAM_APP_MAX_STREAM_NUM; i++) {
+            if (pme->stream[i].id == frame->stream_id) {
+                app_bufs = &pme->stream [i].app_bufs;
+                break;
+            }
+        }
+        if(app_bufs == NULL) {
+            CDBG_ERROR("Failed to match Stream");
+            return -1;
+        }
+        for (i = 0; i < MM_CAMERA_MAX_NUM_FRAMES; i++) {
+            if (app_bufs->bufs[i].buf_idx == frame->buf_idx) {
+                index = i;
+                break;
+            }
+        }
+        if(index < 0) {
+            CDBG_ERROR("Failed to match Frame");
+            return -1;
+        }
+
+        cache_inv_data.vaddr = app_bufs->bufs[index].buffer;
+        cache_inv_data.fd = app_bufs->bufs[index].fd;
+        cache_inv_data.handle = app_bufs->ion_info_fd[index].handle;
+        cache_inv_data.length = app_bufs->alloc[index].len;
+        custom_data.cmd = ION_IOC_CLEAN_INV_CACHES;
+        custom_data.arg = (unsigned long)&cache_inv_data;
+        ion_fd = pme->ionfd;
+        if(ion_fd > 0) {
+          if(ioctl(ion_fd, ION_IOC_CUSTOM, &custom_data) < 0)
+              ALOGE("%s: Cache Invalidate failed\n", __func__);
+          else {
+              ALOGD("%s: Successful cache invalidate\n", __func__);
+          }
+        }
+    }
+#endif
+    return MM_CAMERA_OK;
+}
+
 int mm_stream_alloc_bufs(mm_camera_app_obj_t *pme,
                          mm_camear_app_buf_t* app_bufs,
                          mm_camera_frame_len_offset *frame_offset_info,
@@ -454,7 +563,7 @@ int mm_stream_alloc_bufs(mm_camera_app_obj_t *pme,
     app_bufs->num = num_bufs;
     for (i = 0; i < num_bufs ; i++) {
         int j;
-
+        app_bufs->bufs[i].buf_idx = i;
         app_bufs->alloc[i].len = frame_offset_info->frame_len;
         app_bufs->alloc[i].flags = ION_FLAG_CACHED;
         app_bufs->alloc[i].heap_mask =

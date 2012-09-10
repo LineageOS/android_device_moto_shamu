@@ -50,7 +50,10 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 mm_camera_channel_stream_info_t rdi_mode;
 static int rdi_op_mode;
 extern int stopPreview(int cam_id);
-extern void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422,char *ext);
+extern void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h,
+                            char* name, int main_422,char *ext);
+extern int mm_stream_invalid_cache(mm_camera_app_obj_t *pme,
+                                   mm_camera_buf_def_t *frame);
 
 static int rdi_counter = 0;
 static void dumpRdi(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422)
@@ -66,9 +69,9 @@ static void dumpRdi(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int
         if (file_fd < 0) {
             CDBG_ERROR("%s: cannot open file\n", __func__);
         } else {
-            int y_off = newFrame->buffer + newFrame->planes[0].data_offset;
+            void *y_off = newFrame->buffer + newFrame->planes[0].data_offset;
             //int cbcr_off = newFrame->buffer + newFrame->planes[1].data_offset;//newFrame->buffer + newFrame->planes[0].length;
-            int cbcr_off = newFrame->buffer + newFrame->planes[0].length;
+            void *cbcr_off = newFrame->buffer + newFrame->planes[0].length;
             CDBG("%s: Y_off = %p cbcr_off = %p", __func__, y_off,cbcr_off);
             CDBG("%s: Y_off length = %d cbcr_off length = %d", __func__, newFrame->planes[0].length,newFrame->planes[1].length);
 
@@ -162,6 +165,7 @@ static void mm_app_rdi_notify_cb(mm_camera_super_buf_t *bufs,
         CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
         return;
     }
+    mm_stream_invalid_cache(pme,frame);
     if (my_cam_app.run_sanity) {
         mm_camera_app_done(pme);
     }

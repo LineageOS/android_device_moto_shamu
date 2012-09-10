@@ -54,6 +54,7 @@ extern int stopStats(int cam_id);
 extern int takePicture_zsl(int cam_id);
 extern int takePicture_rdi(int cam_id);
 extern int mm_app_tc_reprocess_preview_only(mm_camera_app_t *cam_apps);
+extern int takePicture_raw(int cam_id);
 
 int mm_app_tc_0(mm_camera_app_t *cam_apps)
 {
