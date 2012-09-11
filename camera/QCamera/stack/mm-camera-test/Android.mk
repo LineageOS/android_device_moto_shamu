@@ -10,7 +10,7 @@ LOCAL_CFLAGS:= \
         $(USE_SERVER_TREE)
 
 LOCAL_CFLAGS += -include $(TARGET_OUT_INTERMEDIATES)/include/mm-camera/camera_defs_i.h
-LOCAL_CFLAGS += -include $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/linux/ion.h
+LOCAL_CFLAGS += -include $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/linux/msm_ion.h
 
 ifeq ($(strip $(TARGET_USES_ION)),true)
 LOCAL_CFLAGS += -DUSE_ION
