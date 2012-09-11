@@ -134,7 +134,7 @@ status_t QCameraStream_preview::getBufferFromSurface() {
 
     //as software encoder is used to encode 720p, to enhance the performance
     //cashed pmem is used here
-    if(mVFEOutputs == 1 && dim.display_height == 720)
+    if(mVFEOutputs == 1)
         gralloc_usage = CAMERA_GRALLOC_HEAP_ID | CAMERA_GRALLOC_FALLBACK_HEAP_ID;
     else
         gralloc_usage = CAMERA_GRALLOC_HEAP_ID | CAMERA_GRALLOC_FALLBACK_HEAP_ID |
