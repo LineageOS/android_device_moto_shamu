@@ -16,6 +16,10 @@ MM_CAM_FILES:= \
         mm_camera_helper.c \
         mm_omx_jpeg_encoder.c
 
+ifeq ($(strip $(TARGET_USES_ION)),true)
+    LOCAL_CFLAGS += -DUSE_ION
+endif
+
 LOCAL_CFLAGS+= -D_ANDROID_
 LOCAL_COPY_HEADERS_TO := mm-camera-interface
 LOCAL_COPY_HEADERS += mm_camera_interface2.h

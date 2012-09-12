@@ -14,6 +14,10 @@ MM_CAM_FILES := \
         src/mm_camera_sock.c \
         src/mm_camera_helper.c
 
+ifeq ($(strip $(TARGET_USES_ION)),true)
+    LOCAL_CFLAGS += -DUSE_ION
+endif
+
 LOCAL_CFLAGS += -D_ANDROID_
 LOCAL_COPY_HEADERS_TO := mm-camera-interface
 LOCAL_COPY_HEADERS := inc/mm_camera_interface.h
