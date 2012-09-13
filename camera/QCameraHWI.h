@@ -31,6 +31,7 @@
 #include <system/window.h>
 #include <system/camera.h>
 #include <hardware/camera.h>
+#include <hardware/power.h>
 #include <gralloc_priv.h>
 #include <QComOMXMetadata.h>
 
@@ -130,12 +131,12 @@ typedef enum {
 
 typedef struct {
      int                     buffer_count;
-	 buffer_handle_t        *buffer_handle[MM_CAMERA_MAX_NUM_FRAMES];
-	 struct private_handle_t *private_buffer_handle[MM_CAMERA_MAX_NUM_FRAMES];
-	 int                     stride[MM_CAMERA_MAX_NUM_FRAMES];
-	 uint32_t                addr_offset[MM_CAMERA_MAX_NUM_FRAMES];
-	 uint8_t                 local_flag[MM_CAMERA_MAX_NUM_FRAMES];
-	 camera_memory_t        *camera_memory[MM_CAMERA_MAX_NUM_FRAMES];
+         buffer_handle_t        *buffer_handle[MM_CAMERA_MAX_NUM_FRAMES];
+         struct private_handle_t *private_buffer_handle[MM_CAMERA_MAX_NUM_FRAMES];
+         int                     stride[MM_CAMERA_MAX_NUM_FRAMES];
+         uint32_t                addr_offset[MM_CAMERA_MAX_NUM_FRAMES];
+         uint8_t                 local_flag[MM_CAMERA_MAX_NUM_FRAMES];
+         camera_memory_t        *camera_memory[MM_CAMERA_MAX_NUM_FRAMES];
      int                     main_ion_fd[MM_CAMERA_MAX_NUM_FRAMES];
      struct ion_fd_data      ion_info_fd[MM_CAMERA_MAX_NUM_FRAMES];
 } QCameraHalMemory_t;
@@ -146,9 +147,9 @@ typedef struct {
      uint32_t                size;
      uint32_t                y_offset;
      uint32_t                cbcr_offset;
-	 int                     fd[MM_CAMERA_MAX_NUM_FRAMES];
-	 int                     local_flag[MM_CAMERA_MAX_NUM_FRAMES];
-	 camera_memory_t*        camera_memory[MM_CAMERA_MAX_NUM_FRAMES];
+         int                     fd[MM_CAMERA_MAX_NUM_FRAMES];
+         int                     local_flag[MM_CAMERA_MAX_NUM_FRAMES];
+         camera_memory_t*        camera_memory[MM_CAMERA_MAX_NUM_FRAMES];
      camera_memory_t*        metadata_memory[MM_CAMERA_MAX_NUM_FRAMES];
      int main_ion_fd[MM_CAMERA_MAX_NUM_FRAMES];
      struct ion_allocation_data alloc[MM_CAMERA_MAX_NUM_FRAMES];
@@ -750,7 +751,7 @@ private:
 
     bool mZslLookBackMode;
     int mZslLookBackValue;
-	int mHFRLevel;
+        int mHFRLevel;
     bool mZslEmptyQueueFlag;
     String8 mEffectValues;
     String8 mIsoValues;
@@ -832,6 +833,8 @@ private:
      int                 mNoDisplayMode;
      android :: FPSRange* mSupportedFpsRanges;
      int mSupportedFpsRangesCount;
+
+     power_module_t*   mPowerModule;
 };
 
 }; // namespace android
