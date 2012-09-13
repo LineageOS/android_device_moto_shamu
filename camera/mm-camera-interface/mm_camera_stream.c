@@ -324,11 +324,17 @@ static uint32_t mm_camera_util_get_v4l2_fmt(cam_format_t fmt,
         val= V4L2_PIX_FMT_YUYV;
         *num_planes = 1;
         break;
+    case CAMERA_YUV_420_YV12:
+        val= V4L2_PIX_FMT_NV12;
+        *num_planes = 3;
+        break;
     default:
         val = 0;
         *num_planes = 0;
+        CDBG_ERROR("%s: Unknown fmt=%d", __func__, fmt);
         break;
     }
+    CDBG("%s: fmt=%d, val =%d, num_planes=%d", __func__, fmt, val , *num_planes);
     return val;
 }
 
@@ -405,11 +411,13 @@ int mm_camera_stream_qbuf(mm_camera_obj_t * my_obj, mm_camera_stream_t *stream,
   buffer.m.planes = &(stream->frame.frame[idx].planes[0]);
   buffer.length = stream->frame.frame[idx].num_planes;
 
-  CDBG("%s Ref : PREVIEW=%d VIDEO=%d SNAPSHOT=%d THUMB=%d ", __func__,
-    MM_CAMERA_STREAM_PREVIEW, MM_CAMERA_STREAM_VIDEO,
-    MM_CAMERA_STREAM_SNAPSHOT, MM_CAMERA_STREAM_THUMBNAIL);
   CDBG("%s:fd=%d,type=%d,frame idx=%d,num planes %d\n", __func__,
     stream->fd, stream->stream_type, idx, buffer.length);
+  for(i= 0; i<buffer.length; i++ ) {
+      CDBG("%s: buffer.m.planes[%d]: bytesused=%d, length=%d, data_offset=%d, userptr=%lud\n", __func__, i,
+                 buffer.m.planes[i].bytesused, buffer.m.planes[i].length, buffer.m.planes[i].data_offset ,
+                 buffer.m.planes[i].m.userptr );
+  }
 
   rc = ioctl(stream->fd, VIDIOC_QBUF, &buffer);
   if (rc < 0) {
@@ -441,11 +449,11 @@ static int mm_camera_stream_util_request_buf(mm_camera_obj_t * my_obj,
     bufreq.memory = V4L2_MEMORY_USERPTR;
     rc = ioctl(stream->fd, VIDIOC_REQBUFS, &bufreq);
     if (rc < 0) {
-      CDBG("%s: fd=%d, ioctl VIDIOC_REQBUFS failed: rc=%d\n",
+      CDBG_ERROR("%s: fd=%d, ioctl VIDIOC_REQBUFS failed: rc=%d\n",
         __func__, stream->fd, rc);
       goto end;
     }
-    ALOGE("%s: stream fd=%d, ioctl VIDIOC_REQBUFS: memtype = %d, num_frames = %d, rc=%d\n",
+    CDBG("%s: stream fd=%d, ioctl VIDIOC_REQBUFS: memtype = %d, num_frames = %d, rc=%d\n",
         __func__, stream->fd, bufreq.memory, bufreq.count, rc);
 
 end:
@@ -468,9 +476,9 @@ static int mm_camera_stream_util_enqueue_buf(mm_camera_obj_t * my_obj,
 
     for(i = 0; i < vbuf->num; i++){
         int idx = vbuf->buf.mp[i].idx;
-        ALOGE("%s: enqueue buf index = %d\n",__func__, idx);
+        CDBG("%s: enqueue buf index = %d\n",__func__, idx);
         if(idx < MM_CAMERA_MAX_NUM_FRAMES) {
-            ALOGE("%s: stream_fd = %d, frame_fd = %d, frame ID = %d, offset = %d\n",
+            CDBG("%s: stream_fd = %d, frame_fd = %d, frame ID = %d, offset = %d\n",
                      __func__, stream->fd, stream->frame.frame[i].frame.fd,
                      idx, stream->frame.frame_offset[idx]);
             rc = mm_camera_stream_qbuf(my_obj, stream, stream->frame.frame[idx].idx);
@@ -529,6 +537,8 @@ static int mm_camera_stream_util_reg_buf(mm_camera_obj_t * my_obj,
         rc = -1;
         goto end;
     }
+    CDBG("%s frame_len =%d, mum_planes=%d", __func__, stream->frame.frame_len, num_planes);
+
     stream->frame.num_frame = vbuf->num;
     bufreq.count = stream->frame.num_frame;
     bufreq.type  = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
@@ -561,12 +571,15 @@ static int mm_camera_stream_util_reg_buf(mm_camera_obj_t * my_obj,
             stream->frame.frame_offset[i] = 0;
         }
 
+        CDBG("%s: vbuf_mp[%d]num_planes =%d", __func__, i, stream->frame.frame[i].num_planes);
+
         rc = mm_camera_stream_qbuf(my_obj, stream, stream->frame.frame[i].idx);
         if (rc < 0) {
             CDBG_ERROR("%s: VIDIOC_QBUF rc = %d\n", __func__, rc);
             goto end;
         }
         stream->frame.ref_count[i] = 0;
+
         CDBG("%s: stream_fd = %d, frame_fd = %d, frame ID = %d, offset = %d\n",
           __func__, stream->fd, stream->frame.frame[i].frame.fd,
           i, stream->frame.frame_offset[i]);

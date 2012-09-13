@@ -39,6 +39,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #define LOG_NIDEBUG 0
     #define LOG_TAG "mm-libcamera2"
     #include <utils/Log.h>
+    #define CDBG_ERROR ALOGE
   #else
     #include <stdio.h>
     #define ALOGE CDBG
