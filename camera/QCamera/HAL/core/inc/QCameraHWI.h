@@ -966,7 +966,7 @@ private:
                                             QCameraHardwareInterface* pme);
      static void superbuf_cb_routine(mm_camera_super_buf_t *recvd_frame,
                                      void *userdata);
-
+     static void receiveRawPicture(mm_camera_super_buf_t* recvd_frame, QCameraHardwareInterface *pme);
      status_t encodeData(mm_camera_super_buf_t* recvd_frame, uint32_t *jobId);
      void notifyShutter(bool play_shutter_sound);
 };

@@ -3958,6 +3958,7 @@ status_t QCameraHardwareInterface::setRDIMode(const QCameraParameters& params)
 
 status_t QCameraHardwareInterface::setDimension()
 {
+    ALOGV("%s: E", __func__);
     cam_ctrl_dimension_t dim;
     int ret = MM_CAMERA_OK;
     int postviewWidth,postviewHeight;
@@ -4059,6 +4060,7 @@ status_t QCameraHardwareInterface::setDimension()
         dim.display_width = dim.video_width;
         dim.display_height = dim.video_height;
     }
+
     /*End of limitation code*/
 
     ret = mCameraHandle->ops->set_parm(mCameraHandle->camera_handle, MM_CAMERA_PARM_DIMENSION,&dim);
@@ -4078,8 +4080,13 @@ status_t QCameraHardwareInterface::setDimension()
     }
     if(mStreamSnapMain) {
         mStreamSnapMain->mFormat = dim.main_img_format;
-        mStreamSnapMain->mWidth = dim.picture_width;
-        mStreamSnapMain->mHeight = dim.picture_height;
+        if (!isRawSnapshot()) {
+                mStreamSnapMain->mWidth = dim.picture_width;
+                mStreamSnapMain->mHeight = dim.picture_height;
+        } else {
+                mStreamSnapMain->mWidth = dim.raw_picture_width;
+                mStreamSnapMain->mHeight = dim.raw_picture_height;
+        }
     }
     if(mStreamSnapThumb) {
         mStreamSnapThumb->mFormat = dim.thumb_format;
@@ -4088,6 +4095,7 @@ status_t QCameraHardwareInterface::setDimension()
     }
 
     memcpy(&mDimension, &dim, sizeof(mDimension));
+    ALOGV("%s: X", __func__);
     return NO_ERROR;
 }
 }; /*namespace android */
