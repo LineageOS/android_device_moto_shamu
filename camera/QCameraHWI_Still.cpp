@@ -1672,7 +1672,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         /*Thumbnail image*/
         crop.in1_w=mCrop.snapshot.thumbnail_crop.width; //dimension.thumbnail_width;
         crop.in1_h=mCrop.snapshot.thumbnail_crop.height; // dimension.thumbnail_height;
-        if(isLiveSnapshot() || isFullSizeLiveshot()) {
+        if(isLiveSnapshot() || isFullSizeLiveshot() || isZSLMode()) {
             crop.out1_w= mHalCamCtrl->thumbnailWidth;
             crop.out1_h=  mHalCamCtrl->thumbnailHeight;
             ALOGD("Thumbnail width= %d  height= %d for livesnapshot", crop.out1_w, crop.out1_h);
