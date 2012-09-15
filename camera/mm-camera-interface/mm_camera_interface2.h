@@ -29,7 +29,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef __MM_CAMERA_INTERFACE2_H__
 #define __MM_CAMERA_INTERFACE2_H__
-#include <linux/ion.h>
+#include <linux/msm_ion.h>
 #include "mm_omx_jpeg_encoder.h"
 
 #define MM_CAMERA_MAX_NUM_FRAMES        16
