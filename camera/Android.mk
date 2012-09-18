@@ -134,7 +134,7 @@ ifneq ($(USE_CAMERA_STUB),true)
          LOCAL_SHARED_LIBRARIES:= libutils libui libcamera_client liblog libcutils libmmjpeg
       endif
 
-      LOCAL_SHARED_LIBRARIES+= libgenlock libbinder
+      LOCAL_SHARED_LIBRARIES+= libgenlock libbinder libhardware
       ifneq ($(DLOPEN_LIBMMCAMERA),1)
         LOCAL_SHARED_LIBRARIES+= liboemcamera
       else

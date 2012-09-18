@@ -188,7 +188,8 @@ QCameraHardwareInterface(int cameraId, int mode)
     mExifTableNumEntries(0),
                     mNoDisplayMode(0),
     mSupportedFpsRanges(NULL),
-    mSupportedFpsRangesCount(0)
+    mSupportedFpsRangesCount(0),
+    mPowerModule(0)
 {
     ALOGI("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;
@@ -284,6 +285,11 @@ QCameraHardwareInterface(int cameraId, int mode)
         return;
     }
     mCameraState = CAMERA_STATE_READY;
+
+    if (hw_get_module(POWER_HARDWARE_MODULE_ID,
+            (const hw_module_t **)&mPowerModule)) {
+        ALOGE("%s module not found", POWER_HARDWARE_MODULE_ID);
+    }
 
     ALOGI("QCameraHardwareInterface: X");
 }
@@ -889,7 +895,7 @@ void  QCameraHardwareInterface::processEvent(mm_camera_event_t *event)
     app_notify_cb_t app_cb;
     ALOGE("processEvent: type :%d E",event->event_type);
     if(mPreviewState == QCAMERA_HAL_PREVIEW_STOPPED){
-	ALOGE("Stop recording issued. Return from process Event");
+    ALOGE("Stop recording issued. Return from process Event");
         return;
     }
     memset(&app_cb, 0, sizeof(app_notify_cb_t));
@@ -1283,9 +1289,18 @@ status_t QCameraHardwareInterface::startRecording()
         else
             mCameraState = CAMERA_STATE_ERROR;
         mPreviewState = QCAMERA_HAL_RECORDING_STARTED;
+
+        if (mPowerModule) {
+            if (mPowerModule->powerHint) {
+                mPowerModule->powerHint(mPowerModule,
+                    POWER_HINT_VIDEO_ENCODE, (void *)"state=1");
+            }
+        }
+
         break;
     case QCAMERA_HAL_RECORDING_STARTED:
         ALOGE("%s: ", __func__);
+
         break;
     case QCAMERA_HAL_TAKE_PICTURE:
     default:
@@ -1334,6 +1349,14 @@ void QCameraHardwareInterface::stopRecordingInternal()
     mStreamRecord->stop();
     mCameraState = CAMERA_STATE_PREVIEW;  //TODO : Apurva : Hacked for 2nd time Recording
     mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
+
+    if (mPowerModule) {
+        if (mPowerModule->powerHint) {
+            mPowerModule->powerHint(mPowerModule,
+                    POWER_HINT_VIDEO_ENCODE, (void *)"state=0");
+        }
+    }
+
     ALOGI("stopRecordingInternal: X");
     return;
 }
@@ -1523,7 +1546,7 @@ void liveshot_callback(mm_camera_ch_data_buf_t *recvd_frame,
     if (frame == NULL) {
         ALOGE("%s: Error allocating memory to save received_frame structure.", __func__);
         cam_evt_buf_done(pme->mCameraId, recvd_frame);
-		return ;
+        return ;
     }
     memcpy(frame, recvd_frame, sizeof(mm_camera_ch_data_buf_t));
 
@@ -2505,33 +2528,33 @@ int QCameraHardwareInterface::initHeapMem( QCameraHalHeap_t *heap,
 
 int QCameraHardwareInterface::releaseHeapMem( QCameraHalHeap_t *heap)
 {
-	int rc = 0;
-	ALOGE("Release %p", heap);
-	if (heap != NULL) {
+    int rc = 0;
+    ALOGE("Release %p", heap);
+    if (heap != NULL) {
 
-		for (int i = 0; i < heap->buffer_count; i++) {
-			if(heap->camera_memory[i] != NULL) {
-				heap->camera_memory[i]->release( heap->camera_memory[i] );
-				heap->camera_memory[i] = NULL;
-			} else if (heap->fd[i] <= 0) {
-				ALOGE("impossible: amera_memory[%d] = %p, fd = %d",
-				i, heap->camera_memory[i], heap->fd[i]);
-			}
+        for (int i = 0; i < heap->buffer_count; i++) {
+            if(heap->camera_memory[i] != NULL) {
+                heap->camera_memory[i]->release( heap->camera_memory[i] );
+                heap->camera_memory[i] = NULL;
+            } else if (heap->fd[i] <= 0) {
+                ALOGE("impossible: amera_memory[%d] = %p, fd = %d",
+                i, heap->camera_memory[i], heap->fd[i]);
+            }
 
-			if(heap->fd[i] > 0) {
-				close(heap->fd[i]);
-				heap->fd[i] = -1;
-			}
+            if(heap->fd[i] > 0) {
+                close(heap->fd[i]);
+                heap->fd[i] = -1;
+            }
 #ifdef USE_ION
             deallocate_ion_memory(heap, i);
 #endif
-		}
+        }
         heap->buffer_count = 0;
         heap->size = 0;
         heap->y_offset = 0;
         heap->cbcr_offset = 0;
-	}
-	return rc;
+    }
+    return rc;
 }
 
 preview_format_info_t  QCameraHardwareInterface::getPreviewFormatInfo( )
