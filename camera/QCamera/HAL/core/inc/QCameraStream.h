@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2012 Code Aurora Forum. All rights reserved.
+** Copyright (c) 2012 The Linux Foundation. All rights reserved.
 **
 ** Not a Contribution, Apache license notifications and license are retained
 ** for attribution purposes only.
@@ -41,33 +41,9 @@ extern "C" {
 #define MM_CAMERA_CH_PREVIEW_MASK    (0x01 << MM_CAMERA_CH_PREVIEW)
 #define MM_CAMERA_CH_VIDEO_MASK      (0x01 << MM_CAMERA_CH_VIDEO)
 #define MM_CAMERA_CH_SNAPSHOT_MASK   (0x01 << MM_CAMERA_CH_SNAPSHOT)
+#define MM_CAMERA_CH_RDI_MASK        (0x01 << MM_CAMERA_CH_RDI)
 
 } /* extern C*/
-
-typedef struct snap_hdr_record_t_ {
-    bool hdr_on;
-    int num_frame;
-    int num_raw_received;
-    /*in terms of 2^*(n/6), e.g 6 means (1/2)x, whole 12 means 4x*/
-    int exp[MAX_HDR_EXP_FRAME_NUM];
-    mm_camera_super_buf_t *recvd_frame[MAX_HDR_EXP_FRAME_NUM];
-} snap_hdr_record_t;
-
-typedef struct {
-    jpeg_job_status_t status;
-    uint8_t thumbnailDroppedFlag;
-    uint32_t client_hdl;
-    uint32_t jobId;
-    uint8_t* out_data;
-    uint32_t data_size;
-    mm_camera_super_buf_t* src_frame;
-} camera_jpeg_data_t;
-
-typedef struct {
-    mm_camera_super_buf_t* src_frame;
-    void* userdata;
-} camera_jpeg_encode_cookie_t;
-
 
 namespace android {
 
@@ -89,6 +65,9 @@ public:
     mm_camera_frame_len_offset mFrameOffsetInfo;
     mm_camera_vtbl_t *p_mm_ops;
     mm_camera_img_mode mExtImgMode;
+    uint8_t m_flag_no_cb;
+    uint8_t m_flag_stream_on;
+
     void setResolution(mm_camera_dimension_t *res);
     bool isResolutionSame(mm_camera_dimension_t *res);
     void getResolution(mm_camera_dimension_t *res);
@@ -103,7 +82,7 @@ public:
     void dataCallback(mm_camera_super_buf_t *bufs);
     virtual int32_t streamOn();
     virtual int32_t streamOff(bool aSync);
-    virtual status_t    initStream(int no_cb_needed);
+    virtual status_t    initStream(uint8_t no_cb_needed, uint8_t stream_on);
     virtual status_t    deinitStream();
     virtual void releaseRecordingFrame(const void *opaque)
     {
@@ -130,11 +109,7 @@ public:
     virtual void notifyROIEvent(fd_roi_t roi) {;}
     virtual void notifyWDenoiseEvent(cam_ctrl_status_t status, void * cookie) {;}
     virtual void resetSnapshotCounters(void ){};
-    virtual void initHdrInfoForSnapshot(bool HDR_on, int number_frames, int *exp){};
     virtual void notifyHdrEvent(cam_ctrl_status_t status, void * cookie){};
-    virtual status_t receiveRawPicture(mm_camera_super_buf_t* recvd_frame, uint32_t *jobId){return NO_ERROR;};
-    virtual status_t encodeData(mm_camera_super_buf_t* recvd_frame, uint32_t *jobId){return NO_ERROR;};
-    virtual void receiveCompleteJpegPicture(uint32_t jobId, uint8_t* out_data, uint32_t data_size){};
     QCameraStream();
     QCameraStream(uint32_t CameraHandle,
                         uint32_t ChannelId,
@@ -227,7 +202,7 @@ public:
     status_t initDisplayBuffers();
     /*init preview buffers without display case*/
     status_t initPreviewOnlyBuffers();
-    status_t initStream(int no_cb_needed);
+    status_t initStream(uint8_t no_cb_needed, uint8_t stream_on);
     status_t processPreviewFrame(mm_camera_super_buf_t *frame);
     /*init preview buffers with display case*/
     status_t processPreviewFrameWithDisplay(mm_camera_super_buf_t *frame);
@@ -278,16 +253,11 @@ private:
 class QCameraStream_SnapshotMain : public QCameraStream {
 public:
     void        release();
-    status_t    initStream(int no_cb_needed);
+    status_t    initStream(uint8_t no_cb_needed, uint8_t stream_on);
     status_t    initMainBuffers();
     bool        isZSLMode();
-    void        jpegErrorHandler(jpeg_job_status_t event);
     void        deInitMainBuffers();
-    void        initHdrInfoForSnapshot(bool HDR_on, int number_frames, int *exp);
-    void        notifyHdrEvent(cam_ctrl_status_t status, void * cookie);
     static void            deleteInstance(QCameraStream *p);
-    status_t receiveRawPicture(mm_camera_super_buf_t* recvd_frame, uint32_t *jobId);
-    void receiveCompleteJpegPicture(camera_jpeg_data_t* jpeg_data);
     mm_camera_buf_def_t mSnapshotStreamBuf[MM_CAMERA_MAX_NUM_FRAMES];
     static QCameraStream* createInstance(uint32_t CameraHandle,
                         uint32_t ChannelId,
@@ -310,12 +280,7 @@ public:
     ~QCameraStream_SnapshotMain();
 
 private:
-    status_t doHdrProcessing();
-    status_t encodeData(mm_camera_super_buf_t* recvd_frame, uint32_t *jobId);
-    void notifyShutter(bool play_shutter_sound);
-
     /*Member variables*/
-    snap_hdr_record_t    mHdrInfo;
     int mSnapshotState;
 };
 
@@ -345,6 +310,54 @@ public:
     ~QCameraStream_SnapshotThumbnail();
     static void            deleteInstance(QCameraStream *p);
     mm_camera_buf_def_t mPostviewStreamBuf[MM_CAMERA_MAX_NUM_FRAMES];
+};
+
+class QCameraStream_Rdi : public QCameraStream {
+public:
+    status_t init();
+    status_t start() ;
+    void stop() ;
+    void release() ;
+
+    static QCameraStream* createInstance(uint32_t CameraHandle,
+    uint32_t ChannelId,
+    uint32_t Width,
+    uint32_t Height,
+    uint32_t Format,
+    uint8_t NumBuffers,
+    mm_camera_vtbl_t *mm_ops,
+    mm_camera_img_mode imgmode,
+    camera_mode_t mode);
+    static void deleteInstance(QCameraStream *p);
+
+    QCameraStream_Rdi(uint32_t CameraHandle,
+                      uint32_t ChannelId,uint32_t Width,uint32_t Height,
+                      uint32_t Format,uint8_t NumBuffers,mm_camera_vtbl_t *mm_ops,
+                      mm_camera_img_mode imgmode,camera_mode_t mode);
+    virtual ~QCameraStream_Rdi();
+    status_t initRdiBuffers();
+    status_t processRdiFrame (mm_camera_super_buf_t *data);
+    friend class QCameraHardwareInterface;
+
+private:
+    /*allocate and free buffers for rdi case*/
+    status_t getBufferRdi();
+    status_t freeBufferRdi();
+
+    void dumpFrameToFile(mm_camera_buf_def_t* newFrame);
+
+    int8_t my_id;
+    mm_camera_op_mode_type_t op_mode;
+    cam_ctrl_dimension_t dim;
+    mm_camera_buf_def_t mRdiBuf[PREVIEW_BUFFER_COUNT];
+    //mm_cameara_stream_buf_t mRdiStreamBuf;
+    Mutex mDisplayLock;
+    static const int kRdiBufferCount = PREVIEW_BUFFER_COUNT;
+    //mm_camera_ch_data_buf_t mNotifyBuffer[16];
+    int8_t mNumFDRcvd;
+    int mVFEOutputs;
+    int mHFRFrameCnt;
+    int mHFRFrameSkip;
 };
 
 }; // namespace android

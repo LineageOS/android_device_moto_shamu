@@ -179,13 +179,12 @@ int mm_app_set_ihist_stats_fmt(int cam_id,mm_camera_image_fmt_t *fmt)
     return rc;
 }
 
-void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422)
+//void dumpFrameToFile(struct msm_frame* newFrame, int w, int h, char* name, int main_422)
+void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422,char *ext)
 {
     char buf[50];
     int file_fd;
     int i;
-    char *ext = "yuv";
-
     if ( newFrame != NULL) {
         char * str;
         snprintf(buf, sizeof(buf), "/data/%s.%s", name, ext);
@@ -622,7 +621,7 @@ void mm_app_preview_notify_cb(mm_camera_super_buf_t *bufs,
         pme->dim.display_height, pme->cam->camera_info->camera_id);
 
     dumpFrameToFile(frame, pme->dim.display_width,
-        pme->dim.display_height, buf, 1);
+        pme->dim.display_height, buf, 1,"yuv");
 
     if (!my_cam_app.run_sanity) {
         if (0 != (rc = mm_app_dl_render(frame->fd, NULL))) {
@@ -755,7 +754,7 @@ static void mm_app_zsl_notify_cb(mm_camera_super_buf_t *bufs,
     thumb_frame = bufs->bufs[0];
 
     //dumpFrameToFile(preview_frame->frame,pme->dim.display_width,pme->dim.display_height,"preview", 1);
-    dumpFrameToFile(preview_frame,pme->dim.display_width,pme->dim.display_height,"zsl_preview", 1);
+    dumpFrameToFile(preview_frame,pme->dim.display_width,pme->dim.display_height,"zsl_preview", 1,"yuv");
     if (0 != (rc = mm_app_dl_render(preview_frame->fd, NULL))) {
         CDBG("%s:DL rendering err=%d, frame fd=%d,frame idx = %d\n",
              __func__, rc, preview_frame->fd, preview_frame->frame_idx);
@@ -768,8 +767,8 @@ static void mm_app_zsl_notify_cb(mm_camera_super_buf_t *bufs,
         //dumpFrameToFile(main_frame->frame,pme->dim.picture_width,pme->dim.picture_height,"main", 1);
         //dumpFrameToFile(thumb_frame->frame,pme->dim.thumbnail_width,pme->dim.thumbnail_height,"thumb", 1);
 
-        dumpFrameToFile(main_frame,pme->dim.picture_width,pme->dim.picture_height,"zsl_main", 1);
-        dumpFrameToFile(thumb_frame,pme->dim.thumbnail_width,pme->dim.thumbnail_height,"zsl_thumb", 1);
+        dumpFrameToFile(main_frame,pme->dim.picture_width,pme->dim.picture_height,"zsl_main", 1,"yuv");
+        dumpFrameToFile(thumb_frame,pme->dim.thumbnail_width,pme->dim.thumbnail_height,"zsl_thumb", 1,"yuv");
 
         if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,main_frame)) {
             CDBG_ERROR("%s: Failed in thumbnail Qbuf\n", __func__); 

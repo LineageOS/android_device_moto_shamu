@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
+Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -447,6 +447,16 @@ int32_t mm_channel_fsm_fn_stopped(mm_channel_t *my_obj,
                                                      TRUE);
         }
         break;
+    case MM_CHANNEL_EVT_START_REPRO_ISP:
+        {
+            mm_evt_paylod_repro_start_stop_t *payload =
+                (mm_evt_paylod_repro_start_stop_t*)in_val;
+            rc = mm_channel_repro_isp_ops(my_obj,
+                                          payload->repro_isp_handle,
+                                          payload->stream_id,
+                                          TRUE);
+        }
+        break;
     case MM_CHANNEL_EVT_REPROCESS:
         {
             mm_evt_paylod_reprocess_t *payload =
@@ -454,6 +464,16 @@ int32_t mm_channel_fsm_fn_stopped(mm_channel_t *my_obj,
             rc = mm_channel_reprocess(my_obj,
                                       payload->repro_isp_handle,
                                       payload->repro_data);
+        }
+        break;
+    case MM_CHANNEL_EVT_STOP_REPRO_ISP:
+        {
+            mm_evt_paylod_repro_start_stop_t *payload =
+                (mm_evt_paylod_repro_start_stop_t*)in_val;
+            rc = mm_channel_repro_isp_ops(my_obj,
+                                          payload->repro_isp_handle,
+                                          payload->stream_id,
+                                          FALSE);
         }
         break;
     case MM_CHANNEL_EVT_DETACH_STREAM_FROM_REPRO_ISP:
@@ -602,6 +622,16 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
             rc = mm_channel_del_stream(my_obj, s_id);
         }
         break;
+    case MM_CHANNEL_EVT_ATTACH_STREAM_TO_REPRO_ISP:
+        {
+            mm_evt_paylod_stream_to_repro_isp_t *payload =
+                (mm_evt_paylod_stream_to_repro_isp_t *)in_val;
+            rc = mm_channel_repro_isp_dest_stream_ops(my_obj,
+                                                     payload->repro_isp_handle,
+                                                     payload->stream_id,
+                                                     TRUE);
+        }
+        break;
     case MM_CHANNEL_EVT_START_REPRO_ISP:
         {
             mm_evt_paylod_repro_start_stop_t *payload =
@@ -610,6 +640,15 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
                                           payload->repro_isp_handle,
                                           payload->stream_id,
                                           TRUE);
+        }
+        break;
+    case MM_CHANNEL_EVT_REPROCESS:
+        {
+            mm_evt_paylod_reprocess_t *payload =
+                (mm_evt_paylod_reprocess_t *)in_val;
+            rc = mm_channel_reprocess(my_obj,
+                                      payload->repro_isp_handle,
+                                      payload->repro_data);
         }
         break;
     case MM_CHANNEL_EVT_STOP_REPRO_ISP:
@@ -622,6 +661,15 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
                                           FALSE);
         }
         break;
+    case MM_CHANNEL_EVT_DETACH_STREAM_FROM_REPRO_ISP:
+        {
+            mm_evt_paylod_stream_to_repro_isp_t *payload =
+                (mm_evt_paylod_stream_to_repro_isp_t *)in_val;
+            rc = mm_channel_repro_isp_dest_stream_ops(my_obj,
+                                                     payload->repro_isp_handle,
+                                                     payload->stream_id,
+                                                     FALSE);
+        }
         break;
     default:
         CDBG_ERROR("%s: invalid state (%d) for evt (%d)",
@@ -700,6 +748,10 @@ uint32_t mm_channel_get_ext_mode_from_img_mode(uint32_t img_mode)
 		return MSM_V4L2_EXT_CAPTURE_MODE_RS;
 	case MM_CAMERA_CSTA:
 		return MSM_V4L2_EXT_CAPTURE_MODE_CSTA;
+    case MM_CAMERA_ISP_PIX_OUTPUT1:
+        return MSM_V4L2_EXT_CAPTURE_MODE_ISP_PIX_OUTPUT1;
+    case MM_CAMERA_ISP_PIX_OUTPUT2:
+        return MSM_V4L2_EXT_CAPTURE_MODE_ISP_PIX_OUTPUT2;
     default:
         return MSM_V4L2_EXT_CAPTURE_MODE_DEFAULT;
     }
@@ -863,6 +915,9 @@ int32_t mm_channel_bundle_stream(mm_channel_t *my_obj,
                                 mm_channel_process_stream_buf,
                                 (void*)my_obj);
 
+    /* set flag to TRUE */
+    my_obj->bundle.is_active = TRUE;
+
     return rc;
 }
 
@@ -871,6 +926,11 @@ int32_t mm_channel_destroy_bundle(mm_channel_t *my_obj)
 {
     mm_stream_t* s_obj = NULL;
     uint8_t i;
+
+    if (FALSE == my_obj->bundle.is_active) {
+        CDBG("%s: bundle not active, no need to destroy", __func__);
+        return 0;
+    }
 
     /* first check all bundled streams should be stopped already */
     for (i=0; i < my_obj->bundle.superbuf_queue.num_streams; i++) {
@@ -891,6 +951,7 @@ int32_t mm_channel_destroy_bundle(mm_channel_t *my_obj)
 
     /* memset bundle info */
     memset(&my_obj->bundle, 0, sizeof(mm_channel_bundle_t));
+    my_obj->bundle.is_active = FALSE;
     return 0;
 }
 
@@ -1286,20 +1347,6 @@ int32_t mm_channel_superbuf_queue_init(mm_channel_queue_t * queue)
 int32_t mm_channel_superbuf_queue_deinit(mm_channel_t *my_obj,
                                          mm_channel_queue_t * queue)
 {
-    mm_channel_queue_node_t* node = NULL;
-    /* dequeue */
-    node = mm_channel_superbuf_dequeue(queue);
-    while (NULL != node) {
-        /* buf done with the nonuse super buf */
-        uint8_t i;
-        for (i=0; i<node->num_of_bufs; i++) {
-            mm_channel_qbuf(my_obj, node->super_buf[i].buf);
-        }
-        free(node);
-
-        node = mm_channel_superbuf_dequeue(queue);
-    }
-
     return mm_camera_queue_deinit(&queue->que);
 }
 
@@ -1669,6 +1716,13 @@ int32_t mm_channel_config_repro_isp(mm_channel_t *my_obj,
     repro_cmd.payload.config.src.format = config->src.format;
     repro_cmd.payload.config.src.width = config->src.width;
     repro_cmd.payload.config.src.height = config->src.height;
+    CDBG("%s: src: inst_hdl=0x%x, image_mode=%d, format=%d, width x height=%dx%d",
+         __func__,
+         repro_cmd.payload.config.src.inst_handle,
+         repro_cmd.payload.config.src.image_mode,
+         repro_cmd.payload.config.src.format,
+         repro_cmd.payload.config.src.width,
+         repro_cmd.payload.config.src.height);
     repro_cmd.payload.config.num_dest = config->num_dest;
     for (i = 0; i < repro_cmd.payload.config.num_dest; i++) {
         /* using instant handler which can be understandable by mctl */
@@ -1679,6 +1733,13 @@ int32_t mm_channel_config_repro_isp(mm_channel_t *my_obj,
         repro_cmd.payload.config.dest[i].format = config->dest[i].format;
         repro_cmd.payload.config.dest[i].width = config->dest[i].width;
         repro_cmd.payload.config.dest[i].height = config->dest[i].height;
+        CDBG("%s: dest %d: inst_hdl=0x%x, image_mode=%d, format=%d, width x height=%dx%d",
+             __func__, i,
+             repro_cmd.payload.config.dest[i].inst_handle,
+             repro_cmd.payload.config.dest[i].image_mode,
+             repro_cmd.payload.config.dest[i].format,
+             repro_cmd.payload.config.dest[i].width,
+             repro_cmd.payload.config.dest[i].height);
     }
     rc = mm_camera_send_native_ctrl_cmd(my_obj->cam_obj,
                                         CAMERA_SEND_PP_PIPELINE_CMD,
@@ -1710,6 +1771,7 @@ int32_t mm_channel_repro_isp_dest_stream_ops(mm_channel_t *my_obj,
     repro_cmd.cmd = MM_CAMERA_REPRO_CMD_ATTACH_DETACH;
     repro_cmd.payload.attach_detach.repro_handle = repro_handle;
     repro_cmd.payload.attach_detach.attach_flag = attach_flag;
+    repro_cmd.payload.attach_detach.inst_handle = stream_obj->inst_hdl;
     rc = mm_camera_send_native_ctrl_cmd(my_obj->cam_obj,
                                         CAMERA_SEND_PP_PIPELINE_CMD,
                                         sizeof(mm_camera_repro_cmd_t),

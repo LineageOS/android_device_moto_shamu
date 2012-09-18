@@ -370,6 +370,7 @@ typedef struct {
 } mm_channel_queue_t;
 
 typedef struct {
+    uint8_t is_active; /* flag to indicate if bundle is valid */
     /* queue to store bundled super buffers */
     mm_channel_queue_t superbuf_queue;
     mm_camera_buf_notify_t super_buf_notify_cb;
@@ -495,6 +496,8 @@ extern int32_t mm_camera_qbuf(mm_camera_obj_t *my_obj,
                               mm_camera_buf_def_t *buf);
 extern mm_camera_2nd_sensor_t * mm_camera_query_2nd_sensor_info(mm_camera_obj_t *my_obj);
 extern int32_t mm_camera_sync(mm_camera_obj_t *my_obj);
+extern int32_t mm_camera_is_op_supported(mm_camera_obj_t *my_obj,
+                                              mm_camera_ops_type_t opcode);
 extern int32_t mm_camera_is_parm_supported(mm_camera_obj_t *my_obj,
                                            mm_camera_parm_type_t parm_type,
                                            uint8_t *support_set_parm,

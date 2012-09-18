@@ -50,7 +50,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 mm_camera_channel_stream_info_t rdi_mode;
 static int rdi_op_mode;
 extern int stopPreview(int cam_id);
-extern void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422);
+extern void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422,char *ext);
 
 static int rdi_counter = 0;
 static void dumpRdi(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422)
@@ -150,7 +150,7 @@ static void mm_app_rdi_notify_cb(mm_camera_super_buf_t *bufs,
     CDBG("%s: BEGIN - length=%d, frame idx = %d\n", __func__, frame->frame_len, frame->frame_idx);
 
     if (rdi_op_mode == MM_CAMERA_OP_MODE_VIDEO)
-      dumpFrameToFile(frame,pme->dim.rdi0_width,pme->dim.rdi0_height,"rdi_p", 1);
+      dumpFrameToFile(frame,pme->dim.rdi0_width,pme->dim.rdi0_height,"rdi_p", 1,"raw");
     else {
       rdi_counter++;
       if (rdi_counter <=5)

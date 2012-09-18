@@ -46,6 +46,7 @@ LOCAL_HAL_FILES := \
         src/QCameraHWI_Preview.cpp \
         src/QCameraHWI_Record.cpp \
         src/QCameraHWI_Still.cpp \
+        src/QCameraHWI_Rdi.cpp \
         src/QCameraHWI_Mem.cpp \
         src/QCameraParameters.cpp\
         src/QCameraStream.cpp

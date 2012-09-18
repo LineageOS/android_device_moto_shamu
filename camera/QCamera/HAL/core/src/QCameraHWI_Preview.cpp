@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2012 Code Aurora Forum. All rights reserved.
+** Copyright (c) 2012 The Linux Foundation. All rights reserved.
 **
 ** Not a Contribution, Apache license notifications and license are retained
 ** for attribution purposes only.
@@ -255,7 +255,7 @@ status_t QCameraStream_preview::putBufferToSurface() {
     return NO_ERROR;
 }
 
-status_t QCameraStream_preview::initStream(int no_cb_needed)
+status_t QCameraStream_preview::initStream(uint8_t no_cb_needed, uint8_t stream_on)
 {
     int format = 0;
     status_t ret = NO_ERROR;
@@ -282,7 +282,7 @@ status_t QCameraStream_preview::initStream(int no_cb_needed)
       if(mHalCamCtrl->getZSLQueueDepth() > numMinUndequeuedBufs)
         mNumBuffers += mHalCamCtrl->getZSLQueueDepth() - numMinUndequeuedBufs;
     }
-    ret = QCameraStream::initStream(no_cb_needed);
+    ret = QCameraStream::initStream(no_cb_needed, stream_on);
 end:
     ALOGI(" %s : X ", __FUNCTION__);
     return ret;
@@ -508,7 +508,7 @@ status_t QCameraStream_preview::initDisplayBuffers()
   num_planes = mFrameOffsetInfo.num_planes;
   for(int i=0; i < num_planes; i++)
       planes[i] = mFrameOffsetInfo.mp[i].len;
-  memset(mDisplayBuf, 0, sizeof(mm_camera_buf_def_t) * 2*PREVIEW_BUFFER_COUNT);
+  memset(mDisplayBuf, 0, sizeof(mm_camera_buf_def_t) * 2 * PREVIEW_BUFFER_COUNT);
   /*allocate memory for the buffers*/
   for(int i = 0; i < mNumBuffers; i++){
 	  if (mHalCamCtrl->mPreviewMemory.private_buffer_handle[i] == NULL)
@@ -851,10 +851,16 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
           /* The preview buffer size sent back in the callback should be (width*height*bytes_per_pixel)
            * As all preview formats we support, use 12 bits per pixel, buffer size = previewWidth * previewHeight * 3/2.
            * We need to put a check if some other formats are supported in future. (punits) */
-          if((mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_NV21) || (mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_NV12) ||
-                    (mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_YV12))
+          if ((mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_NV21) ||
+              (mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_NV12) ||
+              (mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_YV12))
           {
-              previewBufSize = mHalCamCtrl->mPreviewWidth * mHalCamCtrl->mPreviewHeight * 3/2;
+              if(mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_YV12) {
+                  previewBufSize = ((mHalCamCtrl->mPreviewWidth+15)/16) * 16 * mHalCamCtrl->mPreviewHeight +
+                                   ((mHalCamCtrl->mPreviewWidth/2+15)/16) * 16* mHalCamCtrl->mPreviewHeight;
+              } else {
+                  previewBufSize = mHalCamCtrl->mPreviewWidth * mHalCamCtrl->mPreviewHeight * 3/2;
+              }
               if(previewBufSize != mHalCamCtrl->mPreviewMemory.private_buffer_handle[frame->bufs[0]->buf_idx]->size) {
                   previewMem = mHalCamCtrl->mGetMemory(mHalCamCtrl->mPreviewMemory.private_buffer_handle[frame->bufs[0]->buf_idx]->fd,
                   previewBufSize, 1, mHalCamCtrl->mCallbackCookie);
