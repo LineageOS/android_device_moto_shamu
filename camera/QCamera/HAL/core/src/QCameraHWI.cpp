@@ -92,7 +92,7 @@ void QCameraHardwareInterface::superbuf_cb_routine(mm_camera_super_buf_t *recvd_
         /* notify dataNotify thread that new super buf is avail
          * check if it's done with current JPEG notification and
          * a new encoding job could be conducted*/
-        pme->mNotifyTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE);
+        pme->mNotifyTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
     }
    ALOGE("%s: X", __func__);
 
@@ -152,11 +152,66 @@ void QCameraHardwareInterface::snapshot_jpeg_cb(jpeg_job_status_t status,
     pme->mJpegDataQueue.enqueue((void *)jpeg_data);
 
     /* notify thread to process */
-    pme->mNotifyTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE);
+    pme->mNotifyTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
 
     free(cookie);
 
     ALOGE("%s: X", __func__);
+}
+
+void QCameraHardwareInterface::releaseJpegData(camera_jpeg_data_t *jpeg_data)
+{
+    /* free jpeg_data */
+    if (NULL != jpeg_data) {
+        if (jpeg_data->src_frame != NULL) {
+            for(int i = 0; i< jpeg_data->src_frame->num_bufs; i++) {
+                if(MM_CAMERA_OK != mCameraHandle->ops->qbuf(
+                                                 jpeg_data->src_frame->camera_handle,
+                                                 jpeg_data->src_frame->ch_id,
+                                                 jpeg_data->src_frame->bufs[i])){
+                        ALOGE("%s : Buf done failed for buffer[%d]", __func__, i);
+                }
+
+            }
+            free(jpeg_data->src_frame);
+            jpeg_data->src_frame = NULL;
+        }
+        if (jpeg_data->out_data != NULL) {
+            free(jpeg_data->out_data);
+            jpeg_data->out_data = NULL;
+        }
+    }
+}
+
+void QCameraHardwareInterface::releaseNofityData(void *data, void *user_data)
+{
+    QCameraHardwareInterface *pme = (QCameraHardwareInterface *)user_data;
+    if (NULL != pme) {
+        pme->releaseJpegData((camera_jpeg_data_t *)data);
+    }
+}
+
+void QCameraHardwareInterface::releaseSuperBuf(mm_camera_super_buf_t *super_buf)
+{
+    if (NULL != super_buf) {
+        for(int i = 0; i< super_buf->num_bufs; i++) {
+            if(MM_CAMERA_OK != mCameraHandle->ops->qbuf(
+                                             super_buf->camera_handle,
+                                             super_buf->ch_id,
+                                             super_buf->bufs[i])){
+                    ALOGE("%s : Buf done failed for buffer[%d]", __func__, i);
+            }
+
+        }
+    }
+}
+
+void QCameraHardwareInterface::releaseProcData(void *data, void *user_data)
+{
+    QCameraHardwareInterface *pme = (QCameraHardwareInterface *)user_data;
+    if (NULL != pme) {
+        pme->releaseSuperBuf((mm_camera_super_buf_t *)data);
+    }
 }
 
 void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
@@ -166,6 +221,7 @@ void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
     QCameraHardwareInterface *pme = (QCameraHardwareInterface *)data;
     QCameraCmdThread *cmdThread = pme->mNotifyTh;
     uint8_t isEncoding = FALSE;
+    uint8_t isActive = FALSE;
 
     ALOGD("%s: E", __func__);
     do {
@@ -183,74 +239,61 @@ void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
         ALOGD("%s: get cmd %d", __func__, cmd);
         switch (cmd) {
         case CAMERA_CMD_TYPE_START_DATA_PROC:
+            isActive = TRUE;
             /* init flag to FALSE */
             isEncoding = FALSE;
             break;
         case CAMERA_CMD_TYPE_STOP_DATA_PROC:
+            /* flush jpeg data queue */
+            pme->mJpegDataQueue.flush();
+
+            isActive = FALSE;
             /* set flag to FALSE */
             isEncoding = FALSE;
             break;
         case CAMERA_CMD_TYPE_DO_NEXT_JOB:
             {
-                if (pme->isRawSnapshot()) {
-                    /*raw picture*/
-                    mm_camera_super_buf_t *super_buf =
-                        (mm_camera_super_buf_t *)pme->mSuperBufQueue.dequeue();
-                    if (super_buf != NULL) {
-                        receiveRawPicture(super_buf, pme);
-                    }
-                    /*free superbuf*/
-                    if (super_buf != NULL) {
-                        for(int i = 0; i< super_buf->num_bufs; i++) {
-                            if(MM_CAMERA_OK !=
-                               pme->mCameraHandle->ops->qbuf(super_buf->camera_handle,
-                                                             super_buf->ch_id,
-                                                             super_buf->bufs[i])){
-                                    ALOGE("%s : Buf done failed for buffer[%d]", __func__, i);
-                            }
-                        }
-                        free(super_buf);
-                        super_buf = NULL;
-                    } else {
-                        ALOGE("%s: Superbuf was null", __func__);
-                    }
+                if (TRUE == isActive) {
+                    if (pme->isRawSnapshot()) {
+                        /*raw picture*/
+                        mm_camera_super_buf_t *super_buf =
+                            (mm_camera_super_buf_t *)pme->mSuperBufQueue.dequeue();
+                        if (super_buf != NULL) {
+                            receiveRawPicture(super_buf, pme);
 
-                } else{
-                    /*jpeg picture*/
-                    /* first check if there is any pending jpeg notify */
+                            /*free superbuf*/
+                            pme->releaseSuperBuf(super_buf);
+                            free(super_buf);
+                        }
+                    } else{
+                        /* first check if there is any pending jpeg notify */
+                        camera_jpeg_data_t *jpeg_data =
+                            (camera_jpeg_data_t *)pme->mJpegDataQueue.dequeue();
+                        if (NULL != jpeg_data) {
+                            isEncoding = FALSE;
+
+                            /* send jpeg pic to upper layer */
+                            receiveCompleteJpegPicture(jpeg_data, pme);
+
+                            /* free jpeg_data */
+                            pme->releaseJpegData(jpeg_data);
+                            free(jpeg_data);
+                        }
+
+                        if (FALSE == isEncoding) {
+                            isEncoding = TRUE;
+                            /* notify processData thread to do next encoding job */
+                            pme->mDataProcTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
+                        }
+                    }
+                } else {
+                    /* do no op if not active */
                     camera_jpeg_data_t *jpeg_data =
                         (camera_jpeg_data_t *)pme->mJpegDataQueue.dequeue();
                     if (NULL != jpeg_data) {
-                        isEncoding = FALSE;
-
-                        /* send jpeg pic to upper layer */
-                        receiveCompleteJpegPicture(jpeg_data, pme);
-
                         /* free jpeg_data */
-                        if (jpeg_data->src_frame != NULL) {
-                            for(int i = 0; i< jpeg_data->src_frame->num_bufs; i++) {
-                                if(MM_CAMERA_OK !=
-                                   pme->mCameraHandle->ops->qbuf(jpeg_data->src_frame->camera_handle,
-                                                                 jpeg_data->src_frame->ch_id,
-                                                                 jpeg_data->src_frame->bufs[i])){
-                                        ALOGE("%s : Buf done failed for buffer[%d]", __func__, i);
-                                }
-
-                            }
-                            free(jpeg_data->src_frame);
-                            jpeg_data->src_frame = NULL;
-                        }
-                        if (jpeg_data->out_data != NULL) {
-                            free(jpeg_data->out_data);
-                            jpeg_data->out_data = NULL;
-                        }
+                        pme->releaseJpegData(jpeg_data);
                         free(jpeg_data);
-                    }
-
-                    if (FALSE == isEncoding) {
-                        isEncoding = TRUE;
-                        /* notify processData thread to do next encoding job */
-                        pme->mDataProcTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE);
                     }
                 }
             }
@@ -258,21 +301,7 @@ void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
         case CAMERA_CMD_TYPE_EXIT:
             {
                 /* flush jpeg data queue */
-                camera_jpeg_data_t *jpeg_data =
-                    (camera_jpeg_data_t *)pme->mJpegDataQueue.dequeue();
-                while (NULL != jpeg_data) {
-                    /* free jpeg_data */
-                    if (jpeg_data->src_frame != NULL) {
-                        free(jpeg_data->src_frame);
-                        jpeg_data->src_frame = NULL;
-                    }
-                    if (jpeg_data->out_data != NULL) {
-                        free(jpeg_data->out_data);
-                        jpeg_data->out_data = NULL;
-                    }
-                    free(jpeg_data);
-                    jpeg_data = (camera_jpeg_data_t *)pme->mJpegDataQueue.dequeue();
-                }
+                pme->mJpegDataQueue.flush();
                 running = 0;
             }
             break;
@@ -312,14 +341,18 @@ void *QCameraHardwareInterface::dataProcessRoutine(void *data)
             is_active = TRUE;
             break;
         case CAMERA_CMD_TYPE_STOP_DATA_PROC:
-            is_active = FALSE;
-            /* abort current job if it's running */
-            if (current_jobId > 0) {
-                pme->mJpegHandle.abort_job(pme->mJpegClientHandle, current_jobId);
-                current_jobId = 0;
+            {
+                is_active = FALSE;
+                /* abort current job if it's running */
+                if (current_jobId > 0) {
+                    pme->mJpegHandle.abort_job(pme->mJpegClientHandle, current_jobId);
+                    current_jobId = 0;
+                }
+                /* flush superBufQueue */
+                pme->mSuperBufQueue.flush();
+                /* signal cmd is completed */
+                sem_post(&cmdThread->sync_sem);
             }
-            /* signal cmd is completed */
-            sem_post(&cmdThread->sync_sem);
             break;
         case CAMERA_CMD_TYPE_DO_NEXT_JOB:
             {
@@ -329,32 +362,37 @@ void *QCameraHardwareInterface::dataProcessRoutine(void *data)
                     mm_camera_super_buf_t *super_buf =
                         (mm_camera_super_buf_t *)pme->mSuperBufQueue.dequeue();
                     if (NULL != super_buf) {
-                            ret = pme->encodeData(super_buf, &current_jobId);
+                        ret = pme->encodeData(super_buf, &current_jobId);
 
-                             //play shutter sound
-                             if(!pme->mShutterSoundPlayed){
-                                 pme->notifyShutter(true);
-                             }
-                             pme->notifyShutter(false);
-                             pme->mShutterSoundPlayed = false;
+                         //play shutter sound
+                         if(!pme->mShutterSoundPlayed){
+                             pme->notifyShutter(true);
+                         }
+                         pme->notifyShutter(false);
+                         pme->mShutterSoundPlayed = false;
 
-                            if (NO_ERROR != ret) {
-                                for(int i = 0; i< super_buf->num_bufs; i++) {
-                                    if(MM_CAMERA_OK !=
-                                       pme->mCameraHandle->ops->qbuf(super_buf->camera_handle,
-                                                                     super_buf->ch_id,
-                                                                     super_buf->bufs[i])){
-                                            ALOGE("%s : Buf done failed for buffer[%d]", __func__, i);
-                                    }
-
-                                }
-                                free(super_buf);
-                            }
+                        if (NO_ERROR != ret) {
+                            pme->releaseSuperBuf(super_buf);
+                            free(super_buf);
                         }
                     }
+                } else {
+                    /* not active, simply return buf and do no op */
+                    mm_camera_super_buf_t *super_buf =
+                        (mm_camera_super_buf_t *)pme->mSuperBufQueue.dequeue();
+                    if (NULL != super_buf) {
+                        pme->releaseSuperBuf(super_buf);
+                        free(super_buf);
+                    }
+                }
             }
             break;
         case CAMERA_CMD_TYPE_EXIT:
+            /* abort current job if it's running */
+            if (current_jobId > 0) {
+                pme->mJpegHandle.abort_job(pme->mJpegClientHandle, current_jobId);
+                current_jobId = 0;
+            }
             /* flush super buf queue */
             pme->mSuperBufQueue.flush();
             running = 0;
@@ -1043,6 +1081,8 @@ QCameraHardwareInterface(int cameraId, int mode)
     mPostPreviewHeap(NULL),
     mExifTableNumEntries(0),
     mNoDisplayMode(0),
+    mSuperBufQueue(),
+    mJpegDataQueue(),
     rdiMode(STREAM_IMAGE)
 {
     ALOGI("QCameraHardwareInterface: E");
@@ -1159,6 +1199,10 @@ QCameraHardwareInterface(int cameraId, int mode)
         ALOGE("%s : jpeg_open did not work", __func__);
         return;
     }
+
+    /* init superBufQueue and jpegQueue */
+    mSuperBufQueue.init(releaseProcData, this);
+    mJpegDataQueue.init(releaseNofityData, this);
 
     /* launch jpeg notify thread and raw data proc thread */
     mNotifyTh = new QCameraCmdThread();
@@ -1738,8 +1782,12 @@ status_t QCameraHardwareInterface::startPreview()
     Mutex::Autolock lock(mLock);
 
     switch(mPreviewState) {
-    case QCAMERA_HAL_PREVIEW_STOPPED:
     case QCAMERA_HAL_TAKE_PICTURE:
+        /* cancel pic internally */
+        cancelPictureInternal();
+        mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
+        /* then continue with start preview */
+    case QCAMERA_HAL_PREVIEW_STOPPED:
         mPreviewState = QCAMERA_HAL_PREVIEW_START;
         ALOGE("%s:  HAL::startPreview begin", __func__);
 
@@ -1794,9 +1842,6 @@ status_t QCameraHardwareInterface::startPreview2()
     mStreamSnapMain->setMode(myMode & CAMERA_ZSL_MODE);
     mStreamRecord->setMode(myMode & CAMERA_ZSL_MODE);
     ALOGE("%s: myMode = %d", __func__, myMode);
-
-    ALOGE("%s: setPreviewWindow", __func__);
-    mStreamDisplay->setPreviewWindow(mPreviewWindow);
 
     mStreamSnapMain->mNumBuffers = 1;
     mStreamSnapThumb->mNumBuffers = 1;
@@ -2262,9 +2307,9 @@ status_t QCameraHardwareInterface::cancelPictureInternal()
 
     /* set rawdata proc thread and jpeg notify thread to inactive state */
     /* dataProc Thread need to process "stop" as sync call because abort jpeg job should be a sync call*/
-    mDataProcTh->sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC, TRUE);
+    mDataProcTh->sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC, TRUE, TRUE);
     /* no need for notify thread as a sync call for stop cmd */
-    mNotifyTh->sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC, FALSE);
+    mNotifyTh->sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC, FALSE, TRUE);
 
     if (isZSLMode()) {
         ret = mCameraHandle->ops->cancel_super_buf_request(mCameraHandle->camera_handle, mChannelId);
@@ -2303,8 +2348,8 @@ status_t  QCameraHardwareInterface::takePicture()
     Mutex::Autolock lock(mLock);
 
     /* set rawdata proc thread and jpeg notify thread to active state */
-    mNotifyTh->sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, FALSE);
-    mDataProcTh->sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, FALSE);
+    mNotifyTh->sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, FALSE, FALSE);
+    mDataProcTh->sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, FALSE, FALSE);
 
     switch(mPreviewState) {
     case QCAMERA_HAL_PREVIEW_STARTED:
@@ -2572,80 +2617,25 @@ void QCameraHardwareInterface::roiEvent(fd_roi_t roi,app_notify_cb_t *app_cb)
 
 void QCameraHardwareInterface::handleZoomEventForSnapshot(void)
 {
-    mm_camera_rect_t v4l2_crop;
-
     ALOGI("%s: E", __func__);
 
-    if (mStreamSnapMain != NULL && mStreamSnapMain->mStreamId > 0) {
-        memset(&v4l2_crop,0,sizeof(v4l2_crop));
-        mCameraHandle->ops->get_stream_parm(mCameraHandle->camera_handle,
-                                mStreamSnapMain->mChannelId,
-                                mStreamSnapMain->mStreamId,
-                                MM_CAMERA_STREAM_CROP,
-                                &v4l2_crop);
-        ALOGI("%s: Crop info received for main: %d, %d, %d, %d ", __func__,
-             v4l2_crop.left,
-             v4l2_crop.top,
-             v4l2_crop.width,
-             v4l2_crop.height);
-        mStreamSnapMain->mCrop.offset_x = v4l2_crop.left;
-        mStreamSnapMain->mCrop.offset_y = v4l2_crop.top;
-        mStreamSnapMain->mCrop.width = v4l2_crop.width;
-        mStreamSnapMain->mCrop.height = v4l2_crop.height;
+    if (mStreamSnapMain != NULL) {
+        mStreamSnapMain->setCrop();
     }
-    if (mStreamSnapThumb != NULL && mStreamSnapThumb->mStreamId > 0) {
-        memset(&v4l2_crop,0,sizeof(v4l2_crop));
-        mCameraHandle->ops->get_stream_parm(mCameraHandle->camera_handle,
-                                mStreamSnapThumb->mChannelId,
-                                mStreamSnapThumb->mStreamId,
-                                MM_CAMERA_STREAM_CROP,
-                                &v4l2_crop);
-        ALOGI("%s: Crop info received for thumbnail: %d, %d, %d, %d ", __func__,
-             v4l2_crop.left,
-             v4l2_crop.top,
-             v4l2_crop.width,
-             v4l2_crop.height);
-        mStreamSnapThumb->mCrop.offset_x = v4l2_crop.left;
-        mStreamSnapThumb->mCrop.offset_y = v4l2_crop.top;
-        mStreamSnapThumb->mCrop.width = v4l2_crop.width;
-        mStreamSnapThumb->mCrop.height = v4l2_crop.height;
+    if (mStreamSnapThumb != NULL) {
+        mStreamSnapThumb->setCrop();
     }
-    ALOGD("%s: X", __func__);
+    ALOGI("%s: X", __func__);
 }
 
 void QCameraHardwareInterface::handleZoomEventForPreview(app_notify_cb_t *app_cb)
 {
-    mm_camera_rect_t v4l2_crop;
-
     ALOGI("%s: E", __func__);
 
     /*regular zooming or smooth zoom stopped*/
-    if (!mSmoothZoomRunning && mPreviewWindow) {
-        memset(&v4l2_crop, 0, sizeof(v4l2_crop));
-
+    if (mStreamDisplay != NULL) {
         ALOGI("%s: Fetching crop info", __func__);
-        mCameraHandle->ops->get_stream_parm(mCameraHandle->camera_handle,
-                                mStreamDisplay->mChannelId,
-                                mStreamDisplay->mStreamId,
-                                MM_CAMERA_STREAM_CROP,
-                                &v4l2_crop);
-
-        ALOGI("%s: Crop info received: %d, %d, %d, %d ", __func__,
-             v4l2_crop.left,
-             v4l2_crop.top,
-             v4l2_crop.width,
-             v4l2_crop.height);
-        mStreamDisplay->mCrop.offset_x = v4l2_crop.left;
-        mStreamDisplay->mCrop.offset_y = v4l2_crop.top;
-        mStreamDisplay->mCrop.width = v4l2_crop.width;
-        mStreamDisplay->mCrop.height = v4l2_crop.height;
-
-        mPreviewWindow->set_crop(mPreviewWindow,
-                        v4l2_crop.left,
-                        v4l2_crop.top,
-                        v4l2_crop.left + v4l2_crop.width,
-                        v4l2_crop.top + v4l2_crop.height);
-        ALOGI("%s: Done setting crop", __func__);
+        mStreamDisplay->setCrop();
         ALOGI("%s: Currrent zoom :%d",__func__, mCurrentZoom);
     }
 
@@ -2814,8 +2804,6 @@ status_t QCameraHardwareInterface::setPreviewWindow(preview_stream_ops_t* window
         mPreviewWindow = window;
         ALOGE("%s: mPreviewWindow = 0x%p, mStreamDisplay = 0x%p",
                                     __func__, mPreviewWindow, mStreamDisplay);
-        if(mStreamDisplay)
-            retVal = mStreamDisplay->setPreviewWindow(window);
         break;
     default:
         ALOGE("%s: bug, cannot handle new window in state %d", __func__, mPreviewState);
@@ -3393,14 +3381,13 @@ void QCameraHardwareInterface::notifyHdrEvent(cam_ctrl_status_t status, void * c
     mm_camera_super_buf_t *frame;
     int i;
     ALOGI("%s: HDR Done status (%d) received",__func__,status);
-    //Mutex::Autolock lock(mStopCallbackLock);
     for (i =0; i < 2; i++) {
         frame = mHdrInfo.recvd_frame[i];
         mSuperBufQueue.enqueue(frame);
         /* notify dataNotify thread that new super buf is avail
         * check if it's done with current JPEG notification and
         * a new encoding job could be conducted */
-        mNotifyTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE);
+        mNotifyTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
     }
     /* qbuf the third frame */
     frame = mHdrInfo.recvd_frame[2];
@@ -3417,25 +3404,21 @@ void QCameraHardwareInterface::notifyHdrEvent(cam_ctrl_status_t status, void * c
 
 QCameraQueue::QCameraQueue()
 {
-    init();
+    pthread_mutex_init(&mlock, NULL);
+    cam_list_init(&mhead.list);
 }
 
 QCameraQueue::~QCameraQueue()
 {
-    deinit();
-}
-
-void QCameraQueue::init()
-{
-    pthread_mutex_init(&mlock, NULL);
-    cam_list_init(&mhead.list);
-    msize = 0;
-}
-
-void QCameraQueue::deinit()
-{
     flush();
     pthread_mutex_destroy(&mlock);
+}
+
+void QCameraQueue::init(release_data_fn data_rel_fn, void *user_data)
+{
+    mdata_rel_fn = data_rel_fn;
+    muser_data = user_data;
+    msize = 0;		
 }
 
 bool QCameraQueue::enqueue(void *data)
@@ -3452,6 +3435,33 @@ bool QCameraQueue::enqueue(void *data)
 
     pthread_mutex_lock(&mlock);
     cam_list_add_tail_node(&node->list, &mhead.list);
+    msize++;
+    ALOGE("%s: queue size = %d", __func__, msize);
+    pthread_mutex_unlock(&mlock);
+    return true;
+}
+
+/* priority queue, will insert into the head of the queue */
+bool QCameraQueue::pri_enqueue(void *data)
+{
+    camera_q_node *node =
+        (camera_q_node *)malloc(sizeof(camera_q_node));
+    if (NULL == node) {
+        ALOGE("%s: No memory for camera_q_node", __func__);
+        return false;
+    }
+
+    memset(node, 0, sizeof(camera_q_node));
+    node->data = data;
+
+    pthread_mutex_lock(&mlock);
+    struct cam_list *p_next = mhead.list.next;
+
+    mhead.list.next = &node->list;
+    p_next->prev = &node->list;
+    node->list.next = p_next;
+    node->list.prev = &mhead.list;
+
     msize++;
     ALOGE("%s: queue size = %d", __func__, msize);
     pthread_mutex_unlock(&mlock);
@@ -3500,6 +3510,9 @@ void QCameraQueue::flush(){
         msize--;
 
         if (NULL != node->data) {
+            if (mdata_rel_fn) {
+                mdata_rel_fn(node->data, muser_data);
+            }
             free(node->data);
         }
         free(node);
@@ -3509,7 +3522,8 @@ void QCameraQueue::flush(){
     pthread_mutex_unlock(&mlock);
 }
 
-QCameraCmdThread::QCameraCmdThread()
+QCameraCmdThread::QCameraCmdThread() :
+    cmd_queue()
 {
     sem_init(&sync_sem, 0, 0);
     sem_init(&cmd_sem, 0, 0);
@@ -3532,7 +3546,7 @@ int32_t QCameraCmdThread::launch(void *(*start_routine)(void *),
     return 0;
 }
 
-int32_t QCameraCmdThread::sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd)
+int32_t QCameraCmdThread::sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd, uint8_t priority)
 {
     camera_cmd_t *node = (camera_cmd_t *)malloc(sizeof(camera_cmd_t));
     if (NULL == node) {
@@ -3543,7 +3557,11 @@ int32_t QCameraCmdThread::sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd)
     node->cmd = cmd;
 
     ALOGD("%s: enqueue cmd %d", __func__, cmd);
-    cmd_queue.enqueue((void *)node);
+    if (TRUE == priority) {
+        cmd_queue.pri_enqueue((void *)node);
+    } else {
+        cmd_queue.enqueue((void *)node);
+    }
     sem_post(&cmd_sem);
 
     /* if is a sync call, need to wait until it returns */
@@ -3571,7 +3589,7 @@ int32_t QCameraCmdThread::exit()
 {
     int32_t rc = 0;
 
-    rc = sendCmd(CAMERA_CMD_TYPE_EXIT, FALSE);
+    rc = sendCmd(CAMERA_CMD_TYPE_EXIT, FALSE, TRUE);
     if (0 != rc) {
         ALOGE("%s: Error during exit, rc = %d", __func__, rc);
         return rc;
