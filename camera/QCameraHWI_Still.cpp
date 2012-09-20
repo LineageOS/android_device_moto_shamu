@@ -821,7 +821,6 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
     	   frame_len, y_off, cbcr_off, MSM_PMEM_MAINIMG, &mSnapshotStreamBuf,
                                      &reg_buf.snapshot.main, num_planes, planes) < 0) {
     				ret = NO_MEMORY;
-                    mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mJpegMemory);
     				goto end;
     	};
         num_planes = 2;
@@ -840,7 +839,6 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
     		    &reg_buf.snapshot.thumbnail, num_planes, planes) < 0) {
     	        ret = NO_MEMORY;
                     mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mSnapshotMemory);
-                    mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mJpegMemory);
     	        goto end;
     	    }
         } 
@@ -861,7 +859,6 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
                 mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mThumbnailMemory);
             }
             mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mSnapshotMemory);
-            mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mJpegMemory);
             goto end;
         }
     }
@@ -877,6 +874,8 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
                                  MSM_PMEM_MAX, NULL, NULL, num_planes, planes) < 0) {
                ALOGE("%s: Error allocating JPEG memory", __func__);
                ret = NO_MEMORY;
+               mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mSnapshotMemory);
+               mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mThumbnailMemory);
                goto end;
     }
 
