@@ -695,6 +695,7 @@ private:
     int  mContrast;
     int  mBestShotMode;
     int  mEffects;
+    int  mColorEffects;
     int  mSkinToneEnhancement;
     int  mDenoiseValue;
     int  mHJR;
