@@ -34,6 +34,7 @@
 #include <hardware/camera.h>
 #include <gralloc_priv.h>
 #include <QComOMXMetadata.h>
+#include <hardware/power.h>
 
 extern "C" {
 #include <linux/android_pmem.h>
@@ -834,6 +835,7 @@ private:
     unsigned int mVideoSizeCount;
 
     bool mAutoFocusRunning;
+    bool mNeedToUnlockCaf;
     bool mMultiTouch;
     bool mHasAutoFocusSupport;
     bool mInitialized;
@@ -955,6 +957,8 @@ private:
      mm_jpeg_ops_t mJpegHandle;
      uint32_t mJpegClientHandle;
      snap_hdr_record_t    mHdrInfo;
+     power_module_t*   mPowerModule;
+     cam_sensor_fps_range_t mSensorFpsRange;
 
      static void *dataNotifyRoutine(void *data);
      static void *dataProcessRoutine(void *data);

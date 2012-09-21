@@ -77,7 +77,7 @@ status_t QCameraStream_preview::getBufferFromSurface() {
 
     //as software encoder is used to encode 720p, to enhance the performance
     //cashed pmem is used here
-    if(mVFEOutputs == 1 && dim.display_height == 720)
+    if(mVFEOutputs == 1)
         gralloc_usage = CAMERA_GRALLOC_HEAP_ID | CAMERA_GRALLOC_FALLBACK_HEAP_ID;
     else
         gralloc_usage = CAMERA_GRALLOC_HEAP_ID | CAMERA_GRALLOC_FALLBACK_HEAP_ID |
@@ -412,10 +412,13 @@ void QCameraStream_preview::notifyROIEvent(fd_roi_t roi)
             mHalCamCtrl->mFace[idx].blink_detected = roi.d.data.face.blink_detected;
             mHalCamCtrl->mFace[idx].face_recognised = roi.d.data.face.is_face_recognised;
             mHalCamCtrl->mFace[idx].gaze_angle = roi.d.data.face.gaze_angle;
+
             /* newly added */
-            mHalCamCtrl->mFace[idx].updown_dir = roi.d.data.face.updown_dir;
-            mHalCamCtrl->mFace[idx].leftright_dir = roi.d.data.face.leftright_dir;
-            mHalCamCtrl->mFace[idx].roll_dir = roi.d.data.face.roll_dir;
+            // upscale by 2 to recover from demaen downscaling
+            mHalCamCtrl->mFace[idx].updown_dir = roi.d.data.face.updown_dir * 2;
+            mHalCamCtrl->mFace[idx].leftright_dir = roi.d.data.face.leftright_dir * 2;
+            mHalCamCtrl->mFace[idx].roll_dir = roi.d.data.face.roll_dir * 2;
+
             mHalCamCtrl->mFace[idx].leye_blink = roi.d.data.face.left_blink;
             mHalCamCtrl->mFace[idx].reye_blink = roi.d.data.face.right_blink;
             mHalCamCtrl->mFace[idx].left_right_gaze = roi.d.data.face.left_right_gaze;
@@ -796,7 +799,7 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(mm_camera_super_b
       }
      }
   } else
-      ALOGE("%s: error in dequeue_buffer, enqueue_buffer idx = %d, no free buffer now", __func__, frame->bufs[0]->buf_idx);
+      ALOGE("%s: enqueue_buffer idx = %d, no free buffer from display now", __func__, frame->bufs[0]->buf_idx);
   /* Save the last displayed frame. We'll be using it to fill the gap between
      when preview stops and postview start during snapshot.*/
   mLastQueuedFrame = &(mDisplayBuf[frame->bufs[0]->buf_idx]);

@@ -1083,7 +1083,11 @@ QCameraHardwareInterface(int cameraId, int mode)
     mNoDisplayMode(0),
     mSuperBufQueue(),
     mJpegDataQueue(),
-    rdiMode(STREAM_IMAGE)
+    rdiMode(STREAM_IMAGE),
+    mSupportedFpsRanges(NULL),
+    mSupportedFpsRangesCount(0),
+    mPowerModule(0),
+    mNeedToUnlockCaf(false)
 {
     ALOGI("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;
@@ -1220,9 +1224,12 @@ QCameraHardwareInterface(int cameraId, int mode)
         return;
     }
 
-    mCameraState = CAMERA_STATE_READY;
     memset(&mHdrInfo, 0, sizeof(snap_hdr_record_t));
+    if (hw_get_module(POWER_HARDWARE_MODULE_ID, (const hw_module_t **)&mPowerModule)) {
+        ALOGE("%s module not found", POWER_HARDWARE_MODULE_ID);
+    }
 
+    mCameraState = CAMERA_STATE_READY;
     ALOGI("QCameraHardwareInterface: X");
 }
 
@@ -1250,6 +1257,11 @@ QCameraHardwareInterface::~QCameraHardwareInterface()
         mDataProcTh->exit();
         delete mDataProcTh;
         mDataProcTh = NULL;
+    }
+
+    if(mSupportedFpsRanges != NULL) {
+        delete mSupportedFpsRanges;
+        mSupportedFpsRanges = NULL;
     }
 
     freePictureTable();
@@ -2108,6 +2120,12 @@ status_t QCameraHardwareInterface::startRecording()
             break;
         }
         mPreviewState = QCAMERA_HAL_RECORDING_STARTED;
+
+        if (mPowerModule) {
+            if (mPowerModule->powerHint) {
+                mPowerModule->powerHint(mPowerModule, POWER_HINT_VIDEO_ENCODE, (void *)"state=1");
+            }
+        }
         break;
     case QCAMERA_HAL_RECORDING_STARTED:
         ALOGE("%s: ", __func__);
@@ -2134,6 +2152,12 @@ void QCameraHardwareInterface::stopRecording()
         cancelPictureInternal();
         stopRecordingInternal();
         mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
+
+        if (mPowerModule) {
+            if (mPowerModule->powerHint) {
+	            mPowerModule->powerHint(mPowerModule, POWER_HINT_VIDEO_ENCODE, (void *)"state=0");
+            }
+        }
         break;
     case QCAMERA_HAL_TAKE_PICTURE:
     default:
@@ -2220,7 +2244,10 @@ status_t QCameraHardwareInterface::autoFocusEvent(cam_ctrl_status_t *status, app
 	* We specifically need to call cancelAutoFocus to unlock CAF.
     * In that sense, AF is still running.*/
     isp3a_af_mode_t afMode = getAutoFocusMode(mParameters);
-    mAutoFocusRunning = (afMode == AF_MODE_CAF) ? true : false;
+    if (afMode == AF_MODE_CAF) {
+       mNeedToUnlockCaf = true;
+    }
+    mAutoFocusRunning = false;
     mAutofocusLock.unlock();
 
 /************************************************************
@@ -2568,9 +2595,10 @@ status_t QCameraHardwareInterface::cancelAutoFocus()
 *************************************************************/
 
     mAutofocusLock.lock();
-    if(mAutoFocusRunning) {
+    if(mAutoFocusRunning || mNeedToUnlockCaf) {
 
       mAutoFocusRunning = false;
+      mNeedToUnlockCaf = false;
       mAutofocusLock.unlock();
 
     }else/*(!mAutoFocusRunning)*/{
