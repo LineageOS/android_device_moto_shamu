@@ -223,7 +223,7 @@ status_t QCameraStream::setFormat()
     int rc = MM_CAMERA_OK;
     mm_camera_stream_config_t stream_config;
 
-    ALOGD("%s: E, mActive = %d, streamid = %d, image_mode = %d",__func__, mActive, mStreamId, mExtImgMode);
+    ALOGV("%s: E, mActive = %d, streamid = %d, image_mode = %d",__func__, mActive, mStreamId, mExtImgMode);
     memset(&stream_config, 0, sizeof(mm_camera_stream_config_t));
 
     switch(mExtImgMode)
@@ -242,6 +242,10 @@ status_t QCameraStream::setFormat()
         case MM_CAMERA_VIDEO:
             break;
         case MM_CAMERA_SNAPSHOT_MAIN:
+            if (mHalCamCtrl->isRawSnapshot()) {
+                mFormat = CAMERA_BAYER_SBGGR10;
+                ALOGV("%s: Raw snapshot: Setting res=%d x %d, fmt=%d", __func__, mWidth, mHeight, mFormat);
+            }
             stream_config.fmt.rotation = mHalCamCtrl->getJpegRotation();
             break;
         case MM_CAMERA_SNAPSHOT_THUMBNAIL:
@@ -271,6 +275,8 @@ status_t QCameraStream::setFormat()
         mHalCamCtrl->mRdiHeight = stream_config.fmt.height;
     }
 
+    mWidth = stream_config.fmt.width;
+    mHeight = stream_config.fmt.height;
     ALOGD("%s: X",__func__);
     return rc;
 }
