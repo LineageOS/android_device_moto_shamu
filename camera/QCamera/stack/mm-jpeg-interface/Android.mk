@@ -19,6 +19,10 @@ LOCAL_C_INCLUDES += \
     $(TARGET_OUT_HEADERS)/mm-core/omxcore \
     $(TARGET_OUT_HEADERS)/mm-still/mm-omx
 
+ifeq ($(strip $(TARGET_USES_ION)),true)
+    LOCAL_CFLAGS += -DUSE_ION
+endif
+
 LOCAL_SRC_FILES := \
     src/mm_jpeg_queue.c \
     src/mm_jpeg.c \
