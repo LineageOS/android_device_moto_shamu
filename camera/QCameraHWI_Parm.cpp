@@ -1021,7 +1021,7 @@ void QCameraHardwareInterface::initDefaultParameters()
     if(mFps >= MINIMUM_FPS && mFps <= MAXIMUM_FPS) {
         mParameters.setPreviewFrameRate(mFps);
     }else{
-        mParameters.setPreviewFrameRate(DEFAULT_FPS);
+        mParameters.setPreviewFrameRate(DEFAULT_FIXED_FPS);
     }
 
     //Set Picture Format
