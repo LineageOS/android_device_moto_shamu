@@ -41,7 +41,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static int num_run = 0;
 
 extern int mm_app_set_live_snapshot_fmt(int cam_id,mm_camera_image_fmt_t *fmt);
-extern void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422);
+extern void dumpFrameToFile(mm_camera_buf_def_t* newFrame, int w, int h, char* name, int main_422,char *ext);
 extern int initDisplay();
 extern int mm_app_prepare_preview(int cam_id);
 
@@ -209,7 +209,7 @@ static void mm_app_video_notify_cb(mm_camera_super_buf_t *bufs,
 		pme->dim.orig_video_height, pme->cam->camera_info->camera_id);
 
 	dumpFrameToFile(frame, pme->dim.orig_video_width,
-		pme->dim.orig_video_height, buf, 1);
+		pme->dim.orig_video_height, buf, 1,"yuv");
 
 	if(MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,frame))
 	{

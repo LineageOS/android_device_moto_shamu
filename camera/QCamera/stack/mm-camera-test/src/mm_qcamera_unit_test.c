@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
+Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -40,8 +40,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MM_QCAMERA_APP_UTEST_MAX_MAIN_LOOP 4
 #define MM_QCAM_APP_TEST_NUM 128
 
-#define MM_QCAMERA_APP_INTERATION 5
-
 static mm_app_tc_t mm_app_tc[MM_QCAM_APP_TEST_NUM];
 static int num_test_cases = 0;
 static mm_jpeg_ops_t jpeg_ops;
@@ -53,7 +51,9 @@ extern int startRdi(int cam_id);
 extern int stopRdi(int cam_id);
 extern int startStats(int cam_id);
 extern int stopStats(int cam_id);
-
+extern int takePicture_zsl(int cam_id);
+extern int takePicture_rdi(int cam_id);
+extern int mm_app_tc_reprocess_preview_only(mm_camera_app_t *cam_apps);
 
 int mm_app_tc_0(mm_camera_app_t *cam_apps)
 {
@@ -384,12 +384,12 @@ int mm_app_tc_5(mm_camera_app_t *cam_apps)
 {
     int rc = MM_CAMERA_OK;
     int i;
-    printf("Running %s - open/close ,video0, open/close snapshot channel only\n", __func__); 
+    printf("Running %s - open/close ,video0, open/close snapshot channel only\n", __func__);
 #if 0
     for (i = 0; i < MM_QCAMERA_APP_UTEST_MAX_MAIN_LOOP; i++) {
         if ( 0 != (rc = mm_app_open(cam_id, MM_CAMERA_OP_MODE_NOTUSED))) {
-            CDBG("%s: open cam %d at opmode = %d err, loop=%d, rc=%d\n", 
-                 __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc); 
+            CDBG("%s: open cam %d at opmode = %d err, loop=%d, rc=%d\n",
+                 __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc);
             goto end;
         }
         if (0 != (rc = mm_app_open_snapshot(cam_id))) {
@@ -399,13 +399,13 @@ int mm_app_tc_5(mm_camera_app_t *cam_apps)
             goto end;
         }
         if ( 0 != (rc = mm_app_close(cam_id))) {
-            CDBG("%s: close cam %d at opmode = %d err,loop=%d, rc=%d\n", 
-                 __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc); 
+            CDBG("%s: close cam %d at opmode = %d err,loop=%d, rc=%d\n",
+                 __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc);
             goto end;
         }
     }
     end:
-#endif 
+#endif
     CDBG("%s:END, rc=%d\n", __func__, rc);
     return rc;
 }
@@ -414,11 +414,11 @@ int mm_app_tc_6(mm_camera_app_t *cam_apps)
 {
     int rc = MM_CAMERA_OK;
     int i;
-    printf("Running %s - simple preview \n", __func__); 
+    printf("Running %s - simple preview \n", __func__);
 #if 0
     if ( 0 != (rc = mm_app_open(cam_id, MM_CAMERA_OP_MODE_NOTUSED))) {
-        CDBG("%s: open cam %d at opmode = %d err, loop=%d, rc=%d\n", 
-             __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc); 
+        CDBG("%s: open cam %d at opmode = %d err, loop=%d, rc=%d\n",
+             __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc);
         goto end;
     }
 
@@ -442,12 +442,12 @@ int mm_app_tc_6(mm_camera_app_t *cam_apps)
         }
     }
     if ( 0 != (rc = mm_app_close(cam_id))) {
-        CDBG("%s: close cam %d at opmode = %d err,loop=%d, rc=%d\n", 
-             __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc); 
+        CDBG("%s: close cam %d at opmode = %d err,loop=%d, rc=%d\n",
+             __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc);
         goto end;
     }
 end:
-#endif 
+#endif
     CDBG("%s:END, rc=%d\n", __func__, rc);
     return rc;
 }
@@ -456,11 +456,11 @@ int mm_app_tc_7(mm_camera_app_t *cam_apps)
 {
     int rc = MM_CAMERA_OK;
     int i;
-    printf("Running %s - simple preview and recording \n", __func__); 
+    printf("Running %s - simple preview and recording \n", __func__);
 #if 0
     if ( 0 != (rc = mm_app_open(cam_id, MM_CAMERA_OP_MODE_NOTUSED))) {
-        CDBG("%s: open cam %d at opmode = %d err, loop=%d, rc=%d\n", 
-             __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc); 
+        CDBG("%s: open cam %d at opmode = %d err, loop=%d, rc=%d\n",
+             __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc);
         goto end;
     }
 
@@ -492,12 +492,12 @@ int mm_app_tc_7(mm_camera_app_t *cam_apps)
         }
     }
     if ( 0 != (rc = mm_app_close(cam_id))) {
-        CDBG("%s: close cam %d at opmode = %d err,loop=%d, rc=%d\n", 
-             __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc); 
+        CDBG("%s: close cam %d at opmode = %d err,loop=%d, rc=%d\n",
+             __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc);
         goto end;
     }
 end:
-#endif 
+#endif
     CDBG("%s:END, rc=%d\n", __func__, rc);
     return rc;
 }
@@ -506,11 +506,11 @@ int mm_app_tc_8(mm_camera_app_t *cam_apps)
 {
     int rc = MM_CAMERA_OK;
     int i;
-    printf("Running %s - preview, recording, and snapshot, then preview again \n", __func__); 
+    printf("Running %s - preview, recording, and snapshot, then preview again \n", __func__);
 #if 0
     if ( 0 != (rc = mm_app_open(cam_id, MM_CAMERA_OP_MODE_NOTUSED))) {
-        CDBG("%s: open cam %d at opmode = %d err, loop=%d, rc=%d\n", 
-             __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc); 
+        CDBG("%s: open cam %d at opmode = %d err, loop=%d, rc=%d\n",
+             __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc);
         goto end;
     }
 
@@ -554,8 +554,8 @@ int mm_app_tc_8(mm_camera_app_t *cam_apps)
         }
     }
     if ( 0 != (rc = mm_app_close(cam_id))) {
-        CDBG("%s: close cam %d at opmode = %d err,loop=%d, rc=%d\n", 
-             __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc); 
+        CDBG("%s: close cam %d at opmode = %d err,loop=%d, rc=%d\n",
+             __func__, cam_id, MM_CAMERA_OP_MODE_NOTUSED, i, rc);
         goto end;
     }
 end:
@@ -635,6 +635,68 @@ int mm_app_tc_9(mm_camera_app_t *cam_apps) /*RDI snapshot*/
     return rc;
 }
 
+int mm_app_tc_10(mm_camera_app_t *cam_apps)
+{
+    int rc = MM_CAMERA_OK;
+    int i,j;
+    int result = 0;
+
+    printf("\n Verifying RAW Snapshot on front and back camera...\n");
+    for (i = 0; i < cam_apps->num_cameras; i++) {
+        if ( mm_app_open(i) != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:mm_app_open() err=%d\n",__func__, rc);
+            rc = -1;
+            goto end;
+        }
+        if (system_dimension_set(my_cam_app.cam_open) != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:system_dimension_set() err=%d\n",__func__, rc);
+            rc = -1;
+            goto end;
+        }
+
+        if ( MM_CAMERA_OK != (rc = startPreview(my_cam_app.cam_open))) {
+            CDBG_ERROR("%s: startPreview() err=%d\n", __func__, rc);
+            break;
+        }
+        for (j = 0; j < MM_QCAMERA_APP_INTERATION; j++) {
+            if ( MM_CAMERA_OK != (rc = takePicture_raw(my_cam_app.cam_open))) {
+                CDBG_ERROR("%s: TakePicture() err=%d\n", __func__, rc);
+                break;
+            }
+            /*if(mm_camera_app_timedwait() == ETIMEDOUT) {
+                    CDBG_ERROR("%s: Snapshot/Preview Callback not received in time or qbuf Faile\n", __func__);
+                    break;
+            }*/
+            mm_camera_app_wait();
+            result++;
+        }
+        if ( MM_CAMERA_OK != (rc = stopPreview(my_cam_app.cam_open))) {
+            CDBG("%s: startPreview() err=%d\n", __func__, rc);
+            break;
+        }
+        if ( mm_app_close(my_cam_app.cam_open) != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:mm_app_close() err=%d\n",__func__, rc);
+            rc = -1;
+            goto end;
+        }
+        if (result != MM_QCAMERA_APP_INTERATION) {
+            printf("%s: Snapshot Start/Stop Fails for Camera %d in %d iteration", __func__, i,j);
+            rc = -1;
+            break;
+        }
+
+        result = 0;
+    }
+    end:
+    if (rc == 0) {
+        printf("\t***Passed***\n");
+    } else {
+        printf("\t***Failed***\n");
+    }
+    CDBG("%s:END, rc = %d\n", __func__, rc);
+    return rc;
+}
+
 int mm_app_gen_test_cases()
 {
     int tc = 0;
@@ -649,6 +711,21 @@ int mm_app_gen_test_cases()
       if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_7;
       if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_8;*/
     //if(tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_9;  /*Enable only when rdi enabled for front camera*/
+    if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_10;
+
+    /* test case for reprocess with preview only */
+    /*
+    if (tc < MM_QCAM_APP_TEST_NUM) {
+        mm_app_tc[tc++].f = mm_app_tc_reprocess_preview_only;
+    }
+    */
+    /* test case for reprocess with preview and recording */
+    /*
+    if (tc < MM_QCAM_APP_TEST_NUM) {
+        mm_app_tc[tc++].f = mm_app_tc_reprocess_preview_and_recording;
+    }
+    */
+
     return tc;
 }
 
@@ -663,8 +740,8 @@ int mm_app_unit_test_entry(mm_camera_app_t *cam_app)
     for (i = 0; i < tc; i++) {
         mm_app_tc[i].r = mm_app_tc[i].f(cam_app);
         if (mm_app_tc[i].r != MM_CAMERA_OK) {
-            printf("%s: test case %d error = %d, abort unit testing engine!!!!\n", 
-                   __func__, i, mm_app_tc[i].r); 
+            printf("%s: test case %d error = %d, abort unit testing engine!!!!\n",
+                   __func__, i, mm_app_tc[i].r);
             rc = mm_app_tc[i].r;
             goto end;
         }

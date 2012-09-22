@@ -89,7 +89,6 @@ int32_t mm_jpeg_omx_load(mm_jpeg_obj* my_obj)
     rc = OMX_Init();
     if (0 != rc) {
         CDBG_ERROR("%s : OMX_Init failed (%d)",__func__, rc);
-        OMX_FreeHandle(my_obj->omx_handle);
     }
 
     return rc;
@@ -99,8 +98,6 @@ int32_t mm_jpeg_omx_unload(mm_jpeg_obj *my_obj)
 {
     int32_t rc = 0;
     rc = OMX_Deinit();
-    OMX_FreeHandle(my_obj->omx_handle);
-
     return rc;
 }
 

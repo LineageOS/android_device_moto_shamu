@@ -1283,7 +1283,7 @@ int takePicture_raw(int cam_id)
 {
   int rc = 0;
   CDBG("%s:BEGIN\n", __func__);
-  if(0 != (rc = mm_app_take_raw_picture(cam_id))) {
+  if(0 != (rc = mm_app_take_raw(cam_id))) {
     CDBG("%s: mm_app_take_raw_picture() err=%d\n", __func__, rc);
   }
   return rc;

@@ -116,6 +116,25 @@ static int32_t mm_camera_intf_sync(uint32_t camera_handler)
     return rc;
 }
 
+/* check if the operation is supported */
+static int32_t mm_camera_intf_is_op_supported(uint32_t camera_handler,mm_camera_ops_type_t opcode)
+{
+    int32_t rc = -1;
+    mm_camera_obj_t * my_obj = NULL;
+
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handler);
+
+    if(my_obj) {
+        pthread_mutex_lock(&my_obj->cam_lock);
+        pthread_mutex_unlock(&g_intf_lock);
+        rc = mm_camera_is_op_supported(my_obj, opcode);
+    } else {
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+    return rc;
+}
+
 /* check if the parm is supported */
 static int32_t mm_camera_intf_is_parm_supported(uint32_t camera_handler,
                                    mm_camera_parm_type_t parm_type,
@@ -824,10 +843,12 @@ static int32_t mm_camera_intf_send_native_cmd(uint32_t camera_handle,
           break;
        case NATIVE_CMD_ID_IOCTL_CTRL:
            /* may switch to send through native ctrl cmd ioctl */
-           /* rc = mm_camera_send_native_ctrl_cmd(my_obj,
-                                                cmd_id,
-                                                cmd_length,
-                                                cmd); */
+           rc = mm_camera_util_sendmsg(my_obj, cmd,
+                                      cmd_length, 0);
+#if 0
+           rc = mm_camera_send_native_ctrl_cmd(my_obj, cmd_id,
+                                                cmd_length, cmd);
+#endif
           break;
        default:
           CDBG_ERROR("%s Invalid native cmd id %d ", __func__, cmd_id);
@@ -1199,6 +1220,7 @@ static mm_camera_ops_t mm_camera_ops = {
     .qbuf = mm_camera_intf_qbuf,
     .camera_close = mm_camera_intf_close,
     .query_2nd_sensor_info = mm_camera_intf_query_2nd_sensor_info,
+    .is_op_supported = mm_camera_intf_is_op_supported,
     .is_parm_supported = mm_camera_intf_is_parm_supported,
     .set_parm = mm_camera_intf_set_parm,
     .get_parm = mm_camera_intf_get_parm,

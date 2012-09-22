@@ -549,22 +549,19 @@ void QCameraHardwareInterface::hasAutoFocusSupport(){
 
     ALOGV("%s",__func__);
     mHasAutoFocusSupport = false;
-#if 0
 
     if(isZSLMode()){
         mHasAutoFocusSupport = false;
         return;
     }
 
-    if(cam_ops_is_op_supported (mCameraId, MM_CAMERA_OPS_FOCUS )) {
+    if(mCameraHandle->ops->is_op_supported(mCameraHandle->camera_handle, MM_CAMERA_OPS_FOCUS)) {
         mHasAutoFocusSupport = true;
     }
     else {
         ALOGE("AutoFocus is not supported");
         mHasAutoFocusSupport = false;
     }
-#endif
-
     ALOGV("%s:rc= %d",__func__, mHasAutoFocusSupport);
 
 }
@@ -1354,6 +1351,7 @@ status_t QCameraHardwareInterface::setParameters(const QCameraParameters& params
     //    if ((rc = setOverlayFormats(params)))         final_rc = rc;
     if ((rc = setRedeyeReduction(params)))              final_rc = rc;
     if ((rc = setCaptureBurstExp()))                    final_rc = rc;
+    if ((rc = setRDIMode(params)))                      final_rc = rc;
 
     const char *str_val = params.get("capture-burst-exposures");
     if ( str_val == NULL || strlen(str_val)==0 ) {
@@ -2400,29 +2398,6 @@ status_t QCameraHardwareInterface::setVideoSize(const QCameraParameters& params)
                 ALOGE("%s: Video sizes changes to %s, Restart preview...", __func__, str);
             }
             mParameters.set(QCameraParameters::KEY_VIDEO_SIZE, str);
-            //VFE output1 shouldn't be greater than VFE output2.
-            if( (mPreviewWidth > videoWidth) || (mPreviewHeight > videoHeight)) {
-                //Set preview sizes as record sizes.
-                ALOGE("Preview size %dx%d > record size %dx%d,resetting preview size to record size",
-                      mPreviewWidth, mPreviewHeight,
-                      videoWidth, videoHeight);
-                mPreviewWidth = videoWidth;
-                mPreviewHeight = videoHeight;
-                mParameters.setPreviewSize(mPreviewWidth, mPreviewHeight);
-            }
-
-            if(mIs3DModeOn == true) {
-                /* As preview and video frames are same in 3D mode,
-                 * preview size should be same as video size. This
-                 * cahnge is needed to take of video resolutions
-                 * like 720P and 1080p where the application can
-                 * request different preview sizes like 768x432
-                 */
-                ALOGE("3D mod is on");
-                mPreviewWidth = videoWidth;
-                mPreviewHeight = videoHeight;
-                mParameters.setPreviewSize(mPreviewWidth, mPreviewHeight);
-            }
         } else {
             mParameters.set(QCameraParameters::KEY_VIDEO_SIZE, "");
             ALOGE("%s: error :failed to parse parameter record-size (%s)", __func__, str);
@@ -2431,8 +2406,6 @@ status_t QCameraHardwareInterface::setVideoSize(const QCameraParameters& params)
     }
     ALOGE("%s: preview dimensions: %dx%d", __func__, mPreviewWidth, mPreviewHeight);
     ALOGE("%s: video dimensions: %dx%d", __func__, videoWidth, videoHeight);
-    mDimension.display_width = mPreviewWidth;
-    mDimension.display_height= mPreviewHeight;
     mDimension.orig_video_width = videoWidth;
     mDimension.orig_video_height = videoHeight;
     mDimension.video_width = videoWidth;
@@ -3972,12 +3945,22 @@ status_t QCameraHardwareInterface::setNoDisplayMode(const QCameraParameters& par
   return NO_ERROR;
 }
 
+status_t QCameraHardwareInterface::setRDIMode(const QCameraParameters& params)
+{
+    char prop[PROPERTY_VALUE_MAX];
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.camera.rdi.mode", prop, "0");
+    int prop_val = atoi(prop);
+    rdiMode = prop_val;
+    ALOGE("RDI Mode = %d",rdiMode);
+    return NO_ERROR;
+}
+
 status_t QCameraHardwareInterface::setDimension()
 {
     cam_ctrl_dimension_t dim;
     int ret = MM_CAMERA_OK;
-    bool matching = true;
-    int mPostviewWidth,mPostviewHeight;
+    int postviewWidth,postviewHeight;
 
     memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
     ret = mCameraHandle->ops->get_parm(mCameraHandle->camera_handle, MM_CAMERA_PARM_DIMENSION,&dim);
@@ -3989,11 +3972,8 @@ status_t QCameraHardwareInterface::setDimension()
     }
 
     getPreviewSize(&mPreviewWidth,  &mPreviewHeight);
-    if(dim.display_width != mPreviewWidth || dim.display_height != mPreviewHeight) {
-        matching = false;
-        dim.display_width  = mPreviewWidth;
-        dim.display_height = mPreviewHeight;
-    }
+    dim.display_width  = mPreviewWidth;
+    dim.display_height = mPreviewHeight;
 
     cam_format_t value = getPreviewFormat();
     if(value != NOT_FOUND && value != dim.prev_format ) {
@@ -4006,29 +3986,21 @@ status_t QCameraHardwareInterface::setDimension()
     dim.prev_padding_format =  getPreviewPadding( );
 
     getVideoSize(&videoWidth,  &videoHeight);
-    if(dim.video_width != videoWidth || dim.video_height != videoHeight) {
-        matching = false;
-        dim.enc_format = CAMERA_YUV_420_NV12;
-        dim.orig_video_width = videoWidth;
-        dim.orig_video_height = videoHeight;
-        dim.video_width = videoWidth;
-        dim.video_height = videoHeight;
-        dim.video_chroma_width = videoWidth;
-        dim.video_chroma_height  = videoHeight;
-    }
+    dim.enc_format = CAMERA_YUV_420_NV12;
+    dim.orig_video_width = videoWidth;
+    dim.orig_video_height = videoHeight;
+    dim.video_width = videoWidth;
+    dim.video_height = videoHeight;
+    dim.video_chroma_width = videoWidth;
+    dim.video_chroma_height  = videoHeight;
 
     getPictureSize(&mPictureWidth, &mPictureHeight);
-    if(dim.picture_width != mPictureWidth || dim.picture_height != mPictureHeight) {
-        matching = false;
-        dim.picture_width = mPictureWidth;
-        dim.picture_height  = mPictureHeight;
-    }
+    dim.picture_width = mPictureWidth;
+    dim.picture_height  = mPictureHeight;
+
     getThumbnailSize(&thumbnailWidth,&thumbnailHeight);
-    if(dim.ui_thumbnail_width != thumbnailWidth || dim.ui_thumbnail_height != thumbnailHeight) {
-        matching = false;
-        dim.ui_thumbnail_width = thumbnailWidth;
-        dim.ui_thumbnail_height = thumbnailHeight;
-    }
+    dim.ui_thumbnail_width = thumbnailWidth;
+    dim.ui_thumbnail_height = thumbnailHeight;
 
     /* Reset the Main image and thumbnail formats here,
      * since they might have been changed when video size
@@ -4039,53 +4011,83 @@ status_t QCameraHardwareInterface::setDimension()
       dim.main_img_format = CAMERA_YUV_420_NV21;
     dim.thumb_format = CAMERA_YUV_420_NV21;
 
+    //RDI Format
+    dim.rdi0_format = CAMERA_BAYER_SBGGR10;
+
     /*Code to handle different limitations*/
     if (mRecordingHint && mFullLiveshotEnabled){
         dim.ui_thumbnail_height = dim.display_height;
         dim.ui_thumbnail_width = dim.display_width;
     }
     if (isZSLMode()){
-        mPostviewWidth = mPreviewWidth;
-        mPostviewHeight = mPreviewHeight;
+        postviewWidth = mPreviewWidth;
+        postviewHeight = mPreviewHeight;
     } else {
-        mPostviewWidth = thumbnailWidth;
-        mPostviewHeight = thumbnailHeight;
+        postviewWidth = thumbnailWidth;
+        postviewHeight = thumbnailHeight;
     }
-    if (mPictureWidth < mPostviewWidth || mPictureHeight < mPostviewHeight)
+    if (mPictureWidth < postviewWidth || mPictureHeight < postviewHeight)
     {
         //Changes to handle VFE limitation when primary o/p is main image
-        dim.picture_width = mPostviewWidth;
-        dim.picture_height = mPostviewHeight;
+        dim.picture_width = postviewWidth;
+        dim.picture_height = postviewHeight;
+    }
+
+    //VFE output1 shouldn't be greater than VFE output2.
+    if( (dim.display_width > dim.video_width) ||
+        (dim.display_height > dim.video_height)) {
+        //Set preview sizes as record sizes.
+        dim.display_width = dim.video_width;
+        dim.display_height = dim.video_height;
+    }
+    if (mRecordingHint && mFullLiveshotEnabled){
+        if( (dim.picture_width < dim.video_width) ||
+            (dim.picture_height < dim.video_height)) {
+            dim.picture_width = dim.video_width;
+            dim.picture_height = dim.video_height;
+        }
+    }
+
+    if(mIs3DModeOn == true) {
+        /* As preview and video frames are same in 3D mode,
+         * preview size should be same as video size. This
+         * cahnge is needed to take of video resolutions
+         * like 720P and 1080p where the application can
+         * request different preview sizes like 768x432
+         */
+        ALOGE("3D mod is on");
+        dim.display_width = dim.video_width;
+        dim.display_height = dim.video_height;
     }
     /*End of limitation code*/
 
-    if(!matching) {
-        ret = mCameraHandle->ops->set_parm(mCameraHandle->camera_handle, MM_CAMERA_PARM_DIMENSION,&dim);
-        if (MM_CAMERA_OK != ret) {
-          ALOGE("%s X: error - can't config preview parms!", __func__);
-          return BAD_VALUE;
-        }
-        if(mStreamDisplay) {
-            mStreamDisplay->mFormat = dim.prev_format;
-            mStreamDisplay->mWidth = dim.display_width;
-            mStreamDisplay->mHeight = dim.display_height;
-        }
-        if(mStreamRecord) {
-            mStreamRecord->mFormat = dim.enc_format;
-            mStreamRecord->mWidth = dim.video_width;
-            mStreamRecord->mHeight = dim.video_height;
-        }
-        if(mStreamSnapMain) {
-            mStreamSnapMain->mFormat = dim.main_img_format;
-            mStreamSnapMain->mWidth = dim.picture_width;
-            mStreamSnapMain->mHeight = dim.picture_height;
-        }
-        if(mStreamSnapThumb) {
-            mStreamSnapThumb->mFormat = dim.thumb_format;
-            mStreamSnapThumb->mWidth = dim.ui_thumbnail_width;
-            mStreamSnapThumb->mHeight = dim.ui_thumbnail_height;
-        }
+    ret = mCameraHandle->ops->set_parm(mCameraHandle->camera_handle, MM_CAMERA_PARM_DIMENSION,&dim);
+    if (MM_CAMERA_OK != ret) {
+      ALOGE("%s X: error - can't config preview parms!", __func__);
+      return BAD_VALUE;
     }
+    if(mStreamDisplay) {
+        mStreamDisplay->mFormat = dim.prev_format;
+        mStreamDisplay->mWidth = dim.display_width;
+        mStreamDisplay->mHeight = dim.display_height;
+    }
+    if(mStreamRecord) {
+        mStreamRecord->mFormat = dim.enc_format;
+        mStreamRecord->mWidth = dim.video_width;
+        mStreamRecord->mHeight = dim.video_height;
+    }
+    if(mStreamSnapMain) {
+        mStreamSnapMain->mFormat = dim.main_img_format;
+        mStreamSnapMain->mWidth = dim.picture_width;
+        mStreamSnapMain->mHeight = dim.picture_height;
+    }
+    if(mStreamSnapThumb) {
+        mStreamSnapThumb->mFormat = dim.thumb_format;
+        mStreamSnapThumb->mWidth = dim.ui_thumbnail_width;
+        mStreamSnapThumb->mHeight = dim.ui_thumbnail_height;
+    }
+
+    memcpy(&mDimension, &dim, sizeof(mDimension));
     return NO_ERROR;
 }
 }; /*namespace android */

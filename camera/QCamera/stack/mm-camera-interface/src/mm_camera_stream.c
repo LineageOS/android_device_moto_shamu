@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
+Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -890,11 +890,17 @@ static uint32_t mm_stream_util_get_v4l2_fmt(cam_format_t fmt,
         val= V4L2_PIX_FMT_YUYV;
         *num_planes = 1;
         break;
+    case CAMERA_YUV_420_YV12:
+        val= V4L2_PIX_FMT_NV12;
+        *num_planes = 3;
+        break;
     default:
         val = 0;
         *num_planes = 0;
+        CDBG_ERROR("%s: Unknown fmt=%d", __func__, fmt);
         break;
     }
+    CDBG("%s: fmt=%d, val =%d, num_planes=%d", __func__, fmt, val , *num_planes);
     return val;
 }
 
@@ -1211,76 +1217,6 @@ int32_t mm_stream_request_buf(mm_stream_t * my_obj)
     return rc;
 }
 
-int32_t mm_stream_get_frame_len_offset(mm_camera_image_fmt_t* img_fmt,
-                                       camera_mode_t mode,
-                                       int image_type,
-                                       mm_camera_frame_len_offset * frame_offset)
-{
-    /* TODO : this function should query the frame len from backend using cmd */
-    /* for now, it's still use hardcoded value */
-    uint32_t width, height;
-    int local_height;
-
-    width = img_fmt->width;
-    height = img_fmt->height;
-
-    switch (img_fmt->fmt) {
-    case CAMERA_YUV_420_NV12:
-    case CAMERA_YUV_420_NV21:
-        frame_offset->num_planes = 2;
-        if (image_type == OUTPUT_TYPE_V) {
-            frame_offset->mp[0].len = PAD_TO_2K(width * height);
-            frame_offset->mp[1].len = PAD_TO_2K(width * height/2);
-            /* TODO: offset to count in meta header*/
-            frame_offset->mp[0].offset = 0;
-            frame_offset->mp[1].offset = 0;
-        } else if (image_type == OUTPUT_TYPE_P) {
-            frame_offset->mp[0].len = PAD_TO_WORD(width * height);
-            frame_offset->mp[1].len = PAD_TO_WORD(width * height/2);
-            /* TODO: offset to count in meta header*/
-            frame_offset->mp[0].offset = 0;
-            frame_offset->mp[1].offset = 0;
-        } else {
-            frame_offset->mp[0].len = PAD_TO_WORD(width * CEILING16(height));
-            frame_offset->mp[1].len = PAD_TO_WORD(width * CEILING16(height)/2);
-            /* TODO: offset to count in meta header*/
-            frame_offset->mp[0].offset = 0;
-            frame_offset->mp[1].offset = 0;
-        }
-        frame_offset->frame_len =
-            PAD_TO_4K(frame_offset->mp[0].len + frame_offset->mp[1].len);
-        break;
-    case CAMERA_BAYER_SBGGR10:
-        frame_offset->num_planes = 1;
-        frame_offset->mp[0].len = PAD_TO_WORD(width * height);
-        frame_offset->frame_len = frame_offset->mp[0].len;
-        break;
-    case CAMERA_YUV_422_NV16:
-    case CAMERA_YUV_422_NV61:
-        if( image_type == OUTPUT_TYPE_S || image_type == OUTPUT_TYPE_V) {
-            local_height = CEILING16(height);
-        } else {
-            local_height = height;
-        }
-        frame_offset->num_planes = 2;
-        frame_offset->mp[0].len = PAD_TO_WORD(width * height);
-        frame_offset->mp[1].len = PAD_TO_WORD(width * height);
-        /* TODO: offset to count in meta header*/
-        frame_offset->mp[0].offset = 0;
-        frame_offset->mp[1].offset = 0;
-        frame_offset->frame_len =
-            frame_offset->mp[0].len + frame_offset->mp[1].len;
-        break;
-    default:
-        CDBG("%s: format %d not supported.\n",
-            __func__, img_fmt->fmt);
-        frame_offset->frame_len = 0;
-    }
-    CDBG("%s:fmt=%d,image_type=%d,width=%d,height=%d,frame_len=%d\n",
-        __func__, img_fmt->fmt, image_type, width, height, frame_offset->frame_len);
-    return 0;
-}
-
 int32_t mm_stream_init_bufs(mm_stream_t * my_obj)
 {
     int32_t i, rc = 0, j;
@@ -1588,6 +1524,12 @@ int32_t mm_stream_get_offset(mm_stream_t *my_obj)
 
     switch (frame_offset.image_mode) {
     case MSM_V4L2_EXT_CAPTURE_MODE_PREVIEW:
+        if (CAMERA_YUV_420_YV12 == frame_offset.format) {
+            frame_offset.padding_format = CAMERA_PAD_TO_2K;
+        } else {
+            frame_offset.padding_format = CAMERA_PAD_TO_WORD;
+        }
+        break;
     case MSM_V4L2_EXT_CAPTURE_MODE_MAIN:
     case MSM_V4L2_EXT_CAPTURE_MODE_RAW:
     case MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL:

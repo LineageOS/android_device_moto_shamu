@@ -517,6 +517,23 @@ on_error:
 
 }
 
+int32_t mm_camera_is_op_supported(mm_camera_obj_t *my_obj,
+                                   mm_camera_ops_type_t op_code)
+{
+    int32_t rc = 0;
+    int32_t is_ops_supported = false;
+    int index = 0;
+
+    if (op_code != MM_CAMERA_OPS_LOCAL) {
+        index = op_code/32;
+        is_ops_supported = ((my_obj->properties.ops[index] &
+            (1<<op_code)) != 0);
+
+    }
+    pthread_mutex_unlock(&my_obj->cam_lock);
+    return is_ops_supported;
+}
+
 int32_t mm_camera_is_parm_supported(mm_camera_obj_t *my_obj,
                                    mm_camera_parm_type_t parm_type,
                                    uint8_t *support_set_parm,
@@ -550,6 +567,9 @@ int32_t mm_camera_util_set_op_mode(mm_camera_obj_t * my_obj,
             break;
     case MM_CAMERA_OP_MODE_VIDEO:
         v4l2_op_mode = MSM_V4L2_CAM_OP_VIDEO;
+            break;
+    case MM_CAMERA_OP_MODE_RAW:
+        v4l2_op_mode = MSM_V4L2_CAM_OP_RAW;
             break;
     default:
         rc = - 1;
@@ -786,6 +806,12 @@ int32_t mm_camera_get_parm(mm_camera_obj_t *my_obj,
         rc = mm_camera_send_native_ctrl_cmd(my_obj,
                                             CAMERA_GET_MAX_NUM_FACES_DECT,
                                             sizeof(int),
+                                            p_value);
+        break;
+    case MM_CAMERA_PARM_HDR:
+        rc = mm_camera_send_native_ctrl_cmd(my_obj,
+                                            CAMERA_GET_PARM_HDR,
+                                            sizeof(exp_bracketing_t),
                                             p_value);
         break;
     default:

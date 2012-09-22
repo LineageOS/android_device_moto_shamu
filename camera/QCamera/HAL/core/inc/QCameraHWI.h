@@ -88,22 +88,6 @@ struct preview_format_info_t {
 typedef enum {
   CAMERA_STATE_UNINITED,
   CAMERA_STATE_READY,
-  CAMERA_STATE_PREVIEW_START_CMD_SENT,
-  CAMERA_STATE_PREVIEW_STOP_CMD_SENT,
-  CAMERA_STATE_PREVIEW,
-  CAMERA_STATE_RECORD_START_CMD_SENT,  /*5*/
-  CAMERA_STATE_RECORD_STOP_CMD_SENT,
-  CAMERA_STATE_RECORD,
-  CAMERA_STATE_SNAP_START_CMD_SENT,
-  CAMERA_STATE_SNAP_STOP_CMD_SENT,
-  CAMERA_STATE_SNAP_CMD_ACKED,  /*10 - snapshot comd acked, snapshot not done yet*/
-  CAMERA_STATE_ZSL_START_CMD_SENT,
-  CAMERA_STATE_ZSL,
-  CAMERA_STATE_AF_START_CMD_SENT,
-  CAMERA_STATE_AF_STOP_CMD_SENT,
-  CAMERA_STATE_ERROR, /*15*/
-
-  /*Add any new state above*/
   CAMERA_STATE_MAX
 } HAL_camera_state_type_t;
 
@@ -118,6 +102,7 @@ typedef enum {
   HAL_DUMP_FRM_VIDEO = 1<<1,
   HAL_DUMP_FRM_MAIN = 1<<2,
   HAL_DUMP_FRM_THUMBNAIL = 1<<3,
+  HAL_DUMP_FRM_RDI = 1<<4,
 
   /*8 bits mask*/
   HAL_DUMP_FRM_MAX = 1 << 8
@@ -263,6 +248,21 @@ typedef struct{
 
 } exif_values_t;
 
+typedef struct {
+    jpeg_job_status_t status;
+    uint8_t thumbnailDroppedFlag;
+    uint32_t client_hdl;
+    uint32_t jobId;
+    uint8_t* out_data;
+    uint32_t data_size;
+    mm_camera_super_buf_t* src_frame;
+} camera_jpeg_data_t;
+
+typedef struct {
+    mm_camera_super_buf_t* src_frame;
+    void* userdata;
+} camera_jpeg_encode_cookie_t;
+
 namespace android {
 
 class QCameraStream;
@@ -299,6 +299,15 @@ typedef enum
     CAMERA_CMD_TYPE_MAX
 } camera_cmd_type_t;
 
+typedef struct snap_hdr_record_t_ {
+    bool hdr_on;
+    int num_frame;
+    int num_raw_received;
+    /*in terms of 2^*(n/6), e.g 6 means (1/2)x, whole 12 means 4x*/
+    int exp[MAX_HDR_EXP_FRAME_NUM];
+    mm_camera_super_buf_t *recvd_frame[MAX_HDR_EXP_FRAME_NUM];
+} snap_hdr_record_t;
+
 typedef struct {
     camera_cmd_type_t cmd;
 } camera_cmd_t;
@@ -310,12 +319,13 @@ public:
 
     int32_t launch(void *(*start_routine)(void *), void* user_data);
     int32_t exit();
-    int32_t sendCmd(camera_cmd_type_t cmd);
+    int32_t sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd);
     camera_cmd_type_t getCmd();
 
-    QCameraQueue cmd_queue;       /* cmd queue */
+    QCameraQueue cmd_queue;      /* cmd queue */
     pthread_t cmd_pid;           /* cmd thread ID */
     sem_t cmd_sem;               /* semaphore for cmd thread */
+    sem_t sync_sem;              /* semaphore for synchronized call signal */
 };
 
 class QCameraHardwareInterface : public virtual RefBase {
@@ -603,6 +613,7 @@ private:
     bool isSnapshotRunning();
 
     void processChannelEvent(mm_camera_ch_event_t *, app_notify_cb_t *);
+    void processRdiChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *);
     void processPreviewChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *);
     void processRecordChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *);
     void processSnapshotChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *);
@@ -622,7 +633,6 @@ private:
     bool supportsSelectableZoneAf();
     bool supportsFaceDetection();
     bool supportsRedEyeReduction();
-    bool preview_parm_config (cam_ctrl_dimension_t* dim,QCameraParameters& parm);
 
     void stopPreviewInternal();
     void stopRecordingInternal();
@@ -700,7 +710,8 @@ private:
     status_t setPowerMode(const QCameraParameters& params);
     void takePicturePrepareHardware( );
     status_t setNoDisplayMode(const QCameraParameters& params);
-	status_t setDimension();
+    status_t setDimension();
+    status_t setRDIMode(const QCameraParameters& params);
 
     isp3a_af_mode_t getAutoFocusMode(const QCameraParameters& params);
     bool isValidDimension(int w, int h);
@@ -718,6 +729,7 @@ private:
     int32_t createPreview();
     int32_t createRecord();
     int32_t createSnapshot();
+    int32_t createRdi();
 
     int getHDRMode();
     //EXIF
@@ -736,6 +748,10 @@ private:
     status_t initHistogramBuffers();
     status_t deInitHistogramBuffers();
     mm_jpeg_color_format getColorfmtFromImgFmt(uint32_t img_fmt);
+
+    void notifyHdrEvent(cam_ctrl_status_t status, void * cookie);
+    void initHdrInfoForSnapshot(bool Hdr_on, int number_frames, int *exp );
+    void doHdrProcessing();
 
     int           mCameraId;
     camera_mode_t myMode;
@@ -762,6 +778,7 @@ private:
     Mutex         mCallbackLock;
     Mutex         mPreviewMemoryLock;
     Mutex         mRecordingMemoryLock;
+    Mutex         mRdiMemoryLock;
     Mutex         mAutofocusLock;
     Mutex         mMetaDataWaitLock;
     Mutex         mRecordFrameLock;
@@ -783,6 +800,7 @@ private:
     int  videoWidth, videoHeight;
     int  thumbnailWidth, thumbnailHeight;
     int  maxSnapshotWidth, maxSnapshotHeight;
+    int  mRdiWidth,mRdiHeight;
     int  mPreviewFormat;
     int  mFps;
     int  mDebugFps;
@@ -805,6 +823,7 @@ private:
     int  mDumpFrmCnt;
     int  mDumpSkipCnt;
     int  mFocusMode;
+    int  rdiMode;
 
     unsigned int mPictureSizeCount;
     unsigned int mPreviewSizeCount;
@@ -911,7 +930,7 @@ private:
      /*preview memory without display case: memory is allocated
       directly by camera */
      QCameraHalHeap_t     mNoDispPreviewMemory;
-
+     QCameraHalHeap_t mRdiMemory;
      QCameraHalHeap_t     mSnapshotMemory;
      QCameraHalHeap_t     mThumbnailMemory;
      QCameraHalHeap_t     mRecordingMemory;
@@ -932,6 +951,7 @@ private:
      QCameraCmdThread *mDataProcTh;   /* thread for data process (jpeg encoding) */
      mm_jpeg_ops_t mJpegHandle;
      uint32_t mJpegClientHandle;
+     snap_hdr_record_t    mHdrInfo;
 
      static void *dataNotifyRoutine(void *data);
      static void *dataProcessRoutine(void *data);
@@ -942,9 +962,13 @@ private:
                              uint8_t* out_data,
                              uint32_t data_size,
                              void *userdata);
+     static void receiveCompleteJpegPicture(camera_jpeg_data_t* jpeg_data,
+                                            QCameraHardwareInterface* pme);
      static void superbuf_cb_routine(mm_camera_super_buf_t *recvd_frame,
                                      void *userdata);
 
+     status_t encodeData(mm_camera_super_buf_t* recvd_frame, uint32_t *jobId);
+     void notifyShutter(bool play_shutter_sound);
 };
 
 }; // namespace android

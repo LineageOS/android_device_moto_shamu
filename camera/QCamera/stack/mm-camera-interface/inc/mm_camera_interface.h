@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
+Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -36,6 +36,29 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MM_CAMERA_MAX_NUM_FRAMES 16
 #define MM_CAMERA_MAX_2ND_SENSORS 4
+
+typedef enum {
+    MM_CAMERA_OPS_LOCAL = -1,  /*no need to query mm-camera*/
+    MM_CAMERA_OPS_STREAMING_PREVIEW = 0,
+    MM_CAMERA_OPS_STREAMING_ZSL,
+    MM_CAMERA_OPS_STREAMING_VIDEO,
+    MM_CAMERA_OPS_CAPTURE, /*not supported*/
+    MM_CAMERA_OPS_FOCUS,
+    MM_CAMERA_OPS_GET_PICTURE, /*5*/
+    MM_CAMERA_OPS_PREPARE_SNAPSHOT,
+    MM_CAMERA_OPS_SNAPSHOT,
+    MM_CAMERA_OPS_LIVESHOT,
+    MM_CAMERA_OPS_RAW_SNAPSHOT,
+    MM_CAMERA_OPS_VIDEO_RECORDING, /*10*/
+    MM_CAMERA_OPS_REGISTER_BUFFER,
+    MM_CAMERA_OPS_UNREGISTER_BUFFER,
+    MM_CAMERA_OPS_CAPTURE_AND_ENCODE,
+    MM_CAMERA_OPS_RAW_CAPTURE,
+    MM_CAMERA_OPS_ENCODE, /*15*/
+    MM_CAMERA_OPS_ZSL_STREAMING_CB,
+    /* add new above*/
+    MM_CAMERA_OPS_MAX
+}mm_camera_ops_type_t;
 
 typedef enum {
     MM_CAMERA_WHITE_BALANCE_AUTO,
@@ -255,6 +278,10 @@ typedef struct {
     /* Only fo supporting advanced 2nd sensors. If no secondary sensor needed
      * HAL can ignore this function */
     mm_camera_2nd_sensor_t * (*query_2nd_sensor_info) (uint32_t camera_handle);
+
+    /* if the operation is supported: TRUE - support, FALSE - not support */
+    uint8_t (*is_op_supported)(uint32_t camera_handle, mm_camera_ops_type_t opcode);
+
     /* if the parm is supported: TRUE - support, FALSE - not support */
     int32_t (*is_parm_supported) (uint32_t camera_handle,
                                  mm_camera_parm_type_t parm_type,
@@ -414,6 +441,9 @@ typedef enum {
     MM_CAMERA_CS,
     MM_CAMERA_RS,
     MM_CAMERA_CSTA,
+    MM_CAMERA_ISP_PIX_OUTPUT1,
+    MM_CAMERA_ISP_PIX_OUTPUT2,
+    MM_CAMERA_IMG_MODE_MAX
 } mm_camera_img_mode;
 
 /* may remove later */
@@ -422,6 +452,8 @@ typedef enum {
     MM_CAMERA_OP_MODE_CAPTURE,
     MM_CAMERA_OP_MODE_VIDEO,
     MM_CAMERA_OP_MODE_ZSL,
+    MM_CAMERA_OP_MODE_RAW,
     MM_CAMERA_OP_MODE_MAX
 } mm_camera_op_mode_type_t;
+
 #endif /*__MM_CAMERA_INTERFACE_H__*/

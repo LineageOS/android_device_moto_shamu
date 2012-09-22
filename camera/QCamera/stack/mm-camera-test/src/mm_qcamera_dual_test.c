@@ -40,7 +40,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MM_QCAMERA_APP_UTEST_MAX_MAIN_LOOP 4
 #define MM_QCAM_APP_TEST_NUM 128
 
-#define MM_QCAMERA_APP_INTERATION 5
 #define MM_QCAMERA_APP_WAIT_TIME 1000000000
 
 extern int system_dimension_set(int cam_id);
@@ -69,7 +68,7 @@ extern int stopStats(int cam_id);
 */
 static mm_app_tc_t mm_app_tc[MM_QCAM_APP_TEST_NUM];
 static int num_test_cases = 0;
-static struct test_case_params {
+struct test_case_params {
   uint16_t launch;
   uint16_t preview;
   uint16_t recording;
@@ -595,13 +594,13 @@ int mm_app_dtc_5(mm_camera_app_t *cam_apps)
                   rc = -1;
                   goto end;
           }
-  
+
           if(system_dimension_set(back_camera) != MM_CAMERA_OK){
                   CDBG_ERROR("%s:system_dimension_set() err=%d\n",__func__, rc);
                   rc = -1;
                   goto end;
           }
-  
+
           CDBG_ERROR("DUAL start camera Preview for back \n");
           if( MM_CAMERA_OK != (rc = startPreview(back_camera))) {
                  CDBG_ERROR("%s: back camera startPreview() err=%d\n", __func__, rc);
@@ -609,14 +608,14 @@ int mm_app_dtc_5(mm_camera_app_t *cam_apps)
           }
           mm_camera_app_wait();
           sleep(1);
-  
+
           CDBG_ERROR("DUAL stop camera Preview for back \n");
           if( MM_CAMERA_OK != (rc = stopPreview(back_camera))) {
                   CDBG_ERROR("%s: stopPreview() backcamera err=%d\n", __func__, rc);
                   goto end;
           }
           usleep(10*1000);
-  
+
           CDBG_ERROR("DUAL close back camera\n");
           if( mm_app_close(back_camera) != MM_CAMERA_OK) {
                   CDBG_ERROR("%s:mm_app_close() err=%d\n",__func__, rc);
@@ -1921,8 +1920,8 @@ int mm_app_dual_test_entry(mm_camera_app_t *cam_app)
     for(i = 0; i < tc; i++) {
         mm_app_tc[i].r = mm_app_tc[i].f(cam_app);
         if(mm_app_tc[i].r != MM_CAMERA_OK) {
-            printf("%s: test case %d error = %d, abort unit testing engine!!!!\n", 
-                    __func__, i, mm_app_tc[i].r); 
+            printf("%s: test case %d error = %d, abort unit testing engine!!!!\n",
+                    __func__, i, mm_app_tc[i].r);
             rc = mm_app_tc[i].r;
             goto end;
         }
