@@ -348,39 +348,6 @@ int8_t omxJpegEncodeNext(omx_jpeg_encode_params *encode_params)
     OMX_UseBuffer(pHandle, &pInBuffers, 0, &pmem_info, inputPort->nBufferSize,
     (void *) encode_params->snapshot_buf);
     OMX_GetExtensionIndex(pHandle, "omx.qcom.jpeg.exttype.exif", &exif);
-    /*temporarily set rotation in EXIF data. This is done to avoid
-      image corruption issues in ZSL mode since roation is known
-      before hand. The orientation is set in the exif tag and
-      decoder will decode it will the right orientation. need to add double
-      padding to fix the issue */
-    if (isZSLMode) {
-        /*Get the orientation tag values depending on rotation*/
-        switch (jpegRotation) {
-        case 0:
-            orientation = 1; /*Normal*/
-            break;
-        case 90:
-            orientation = 6; /*Rotated 90 CCW*/
-            break;
-        case 180:
-            orientation =  3; /*Rotated 180*/
-            break;
-        case 270:
-            orientation = 8; /*Rotated 90 CW*/
-            break;
-        default:
-            orientation = 1;
-            break;
-      }
-      tag.tag_id = EXIFTAGID_ORIENTATION;
-      tag.tag_entry.type = EXIFTAGTYPE_ORIENTATION;
-      tag.tag_entry.count = 1;
-      tag.tag_entry.copy = 1;
-      tag.tag_entry.data._short = orientation;
-      ALOGE("%s jpegRotation = %d , orientation value =%d\n", __func__,
-           jpegRotation, orientation);
-      OMX_SetParameter(pHandle, exif, &tag);
-    }
 
     /*Set omx parameter for all exif tags*/
     int i;
