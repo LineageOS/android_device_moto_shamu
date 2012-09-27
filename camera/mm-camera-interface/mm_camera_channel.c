@@ -650,6 +650,8 @@ void mm_camera_dispatch_buffered_frames(mm_camera_obj_t *my_obj,
                 ch->snapshot.pending_cnt--;
                 mq->match_cnt--;
                 sq->match_cnt--;
+                data.p_mobicat_info = mframe->mobicat_info;
+                CDBG("%s:%d] mobicat info %p", __func__, __LINE__, data.p_mobicat_info);
                 for(j=0;j<MM_CAMERA_BUF_CB_MAX;j++) {
                     if( ch->buf_cb[j].cb!=NULL )
                         ch->buf_cb[j].cb(&data, ch->buf_cb[j].user_data);
@@ -674,8 +676,8 @@ void mm_camera_dispatch_buffered_frames(mm_camera_obj_t *my_obj,
       CDBG_ERROR(" mq =%p sq =%p stream1 =%p stream2 =%p", mq, sq , stream1 , stream2);
 
     }
-    CDBG("%s: burst number: %d, pending_count: %d", __func__,
-        my_obj->snap_burst_num_by_user, ch->snapshot.pending_cnt);
+    CDBG("%s: burst number: %d, pending_count: %d rc %d", __func__,
+        my_obj->snap_burst_num_by_user, ch->snapshot.pending_cnt, rc);
 end:
     pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_SNAPSHOT].mutex);
     pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_PREVIEW].mutex);

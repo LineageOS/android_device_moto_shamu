@@ -47,6 +47,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define LOG_TAG "NotifyLogs"
 #endif
 
+extern int32_t mm_camera_send_native_ctrl_cmd(mm_camera_obj_t * my_obj,
+    cam_ctrl_type type, uint32_t length, void *value);
+
 static void mm_camera_read_raw_frame(mm_camera_obj_t * my_obj)
 {
     int rc = 0;
@@ -369,10 +372,11 @@ end:
         data.type = MM_CAMERA_CH_SNAPSHOT;
         data.snapshot.main.frame = &my_frame->frame;
         data.snapshot.main.idx = my_frame->idx;
+        data.p_mobicat_info = my_frame->mobicat_info;
         data.snapshot.thumbnail.frame = &peer_frame->frame;
         data.snapshot.thumbnail.idx = peer_frame->idx;
         my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.pending_cnt--;
-        memcpy(&buf_cb[0], &my_obj->ch[MM_CAMERA_CH_SNAPSHOT].buf_cb[0], 
+        memcpy(&buf_cb[0], &my_obj->ch[MM_CAMERA_CH_SNAPSHOT].buf_cb[0],
                sizeof(buf_cb));
         if(my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.pending_cnt == 0)
             deliver_done = 1;
@@ -487,6 +491,7 @@ static void mm_camera_snapshot_send_liveshot_notify(mm_camera_obj_t * my_obj)
             frame = mm_camera_stream_frame_deq(s_q);
             data[i].snapshot.main.frame = &frame->frame;
             data[i].snapshot.main.idx = frame->idx;
+            data[i].p_mobicat_info = NULL;
             data[i].snapshot.thumbnail.frame = NULL;
             my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.main.frame.ref_count[data[i].snapshot.main.idx]++;
             /*my_obj->ch[MM_CAMERA_CH_SNAPSHOT].buf_cb[i].cb(&data,
@@ -542,6 +547,7 @@ static void mm_camera_snapshot_send_snapshot_notify(mm_camera_obj_t * my_obj)
             frame = mm_camera_stream_frame_deq(s_q);
             data[i].snapshot.main.frame = &frame->frame;
             data[i].snapshot.main.idx = frame->idx;
+            data[i].p_mobicat_info = frame->mobicat_info;
             frame = mm_camera_stream_frame_deq(t_q);
             data[i].snapshot.thumbnail.frame = &frame->frame;
             data[i].snapshot.thumbnail.idx = frame->idx;
@@ -597,7 +603,18 @@ static void mm_camera_read_snapshot_main_frame(mm_camera_obj_t * my_obj)
     idx =  mm_camera_read_msm_frame(my_obj,stream);
     if (idx < 0)
         return;
-
+#ifndef HAL_GET_MBC_INFO
+    if (my_obj->mobicat_enable) {
+        rc = mm_camera_send_native_ctrl_cmd(my_obj, CAMERA_GET_PARM_MOBICAT,
+          sizeof(cam_exif_tags_t),
+          (void *)my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.main.frame.
+          frame[idx].mobicat_info);
+        if (rc < 0) {
+          CDBG_ERROR("%s:%d] cannot get mobicat info for frame %d ",
+            __func__, __LINE__, idx);
+        }
+    }
+#endif
     CDBG("%s Read Snapshot frame %d ", __func__, idx);
     if(my_obj->op_mode == MM_CAMERA_OP_MODE_ZSL) {
         my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.main.frame.ref_count[idx]++;

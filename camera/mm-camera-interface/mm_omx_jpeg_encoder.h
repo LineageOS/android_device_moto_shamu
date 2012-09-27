@@ -48,6 +48,10 @@ typedef struct omx_jpeg_encode_params_t {
     int hasThumbnail;
     cam_format_t main_format;
     cam_format_t thumbnail_format;
+    const uint8_t * mobicat_data;
+    int32_t mobicat_data_length;
+    int hasmobicat;
+
 }omx_jpeg_encode_params;
 
 int8_t omxJpegOpen();

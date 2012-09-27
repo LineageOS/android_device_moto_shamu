@@ -331,6 +331,7 @@ typedef struct {
         mm_camera_notify_snapshot_buf_t snapshot;
         mm_camera_notify_video_buf_t video;
         mm_camera_notify_frame_t def;
+        cam_exif_tags_t *p_mobicat_info;
 //    };
 } mm_camera_ch_data_buf_t;
 
