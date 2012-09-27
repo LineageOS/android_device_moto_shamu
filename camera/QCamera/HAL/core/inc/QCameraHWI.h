@@ -188,6 +188,7 @@ typedef struct {
   unsigned int             index;
   camera_frame_metadata_t *metadata;
   void                    *cookie;
+  void                    *user_data;
 } argm_data_cb_t;
 
 typedef struct {
@@ -268,12 +269,12 @@ typedef void (*release_data_fn)(void* data, void *user_data);
 class QCameraQueue {
 public:
     QCameraQueue();
+    QCameraQueue(release_data_fn data_rel_fn, void *user_data);
     virtual ~QCameraQueue();
     bool enqueue(void *data);
     bool pri_enqueue(void *data);
     void flush();
     void* dequeue();
-    void init(release_data_fn data_rel_fn, void *user_data);
 
 private:
     typedef struct {
@@ -737,7 +738,6 @@ private:
     void parseGPSCoordinate(const char *latlonString, rat_t* coord);
     //added to support hdr
     bool getHdrInfoAndSetExp(int max_num_frm, int *num_frame, int *exp);
-    void hdrEvent(cam_ctrl_status_t status, void *cookie);
     status_t initHistogramBuffers();
     status_t deInitHistogramBuffers();
     mm_jpeg_color_format getColorfmtFromImgFmt(uint32_t img_fmt);
@@ -761,7 +761,6 @@ private:
     void                           *mCallbackCookie;
 
     mutable Mutex       mLock;
-    Mutex         mCallbackLock;
     Mutex         mPreviewMemoryLock;
     Mutex         mAutofocusLock;
     Mutex         mRecordFrameLock;
@@ -769,13 +768,7 @@ private:
     pthread_mutex_t     mAsyncCmdMutex;
     pthread_cond_t      mAsyncCmdWait;
 
-    QCameraStream       *mStreamDisplay;
-    QCameraStream       *mStreamRecord;
-    QCameraStream       *mStreamSnapMain;
-    QCameraStream       *mStreamSnapThumb;
-    QCameraStream       *mStreamLiveSnap;
-    QCameraStream       *mStreamRdi;
-
+    QCameraStream *     mStreams[MM_CAMERA_IMG_MODE_MAX];
     cam_ctrl_dimension_t mDimension;
     int  mPreviewWidth, mPreviewHeight;
     int  mPictureWidth, mPictureHeight;
@@ -923,7 +916,7 @@ private:
      int                    mExifTableNumEntries;            //NUmber of entries in mExifData
      int                 mNoDisplayMode;
      QCameraQueue mSuperBufQueue;     /* queue for raw super buf */
-     QCameraQueue mJpegDataQueue;     /* queue for encoded jpeg frame */
+     QCameraQueue mNotifyDataQueue;   /* queue for data notify */
      QCameraCmdThread *mNotifyTh;     /* thread for data notify */
      QCameraCmdThread *mDataProcTh;   /* thread for data process (jpeg encoding) */
      mm_jpeg_ops_t mJpegHandle;
@@ -941,16 +934,28 @@ private:
                              uint8_t* out_data,
                              uint32_t data_size,
                              void *userdata);
-     static void receiveCompleteJpegPicture(camera_jpeg_data_t* jpeg_data,
+     static void receiveCompleteJpegPicture(jpeg_job_status_t status,
+                                            uint8_t thumbnailDroppedFlag,
+                                            uint32_t client_hdl,
+                                            uint32_t jobId,
+                                            uint8_t* out_data,
+                                            uint32_t data_size,
                                             QCameraHardwareInterface* pme);
      static void superbuf_cb_routine(mm_camera_super_buf_t *recvd_frame,
                                      void *userdata);
-     static void receiveRawPicture(mm_camera_super_buf_t* recvd_frame, QCameraHardwareInterface *pme);
-     status_t encodeData(mm_camera_super_buf_t* recvd_frame, uint32_t *jobId);
+     static void receiveRawPicture(mm_camera_super_buf_t* recvd_frame,
+                                   QCameraHardwareInterface *pme);
+     status_t encodeData(mm_camera_super_buf_t* recvd_frame,
+                         uint32_t *jobId);
      void notifyShutter(bool play_shutter_sound);
+     status_t sendDataNotify(int32_t msg_type,
+                             camera_memory_t *data,
+                             uint8_t index,
+                             camera_frame_metadata_t *metadata,
+                             QCameraHalHeap_t *heap);
 
      void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
-     void releaseJpegData(camera_jpeg_data_t *jpeg_data);
+     void releaseAppCBData(app_notify_cb_t *app_cb);
      static void releaseNofityData(void *data, void *user_data);
      static void releaseProcData(void *data, void *user_data);
 };

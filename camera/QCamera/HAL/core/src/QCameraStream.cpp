@@ -209,16 +209,6 @@ status_t QCameraStream::deinitStream()
     return NO_ERROR;
 }
 
-status_t QCameraStream::setMode(int enable) {
-  ALOGE("%s: E, mActive = %d, streamid = %d, image_mode = %d",__func__, mActive, mStreamId, mExtImgMode);
-  if (enable) {
-      myMode = (camera_mode_t)(myMode | CAMERA_ZSL_MODE);
-  } else {
-      myMode = (camera_mode_t)(myMode & ~CAMERA_ZSL_MODE);
-  }
-  return NO_ERROR;
-}
-
 status_t QCameraStream::setFormat()
 {
     int rc = MM_CAMERA_OK;
@@ -288,27 +278,28 @@ QCameraStream::QCameraStream (){
 }
 
 QCameraStream::QCameraStream(uint32_t CameraHandle,
-                        uint32_t ChannelId,
-                        uint32_t Width,
-                        uint32_t Height,
-                        uint32_t Format,
-                        uint8_t NumBuffers,
-                        mm_camera_vtbl_t *mm_ops,
-                        mm_camera_img_mode imgmode,
-                        camera_mode_t mode)
-              :myMode(mode)
+                             uint32_t ChannelId,
+                             uint32_t Width,
+                             uint32_t Height,
+                             uint32_t Format,
+                             uint8_t NumBuffers,
+                             mm_camera_vtbl_t *mm_ops,
+                             mm_camera_img_mode imgmode,
+                             camera_mode_t mode,
+                             QCameraHardwareInterface* camCtrl)
+              : mCameraHandle(CameraHandle),
+                mChannelId(ChannelId),
+                mWidth(Width),
+                mHeight(Height),
+                mFormat(Format),
+                mNumBuffers(NumBuffers),
+                p_mm_ops(mm_ops),
+                mExtImgMode(imgmode),
+                mHalCamCtrl(camCtrl)
 {
     mInit = false;
     mActive = false;
 
-    mCameraHandle=CameraHandle;
-    mChannelId=ChannelId;
-    mWidth=Width;
-    mHeight=Height;
-    mFormat=Format;
-    mNumBuffers=NumBuffers;
-    p_mm_ops=mm_ops;
-    mExtImgMode=imgmode;
     mStreamId = 0;
     m_flag_no_cb = FALSE;
     m_flag_stream_on = TRUE;
@@ -317,17 +308,12 @@ QCameraStream::QCameraStream(uint32_t CameraHandle,
     memset(&mCrop, 0, sizeof(mm_camera_rect_t));
 }
 
-QCameraStream::~QCameraStream () {;}
+QCameraStream::~QCameraStream ()
+{
+}
 
 void QCameraStream::release() {
     return;
-}
-
-void QCameraStream::setHALCameraControl(QCameraHardwareInterface* ctrl) {
-
-    /* provide a frame data user,
-    for the  queue monitor thread to call the busy queue is not empty*/
-    mHalCamCtrl = ctrl;
 }
 
 int32_t QCameraStream::setCrop()

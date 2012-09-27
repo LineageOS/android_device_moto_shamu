@@ -249,9 +249,9 @@ status_t QCameraStream_preview::initStream(uint8_t no_cb_needed, uint8_t stream_
 
     ALOGI(" %s : E ", __FUNCTION__);
     if (mHalCamCtrl->isNoDisplayMode()) {
-        mNumBuffers = kPreviewBufferCount;
+        mNumBuffers = PREVIEW_BUFFER_COUNT;
         if(mHalCamCtrl->isZSLMode()) {
-            if(mHalCamCtrl->getZSLQueueDepth() > kPreviewBufferCount - 3) {
+            if(mNumBuffers < mHalCamCtrl->getZSLQueueDepth() + 3) {
                 mNumBuffers = mHalCamCtrl->getZSLQueueDepth() + 3;
             }
         }
@@ -271,7 +271,7 @@ status_t QCameraStream_preview::initStream(uint8_t no_cb_needed, uint8_t stream_
                 goto end;
             }
         }
-        mNumBuffers = kPreviewBufferCount + numMinUndequeuedBufs;
+        mNumBuffers = PREVIEW_BUFFER_COUNT + numMinUndequeuedBufs;
         if(mHalCamCtrl->isZSLMode()) {
           if(mHalCamCtrl->getZSLQueueDepth() > numMinUndequeuedBufs)
             mNumBuffers += mHalCamCtrl->getZSLQueueDepth() - numMinUndequeuedBufs;
@@ -339,13 +339,9 @@ void QCameraStream_preview::notifyROIEvent(fd_roi_t roi)
 
             if (mHalCamCtrl->mMetadata.number_of_faces == 0) {
                 // Clear previous faces
-                mHalCamCtrl->mCallbackLock.lock();
-                camera_data_callback pcb = mHalCamCtrl->mDataCb;
-                mHalCamCtrl->mCallbackLock.unlock();
-
-                if (pcb && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_PREVIEW_METADATA)){
+                if (mHalCamCtrl->mDataCb && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_PREVIEW_METADATA)){
                     ALOGE("%s: Face detection RIO callback", __func__);
-                    pcb(CAMERA_MSG_PREVIEW_METADATA, NULL, 0,
+                    mHalCamCtrl->mDataCb(CAMERA_MSG_PREVIEW_METADATA, NULL, 0,
                         &mHalCamCtrl->mMetadata, mHalCamCtrl->mCallbackCookie);
                 }
             }
@@ -431,13 +427,10 @@ void QCameraStream_preview::notifyROIEvent(fd_roi_t roi)
              mDisplayLock.unlock();
 
              if (mNumFDRcvd == mHalCamCtrl->mMetadata.number_of_faces) {
-                 mHalCamCtrl->mCallbackLock.lock();
-                 camera_data_callback pcb = mHalCamCtrl->mDataCb;
-                 mHalCamCtrl->mCallbackLock.unlock();
-
-                 if (pcb && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_PREVIEW_METADATA)){
+                 if (mHalCamCtrl->mDataCb && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_PREVIEW_METADATA)){
                      ALOGE("%s: Face detection RIO callback with %d faces detected (score=%d)", __func__, mNumFDRcvd, mHalCamCtrl->mFace[idx].score);
-                     pcb(CAMERA_MSG_PREVIEW_METADATA, NULL, 0, &mHalCamCtrl->mMetadata, mHalCamCtrl->mCallbackCookie);
+                     mHalCamCtrl->mDataCb(CAMERA_MSG_PREVIEW_METADATA, NULL,
+                                          0, &mHalCamCtrl->mMetadata, mHalCamCtrl->mCallbackCookie);
                  }
              }
         }
@@ -595,21 +588,19 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(mm_camera_super_b
   camera_frame_metadata_t *metadata = NULL;
   int preview_buf_idx = frame->bufs[0]->buf_idx;
 
+  if(!mActive) {
+    ALOGE("Preview Stopped. Returning callback");
+    return NO_ERROR;
+  }
+
   if(mHalCamCtrl==NULL) {
     ALOGE("%s: X: HAL control object not set",__func__);
     /*Call buf done*/
     return BAD_VALUE;
   }
-  mHalCamCtrl->mCallbackLock.lock();
-  camera_data_timestamp_callback rcb = mHalCamCtrl->mDataCbTimestamp;
-  void *rdata = mHalCamCtrl->mCallbackCookie;
-  mHalCamCtrl->mCallbackLock.unlock();
-  nsecs_t timeStamp = seconds_to_nanoseconds(frame->bufs[0]->ts.tv_sec) ;
-  timeStamp += frame->bufs[0]->ts.tv_nsec;
 
   if(mFirstFrameRcvd == false) {
-  //mm_camera_util_profile("HAL: First preview frame received");
-  mFirstFrameRcvd = true;
+      mFirstFrameRcvd = true;
   }
 
   if (UNLIKELY(mHalCamCtrl->mDebugFps)) {
@@ -723,14 +714,13 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(mm_camera_super_b
   mLastQueuedFrame = &(mDisplayBuf[preview_buf_idx]);
   mHalCamCtrl->mPreviewMemoryLock.unlock();
 
-  mHalCamCtrl->mCallbackLock.lock();
-  camera_data_callback pcb = mHalCamCtrl->mDataCb;
-  mHalCamCtrl->mCallbackLock.unlock();
+  nsecs_t timeStamp = seconds_to_nanoseconds(frame->bufs[0]->ts.tv_sec) ;
+  timeStamp += frame->bufs[0]->ts.tv_nsec;
   ALOGD("Message enabled = 0x%x", mHalCamCtrl->mMsgEnabled);
 
   camera_memory_t *previewMem = NULL;
 
-  if (pcb != NULL) {
+  if (mHalCamCtrl->mDataCb != NULL) {
        ALOGD("%s: mMsgEnabled =0x%x, preview format =%d", __func__,
             mHalCamCtrl->mMsgEnabled, mHalCamCtrl->mPreviewFormat);
       //Sending preview callback if corresponding Msgs are enabled
@@ -768,16 +758,17 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(mm_camera_super_b
       } else {
           data = NULL;
       }
-      if(msgType) {
-          pcb(msgType, data, 0, metadata, mHalCamCtrl->mCallbackCookie);
-          if (previewMem)
-              previewMem->release(previewMem);
+      if(msgType && mActive) {
+          mHalCamCtrl->mDataCb(msgType, data, 0, metadata, mHalCamCtrl->mCallbackCookie);
+      }
+      if (previewMem) {
+          previewMem->release(previewMem);
       }
 	  ALOGD("end of cb");
   } else {
     ALOGD("%s PCB is not enabled", __func__);
   }
-  if(rcb != NULL && mVFEOutputs == 1)
+  if(mHalCamCtrl->mDataCbTimestamp != NULL && mVFEOutputs == 1)
   {
       int flagwait = 1;
       if(mHalCamCtrl->mStartRecording == true &&
@@ -788,17 +779,17 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(mm_camera_super_b
           if(mHalCamCtrl->mRecordingMemory.metadata_memory[preview_buf_idx])
           {
               flagwait = 1;
-              rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME,
-                      mHalCamCtrl->mRecordingMemory.metadata_memory[preview_buf_idx],
-                      0, mHalCamCtrl->mCallbackCookie);
+              mHalCamCtrl->mDataCbTimestamp(timeStamp, CAMERA_MSG_VIDEO_FRAME,
+                                            mHalCamCtrl->mRecordingMemory.metadata_memory[preview_buf_idx],
+                                            0, mHalCamCtrl->mCallbackCookie);
           }else
               flagwait = 0;
       }
       else
       {
-              rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME,
-                      mHalCamCtrl->mPreviewMemory.camera_memory[preview_buf_idx],
-                      0, mHalCamCtrl->mCallbackCookie);
+          mHalCamCtrl->mDataCbTimestamp(timeStamp, CAMERA_MSG_VIDEO_FRAME,
+                                        mHalCamCtrl->mPreviewMemory.camera_memory[preview_buf_idx],
+                                        0, mHalCamCtrl->mCallbackCookie);
       }
 
       if(flagwait){
@@ -844,20 +835,13 @@ status_t QCameraStream_preview::processPreviewFrameWithOutDisplay(
   mLastQueuedFrame = &(mDisplayBuf[frame->bufs[0]->buf_idx]);
   mHalCamCtrl->mPreviewMemoryLock.unlock();
 
-  mHalCamCtrl->mCallbackLock.lock();
-  camera_data_callback pcb = mHalCamCtrl->mDataCb;
-  mHalCamCtrl->mCallbackLock.unlock();
   ALOGD("Message enabled = 0x%x", mHalCamCtrl->mMsgEnabled);
-
-  camera_memory_t *previewMem = NULL;
-  int previewWidth, previewHeight;
-  mHalCamCtrl->mParameters.getPreviewSize(&previewWidth, &previewHeight);
 
   mHalCamCtrl->cache_ops(&mHalCamCtrl->mNoDispPreviewMemory.mem_info[preview_buf_idx],
                          (void *)mHalCamCtrl->mNoDispPreviewMemory.camera_memory[preview_buf_idx]->data,
                          ION_IOC_CLEAN_CACHES);
 
-  if (pcb != NULL) {
+  if (mHalCamCtrl->mDataCb != NULL) {
       //Sending preview callback if corresponding Msgs are enabled
       if(mHalCamCtrl->mMsgEnabled & CAMERA_MSG_PREVIEW_FRAME) {
           msgType |=  CAMERA_MSG_PREVIEW_FRAME;
@@ -877,10 +861,8 @@ status_t QCameraStream_preview::processPreviewFrameWithOutDisplay(
       } else {
           metadata = NULL;
       }
-      if(msgType) {
-          pcb(msgType, data, 0, metadata, mHalCamCtrl->mCallbackCookie);
-          if (previewMem)
-              previewMem->release(previewMem);
+      if(mActive && msgType) {
+          mHalCamCtrl->mDataCb(msgType, data, 0, metadata, mHalCamCtrl->mCallbackCookie);
       }
 
       if(MM_CAMERA_OK !=p_mm_ops->ops->qbuf(mCameraHandle, mChannelId, mNotifyBuffer[preview_buf_idx].bufs[0])) {
@@ -910,14 +892,15 @@ status_t QCameraStream_preview::processPreviewFrame (
 // ---------------------------------------------------------------------------
 
 QCameraStream_preview::QCameraStream_preview(uint32_t CameraHandle,
-                        uint32_t ChannelId,
-                        uint32_t Width,
-                        uint32_t Height,
-                        uint32_t Format,
-                        uint8_t NumBuffers,
-                        mm_camera_vtbl_t *mm_ops,
-                        mm_camera_img_mode imgmode,
-                        camera_mode_t mode)
+                                             uint32_t ChannelId,
+                                             uint32_t Width,
+                                             uint32_t Height,
+                                             uint32_t Format,
+                                             uint8_t NumBuffers,
+                                             mm_camera_vtbl_t *mm_ops,
+                                             mm_camera_img_mode imgmode,
+                                             camera_mode_t mode,
+                                             QCameraHardwareInterface* camCtrl)
   :QCameraStream(CameraHandle,
                  ChannelId,
                  Width,
@@ -926,13 +909,11 @@ QCameraStream_preview::QCameraStream_preview(uint32_t CameraHandle,
                  NumBuffers,
                  mm_ops,
                  imgmode,
-                 mode),
+                 mode,
+                 camCtrl),
     mLastQueuedFrame(NULL),
     mNumFDRcvd(0)
   {
-    mHalCamCtrl = NULL;
-    ALOGE("%s: E", __func__);
-    ALOGE("%s: X", __func__);
   }
 // ---------------------------------------------------------------------------
 // QCameraStream_preview
@@ -940,14 +921,7 @@ QCameraStream_preview::QCameraStream_preview(uint32_t CameraHandle,
 
 QCameraStream_preview::~QCameraStream_preview() {
     ALOGV("%s: E", __func__);
-	if(mActive) {
-		streamOff(0);
-	}
-	if(mInit) {
-		deinitStream();
-	}
-	mInit = false;
-	mActive = false;
+    release();
     ALOGV("%s: X", __func__);
 
 }
@@ -955,69 +929,11 @@ QCameraStream_preview::~QCameraStream_preview() {
 // ---------------------------------------------------------------------------
 // QCameraStream_preview
 // ---------------------------------------------------------------------------
-  void QCameraStream_preview::release() {
-
-    ALOGE("%s : BEGIN",__func__);
-    int ret=MM_CAMERA_OK,i;
-
-    if(!mInit)
-    {
-      ALOGE("%s : Stream not Initalized",__func__);
-      return;
-    }
-
-    if(mActive) {
-      this->streamOff(0);
-    }
-
-
-    if(mInit) {
-        deinitStream();
-    }
-    mInit = false;
-    ALOGE("%s: END", __func__);
-
-  }
-
-QCameraStream*
-QCameraStream_preview::createInstance(uint32_t CameraHandle,
-                        uint32_t ChannelId,
-                        uint32_t Width,
-                        uint32_t Height,
-                        uint32_t Format,
-                        uint8_t NumBuffers,
-                        mm_camera_vtbl_t *mm_ops,
-                        mm_camera_img_mode imgmode,
-                        camera_mode_t mode)
-{
-  QCameraStream* pme = new QCameraStream_preview(CameraHandle,
-                        ChannelId,
-                        Width,
-                        Height,
-                        Format,
-                        NumBuffers,
-                        mm_ops,
-                        imgmode,
-                        mode);
-  return pme;
-}
-// ---------------------------------------------------------------------------
-// QCameraStream_preview
-// ---------------------------------------------------------------------------
-
-void QCameraStream_preview::deleteInstance(QCameraStream *p)
-{
-  if (p){
-    ALOGV("%s: BEGIN", __func__);
-    p->release();
-    delete p;
-    p = NULL;
-    ALOGV("%s: END", __func__);
-  }
+void QCameraStream_preview::release() {
+    streamOff(0);
+    deinitStream();
 }
 
-
-/* Temp helper function */
 void *QCameraStream_preview::getLastQueuedFrame(void)
 {
     return mLastQueuedFrame;
@@ -1037,6 +953,52 @@ int32_t QCameraStream_preview::setCrop()
         }
     }
     return rc;
+}
+
+int QCameraStream_preview::getBuf(mm_camera_frame_len_offset *frame_offset_info,
+                              uint8_t num_bufs,
+                              uint8_t *initial_reg_flag,
+                              mm_camera_buf_def_t  *bufs)
+{
+    int ret = 0;
+    ALOGE("%s:BEGIN",__func__);
+
+    if (num_bufs > mNumBuffers) {
+        mNumBuffers = num_bufs;
+    }
+    if ((mNumBuffers == 0) || (mNumBuffers > MM_CAMERA_MAX_NUM_FRAMES)) {
+        ALOGE("%s: Invalid number of buffers (=%d) requested!",
+             __func__, mNumBuffers);
+        return BAD_VALUE;
+    }
+
+    memcpy(&mFrameOffsetInfo, frame_offset_info, sizeof(mFrameOffsetInfo));
+    if (mHalCamCtrl->isNoDisplayMode()) {
+        ret = initPreviewOnlyBuffers();
+    } else {
+        ret = initDisplayBuffers();
+    }
+    ALOGE("Debug : %s : initDisplayBuffers",__func__);
+    for(int i = 0; i < num_bufs; i++) {
+        bufs[i] = mDisplayBuf[i];
+        initial_reg_flag[i] = true;
+    }
+
+    ALOGV("%s: X - ret = %d ", __func__, ret);
+    return ret;
+}
+
+int QCameraStream_preview::putBuf(uint8_t num_bufs, mm_camera_buf_def_t *bufs)
+{
+    int ret = 0;
+    ALOGE(" %s : E ", __func__);
+    if (mHalCamCtrl->isNoDisplayMode()) {
+        ret = freeBufferNoDisplay();
+    } else {
+        ret = putBufferToSurface();
+    }
+    ALOGI(" %s : X ",__func__);
+    return ret;
 }
 
 // ---------------------------------------------------------------------------
