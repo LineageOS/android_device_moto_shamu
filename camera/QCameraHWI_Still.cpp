@@ -401,7 +401,7 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
       mPostviewWidth = mHalCamCtrl->mParameters.getInt(QCameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
       mPostviewHeight =  mHalCamCtrl->mParameters.getInt(QCameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
     }
-    /*If application requested thumbnail size to be (0,0) 
+    /*If application requested thumbnail size to be (0,0)
        then configure second outout to a default size.
        Jpeg encoder will drop thumbnail as reflected in encodeParams.
     */
@@ -487,6 +487,7 @@ initRawSnapshotChannel(cam_ctrl_dimension_t *dim,
     mm_camera_ch_image_fmt_parm_t fmt;
     mm_camera_channel_attr_t ch_attr;
     cam_format_t raw_fmt;
+    cam_frame_resolution_t frame_offset;
 
     mm_camera_raw_streaming_type_t raw_stream_type =
         MM_CAMERA_RAW_STREAMING_CAPTURE_SINGLE;
@@ -520,19 +521,32 @@ initRawSnapshotChannel(cam_ctrl_dimension_t *dim,
         ret = FAILED_TRANSACTION;
         goto end;
     }
+    memset(&frame_offset,0,sizeof(cam_frame_resolution_t));
 
+    frame_offset.format = raw_fmt;
+    frame_offset.rotation = 0;
+    frame_offset.width = dim->raw_picture_width;
+    frame_offset.height = dim->raw_picture_height;
+    frame_offset.image_mode = MSM_V4L2_EXT_CAPTURE_MODE_RAW;
+    frame_offset.padding_format = CAMERA_PAD_TO_WORD;
+    ret = cam_config_get_parm(mCameraId,
+                                     MM_CAMERA_PARM_FRAME_RESOLUTION,
+                                     &frame_offset);
+    if (ret < 0){
+        ALOGE("%s: MM_CAMERA_PARM_FRAME_RESOLUTION error, rc = %d",
+                   __func__, ret);
+        ret = FAILED_TRANSACTION;
+        goto end;
+    }
     memset(&fmt, 0, sizeof(mm_camera_ch_image_fmt_parm_t));
     fmt.ch_type = MM_CAMERA_CH_RAW;
     fmt.def.fmt = raw_fmt;
-    fmt.def.dim.width = dim->raw_picture_width;
-    fmt.def.dim.height = dim->raw_picture_height;
-
-
-    ALOGV("%s: Raw snapshot channel fmt: %d", __func__,
-         fmt.def.fmt);
-    ALOGV("%s: Raw snapshot resolution: %dX%d", __func__,
-         dim->raw_picture_width, dim->raw_picture_height);
-
+    fmt.def.dim.width = frame_offset.width;
+    fmt.def.dim.height = frame_offset.height;
+    ALOGV("%s: fmt.ch_type = %d, fmt.def.fmt = %d, "
+          "fmt.def.dim.width = %d, fmt.def.dim.height = %d",
+             __func__, fmt.ch_type, fmt.def.fmt,
+          fmt.def.dim.width, fmt.def.dim.height);
     ALOGD("%s: Set Raw Snapshot channel image format", __func__);
     ret = cam_config_set_parm(mCameraId, MM_CAMERA_PARM_CH_IMAGE_FMT, &fmt);
     if (NO_ERROR != ret) {
@@ -841,7 +855,7 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
                     mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mSnapshotMemory);
     	        goto end;
     	    }
-        } 
+        }
         /* register the streaming buffers for the channel*/
         reg_buf.ch_type = MM_CAMERA_CH_SNAPSHOT;
         reg_buf.snapshot.main.num = mSnapshotStreamBuf.num;
@@ -850,7 +864,7 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
             reg_buf.snapshot.thumbnail.num = mPostviewStreamBuf.num;
         else
             reg_buf.snapshot.thumbnail.num = 0;
-    
+
         ret = cam_config_prepare_buf(mCameraId, &reg_buf);
         if(ret != NO_ERROR) {
             ALOGV("%s:reg snapshot buf err=%d\n", __func__, ret);

@@ -4084,8 +4084,24 @@ status_t QCameraHardwareInterface::setDimension()
                 mStreamSnapMain->mWidth = dim.picture_width;
                 mStreamSnapMain->mHeight = dim.picture_height;
         } else {
-                mStreamSnapMain->mWidth = dim.raw_picture_width;
-                mStreamSnapMain->mHeight = dim.raw_picture_height;
+            cam_frame_resolution_t raw_res;
+
+            /* the raw_picture_width in dimension is for RDI dump.
+             * here, raw snapshot size is from camif. */
+            memset(&raw_res, 0,  sizeof(raw_res));
+            raw_res.image_mode = MSM_V4L2_EXT_CAPTURE_MODE_RAW;
+            raw_res.padding_format = CAMERA_PAD_TO_WORD;
+            ret = mCameraHandle->ops->get_parm(
+               mCameraHandle->camera_handle,
+               MM_CAMERA_PARM_FRAME_RESOLUTION,&raw_res);
+            if (MM_CAMERA_OK != ret) {
+              ALOGE("%s error - config raw snapshot parms, rc = %d",
+                    __func__, ret);
+              return BAD_VALUE;
+            }
+            mStreamSnapMain->mWidth = raw_res.width;
+            mStreamSnapMain->mHeight = raw_res.height;
+            mStreamSnapMain->mFormat = raw_res.format;
         }
     }
     if(mStreamSnapThumb) {

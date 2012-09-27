@@ -634,6 +634,15 @@ int32_t mm_camera_get_parm(mm_camera_obj_t *my_obj,
     int32_t rc = 0;
 
     switch(parm_type) {
+    case MM_CAMERA_PARM_FRAME_RESOLUTION:
+        rc = mm_camera_send_native_ctrl_cmd(my_obj,
+                                            CAMERA_GET_PARM_FRAME_RESOLUTION,
+                                            sizeof(cam_frame_resolution_t),
+                                            p_value);
+        if (rc < 0)
+            CDBG_ERROR("%s: ERROR in CAMERA_GET_PARM_FRAME_RESOLUTION, rc = %d",
+                 __func__, rc);
+        break;
     case MM_CAMERA_PARM_MAX_PICTURE_SIZE:
         {
             mm_camera_dimension_t *dim =
