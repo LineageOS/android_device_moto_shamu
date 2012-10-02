@@ -242,10 +242,6 @@ status_t QCameraStream::setFormat()
         case MM_CAMERA_VIDEO:
             break;
         case MM_CAMERA_SNAPSHOT_MAIN:
-            if (mHalCamCtrl->isRawSnapshot()) {
-                mFormat = CAMERA_BAYER_SBGGR10;
-                ALOGV("%s: Raw snapshot: Setting res=%d x %d, fmt=%d", __func__, mWidth, mHeight, mFormat);
-            }
             stream_config.fmt.rotation = mHalCamCtrl->getJpegRotation();
             break;
         case MM_CAMERA_SNAPSHOT_THUMBNAIL:
