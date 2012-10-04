@@ -447,6 +447,7 @@ typedef enum {
     MM_CAMERA_PARM_FRAME_RESOLUTION,
     MM_CAMERA_PARM_RAW_SNAPSHOT_FMT,
     MM_CAMERA_PARM_FACIAL_FEATURE_INFO,
+    MM_CAMERA_PARM_MOBICAT,
     MM_CAMERA_PARM_MAX
 } mm_camera_parm_type_t;
 
@@ -595,6 +596,8 @@ typedef enum {
   CAMERA_GET_PARM_HDR,
   CAMERA_SEND_PP_PIPELINE_CMD, /* send offline pp cmd */
   CAMERA_SET_BUNDLE, /* set stream bundle */
+  CAMERA_ENABLE_MOBICAT,
+  CAMERA_GET_PARM_MOBICAT,
   CAMERA_CTRL_PARM_MAX
 } cam_ctrl_type;
 
@@ -1091,6 +1094,33 @@ typedef struct {
     uint32_t repro_handle;
   } payload;
 } mm_camera_repro_cmd_t;
+
+typedef struct {
+  /*input parameter*/
+  int enable;
+  /*output parameter*/
+  uint32_t mobicat_size;
+}mm_cam_mobicat_info_t;
+
+#define MAX_MOBICAT_SIZE 8092
+
+/* This macro defines whether to gather the mobicat info from
+   mm-camera-interface or HAL. Since its a huge data, we dont
+   want to get the data per frame basis unless OEM wants it.
+   Adding the support for both by controlling this macro*/
+#define HAL_GET_MBC_INFO
+
+/*
+  WARNING: Since this data structure is huge,
+  never use it as local variable, otherwise, it so easy to cause
+  stack overflow
+  Always use malloc to allocate heap memory for it
+*/
+typedef struct {
+  int max_len;   //telling the client max sizen of tags, here 10k.
+  int data_len;  //client return real size including null "\0".
+  char tags[MAX_MOBICAT_SIZE];
+} cam_exif_tags_t;
 
 /******************************************************************************
  * Function: exif_set_tag

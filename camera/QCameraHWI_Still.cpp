@@ -59,7 +59,8 @@ typedef enum {
 static const int PICTURE_FORMAT_JPEG = 1;
 static const int PICTURE_FORMAT_RAW = 2;
 static const int POSTVIEW_SMALL_HEIGHT = 144;
-
+static const String8 mobstr("Parm1=10\nParm2=20\narray=1,2,\
+  3,4,5,6,7,8,9,10,\nParm4=40\n");
 // ---------------------------------------------------------------------------
 /* static functions*/
 // ---------------------------------------------------------------------------
@@ -1525,8 +1526,21 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
     uint32_t thumbnail_fd;
     uint8_t hw_encode = true;
     int mNuberOfVFEOutputs = 0;
-
     omx_jpeg_encode_params encode_params;
+#ifdef HAL_GET_MBC_INFO
+    if (mHalCamCtrl->mMobiCatEnabled) {
+        if ((recvd_frame->p_mobicat_info != NULL) &&
+            cam_config_get_parm(mCameraId, MM_CAMERA_PARM_MOBICAT,
+              recvd_frame->p_mobicat_info)
+               == MM_CAMERA_OK) {
+            ALOGE("%s:%d] Mobicat enabled %p %d", __func__, __LINE__,
+              recvd_frame->p_mobicat_info->tags,
+              recvd_frame->p_mobicat_info->data_len);
+        } else {
+            ALOGE("MM_CAMERA_PARM_MOBICAT get failed");
+        }
+    }
+#endif
 
     /* If it's the only frame, we directly pass to encoder.
        If not, we'll queue it and check during next jpeg .
@@ -1566,6 +1580,15 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
 
       encode_params.exif_data = mHalCamCtrl->getExifData();
       encode_params.exif_numEntries = mHalCamCtrl->getExifTableNumEntries();
+
+      if (mHalCamCtrl->mMobiCatEnabled && recvd_frame->p_mobicat_info) {
+          encode_params.hasmobicat = 1;
+          encode_params.mobicat_data = (uint8_t *)recvd_frame->p_mobicat_info->tags;
+          encode_params.mobicat_data_length = recvd_frame->p_mobicat_info->data_len;
+      } else {
+          encode_params.hasmobicat = 0;
+      }
+
       if (!omxJpegEncodeNext(&encode_params)){
           ALOGE("%s: Failure! JPEG encoder returned error.", __func__);
           ret = FAILED_TRANSACTION;
@@ -1713,6 +1736,14 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         encode_params.scaling_params = &crop;
         encode_params.exif_data = mHalCamCtrl->getExifData();
         encode_params.exif_numEntries = mHalCamCtrl->getExifTableNumEntries();
+
+        if (mHalCamCtrl->mMobiCatEnabled && recvd_frame->p_mobicat_info) {
+            encode_params.hasmobicat = 1;
+            encode_params.mobicat_data = (uint8_t *)recvd_frame->p_mobicat_info->tags;
+            encode_params.mobicat_data_length = recvd_frame->p_mobicat_info->data_len;
+        } else {
+            encode_params.hasmobicat = 0;
+        }
 
         if (isLiveSnapshot() && !isFullSizeLiveshot())
             encode_params.a_cbcroffset = mainframe->cbcr_off;

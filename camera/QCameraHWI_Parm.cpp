@@ -1473,7 +1473,8 @@ status_t QCameraHardwareInterface::setParameters(const QCameraParameters& params
     if ((rc = setZSLBurstLookBack(params))) final_rc = rc;
     if ((rc = setZSLBurstInterval(params))) final_rc = rc;
     if ((rc = setNoDisplayMode(params))) final_rc = rc;
-    
+    if ((rc = setMobiCat(params)))       final_rc = rc;
+
     //Update Exiftag values.
     setExifTags();
 
@@ -3430,6 +3431,27 @@ status_t QCameraHardwareInterface::setFullLiveshot()
   return NO_ERROR;
 }
 
+status_t QCameraHardwareInterface::setMobiCat(const QCameraParameters& params)
+{
+    mm_cam_mobicat_info_t mbc_info;
+    char mbc_prop[PROPERTY_VALUE_MAX];
+    int propval;
+    memset(mbc_prop, 0, sizeof(mbc_prop));
+    property_get("persist.camera.mobicat", mbc_prop, "0");
+    propval = atoi(mbc_prop);
+
+    mbc_info.enable = (mParameters.getInt("mobicat") == 1) ? 1 : 0;
+    ALOGE("%s:%d] prop %d %d", __func__, __LINE__, mbc_info.enable, propval);
+    mbc_info.enable |= propval;
+
+    if (mbc_info.enable != mMobiCatEnabled) {
+        ALOGE("%s:%d] enable %d", __func__, __LINE__, mbc_info.enable);
+        native_set_parms(MM_CAMERA_PARM_MOBICAT, sizeof(mm_cam_mobicat_info_t),
+          (void *)&mbc_info);
+        mMobiCatEnabled = mbc_info.enable;
+    }
+    return NO_ERROR;
+}
 
 isp3a_af_mode_t QCameraHardwareInterface::getAutoFocusMode(
   const QCameraParameters& params)

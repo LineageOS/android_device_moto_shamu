@@ -154,17 +154,44 @@ void mm_camera_stream_frame_refill_q(mm_camera_frame_queue_t *q, mm_camera_frame
 
 void mm_camera_stream_deinit_frame(mm_camera_stream_frame_t *frame)
 {
+    int i;
     mm_stream_frame_flash_q(&frame->readyq);
     mm_camera_stream_deinit_q(&frame->readyq);
+    for(i=0; i < MM_CAMERA_MAX_NUM_FRAMES; i++) {
+        if(frame->frame[i].mobicat_info){
+            free (frame->frame[i].mobicat_info);
+            frame->frame[i].mobicat_info = NULL;
+        }
+    }
     pthread_mutex_destroy(&frame->mutex);
     memset(frame, 0, sizeof(mm_camera_stream_frame_t));
 }
 
-void mm_camera_stream_init_frame(mm_camera_stream_frame_t *frame)
+int mm_camera_stream_init_frame(mm_camera_stream_frame_t *frame)
 {
+    int rc = 0;
+    int i;
     memset(frame, 0, sizeof(mm_camera_stream_frame_t));
-    pthread_mutex_init(&frame->mutex, NULL);
-    mm_camera_stream_init_q(&frame->readyq);
+
+    for(i= 0; i < MM_CAMERA_MAX_NUM_FRAMES; i++) {
+        frame->frame[i].mobicat_info = malloc (sizeof(cam_exif_tags_t ));
+        if(frame->frame[i].mobicat_info == NULL) {
+            rc = -1;
+            break;
+        }
+    }
+    if(rc == 0) {
+        pthread_mutex_init(&frame->mutex, NULL);
+        mm_camera_stream_init_q(&frame->readyq);
+    } else {
+        for(i=0; i < MM_CAMERA_MAX_NUM_FRAMES; i++) {
+            if(frame->frame[i].mobicat_info){
+                free (frame->frame[i].mobicat_info);
+                frame->frame[i].mobicat_info = NULL;
+            }
+        }
+    }
+    return rc;
 }
 
 void mm_camera_stream_release(mm_camera_stream_t *stream)

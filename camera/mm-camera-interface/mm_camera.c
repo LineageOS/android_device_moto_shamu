@@ -39,7 +39,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mm_camera_interface2.h"
 #include "mm_camera.h"
 
-static int32_t mm_camera_send_native_ctrl_cmd(mm_camera_obj_t * my_obj,
+int32_t mm_camera_send_native_ctrl_cmd(mm_camera_obj_t * my_obj,
     cam_ctrl_type type, uint32_t length, void *value);
 static int32_t mm_camera_send_native_ctrl_timeout_cmd(mm_camera_obj_t * my_obj,
     cam_ctrl_type type, uint32_t length, void *value, int timeout);
@@ -391,6 +391,12 @@ int32_t mm_camera_set_general_parm(mm_camera_obj_t * my_obj, mm_camera_parm_t *p
     case MM_CAMERA_PARM_HDR:
       return mm_camera_send_native_ctrl_cmd(my_obj,
                         CAMERA_SET_PARM_HDR, sizeof(exp_bracketing_t), (void *)parm->p_value);
+    case MM_CAMERA_PARM_MOBICAT: {
+      mm_cam_mobicat_info_t *p_info = (mm_cam_mobicat_info_t *)parm->p_value;
+      rc = mm_camera_send_native_ctrl_cmd(my_obj,
+        CAMERA_ENABLE_MOBICAT, sizeof(mm_cam_mobicat_info_t), (void *)parm->p_value);
+      my_obj->mobicat_enable = p_info->enable;
+    }
 
     default:
         CDBG("%s: default: parm %d not supported\n", __func__, parm->parm_type);
@@ -398,7 +404,8 @@ int32_t mm_camera_set_general_parm(mm_camera_obj_t * my_obj, mm_camera_parm_t *p
     }
     return rc;
 }
-static int32_t mm_camera_send_native_ctrl_cmd(mm_camera_obj_t * my_obj,
+
+int32_t mm_camera_send_native_ctrl_cmd(mm_camera_obj_t * my_obj,
                     cam_ctrl_type type, uint32_t length, void *value)
 {
     int rc = -1;
@@ -644,6 +651,10 @@ int32_t mm_camera_get_parm(mm_camera_obj_t * my_obj,
     case MM_CAMERA_PARM_FACIAL_FEATURE_INFO:
         return mm_camera_send_native_ctrl_cmd(my_obj, CAMERA_GET_FACIAL_FEATURE_INFO,
                      sizeof(int), (void *)parm->p_value);
+    case MM_CAMERA_PARM_MOBICAT:
+        return mm_camera_send_native_ctrl_cmd(my_obj, CAMERA_GET_PARM_MOBICAT,
+                     sizeof(cam_exif_tags_t), (void *)parm->p_value);
+        break;
     default:
         /* needs to add more implementation */
         rc = -1;

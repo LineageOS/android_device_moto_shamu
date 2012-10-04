@@ -103,7 +103,9 @@ static OMX_INDEXTYPE thumbnailQualityType;
 static void *out_buffer;
 static int * out_buffer_size;
 static OMX_INDEXTYPE buffer_offset;
+static OMX_INDEXTYPE mobicat_data;
 static omx_jpeg_buffer_offset bufferoffset;
+static omx_jpeg_mobicat mobicat_d;
 
 static jpeg_color_format_t get_jpeg_format_from_cam_format(
   cam_format_t cam_format )
@@ -257,7 +259,7 @@ int8_t mm_jpeg_encoder_get_buffer_offset(uint32_t width, uint32_t height,
 
 int8_t omxJpegOpen()
 {
-    ALOGI("%s", __func__);
+    OMX_DBG_INFO("%s:%d", __func__,__LINE__);
     pthread_mutex_lock(&jpege_mutex);
     OMX_ERRORTYPE ret = OMX_GetHandle(&pHandle, "OMX.qcom.image.jpeg.encoder",
       NULL, &callbacks);
@@ -330,6 +332,15 @@ int8_t omxJpegEncodeNext(omx_jpeg_encode_params *encode_params)
     OMX_GetParameter(pHandle, OMX_IndexParamPortDefinition, inputPort1);
     ALOGI("%s: thumbnail widht %d height %d", __func__,
       thumbnail.width, thumbnail.height);
+
+    if(encode_params->hasmobicat) {
+        OMX_DBG_INFO("%s %d ", __func__,
+                __LINE__);
+        mobicat_d.mobicatData = encode_params->mobicat_data;
+        mobicat_d.mobicatDataLength =  encode_params->mobicat_data_length;
+        OMX_GetExtensionIndex(pHandle, "omx.qcom.jpeg.exttype.mobicat", &mobicat_data);
+        OMX_SetParameter(pHandle, mobicat_data, &mobicat_d);
+    }
 
     userpreferences.color_format =
         format_cam2jpeg(encode_params->dimension->main_img_format);
@@ -568,6 +579,16 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
       userpreferences.color_format,userpreferences.thumbnail_color_format,
       userpreferences.preference);
     OMX_SetParameter(pHandle,user_preferences,&userpreferences);
+    OMX_DBG_INFO("%s Mobicat:::::%d ", __func__,
+                __LINE__);
+    if(encode_params->hasmobicat) {
+        OMX_DBG_INFO("%s %d ", __func__,
+                __LINE__);
+        mobicat_d.mobicatData = encode_params->mobicat_data;
+        mobicat_d.mobicatDataLength =  encode_params->mobicat_data_length;
+        OMX_GetExtensionIndex(pHandle, "omx.qcom.jpeg.exttype.mobicat", &mobicat_data);
+        OMX_SetParameter(pHandle, mobicat_data, &mobicat_d);
+    }
 
     ALOGI("%s Thumbnail present? : %d ", __func__,
                  encode_params->hasThumbnail);

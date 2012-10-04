@@ -193,6 +193,7 @@ QCameraHardwareInterface(int cameraId, int mode)
 {
     ALOGI("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;
+    mMobiCatEnabled = false;
     char value[PROPERTY_VALUE_MAX];
 
     pthread_mutex_init(&mAsyncCmdMutex, NULL);
@@ -215,7 +216,6 @@ QCameraHardwareInterface(int cameraId, int mode)
 
     property_get("persist.camera.hal.dis", value, "0");
     mDisEnabled = atoi(value);
-
     /* Open camera stack! */
     result=cam_ops_open(mCameraId, MM_CAMERA_OP_MODE_NOTUSED);
     if (result == MM_CAMERA_OK) {
