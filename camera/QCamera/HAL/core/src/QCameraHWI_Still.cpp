@@ -130,43 +130,21 @@ status_t QCameraStream_SnapshotMain::initStream(uint8_t no_cb_needed, uint8_t st
 status_t QCameraStream_SnapshotMain::initMainBuffers()
 {
     ALOGE("%s : E", __func__);
-    status_t ret = NO_ERROR;
-    uint32_t frame_len, y_off, cbcr_off;
-    uint8_t num_planes=mFrameOffsetInfo.num_planes;
-    int num_of_buf=mNumBuffers;
-    uint32_t planes[VIDEO_MAX_PLANES];
-    int rotation = 0;
 
-    memset(mSnapshotStreamBuf, 0, MM_CAMERA_MAX_NUM_FRAMES *sizeof(mm_camera_buf_def_t));
-
-    if ((num_of_buf == 0) || (num_of_buf > MM_CAMERA_MAX_NUM_FRAMES)) {
+    if ((mNumBuffers == 0) || (mNumBuffers > MM_CAMERA_MAX_NUM_FRAMES)) {
         ALOGE("%s: Invalid number of buffers (=%d) requested!",
-             __func__, num_of_buf);
+             __func__, mNumBuffers);
         return BAD_VALUE;
     }
 
-    ALOGD("%s: Mode: %d Num_of_buf: %d ImageSizes: main: %dx%d",
-         __func__, myMode, num_of_buf,
-         mWidth, mHeight);
-
-    /* Number of buffers to be set*/
-    /* Set the JPEG Rotation here since get_buffer_offset needs
-     * the value of rotation.*/
-    num_planes = 2;
-    planes[0] = mFrameOffsetInfo.mp[0].len;
-    planes[1] = mFrameOffsetInfo.mp[1].len;
-    frame_len = mFrameOffsetInfo.frame_len;
-    y_off = mFrameOffsetInfo.mp[0].offset;
-    cbcr_off = mFrameOffsetInfo.mp[1].offset;
+    memset(mSnapshotStreamBuf, 0, sizeof(mSnapshotStreamBuf));
     if (mHalCamCtrl->initHeapMem(&mHalCamCtrl->mSnapshotMemory,
-        num_of_buf,frame_len, y_off, cbcr_off,
-        MSM_PMEM_MAINIMG, mSnapshotStreamBuf,
-        num_planes, planes) < 0) {
-        ret = NO_MEMORY;
-    	return ret;
-    };
-    for(int i=0;i<num_of_buf;i++) {
-       this->mSnapshotStreamBuf[i].stream_id=mStreamId;
+                                 mNumBuffers,
+                                 mFrameOffsetInfo.frame_len,
+                                 MSM_PMEM_MAINIMG,
+                                 &mFrameOffsetInfo,
+                                 mSnapshotStreamBuf) < 0) {
+        return NO_MEMORY;
     }
 
     /* If we have reached here successfully, we have allocated buffer.
@@ -259,34 +237,22 @@ void QCameraStream_SnapshotThumbnail::release()
 
 status_t QCameraStream_SnapshotThumbnail::initThumbnailBuffers()
 {
-    status_t ret = NO_ERROR;
-    uint32_t frame_len, y_off, cbcr_off;
-    uint8_t num_planes=mFrameOffsetInfo.num_planes;
-    int num_of_buf=mNumBuffers;
-    uint32_t planes[VIDEO_MAX_PLANES];
-    int rotation = 0;
-
-
-    num_planes = mFrameOffsetInfo.num_planes;
-    planes[0] = mFrameOffsetInfo.mp[0].len;
-    planes[1] = mFrameOffsetInfo.mp[1].len;
-    frame_len = mFrameOffsetInfo.frame_len;
-    y_off = mFrameOffsetInfo.mp[0].offset;
-    cbcr_off = mFrameOffsetInfo.mp[1].offset;
-
-    if (mHalCamCtrl->initHeapMem(
-                         &mHalCamCtrl->mThumbnailMemory,
-                         num_of_buf,
-                         frame_len,
-                         y_off,
-                         cbcr_off,
-                         MSM_PMEM_THUMBNAIL,
-                         mPostviewStreamBuf,
-    		         num_planes,
-                         planes) < 0) {
-    	return NO_MEMORY;
+    if ((mNumBuffers == 0) || (mNumBuffers > MM_CAMERA_MAX_NUM_FRAMES)) {
+        ALOGE("%s: Invalid number of buffers (=%d) requested!",
+             __func__, mNumBuffers);
+        return BAD_VALUE;
     }
 
+    memset(mPostviewStreamBuf, 0, sizeof(mPostviewStreamBuf));
+    if (mHalCamCtrl->initHeapMem(
+                         &mHalCamCtrl->mThumbnailMemory,
+                         mNumBuffers,
+                         mFrameOffsetInfo.frame_len,
+                         MSM_PMEM_THUMBNAIL,
+                         &mFrameOffsetInfo,
+                         mPostviewStreamBuf) < 0) {
+    	return NO_MEMORY;
+    }
 
     return NO_ERROR;
 }

@@ -41,6 +41,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int mm_app_start_preview(int cam_id);
 int mm_app_start_preview_zsl(int cam_id);
 int mm_app_stop_preview_zsl(int cam_id);
+int mm_app_stop_preview_stats(int cam_id);
+int mm_app_start_preview_stats(int cam_id);
 
 extern int mm_stream_alloc_bufs(mm_camera_app_obj_t *pme,
                                 mm_camear_app_buf_t* app_bufs,
@@ -49,6 +51,8 @@ extern int mm_stream_alloc_bufs(mm_camera_app_obj_t *pme,
 extern int mm_stream_release_bufs(mm_camera_app_obj_t *pme,
                                   mm_camear_app_buf_t* app_bufs);
 extern int mm_app_unprepare_video(int cam_id);
+extern int mm_stream_invalid_cache(mm_camera_app_obj_t *pme,
+                                   mm_camera_buf_def_t *frame);
 
 /*===========================================================================
  * FUNCTION    - mm_camera_do_mmap_ion -
@@ -636,6 +640,7 @@ void mm_app_preview_notify_cb(mm_camera_super_buf_t *bufs,
         CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
         return;
     }
+    mm_stream_invalid_cache(pme,frame);
     if (my_cam_app.run_sanity) {
         preview_cb_signal(pme);
     }
@@ -663,6 +668,7 @@ void mm_app_aec_stats_notify_cb(mm_camera_super_buf_t *bufs,
         CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
         return;
     }
+    mm_stream_invalid_cache(pme,frame);
     CDBG("%s: END\n", __func__);
 }
 
@@ -686,6 +692,7 @@ void mm_app_awb_stats_notify_cb(mm_camera_super_buf_t *bufs,
         CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
         return;
     }
+    mm_stream_invalid_cache(pme,frame);
     CDBG("%s: END\n", __func__);
 }
 
@@ -709,6 +716,7 @@ void mm_app_af_stats_notify_cb(mm_camera_super_buf_t *bufs,
         CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
         return;
     }
+    mm_stream_invalid_cache(pme,frame);
     CDBG("%s: END\n", __func__);
 }
 
@@ -732,6 +740,7 @@ void mm_app_ihist_stats_notify_cb(mm_camera_super_buf_t *bufs,
         CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
         return;
     }
+    mm_stream_invalid_cache(pme,frame);
     CDBG("%s: END\n", __func__);
 }
 
@@ -773,11 +782,13 @@ static void mm_app_zsl_notify_cb(mm_camera_super_buf_t *bufs,
         if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,main_frame)) {
             CDBG_ERROR("%s: Failed in thumbnail Qbuf\n", __func__); 
         }
+        mm_stream_invalid_cache(pme,main_frame);
     }
 
     if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,preview_frame)) {
         CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__); 
     }
+    mm_stream_invalid_cache(pme,preview_frame);
 	if (my_cam_app.run_sanity) {
         previewzsl_cb_signal(pme);
     }
@@ -943,21 +954,21 @@ int mm_app_unprepare_preview(int cam_id)
 int mm_app_streamon_stats(int cam_id)
 {
     int rc = MM_CAMERA_OK;
-    int stream_aec[2], stream_af[2], stream_awb[2], stream_ihist[2];
+    uint32_t stream_aec[2], stream_af[2], stream_awb[2], stream_ihist[2];
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
     mm_camera_frame_len_offset frame_offset_info;
 
     stream_aec[0] = pme->stream[MM_CAMERA_SAEC].id;
     stream_aec[1] = 0;
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_aec))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,stream_aec))) {
         CDBG_ERROR("%s : Start Stats Stream Error",__func__);
         goto end;
     }
     stream_awb[0] = pme->stream[MM_CAMERA_SAWB].id;
     stream_awb[1] = 0;
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_awb))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,stream_awb))) {
         CDBG_ERROR("%s : Start Stats Stream Error",__func__);
         goto end;
     }
@@ -965,7 +976,7 @@ int mm_app_streamon_stats(int cam_id)
     stream_af[0] = pme->stream[MM_CAMERA_SAFC].id;
     stream_af[1] = 0;
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_af))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,stream_af))) {
         CDBG_ERROR("%s : Start Stats Stream Error",__func__);
         goto end;
     }
@@ -973,7 +984,7 @@ int mm_app_streamon_stats(int cam_id)
     stream_ihist[0] = pme->stream[MM_CAMERA_IHST].id;
     stream_ihist[1] = 0;
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_ihist))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->start_streams(pme->cam->camera_handle,pme->ch_id,1,stream_ihist))) {
         CDBG_ERROR("%s : Start Stats Stream Error",__func__);
         goto end;
     }
@@ -1258,7 +1269,7 @@ static int mm_app_streamoff_stats(int cam_id)
     stream_aec[0] = pme->stream[MM_CAMERA_SAEC].id;
     stream_aec[1] = 0;
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_aec))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,stream_aec))) {
         CDBG_ERROR("%s : Stats Stream off Error",__func__);
         goto end;
     }
@@ -1271,7 +1282,7 @@ static int mm_app_streamoff_stats(int cam_id)
     stream_awb[0] = pme->stream[MM_CAMERA_SAWB].id;
     stream_awb[1] = 0;
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_awb))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,stream_awb))) {
         CDBG_ERROR("%s : Stats Stream off Error",__func__);
         goto end;
     }
@@ -1285,7 +1296,7 @@ static int mm_app_streamoff_stats(int cam_id)
     stream_af[0] = pme->stream[MM_CAMERA_SAFC].id;
     stream_af[1] = 0;
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_af))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1, stream_af))) {
         CDBG_ERROR("%s : Stats Stream off Error",__func__);
         goto end;
     }
@@ -1300,7 +1311,7 @@ static int mm_app_streamoff_stats(int cam_id)
     stream_ihist[0] = pme->stream[MM_CAMERA_IHST].id;
     stream_ihist[1] = 0;
 
-    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,&stream_ihist))) {
+    if (MM_CAMERA_OK != (rc = pme->cam->ops->stop_streams(pme->cam->camera_handle,pme->ch_id,1,stream_ihist))) {
         CDBG_ERROR("%s : Stats Stream off Error",__func__);
         goto end;
     }

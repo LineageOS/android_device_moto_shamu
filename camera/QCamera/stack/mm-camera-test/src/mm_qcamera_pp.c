@@ -71,6 +71,7 @@ static void mm_app_preview_pp_notify_cb(mm_camera_super_buf_t *bufs,
         if (0 == buf_info->ref_cnt) {
             mm_qcamera_queue_deq(&pme->repro_q);
             pme->cam->ops->qbuf(pme->cam->camera_handle, pme->ch_id, buf_info->frame);
+            mm_stream_invalid_cache(pme, buf_info->frame);
             buf_info->frame = NULL;
         }
     }
@@ -79,6 +80,7 @@ static void mm_app_preview_pp_notify_cb(mm_camera_super_buf_t *bufs,
         CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
         return;
     }
+    mm_stream_invalid_cache(pme,frame);
     CDBG("%s: END\n", __func__);
 }
 
@@ -105,32 +107,34 @@ static void mm_app_video_pp_notify_cb(mm_camera_super_buf_t *bufs,
         if (0 == buf_info->ref_cnt) {
             mm_qcamera_queue_deq(&pme->repro_q);
             pme->cam->ops->qbuf(pme->cam->camera_handle, pme->ch_id, buf_info->frame);
+            mm_stream_invalid_cache(pme, buf_info->frame);
             buf_info->frame = NULL;
         }
     }
 
-	if(MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle, pme->ch_id, frame))
-	{
-		CDBG_ERROR("%s: Failed in Snapshot Qbuf\n", __func__);
-		return;
-	}
-	CDBG("%s: END\n", __func__);
+    if(MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle, pme->ch_id, frame))
+    {
+        CDBG_ERROR("%s: Failed in Snapshot Qbuf\n", __func__);
+        return;
+    }
+    mm_stream_invalid_cache(pme,frame);
+    CDBG("%s: END\n", __func__);
 }
 
 static void mm_app_isp_pix_notify_cb(mm_camera_super_buf_t *bufs,
                                      void *user_data)
 {
-	int rc = MM_CAMERA_OK;
-	mm_camera_buf_def_t *frame = NULL;
-	mm_camera_app_obj_t *pme = NULL;
+    int rc = MM_CAMERA_OK;
+    mm_camera_buf_def_t *frame = NULL;
+    mm_camera_app_obj_t *pme = NULL;
     mm_camera_repro_data_t repro_data;
 
-	CDBG("%s: BEGIN\n", __func__);
-	frame = bufs->bufs[0] ;
-	pme = (mm_camera_app_obj_t *)user_data;
+    CDBG("%s: BEGIN\n", __func__);
+    frame = bufs->bufs[0] ;
+    pme = (mm_camera_app_obj_t *)user_data;
 
-	CDBG("%s: BEGIN - length=%d, frame idx = %d\n",
-         __func__, frame->frame_len, frame->frame_idx);
+    CDBG("%s: BEGIN - length=%d, frame idx = %d\n",
+     __func__, frame->frame_len, frame->frame_idx);
 
     pme->repro_buf_info[frame->buf_idx].frame = frame;
     pme->repro_buf_info[frame->buf_idx].ref_cnt = pme->repro_dest_num;

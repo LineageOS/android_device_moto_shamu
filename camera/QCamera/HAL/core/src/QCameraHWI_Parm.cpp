@@ -1007,7 +1007,7 @@ void QCameraHardwareInterface::initDefaultParameters()
     if(mFps >= MINIMUM_FPS && mFps <= MAXIMUM_FPS) {
         mParameters.setPreviewFrameRate(mFps);
     }else{
-        mParameters.setPreviewFrameRate(DEFAULT_FPS);
+        mParameters.setPreviewFrameRate(DEFAULT_FIXED_FPS);
     }
 
     //Set Picture Format
@@ -2086,6 +2086,15 @@ status_t QCameraHardwareInterface::setSceneMode(const QCameraParameters& params)
         int32_t value = attr_lookup(scenemode, sizeof(scenemode) / sizeof(str_map), str);
         ALOGE("Setting Scenemode value = %d",value );
         if (value != NOT_FOUND) {
+            if((value != CAMERA_BESTSHOT_OFF ) && (mColorEffects != CAMERA_EFFECT_OFF )) {
+               int result;
+               mColorEffects = CAMERA_EFFECT_OFF;
+               native_set_parms(MM_CAMERA_PARM_EFFECT, sizeof(mColorEffects),
+                                (void *)&mColorEffects,(int *)&result);
+               if(result != MM_CAMERA_OK) {
+                  ALOGI("Camera Effect is not set as the EFFECT_NONE and result is not OK");
+               }
+            }
             mParameters.set(QCameraParameters::KEY_SCENE_MODE, str);
             bool ret = native_set_parms(MM_CAMERA_PARM_BESTSHOT_MODE, sizeof(value),
                                        (void *)&value);
@@ -2144,6 +2153,7 @@ status_t QCameraHardwareInterface::setEffect(const QCameraParameters& params)
     uint8_t supported;
     const char *str = params.get(CameraParameters::KEY_EFFECT);
     int result;
+    mColorEffects = CAMERA_EFFECT_OFF;
     if (str != NULL) {
         ALOGE("Setting effect %s",str);
         int32_t value = attr_lookup(effects, sizeof(effects) / sizeof(str_map), str);
@@ -2156,6 +2166,7 @@ status_t QCameraHardwareInterface::setEffect(const QCameraParameters& params)
            }else {
                mParameters.set(QCameraParameters::KEY_EFFECT, str);
                ALOGE("Setting effect to lower HAL : %d",value);
+               mColorEffects = value;
                bool ret = native_set_parms(MM_CAMERA_PARM_EFFECT, sizeof(value),
                                            (void *)&value,(int *)&result);
                 if(result != 0) {
@@ -2993,9 +3004,7 @@ status_t QCameraHardwareInterface::setFaceDetection(const char *str)
                                     sizeof(facedetection) / sizeof(str_map), str);
         if (value != NOT_FOUND) {
             fd_set_parm_t fd_set_parm;
-            mMetaDataWaitLock.lock();
             mFaceDetectOn = value;
-            mMetaDataWaitLock.unlock();
             fd_set_parm.fd_mode = value;
             fd_set_parm.num_fd = requested_faces;
             ALOGE("%s Face detection value = %d, num_fd = %d",__func__, value, requested_faces);

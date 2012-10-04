@@ -61,6 +61,8 @@ extern int mm_stream_alloc_bufs(mm_camera_app_obj_t *pme,
                                 uint8_t num_bufs);
 extern int mm_stream_release_bufs(mm_camera_app_obj_t *pme,
                                   mm_camear_app_buf_t* app_bufs);
+extern int mm_stream_invalid_cache(mm_camera_app_obj_t *pme,
+                                   mm_camera_buf_def_t *frame);
 
 static void mm_app_snapshot_done()
 {
@@ -230,7 +232,7 @@ static int encodeData(mm_camera_app_obj_t *pme,
                       mm_camera_super_buf_t* recvd_frame)
 {
     int rc = -1;
-    int i;
+    int i,index = -1;
     mm_jpeg_job job;
     mm_camera_buf_def_t *main_frame = NULL;
     mm_camera_buf_def_t *thumb_frame = NULL;
@@ -309,6 +311,8 @@ static int encodeData(mm_camera_app_obj_t *pme,
          main_buf_info->src_image[0].offset.mp[0].offset,
          main_buf_info->src_image[0].offset.mp[1].offset);
 
+    mm_stream_clear_invalid_cache(pme,main_frame);
+
     if (thumb_frame) {
         /* fill in thumbnail src img encode param */
         thumb_buf_info = &job.encode_job.encode_parm.buf_info.src_imgs.src_img[JPEG_SRC_IMAGE_TYPE_THUMB];
@@ -338,6 +342,8 @@ static int encodeData(mm_camera_app_obj_t *pme,
     job.encode_job.encode_parm.buf_info.sink_img.buf_len = pme->jpeg_buf.bufs[0].frame_len;
     job.encode_job.encode_parm.buf_info.sink_img.buf_vaddr = pme->jpeg_buf.bufs[0].buffer;
     job.encode_job.encode_parm.buf_info.sink_img.fd = pme->jpeg_buf.bufs[0].fd;
+
+    mm_stream_clear_invalid_cache(pme,thumb_frame);
 
     rc = pme->jpeg_ops.start_job(pme->jpeg_hdl, &job, &pme->current_job_id);
     if ( 0 != rc ) {
@@ -381,6 +387,7 @@ static void snapshot_yuv_cb(mm_camera_super_buf_t *bufs,
                                                     bufs->bufs[i])) {
                 CDBG_ERROR("%s: Failed in Qbuf\n", __func__);
             }
+            mm_stream_invalid_cache(pme,bufs->bufs[i]);
         }
     }
 #ifdef TEST_ABORT_JPEG_ENCODE
@@ -401,6 +408,7 @@ static void snapshot_yuv_cb(mm_camera_super_buf_t *bufs,
                                                         bufs->bufs[i])) {
                     CDBG_ERROR("%s: Failed in Qbuf\n", __func__);
                 }
+                mm_stream_invalid_cache(pme,bufs->bufs[i]);
             }
 
             /* signal snapshot is done */
@@ -786,6 +794,7 @@ int mm_app_stop_snapshot(int cam_id)
                                                         pme->current_job_frames->bufs[i])) {
                     CDBG_ERROR("%s: Failed in Qbuf\n", __func__);
                 }
+                mm_stream_invalid_cache(pme,pme->current_job_frames->bufs[i]);
             }
             free(pme->current_job_frames);
             pme->current_job_frames = NULL;
@@ -874,6 +883,7 @@ static void mm_app_live_notify_cb(mm_camera_super_buf_t *bufs,
     if (MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,main_frame)) {
         CDBG_ERROR("%s: Failed in thumbnail Qbuf\n", __func__);
     }
+    mm_stream_invalid_cache(pme,main_frame);
     /*if(MM_CAMERA_OK != pme->cam->ops->qbuf(pme->cam->camera_handle,pme->ch_id,thumb_frame))
     {
             CDBG_ERROR("%s: Failed in thumbnail Qbuf\n", __func__);
