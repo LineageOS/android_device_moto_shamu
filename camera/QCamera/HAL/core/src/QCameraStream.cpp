@@ -96,6 +96,7 @@ int32_t QCameraStream::streamOn()
             __func__,mStreamId);
        return rc;
    }
+
    if (mInit == true) {
        /* this is the restart case, for now we need config again */
        rc = setFormat();
@@ -122,13 +123,13 @@ int32_t QCameraStream::streamOff(bool isAsyncCmd)
               __func__,mStreamId);
         return rc;
     }
+    mActive = false;
 
     rc = p_mm_ops->ops->stop_streams(mCameraHandle,
                               mChannelId,
                               1,
                               &mStreamId);
 
-    mActive = false;
     ALOGD("%s: X, mActive = %d, mInit = %d, streamid = %d, image_mode = %d",
           __func__, mActive, mInit, mStreamId, mExtImgMode);
     return rc;
@@ -327,6 +328,37 @@ void QCameraStream::setHALCameraControl(QCameraHardwareInterface* ctrl) {
     /* provide a frame data user,
     for the  queue monitor thread to call the busy queue is not empty*/
     mHalCamCtrl = ctrl;
+}
+
+int32_t QCameraStream::setCrop()
+{
+    mm_camera_rect_t v4l2_crop;
+    int32_t rc = 0;
+    memset(&v4l2_crop,0,sizeof(v4l2_crop));
+
+    if(!mActive) {
+        ALOGE("%s: Stream:%d is not active", __func__, mStreamId);
+        return -1;
+    }
+
+    rc = p_mm_ops->ops->get_stream_parm(mCameraHandle,
+                                   mChannelId,
+                                   mStreamId,
+                                   MM_CAMERA_STREAM_CROP,
+                                   &v4l2_crop);
+    ALOGI("%s: Crop info received: %d, %d, %d, %d ",
+                                 __func__,
+                                 v4l2_crop.left,
+                                 v4l2_crop.top,
+                                 v4l2_crop.width,
+                                 v4l2_crop.height);
+    if (rc == 0) {
+        mCrop.offset_x = v4l2_crop.left;
+        mCrop.offset_y = v4l2_crop.top;
+        mCrop.width = v4l2_crop.width;
+        mCrop.height = v4l2_crop.height;
+    }
+    return rc;
 }
 
 }; // namespace android

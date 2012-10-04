@@ -67,6 +67,9 @@ public:
     mm_camera_img_mode mExtImgMode;
     uint8_t m_flag_no_cb;
     uint8_t m_flag_stream_on;
+    image_crop_t mCrop;
+    QCameraHardwareInterface*  mHalCamCtrl;
+    camera_mode_t myMode;
 
     void setResolution(mm_camera_dimension_t *res);
     bool isResolutionSame(mm_camera_dimension_t *res);
@@ -88,28 +91,14 @@ public:
     {
       ;
     }
-    virtual void prepareHardware()
-    {
-      ;
-    }
     virtual sp<IMemoryHeap> getHeap() const{return NULL;}
-    virtual status_t    initDisplayBuffers(){return NO_ERROR;}
-    virtual status_t initPreviewOnlyBuffers(){return NO_ERROR;}
     virtual sp<IMemoryHeap> getRawHeap() const {return NULL;}
     virtual void *getLastQueuedFrame(void){return NULL;}
-    virtual status_t takePictureZSL(void){return NO_ERROR;}
-    virtual status_t takeLiveSnapshot(){return NO_ERROR;}
-    virtual void setModeLiveSnapshot(bool){;}
-    virtual status_t initSnapshotBuffers(cam_ctrl_dimension_t *dim,
-                                 int num_of_buf){return NO_ERROR;}
-
-    virtual void setFullSizeLiveshot(bool){};
-    /* Set the ANativeWindow */
-    virtual int setPreviewWindow(preview_stream_ops_t* window) {return NO_ERROR;}
     virtual void notifyROIEvent(fd_roi_t roi) {;}
     virtual void notifyWDenoiseEvent(cam_ctrl_status_t status, void * cookie) {;}
-    virtual void resetSnapshotCounters(void ){};
     virtual void notifyHdrEvent(cam_ctrl_status_t status, void * cookie){};
+    virtual int32_t setCrop();
+
     QCameraStream();
     QCameraStream(uint32_t CameraHandle,
                         uint32_t ChannelId,
@@ -121,14 +110,7 @@ public:
                         mm_camera_img_mode imgmode,
                         camera_mode_t mode);
     virtual             ~QCameraStream();
-    QCameraHardwareInterface*  mHalCamCtrl;
-    image_crop_t mCrop;
 
-    camera_mode_t myMode;
-
-    mutable Mutex mStopCallbackLock;
-public:
-//     friend void liveshot_callback(mm_camera_ch_data_buf_t *frame,void *user_data);
 };
 /*
 *   Record Class
@@ -158,7 +140,6 @@ public:
   void releaseRecordingFrame(const void *opaque);
   void debugShowVideoFPS() const;
 
-  status_t takeLiveSnapshot();
   mm_camera_buf_def_t              mRecordBuf[2*VIDEO_BUFFER_COUNT];
   void releaseEncodeBuffer();
 private:
@@ -209,8 +190,9 @@ public:
     /*init preview buffers without display case*/
     status_t processPreviewFrameWithOutDisplay(mm_camera_super_buf_t *frame);
 
-    int setPreviewWindow(preview_stream_ops_t* window);
     void notifyROIEvent(fd_roi_t roi);
+    int32_t setCrop();
+
     friend class QCameraHardwareInterface;
 
 private:

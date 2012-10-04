@@ -31,8 +31,7 @@ extern "C" {
 #include <linux/msm_ion.h>
 }
 
-
-#define VIDEO_BUFFER_COUNT 5
+#define VIDEO_BUFFER_COUNT NUM_RECORDING_BUFFERS
 #define VIDEO_BUFFER_COUNT_LOW_POWER_CAMCORDER 9
 
 #define PREVIEW_BUFFER_COUNT 5

@@ -179,12 +179,6 @@ status_t QCameraStream_record::processRecordFrame(mm_camera_super_buf_t *frame)
 {
     ALOGV("%s : BEGIN",__func__);
 
-    Mutex::Autolock lock(mStopCallbackLock);
-    if(!mActive) {
-      ALOGE("Recording Stopped. Returning callback");
-      return NO_ERROR;
-    }
-
     if (UNLIKELY(mDebugFps)) {
         debugShowVideoFPS();
     }
@@ -202,16 +196,14 @@ status_t QCameraStream_record::processRecordFrame(mm_camera_super_buf_t *frame)
   mRecordedFrames[frame->bufs[0]->buf_idx] = *frame;
 
   if (mHalCamCtrl->mStoreMetaDataInFrame) {
-    mStopCallbackLock.unlock();
-    if(mActive && (rcb != NULL) && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_VIDEO_FRAME)) {
+    if((rcb != NULL) && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_VIDEO_FRAME)) {
       ALOGE("Calling video callback:%d",frame->bufs[0]->buf_idx);
       rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME,
               mHalCamCtrl->mRecordingMemory.metadata_memory[frame->bufs[0]->buf_idx],
               0, mHalCamCtrl->mCallbackCookie);
     }
   } else {
-    mStopCallbackLock.unlock();
-    if(mActive && (rcb != NULL) && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_VIDEO_FRAME)) {
+    if((rcb != NULL) && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_VIDEO_FRAME)) {
       ALOGE("Calling video callback2");
       rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME,
               mHalCamCtrl->mRecordingMemory.camera_memory[frame->bufs[0]->buf_idx],
@@ -366,10 +358,6 @@ void QCameraStream_record::debugShowVideoFPS() const
     mLastFpsTime = now;
     mLastFrameCount = mFrameCount;
   }
-}
-
-status_t  QCameraStream_record::takeLiveSnapshot(){
-	return true;
 }
 
 }//namespace android

@@ -34,6 +34,7 @@
 #include <hardware/camera.h>
 #include <gralloc_priv.h>
 #include <QComOMXMetadata.h>
+#include <hardware/power.h>
 
 extern "C" {
 #include <linux/android_pmem.h>
@@ -267,16 +268,17 @@ namespace android {
 
 class QCameraStream;
 
+typedef void (*release_data_fn)(void* data, void *user_data);
+
 class QCameraQueue {
 public:
     QCameraQueue();
     virtual ~QCameraQueue();
     bool enqueue(void *data);
+    bool pri_enqueue(void *data);
     void flush();
     void* dequeue();
-private:
-    void init();
-    void deinit();
+    void init(release_data_fn data_rel_fn, void *user_data);
 
 private:
     typedef struct {
@@ -287,6 +289,8 @@ private:
     camera_q_node mhead; /* dummy head */
     uint32_t msize;
     pthread_mutex_t mlock;
+    release_data_fn mdata_rel_fn;
+    void * muser_data;
 };
 
 typedef enum
@@ -319,7 +323,7 @@ public:
 
     int32_t launch(void *(*start_routine)(void *), void* user_data);
     int32_t exit();
-    int32_t sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd);
+    int32_t sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd, uint8_t priority);
     camera_cmd_type_t getCmd();
 
     QCameraQueue cmd_queue;      /* cmd queue */
@@ -831,6 +835,7 @@ private:
     unsigned int mVideoSizeCount;
 
     bool mAutoFocusRunning;
+    bool mNeedToUnlockCaf;
     bool mMultiTouch;
     bool mHasAutoFocusSupport;
     bool mInitialized;
@@ -952,6 +957,8 @@ private:
      mm_jpeg_ops_t mJpegHandle;
      uint32_t mJpegClientHandle;
      snap_hdr_record_t    mHdrInfo;
+     power_module_t*   mPowerModule;
+     cam_sensor_fps_range_t mSensorFpsRange;
 
      static void *dataNotifyRoutine(void *data);
      static void *dataProcessRoutine(void *data);
@@ -969,6 +976,11 @@ private:
      static void receiveRawPicture(mm_camera_super_buf_t* recvd_frame, QCameraHardwareInterface *pme);
      status_t encodeData(mm_camera_super_buf_t* recvd_frame, uint32_t *jobId);
      void notifyShutter(bool play_shutter_sound);
+
+     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
+     void releaseJpegData(camera_jpeg_data_t *jpeg_data);
+     static void releaseNofityData(void *data, void *user_data);
+     static void releaseProcData(void *data, void *user_data);
 };
 
 }; // namespace android

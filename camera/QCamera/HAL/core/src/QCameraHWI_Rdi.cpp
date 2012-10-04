@@ -102,7 +102,7 @@ status_t QCameraStream_Rdi::initRdiBuffers()
     for (i = 0; i < mHalCamCtrl->mRdiMemory.buffer_count ; i++) {
       int j;
 
-      mRdiBuf[i].fd = mHalCamCtrl->mRdiMemory.fd[i]; 
+      mRdiBuf[i].fd = mHalCamCtrl->mRdiMemory.fd[i];
       mRdiBuf[i].frame_len = mHalCamCtrl->mRdiMemory.alloc[i].len;
       mRdiBuf[i].num_planes = num_planes;
 
@@ -162,7 +162,7 @@ void QCameraStream_Rdi::dumpFrameToFile(mm_camera_buf_def_t* newFrame)
             void* cbcr_off = newFrame->buffer + newFrame->planes[0].length;
 
             write(file_fd, (const void *)(y_off), newFrame->planes[0].length);
-            write(file_fd, (const void *)(cbcr_off), 
+            write(file_fd, (const void *)(cbcr_off),
                   (newFrame->planes[1].length * newFrame->num_planes));
             close(file_fd);
         }
@@ -179,19 +179,11 @@ status_t QCameraStream_Rdi::processRdiFrame(
     int i;
     camera_memory_t *data = NULL;
 
-    Mutex::Autolock lock(mStopCallbackLock);
-    if(!mActive) {
-    ALOGE("RDI Streaming Stopped. Returning callback");
-    return NO_ERROR;
-    }
     if(mHalCamCtrl==NULL) {
-    ALOGE("%s: X: HAL control object not set",__func__);
-    /*Call buf done*/
-    return BAD_VALUE;
+        ALOGE("%s: X: HAL control object not set",__func__);
+        /*Call buf done*/
+        return BAD_VALUE;
     }
-
-    mHalCamCtrl->mRdiMemoryLock.lock();
-    mHalCamCtrl->mRdiMemoryLock.unlock();
 
     mHalCamCtrl->mCallbackLock.lock();
     camera_data_callback pcb = mHalCamCtrl->mDataCb;
@@ -205,15 +197,13 @@ status_t QCameraStream_Rdi::processRdiFrame(
       //Sending rdi callback if corresponding Msgs are enabled
       if(mHalCamCtrl->mMsgEnabled & CAMERA_MSG_PREVIEW_FRAME) {
           msgType |=  CAMERA_MSG_PREVIEW_FRAME;
-        data = mHalCamCtrl->mRdiMemory.camera_memory[frame->bufs[0]->buf_idx];
+          data = mHalCamCtrl->mRdiMemory.camera_memory[frame->bufs[0]->buf_idx];
       } else {
           data = NULL;
       }
 
       if(msgType) {
-          mStopCallbackLock.unlock();
-          if(mActive)
-            pcb(msgType, data, 0, NULL, mHalCamCtrl->mCallbackCookie);
+          pcb(msgType, data, 0, NULL, mHalCamCtrl->mCallbackCookie);
       }
       ALOGD("end of cb");
     }
