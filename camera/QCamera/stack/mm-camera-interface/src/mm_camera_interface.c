@@ -818,12 +818,13 @@ static int32_t mm_camera_intf_send_native_cmd(uint32_t camera_handle,
         switch(cmd_id) {
         case NATIVE_CMD_ID_SOCKET_MAP: {
             cam_sock_packet_t packet;
-            mm_camera_frame_map_type *frame_map =
-              (mm_camera_frame_map_type *)cmd;
-
             memset(&packet, 0, sizeof(cam_sock_packet_t));
-            packet.msg_type = CAM_SOCK_MSG_TYPE_HIST_MAPPING;
-            packet.payload.frame_fd_map = *frame_map;
+            memcpy(&packet.payload.frame_fd_map, cmd, sizeof(mm_camera_frame_map_type));
+            if(packet.payload.frame_fd_map.is_hist) {
+                packet.msg_type = CAM_SOCK_MSG_TYPE_HIST_MAPPING;
+            } else {
+                packet.msg_type = CAM_SOCK_MSG_TYPE_FD_MAPPING;
+            }
             rc = mm_camera_util_sendmsg(my_obj, &packet,
                                       sizeof(cam_sock_packet_t),
                                       packet.payload.frame_fd_map.fd);
@@ -831,12 +832,13 @@ static int32_t mm_camera_intf_send_native_cmd(uint32_t camera_handle,
           break;
         case NATIVE_CMD_ID_SOCKET_UNMAP: {
             cam_sock_packet_t packet;
-            mm_camera_frame_unmap_type *frame_unmap =
-              (mm_camera_frame_unmap_type *)cmd;
-
             memset(&packet, 0, sizeof(cam_sock_packet_t));
-            packet.msg_type = CAM_SOCK_MSG_TYPE_FD_UNMAPPING;
-            packet.payload.frame_fd_unmap = *frame_unmap;
+            memcpy(&packet.payload.frame_fd_unmap, cmd, sizeof(mm_camera_frame_unmap_type));
+            if(packet.payload.frame_fd_unmap.is_hist) {
+                packet.msg_type = CAM_SOCK_MSG_TYPE_HIST_UNMAPPING;
+            } else {
+                packet.msg_type = CAM_SOCK_MSG_TYPE_FD_UNMAPPING;
+            }
             rc = mm_camera_util_sendmsg(my_obj, &packet,
                                       sizeof(cam_sock_packet_t), 0);
           }

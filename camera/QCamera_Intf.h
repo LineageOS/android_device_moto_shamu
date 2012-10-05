@@ -107,11 +107,13 @@ typedef struct {
   int frame_idx;  /* frame index */
   int fd;         /* origin fd */
   uint32_t size;
+  uint8_t is_hist; /* is hist mapping? */
 } mm_camera_frame_map_type;
 
 typedef struct {
   int ext_mode;   /* preview, main, thumbnail, video, raw, etc */
   int frame_idx;  /* frame index */
+  uint8_t is_hist; /* is hist unmapping? */
 } mm_camera_frame_unmap_type;
 
 typedef enum {

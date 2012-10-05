@@ -4169,21 +4169,21 @@ status_t QCameraHardwareInterface::setDimension()
       ALOGE("%s X: error - can't config preview parms!", __func__);
       return BAD_VALUE;
     }
-    if(mStreamDisplay) {
-        mStreamDisplay->mFormat = dim.prev_format;
-        mStreamDisplay->mWidth = dim.display_width;
-        mStreamDisplay->mHeight = dim.display_height;
+    if(mStreams[MM_CAMERA_PREVIEW]) {
+        mStreams[MM_CAMERA_PREVIEW]->mFormat = dim.prev_format;
+        mStreams[MM_CAMERA_PREVIEW]->mWidth = dim.display_width;
+        mStreams[MM_CAMERA_PREVIEW]->mHeight = dim.display_height;
     }
-    if(mStreamRecord) {
-        mStreamRecord->mFormat = dim.enc_format;
-        mStreamRecord->mWidth = dim.video_width;
-        mStreamRecord->mHeight = dim.video_height;
+    if(mStreams[MM_CAMERA_VIDEO]) {
+        mStreams[MM_CAMERA_VIDEO]->mFormat = dim.enc_format;
+        mStreams[MM_CAMERA_VIDEO]->mWidth = dim.video_width;
+        mStreams[MM_CAMERA_VIDEO]->mHeight = dim.video_height;
     }
-    if(mStreamSnapMain) {
-        mStreamSnapMain->mFormat = dim.main_img_format;
+    if(mStreams[MM_CAMERA_SNAPSHOT_MAIN]) {
+        mStreams[MM_CAMERA_SNAPSHOT_MAIN]->mFormat = dim.main_img_format;
         if (!isRawSnapshot()) {
-                mStreamSnapMain->mWidth = dim.picture_width;
-                mStreamSnapMain->mHeight = dim.picture_height;
+                mStreams[MM_CAMERA_SNAPSHOT_MAIN]->mWidth = dim.picture_width;
+                mStreams[MM_CAMERA_SNAPSHOT_MAIN]->mHeight = dim.picture_height;
         } else {
             cam_frame_resolution_t raw_res;
 
@@ -4200,15 +4200,15 @@ status_t QCameraHardwareInterface::setDimension()
                     __func__, ret);
               return BAD_VALUE;
             }
-            mStreamSnapMain->mWidth = raw_res.width;
-            mStreamSnapMain->mHeight = raw_res.height;
-            mStreamSnapMain->mFormat = raw_res.format;
+            mStreams[MM_CAMERA_SNAPSHOT_MAIN]->mWidth = raw_res.width;
+            mStreams[MM_CAMERA_SNAPSHOT_MAIN]->mHeight = raw_res.height;
+            mStreams[MM_CAMERA_SNAPSHOT_MAIN]->mFormat = raw_res.format;
         }
     }
-    if(mStreamSnapThumb) {
-        mStreamSnapThumb->mFormat = dim.thumb_format;
-        mStreamSnapThumb->mWidth = dim.ui_thumbnail_width;
-        mStreamSnapThumb->mHeight = dim.ui_thumbnail_height;
+    if(mStreams[MM_CAMERA_SNAPSHOT_THUMBNAIL]) {
+        mStreams[MM_CAMERA_SNAPSHOT_THUMBNAIL]->mFormat = dim.thumb_format;
+        mStreams[MM_CAMERA_SNAPSHOT_THUMBNAIL]->mWidth = dim.ui_thumbnail_width;
+        mStreams[MM_CAMERA_SNAPSHOT_THUMBNAIL]->mHeight = dim.ui_thumbnail_height;
     }
 
     memcpy(&mDimension, &dim, sizeof(mDimension));

@@ -1191,6 +1191,13 @@ int32_t mm_camera_start_focus(mm_camera_obj_t *my_obj,
                                MM_CHANNEL_EVT_START_FOCUS,
                                (void *)&payload,
                                NULL);
+        if (0 != rc) {
+            mm_camera_event_t event;
+            event.event_type = MM_CAMERA_EVT_TYPE_CTRL;
+            event.e.ctrl.evt = MM_CAMERA_CTRL_EVT_AUTO_FOCUS_DONE;
+            event.e.ctrl.status = CAM_CTRL_FAILED;
+            rc = mm_camera_enqueue_evt(my_obj, &event);
+        }
     } else {
         pthread_mutex_unlock(&my_obj->cam_lock);
     }
