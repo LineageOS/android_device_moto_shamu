@@ -703,6 +703,7 @@ private:
     status_t setNoDisplayMode(const QCameraParameters& params);
     status_t setDimension();
     status_t setRDIMode(const QCameraParameters& params);
+    status_t setMobiCat(const QCameraParameters& params);
 
     isp3a_af_mode_t getAutoFocusMode(const QCameraParameters& params);
     bool isValidDimension(int w, int h);
@@ -824,6 +825,7 @@ private:
     int mSnapshotFormat;
     int mZslInterval;
     bool mRestartPreview;
+    bool mMobiCatEnabled;
     /*for histogram*/
     int            mStatsOn;
     int            mCurrentHisto;
