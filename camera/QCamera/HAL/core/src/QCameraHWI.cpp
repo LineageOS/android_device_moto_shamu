@@ -527,6 +527,9 @@ status_t QCameraHardwareInterface::encodeData(mm_camera_super_buf_t* recvd_frame
     ALOGV("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.encode_parm.rotation);
     jpg_job.encode_job.encode_parm.buf_info.src_imgs.src_img_num = src_img_num;
 
+    //TODO: hardcode for now, need to set to proper value once video-sized livesnapshot is enabled
+    jpg_job.encode_job.encode_parm.buf_info.src_imgs.is_video_frame = FALSE;
+
     // fill in the src_img info
     //main img
     main_buf_info = &jpg_job.encode_job.encode_parm.buf_info.src_imgs.src_img[JPEG_SRC_IMAGE_TYPE_MAIN];
@@ -544,9 +547,13 @@ status_t QCameraHardwareInterface::encodeData(mm_camera_super_buf_t* recvd_frame
         main_buf_info->crop.width = main_stream->mWidth;
         main_buf_info->crop.height = main_stream->mHeight;
     }
+
     ALOGD("%s : Main Image :Input Dimension %d x %d output Dimension = %d X %d",
           __func__, main_buf_info->src_dim.width, main_buf_info->src_dim.height,
           main_buf_info->out_dim.width, main_buf_info->out_dim.height);
+    ALOGE("%s : Main Image :Crop %d x %d, offset = (%d, %d)",
+          __func__, main_buf_info->crop.width, main_buf_info->crop.height,
+          main_buf_info->crop.offset_x, main_buf_info->crop.offset_y);
     main_buf_info->img_fmt = JPEG_SRC_IMAGE_FMT_YUV;
     main_buf_info->num_bufs = 1;
     main_buf_info->src_image[0].offset = main_stream->mFrameOffsetInfo;
