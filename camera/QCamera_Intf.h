@@ -451,11 +451,11 @@ typedef enum {
 } mm_camera_parm_type_t;
 
 typedef enum {
-  STREAM_IMAGE,
-  STREAM_RAW,
-  STREAM_IMAGE_AND_RAW,
-  STREAM_RAW_AND_RAW,
-  STREAM_MAX,
+  STREAM_NONE           =  0x0,
+  STREAM_IMAGE          =  0x1,
+  STREAM_RAW            =  0x2,
+  STREAM_RAW1           =  0x4,
+  STREAM_RAW2           =  0x8,
 } mm_camera_channel_stream_info_t;
 
 typedef enum {
