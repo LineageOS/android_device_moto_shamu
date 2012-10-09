@@ -3252,12 +3252,15 @@ status_t QCameraHardwareInterface::setOrientation(const QCameraParameters& param
 status_t QCameraHardwareInterface::setPictureFormat(const QCameraParameters& params)
 {
     const char * str = params.get(QCameraParameters::KEY_PICTURE_FORMAT);
-
     if(str != NULL){
         int32_t value = attr_lookup(picture_formats,
                                     sizeof(picture_formats) / sizeof(str_map), str);
         if(value != NOT_FOUND){
-            mParameters.set(QCameraParameters::KEY_PICTURE_FORMAT, str);
+            if (isZSLMode() && !strcmp(str, "raw")) {
+                mParameters.set(QCameraParameters::KEY_PICTURE_FORMAT, "jpeg");
+            } else {
+                mParameters.set(QCameraParameters::KEY_PICTURE_FORMAT, str);
+            }
         } else {
             ALOGE("Invalid Picture Format value: %s", str);
             return BAD_VALUE;
