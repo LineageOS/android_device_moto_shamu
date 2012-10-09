@@ -288,7 +288,7 @@ static void mm_stream_buf_notify(mm_camera_super_buf_t *super_buf,
 
     memcpy(&my_obj->buf[my_obj->local_buf_idx].ts, &buf->ts, sizeof(buf->ts));
 
-    memcpy(&my_obj->buf[my_obj->local_buf_idx].planes, &buf->planes, buf->num_planes * sizeof(struct v4l2_plane));
+    memcpy(my_obj->buf[my_obj->local_buf_idx].buffer, buf->buffer, buf->frame_len);
 
     /* set flag to indicate buf be to sent out is from local */
     my_obj->is_local_buf = 1;

@@ -526,8 +526,6 @@ status_t QCameraHardwareInterface::encodeData(mm_camera_super_buf_t* recvd_frame
     jpg_job.encode_job.encode_parm.rotation = getJpegRotation();
     ALOGV("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.encode_parm.rotation);
     jpg_job.encode_job.encode_parm.buf_info.src_imgs.src_img_num = src_img_num;
-
-    //TODO: hardcode for now, need to set to proper value once video-sized livesnapshot is enabled
     jpg_job.encode_job.encode_parm.buf_info.src_imgs.is_video_frame = FALSE;
 
     // fill in the src_img info
@@ -551,7 +549,7 @@ status_t QCameraHardwareInterface::encodeData(mm_camera_super_buf_t* recvd_frame
     ALOGD("%s : Main Image :Input Dimension %d x %d output Dimension = %d X %d",
           __func__, main_buf_info->src_dim.width, main_buf_info->src_dim.height,
           main_buf_info->out_dim.width, main_buf_info->out_dim.height);
-    ALOGE("%s : Main Image :Crop %d x %d, offset = (%d, %d)",
+    ALOGD("%s : Main Image :Crop %d x %d, offset = (%d, %d)",
           __func__, main_buf_info->crop.width, main_buf_info->crop.height,
           main_buf_info->crop.offset_x, main_buf_info->crop.offset_y);
     main_buf_info->img_fmt = JPEG_SRC_IMAGE_FMT_YUV;
@@ -592,11 +590,30 @@ status_t QCameraHardwareInterface::encodeData(mm_camera_super_buf_t* recvd_frame
         cache_ops(thumb_mem_info, thumb_frame->buffer, ION_IOC_CLEAN_INV_CACHES);
     }
 
+    uint32_t buf_len = main_stream->mFrameOffsetInfo.frame_len;
+    if (main_stream->m_flag_stream_on == FALSE) {
+        //if video-sized livesnapshot
+        jpg_job.encode_job.encode_parm.buf_info.src_imgs.is_video_frame = TRUE;
+
+        //use the same output resolution as input
+        main_buf_info->out_dim.width = main_buf_info->src_dim.width;
+        main_buf_info->out_dim.height = main_buf_info->src_dim.height;
+
+        if (thumb_buf_info->out_dim.width > thumb_buf_info->src_dim.width ||
+            thumb_buf_info->out_dim.height > thumb_buf_info->src_dim.height ) {
+            thumb_buf_info->out_dim.width = thumb_buf_info->src_dim.width;
+            thumb_buf_info->out_dim.height = thumb_buf_info->src_dim.height;
+        }
+
+        uint32_t len = main_buf_info->out_dim.width * main_buf_info->out_dim.height * 1.5;
+        if (len > buf_len) {
+            buf_len = len;
+        }
+    }
+
     //fill in the sink img info
-    jpg_job.encode_job.encode_parm.buf_info.sink_img.buf_len =
-        main_stream->mFrameOffsetInfo.frame_len;
-    jpg_job.encode_job.encode_parm.buf_info.sink_img.buf_vaddr =
-        (uint8_t *)malloc(main_stream->mFrameOffsetInfo.frame_len);
+    jpg_job.encode_job.encode_parm.buf_info.sink_img.buf_len = buf_len;
+    jpg_job.encode_job.encode_parm.buf_info.sink_img.buf_vaddr = (uint8_t *)malloc(buf_len);
     if (NULL == jpg_job.encode_job.encode_parm.buf_info.sink_img.buf_vaddr) {
         ALOGE("%s: ERROR: no memory for sink_img buf", __func__);
         free(cookie);
@@ -1903,7 +1920,15 @@ status_t QCameraHardwareInterface::startPreview2()
                  mStreams[MM_CAMERA_PREVIEW]->deinitStream();
                  return BAD_VALUE;
             }
-            ret = mStreams[MM_CAMERA_SNAPSHOT_MAIN]->initStream(TRUE, TRUE);
+            if (!canTakeFullSizeLiveshot()) {
+                // video-size live snapshot, config same as video
+                mStreams[MM_CAMERA_SNAPSHOT_MAIN]->mFormat = mStreams[MM_CAMERA_VIDEO]->mFormat;
+                mStreams[MM_CAMERA_SNAPSHOT_MAIN]->mWidth = mStreams[MM_CAMERA_VIDEO]->mWidth;
+                mStreams[MM_CAMERA_SNAPSHOT_MAIN]->mHeight = mStreams[MM_CAMERA_VIDEO]->mHeight;
+                ret = mStreams[MM_CAMERA_SNAPSHOT_MAIN]->initStream(FALSE, FALSE);
+            } else {
+                ret = mStreams[MM_CAMERA_SNAPSHOT_MAIN]->initStream(FALSE, TRUE);
+            }
             if (MM_CAMERA_OK != ret){
                  ALOGE("%s: error - can't init Snapshot Main!", __func__);
                  mStreams[MM_CAMERA_PREVIEW]->deinitStream();
@@ -3299,6 +3324,40 @@ int QCameraHardwareInterface::cache_ops(QCameraHalMemInfo_t *mem_info,
 #endif
 
     return ret;
+}
+
+uint8_t QCameraHardwareInterface::canTakeFullSizeLiveshot() {
+    if (mFullLiveshotEnabled && !isLowPowerCamcorder()) {
+        /* Full size liveshot enabled. */
+
+        /* If Picture size is same as video size, switch to Video size
+         * live snapshot */
+        if ((mDimension.picture_width == mDimension.video_width) &&
+            (mDimension.picture_height == mDimension.video_height)) {
+            return FALSE;
+        }
+
+        if (mDisEnabled) {
+            /* If DIS is enabled and Picture size is
+             * less than (video size + 10% DIS Margin)
+             * then fall back to Video size liveshot. */
+            if ((mDimension.picture_width <
+                 (int)(mDimension.video_width * 1.1)) ||
+                (mDimension.picture_height <
+                 (int)(mDimension.video_height * 1.1))) {
+                return FALSE;
+            } else {
+                /* Go with Full size live snapshot. */
+                return TRUE;
+            }
+        } else {
+            /* DIS Disabled. Go with Full size live snapshot */
+            return TRUE;
+        }
+    } else {
+        /* Full size liveshot disabled. Fallback to Video size liveshot. */
+        return FALSE;
+    }
 }
 
 QCameraQueue::QCameraQueue()
