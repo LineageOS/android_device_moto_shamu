@@ -142,7 +142,9 @@ int32_t mm_jpeg_omx_abort_job(mm_jpeg_obj *my_obj, mm_jpeg_job_entry* job_entry)
 }
 
 /* TODO: needs revisit after omx lib supports multi src buffers */
-int32_t mm_jpeg_omx_config_main_buffer_offset(mm_jpeg_obj* my_obj, src_image_buffer_info *src_buf)
+int32_t mm_jpeg_omx_config_main_buffer_offset(mm_jpeg_obj* my_obj,
+                                              src_image_buffer_info *src_buf,
+                                              uint8_t is_video_frame)
 {
     int32_t rc = 0;
     uint8_t i;
@@ -167,9 +169,6 @@ int32_t mm_jpeg_omx_config_main_buffer_offset(mm_jpeg_obj* my_obj, src_image_buf
             } else {
                 buffer_offset.yOffset =
                     src_buf->src_image[i].offset.mp[0].offset;
-                /*buffer_offset.cbcrOffset =
-                    src_buf->src_image[i].offset.mp[0].len +
-                    src_buf->src_image[i].offset.mp[1].offset;*/
                 buffer_offset.cbcrOffset =
                     src_buf->src_image[i].offset.mp[1].offset;
                 buffer_offset.totalSize =
@@ -178,6 +177,17 @@ int32_t mm_jpeg_omx_config_main_buffer_offset(mm_jpeg_obj* my_obj, src_image_buf
             CDBG("%s: idx=%d, yOffset =%d, cbcrOffset =%d, totalSize = %d\n",
                  __func__, i, buffer_offset.yOffset, buffer_offset.cbcrOffset, buffer_offset.totalSize);
             OMX_SetParameter(my_obj->omx_handle, buf_offset_idx, &buffer_offset);
+
+            /* set acbcr (special case for video-sized live snapshot)*/
+            if (is_video_frame) {
+                CDBG("Using acbcroffset\n");
+                memset(&buffer_offset, 0, sizeof(buffer_offset));
+                buffer_offset.cbcrOffset = src_buf->src_image[i].offset.mp[0].offset +
+                                          src_buf->src_image[i].offset.mp[0].len +
+                                          src_buf->src_image[i].offset.mp[1].offset;;
+                OMX_GetExtensionIndex(my_obj->omx_handle,"omx.qcom.jpeg.exttype.acbcr_offset",&buf_offset_idx);
+                OMX_SetParameter(my_obj->omx_handle, buf_offset_idx, &buffer_offset);
+            }
             break;
         case JPEG_SRC_IMAGE_FMT_BITSTREAM:
             /* TODO: need visit here when bit stream is supported */
@@ -283,6 +293,13 @@ int32_t mm_jpeg_omx_config_user_preference(mm_jpeg_obj* my_obj, mm_jpeg_encode_j
                           &user_pref_idx);
     CDBG("%s:User Preferences: color_format %d, thumbnail_color_format = %d",
          __func__, user_preferences.color_format, user_preferences.thumbnail_color_format);
+
+    if (job->encode_parm.buf_info.src_imgs.is_video_frame != 0) {
+        user_preferences.preference = OMX_JPEG_PREF_SOFTWARE_ONLY;
+    } else {
+        user_preferences.preference = OMX_JPEG_PREF_HW_ACCELERATED_PREFERRED;
+    }
+
     OMX_SetParameter(my_obj->omx_handle, user_pref_idx, &user_preferences);
     return rc;
 }
@@ -338,8 +355,10 @@ int32_t mm_jpeg_omx_config_thumbnail(mm_jpeg_obj* my_obj, mm_jpeg_encode_job* jo
 
     /* set scaling flag */
     if (thumbnail.left > 0 || thumbnail.top > 0 ||
-        src_buf->crop.width != src_buf->out_dim.width ||
-        src_buf->crop.height != src_buf->out_dim.height) {
+        src_buf->crop.width != src_buf->src_dim.width ||
+        src_buf->crop.height != src_buf->src_dim.height ||
+        src_buf->src_dim.width != src_buf->out_dim.width ||
+        src_buf->src_dim.height != src_buf->out_dim.height) {
         thumbnail.scaling = 1;
     }
 
@@ -364,11 +383,12 @@ int32_t mm_jpeg_omx_config_thumbnail(mm_jpeg_obj* my_obj, mm_jpeg_encode_job* jo
 int32_t mm_jpeg_omx_config_main_crop(mm_jpeg_obj* my_obj, src_image_buffer_info *src_buf)
 {
     int32_t rc = 0;
-    OMX_CONFIG_RECTTYPE rect_type;
+    OMX_CONFIG_RECTTYPE rect_type_in, rect_type_out;
 
     /* error check first */
-    if (src_buf->crop.width + src_buf->crop.offset_x > src_buf->src_dim.width ||
-        src_buf->crop.height + src_buf->crop.offset_y > src_buf->src_dim.height) {
+    if ((src_buf->crop.width == 0) || (src_buf->crop.height == 0) ||
+        (src_buf->crop.width + src_buf->crop.offset_x > src_buf->src_dim.width) ||
+        (src_buf->crop.height + src_buf->crop.offset_y > src_buf->src_dim.height)) {
         CDBG_ERROR("%s: invalid crop boundary (%d, %d) out of (%d, %d)", __func__,
                    src_buf->crop.width + src_buf->crop.offset_x,
                    src_buf->crop.height + src_buf->crop.offset_y,
@@ -377,35 +397,37 @@ int32_t mm_jpeg_omx_config_main_crop(mm_jpeg_obj* my_obj, src_image_buffer_info 
         return -1;
     }
 
-    if (src_buf->crop.width && src_buf->crop.width) {
+    memset(&rect_type_in, 0, sizeof(rect_type_in));
+    memset(&rect_type_out, 0, sizeof(rect_type_out));
+    rect_type_in.nPortIndex = OUTPUT_PORT;
+    rect_type_out.nPortIndex = OUTPUT_PORT;
+
+    if ((src_buf->src_dim.width != src_buf->crop.width) ||
+        (src_buf->src_dim.height != src_buf->crop.height) ||
+        (src_buf->src_dim.width != src_buf->out_dim.width) ||
+        (src_buf->src_dim.height != src_buf->out_dim.height)) {
         /* Scaler information */
-        memset(&rect_type, 0, sizeof(rect_type));
-        rect_type.nWidth = CEILING2(src_buf->crop.width);
-        rect_type.nHeight = CEILING2(src_buf->crop.height);
-        rect_type.nLeft = src_buf->crop.offset_x;
-        rect_type.nTop = src_buf->crop.offset_y;
-        rect_type.nPortIndex = OUTPUT_PORT;
-        OMX_SetConfig(my_obj->omx_handle, OMX_IndexConfigCommonInputCrop, &rect_type);
-        CDBG("%s: OMX_IndexConfigCommonInputCrop w=%d, h=%d, l=%d, t=%d, port_idx=%d", __func__,
-             rect_type.nWidth, rect_type.nHeight,
-             rect_type.nLeft, rect_type.nTop,
-             rect_type.nPortIndex);
+        rect_type_in.nWidth = CEILING2(src_buf->crop.width);
+        rect_type_in.nHeight = CEILING2(src_buf->crop.height);
+        rect_type_in.nLeft = src_buf->crop.offset_x;
+        rect_type_in.nTop = src_buf->crop.offset_y;
 
         if (src_buf->out_dim.width && src_buf->out_dim.height) {
-            memset(&rect_type, 0, sizeof(rect_type));
-            rect_type.nWidth = src_buf->out_dim.width;
-            rect_type.nHeight = src_buf->out_dim.height;
-            rect_type.nPortIndex = OUTPUT_PORT;
-            OMX_SetConfig(my_obj->omx_handle, OMX_IndexConfigCommonOutputCrop, &rect_type);
-            CDBG("%s: OMX_IndexConfigCommonOutputCrop w=%d, h=%d, port_idx=%d", __func__,
-                 rect_type.nWidth, rect_type.nHeight,
-                 rect_type.nPortIndex);
+            rect_type_out.nWidth = src_buf->out_dim.width;
+            rect_type_out.nHeight = src_buf->out_dim.height;
         }
-
-    } else {
-        CDBG_ERROR("%s: There is no main image scaling information", __func__);
-        rc = -1;
     }
+
+    OMX_SetConfig(my_obj->omx_handle, OMX_IndexConfigCommonInputCrop, &rect_type_in);
+    CDBG("%s: OMX_IndexConfigCommonInputCrop w=%d, h=%d, l=%d, t=%d, port_idx=%d", __func__,
+         rect_type_in.nWidth, rect_type_in.nHeight,
+         rect_type_in.nLeft, rect_type_in.nTop,
+         rect_type_in.nPortIndex);
+
+    OMX_SetConfig(my_obj->omx_handle, OMX_IndexConfigCommonOutputCrop, &rect_type_out);
+    CDBG("%s: OMX_IndexConfigCommonOutputCrop w=%d, h=%d, port_idx=%d", __func__,
+         rect_type_out.nWidth, rect_type_out.nHeight,
+         rect_type_out.nPortIndex);
 
     return rc;
 }
@@ -427,7 +449,7 @@ int32_t mm_jpeg_omx_config_main(mm_jpeg_obj* my_obj, mm_jpeg_encode_job* job)
 
     /* config buffer offset */
     CDBG("%s: config main buf offset", __func__);
-    rc = mm_jpeg_omx_config_main_buffer_offset(my_obj, src_buf);
+    rc = mm_jpeg_omx_config_main_buffer_offset(my_obj, src_buf, job->encode_parm.buf_info.src_imgs.is_video_frame);
     if (0 != rc) {
         CDBG_ERROR("%s: config buffer offset failed", __func__);
         return rc;
@@ -642,22 +664,23 @@ static void *mm_jpeg_notify_thread(void *data)
     mm_jpeg_obj* my_obj = (mm_jpeg_obj *)job_entry->jpeg_obj;
     void* node = NULL;
     int32_t rc = 0;
+    uint32_t jobId = job_entry->jobId;
 
     if (NULL == my_obj) {
         CDBG_ERROR("%s: jpeg obj is NULL", __func__);
         return NULL;
     }
 
-    /* Add to cb queue */
-    rc = mm_jpeg_queue_enq(&my_obj->cb_q, data);
-    if (0 != rc) {
-        CDBG_ERROR("%s: enqueue into cb_q failed", __func__);
-        free(job_node);
-        return NULL;
-    }
-
     /* call cb */
     if (NULL != job_entry->job.encode_job.jpeg_cb) {
+        /* Add to cb queue */
+        rc = mm_jpeg_queue_enq(&my_obj->cb_q, data);
+        if (0 != rc) {
+            CDBG_ERROR("%s: enqueue into cb_q failed", __func__);
+            free(job_node);
+            return NULL;
+        }
+
         CDBG("%s: send jpeg callback", __func__);
         /* has callback, send CB */
         job_entry->job.encode_job.jpeg_cb(job_entry->job_status,
@@ -667,14 +690,17 @@ static void *mm_jpeg_notify_thread(void *data)
                                           job_entry->job.encode_job.encode_parm.buf_info.sink_img.buf_vaddr,
                                           job_entry->jpeg_size,
                                           job_entry->job.encode_job.userdata);
+
+        /* Remove from cb queue */
+        CDBG_ERROR("%s: remove job %d from cb queue", __func__, jobId);
+        node = mm_jpeg_queue_remove_job_by_job_id(&my_obj->cb_q, jobId);
+        if (NULL != node) {
+            free(node);
+        }
     } else {
         CDBG_ERROR("%s: no cb provided, no action", __func__);
-    }
-
-    /* Remove from cb queue */
-    node = mm_jpeg_queue_remove_job_by_job_id(&my_obj->cb_q, job_entry->jobId);
-    if (NULL != node) {
-        free(node);
+        /* note here we are not freeing any internal memory */
+        free(data);
     }
 
     return NULL;
@@ -721,6 +747,7 @@ int32_t mm_jpeg_process_job(mm_jpeg_obj *my_obj, mm_jpeg_job_q_node_t* job_node)
     default:
         CDBG_ERROR("%s: job type not supported (%d)",
                    __func__, job_node->entry.job.job_type);
+        free(job_node);
         rc = -1;
         break;
     }
@@ -760,11 +787,7 @@ static void *mm_jpeg_jobmgr_thread(void *data)
         if (node != NULL) {
             switch (node->type) {
             case MM_JPEG_CMD_TYPE_JOB:
-                rc = mm_jpeg_process_job(my_obj, node);
-                if (0 != rc) {
-                    /* free node in error case */
-                    free(node);
-                }
+                mm_jpeg_process_job(my_obj, node);
                 break;
             case MM_JPEG_CMD_TYPE_EXIT:
             default:

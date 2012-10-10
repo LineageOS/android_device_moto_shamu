@@ -52,8 +52,9 @@ void static mm_jpeg_dump_job(mm_jpeg_job* job )
     jpeg_image_buffer_config * buf_info;
     buf_info = &job->encode_job.encode_parm.buf_info;
     CDBG_ERROR("*****Dump job************");
-    CDBG_ERROR("rotation =%d, exif_numEntries=%d ",
-               job->encode_job.encode_parm.rotation, job->encode_job.encode_parm.exif_numEntries);
+    CDBG_ERROR("rotation =%d, exif_numEntries=%d, is_video_frame=%d",
+               job->encode_job.encode_parm.rotation, job->encode_job.encode_parm.exif_numEntries,
+               job->encode_job.encode_parm.buf_info.src_imgs.is_video_frame);
     CDBG_ERROR("Buff_inof: sin_img fd=%d, buf_len=%d, buf_add=%p: src img img num=%d", buf_info->sink_img.fd, buf_info->sink_img.buf_len,
                buf_info->sink_img.buf_vaddr,  buf_info->src_imgs.src_img_num);
     for (i=0; i < buf_info->src_imgs.src_img_num; i++) {

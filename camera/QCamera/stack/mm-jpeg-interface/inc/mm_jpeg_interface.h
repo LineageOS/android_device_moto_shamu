@@ -100,7 +100,7 @@ typedef struct {
     /* src img type: main or thumbnail */
     jpeg_enc_src_img_type_t type;
 
-    /* color format */ 
+    /* color format */
     mm_jpeg_color_format color_format;
 
     /* src img dimension */
@@ -132,6 +132,9 @@ typedef struct {
     /* index 0 is always for main image
      * if thumbnail presented, it will be in index 1 */
     src_image_buffer_info src_img[JPEG_SRC_IMAGE_TYPE_MAX];
+
+    /* flag indicating if buffer is from video stream (special case for video-sized live snapshot) */
+    uint8_t is_video_frame;
 } src_image_buffer_config;
 
 typedef struct {
