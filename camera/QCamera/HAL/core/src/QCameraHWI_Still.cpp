@@ -117,7 +117,7 @@ int QCameraStream_SnapshotMain::getBuf(mm_camera_frame_len_offset *frame_offset_
     if(MM_CAMERA_OK == ret) {
         for(int i = 0; i < num_bufs; i++) {
             bufs[i] = mSnapshotStreamBuf[i];
-            initial_reg_flag[i] = true;
+            initial_reg_flag[i] = (TRUE == m_flag_stream_on)? TRUE : FALSE;
         }
     }
 

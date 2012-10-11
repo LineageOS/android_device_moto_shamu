@@ -958,6 +958,7 @@ private:
      void releaseAppCBData(app_notify_cb_t *app_cb);
      static void releaseNofityData(void *data, void *user_data);
      static void releaseProcData(void *data, void *user_data);
+     uint8_t canTakeFullSizeLiveshot();
 };
 
 }; // namespace android
