@@ -275,7 +275,7 @@ public:
     bool pri_enqueue(void *data);
     void flush();
     void* dequeue();
-
+    bool is_empty();
 private:
     typedef struct {
         struct cam_list list;
