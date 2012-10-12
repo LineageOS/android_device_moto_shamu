@@ -829,6 +829,9 @@ int32_t mm_camera_get_parm(mm_camera_obj_t *my_obj,
                                             sizeof(cam_sensor_fps_range_t),
                                             p_value);
         break;
+    case MM_CAMERA_PARM_BESTSHOT_RECONFIGURE:
+        *((int *)p_value) = my_obj->properties.bestshot_reconfigure;
+        break;
     default:
         /* needs to add more implementation */
         rc = -1;
