@@ -372,6 +372,10 @@ end:
                          mHalCamCtrl->mCallbackCookie);
         }
     }
+    // If this is non-fullsize liveshot, we need to de-allocate snapshot buffers
+    // here because stop() won't do it (mActive is FALSE)
+    if (isLiveSnapshot() && !isFullSizeLiveshot())
+           deinitSnapshotBuffers();
     //reset jpeg_offset
     mJpegOffset = 0;
     ALOGD("%s: X", __func__);
