@@ -2522,8 +2522,10 @@ status_t QCameraHardwareInterface::setVideoSize(const QCameraParameters& params)
         if(!parse_size(str, videoWidth, videoHeight)) {
             parse_size(str_t, old_vid_w, old_vid_h);
             if(old_vid_w != videoWidth || old_vid_h != videoHeight) {
-                mRestartPreview = true; 
-                ALOGE("%s: Video sizes changes to %s, Restart preview...", __func__, str);
+               if(mPreviewState == QCAMERA_HAL_PREVIEW_STARTED) {
+                  mRestartPreview = true;
+                  ALOGE("%s: Video sizes changes to %s, Restart preview...", __func__, str);
+               }
             }
             mParameters.set(QCameraParameters::KEY_VIDEO_SIZE, str);
             //VFE output1 shouldn't be greater than VFE output2.
@@ -2739,7 +2741,10 @@ status_t QCameraHardwareInterface::setPictureSize(const QCameraParameters& param
             int old_width, old_height;
             mParameters.getPictureSize(&old_width,&old_height);
             if(width != old_width || height != old_height) {
-                mRestartPreview = true;
+               if(mPreviewState == QCAMERA_HAL_PREVIEW_STARTED) {
+                  mRestartPreview = true;
+                  ALOGE("%s: Picture size changed, Restart preview...", __func__);
+               }
             }
             mParameters.setPictureSize(width, height);
             mDimension.picture_width = width;
