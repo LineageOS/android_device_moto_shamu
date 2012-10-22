@@ -326,9 +326,13 @@ int32_t mm_jpeg_omx_config_thumbnail(mm_jpeg_obj* my_obj, mm_jpeg_encode_job* jo
         return rc;
     }
 
+    if ((src_buf->crop.width == 0) || (src_buf->crop.height == 0)) {
+        src_buf->crop.width = src_buf->src_dim.width;
+        src_buf->crop.height = src_buf->src_dim.height;
+    }
+
     /* check crop boundary */
-    if ((src_buf->crop.width == 0) || (src_buf->crop.height == 0) ||
-        (src_buf->crop.width + src_buf->crop.offset_x > src_buf->src_dim.width) ||
+    if ((src_buf->crop.width + src_buf->crop.offset_x > src_buf->src_dim.width) ||
         (src_buf->crop.height + src_buf->crop.offset_y > src_buf->src_dim.height)) {
         CDBG_ERROR("%s: invalid crop boundary (%d, %d) offset (%d, %d) out of (%d, %d)",
                    __func__,
@@ -385,9 +389,12 @@ int32_t mm_jpeg_omx_config_main_crop(mm_jpeg_obj* my_obj, src_image_buffer_info 
     int32_t rc = 0;
     OMX_CONFIG_RECTTYPE rect_type_in, rect_type_out;
 
+    if ((src_buf->crop.width == 0) || (src_buf->crop.height == 0)) {
+        src_buf->crop.width = src_buf->src_dim.width;
+        src_buf->crop.height = src_buf->src_dim.height;
+    }
     /* error check first */
-    if ((src_buf->crop.width == 0) || (src_buf->crop.height == 0) ||
-        (src_buf->crop.width + src_buf->crop.offset_x > src_buf->src_dim.width) ||
+    if ((src_buf->crop.width + src_buf->crop.offset_x > src_buf->src_dim.width) ||
         (src_buf->crop.height + src_buf->crop.offset_y > src_buf->src_dim.height)) {
         CDBG_ERROR("%s: invalid crop boundary (%d, %d) out of (%d, %d)", __func__,
                    src_buf->crop.width + src_buf->crop.offset_x,

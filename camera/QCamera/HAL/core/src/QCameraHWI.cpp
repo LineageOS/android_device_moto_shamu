@@ -196,6 +196,8 @@ void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
     QCameraCmdThread *cmdThread = pme->mNotifyTh;
     uint8_t isEncoding = FALSE;
     uint8_t isActive = FALSE;
+    uint32_t numOfSnapshotExpected = 0;
+    uint32_t numOfSnapshotRcvd = 0;
 
     ALOGD("%s: E", __func__);
     do {
@@ -216,6 +218,8 @@ void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
             isActive = TRUE;
             /* init flag to FALSE */
             isEncoding = FALSE;
+            numOfSnapshotExpected = pme->getNumOfSnapshots();
+            numOfSnapshotRcvd = 0;
             break;
         case CAMERA_CMD_TYPE_STOP_DATA_PROC:
             /* flush jpeg data queue */
@@ -224,6 +228,8 @@ void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
             isActive = FALSE;
             /* set flag to FALSE */
             isEncoding = FALSE;
+            numOfSnapshotExpected = 0;
+            numOfSnapshotRcvd = 0;
             break;
         case CAMERA_CMD_TYPE_DO_NEXT_JOB:
             {
@@ -232,8 +238,6 @@ void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
                     app_notify_cb_t *app_cb =
                         (app_notify_cb_t *)pme->mNotifyDataQueue.dequeue();
                     if (NULL != app_cb) {
-                        isEncoding = FALSE;
-
                         /* send notify to upper layer */
                         if (app_cb->notifyCb) {
                             ALOGE("%s: evt notify cb", __func__);
@@ -249,6 +253,10 @@ void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
                                            app_cb->argm_data_cb.index,
                                            app_cb->argm_data_cb.metadata,
                                            app_cb->argm_data_cb.cookie);
+                            if (CAMERA_MSG_COMPRESSED_IMAGE == app_cb->argm_data_cb.msg_type) {
+                                numOfSnapshotRcvd++;
+                                isEncoding = FALSE;
+                            }
                         }
 
                         /* free app_cb */
@@ -256,10 +264,15 @@ void *QCameraHardwareInterface::dataNotifyRoutine(void *data)
                         free(app_cb);
                     }
 
-                    if (FALSE == isEncoding) {
+                    if ((FALSE == isEncoding) && !pme->mSuperBufQueue.is_empty()) {
                         isEncoding = TRUE;
                         /* notify processData thread to do next encoding job */
                         pme->mDataProcTh->sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
+                    }
+
+                    if (numOfSnapshotExpected > 0 &&
+                        numOfSnapshotExpected == numOfSnapshotRcvd) {
+                        pme->cancelPictureInternal();
                     }
                 } else {
                     /* do no op if not active */
@@ -541,10 +554,6 @@ status_t QCameraHardwareInterface::encodeData(mm_camera_super_buf_t* recvd_frame
     main_buf_info->out_dim.width = mPictureWidth;
     main_buf_info->out_dim.height = mPictureHeight;
     memcpy(&main_buf_info->crop, &main_stream->mCrop, sizeof(image_crop_t));
-    if (main_buf_info->crop.width == 0 || main_buf_info->crop.height == 0) {
-        main_buf_info->crop.width = main_stream->mWidth;
-        main_buf_info->crop.height = main_stream->mHeight;
-    }
 
     ALOGD("%s : Main Image :Input Dimension %d x %d output Dimension = %d X %d",
           __func__, main_buf_info->src_dim.width, main_buf_info->src_dim.height,
@@ -572,10 +581,6 @@ status_t QCameraHardwareInterface::encodeData(mm_camera_super_buf_t* recvd_frame
         thumb_buf_info->out_dim.width = thumbnailWidth;
         thumb_buf_info->out_dim.height = thumbnailHeight;
         memcpy(&thumb_buf_info->crop, &thumb_stream->mCrop, sizeof(image_crop_t));
-        if (thumb_buf_info->crop.width == 0 || thumb_buf_info->crop.height == 0) {
-            thumb_buf_info->crop.width = thumb_stream->mWidth;
-            thumb_buf_info->crop.height = thumb_stream->mHeight;
-        }
         ALOGD("%s : Thumanail :Input Dimension %d x %d output Dimension = %d X %d",
           __func__, thumb_buf_info->src_dim.width, thumb_buf_info->src_dim.height,
               thumb_buf_info->out_dim.width,thumb_buf_info->out_dim.height);
@@ -1206,26 +1211,9 @@ QCameraHardwareInterface::~QCameraHardwareInterface()
 {
     ALOGI("~QCameraHardwareInterface: E");
 
-    stopPreview();
-    mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
-
-    if(mJpegClientHandle > 0) {
-        int rc = mJpegHandle.close(mJpegClientHandle);
-        ALOGE("%s: Jpeg closed, rc = %d, mJpegClientHandle = %x",
-              __func__, rc, mJpegClientHandle);
-        mJpegClientHandle = 0;
-        memset(&mJpegHandle, 0, sizeof(mJpegHandle));
-    }
-
-    if (mNotifyTh != NULL) {
-        mNotifyTh->exit();
-        delete mNotifyTh;
-        mNotifyTh = NULL;
-    }
-    if (mDataProcTh != NULL) {
-        mDataProcTh->exit();
-        delete mDataProcTh;
-        mDataProcTh = NULL;
+    if (CAMERA_STATE_READY == mCameraState) {
+        stopPreview();
+        mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
     }
 
     if(mSupportedFpsRanges != NULL) {
@@ -1255,11 +1243,32 @@ QCameraHardwareInterface::~QCameraHardwareInterface()
             mHdrInfo.recvd_frame[i] = NULL;
         }
     }
-    mCameraHandle->ops->ch_release(mCameraHandle->camera_handle,
-                                   mChannelId);
 
+    if (mNotifyTh != NULL) {
+        mNotifyTh->exit();
+        delete mNotifyTh;
+        mNotifyTh = NULL;
+    }
+    if (mDataProcTh != NULL) {
+        mDataProcTh->exit();
+        delete mDataProcTh;
+        mDataProcTh = NULL;
+    }
+    if(mJpegClientHandle > 0) {
+        int rc = mJpegHandle.close(mJpegClientHandle);
+        ALOGE("%s: Jpeg closed, rc = %d, mJpegClientHandle = %x",
+              __func__, rc, mJpegClientHandle);
+        mJpegClientHandle = 0;
+        memset(&mJpegHandle, 0, sizeof(mJpegHandle));
+    }
 
-    mCameraHandle->ops->camera_close(mCameraHandle->camera_handle);
+    if (NULL != mCameraHandle) {
+        mCameraHandle->ops->ch_release(mCameraHandle->camera_handle,
+                                       mChannelId);
+
+        mCameraHandle->ops->camera_close(mCameraHandle->camera_handle);
+    }
+
     pthread_mutex_destroy(&mAsyncCmdMutex);
     pthread_cond_destroy(&mAsyncCmdWait);
 
@@ -2327,7 +2336,7 @@ void QCameraHardwareInterface::pausePreviewForSnapshot()
 
 status_t  QCameraHardwareInterface::takePicture()
 {
-    ALOGV("takePicture: E");
+    ALOGE("takePicture: E");
     status_t ret = MM_CAMERA_OK;
     uint32_t stream_info;
     uint32_t stream[2];
@@ -2410,7 +2419,6 @@ status_t  QCameraHardwareInterface::takePicture()
                 }
                 stream[num_streams++] = mStreams[MM_CAMERA_SNAPSHOT_THUMBNAIL]->mStreamId;
             }
-            ALOGV("%s : just before calling superbuf_cb_routine, num_streams = %d", __func__, num_streams);
             ret = mCameraHandle->ops->init_stream_bundle(
                       mCameraHandle->camera_handle,
                       mChannelId,
@@ -2419,7 +2427,6 @@ status_t  QCameraHardwareInterface::takePicture()
                       &attr,
                       num_streams,
                       stream);
-            ALOGE("%s : just after calling suberbuf_cb_routine, ret = %d", __func__, ret);
             if (MM_CAMERA_OK != ret){
                 ALOGE("%s: error - can't init Snapshot streams!", __func__);
                 return BAD_VALUE;
@@ -2457,9 +2464,6 @@ status_t  QCameraHardwareInterface::takePicture()
         ret = UNKNOWN_ERROR;
         break;
     case QCAMERA_HAL_RECORDING_STARTED:
-        /* if livesnapshot stream is previous on, need to stream off first */
-        mStreams[MM_CAMERA_SNAPSHOT_MAIN]->streamOff(0);
-
         stream[0] = mStreams[MM_CAMERA_SNAPSHOT_MAIN]->mStreamId;
         memset(&attr, 0, sizeof(mm_camera_bundle_attr_t));
         attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
@@ -3382,6 +3386,17 @@ QCameraQueue::~QCameraQueue()
 {
     flush();
     pthread_mutex_destroy(&mlock);
+}
+
+bool QCameraQueue::is_empty()
+{
+    bool isEmpty = true;
+    pthread_mutex_lock(&mlock);
+    if (msize > 0) {
+        isEmpty = false;
+    }
+    pthread_mutex_unlock(&mlock);
+    return isEmpty;
 }
 
 bool QCameraQueue::enqueue(void *data)
