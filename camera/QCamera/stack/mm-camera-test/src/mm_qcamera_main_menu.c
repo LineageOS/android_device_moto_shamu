@@ -144,11 +144,11 @@ const CAMERA_SHARPNESS_TBL_T camera_sharpness_tbl[] = {
 };
 
 const WHITE_BALANCE_TBL_T white_balance_tbl[] = {
-  { 	MM_CAMERA_WHITE_BALANCE_AUTO,         "White Balance - Auto"},
-  { 	MM_CAMERA_WHITE_BALANCE_OFF,          "White Balance - Off"},
-  {   MM_CAMERA_WHITE_BALANCE_DAYLIGHT,     "White Balance - Daylight"},
-  {   MM_CAMERA_WHITE_BALANCE_INCANDESCENT, "White Balance - Incandescent"},
-  {   MM_CAMERA_WHITE_BALANCE_FLUORESCENT,  "White Balance - Fluorescent"},
+  { CAMERA_WB_AUTO,         "White Balance - Auto"},
+  { CAMERA_WB_DAYLIGHT,     "White Balance - Daylight"},
+  { CAMERA_WB_INCANDESCENT, "White Balance - Incandescent"},
+  { CAMERA_WB_FLUORESCENT,  "White Balance - Fluorescent"},
+  { CAMERA_WB_CLOUDY_DAYLIGHT,  "White Balance - Cloudy"},
 };
 
 const CAMERA_TBL_T cam_tbl[] = {
@@ -1676,44 +1676,37 @@ ERROR:
  * ===========================================================================*/
 int set_whitebalance (int wb_action_param) {
 
-	int rc = 0;
-	struct v4l2_control ctrl;
+    int rc = 0;
+    struct v4l2_control ctrl_awb, ctrl_temperature;
 
-  if (wb_action_param == MM_CAMERA_WHITE_BALANCE_AUTO) {
-		ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
-		ctrl.value = TRUE;
-	//	rc = ioctl(camfd, VIDIOC_S_CTRL, &ctrl);
+    ctrl_awb.id = V4L2_CID_AUTO_WHITE_BALANCE;
+    ctrl_awb.id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
 
-	} else if ( wb_action_param == MM_CAMERA_WHITE_BALANCE_OFF) {
-		ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
-		ctrl.value = FALSE;
-	//	rc = ioctl(camfd, VIDIOC_S_CTRL, &ctrl);
-
-  } else {
-		int temperature = 6500;
-
-		switch (wb_action_param) {
-			case MM_CAMERA_WHITE_BALANCE_DAYLIGHT:
-				temperature = 6500;
-				break;
-			case MM_CAMERA_WHITE_BALANCE_INCANDESCENT:
-				temperature = 2800;
-				break;
-			case MM_CAMERA_WHITE_BALANCE_FLUORESCENT:
-				temperature = 4200;
-				break;
-			default:
-				temperature = 4200;
-				break;
-		}
-
-		ctrl.id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
-		ctrl.value = temperature;
-	//	rc = ioctl(camfd, VIDIOC_S_CTRL, &ctrl);
-	}
+    switch (wb_action_param) {
+    case CAMERA_WB_INCANDESCENT:
+        ctrl_awb.value = FALSE;
+        ctrl_temperature.value = 2800;
+        break;
+    case CAMERA_WB_DAYLIGHT:
+        ctrl_awb.value = FALSE;
+        ctrl_temperature.value = 6500;
+	break;
+    case CAMERA_WB_FLUORESCENT:
+        ctrl_awb.value = FALSE;
+	ctrl_temperature.value = 4200;
+	break;
+    case CAMERA_WB_CLOUDY_DAYLIGHT:
+        ctrl_awb.value = FALSE;
+	ctrl_temperature.value = 7500;
+	break;
+    case CAMERA_WB_AUTO:
+    default:
+        ctrl_awb.value = TRUE;
+        break;
+    }
 
 DONE:
-	return rc;
+    return rc;
 }
 
 

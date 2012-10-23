@@ -1377,42 +1377,49 @@ int32_t mm_camera_ctrl_set_auto_focus (mm_camera_obj_t *my_obj, int32_t value)
 
 int32_t mm_camera_ctrl_set_whitebalance (mm_camera_obj_t *my_obj, int32_t mode) {
 
-    int32_t rc = 0, value;
-    uint32_t id;
+    int32_t rc = 0, auto_wb, temperature;
+    uint32_t id_auto_wb, id_temperature;
+
+    id_auto_wb = V4L2_CID_AUTO_WHITE_BALANCE;
+    id_temperature = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
 
     switch(mode) {
-    case MM_CAMERA_WHITE_BALANCE_AUTO:
-        id = V4L2_CID_AUTO_WHITE_BALANCE;
-        value = 1; /* TRUE */
+    case CAMERA_WB_DAYLIGHT:
+        auto_wb = 0;
+        temperature = 6500;
         break;
-    case MM_CAMERA_WHITE_BALANCE_OFF:
-        id = V4L2_CID_AUTO_WHITE_BALANCE;
-        value = 0; /* FALSE */
+    case CAMERA_WB_INCANDESCENT:
+        auto_wb = 0;
+        temperature = 2800;
         break;
-    case MM_CAMERA_WHITE_BALANCE_DAYLIGHT:
-        id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
-        value = 6500;
+    case CAMERA_WB_FLUORESCENT:
+        auto_wb = 0;
+        temperature = 4200;
         break;
-    case MM_CAMERA_WHITE_BALANCE_INCANDESCENT:
-        id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
-        value = 2800;
+    case CAMERA_WB_CLOUDY_DAYLIGHT:
+        auto_wb = 0;
+        temperature = 7500;
         break;
-    case MM_CAMERA_WHITE_BALANCE_FLUORESCENT:
-        id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
-        value = 4200;
-        break;
-    case MM_CAMERA_WHITE_BALANCE_CLOUDY:
-        id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
-        value = 7500;
-        break;
+    case CAMERA_WB_AUTO:
     default:
-        id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
-        value = 4200;
+        auto_wb = 1; /* TRUE */
+        temperature = 0;
         break;
     }
-    rc =  mm_camera_util_s_ctrl(my_obj->ctrl_fd, id, value);
+
+    rc =  mm_camera_util_s_ctrl(my_obj->ctrl_fd, id_auto_wb, auto_wb);
     if(0 != rc){
-        CDBG("%s: error, exp_metering_action_param=%d, rc = %d\n", __func__, value, rc);
+        CDBG_ERROR("%s: error, V4L2_CID_AUTO_WHITE_BALANCE value = %d, rc = %d\n",
+            __func__, auto_wb, rc);
+        return rc;
+    }
+    if (!auto_wb) {
+        rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, id_temperature, temperature);
+        if (0 != rc) {
+            CDBG_ERROR("%s: error, V4L2_CID_WHITE_BALANCE_TEMPERATURE value = %d, rc = %d\n",
+                __func__, temperature, rc);
+            return rc;
+        }
     }
     return rc;
 }
