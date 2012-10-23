@@ -630,12 +630,9 @@ private:
 
     void stopPreviewInternal();
     void stopRecordingInternal();
-    //void stopPreviewZSL();
     status_t cancelPictureInternal();
-    //status_t startPreviewZSL();
     void pausePreviewForSnapshot();
-    void pausePreviewForZSL();
-    //status_t resumePreviewAfterSnapshot();
+    void restartPreview();
 
     status_t runFaceDetection();
 

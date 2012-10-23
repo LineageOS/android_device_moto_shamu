@@ -1176,7 +1176,7 @@ int32_t mm_channel_request_super_buf(mm_channel_t *my_obj, uint32_t num_buf_requ
     if (NULL != node) {
         memset(node, 0, sizeof(mm_camera_cmdcb_t));
         node->cmd_type = MM_CAMERA_CMD_TYPE_REQ_DATA_CB;
-        node->u.req_buf.num_buf_requested = my_obj->bundle.superbuf_queue.attr.burst_num;
+        node->u.req_buf.num_buf_requested = num_buf_requested;
 
         /* enqueue to cmd thread */
         mm_camera_queue_enq(&(my_obj->cmd_thread.cmd_queue), node);

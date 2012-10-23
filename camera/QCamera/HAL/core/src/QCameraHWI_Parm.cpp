@@ -1394,6 +1394,7 @@ status_t QCameraHardwareInterface::setParameters(const QCameraParameters& params
     ALOGI("%s: E", __func__);
 //    Mutex::Autolock l(&mLock);
     status_t rc, final_rc = NO_ERROR;
+    mRestartPreview = false;
 
     if ((rc = setCameraMode(params)))                   final_rc = rc;
 //    if ((rc = setChannelInterfaceMask(params)))         final_rc = rc;
@@ -1474,8 +1475,14 @@ status_t QCameraHardwareInterface::setParameters(const QCameraParameters& params
     //Update Exiftag values.
     setExifTags();
 
-   ALOGI("%s: X", __func__);
-   return final_rc;
+    if (mRestartPreview) {
+        ALOGI("%s: need to restart preview", __func__);
+        restartPreview();
+        mRestartPreview = false;
+    }
+
+    ALOGI("%s: X", __func__);
+    return final_rc;
 }
 
 /** Retrieve the camera parameters.  The buffer returned by the camera HAL
@@ -1621,8 +1628,7 @@ status_t QCameraHardwareInterface::setContrast(const QCameraParameters& params)
              if (mContrast != contrast) {
                   mContrast = contrast;
                  if (mPreviewState == QCAMERA_HAL_PREVIEW_STARTED && ret) {
-                      mRestartPreview = 1;
-                      pausePreviewForZSL();
+                      mRestartPreview = true;
                   }
              }
         }
@@ -2106,8 +2112,7 @@ status_t QCameraHardwareInterface::setSceneMode(const QCameraParameters& params)
                 if (mBestShotMode != value) {
                      mBestShotMode = value;
                      if (mPreviewState == QCAMERA_HAL_PREVIEW_STARTED && ret) {
-                           mRestartPreview = 1;
-                           pausePreviewForZSL();
+                           mRestartPreview = true;
                       }
                  }
             }
@@ -2180,8 +2185,7 @@ status_t QCameraHardwareInterface::setEffect(const QCameraParameters& params)
                      if (mEffects != value) {
                          mEffects = value;
                          if (mPreviewState == QCAMERA_HAL_PREVIEW_STARTED && ret) {
-                               mRestartPreview = 1;
-                               pausePreviewForZSL();
+                               mRestartPreview = true;
                           }
                    }
                }
@@ -2477,11 +2481,12 @@ status_t QCameraHardwareInterface::setVideoSize(const QCameraParameters& params)
         ALOGI("%s: requested record size %s", __func__, str);
         if(!parse_size(str, videoWidth, videoHeight)) {
             parse_size(str_t, old_vid_w, old_vid_h);
-            if(old_vid_w != videoWidth || old_vid_h != videoHeight) {
-                mRestartPreview = true;
-                ALOGE("%s: Video sizes changes to %s, Restart preview...", __func__, str);
-            }
             mParameters.set(QCameraParameters::KEY_VIDEO_SIZE, str);
+            if((QCAMERA_HAL_PREVIEW_STARTED == mPreviewState) &&
+               (old_vid_w != videoWidth || old_vid_h != videoHeight)) {
+                ALOGE("%s: Video sizes changes to %s, Restart preview...", __func__, str);
+                mRestartPreview = true;
+            }
         } else {
             mParameters.set(QCameraParameters::KEY_VIDEO_SIZE, "");
             ALOGE("%s: error :failed to parse parameter record-size (%s)", __func__, str);
@@ -2664,12 +2669,13 @@ status_t QCameraHardwareInterface::setPictureSize(const QCameraParameters& param
           && height == mPictureSizesPtr[i].height) {
             int old_width, old_height;
             mParameters.getPictureSize(&old_width,&old_height);
-            if(width != old_width || height != old_height) {
-                mRestartPreview = true;
-            }
             mParameters.setPictureSize(width, height);
             mDimension.picture_width = width;
             mDimension.picture_height = height;
+            if((QCAMERA_HAL_PREVIEW_STARTED == mPreviewState) &&
+               (width != old_width || height != old_height)) {
+                mRestartPreview = true;
+            }
             return NO_ERROR;
         }
     }
@@ -2903,8 +2909,6 @@ status_t QCameraHardwareInterface::setMCEValue(const QCameraParameters& params)
 
 status_t QCameraHardwareInterface::setHighFrameRate(const QCameraParameters& params)
 {
-
-    bool mCameraRunning;
     uint8_t supported;
     mCameraHandle->ops->is_parm_supported(mCameraHandle->camera_handle,
                                           MM_CAMERA_PARM_HFR,&supported,&supported);
@@ -2922,14 +2926,11 @@ status_t QCameraHardwareInterface::setHighFrameRate(const QCameraParameters& par
             const char *oldHfr = mParameters.get(QCameraParameters::KEY_QC_VIDEO_HIGH_FRAME_RATE);
             if(strcmp(oldHfr, str)){
                 mParameters.set(QCameraParameters::KEY_QC_VIDEO_HIGH_FRAME_RATE, str);
-		mCameraRunning=isPreviewRunning();
-                if(mCameraRunning == true) {
+                if(QCAMERA_HAL_PREVIEW_STARTED == mPreviewState) {
                     stopPreviewInternal();
                     mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
                     native_set_parms(MM_CAMERA_PARM_HFR, sizeof(int32_t), (void *)&mHFRLevel);
-                    mPreviewState = QCAMERA_HAL_PREVIEW_START;
-                    if (startPreview2() == NO_ERROR)
-                        mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
+                    mRestartPreview = true;
                     return NO_ERROR;
                 }
             }
