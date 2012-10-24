@@ -1194,6 +1194,9 @@ QCameraHardwareInterface(int cameraId, int mode)
     }
 
     memset(&mHdrInfo, 0, sizeof(snap_hdr_record_t));
+    // initialize the mMetadata to set num_of_faces to 0
+    memset(&mMetadata, 0, sizeof(mMetadata));
+
     if (hw_get_module(POWER_HARDWARE_MODULE_ID, (const hw_module_t **)&mPowerModule)) {
         ALOGE("%s module not found", POWER_HARDWARE_MODULE_ID);
     }
