@@ -2350,6 +2350,18 @@ status_t QCameraHardwareInterface::setWhiteBalance(const QCameraParameters& para
     ALOGE("Invalid whitebalance value: %s", (str == NULL) ? "NULL" : str);
     return BAD_VALUE;
 }
+
+int QCameraHardwareInterface::getAutoFlickerMode()
+{
+     /* Enable Advanced Auto Antibanding where we can set
+        any of the following option
+        ie. CAMERA_ANTIBANDING_AUTO
+            CAMERA_ANTIBANDING_AUTO_50HZ
+            CAMERA_ANTIBANDING_AUTO_60HZ
+        Currently setting it to default    */
+    return CAMERA_ANTIBANDING_AUTO;
+}
+
 status_t QCameraHardwareInterface::setAntibanding(const QCameraParameters& params)
 {
     int result;
@@ -2369,6 +2381,9 @@ status_t QCameraHardwareInterface::setAntibanding(const QCameraParameters& param
             camera_antibanding_type temp = (camera_antibanding_type) value;
             ALOGE("Antibanding Value : %d",value);
             mParameters.set(QCameraParameters::KEY_ANTIBANDING, str);
+            if(value == CAMERA_ANTIBANDING_AUTO) {
+            value = getAutoFlickerMode();
+            }
             bool ret = native_set_parms(MM_CAMERA_PARM_ANTIBANDING,
                        sizeof(camera_antibanding_type), (void *)&value ,(int *)&result);
             if(result != MM_CAMERA_OK) {
@@ -2489,7 +2504,23 @@ status_t QCameraHardwareInterface::setWaveletDenoise(const QCameraParameters& pa
             denoise_param_t temp;
             memset(&temp, 0, sizeof(denoise_param_t));
             temp.denoise_enable = value;
-            temp.process_plates = atoi(prop);
+            switch(atoi(prop)) {
+                case 0:
+                    temp.process_plates = WAVELET_DENOISE_YCBCR_PLANE;
+                    break;
+                case 1:
+                    temp.process_plates = WAVELET_DENOISE_CBCR_ONLY;
+                    break;
+                case 2:
+                    temp.process_plates = WAVELET_DENOISE_STREAMLINE_YCBCR;
+                    break;
+                case 3:
+                    temp.process_plates = WAVELET_DENOISE_STREAMLINED_CBCR;
+                    break;
+                default:
+                    temp.process_plates = WAVELET_DENOISE_STREAMLINE_YCBCR;
+                    break;
+            }
             ALOGE("Denoise enable=%d, plates=%d", temp.denoise_enable, temp.process_plates);
             bool ret = native_set_parms(MM_CAMERA_PARM_WAVELET_DENOISE, sizeof(temp),
                     (void *)&temp);
