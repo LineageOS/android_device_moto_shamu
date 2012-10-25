@@ -45,7 +45,7 @@ void stream_cb_routine(mm_camera_super_buf_t *bufs,
     switch(p_obj->mExtImgMode)
     {
         case MM_CAMERA_PREVIEW:
-            ALOGE("%s : callback for MM_CAMERA_PREVIEW", __func__);
+            ALOGD("%s : callback for MM_CAMERA_PREVIEW", __func__);
             ((QCameraStream_preview *)p_obj)->processPreviewFrame(bufs);
             break;
         case MM_CAMERA_VIDEO:
