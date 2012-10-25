@@ -230,7 +230,6 @@ static void mm_stream_data_notify(void* user_data)
         return;
     }
     idx = buf_info.buf->buf_idx;
-
     /* update buffer location */
     my_obj->buf_status[idx].in_kernel = 0;
 
@@ -1375,7 +1374,6 @@ int32_t mm_stream_deinit_bufs(mm_stream_t * my_obj)
         CDBG_ERROR("%s: mem table is NULL, cannot release buf", __func__);
         rc = -1;
     }
-
     free(my_obj->buf);
     my_obj->buf = NULL;
     free(my_obj->buf_status);

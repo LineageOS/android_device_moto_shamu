@@ -1106,12 +1106,6 @@ typedef struct {
 
 #define MAX_MOBICAT_SIZE 8092
 
-/* This macro defines whether to gather the mobicat info from
-   mm-camera-interface or HAL. Since its a huge data, we dont
-   want to get the data per frame basis unless OEM wants it.
-   Adding the support for both by controlling this macro*/
-#define HAL_GET_MBC_INFO
-
 /*
   WARNING: Since this data structure is huge,
   never use it as local variable, otherwise, it so easy to cause

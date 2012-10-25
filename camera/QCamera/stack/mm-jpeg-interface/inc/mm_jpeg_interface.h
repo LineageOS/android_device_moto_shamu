@@ -155,6 +155,11 @@ typedef struct {
     /* buf to exif entries, caller needs to
      * take care of the memory manage with insider ptr */
     exif_tags_info_t *exif_data;
+
+    /*for mobicat support*/
+    const uint8_t * mobicat_data;
+    int32_t mobicat_data_length;
+    int hasmobicat;
 } mm_jpeg_encode_params;
 
 typedef enum {

@@ -54,6 +54,10 @@ void QCameraHardwareInterface::superbuf_cb_routine(mm_camera_super_buf_t *recvd_
         ALOGE("%s: Error allocating memory to save received_frame structure.", __func__);
         for (int i=0; i<recvd_frame->num_bufs; i++) {
              if (recvd_frame->bufs[i] != NULL) {
+                 if (recvd_frame->bufs[i]->p_mobicat_info) {
+                    free(recvd_frame->bufs[i]->p_mobicat_info);
+                    recvd_frame->bufs[i]->p_mobicat_info = NULL;
+                 }
                  pme->mCameraHandle->ops->qbuf(recvd_frame->camera_handle,
                                                recvd_frame->ch_id,
                                                recvd_frame->bufs[i]);
@@ -124,6 +128,10 @@ void QCameraHardwareInterface::snapshot_jpeg_cb(jpeg_job_status_t status,
 
     /* no use of src frames, return them to kernel */
     for(int i = 0; i< cookie->src_frame->num_bufs; i++) {
+        if (cookie->src_frame->bufs[i]->p_mobicat_info) {
+            free(cookie->src_frame->bufs[i]->p_mobicat_info);
+            cookie->src_frame->bufs[i]->p_mobicat_info = NULL;
+        }
         pme->mCameraHandle->ops->qbuf(cookie->src_frame->camera_handle,
                                       cookie->src_frame->ch_id,
                                       cookie->src_frame->bufs[i]);
@@ -170,6 +178,10 @@ void QCameraHardwareInterface::releaseSuperBuf(mm_camera_super_buf_t *super_buf)
 {
     if (NULL != super_buf) {
         for(int i = 0; i< super_buf->num_bufs; i++) {
+            if (super_buf->bufs[i]->p_mobicat_info) {
+                free(super_buf->bufs[i]->p_mobicat_info);
+                super_buf->bufs[i]->p_mobicat_info = NULL;
+            }
             mCameraHandle->ops->qbuf(super_buf->camera_handle,
                                      super_buf->ch_id,
                                      super_buf->bufs[i]);
@@ -541,7 +553,28 @@ status_t QCameraHardwareInterface::encodeData(mm_camera_super_buf_t* recvd_frame
     jpg_job.encode_job.encode_parm.buf_info.src_imgs.src_img_num = src_img_num;
     jpg_job.encode_job.encode_parm.buf_info.src_imgs.is_video_frame = FALSE;
 
-    // fill in the src_img info
+    if (mMobiCatEnabled) {
+        main_frame->p_mobicat_info = (cam_exif_tags_t*)malloc(sizeof(cam_exif_tags_t));
+        if ((main_frame->p_mobicat_info != NULL) &&
+             mCameraHandle->ops->get_parm(mCameraHandle->camera_handle, MM_CAMERA_PARM_MOBICAT,
+                 main_frame->p_mobicat_info)
+                 == MM_CAMERA_OK) {
+                 ALOGV("%s:%d] Mobicat enabled %p %d", __func__, __LINE__,
+                       main_frame->p_mobicat_info->tags,
+                       main_frame->p_mobicat_info->data_len);
+        } else {
+              ALOGE("MM_CAMERA_PARM_MOBICAT get failed");
+        }
+    }
+    if (mMobiCatEnabled && main_frame->p_mobicat_info) {
+        jpg_job.encode_job.encode_parm.hasmobicat = 1;
+        jpg_job.encode_job.encode_parm.mobicat_data = (uint8_t *)main_frame->p_mobicat_info->tags;
+        jpg_job.encode_job.encode_parm.mobicat_data_length = main_frame->p_mobicat_info->data_len;
+     } else {
+        jpg_job.encode_job.encode_parm.hasmobicat = 0;
+     }
+
+     // fill in the src_img info
     //main img
     main_buf_info = &jpg_job.encode_job.encode_parm.buf_info.src_imgs.src_img[JPEG_SRC_IMAGE_TYPE_MAIN];
     main_buf_info->type = JPEG_SRC_IMAGE_TYPE_MAIN;
@@ -1067,6 +1100,7 @@ QCameraHardwareInterface(int cameraId, int mode)
 {
     ALOGI("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;
+    mMobiCatEnabled = false;
     char value[PROPERTY_VALUE_MAX];
 
     pthread_mutex_init(&mAsyncCmdMutex, NULL);

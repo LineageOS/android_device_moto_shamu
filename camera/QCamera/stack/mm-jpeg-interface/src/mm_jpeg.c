@@ -69,6 +69,9 @@ int32_t mm_jpeg_queue_update_flag(mm_jpeg_queue_t* queue, uint32_t job_id, uint8
 mm_jpeg_job_q_node_t* mm_jpeg_queue_remove_job_by_client_id(mm_jpeg_queue_t* queue, uint32_t client_hdl);
 mm_jpeg_job_q_node_t* mm_jpeg_queue_remove_job_by_job_id(mm_jpeg_queue_t* queue, uint32_t job_id);
 
+static OMX_INDEXTYPE mobicat_data;
+static omx_jpeg_mobicat mobicat_d;
+
 int32_t mm_jpeg_omx_load(mm_jpeg_obj* my_obj)
 {
     int32_t rc = 0;
@@ -511,6 +514,15 @@ int32_t mm_jpeg_omx_config_common(mm_jpeg_obj* my_obj, mm_jpeg_encode_job* job)
     for(i = 0; i < job->encode_parm.exif_numEntries; i++) {
         memcpy(&tag, job->encode_parm.exif_data + i, sizeof(omx_jpeg_exif_info_tag));
         OMX_SetParameter(my_obj->omx_handle, exif_idx, &tag);
+    }
+
+    /* set mobicat info */
+    CDBG("%s: set Mobicat info", __func__);
+    if(job->encode_parm.hasmobicat) {
+        mobicat_d.mobicatData = job->encode_parm.mobicat_data;
+        mobicat_d.mobicatDataLength =  job->encode_parm.mobicat_data_length;
+        OMX_GetExtensionIndex(my_obj->omx_handle, "omx.qcom.jpeg.exttype.mobicat", &mobicat_data);
+        OMX_SetParameter(my_obj->omx_handle, mobicat_data, &mobicat_d);
     }
 
     return rc;

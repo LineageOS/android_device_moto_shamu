@@ -829,8 +829,16 @@ int32_t mm_camera_get_parm(mm_camera_obj_t *my_obj,
                                             sizeof(cam_sensor_fps_range_t),
                                             p_value);
         break;
+
     case MM_CAMERA_PARM_BESTSHOT_RECONFIGURE:
         *((int *)p_value) = my_obj->properties.bestshot_reconfigure;
+        break;
+
+    case MM_CAMERA_PARM_MOBICAT:
+        rc = mm_camera_send_native_ctrl_cmd(my_obj,
+                                            CAMERA_GET_PARM_MOBICAT,
+                                            sizeof(cam_exif_tags_t),
+                                            p_value);
         break;
     default:
         /* needs to add more implementation */
@@ -1728,6 +1736,11 @@ int32_t mm_camera_set_general_parm(mm_camera_obj_t * my_obj,
                                             sizeof(exp_bracketing_t),
                                             p_value);
         break;
+    case MM_CAMERA_PARM_MOBICAT:
+	    rc = mm_camera_send_native_ctrl_cmd(my_obj,
+                                            CAMERA_ENABLE_MOBICAT,
+                                            sizeof(mm_cam_mobicat_info_t),
+                                            p_value);
     default:
         CDBG("%s: default: parm %d not supported\n", __func__, parm_type);
         break;
