@@ -95,7 +95,7 @@ extern "C" {
 
 //Default Video Width
 #define DEFAULT_VIDEO_WIDTH 1920
-#define DEFAULT_VIDEO_HEIGHT 1088
+#define DEFAULT_VIDEO_HEIGHT 1080
 
 #define THUMBNAIL_SIZE_COUNT (sizeof(thumbnail_sizes)/sizeof(thumbnail_size_type))
 #define DEFAULT_THUMBNAIL_SETTING 4
@@ -160,7 +160,7 @@ static camera_size_type default_picture_sizes[] = {
   { 3200, 2400}, // 8MP
   { 2592, 1944}, // 5MP
   { 2048, 1536}, // 3MP QXGA
-  { 1920, 1088}, //HD1080
+  { 1920, 1080}, //HD1080
   { 1600, 1200}, // 2MP UXGA
   { 1280, 768}, //WXGA
   { 1280, 720}, //HD720
