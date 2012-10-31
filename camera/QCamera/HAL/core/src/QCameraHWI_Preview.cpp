@@ -704,7 +704,7 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(mm_camera_super_b
         }
         mHalCamCtrl->cache_ops((QCameraHalMemInfo_t *)(mNotifyBuffer[i].bufs[0]->mem_info),
                                mNotifyBuffer[i].bufs[0]->buffer,
-                               ION_IOC_CLEAN_CACHES);
+                               ION_IOC_INV_CACHES);
         }
      }
   } else
@@ -870,7 +870,7 @@ status_t QCameraStream_preview::processPreviewFrameWithOutDisplay(
       }
       mHalCamCtrl->cache_ops((QCameraHalMemInfo_t *)(mNotifyBuffer[preview_buf_idx].bufs[0]->mem_info),
                              mNotifyBuffer[preview_buf_idx].bufs[0]->buffer,
-                             ION_IOC_CLEAN_CACHES);
+                             ION_IOC_INV_CACHES);
       ALOGD("end of cb");
   }
 

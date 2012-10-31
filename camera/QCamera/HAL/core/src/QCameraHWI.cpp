@@ -63,7 +63,7 @@ void QCameraHardwareInterface::superbuf_cb_routine(mm_camera_super_buf_t *recvd_
                                                recvd_frame->bufs[i]);
                  pme->cache_ops((QCameraHalMemInfo_t *)(recvd_frame->bufs[i]->mem_info),
                                 recvd_frame->bufs[i]->buffer,
-                                ION_IOC_CLEAN_CACHES);
+                                ION_IOC_INV_CACHES);
              }
         }
         return;
@@ -137,7 +137,7 @@ void QCameraHardwareInterface::snapshot_jpeg_cb(jpeg_job_status_t status,
                                       cookie->src_frame->bufs[i]);
         pme->cache_ops((QCameraHalMemInfo_t *)(cookie->src_frame->bufs[i]->mem_info),
                       cookie->src_frame->bufs[i]->buffer,
-                      ION_IOC_CLEAN_CACHES);
+                      ION_IOC_INV_CACHES);
     }
     free(cookie->src_frame);
     cookie->src_frame = NULL;
@@ -187,7 +187,7 @@ void QCameraHardwareInterface::releaseSuperBuf(mm_camera_super_buf_t *super_buf)
                                      super_buf->bufs[i]);
             cache_ops((QCameraHalMemInfo_t *)(super_buf->bufs[i]->mem_info),
                       super_buf->bufs[i]->buffer,
-                      ION_IOC_CLEAN_CACHES);
+                      ION_IOC_INV_CACHES);
         }
     }
 }
@@ -608,7 +608,8 @@ status_t QCameraHardwareInterface::encodeData(mm_camera_super_buf_t* recvd_frame
         thumb_buf_info = &jpg_job.encode_job.encode_parm.buf_info.src_imgs.src_img[JPEG_SRC_IMAGE_TYPE_THUMB];
         thumb_buf_info->type = JPEG_SRC_IMAGE_TYPE_THUMB;
         thumb_buf_info->color_format = getColorfmtFromImgFmt(thumb_stream->mFormat);
-        thumb_buf_info->quality = jpeg_quality;
+        //thumb_buf_info->quality = jpeg_quality;
+        thumb_buf_info->quality = 75; //hardcoded for now, will be calculated in encoder code later
         thumb_buf_info->src_dim.width = thumb_stream->mWidth;
         thumb_buf_info->src_dim.height = thumb_stream->mHeight;
         thumb_buf_info->out_dim.width = thumbnailWidth;
@@ -772,7 +773,6 @@ void QCameraHardwareInterface::receiveCompleteJpegPicture(jpeg_job_status_t stat
 
     if(thumbnailDroppedFlag) {
         ALOGE("%s : Error in thumbnail encoding, no ops here", __func__);
-        return;
     }
 
     pme->dumpFrameToFile(out_data,
@@ -3320,7 +3320,7 @@ void QCameraHardwareInterface::notifyHdrEvent(cam_ctrl_status_t status, void * c
                                  frame->bufs[i]);
         cache_ops((QCameraHalMemInfo_t *)(frame->bufs[i]->mem_info),
                   frame->bufs[i]->buffer,
-                  ION_IOC_CLEAN_CACHES);
+                  ION_IOC_INV_CACHES);
     }
     free(frame);
     mHdrInfo.recvd_frame[2] = NULL;
