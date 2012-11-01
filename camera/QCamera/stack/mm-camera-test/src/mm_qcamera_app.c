@@ -480,6 +480,7 @@ int mm_stream_invalid_cache(mm_camera_app_obj_t *pme,mm_camera_buf_def_t *frame)
     cache_inv_data.fd = app_bufs->bufs[index].fd;
     cache_inv_data.handle = app_bufs->ion_info_fd[index].handle;
     cache_inv_data.length = app_bufs->alloc[index].len;
+    cache_inv_data.offset = 0;
     custom_data.cmd = ION_IOC_INV_CACHES;
     custom_data.arg = (unsigned long)&cache_inv_data;
     ion_fd = pme->ionfd;
@@ -535,6 +536,7 @@ int mm_stream_clear_invalid_cache(mm_camera_app_obj_t *pme,mm_camera_buf_def_t *
         cache_inv_data.fd = app_bufs->bufs[index].fd;
         cache_inv_data.handle = app_bufs->ion_info_fd[index].handle;
         cache_inv_data.length = app_bufs->alloc[index].len;
+        cache_inv_data.offset = 0;
         custom_data.cmd = ION_IOC_CLEAN_INV_CACHES;
         custom_data.arg = (unsigned long)&cache_inv_data;
         ion_fd = pme->ionfd;

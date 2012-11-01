@@ -351,6 +351,7 @@ status_t QCameraStream_record::processRecordFrame(void *data)
   cache_inv_data.fd = frame->video.video.frame->fd;
   cache_inv_data.handle = frame->video.video.frame->fd_data.handle;
   cache_inv_data.length = frame->video.video.frame->ion_alloc.len;
+  cache_inv_data.offset = 0;
 
   if (mHalCamCtrl->cache_ops(ion_fd, &cache_inv_data, ION_IOC_CLEAN_CACHES) < 0)
     ALOGE("%s: Cache clean for Video buffer %p fd = %d failed", __func__,

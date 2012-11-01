@@ -332,9 +332,9 @@ status_t  QCameraStream_preview::getBufferNoDisplay( )
     planes[i] = dim.display_frame_offset.mp[i].len;
   }
 
-  frame_len = dim.picture_frame_offset.frame_len;
-  y_off = dim.picture_frame_offset.mp[0].offset;
-  cbcr_off = dim.picture_frame_offset.mp[1].offset;
+  frame_len = dim.display_frame_offset.frame_len;
+  y_off = dim.display_frame_offset.mp[0].offset;
+  cbcr_off = dim.display_frame_offset.mp[1].offset;
   ALOGE("%s: main image: rotation = %d, yoff = %d, cbcroff = %d, size = %d, width = %d, height = %d",
        __func__, dim.rotation, y_off, cbcr_off, frame_len,
        dim.display_width, dim.display_height);
@@ -719,7 +719,7 @@ status_t QCameraStream_preview::initPreviewOnlyBuffers()
 
     ALOGE("%s: idx = %d, fd = %d, size = %d, cbcr_offset = %d, y_offset = %d, "
       "vaddr = 0x%x", __func__, i, mDisplayStreamBuf.frame[i].fd,
-      frame_len,
+      mDisplayStreamBuf.frame_len,
       mDisplayStreamBuf.frame[i].cbcr_off, mDisplayStreamBuf.frame[i].y_off,
       (uint32_t)mDisplayStreamBuf.frame[i].buffer);
 
@@ -885,6 +885,7 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
   cache_inv_data.fd = frame->def.frame->fd;
   cache_inv_data.handle = frame->def.frame->fd_data.handle;
   cache_inv_data.length = frame->def.frame->ion_alloc.len;
+  cache_inv_data.offset = 0;
 
   if (mHalCamCtrl->cache_ops(ion_fd, &cache_inv_data, ION_IOC_CLEAN_CACHES) < 0)
     ALOGE("%s: Cache clean for Preview buffer %p fd = %d failed", __func__,
@@ -1123,6 +1124,7 @@ status_t QCameraStream_preview::processPreviewFrameWithOutDisplay(
   cache_inv_data.fd = frame->def.frame->fd;
   cache_inv_data.handle = frame->def.frame->fd_data.handle;
   cache_inv_data.length = frame->def.frame->ion_alloc.len;
+  cache_inv_data.offset = 0;
 
   if (mHalCamCtrl->cache_ops(ion_fd, &cache_inv_data, ION_IOC_CLEAN_CACHES) < 0)
     ALOGE("%s: Cache clean for Preview buffer %p fd = %d failed", __func__,

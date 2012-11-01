@@ -465,6 +465,7 @@ static int32_t mm_camera_ch_util_qbuf(mm_camera_obj_t *my_obj,
     cache_inv_data.fd = cache_frame->fd;
     cache_inv_data.handle = cache_frame->fd_data.handle;
     cache_inv_data.length = cache_frame->ion_alloc.len;
+    cache_inv_data.offset = 0;
     custom_data.cmd = ION_IOC_INV_CACHES;
     custom_data.arg = &cache_inv_data;
     ion_fd = cache_frame->ion_dev_fd;
@@ -479,6 +480,7 @@ static int32_t mm_camera_ch_util_qbuf(mm_camera_obj_t *my_obj,
               cache_inv_data.fd = cache_frame1->fd;
               cache_inv_data.handle = cache_frame1->fd_data.handle;
               cache_inv_data.length = cache_frame1->ion_alloc.len;
+              cache_inv_data.offset = 0;
               custom_data.cmd = ION_IOC_INV_CACHES;
               custom_data.arg = &cache_inv_data;
               if(ioctl(ion_fd, ION_IOC_CUSTOM, &custom_data) < 0)

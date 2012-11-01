@@ -1826,6 +1826,7 @@ encodeDisplayAndSave(mm_camera_ch_data_buf_t* recvd_frame,
     cache_inv_data.fd = recvd_frame->snapshot.main.frame->fd;
     cache_inv_data.handle = recvd_frame->snapshot.main.frame->fd_data.handle;
     cache_inv_data.length = recvd_frame->snapshot.main.frame->ion_alloc.len;
+    cache_inv_data.offset = 0;
     ion_fd = recvd_frame->snapshot.main.frame->ion_dev_fd;
     if(ion_fd > 0) {
       if(mHalCamCtrl->cache_ops(ion_fd, &cache_inv_data, ION_IOC_CLEAN_INV_CACHES) < 0)
