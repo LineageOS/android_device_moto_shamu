@@ -112,7 +112,7 @@ static int32_t mm_camera_intf_query_capability(uint32_t camera_handle)
 
 /* set a parm’s current value */
 static int32_t mm_camera_intf_set_parms(uint32_t camera_handle,
-                                        void *parms)
+                                        set_parm_buffer_t *parms)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;
@@ -132,7 +132,7 @@ static int32_t mm_camera_intf_set_parms(uint32_t camera_handle,
 
 /* get a parm’s current value */
 static int32_t mm_camera_intf_get_parms(uint32_t camera_handle,
-                                        void *parms)
+                                        get_parm_buffer_t *parms)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;
@@ -283,7 +283,7 @@ static uint32_t mm_camera_intf_add_stream(uint32_t camera_handle,
     mm_camera_obj_t * my_obj = NULL;
 
     CDBG("%s : E handle = %d ch_id = %d",
-         __func__, camera_handler, ch_id);
+         __func__, camera_handle, ch_id);
 
     pthread_mutex_lock(&g_intf_lock);
     my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
@@ -307,7 +307,7 @@ static int32_t mm_camera_intf_del_stream(uint32_t camera_handle,
     mm_camera_obj_t * my_obj = NULL;
 
     CDBG("%s : E handle = %d ch_id = %d stream_id = %d",
-         __func__, camera_handler, ch_id, stream_id);
+         __func__, camera_handle, ch_id, stream_id);
 
     pthread_mutex_lock(&g_intf_lock);
     my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
@@ -332,7 +332,7 @@ static int32_t mm_camera_intf_config_stream(uint32_t camera_handle,
     mm_camera_obj_t * my_obj = NULL;
 
     CDBG("%s :E handle = %d, ch_id = %d,stream_id = %d",
-         __func__, camera_handler, ch_id, stream_id);
+         __func__, camera_handle, ch_id, stream_id);
 
     pthread_mutex_lock(&g_intf_lock);
     my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
@@ -396,7 +396,7 @@ static int32_t mm_camera_intf_request_super_buf(uint32_t camera_handle,
 {
     int32_t rc = -1;
     CDBG("%s :E camera_handler = %d,ch_id = %d",
-         __func__, camera_handler, ch_id);
+         __func__, camera_handle, ch_id);
     mm_camera_obj_t * my_obj = NULL;
 
     pthread_mutex_lock(&g_intf_lock);
@@ -420,7 +420,7 @@ static int32_t mm_camera_intf_cancel_super_buf_request(uint32_t camera_handle,
     mm_camera_obj_t * my_obj = NULL;
 
     CDBG("%s :E camera_handler = %d,ch_id = %d",
-         __func__, camera_handler, ch_id);
+         __func__, camera_handle, ch_id);
     pthread_mutex_lock(&g_intf_lock);
     my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
 
@@ -436,7 +436,7 @@ static int32_t mm_camera_intf_cancel_super_buf_request(uint32_t camera_handle,
 }
 
 static int32_t mm_camera_intf_do_action(uint32_t camera_handle,
-                                        void *actions)
+                                        set_parm_buffer_t *actions)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;
@@ -658,7 +658,7 @@ uint8_t get_num_of_cameras()
             break;
         }
 
-        if(strncmp(mdev_info.model, MSM_SENSOR_NAME, sizeof(mdev_info.model) != 0)) {
+        if(strncmp(mdev_info.model, MSM_CAMERA_NAME, sizeof(mdev_info.model)) != 0) {
             close(dev_fd);
             continue;
         }

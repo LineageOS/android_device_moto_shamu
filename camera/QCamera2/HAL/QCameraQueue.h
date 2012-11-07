@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,43 +27,39 @@
  *
  */
 
-#ifndef __QCAMERA2FACTORY_H__
-#define __QCAMERA2FACTORY_H__
+#ifndef __QCAMERA_QUEUE_H__
+#define __QCAMERA_QUEUE_H__
 
-#include <hardware/camera.h>
-#include <system/camera.h>
-#include <media/msmb_camera.h>
-
-#include "QCamera2HWI.h"
+#include <pthread.h>
+#include "cam_list.h"
 
 namespace android {
 
-class QCamera2Factory
-{
+typedef void (*release_data_fn)(void* data, void *user_data);
+
+class QCameraQueue {
 public:
-    QCamera2Factory();
-    virtual ~QCamera2Factory();
-
-    static int get_number_of_cameras();
-    static int get_camera_info(int camera_id, struct camera_info *info);
-
+    QCameraQueue();
+    QCameraQueue(release_data_fn data_rel_fn, void *user_data);
+    virtual ~QCameraQueue();
+    bool enqueue(void *data);
+    bool enqueueWithPriority(void *data);
+    void flush();
+    void* dequeue();
+    bool isEmpty();
 private:
-    int getNumberOfCameras();
-    int getCameraInfo(int camera_id, struct camera_info *info);
-    int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
-    static int camera_device_open(const struct hw_module_t *module, const char *id,
-                struct hw_device_t **hw_device);
+    typedef struct {
+        struct cam_list list;
+        void* data;
+    } camera_q_node;
 
-public:
-    static struct hw_module_methods_t mModuleMethods;
-
-private:
-    int mNumOfCameras;
-    QCamera2HardwareInterface *mCameraHardware[MM_CAMERA_MAX_NUM_SENSORS];
+    camera_q_node m_head; /* dummy head */
+    int m_size;
+    pthread_mutex_t m_lock;
+    release_data_fn m_dataFn;
+    void * m_userData;
 };
 
-}; /*namespace android*/
+}; // namespace android
 
-extern camera_module_t HAL_MODULE_INFO_SYM;
-
-#endif /* ANDROID_HARDWARE_QUALCOMM_CAMERA_H */
+#endif /* __QCAMERA_QUEUE_H__ */

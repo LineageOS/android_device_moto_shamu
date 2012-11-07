@@ -110,6 +110,8 @@ typedef struct {
 typedef struct {
     uint32_t s_id;
     mm_camera_stream_config_t s_config;
+    cam_frame_len_offset_t offset;
+    uint8_t num_of_bufs;
     mm_camera_app_buf_t s_bufs[MM_CAMERA_MAX_NUM_FRAMES];
     mm_camera_app_buf_t s_info_buf;
 } mm_camera_stream_t;
@@ -117,7 +119,7 @@ typedef struct {
 typedef struct {
     uint32_t ch_id;
     uint8_t num_streams;
-    mm_camera_stream_t streams[MAX_STRAEM_NUM_IN_BUNDLE];
+    mm_camera_stream_t streams[MAX_STREAM_NUM_IN_BUNDLE];
 } mm_camera_channel_t;
 
 typedef struct {
@@ -175,20 +177,13 @@ extern int mm_app_alloc_bufs(mm_camera_app_buf_t* app_bufs,
                              uint8_t is_streambuf);
 extern int mm_app_release_bufs(uint8_t num_bufs,
                                mm_camera_app_buf_t* app_bufs);
-extern int mm_app_stream_initbuf(uint32_t camera_handle,
-                                 uint32_t ch_id,
-                                 uint32_t stream_id,
-                                 uint8_t num_bufs,
-                                 uint8_t *initial_reg_flag,
-                                 mm_camera_buf_def_t *bufs,
+extern int mm_app_stream_initbuf(cam_frame_len_offset_t *frame_offset_info,
+                                 uint8_t *num_bufs,
+                                 uint8_t **initial_reg_flag,
+                                 mm_camera_buf_def_t **bufs,
                                  mm_camera_map_unmap_ops_tbl_t *ops_tbl,
                                  void *user_data);
-extern int32_t mm_app_stream_deinitbuf(uint32_t camera_handle,
-                                       uint32_t ch_id,
-                                       uint32_t stream_id,
-                                       uint8_t num_bufs,
-                                       mm_camera_buf_def_t *bufs,
-                                       mm_camera_map_unmap_ops_tbl_t *ops_tbl,
+extern int32_t mm_app_stream_deinitbuf(mm_camera_map_unmap_ops_tbl_t *ops_tbl,
                                        void *user_data);
 extern int mm_app_cache_ops(mm_camera_app_meminfo_t *mem_info,
                             unsigned int cmd);

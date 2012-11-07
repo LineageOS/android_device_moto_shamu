@@ -111,7 +111,7 @@ mm_stream_t * mm_channel_util_get_stream_by_handler(
 {
     int i;
     mm_stream_t *s_obj = NULL;
-    for(i = 0; i < MAX_STRAEM_NUM_IN_BUNDLE; i++) {
+    for(i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
         if ((MM_STREAM_STATE_NOTUSED != ch_obj->streams[i].state) &&
             (handler == ch_obj->streams[i].my_hdl)) {
             s_obj = &ch_obj->streams[i];
@@ -272,8 +272,8 @@ int32_t mm_channel_fsm_fn_notused(mm_channel_t *my_obj,
 
     switch (evt) {
     default:
-        CDBG_ERROR("%s: invalid state (%d) for evt (%d)",
-                   __func__, my_obj->state, evt);
+        CDBG_ERROR("%s: invalid state (%d) for evt (%d), in(%p), out(%p)",
+                   __func__, my_obj->state, evt, in_val, out_val);
         break;
     }
 
@@ -419,8 +419,8 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
         }
         break;
     default:
-        CDBG_ERROR("%s: invalid state (%d) for evt (%d)",
-                   __func__, my_obj->state, evt);
+        CDBG_ERROR("%s: invalid state (%d) for evt (%d), in(%p), out(%p)",
+                   __func__, my_obj->state, evt, in_val, out_val);
         break;
     }
     CDBG("%s : X rc = %d", __func__, rc);
@@ -435,8 +435,8 @@ int32_t mm_channel_fsm_fn_paused(mm_channel_t *my_obj,
     int32_t rc = 0;
 
     /* currently we are not supporting pause/resume channel */
-    CDBG_ERROR("%s: evt (%d) not supported in state (%d)",
-               __func__, evt, my_obj->state);
+    CDBG_ERROR("%s: invalid state (%d) for evt (%d), in(%p), out(%p)",
+               __func__, my_obj->state, evt, in_val, out_val);
 
     return rc;
 }
@@ -481,7 +481,7 @@ uint32_t mm_channel_add_stream(mm_channel_t *my_obj)
 
     CDBG("%s : E", __func__);
     /* check available stream */
-    for (idx = 0; idx < MAX_STRAEM_NUM_IN_BUNDLE; idx++) {
+    for (idx = 0; idx < MAX_STREAM_NUM_IN_BUNDLE; idx++) {
         if (MM_STREAM_STATE_NOTUSED == my_obj->streams[idx].state) {
             stream_obj = &my_obj->streams[idx];
             break;
@@ -562,11 +562,11 @@ int32_t mm_channel_start(mm_channel_t *my_obj)
 {
     int32_t rc = 0;
     int i, j;
-    mm_stream_t *s_objs[MAX_STRAEM_NUM_IN_BUNDLE] = {NULL};
+    mm_stream_t *s_objs[MAX_STREAM_NUM_IN_BUNDLE] = {NULL};
     uint8_t num_streams_to_start = 0;
     mm_stream_t *s_obj = NULL;
 
-    for (i = 0; i < MAX_STRAEM_NUM_IN_BUNDLE; i++) {
+    for (i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
         s_obj = mm_channel_util_get_stream_by_handler(my_obj, i);
         if (NULL != s_obj) {
             s_objs[num_streams_to_start++] = s_obj;
@@ -686,11 +686,11 @@ int32_t mm_channel_stop(mm_channel_t *my_obj)
 {
     int32_t rc = 0;
     int i;
-    mm_stream_t *s_objs[MAX_STRAEM_NUM_IN_BUNDLE] = {NULL};
+    mm_stream_t *s_objs[MAX_STREAM_NUM_IN_BUNDLE] = {NULL};
     uint8_t num_streams_to_stop = 0;
     mm_stream_t *s_obj = NULL;
 
-    for (i = 0; i < MAX_STRAEM_NUM_IN_BUNDLE; i++) {
+    for (i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
         s_obj = mm_channel_util_get_stream_by_handler(my_obj, i);
         if (NULL != s_obj) {
             s_objs[num_streams_to_stop++] = s_obj;

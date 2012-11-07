@@ -39,15 +39,14 @@ static void jpeg_encode_cb(jpeg_job_status_t status,
                            uint32_t data_size,
                            void *userData)
 {
-    int rc;
     int i = 0;
-    mm_camera_buf_def_t *main_frame = NULL;
-    mm_camera_buf_def_t *thumb_frame = NULL;
     mm_camera_test_obj_t *pme = NULL;
     CDBG("%s: BEGIN\n", __func__);
 
     pme = (mm_camera_test_obj_t *)userData;
-    if (jobId != pme->current_job_id || !pme->current_job_frames) {
+    if (pme->jpeg_hdl != client_hdl ||
+        jobId != pme->current_job_id ||
+        !pme->current_job_frames) {
         CDBG_ERROR("%s: NULL current job frames or not matching job ID (%d, %d)",
                    __func__, jobId, pme->current_job_id);
         return;
@@ -81,7 +80,7 @@ int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_fram
     cam_capapbility_t *cam_cap = (cam_capapbility_t *)(test_obj->cap_buf.buf.buffer);
 
     int rc = -MM_CAMERA_E_GENERAL;
-    int i,index = -1;
+    int i;
     mm_jpeg_job job;
     mm_camera_channel_t *channel = NULL;
     mm_camera_stream_t *p_stream = NULL;
@@ -182,16 +181,16 @@ int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_fram
     m_imgbuf_info->src_image[0].fd = m_frame->fd;
     m_imgbuf_info->src_image[0].buf_vaddr = m_frame->buffer;
     memcpy(&m_imgbuf_info->src_dim,
-           &m_stream->s_config.stream_info->dest_dim,
+           &m_stream->s_config.stream_info->dim,
            sizeof(cam_dimension_t));
     memcpy(&m_imgbuf_info->out_dim,
-           &m_stream->s_config.stream_info->dest_dim,
+           &m_stream->s_config.stream_info->dim,
            sizeof(cam_dimension_t));
     memcpy(&m_imgbuf_info->crop,
            &m_stream->s_config.stream_info->crop,
            sizeof(cam_rect_t));
     memcpy(&m_imgbuf_info->src_image[0].offset,
-           &m_stream->s_config.stream_info->offset,
+           &m_stream->offset,
            sizeof(cam_frame_len_offset_t));
     mm_app_cache_ops((mm_camera_app_meminfo_t *)recvd_frame->bufs[i]->mem_info,
                      ION_IOC_CLEAN_INV_CACHES);
@@ -207,16 +206,16 @@ int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_fram
         p_imgbuf_info->src_image[0].fd = p_frame->fd;
         p_imgbuf_info->src_image[0].buf_vaddr = p_frame->buffer;
         memcpy(&p_imgbuf_info->src_dim,
-               &p_stream->s_config.stream_info->dest_dim,
+               &p_stream->s_config.stream_info->dim,
                sizeof(cam_dimension_t));
         memcpy(&p_imgbuf_info->out_dim,
-               &p_stream->s_config.stream_info->dest_dim,
+               &p_stream->s_config.stream_info->dim,
                sizeof(cam_dimension_t));
         memcpy(&p_imgbuf_info->crop,
                &p_stream->s_config.stream_info->crop,
                sizeof(cam_rect_t));
         memcpy(&p_imgbuf_info->src_image[0].offset,
-               &p_stream->s_config.stream_info->offset,
+               &p_stream->offset,
                sizeof(cam_frame_len_offset_t));
     }
 
@@ -268,7 +267,6 @@ static void mm_app_snapshot_notify_cb(mm_camera_super_buf_t *bufs,
 
 mm_camera_channel_t * mm_app_add_snapshot_channel(mm_camera_test_obj_t *test_obj)
 {
-    int rc = MM_CAMERA_OK;
     mm_camera_channel_t *channel = NULL;
     mm_camera_stream_t *stream = NULL;
 
@@ -318,7 +316,7 @@ mm_camera_stream_t * mm_app_add_postview_stream(mm_camera_test_obj_t *test_obj,
     stream->s_config.mem_vtbl.user_data = (void *)stream;
     stream->s_config.stream_cb = stream_cb;
     stream->s_config.userdata = userdata;
-    stream->s_config.num_of_bufs = num_bufs;
+    stream->num_of_bufs = num_bufs;
 
     stream->s_config.stream_info = (cam_stream_info_t *)stream->s_info_buf.buf.buffer;
     memset(stream->s_config.stream_info, 0, sizeof(cam_stream_info_t));
@@ -330,13 +328,12 @@ mm_camera_stream_t * mm_app_add_postview_stream(mm_camera_test_obj_t *test_obj,
         stream->s_config.stream_info->num_of_burst = num_burst;
     }
     stream->s_config.stream_info->meta_header = CAM_META_DATA_TYPE_DEF;
-    stream->s_config.stream_info->src_fmt = DEFAULT_PREVIEW_FORMAT;
-    stream->s_config.stream_info->src_dim.width = DEFAULT_PREVIEW_WIDTH;
-    stream->s_config.stream_info->src_dim.height = DEFAULT_PREVIEW_HEIGHT;
-    stream->s_config.stream_info->dest_fmt = DEFAULT_PREVIEW_FORMAT;
-    stream->s_config.stream_info->dest_dim.width = DEFAULT_PREVIEW_WIDTH;
-    stream->s_config.stream_info->dest_dim.height = DEFAULT_PREVIEW_HEIGHT;
-    stream->s_config.stream_info->padding_format = DEFAULT_PREVIEW_PADDING;
+    stream->s_config.stream_info->fmt = DEFAULT_PREVIEW_FORMAT;
+    stream->s_config.stream_info->dim.width = DEFAULT_PREVIEW_WIDTH;
+    stream->s_config.stream_info->dim.height = DEFAULT_PREVIEW_HEIGHT;
+    stream->s_config.stream_info->width_padding = CAM_PAD_TO_WORD;
+    stream->s_config.stream_info->height_padding = CAM_PAD_TO_WORD;
+    stream->s_config.stream_info->plane_padding = DEFAULT_PREVIEW_PADDING;
 
     rc = mm_app_config_stream(test_obj, channel, stream, &stream->s_config);
     if (MM_CAMERA_OK != rc) {

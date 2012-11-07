@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,43 +27,45 @@
  *
  */
 
-#ifndef __QCAMERA2FACTORY_H__
-#define __QCAMERA2FACTORY_H__
+#ifndef __QCAMERA_CMD_THREAD_H__
+#define __QCAMERA_CMD_THREAD_H__
 
-#include <hardware/camera.h>
-#include <system/camera.h>
-#include <media/msmb_camera.h>
-
-#include "QCamera2HWI.h"
+#include <pthread.h>
+#include <semaphore.h>
+#include "QCameraQueue.h"
 
 namespace android {
 
-class QCamera2Factory
+typedef enum
 {
+    CAMERA_CMD_TYPE_NONE,
+    CAMERA_CMD_TYPE_START_DATA_PROC,
+    CAMERA_CMD_TYPE_STOP_DATA_PROC,
+    CAMERA_CMD_TYPE_DO_NEXT_JOB,
+    CAMERA_CMD_TYPE_EXIT,
+    CAMERA_CMD_TYPE_MAX
+} camera_cmd_type_t;
+
+typedef struct {
+    camera_cmd_type_t cmd;
+} camera_cmd_t;
+
+class QCameraCmdThread {
 public:
-    QCamera2Factory();
-    virtual ~QCamera2Factory();
+    QCameraCmdThread();
+    ~QCameraCmdThread();
 
-    static int get_number_of_cameras();
-    static int get_camera_info(int camera_id, struct camera_info *info);
+    int32_t launch(void *(*start_routine)(void *), void* user_data);
+    int32_t exit();
+    int32_t sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd, uint8_t priority);
+    camera_cmd_type_t getCmd();
 
-private:
-    int getNumberOfCameras();
-    int getCameraInfo(int camera_id, struct camera_info *info);
-    int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
-    static int camera_device_open(const struct hw_module_t *module, const char *id,
-                struct hw_device_t **hw_device);
-
-public:
-    static struct hw_module_methods_t mModuleMethods;
-
-private:
-    int mNumOfCameras;
-    QCamera2HardwareInterface *mCameraHardware[MM_CAMERA_MAX_NUM_SENSORS];
+    QCameraQueue cmd_queue;      /* cmd queue */
+    pthread_t cmd_pid;           /* cmd thread ID */
+    sem_t cmd_sem;               /* semaphore for cmd thread */
+    sem_t sync_sem;              /* semaphore for synchronized call signal */
 };
 
-}; /*namespace android*/
+}; // namespace android
 
-extern camera_module_t HAL_MODULE_INFO_SYM;
-
-#endif /* ANDROID_HARDWARE_QUALCOMM_CAMERA_H */
+#endif /* __QCAMERA_CMD_THREAD_H__ */

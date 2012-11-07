@@ -53,30 +53,9 @@ static void mm_app_preview_notify_cb(mm_camera_super_buf_t *bufs,
     CDBG("%s: END\n", __func__);
 }
 
-static void mm_app_stats_notify_cb(mm_camera_super_buf_t *bufs,
-                                   void *user_data)
-{
-    int rc;
-    mm_camera_buf_def_t *frame = bufs->bufs[0];
-    mm_camera_test_obj_t *pme = (mm_camera_test_obj_t *)user_data;
-
-    CDBG("%s: BEGIN - length=%d, frame idx = %d\n",
-         __func__, frame->frame_len, frame->frame_idx);
-    if (MM_CAMERA_OK != pme->cam->ops->qbuf(bufs->camera_handle,
-                                            bufs->ch_id,
-                                            frame)) {
-        CDBG_ERROR("%s: Failed in Preview Qbuf\n", __func__);
-    }
-    mm_app_cache_ops((mm_camera_app_meminfo_t *)frame->mem_info,
-                     ION_IOC_INV_CACHES);
-
-    CDBG("%s: END\n", __func__);
-}
-
 static void mm_app_zsl_notify_cb(mm_camera_super_buf_t *bufs,
                                  void *user_data)
 {
-    int rc;
     int i = 0;
     mm_camera_test_obj_t *pme = (mm_camera_test_obj_t *)user_data;
     mm_camera_channel_t *channel = NULL;
@@ -182,20 +161,20 @@ mm_camera_stream_t * mm_app_add_preview_stream(mm_camera_test_obj_t *test_obj,
     stream->s_config.mem_vtbl.user_data = (void *)stream;
     stream->s_config.stream_cb = stream_cb;
     stream->s_config.userdata = userdata;
-    stream->s_config.num_of_bufs = num_bufs;
+    stream->num_of_bufs = num_bufs;
 
     stream->s_config.stream_info = (cam_stream_info_t *)stream->s_info_buf.buf.buffer;
     memset(stream->s_config.stream_info, 0, sizeof(cam_stream_info_t));
+    stream->s_config.stream_info->bundle_id = channel->ch_id;
     stream->s_config.stream_info->stream_type = CAM_STREAM_TYPE_PREVIEW;
     stream->s_config.stream_info->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
     stream->s_config.stream_info->meta_header = CAM_META_DATA_TYPE_DEF;
-    stream->s_config.stream_info->src_fmt = DEFAULT_PREVIEW_FORMAT;
-    stream->s_config.stream_info->src_dim.width = DEFAULT_PREVIEW_WIDTH;
-    stream->s_config.stream_info->src_dim.height = DEFAULT_PREVIEW_HEIGHT;
-    stream->s_config.stream_info->dest_fmt = DEFAULT_PREVIEW_FORMAT;
-    stream->s_config.stream_info->dest_dim.width = DEFAULT_PREVIEW_WIDTH;
-    stream->s_config.stream_info->dest_dim.height = DEFAULT_PREVIEW_HEIGHT;
-    stream->s_config.stream_info->padding_format = DEFAULT_PREVIEW_PADDING;
+    stream->s_config.stream_info->fmt = DEFAULT_PREVIEW_FORMAT;
+    stream->s_config.stream_info->dim.width = DEFAULT_PREVIEW_WIDTH;
+    stream->s_config.stream_info->dim.height = DEFAULT_PREVIEW_HEIGHT;
+    stream->s_config.stream_info->width_padding = CAM_PAD_TO_WORD;
+    stream->s_config.stream_info->height_padding = CAM_PAD_TO_WORD;
+    stream->s_config.stream_info->plane_padding = DEFAULT_PREVIEW_PADDING;
 
     rc = mm_app_config_stream(test_obj, channel, stream, &stream->s_config);
     if (MM_CAMERA_OK != rc) {
@@ -228,7 +207,7 @@ mm_camera_stream_t * mm_app_add_snapshot_stream(mm_camera_test_obj_t *test_obj,
     stream->s_config.mem_vtbl.user_data = (void *)stream;
     stream->s_config.stream_cb = stream_cb;
     stream->s_config.userdata = userdata;
-    stream->s_config.num_of_bufs = num_bufs;
+    stream->num_of_bufs = num_bufs;
 
     stream->s_config.stream_info = (cam_stream_info_t *)stream->s_info_buf.buf.buffer;
     memset(stream->s_config.stream_info, 0, sizeof(cam_stream_info_t));
@@ -240,13 +219,12 @@ mm_camera_stream_t * mm_app_add_snapshot_stream(mm_camera_test_obj_t *test_obj,
         stream->s_config.stream_info->num_of_burst = num_burst;
     }
     stream->s_config.stream_info->meta_header = CAM_META_DATA_TYPE_DEF;
-    stream->s_config.stream_info->src_fmt = DEFAULT_SNAPSHOT_FORMAT;
-    stream->s_config.stream_info->src_dim.width = DEFAULT_SNAPSHOT_WIDTH;
-    stream->s_config.stream_info->src_dim.height = DEFAULT_SNAPSHOT_HEIGHT;
-    stream->s_config.stream_info->dest_fmt = DEFAULT_SNAPSHOT_FORMAT;
-    stream->s_config.stream_info->dest_dim.width = DEFAULT_SNAPSHOT_WIDTH;
-    stream->s_config.stream_info->dest_dim.height = DEFAULT_SNAPSHOT_HEIGHT;
-    stream->s_config.stream_info->padding_format = DEFAULT_SNAPSHOT_PADDING;
+    stream->s_config.stream_info->fmt = DEFAULT_SNAPSHOT_FORMAT;
+    stream->s_config.stream_info->dim.width = DEFAULT_SNAPSHOT_WIDTH;
+    stream->s_config.stream_info->dim.height = DEFAULT_SNAPSHOT_HEIGHT;
+    stream->s_config.stream_info->width_padding = CAM_PAD_TO_WORD;
+    stream->s_config.stream_info->height_padding = CAM_PAD_TO_WORD;
+    stream->s_config.stream_info->plane_padding = DEFAULT_SNAPSHOT_PADDING;
     stream->s_config.stream_info->rotation = 0;
     if (cam_cap->position == CAM_POSITION_BACK) {
         /* back camera, rotate 90 */
@@ -264,7 +242,6 @@ mm_camera_stream_t * mm_app_add_snapshot_stream(mm_camera_test_obj_t *test_obj,
 
 mm_camera_channel_t * mm_app_add_preview_channel(mm_camera_test_obj_t *test_obj)
 {
-    int rc = MM_CAMERA_OK;
     mm_camera_channel_t *channel = NULL;
     mm_camera_stream_t *stream = NULL;
 

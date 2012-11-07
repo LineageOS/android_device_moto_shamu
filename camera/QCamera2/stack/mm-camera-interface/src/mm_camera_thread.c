@@ -131,7 +131,7 @@ static void mm_camera_poll_proc_pipe(mm_camera_poll_thread_t *poll_cb)
                 poll_cb->num_fds++;
             }
         } else if (MM_CAMERA_POLL_TYPE_DATA == poll_cb->poll_type) {
-            for(i = 0; i < MAX_STRAEM_NUM_IN_BUNDLE; i++) {
+            for(i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
                 if(poll_cb->poll_entries[i].fd > 0) {
                     /* fd is valid, we update poll_fds to this fd */
                     poll_cb->poll_fds[poll_cb->num_fds].fd = poll_cb->poll_entries[i].fd;
@@ -245,7 +245,7 @@ int32_t mm_camera_poll_thread_add_poll_fd(mm_camera_poll_thread_t * poll_cb,
         idx = 0;
     }
 
-    if (MAX_STRAEM_NUM_IN_BUNDLE > idx) {
+    if (MAX_STREAM_NUM_IN_BUNDLE > idx) {
         poll_cb->poll_entries[idx].fd = fd;
         poll_cb->poll_entries[idx].handler = handler;
         poll_cb->poll_entries[idx].notify_cb = notify_cb;
@@ -273,7 +273,7 @@ int32_t mm_camera_poll_thread_del_poll_fd(mm_camera_poll_thread_t * poll_cb,
         idx = 0;
     }
 
-    if ((MAX_STRAEM_NUM_IN_BUNDLE > idx) &&
+    if ((MAX_STREAM_NUM_IN_BUNDLE > idx) &&
         (handler == poll_cb->poll_entries[idx].handler)) {
         /* reset poll entry */
         poll_cb->poll_entries[idx].fd = -1; /* set fd to invalid */
