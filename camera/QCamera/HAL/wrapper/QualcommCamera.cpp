@@ -39,6 +39,7 @@
 #include "QCameraHAL.h"
 /* include QCamera Hardware Interface Header*/
 #include "QualcommCamera.h"
+#include "QualcommUsbCamera.h"
 //#include "QualcommCameraHardware.h"
 //#include <camera/CameraHardwareInterface.h>
 
@@ -154,6 +155,13 @@ extern "C" int get_number_of_cameras()
     /* try to query every time we get the call!*/
 
     ALOGE("Q%s: E", __func__);
+    int is_mpq = 0;
+    IS_TARGET_MPQ(is_mpq);
+
+    if(is_mpq)
+        return usbcam_get_number_of_cameras();
+
+    /* if(!is_mpq) */
     return android::HAL_getNumberOfCameras( );
 }
 
@@ -161,6 +169,14 @@ extern "C" int get_camera_info(int camera_id, struct camera_info *info)
 {
     int rc = -1;
     ALOGE("Q%s: E", __func__);
+
+    int is_mpq = 0;
+    IS_TARGET_MPQ(is_mpq);
+
+    if(is_mpq)
+        return usbcam_get_camera_info(camera_id, info);
+
+    /* if(!is_mpq) */
     if(info) {
         struct CameraInfo camInfo;
         memset(&camInfo, -1, sizeof (struct CameraInfo));
@@ -184,6 +200,13 @@ extern "C" int  camera_device_open(
     int rc = -1;
 	int mode = 0; // TODO: need to add 3d/2d mode, etc
     camera_device *device = NULL;
+    int is_mpq = 0;
+    IS_TARGET_MPQ(is_mpq);
+
+    if(is_mpq && module && id && hw_device)
+        return usbcam_camera_device_open(module, id, hw_device);
+
+    /* if(!is_mpq) */
     if(module && id && hw_device) {
         int cameraId = atoi(id);
 
