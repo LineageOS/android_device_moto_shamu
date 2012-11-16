@@ -167,6 +167,7 @@ static camera_size_type default_picture_sizes[] = {
   { 1024, 768}, // 1MP XGA
   { 800, 600}, //SVGA
   { 800, 480}, // WVGA
+  { 720, 480},
   { 640, 480}, // VGA
   { 352, 288}, //CIF
   { 320, 240}, // QVGA
@@ -2689,7 +2690,7 @@ status_t QCameraHardwareInterface::setPreviewFpsRange(const QCameraParameters& p
 
     for(int i=0; i<mSupportedFpsRangesCount; i++) {
         // if the value is in the supported list
-        if(minFps==mSupportedFpsRanges[i].minFPS && maxFps == mSupportedFpsRanges[i].maxFPS) {
+        if(minFps >= mSupportedFpsRanges[i].minFPS && maxFps <= mSupportedFpsRanges[i].maxFPS) {
             found = true;
             ALOGE("FPS: i=%d : minFps = %d, maxFps = %d ", i, minFps, maxFps);
             mParameters.setPreviewFpsRange(minFps,maxFps);
