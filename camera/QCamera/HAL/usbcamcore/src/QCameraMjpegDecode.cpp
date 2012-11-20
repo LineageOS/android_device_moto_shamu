@@ -39,7 +39,6 @@ extern "C" {
 #include "jpeg_buffer.h"
 #include "jpeg_common.h"
 #include "jpegd.h"
-#include "jpsd.h"
 }
 
 #include "QCameraMjpegDecode.h"
@@ -242,7 +241,6 @@ OS_THREAD_FUNC_RET_T OS_THREAD_FUNC_MODIFIER decoder_test(OS_THREAD_FUNC_ARG_T a
     test_args_t *p_args = p_thread_arg->p_args;
     uint32_t            output_width;
     uint32_t            output_height;
-    jps_cfg_3d_t        jps_config;
     uint32_t total_time = 0;
 
     ALOGD("%s: E", __func__);
@@ -341,16 +339,6 @@ OS_THREAD_FUNC_RET_T OS_THREAD_FUNC_MODIFIER decoder_test(OS_THREAD_FUNC_ARG_T a
         p_args->height = header.main.height;
         ALOGD("%s: main dimension: (%dx%d) subsampling: (%d)", __func__,
                 header.main.width, header.main.height, (int)header.main.subsampling);
-
-        /* TBDJ: Can be removed as MJPEG streams will not contain JPEG stereo */
-        rc = jpsd_get_config(decoder, &jps_config);
-        if (JPEG_FAILED(rc))
-        {
-            ALOGE("%s: decoder_test: jpsd_get_config failed\n", __func__);
-            goto fail;
-        }
-        ALOGD("%s: JPS sturcture: \nlayout = %d\nheight_flag = %d  width_flag = %d\nfield order = %d\nSeparation =  %d\n",
-                __func__, jps_config.layout, jps_config.height_flag, jps_config.width_flag, jps_config.field_order, jps_config.separation);
 
         // main image decoding:
         // Set destination information
