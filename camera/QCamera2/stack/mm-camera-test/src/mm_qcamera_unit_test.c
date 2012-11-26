@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+Copyright (c) 2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -31,6 +31,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mm_qcamera_app.h"
 
 #define MM_QCAMERA_APP_UTEST_MAX_MAIN_LOOP 4
+#define MM_QCAMERA_APP_UTEST_OUTER_LOOP 10
 #define MM_QCAMERA_APP_UTEST_INNER_LOOP 4
 #define MM_QCAM_APP_TEST_NUM 128
 
@@ -497,7 +498,7 @@ int mm_app_gen_test_cases()
     int tc = 0;
     memset(mm_app_tc, 0, sizeof(mm_app_tc));
     if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_open_close;
-    if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_preview;
+    //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_preview;
     //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_zsl;
     //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_video_preview;
     //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_video_record;
@@ -511,17 +512,19 @@ int mm_app_gen_test_cases()
 int mm_app_unit_test_entry(mm_camera_app_t *cam_app)
 {
     int rc = MM_CAMERA_OK;
-    int i, tc = 0;
+    int i, j, tc = 0;
 
     tc = mm_app_gen_test_cases();
     CDBG("Running %d test cases\n",tc);
     for (i = 0; i < tc; i++) {
-        mm_app_tc[i].r = mm_app_tc[i].f(cam_app);
-        if (mm_app_tc[i].r != MM_CAMERA_OK) {
-            printf("%s: test case %d error = %d, abort unit testing engine!!!!\n",
-                   __func__, i, mm_app_tc[i].r);
-            rc = mm_app_tc[i].r;
-            goto end;
+        for (j = 0; j < MM_QCAMERA_APP_UTEST_OUTER_LOOP; j++) {
+            mm_app_tc[i].r = mm_app_tc[i].f(cam_app);
+            if (mm_app_tc[i].r != MM_CAMERA_OK) {
+                printf("%s: test case %d (iteration %d) error = %d, abort unit testing engine!!!!\n",
+                       __func__, i, j, mm_app_tc[i].r);
+                rc = mm_app_tc[i].r;
+                goto end;
+            }
         }
     }
 end:

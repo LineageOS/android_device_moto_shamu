@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+Copyright (c) 2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -149,6 +149,7 @@ mm_camera_stream_t * mm_app_add_preview_stream(mm_camera_test_obj_t *test_obj,
 {
     int rc = MM_CAMERA_OK;
     mm_camera_stream_t *stream = NULL;
+    cam_capability_t *cam_cap = (cam_capability_t *)(test_obj->cap_buf.buf.buffer);
 
     stream = mm_app_add_stream(test_obj, channel);
     if (NULL == stream) {
@@ -168,13 +169,10 @@ mm_camera_stream_t * mm_app_add_preview_stream(mm_camera_test_obj_t *test_obj,
     stream->s_config.stream_info->bundle_id = channel->ch_id;
     stream->s_config.stream_info->stream_type = CAM_STREAM_TYPE_PREVIEW;
     stream->s_config.stream_info->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
-    stream->s_config.stream_info->meta_header = CAM_META_DATA_TYPE_DEF;
     stream->s_config.stream_info->fmt = DEFAULT_PREVIEW_FORMAT;
     stream->s_config.stream_info->dim.width = DEFAULT_PREVIEW_WIDTH;
     stream->s_config.stream_info->dim.height = DEFAULT_PREVIEW_HEIGHT;
-    stream->s_config.stream_info->width_padding = CAM_PAD_TO_WORD;
-    stream->s_config.stream_info->height_padding = CAM_PAD_TO_WORD;
-    stream->s_config.stream_info->plane_padding = DEFAULT_PREVIEW_PADDING;
+    stream->s_config.padding_info = cam_cap->padding_info;
 
     rc = mm_app_config_stream(test_obj, channel, stream, &stream->s_config);
     if (MM_CAMERA_OK != rc) {
@@ -194,7 +192,7 @@ mm_camera_stream_t * mm_app_add_snapshot_stream(mm_camera_test_obj_t *test_obj,
 {
     int rc = MM_CAMERA_OK;
     mm_camera_stream_t *stream = NULL;
-    cam_capapbility_t *cam_cap = (cam_capapbility_t *)(test_obj->cap_buf.buf.buffer);
+    cam_capability_t *cam_cap = (cam_capability_t *)(test_obj->cap_buf.buf.buffer);
 
     stream = mm_app_add_stream(test_obj, channel);
     if (NULL == stream) {
@@ -218,18 +216,10 @@ mm_camera_stream_t * mm_app_add_snapshot_stream(mm_camera_test_obj_t *test_obj,
         stream->s_config.stream_info->streaming_mode = CAM_STREAMING_MODE_BURST;
         stream->s_config.stream_info->num_of_burst = num_burst;
     }
-    stream->s_config.stream_info->meta_header = CAM_META_DATA_TYPE_DEF;
     stream->s_config.stream_info->fmt = DEFAULT_SNAPSHOT_FORMAT;
     stream->s_config.stream_info->dim.width = DEFAULT_SNAPSHOT_WIDTH;
     stream->s_config.stream_info->dim.height = DEFAULT_SNAPSHOT_HEIGHT;
-    stream->s_config.stream_info->width_padding = CAM_PAD_TO_WORD;
-    stream->s_config.stream_info->height_padding = CAM_PAD_TO_WORD;
-    stream->s_config.stream_info->plane_padding = DEFAULT_SNAPSHOT_PADDING;
-    stream->s_config.stream_info->rotation = 0;
-    if (cam_cap->position == CAM_POSITION_BACK) {
-        /* back camera, rotate 90 */
-        stream->s_config.stream_info->rotation = 90;
-    }
+    stream->s_config.padding_info = cam_cap->padding_info;
 
     rc = mm_app_config_stream(test_obj, channel, stream, &stream->s_config);
     if (MM_CAMERA_OK != rc) {

@@ -86,7 +86,9 @@ int32_t QCameraChannel::init(mm_camera_channel_attr_t *attr,
 
 int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
                                   cam_stream_type_t stream_type,
-                                  stream_cb_routine stream_cb, void *userdata)
+                                  cam_padding_info_t *paddingInfo,
+                                  stream_cb_routine stream_cb,
+                                  void *userdata)
 {
     int32_t rc = NO_ERROR;
     if (m_numStreams >= MAX_STREAM_NUM_IN_BUNDLE) {
@@ -97,7 +99,8 @@ int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
     QCameraStream *pStream = new QCameraStream(allocator,
                                                m_camHandle,
                                                m_handle,
-                                               m_camOps);
+                                               m_camOps,
+                                               paddingInfo);
     if (pStream == NULL) {
         ALOGE("%s: No mem for Stream", __func__);
         return NO_MEMORY;
@@ -268,6 +271,7 @@ int32_t QCameraReprocessChannel::doReprocess(mm_camera_super_buf_t *frame)
                                   mStreams[0]->getMyHandle(),
                                   CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF,
                                   0,
+                                  -1,
                                   frame->bufs[0]->fd,
                                   frame->bufs[0]->frame_len);
     return rc;

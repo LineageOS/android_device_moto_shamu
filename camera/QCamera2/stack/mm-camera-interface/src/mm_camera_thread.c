@@ -60,6 +60,19 @@ typedef struct {
     mm_camera_event_t event;
 } mm_camera_sig_evt_t;
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_poll_sig
+ *
+ * DESCRIPTION: synchorinzed call to send a command through pipe.
+ *
+ * PARAMETERS :
+ *   @poll_cb      : ptr to poll thread object
+ *   @cmd          : command to be sent
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_poll_sig(mm_camera_poll_thread_t *poll_cb,
                                   uint32_t cmd)
 {
@@ -92,6 +105,16 @@ static int32_t mm_camera_poll_sig(mm_camera_poll_thread_t *poll_cb,
     return 0;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_poll_sig
+ *
+ * DESCRIPTION: signal the status of done
+ *
+ * PARAMETERS :
+ *   @poll_cb : ptr to poll thread object
+ *
+ * RETURN     : none
+ *==========================================================================*/
 static void mm_camera_poll_sig_done(mm_camera_poll_thread_t *poll_cb)
 {
     pthread_mutex_lock(&poll_cb->mutex);
@@ -101,12 +124,33 @@ static void mm_camera_poll_sig_done(mm_camera_poll_thread_t *poll_cb)
     pthread_mutex_unlock(&poll_cb->mutex);
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_poll_set_state
+ *
+ * DESCRIPTION: set a polling state
+ *
+ * PARAMETERS :
+ *   @poll_cb : ptr to poll thread object
+ *   @state   : polling state (stopped/polling)
+ *
+ * RETURN     : none
+ *==========================================================================*/
 static void mm_camera_poll_set_state(mm_camera_poll_thread_t *poll_cb,
                                      mm_camera_poll_task_state_type_t state)
 {
     poll_cb->state = state;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_poll_proc_pipe
+ *
+ * DESCRIPTION: polling thread routine to process pipe
+ *
+ * PARAMETERS :
+ *   @poll_cb : ptr to poll thread object
+ *
+ * RETURN     : none
+ *==========================================================================*/
 static void mm_camera_poll_proc_pipe(mm_camera_poll_thread_t *poll_cb)
 {
     ssize_t read_len;
@@ -162,6 +206,16 @@ static void mm_camera_poll_proc_pipe(mm_camera_poll_thread_t *poll_cb)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_poll_fn
+ *
+ * DESCRIPTION: polling thread routine
+ *
+ * PARAMETERS :
+ *   @poll_cb : ptr to poll thread object
+ *
+ * RETURN     : none
+ *==========================================================================*/
 static void *mm_camera_poll_fn(mm_camera_poll_thread_t *poll_cb)
 {
     int rc = 0, i;
@@ -210,6 +264,16 @@ static void *mm_camera_poll_fn(mm_camera_poll_thread_t *poll_cb)
     return NULL;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_poll_thread
+ *
+ * DESCRIPTION: polling thread entry function
+ *
+ * PARAMETERS :
+ *   @data    : ptr to poll thread object
+ *
+ * RETURN     : none
+ *==========================================================================*/
 static void *mm_camera_poll_thread(void *data)
 {
     mm_camera_poll_thread_t *poll_cb = (mm_camera_poll_thread_t *)data;
@@ -222,12 +286,38 @@ static void *mm_camera_poll_thread(void *data)
     return mm_camera_poll_fn(poll_cb);
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_poll_thread
+ *
+ * DESCRIPTION: notify the polling thread that entries for polling fd have
+ *              been updated
+ *
+ * PARAMETERS :
+ *   @poll_cb : ptr to poll thread object
+ *
+ * RETURN     : none
+ *==========================================================================*/
 int32_t mm_camera_poll_thread_notify_entries_updated(mm_camera_poll_thread_t * poll_cb)
 {
     /* send poll entries updated signal to poll thread */
     return mm_camera_poll_sig(poll_cb, MM_CAMERA_PIPE_CMD_POLL_ENTRIES_UPDATED);
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_poll_thread_add_poll_fd
+ *
+ * DESCRIPTION: add a new fd into polling thread
+ *
+ * PARAMETERS :
+ *   @poll_cb   : ptr to poll thread object
+ *   @handler   : stream handle if channel data polling thread,
+ *                0 if event polling thread
+ *   @fd        : file descriptor need to be added into polling thread
+ *   @notify_cb : callback function to handle if any notify from fd
+ *   @userdata  : user data ptr
+ *
+ * RETURN     : none
+ *==========================================================================*/
 int32_t mm_camera_poll_thread_add_poll_fd(mm_camera_poll_thread_t * poll_cb,
                                           uint32_t handler,
                                           int32_t fd,
@@ -259,6 +349,18 @@ int32_t mm_camera_poll_thread_add_poll_fd(mm_camera_poll_thread_t * poll_cb,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_poll_thread_del_poll_fd
+ *
+ * DESCRIPTION: delete a fd from polling thread
+ *
+ * PARAMETERS :
+ *   @poll_cb   : ptr to poll thread object
+ *   @handler   : stream handle if channel data polling thread,
+ *                0 if event polling thread
+ *
+ * RETURN     : none
+ *==========================================================================*/
 int32_t mm_camera_poll_thread_del_poll_fd(mm_camera_poll_thread_t * poll_cb,
                                           uint32_t handler)
 {

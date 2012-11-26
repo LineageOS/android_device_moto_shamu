@@ -95,11 +95,12 @@ typedef struct {
     qcamera_sm_evt_enum_t request_api;       // api evt requested
     qcamera_api_result_type_t result_type;   // result type
     union {
-        int enabled;
-        char *params;
+        int enabled;                          // result_type == QCAMERA_API_RESULT_TYPE_ENABLE_FLAG
+        char *params;                         // result_type == QCAMERA_API_RESULT_TYPE_PARAMS
     };
 } qcamera_api_result_t;
 
+// definition for payload type of setting callback
 typedef struct {
     camera_notify_callback notify_cb;
     camera_data_callback data_cb;
@@ -108,6 +109,7 @@ typedef struct {
     void *user;
 } qcamera_sm_evt_setcb_payload_t;
 
+// definition for payload type of sending command
 typedef struct {
     int32_t cmd;
     int32_t arg1;
@@ -122,29 +124,31 @@ public:
     int32_t procAPI(qcamera_sm_evt_enum_t evt, void *api_payload);
     int32_t procEvt(qcamera_sm_evt_enum_t evt, void *evt_payload);
 
+    bool isPreviewRunning(); // check if preview is running
+
 private:
     typedef enum {
         QCAMERA_SM_STATE_PREVIEW_STOPPED,          // preview is stopped
         QCAMERA_SM_STATE_PREVIEW_READY,            // preview started but preview window is not set yet
         QCAMERA_SM_STATE_PREVIEWING,               // previewing
-        QCAMERA_SM_STATE_PIC_TAKING,               // taking picture (preview is stopped)
-        QCAMERA_SM_STATE_RECORDING,                // recording
-        QCAMERA_SM_STATE_VIDEO_PIC_TAKING,         // taking live snapshot during recording
+        QCAMERA_SM_STATE_PIC_TAKING,               // taking picture (preview stopped)
+        QCAMERA_SM_STATE_RECORDING,                // recording (preview running)
+        QCAMERA_SM_STATE_VIDEO_PIC_TAKING,         // taking live snapshot during recording (preview running)
         QCAMERA_SM_STATE_PREVIEW_PIC_TAKING        // taking live snapshot (recording stopped but preview running)
     } qcamera_state_enum_t;
 
     typedef enum
     {
-        QCAMERA_SM_CMD_TYPE_API,
-        QCAMERA_SM_CMD_TYPE_EVT,
-        QCAMERA_SM_CMD_TYPE_EXIT,
+        QCAMERA_SM_CMD_TYPE_API,                   // cmd from API
+        QCAMERA_SM_CMD_TYPE_EVT,                   // cmd from mm-camera-interface/mm-jpeg-interface event
+        QCAMERA_SM_CMD_TYPE_EXIT,                  // cmd for exiting statemachine cmdThread
         QCAMERA_SM_CMD_TYPE_MAX
     } qcamera_sm_cmd_type_t;
 
     typedef struct {
-        qcamera_sm_cmd_type_t cmd;
-        qcamera_sm_evt_enum_t evt;
-        void *evt_payload;
+        qcamera_sm_cmd_type_t cmd;                  // cmd type (where it comes from)
+        qcamera_sm_evt_enum_t evt;                  // event type
+        void *evt_payload;                          // ptr to payload
     } qcamera_sm_cmd_t;
 
     int32_t stateMachine(qcamera_sm_evt_enum_t evt, void *payload);
@@ -156,14 +160,15 @@ private:
     int32_t procEvtVideoPicTakingState(qcamera_sm_evt_enum_t evt, void *payload);
     int32_t procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t evt, void *payload);
 
+    // main statemachine process routine
     static void *smEvtProcRoutine(void *data);
 
-    QCamera2HardwareInterface *m_parent;
-    qcamera_state_enum_t m_state;
-    QCameraQueue api_queue;      // cmd queue for APIs
-    QCameraQueue evt_queue;      // cmd queue for evt from mm-camera-intf/mm-jpeg-intf
-    pthread_t cmd_pid;           // cmd thread ID
-    sem_t cmd_sem;               // semaphore for cmd thread
+    QCamera2HardwareInterface *m_parent;  // ptr to HWI
+    qcamera_state_enum_t m_state;         // statemachine state
+    QCameraQueue api_queue;               // cmd queue for APIs
+    QCameraQueue evt_queue;               // cmd queue for evt from mm-camera-intf/mm-jpeg-intf
+    pthread_t cmd_pid;                    // cmd thread ID
+    sem_t cmd_sem;                        // semaphore for cmd thread
 
 };
 

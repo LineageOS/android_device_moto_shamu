@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+Copyright (c) 2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -49,7 +49,16 @@ static mm_camera_ctrl_t g_cam_ctrl = {0, {{0}}, {0}};
 static pthread_mutex_t g_handler_lock = PTHREAD_MUTEX_INITIALIZER;
 static uint16_t g_handler_history_count = 0; /* history count for handler */
 
-/* utility function to generate handler */
+/*===========================================================================
+ * FUNCTION   : mm_camera_util_generate_handler
+ *
+ * DESCRIPTION: utility function to generate handler for camera/channel/stream
+ *
+ * PARAMETERS :
+ *   @index: index of the object to have handler
+ *
+ * RETURN     : uint32_t type of handle that uniquely identify the object
+ *==========================================================================*/
 uint32_t mm_camera_util_generate_handler(uint8_t index)
 {
     uint32_t handler = 0;
@@ -64,11 +73,32 @@ uint32_t mm_camera_util_generate_handler(uint8_t index)
     return handler;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_util_get_index_by_handler
+ *
+ * DESCRIPTION: utility function to get index from handle
+ *
+ * PARAMETERS :
+ *   @handler: object handle
+ *
+ * RETURN     : uint8_t type of index derived from handle
+ *==========================================================================*/
 uint8_t mm_camera_util_get_index_by_handler(uint32_t handler)
 {
     return (handler&0x000000ff);
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_util_get_dev_name
+ *
+ * DESCRIPTION: utility function to get device name from camera handle
+ *
+ * PARAMETERS :
+ *   @cam_handle: camera handle
+ *
+ * RETURN     : char ptr to the device name stored in global variable
+ * NOTE       : caller should not free the char ptr
+ *==========================================================================*/
 const char *mm_camera_util_get_dev_name(uint32_t cam_handle)
 {
     char *dev_name = NULL;
@@ -77,6 +107,17 @@ const char *mm_camera_util_get_dev_name(uint32_t cam_handle)
     return dev_name;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_util_get_camera_by_handler
+ *
+ * DESCRIPTION: utility function to get camera object from camera handle
+ *
+ * PARAMETERS :
+ *   @cam_handle: camera handle
+ *
+ * RETURN     : ptr to the camera object stored in global variable
+ * NOTE       : caller should not free the camera object ptr
+ *==========================================================================*/
 mm_camera_obj_t* mm_camera_util_get_camera_by_handler(uint32_t cam_handle)
 {
     mm_camera_obj_t *cam_obj = NULL;
@@ -89,6 +130,18 @@ mm_camera_obj_t* mm_camera_util_get_camera_by_handler(uint32_t cam_handle)
     return cam_obj;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_query_capability
+ *
+ * DESCRIPTION: query camera capability
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_query_capability(uint32_t camera_handle)
 {
     int32_t rc = -1;
@@ -110,9 +163,24 @@ static int32_t mm_camera_intf_query_capability(uint32_t camera_handle)
     return rc;
 }
 
-/* set a parm’s current value */
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_set_parms
+ *
+ * DESCRIPTION: set parameters per camera
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @parms        : ptr to a param struct to be set to server
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : Assume the parms struct buf is already mapped to server via
+ *              domain socket. Corresponding fields of parameters to be set
+ *              are already filled in by upper layer caller.
+ *==========================================================================*/
 static int32_t mm_camera_intf_set_parms(uint32_t camera_handle,
-                                        set_parm_buffer_t *parms)
+                                        parm_buffer_t *parms)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;
@@ -130,9 +198,26 @@ static int32_t mm_camera_intf_set_parms(uint32_t camera_handle,
     return rc;
 }
 
-/* get a parm’s current value */
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_get_parms
+ *
+ * DESCRIPTION: get parameters per camera
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @parms        : ptr to a param struct to be get from server
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : Assume the parms struct buf is already mapped to server via
+ *              domain socket. Parameters to be get from server are already
+ *              filled in by upper layer caller. After this call, corresponding
+ *              fields of requested parameters will be filled in by server with
+ *              detailed information.
+ *==========================================================================*/
 static int32_t mm_camera_intf_get_parms(uint32_t camera_handle,
-                                        get_parm_buffer_t *parms)
+                                        parm_buffer_t *parms)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;
@@ -150,6 +235,18 @@ static int32_t mm_camera_intf_get_parms(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_close
+ *
+ * DESCRIPTION: close a camera by its handle
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_close(uint32_t camera_handle)
 {
     int32_t rc = -1;
@@ -189,6 +286,25 @@ static int32_t mm_camera_intf_close(uint32_t camera_handle)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_add_channel
+ *
+ * DESCRIPTION: add a channel
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @attr         : bundle attribute of the channel if needed
+ *   @channel_cb   : callback function for bundle data notify
+ *   @userdata     : user data ptr
+ *
+ * RETURN     : uint32_t type of channel handle
+ *              0  -- invalid channel handle, meaning the op failed
+ *              >0 -- successfully added a channel with a valid handle
+ * NOTE       : if no bundle data notify is needed, meaning each stream in the
+ *              channel will have its own stream data notify callback, then
+ *              attr, channel_cb, and userdata can be NULL. In this case,
+ *              no matching logic will be performed in channel for the bundling.
+ *==========================================================================*/
 static uint32_t mm_camera_intf_add_channel(uint32_t camera_handle,
                                            mm_camera_channel_attr_t *attr,
                                            mm_camera_buf_notify_t channel_cb,
@@ -212,6 +328,21 @@ static uint32_t mm_camera_intf_add_channel(uint32_t camera_handle,
     return ch_id;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_del_channel
+ *
+ * DESCRIPTION: delete a channel by its handle
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : all streams in the channel should be stopped already before
+ *              this channel can be deleted.
+ *==========================================================================*/
 static int32_t mm_camera_intf_del_channel(uint32_t camera_handle,
                                           uint32_t ch_id)
 {
@@ -233,6 +364,20 @@ static int32_t mm_camera_intf_del_channel(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_register_event_notify
+ *
+ * DESCRIPTION: register for event notify
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @evt_cb       : callback for event notify
+ *   @user_data    : user data ptr
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_register_event_notify(uint32_t camera_handle,
                                                     mm_camera_event_notify_t evt_cb,
                                                     void * user_data)
@@ -255,6 +400,20 @@ static int32_t mm_camera_intf_register_event_notify(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_qbuf
+ *
+ * DESCRIPTION: enqueue buffer back to kernel
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *   @buf          : buf ptr to be enqueued
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_qbuf(uint32_t camera_handle,
                                     uint32_t ch_id,
                                     mm_camera_buf_def_t *buf)
@@ -276,6 +435,19 @@ static int32_t mm_camera_intf_qbuf(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_add_stream
+ *
+ * DESCRIPTION: add a stream into a channel
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *
+ * RETURN     : uint32_t type of stream handle
+ *              0  -- invalid stream handle, meaning the op failed
+ *              >0 -- successfully added a stream with a valid handle
+ *==========================================================================*/
 static uint32_t mm_camera_intf_add_stream(uint32_t camera_handle,
                                           uint32_t ch_id)
 {
@@ -299,6 +471,21 @@ static uint32_t mm_camera_intf_add_stream(uint32_t camera_handle,
     return stream_id;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_del_stream
+ *
+ * DESCRIPTION: delete a stream by its handle
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *   @stream_id    : stream handle
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : stream should be stopped already before it can be deleted.
+ *==========================================================================*/
 static int32_t mm_camera_intf_del_stream(uint32_t camera_handle,
                                          uint32_t ch_id,
                                          uint32_t stream_id)
@@ -323,6 +510,21 @@ static int32_t mm_camera_intf_del_stream(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_config_stream
+ *
+ * DESCRIPTION: configure a stream
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *   @stream_id    : stream handle
+ *   @config       : stream configuration
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_config_stream(uint32_t camera_handle,
                                             uint32_t ch_id,
                                             uint32_t stream_id,
@@ -350,6 +552,19 @@ static int32_t mm_camera_intf_config_stream(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_start_channel
+ *
+ * DESCRIPTION: start a channel, which will start all streams in the channel
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_start_channel(uint32_t camera_handle,
                                             uint32_t ch_id)
 {
@@ -370,6 +585,19 @@ static int32_t mm_camera_intf_start_channel(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_stop_channel
+ *
+ * DESCRIPTION: stop a channel, which will stop all streams in the channel
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_stop_channel(uint32_t camera_handle,
                                            uint32_t ch_id)
 {
@@ -390,6 +618,21 @@ static int32_t mm_camera_intf_stop_channel(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_request_super_buf
+ *
+ * DESCRIPTION: for burst mode in bundle, reuqest certain amount of matched
+ *              frames from superbuf queue
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *   @num_buf_requested : number of matched frames needed
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_request_super_buf(uint32_t camera_handle,
                                                 uint32_t ch_id,
                                                 uint32_t num_buf_requested)
@@ -413,6 +656,20 @@ static int32_t mm_camera_intf_request_super_buf(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_cancel_super_buf_request
+ *
+ * DESCRIPTION: for burst mode in bundle, cancel the reuqest for certain amount
+ *              of matched frames from superbuf queue
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_cancel_super_buf_request(uint32_t camera_handle,
                                                        uint32_t ch_id)
 {
@@ -435,25 +692,24 @@ static int32_t mm_camera_intf_cancel_super_buf_request(uint32_t camera_handle,
     return rc;
 }
 
-static int32_t mm_camera_intf_do_action(uint32_t camera_handle,
-                                        set_parm_buffer_t *actions)
-{
-    int32_t rc = -1;
-    mm_camera_obj_t * my_obj = NULL;
-
-    pthread_mutex_lock(&g_intf_lock);
-    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
-
-    if(my_obj) {
-        pthread_mutex_lock(&my_obj->cam_lock);
-        pthread_mutex_unlock(&g_intf_lock);
-        rc = mm_camera_do_action(my_obj, actions);
-    } else {
-        pthread_mutex_unlock(&g_intf_lock);
-    }
-    return rc;
-}
-
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_map_buf
+ *
+ * DESCRIPTION: mapping camera buffer via domain socket to server
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @buf_type     : type of buffer to be mapped. could be following values:
+ *                   CAM_MAPPING_BUF_TYPE_CAPABILITY
+ *                   CAM_MAPPING_BUF_TYPE_SETPARM_BUF
+ *                   CAM_MAPPING_BUF_TYPE_GETPARM_BUF
+ *   @fd           : file descriptor of the buffer
+ *   @size         : size of the buffer
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_map_buf(uint32_t camera_handle,
                                       uint8_t buf_type,
                                       int fd,
@@ -475,6 +731,22 @@ static int32_t mm_camera_intf_map_buf(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_unmap_buf
+ *
+ * DESCRIPTION: unmapping camera buffer via domain socket to server
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @buf_type     : type of buffer to be unmapped. could be following values:
+ *                   CAM_MAPPING_BUF_TYPE_CAPABILITY
+ *                   CAM_MAPPING_BUF_TYPE_SETPARM_BUF
+ *                   CAM_MAPPING_BUF_TYPE_GETPARM_BUF
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_unmap_buf(uint32_t camera_handle,
                                         uint8_t buf_type)
 {
@@ -494,10 +766,28 @@ static int32_t mm_camera_intf_unmap_buf(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_set_stream_parms
+ *
+ * DESCRIPTION: set parameters per stream
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *   @s_id         : stream handle
+ *   @parms        : ptr to a param struct to be set to server
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : Assume the parms struct buf is already mapped to server via
+ *              domain socket. Corresponding fields of parameters to be set
+ *              are already filled in by upper layer caller.
+ *==========================================================================*/
 static int32_t mm_camera_intf_set_stream_parms(uint32_t camera_handle,
                                                uint32_t ch_id,
                                                uint32_t s_id,
-                                               void *parms)
+                                               cam_stream_parm_buffer_t *parms)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;
@@ -519,10 +809,30 @@ static int32_t mm_camera_intf_set_stream_parms(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_get_stream_parms
+ *
+ * DESCRIPTION: get parameters per stream
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *   @s_id         : stream handle
+ *   @parms        : ptr to a param struct to be get from server
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : Assume the parms struct buf is already mapped to server via
+ *              domain socket. Parameters to be get from server are already
+ *              filled in by upper layer caller. After this call, corresponding
+ *              fields of requested parameters will be filled in by server with
+ *              detailed information.
+ *==========================================================================*/
 static int32_t mm_camera_intf_get_stream_parms(uint32_t camera_handle,
                                                uint32_t ch_id,
                                                uint32_t s_id,
-                                               void *parms)
+                                               cam_stream_parm_buffer_t *parms)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;
@@ -545,37 +855,38 @@ static int32_t mm_camera_intf_get_stream_parms(uint32_t camera_handle,
     return rc;
 }
 
-static int32_t mm_camera_intf_do_stream_action(uint32_t camera_handle,
-                                               uint32_t ch_id,
-                                               uint32_t s_id,
-                                               void *actions)
-{
-    int32_t rc = -1;
-    mm_camera_obj_t * my_obj = NULL;
-
-    pthread_mutex_lock(&g_intf_lock);
-    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
-
-    CDBG("%s :E camera_handle = %d,ch_id = %d,s_id = %d",
-         __func__, camera_handle, ch_id, s_id);
-
-    if(my_obj) {
-        pthread_mutex_lock(&my_obj->cam_lock);
-        pthread_mutex_unlock(&g_intf_lock);
-        rc = mm_camera_do_stream_action(my_obj, ch_id, s_id, actions);
-    }else{
-        pthread_mutex_unlock(&g_intf_lock);
-    }
-
-    CDBG("%s :X rc = %d", __func__, rc);
-    return rc;
-}
-
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_map_stream_buf
+ *
+ * DESCRIPTION: mapping stream buffer via domain socket to server
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *   @s_id         : stream handle
+ *   @buf_type     : type of buffer to be mapped. could be following values:
+ *                   CAM_MAPPING_BUF_TYPE_STREAM_BUF
+ *                   CAM_MAPPING_BUF_TYPE_STREAM_INFO
+ *                   CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF
+ *   @buf_idx      : index of buffer within the stream buffers, only valid if
+ *                   buf_type is CAM_MAPPING_BUF_TYPE_STREAM_BUF or
+ *                   CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF
+ *   @plane_idx    : plane index. If all planes share the same fd,
+ *                   plane_idx = -1; otherwise, plean_idx is the
+ *                   index to plane (0..num_of_planes)
+ *   @fd           : file descriptor of the buffer
+ *   @size         : size of the buffer
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_map_stream_buf(uint32_t camera_handle,
                                              uint32_t ch_id,
                                              uint32_t stream_id,
                                              uint8_t buf_type,
-                                             uint32_t idx,
+                                             uint32_t buf_idx,
+                                             int32_t plane_idx,
                                              int fd,
                                              uint32_t size)
 {
@@ -585,14 +896,15 @@ static int32_t mm_camera_intf_map_stream_buf(uint32_t camera_handle,
     pthread_mutex_lock(&g_intf_lock);
     my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
 
-    CDBG("%s :E camera_handle = %d,ch_id = %d,s_id = %d, idx = %d",
-         __func__, camera_handle, ch_id, stream_id, idx);
+    CDBG("%s :E camera_handle = %d, ch_id = %d, s_id = %d, buf_idx = %d, plane_idx = %d",
+         __func__, camera_handle, ch_id, stream_id, buf_idx);
 
     if(my_obj) {
         pthread_mutex_lock(&my_obj->cam_lock);
         pthread_mutex_unlock(&g_intf_lock);
         rc = mm_camera_map_stream_buf(my_obj, ch_id, stream_id,
-                                      buf_type, idx, fd, size);
+                                      buf_type, buf_idx, plane_idx,
+                                      fd, size);
     }else{
         pthread_mutex_unlock(&g_intf_lock);
     }
@@ -601,11 +913,36 @@ static int32_t mm_camera_intf_map_stream_buf(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_unmap_stream_buf
+ *
+ * DESCRIPTION: unmapping stream buffer via domain socket to server
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *   @s_id         : stream handle
+ *   @buf_type     : type of buffer to be unmapped. could be following values:
+ *                   CAM_MAPPING_BUF_TYPE_STREAM_BUF
+ *                   CAM_MAPPING_BUF_TYPE_STREAM_INFO
+ *                   CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF
+ *   @buf_idx      : index of buffer within the stream buffers, only valid if
+ *                   buf_type is CAM_MAPPING_BUF_TYPE_STREAM_BUF or
+ *                   CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF
+ *   @plane_idx    : plane index. If all planes share the same fd,
+ *                   plane_idx = -1; otherwise, plean_idx is the
+ *                   index to plane (0..num_of_planes)
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 static int32_t mm_camera_intf_unmap_stream_buf(uint32_t camera_handle,
                                                uint32_t ch_id,
                                                uint32_t stream_id,
                                                uint8_t buf_type,
-                                               uint32_t idx)
+                                               uint32_t buf_idx,
+                                               int32_t plane_idx)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;
@@ -613,14 +950,14 @@ static int32_t mm_camera_intf_unmap_stream_buf(uint32_t camera_handle,
     pthread_mutex_lock(&g_intf_lock);
     my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
 
-    CDBG("%s :E camera_handle = %d,ch_id = %d,s_id = %d, idx = %d",
-         __func__, camera_handle, ch_id, stream_id, idx);
+    CDBG("%s :E camera_handle = %d, ch_id = %d, s_id = %d, buf_idx = %d, plane_idx = %d",
+         __func__, camera_handle, ch_id, stream_id, buf_idx, plane_idx);
 
     if(my_obj) {
         pthread_mutex_lock(&my_obj->cam_lock);
         pthread_mutex_unlock(&g_intf_lock);
         rc = mm_camera_unmap_stream_buf(my_obj, ch_id, stream_id,
-                                        buf_type, idx);
+                                        buf_type, buf_idx, plane_idx);
     }else{
         pthread_mutex_unlock(&g_intf_lock);
     }
@@ -629,6 +966,15 @@ static int32_t mm_camera_intf_unmap_stream_buf(uint32_t camera_handle,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : get_num_of_cameras
+ *
+ * DESCRIPTION: get number of cameras
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : number of cameras supported
+ *==========================================================================*/
 uint8_t get_num_of_cameras()
 {
     int rc = 0;
@@ -706,7 +1052,6 @@ static mm_camera_ops_t mm_camera_ops = {
     .get_parms = mm_camera_intf_get_parms,
     .map_buf = mm_camera_intf_map_buf,
     .unmap_buf = mm_camera_intf_unmap_buf,
-    .do_action = mm_camera_intf_do_action,
     .add_channel = mm_camera_intf_add_channel,
     .delete_channel = mm_camera_intf_del_channel,
     .add_stream = mm_camera_intf_add_stream,
@@ -717,14 +1062,23 @@ static mm_camera_ops_t mm_camera_ops = {
     .unmap_stream_buf = mm_camera_intf_unmap_stream_buf,
     .set_stream_parms = mm_camera_intf_set_stream_parms,
     .get_stream_parms = mm_camera_intf_get_stream_parms,
-    .do_stream_action = mm_camera_intf_do_stream_action,
     .start_channel = mm_camera_intf_start_channel,
     .stop_channel = mm_camera_intf_stop_channel,
     .request_super_buf = mm_camera_intf_request_super_buf,
     .cancel_super_buf_request = mm_camera_intf_cancel_super_buf_request,
 };
 
-/* open camera. */
+/*===========================================================================
+ * FUNCTION   : camera_open
+ *
+ * DESCRIPTION: open a camera by camera index
+ *
+ * PARAMETERS :
+ *   @camera_idx : camera index. should within range of 0 to num_of_cameras
+ *
+ * RETURN     : ptr to a virtual table containing camera handle and operation table.
+ *              NULL if failed.
+ *==========================================================================*/
 mm_camera_vtbl_t * camera_open(uint8_t camera_idx)
 {
     int32_t rc = 0;

@@ -52,7 +52,9 @@ public:
     // Owner of memory is transferred from the caller to the caller with this call.
     virtual int32_t addStream(QCameraAllocator& allocator,
                               cam_stream_type_t stream_type,
-                              stream_cb_routine stream_cb, void *userdata);
+                              cam_padding_info_t *paddingInfo,
+                              stream_cb_routine stream_cb,
+                              void *userdata);
     virtual int32_t start();
     virtual int32_t stop();
     virtual int32_t bufDone(mm_camera_super_buf_t *recvd_frame);

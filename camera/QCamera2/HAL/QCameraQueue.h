@@ -53,7 +53,7 @@ private:
         void* data;
     } camera_q_node;
 
-    camera_q_node m_head; /* dummy head */
+    camera_q_node m_head; // dummy head
     int m_size;
     pthread_mutex_t m_lock;
     release_data_fn m_dataFn;

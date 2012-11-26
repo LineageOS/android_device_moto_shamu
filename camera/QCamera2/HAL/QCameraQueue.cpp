@@ -33,6 +33,15 @@
 
 namespace android {
 
+/*===========================================================================
+ * FUNCTION   : QCameraQueue
+ *
+ * DESCRIPTION: default constructor of QCameraQueue
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraQueue::QCameraQueue()
 {
     pthread_mutex_init(&m_lock, NULL);
@@ -42,6 +51,17 @@ QCameraQueue::QCameraQueue()
     m_userData = NULL;
 }
 
+/*===========================================================================
+ * FUNCTION   : QCameraQueue
+ *
+ * DESCRIPTION: constructor of QCameraQueue
+ *
+ * PARAMETERS :
+ *   @data_rel_fn : function ptr to release node data internal resource
+ *   @user_data   : user data ptr
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraQueue::QCameraQueue(release_data_fn data_rel_fn, void *user_data)
 {
     pthread_mutex_init(&m_lock, NULL);
@@ -51,12 +71,30 @@ QCameraQueue::QCameraQueue(release_data_fn data_rel_fn, void *user_data)
     m_userData = user_data;
 }
 
+/*===========================================================================
+ * FUNCTION   : ~QCameraQueue
+ *
+ * DESCRIPTION: deconstructor of QCameraQueue
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraQueue::~QCameraQueue()
 {
     flush();
     pthread_mutex_destroy(&m_lock);
 }
 
+/*===========================================================================
+ * FUNCTION   : isEmpty
+ *
+ * DESCRIPTION: return if the queue is empty or not
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : true -- queue is empty; false -- not empty
+ *==========================================================================*/
 bool QCameraQueue::isEmpty()
 {
     bool flag = true;
@@ -68,6 +106,16 @@ bool QCameraQueue::isEmpty()
     return flag;
 }
 
+/*===========================================================================
+ * FUNCTION   : enqueue
+ *
+ * DESCRIPTION: enqueue data into the queue
+ *
+ * PARAMETERS :
+ *   @data    : data to be enqueued
+ *
+ * RETURN     : true -- success; false -- failed
+ *==========================================================================*/
 bool QCameraQueue::enqueue(void *data)
 {
     camera_q_node *node =
@@ -87,7 +135,17 @@ bool QCameraQueue::enqueue(void *data)
     return true;
 }
 
-/* priority queue, will insert into the head of the queue */
+/*===========================================================================
+ * FUNCTION   : enqueueWithPriority
+ *
+ * DESCRIPTION: enqueue data into queue with priority, will insert into the
+ *              head of the queue
+ *
+ * PARAMETERS :
+ *   @data    : data to be enqueued
+ *
+ * RETURN     : true -- success; false -- failed
+ *==========================================================================*/
 bool QCameraQueue::enqueueWithPriority(void *data)
 {
     camera_q_node *node =
@@ -113,6 +171,15 @@ bool QCameraQueue::enqueueWithPriority(void *data)
     return true;
 }
 
+/*===========================================================================
+ * FUNCTION   : dequeue
+ *
+ * DESCRIPTION: dequeue data from the queue
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : data ptr. NULL if not any data in the queue.
+ *==========================================================================*/
 void* QCameraQueue::dequeue()
 {
     camera_q_node* node = NULL;
@@ -138,6 +205,16 @@ void* QCameraQueue::dequeue()
     return data;
 }
 
+/*===========================================================================
+ * FUNCTION   : flush
+ *
+ * DESCRIPTION: flush all nodes from the queue, queue will be empty after this
+ *              operation.
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void QCameraQueue::flush(){
     camera_q_node* node = NULL;
     struct cam_list *head = NULL;

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+Copyright (c) 2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -194,6 +194,9 @@ typedef struct mm_stream {
     /* stream info*/
     cam_stream_info_t *stream_info;
 
+    /* padding info */
+    cam_padding_info_t padding_info;
+
     /* offset */
     cam_frame_len_offset_t frame_offset;
 
@@ -251,7 +254,7 @@ typedef struct {
 
 typedef struct {
     uint32_t stream_id;
-    void *parms;
+    cam_stream_parm_buffer_t *parms;
 } mm_evt_paylod_set_get_stream_parms_t;
 
 typedef struct {
@@ -262,7 +265,8 @@ typedef struct {
 typedef struct {
     uint32_t stream_id;
     uint8_t buf_type;
-    uint32_t idx;
+    uint32_t buf_idx;
+    int32_t plane_idx;
     int fd;
     uint32_t size;
 } mm_evt_paylod_map_stream_buf_t;
@@ -270,7 +274,8 @@ typedef struct {
 typedef struct {
     uint32_t stream_id;
     uint8_t buf_type;
-    uint32_t idx;
+    uint32_t buf_idx;
+    int32_t plane_idx;
 } mm_evt_paylod_unmap_stream_buf_t;
 
 typedef struct {
@@ -390,6 +395,8 @@ extern int32_t mm_camera_util_sendmsg(mm_camera_obj_t *my_obj,
                                       void *msg,
                                       uint32_t buf_size,
                                       int sendfd);
+/* Check if hardware target is A family */
+uint8_t mm_camera_util_chip_is_a_family(void);
 
 /* mm-camera */
 extern int32_t mm_camera_open(mm_camera_obj_t *my_obj);
@@ -402,9 +409,9 @@ extern int32_t mm_camera_qbuf(mm_camera_obj_t *my_obj,
                               mm_camera_buf_def_t *buf);
 extern int32_t mm_camera_query_capability(mm_camera_obj_t *my_obj);
 extern int32_t mm_camera_set_parms(mm_camera_obj_t *my_obj,
-                                   set_parm_buffer_t *parms);
+                                   parm_buffer_t *parms);
 extern int32_t mm_camera_get_parms(mm_camera_obj_t *my_obj,
-                                   get_parm_buffer_t *parms);
+                                   parm_buffer_t *parms);
 extern int32_t mm_camera_map_buf(mm_camera_obj_t *my_obj,
                                  uint8_t buf_type,
                                  int fd,
@@ -412,7 +419,7 @@ extern int32_t mm_camera_map_buf(mm_camera_obj_t *my_obj,
 extern int32_t mm_camera_unmap_buf(mm_camera_obj_t *my_obj,
                                    uint8_t buf_type);
 extern int32_t mm_camera_do_action(mm_camera_obj_t *my_obj,
-                                   set_parm_buffer_t *actions);
+                                   parm_buffer_t *actions);
 extern uint32_t mm_camera_add_channel(mm_camera_obj_t *my_obj,
                                       mm_camera_channel_attr_t *attr,
                                       mm_camera_buf_notify_t channel_cb,
@@ -440,11 +447,11 @@ extern int32_t mm_camera_cancel_super_buf_request(mm_camera_obj_t *my_obj,
 extern int32_t mm_camera_set_stream_parms(mm_camera_obj_t *my_obj,
                                           uint32_t ch_id,
                                           uint32_t s_id,
-                                          void *parms);
+                                          cam_stream_parm_buffer_t *parms);
 extern int32_t mm_camera_get_stream_parms(mm_camera_obj_t *my_obj,
                                           uint32_t ch_id,
                                           uint32_t s_id,
-                                          void *parms);
+                                          cam_stream_parm_buffer_t *parms);
 extern int32_t mm_camera_register_event_notify_internal(mm_camera_obj_t *my_obj,
                                                         mm_camera_event_notify_t evt_cb,
                                                         void * user_data);
@@ -452,14 +459,16 @@ extern int32_t mm_camera_map_stream_buf(mm_camera_obj_t *my_obj,
                                         uint32_t ch_id,
                                         uint32_t stream_id,
                                         uint8_t buf_type,
-                                        uint32_t idx,
+                                        uint32_t buf_idx,
+                                        int32_t plane_idx,
                                         int fd,
                                         uint32_t size);
 extern int32_t mm_camera_unmap_stream_buf(mm_camera_obj_t *my_obj,
                                           uint32_t ch_id,
                                           uint32_t stream_id,
                                           uint8_t buf_type,
-                                          int idx);
+                                          uint32_t buf_idx,
+                                          int32_t plane_idx);
 extern int32_t mm_camera_do_stream_action(mm_camera_obj_t *my_obj,
                                           uint32_t ch_id,
                                           uint32_t stream_id,
@@ -495,11 +504,13 @@ extern int32_t mm_stream_reg_buf_cb(mm_stream_t *my_obj,
 extern int32_t mm_stream_map_buf(mm_stream_t *my_obj,
                                  uint8_t buf_type,
                                  uint32_t frame_idx,
+                                 int32_t plane_idx,
                                  int fd,
                                  uint32_t size);
 extern int32_t mm_stream_unmap_buf(mm_stream_t *my_obj,
                                    uint8_t buf_type,
-                                   uint32_t frame_idx);
+                                   uint32_t frame_idx,
+                                   int32_t plane_idx);
 
 
 /* utiltity fucntion declared in mm-camera-inteface2.c

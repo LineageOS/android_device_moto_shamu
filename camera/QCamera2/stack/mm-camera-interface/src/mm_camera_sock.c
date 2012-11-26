@@ -40,12 +40,13 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mm_camera_sock.h"
 
 /*===========================================================================
- * FUNCTION    - mm_camera_socket_create -
+ * FUNCTION   : mm_camera_socket_create
  *
  * DESCRIPTION: opens a domain socket tied to camera ID and socket type
- *                        int cam_id: camera ID
-  *                       mm_camera_sock_type_t sock_type: socket type, TCP/UDP
- * retured fd related to the domain socket
+ *  @cam_id   : camera ID
+ *  @sock_type: socket type, TCP/UDP
+ *
+ * RETURN     : fd related to the domain socket
  *==========================================================================*/
 int mm_camera_socket_create(int cam_id, mm_camera_sock_type_t sock_type)
 {
@@ -87,9 +88,12 @@ int mm_camera_socket_create(int cam_id, mm_camera_sock_type_t sock_type)
 }
 
 /*===========================================================================
- * FUNCTION    - mm_camera_socket_close -
+ * FUNCTION   : mm_camera_socket_close
  *
  * DESCRIPTION:  close domain socket by its fd
+ *   @fd      : file descriptor for the domain socket to be closed
+ *
+ * RETURN     : none
  *==========================================================================*/
 void mm_camera_socket_close(int fd)
 {
@@ -99,13 +103,14 @@ void mm_camera_socket_close(int fd)
 }
 
 /*===========================================================================
- * FUNCTION    - mm_camera_socket_sendmsg -
+ * FUNCTION   : mm_camera_socket_sendmsg
  *
  * DESCRIPTION:  send msg through domain socket
- *                         int fd: socket fd
- *                         mm_camera_sock_msg_packet_t *msg: pointer to msg to be sent over domain socket
- *                         int sendfd: file descriptors to be sent
- * return the total bytes of sent msg
+ *   @fd      : socket fd
+ *   @msg     : pointer to msg to be sent over domain socket
+ *   @sendfd  : file descriptors to be sent
+ *
+ * RETURN     : the total bytes of sent msg
  *==========================================================================*/
 int mm_camera_socket_sendmsg(
   int fd,
@@ -157,15 +162,16 @@ int mm_camera_socket_sendmsg(
 }
 
 /*===========================================================================
- * FUNCTION    - mm_camera_socket_recvmsg -
+ * FUNCTION   : mm_camera_socket_recvmsg
  *
  * DESCRIPTION:  receive msg from domain socket.
- *                         int fd: socket fd
- *                         void *msg: pointer to mm_camera_sock_msg_packet_t to hold incoming msg,
- *                                    need be allocated by the caller
- *                         uint32_t buf_size: the size of the buf that holds incoming msg
- *                         int *rcvdfd: pointer to hold recvd file descriptor if not NULL.
- * return the total bytes of received msg
+ *   @fd      : socket fd
+ *   @msg     : pointer to mm_camera_sock_msg_packet_t to hold incoming msg,
+ *              need be allocated by the caller
+ *   @buf_size: the size of the buf that holds incoming msg
+ *   @rcvdfd  : pointer to hold recvd file descriptor if not NULL.
+ *
+ * RETURN     : the total bytes of received msg
  *==========================================================================*/
 int mm_camera_socket_recvmsg(
   int fd,
@@ -221,4 +227,3 @@ int mm_camera_socket_recvmsg(
 
     return rcvd_len;
 }
-

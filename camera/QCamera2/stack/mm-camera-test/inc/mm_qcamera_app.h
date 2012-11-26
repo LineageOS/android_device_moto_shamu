@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+Copyright (c) 2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -129,8 +129,7 @@ typedef struct {
     mm_jpeg_ops_t jpeg_ops;
     uint32_t jpeg_hdl;
     mm_camera_app_buf_t cap_buf;
-    mm_camera_app_buf_t setparm_buf;
-    mm_camera_app_buf_t getparm_buf;
+    mm_camera_app_buf_t parm_buf;
 
     mm_camera_super_buf_t* current_job_frames;
     uint32_t current_job_id;
