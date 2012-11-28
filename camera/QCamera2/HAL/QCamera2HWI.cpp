@@ -1865,7 +1865,7 @@ int QCamera2HardwareInterface::getJpegRotation() {
     return 0;
 }
 
-int QCamera2HardwareInterface::getExifData(exif_tags_info_t **exif_data,
+int QCamera2HardwareInterface::getExifData(QEXIF_INFO_DATA **exif_data,
                                            int *num_exif_entries)
 {
     if (NULL == exif_data || NULL == num_exif_entries) {

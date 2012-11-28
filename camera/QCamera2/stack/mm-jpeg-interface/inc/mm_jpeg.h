@@ -36,7 +36,7 @@
 #include "OMX_Index.h"
 #include "OMX_Core.h"
 #include "OMX_Component.h"
-#include "omx_jpeg_ext.h"
+#include "QOMX_JpegExtensions.h"
 #include <semaphore.h>
 
 typedef struct {

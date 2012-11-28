@@ -575,70 +575,46 @@ typedef struct {
     int num_fd;
 } cam_fd_set_parm_t;
 
-/*************************************/
-/****The following part is for jpeg***/
-/*************************************/
-/* Exif Tag Data Type */
-typedef enum
-{
-    EXIF_BYTE      = 1,
-    EXIF_ASCII     = 2,
-    EXIF_SHORT     = 3,
-    EXIF_LONG      = 4,
-    EXIF_RATIONAL  = 5,
-    EXIF_UNDEFINED = 7,
-    EXIF_SLONG     = 9,
-    EXIF_SRATIONAL = 10
-} exif_tag_type_t;
-
-/* Exif Rational Data Type */
-typedef struct
-{
-    uint32_t  num;    // Numerator
-    uint32_t  denom;  // Denominator
-} rat_t;
-
-/* Exif Signed Rational Data Type */
-typedef struct
-{
-    int32_t  num;    // Numerator
-    int32_t  denom;  // Denominator
-} srat_t;
-
-typedef struct
-{
-  exif_tag_type_t type;
-  uint8_t copy;
-  uint32_t count;
-  union
-  {
-    char      *_ascii;
-    uint8_t   *_bytes;
-    uint8_t    _byte;
-    uint16_t  *_shorts;
-    uint16_t   _short;
-    uint32_t  *_longs;
-    uint32_t   _long;
-    rat_t     *_rats;
-    rat_t      _rat;
-    uint8_t   *_undefined;
-    int32_t   *_slongs;
-    int32_t    _slong;
-    srat_t    *_srats;
-    srat_t     _srat;
-  } data;
-} exif_tag_entry_t;
+typedef struct {
+    int8_t face_id;            /* unique id for face tracking within view unless view changes */
+    int8_t score;              /* score of confidence (0, -100) */
+    cam_rect_t face_boundary;  /* boundary of face detected */
+    cam_coordinate_type_t left_eye_center;  /* coordinate of center of left eye */
+    cam_coordinate_type_t right_eye_center; /* coordinate of center of right eye */
+    cam_coordinate_type_t mouth_center;     /* coordinate of center of mouth */
+    uint8_t smile_degree;      /* smile degree (0, -100) */
+    uint8_t smile_confidence;  /* smile confidence (0, 100) */
+    uint8_t face_recognised;   /* if face is recognised */
+    int8_t gaze_angle;         /* -90 -45 0 45 90 for head left to rigth tilt */
+    int8_t updown_dir;         /* up down direction (-90, 90) */
+    int8_t leftright_dir;      /* left right direction (-90, 90) */
+    int8_t roll_dir;           /* roll direction (-90, 90) */
+    int8_t left_right_gaze;    /* left right gaze degree (-50, 50) */
+    int8_t top_bottom_gaze;    /* up down gaze degree (-50, 50) */
+    uint8_t blink_detected;    /* if blink is detected */
+    uint8_t left_blink;        /* left eye blink degeree (0, -100) */
+    uint8_t right_blink;       /* right eye blink degree (0, - 100) */
+} cam_face_detection_info_t;
 
 typedef struct {
-    uint32_t      tag_id;
-    exif_tag_entry_t  tag_entry;
-} exif_tags_info_t;
+    uint32_t frame_id;                         /* frame index of which faces are detected */
+    uint8_t num_faces_detected;                /* number of faces detected */
+    cam_face_detection_info_t faces[MAX_ROI];  /* detailed information of faces detected */
+} cam_face_detection_data_t;
 
-/* Exif Tag ID */
-typedef uint32_t exif_tag_id_t;
-/* Exif Info (opaque definition) */
-struct exif_info_t;
-typedef struct exif_info_t * exif_info_obj_t;
+#define CAM_HISTOGRAM_STATS_SIZE 256
+typedef struct {
+    uint32_t max_hist_value;
+    uint32_t hist_buf[CAM_HISTOGRAM_STATS_SIZE]; /* buf holding histogram stats data */
+} cam_histograme_data_t;
+
+typedef  struct {
+    uint8_t is_hist_valid;                /* if histgram data is valid */
+    cam_histograme_data_t hist_data;      /* histogram data */
+
+    uint8_t is_faces_valid;               /* if face detection data is valid */
+    cam_face_detection_data_t faces_data; /* face detection result */
+} cam_metadata_info_t;
 
 /*****************************************************************************
  *                 Code for Domain Socket Based Parameters                   *
