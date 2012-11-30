@@ -26,10 +26,10 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 
-#ifndef _EXIF_H
-#define _EXIF_H
+#ifndef __QEXIF_H__
+#define __QEXIF_H__
 
-#include<stdio.h>
+#include <stdio.h>
 
 /* Exif Info (opaque definition) */
 struct exif_info_t;
@@ -1724,5 +1724,5 @@ typedef enum
 #define _ID_PIM 0xc4a5
 #define EXIFTAGID_PIM_TAG CONSTRUCT_TAGID(PIM, _ID_PIM)
 #define EXIFTAGTYPE_PIM_TAG EXIF_UNDEFINED
-#endif // #ifndef _EXIF_H
+#endif // __QEXIF_H__
 
