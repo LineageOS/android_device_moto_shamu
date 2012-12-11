@@ -128,7 +128,7 @@ int32_t QCameraStream::init(cam_stream_type_t stream_type,
 
     rc = mCamOps->map_stream_buf(mCamHandle,
                 mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO,
-                0, mStreamInfoBuf->getFd(0), mStreamInfoBuf->getSize(0), -1);
+                0, -1, mStreamInfoBuf->getFd(0), mStreamInfoBuf->getSize(0));
     if (rc < 0) {
         ALOGE("Failed to map stream info buffer");
         goto err2;

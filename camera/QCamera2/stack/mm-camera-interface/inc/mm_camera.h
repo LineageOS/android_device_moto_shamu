@@ -383,12 +383,12 @@ typedef struct {
 /* set int32_t value */
 extern int32_t mm_camera_util_s_ctrl(int32_t fd,
                                      uint32_t id,
-                                     int32_t value);
+                                     int32_t *value);
 
 /* get int32_t value */
 extern int32_t mm_camera_util_g_ctrl(int32_t fd,
                                      uint32_t id,
-                                     int32_t value);
+                                     int32_t *value);
 
 /* send msg throught domain socket for fd mapping */
 extern int32_t mm_camera_util_sendmsg(mm_camera_obj_t *my_obj,
@@ -418,8 +418,10 @@ extern int32_t mm_camera_map_buf(mm_camera_obj_t *my_obj,
                                  uint32_t size);
 extern int32_t mm_camera_unmap_buf(mm_camera_obj_t *my_obj,
                                    uint8_t buf_type);
-extern int32_t mm_camera_do_action(mm_camera_obj_t *my_obj,
-                                   parm_buffer_t *actions);
+extern int32_t mm_camera_do_auto_focus(mm_camera_obj_t *my_obj,
+                                        cam_autofocus_cycle_t sweep_mode);
+extern cam_autofocus_state_t mm_camera_cancel_auto_focus(mm_camera_obj_t *my_obj);
+extern int32_t mm_camera_prepare_snapshot(mm_camera_obj_t *my_obj);
 extern uint32_t mm_camera_add_channel(mm_camera_obj_t *my_obj,
                                       mm_camera_channel_attr_t *attr,
                                       mm_camera_buf_notify_t channel_cb,

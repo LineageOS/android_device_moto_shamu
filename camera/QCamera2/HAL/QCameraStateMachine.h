@@ -77,6 +77,7 @@ typedef enum {
     QCAMERA_SM_EVT_DUMP,                     // dump
     /*******END OF: API EVT*********/
 
+    QCAMERA_SM_EVT_EVT_INTERNAL,             // internal evt notify
     QCAMERA_SM_EVT_EVT_NOTIFY,               // evt notify from server
     QCAMERA_SM_EVT_JPEG_EVT_NOTIFY,          // evt notify from jpeg
     QCAMERA_SM_EVT_SNAPSHOT_DONE,            // internal evt that snapshot is done
@@ -115,6 +116,18 @@ typedef struct {
     int32_t arg1;
     int32_t arg2;
 } qcamera_sm_evt_command_payload_t;
+
+typedef enum {
+    QCAMERA_INTERNAL_EVT_FOCUS_UPDATE,       // internal event for focus updating
+    QCAMERA_INTERNAL_EVT_MAX
+} qcamera_internal_evt_type_t;
+
+typedef struct {
+    qcamera_internal_evt_type_t evt_type;
+    union {
+        cam_auto_focus_data_t focus_data;
+    };
+} qcamera_sm_internal_evt_payload_t;
 
 class QCameraStateMachine
 {

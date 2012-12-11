@@ -59,7 +59,6 @@ public:
 
 private:
     int mNumOfCameras;
-    QCamera2HardwareInterface *mCameraHardware[MM_CAMERA_MAX_NUM_SENSORS];
 };
 
 }; /*namespace android*/

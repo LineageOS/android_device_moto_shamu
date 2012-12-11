@@ -605,8 +605,7 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
          goto end;
     }
 
-    gralloc_usage = GRALLOC_USAGE_PRIVATE_CAMERA_HEAP |
-                    GRALLOC_USAGE_PRIVATE_UNCACHED;
+    gralloc_usage = GRALLOC_USAGE_PRIVATE_MM_HEAP;
     err = mWindow->set_usage(mWindow, gralloc_usage);
     if(err != 0) {
         /* set_usage error out */
