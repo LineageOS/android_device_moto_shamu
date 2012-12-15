@@ -56,6 +56,11 @@ static const char ExifUndefinedPrefix[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 #define EXIF_ASCII_PREFIX_SIZE           8   //(sizeof(ExifAsciiPrefix))
 #define FOCAL_LENGTH_DECIMAL_PRECISION   100
 
+typedef enum {
+    CAMERA_PICTURE_TYPE_JPEG = 1,
+    CAMERA_PICTURE_TYPE_RAW = 2
+} QCameraPictureType;
+
 class QCameraParameters: public CameraParameters
 {
 public:
@@ -76,6 +81,10 @@ public:
     static const char KEY_QC_SKIN_TONE_ENHANCEMENT[] ;
     static const char KEY_QC_SUPPORTED_SKIN_TONE_ENHANCEMENT_MODES[] ;
 
+    // Supported Raw formats
+    static const char KEY_QC_SUPPORTED_RAW_FORMATS[];
+    static const char KEY_QC_RAW_FORMAT[];
+
     //Touch Af/AEC settings.
     static const char KEY_QC_TOUCH_AF_AEC[];
     static const char KEY_QC_SUPPORTED_TOUCH_AF_AEC[];
@@ -89,12 +98,12 @@ public:
     // Supported auto scene detection settings.
     // Example value: "off,on". Read only.
     static const char KEY_QC_SUPPORTED_SCENE_DETECT[];
+    static const char KEY_QC_SELECTABLE_ZONE_AF[];
 
     static const char KEY_QC_ISO_MODE[];
     static const char KEY_QC_SUPPORTED_ISO_MODES[];
     static const char KEY_QC_LENSSHADE[] ;
     static const char KEY_QC_SUPPORTED_LENSSHADE_MODES[] ;
-
     static const char KEY_QC_AUTO_EXPOSURE[];
     static const char KEY_QC_SUPPORTED_AUTO_EXPOSURE[];
 
@@ -102,20 +111,27 @@ public:
     static const char KEY_QC_GPS_LONGITUDE_REF[];
     static const char KEY_QC_GPS_ALTITUDE_REF[];
     static const char KEY_QC_GPS_STATUS[];
-    static const char KEY_QC_EXIF_DATETIME[];
     static const char KEY_QC_MEMORY_COLOR_ENHANCEMENT[];
     static const char KEY_QC_SUPPORTED_MEM_COLOR_ENHANCE_MODES[];
 
     static const char KEY_QC_ZSL[];
     static const char KEY_QC_SUPPORTED_ZSL_MODES[];
+    static const char KEY_QC_ZSL_BURST_INTERVAL[];
+    static const char KEY_QC_ZSL_BURST_LOOKBACK[];
+    static const char KEY_QC_ZSL_QUEUE_DEPTH[];
 
     static const char KEY_QC_CAMERA_MODE[];
+    static const char KEY_QC_ORIENTATION[];
 
     static const char KEY_QC_VIDEO_HIGH_FRAME_RATE[];
     static const char KEY_QC_SUPPORTED_VIDEO_HIGH_FRAME_RATE_MODES[];
     static const char KEY_QC_HIGH_DYNAMIC_RANGE_IMAGING[];
     static const char KEY_QC_SUPPORTED_HDR_IMAGING_MODES[];
     static const char KEY_QC_AE_BRACKET_HDR[];
+    static const char KEY_QC_SUPPORTED_AE_BRACKET_HDR_MODES[];
+    static const char KEY_QC_CAPTURE_BURST_EXPOSURE[];
+    static const char KEY_QC_NUM_SNAPSHOT_PER_SHUTTER[];
+    static const char KEY_QC_NO_DISPLAY_MODE[];
 
     // DENOISE
     static const char KEY_QC_DENOISE[];
@@ -250,50 +266,38 @@ public:
         int val;
     } QCameraMap;
 
-    int getOrientation() const;
-    void setOrientation(int orientation);
-    void getSupportedHfrSizes(Vector<Size> &sizes) const;
-    void setPreviewFpsRange(int minFPS,int maxFPS);
+    void getSupportedHfrSizes(Vector<Size> &sizes);
     void setPreviewFrameRateMode(const char *mode);
     const char *getPreviewFrameRateMode() const;
     void setTouchIndexAec(int x, int y);
-    void getTouchIndexAec(int *x, int *y) const;
+    void getTouchIndexAec(int *x, int *y);
     void setTouchIndexAf(int x, int y);
-    void getTouchIndexAf(int *x, int *y) const;
-    void getMeteringAreaCenter(int * x, int *y) const;
+    void getTouchIndexAf(int *x, int *y);
 
-    status_t init(cam_capability_t *, mm_camera_vtbl_t *);
+    int32_t init(cam_capability_t *, mm_camera_vtbl_t *);
     void deinit();
-    status_t assign(QCameraParameters& params);
-    status_t initDefaultParameters();
-    status_t updateParameters(QCameraParameters&, bool &needRestart);
-    status_t commitParameters();
-    status_t setAutoExposure(const QCameraParameters& );
-    status_t setPreviewSize(const QCameraParameters& );
-    status_t setVideoSize(const QCameraParameters& );
-    status_t setPictureSize(const QCameraParameters& );
-    status_t setPreviewFormat(const QCameraParameters& );
-    status_t setPictureFormat(const QCameraParameters& );
-    status_t setPreviewFrameRate(const QCameraParameters& );
-
+    int32_t assign(QCameraParameters& params);
+    int32_t initDefaultParameters();
+    int32_t updateParameters(QCameraParameters&, bool &needRestart);
+    int32_t commitParameters();
     int getPreviewHalPixelFormat() const;
-    status_t getStreamFormat(cam_stream_type_t streamType,
+    int32_t getStreamFormat(cam_stream_type_t streamType,
                              cam_format_t &format);
-    status_t getStreamDimension(cam_stream_type_t streamType,
+    int32_t getStreamDimension(cam_stream_type_t streamType,
                                 cam_dimension_t &dim);
     void getThumbnailSize(int *width, int *height) const;
+    QCameraPictureType getPictureType();
 
     int getZSLBurstInterval();
     int getZSLQueueDepth();
     int getZSLBackLookCount();
-    bool isZSLMode() {return mZslMode;};
-    bool isNoDisplayMode();
-    bool isWNREnabled();
-    bool isSmoothZoomRunning();
+    bool isZSLMode() {return m_bZslMode;};
+    bool isNoDisplayMode() {return m_bNoDisplayMode;};
+    bool isWNREnabled() {return m_bWNROn;};
     uint8_t getNumOfSnapshots();
-    bool getRecordingHintValue() {return mRecordingHint;}; // return local copy of video hint
-    int setRecordingHintValue(bool value); // set local copy of video hint and send to server
-                                           // no change in parameters value
+    bool getRecordingHintValue() {return m_bRecordingHint;}; // return local copy of video hint
+    int setRecordingHintValue(int32_t value); // set local copy of video hint and send to server
+                                              // no change in parameters value
     int getJpegQuality();
     int getJpegRotation();
 
@@ -317,36 +321,123 @@ public:
     cam_focus_mode_type getFocusMode();
 
 private:
-    int parseGPSCoordinate(const char *coord_str, rat_t* coord);
+    int32_t setPreviewSize(const QCameraParameters& );
+    int32_t setVideoSize(const QCameraParameters& );
+    int32_t setPictureSize(const QCameraParameters& );
+    int32_t setPreviewFormat(const QCameraParameters& );
+    int32_t setPictureFormat(const QCameraParameters& );
+    int32_t setOrientation(const QCameraParameters& );
+    int32_t setJpegThumbnailSize(const QCameraParameters& );
+    int32_t setJpegQuality(const QCameraParameters& );
+    int32_t setPreviewFpsRange(const QCameraParameters& );
+    int32_t setAutoExposure(const QCameraParameters& );
+    int32_t setEffect(const QCameraParameters& );
+    int32_t setBrightness(const QCameraParameters& );
+    int32_t setFocusMode(const QCameraParameters& );
+    int32_t setSharpness(const QCameraParameters& );
+    int32_t setSaturation(const QCameraParameters& );
+    int32_t setContrast(const QCameraParameters& );
+    int32_t setSkinToneEnhancement(const QCameraParameters& );
+    int32_t setSceneDetect(const QCameraParameters& );
+    int32_t setZoom(const QCameraParameters& );
+    int32_t setISOValue(const QCameraParameters& );
+    int32_t setRotation(const QCameraParameters& );
+    int32_t setFlash(const QCameraParameters& );
+    int32_t setAecLock(const QCameraParameters& );
+    int32_t setAwbLock(const QCameraParameters& );
+    int32_t setMCEValue(const QCameraParameters& );
+    int32_t setHighFrameRate(const QCameraParameters& );
+    int32_t setLensShadeValue(const QCameraParameters& );
+    int32_t setExposureCompensation(const QCameraParameters& );
+    int32_t setWhiteBalance(const QCameraParameters& );
+    int32_t setAntibanding(const QCameraParameters& );
+    int32_t setFocusAreas(const QCameraParameters& );
+    int32_t setMeteringAreas(const QCameraParameters& );
+    int32_t setSceneMode(const QCameraParameters& );
+    int32_t setSelectableZoneAf(const QCameraParameters& );
+    int32_t setAEBracket(const QCameraParameters& );
+    int32_t setRedeyeReduction(const QCameraParameters& );
+    int32_t setGpsLocation(const QCameraParameters& );
+    int32_t setNumOfSnapshot(const QCameraParameters& );
+    int32_t setRecordingHint(const QCameraParameters& );
+    int32_t setNoDisplayMode(const QCameraParameters& );
+    int32_t setWaveletDenoise(const QCameraParameters& );
+    int32_t setZslMode(const QCameraParameters& );
+    int32_t setZslAttributes(const QCameraParameters& );
+    int32_t setCameraMode(const QCameraParameters& );
+
+    int32_t setAutoExposure(const char *autoExp);
+    int32_t setPreviewFpsRange(int minFPS,int maxFPS);
+    int32_t setEffect(const char *effect);
+    int32_t setBrightness(int brightness);
+    int32_t setFocusMode(const char *focusMode);
+    int32_t setSharpness(int sharpness);
+    int32_t setSaturation(int saturation);
+    int32_t setContrast(int contrast);
+    int32_t setSkinToneEnhancement(int sceFactor);
+    int32_t setSceneDetect(const char *scendDetect);
+    int32_t setZoom(int zoom_level);
+    int32_t setISOValue(const char *isoValue);
+    int32_t setFlash(const char *flashStr);
+    int32_t setAecLock(const char *aecStr);
+    int32_t setAwbLock(const char *awbStr);
+    int32_t setMCEValue(const char *mceStr);
+    int32_t setHighFrameRate(const char *hfrStr);
+    int32_t setLensShadeValue(const char *lensShadeStr);
+    int32_t setExposureCompensation(int expComp);
+    int32_t setWhiteBalance(const char *wbStr);
+    int32_t setAntibanding(const char *antiBandingStr);
+    int32_t setFocusAreas(const char *focusAreasStr);
+    int32_t setMeteringAreas(const char *meteringAreasStr);
+    int32_t setSceneMode(const char *sceneModeStr);
+    int32_t setSelectableZoneAf(const char *selZoneAFStr);
+    int32_t setAEBracket(const char *aecBracketStr);
+    int32_t setRedeyeReduction(const char *redeyeStr);
+    int32_t setWaveletDenoise(const char *wnrStr);
+
+    int32_t parse_pair(const char *str, int *first, int *second,
+                       char delim, char **endptr);
+    void parseSizesList(const char *sizesStr, Vector<Size> &sizes);
+    int32_t parseNDimVector(const char *str, int *num, int N, char delim);
+    int32_t parseCameraAreaString(const char *str, int max_num_areas,
+                                  cam_rect_t *pAreas, int& num_areas_found);
+    bool validateCameraAreas(cam_rect_t *areas, int num_areas);
+    int parseGPSCoordinate(const char *coord_str, rat_t *coord);
     int32_t getRational(rat_t *rat, int num, int denom);
     String8 createSizesString(const cam_dimension_t *sizes, int len);
     String8 createValuesString(const int *values, int len,
-                               const QCameraMap* map, int map_len);
-    String8 createValuesStringFromMap(const QCameraMap* map,
+                               const QCameraMap *map, int map_len);
+    String8 createValuesStringFromMap(const QCameraMap *map,
                                       int map_len);
     String8 createHfrValuesString(const cam_hfr_info_t *values, int len,
-                                  const QCameraMap* map, int map_len);
+                                  const QCameraMap *map, int map_len);
     String8 createHfrSizesString(const cam_hfr_info_t *values, int len);
-    String8 createFpsString(const cam_fps_range_t* fps, int len);
-    String8 createFrameratesString(const cam_fps_range_t *fps, int len);
+    String8 createFpsRangeString(const cam_fps_range_t *fps, int len);
+    String8 createFpsString(const cam_fps_range_t *fps, int len);
     String8 createZoomRatioValuesString(int *zoomRatios, int length);
     int lookupAttr(const QCameraMap arr[], int len, const char *name);
 
     // ops for batch set/get params with server
-    int initBatchUpdateTable(parm_buffer_t *p_table);
-    int AddSetParmEntryToBatch(parm_buffer_t *p_table,
-                               cam_intf_parm_type_t paramType,
-                               uint32_t paramLength,
-                               void *paramValue);
-    int commitSetBatch();
-    int AddGetParmEntryToBatch(parm_buffer_t *p_table,
-                               cam_intf_parm_type_t paramType);
-    int commitGetBatch();
+    int32_t initBatchUpdate(parm_buffer_t *p_table);
+    int32_t AddSetParmEntryToBatch(parm_buffer_t *p_table,
+                                   cam_intf_parm_type_t paramType,
+                                   uint32_t paramLength,
+                                   void *paramValue);
+    int32_t commitSetBatch();
+    int32_t AddGetParmEntryToBatch(parm_buffer_t *p_table,
+                                   cam_intf_parm_type_t paramType);
+    int32_t commitGetBatch();
+
+    // ops to tempororily update parameter entries and commit
+    int32_t updateParamEntry(const char *key, const char *value);
+    int32_t commitParamChanges();
 
     // Map from strings to values
     static const cam_dimension_t THUMBNAIL_SIZES_MAP[];
     static const QCameraMap AUTO_EXPOSURE_MAP[];
     static const QCameraMap PREVIEW_FORMATS_MAP[];
+    static const QCameraMap PICTURE_TYPES_MAP[];
+    static const QCameraMap RAW_FORMATS_MAP[];
     static const QCameraMap FOCUS_MODES_MAP[];
     static const QCameraMap EFFECT_MODES_MAP[];
     static const QCameraMap SCENE_MODES_MAP[];
@@ -365,16 +456,21 @@ private:
     cam_capability_t *m_pCapability;
     mm_camera_vtbl_t *m_pCamOpsTbl;
     QCameraHeapMemory *m_pParamHeap;
-    bool mZslMode;                  // if ZSL is enabled
-    bool mRecordingHint;            // local copy of recording hint
+    parm_buffer_t     *m_pParamBuf;  // ptr to param buf in m_pParamHeap
+
+    bool m_bZslMode;                // if ZSL is enabled
+    bool m_bRecordingHint;          // local copy of recording hint
     bool m_bHistogramEnabled;       // if histogram is enabled
     bool m_bFaceDetectionEnabled;   // if face detection is enabled
     bool m_bDebugFps;               // if FPS need to be logged
     int  m_nDumpFrameEnabled;       // mask for type of dumping enabled
     cam_focus_mode_type mFocusMode;
-
     cam_format_t mPreviewFormat;
-    int32_t mFps;
+    bool m_bNeedRestart;            // if preview needs restart after parameters updated
+    bool m_bNoDisplayMode;
+    bool m_bWNROn;
+
+    DefaultKeyedVector<String8,String8> m_tempMap; // map for temororily store parameters to be set
 };
 
 }; // namespace android

@@ -78,12 +78,12 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
         mDataCB(NULL),
         mStreamInfoBuf(NULL),
         mStreamBufs(NULL),
-        mAllocator(allocator)
+        mAllocator(allocator),
+        mBufDefs(NULL)
 {
     mMemVtbl.user_data = this;
     mMemVtbl.get_bufs = get_bufs;
     mMemVtbl.put_bufs = put_bufs;
-    memset(&mBufDef[0], 0, sizeof(mBufDef));
     memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
     memcpy(&mPaddingInfo, paddingInfo, sizeof(cam_padding_info_t));
 }
@@ -207,6 +207,7 @@ int32_t QCameraStream::processZoomDone(preview_stream_ops_t *previewWindow)
 
 int32_t QCameraStream::processDataNotify(mm_camera_super_buf_t *frame)
 {
+    ALOGI("%s:\n", __func__);
     mDataQ.enqueue((void *)frame);
     return mProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
 }
@@ -214,6 +215,7 @@ int32_t QCameraStream::processDataNotify(mm_camera_super_buf_t *frame)
 void QCameraStream::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
                                  void *userdata)
 {
+    ALOGI("%s:\n", __func__);
     QCameraStream* stream = (QCameraStream *)userdata;
     if (stream == NULL ||
         recvd_frame == NULL ||
@@ -242,13 +244,13 @@ void *QCameraStream::dataProcRoutine(void *data)
     QCameraStream *pme = (QCameraStream *)data;
     QCameraCmdThread *cmdThread = &pme->mProcTh;
 
-    ALOGD("%s: E", __func__);
+    ALOGI("%s: E", __func__);
     do {
         do {
             ret = sem_wait(&cmdThread->cmd_sem);
             if (ret != 0 && errno != EINVAL) {
                 ALOGE("%s: sem_wait error (%s)",
-                           __func__, strerror(errno));
+                      __func__, strerror(errno));
                 return NULL;
             }
         } while (ret != 0);
@@ -289,10 +291,10 @@ int32_t QCameraStream::bufDone(int index)
 {
     int32_t rc = NO_ERROR;
 
-    if (index >= mNumBufs)
+    if (index >= mNumBufs || mBufDefs == NULL)
         return BAD_INDEX;
 
-    rc = mCamOps->qbuf(mCamHandle, mChannelHandle, &mBufDef[index]);
+    rc = mCamOps->qbuf(mCamHandle, mChannelHandle, &mBufDefs[index]);
     if (rc < 0)
         return rc;
 
@@ -348,6 +350,7 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
             }
             mStreamBufs->deallocate();
             delete mStreamBufs;
+            mStreamBufs = NULL;
             return INVALID_OPERATION;
         }
     }
@@ -361,12 +364,25 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
         }
         mStreamBufs->deallocate();
         delete mStreamBufs;
+        mStreamBufs = NULL;
         return NO_MEMORY;
     }
 
-    for (int i = 0; i < mNumBufs; i++) {
-        mStreamBufs->getBufDef(mFrameLenOffset, mBufDef[i], i);
+    mBufDefs = (mm_camera_buf_def_t *)malloc(mNumBufs * sizeof(mm_camera_buf_def_t));
+    if (mBufDefs == NULL) {
+        ALOGE("getBufs: getRegFlags failed %d", rc);
+        for (int i = 0; i < mNumBufs; i++) {
+            ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
+        }
+        mStreamBufs->deallocate();
+        delete mStreamBufs;
+        mStreamBufs = NULL;
+        return INVALID_OPERATION;
     }
+    for (int i = 0; i < mNumBufs; i++) {
+        mStreamBufs->getBufDef(mFrameLenOffset, mBufDefs[i], i);
+    }
+
     rc = mStreamBufs->getRegFlags(regFlags);
     if (rc < 0) {
         ALOGE("getBufs: getRegFlags failed %d", rc);
@@ -375,12 +391,15 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
         }
         mStreamBufs->deallocate();
         delete mStreamBufs;
+        mStreamBufs = NULL;
+        free(mBufDefs);
+        mBufDefs = NULL;
         return INVALID_OPERATION;
     }
 
     *num_bufs = mNumBufs;
     *initial_reg_flag = regFlags;
-    *bufs = &mBufDef[0];
+    *bufs = mBufDefs;
     return NO_ERROR;
 }
 
@@ -393,7 +412,8 @@ int32_t QCameraStream::putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl)
             ALOGE("getBufs: map_stream_buf failed: %d", rc);
         }
     }
-    memset(&mBufDef[0], 0, sizeof(mBufDef));
+    mBufDefs = NULL; // mBufDefs just keep a ptr to the buffer
+                     // mm-camera-interface own the buffer, so no need to free
     memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
     mStreamBufs->deallocate();
     delete mStreamBufs;

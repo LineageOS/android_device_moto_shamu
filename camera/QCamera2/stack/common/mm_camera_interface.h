@@ -46,7 +46,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /** mm_camera_buf_def_t: structure for stream frame buf
 *    @stream_id : stream handler to uniquely identify a stream
 *               object
-*    @buf_idx : index of the buf within the stream bufs
+*    @buf_idx : index of the buf within the stream bufs, to be
+*               filled during mem allocation
 *    @timespec_ts : time stamp, to be filled when DQBUF is
 *                 called
 *    @frame_idx : frame sequence num, to be filled when DQBUF

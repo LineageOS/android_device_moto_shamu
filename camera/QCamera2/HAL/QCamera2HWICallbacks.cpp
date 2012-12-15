@@ -134,6 +134,7 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
                                                           QCameraStream * stream,
                                                           void *userdata)
 {
+    ALOGD("%s : BEGIN", __func__);
     int err = NO_ERROR;
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     QCameraGrallocMemory *memory = (QCameraGrallocMemory *)super_frame->bufs[0]->mem_info;
@@ -149,8 +150,6 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
         return;
     }
 
-    ALOGV("%s : BEGIN", __func__);
-
     mm_camera_buf_def_t *frame = super_frame->bufs[0];
     if (NULL == frame) {
         ALOGE("%s: preview frame is NLUL", __func__);
@@ -159,7 +158,7 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
     }
 
     if (!pme->needProcessPreviewFrame()) {
-        ALOGD("%s: preview is not running, no need to process", __func__);
+        ALOGE("%s: preview is not running, no need to process", __func__);
         stream->bufDone(frame->buf_idx);
         free(super_frame);
         return;
@@ -168,25 +167,21 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
     if (pme->needDebugFps()) {
         pme->debugShowPreviewFPS();
     }
-
     pme->dumpFrameToFile(frame->buffer, frame->frame_len,
-                         frame->frame_idx, QCAMERA_DUMP_FRM_PREVIEW);
+                         frame->buf_idx, QCAMERA_DUMP_FRM_PREVIEW);
 
     int idx = frame->buf_idx;
-
     // Display the buffer.
     int dequeuedIdx = memory->displayBuffer(idx);
     if (dequeuedIdx < 0 || dequeuedIdx >= memory->getCnt()) {
-        ALOGD("%s: Invalid dequeued buffer index %d",
+        ALOGD("%s: Invalid dequeued buffer index %d from display",
               __func__, dequeuedIdx);
-        free(super_frame);
-        return;
-    }
-
-    // Return dequeued buffer back to driver
-    err = stream->bufDone(dequeuedIdx);
-    if ( err < 0) {
-        ALOGE("stream bufDone failed %d", err);
+    } else {
+        // Return dequeued buffer back to driver
+        err = stream->bufDone(dequeuedIdx);
+        if ( err < 0) {
+            ALOGE("stream bufDone failed %d", err);
+        }
     }
 
     // Handle preview data callback
@@ -286,7 +281,7 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
         pme->debugShowPreviewFPS();
     }
     pme->dumpFrameToFile(frame->buffer, frame->frame_len,
-                         frame->frame_idx, QCAMERA_DUMP_FRM_PREVIEW);
+                         frame->buf_idx, QCAMERA_DUMP_FRM_PREVIEW);
 
     QCameraMemory *previewMemObj = (QCameraMemory *)frame->mem_info;
     camera_memory_t *preview_mem =
@@ -414,7 +409,7 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
           frame->ts.tv_sec,
           frame->ts.tv_nsec);
 
-    pme->dumpFrameToFile(frame->buffer, frame->frame_len, frame->frame_idx, QCAMERA_DUMP_FRM_VIDEO);
+    pme->dumpFrameToFile(frame->buffer, frame->frame_len, frame->buf_idx, QCAMERA_DUMP_FRM_VIDEO);
     nsecs_t timeStamp = nsecs_t(frame->ts.tv_sec) * 1000000000LL + frame->ts.tv_nsec;
     ALOGE("Send Video frame to services/encoder TimeStamp : %lld", timeStamp);
 
@@ -459,7 +454,7 @@ void QCamera2HardwareInterface::snapshot_stream_cb_routine(mm_camera_super_buf_t
                                                            QCameraStream * /*stream*/,
                                                            void *userdata)
 {
-    ALOGE("%s: E", __func__);
+    ALOGD("%s: E", __func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -472,7 +467,7 @@ void QCamera2HardwareInterface::snapshot_stream_cb_routine(mm_camera_super_buf_t
 
     pme->m_postprocessor.processData(super_frame);
 
-    ALOGE("%s: X", __func__);
+    ALOGD("%s: X", __func__);
 }
 
 /*===========================================================================
@@ -514,7 +509,7 @@ void QCamera2HardwareInterface::raw_stream_cb_routine(mm_camera_super_buf_t * su
 
     // dump frame into file
     mm_camera_buf_def_t *frame = super_frame->bufs[0];
-    pme->dumpFrameToFile(frame->buffer, frame->frame_len, frame->frame_idx, QCAMERA_DUMP_FRM_RAW);
+    pme->dumpFrameToFile(frame->buffer, frame->frame_len, frame->buf_idx, QCAMERA_DUMP_FRM_RAW);
 
     QCameraMemory *rawMemObj = (QCameraMemory *)frame->mem_info;
     camera_memory_t *raw_mem = rawMemObj->getMemory(frame->buf_idx, false);
@@ -715,9 +710,10 @@ void QCamera2HardwareInterface::dumpFrameToFile(const void *data,
         return;
     }
 
-    ALOGE("dump %s size =%d", buf, size);
+    ALOGD("dump %s size =%d, data = %p", buf, size, data);
     int file_fd = open(buf, O_RDWR | O_CREAT, 0777);
-    write(file_fd, data, size);
+    int written_len = write(file_fd, data, size);
+    ALOGD("%s: written number of bytes %d\n", __func__, written_len);
     close(file_fd);
 }
 

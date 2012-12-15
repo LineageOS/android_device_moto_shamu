@@ -440,8 +440,6 @@ typedef enum {
 
 typedef struct {
     cam_hdr_mode mode;
-    uint32_t total_frames;
-    uint32_t total_hal_frames;
     char values[MAX_EXP_BRACKETING_LENGTH];  /* user defined values */
 } cam_exp_bracketing_t;
 
@@ -464,8 +462,8 @@ typedef struct {
     cam_aec_roi_ctrl_t aec_roi_enable;
     cam_aec_roi_type_t aec_roi_type;
     union {
-        cam_coordinate_type_t coordinate;
-        uint32_t aec_roi_idx;
+        cam_coordinate_type_t coordinate[MAX_ROI];
+        uint32_t aec_roi_idx[MAX_ROI];
     } cam_aec_roi_position;
 } cam_set_aec_roi_t;
 
@@ -476,9 +474,16 @@ typedef struct {
     uint8_t is_multiwindow;
 } cam_roi_info_t;
 
+typedef enum {
+    CAM_WAVELET_DENOISE_YCBCR_PLANE,
+    CAM_WAVELET_DENOISE_CBCR_ONLY,
+    CAM_WAVELET_DENOISE_STREAMLINE_YCBCR,
+    CAM_WAVELET_DENOISE_STREAMLINED_CBCR
+} cam_denoise_process_type_t;
+
 typedef struct {
     int denoise_enable;
-    int process_plates;
+    cam_denoise_process_type_t process_plates;
 } cam_denoise_param_t;
 
 typedef struct {
