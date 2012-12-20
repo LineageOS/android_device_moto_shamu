@@ -672,7 +672,6 @@ int32_t mm_jpeg_omx_encode(mm_jpeg_obj* my_obj, mm_jpeg_job_entry* job_entry)
     }
     CDBG("%s: start output writing\n", __func__);
     OMX_FillThisBuffer(my_obj->omx_handle, job_entry->sink_buf.buf_header);
-
     return rc;
 }
 
@@ -1248,6 +1247,8 @@ OMX_ERRORTYPE mm_jpeg_handle_omx_event(OMX_HANDLETYPE hComponent,
             case OMX_EVENT_THUMBNAIL_DROPPED:
                 {
                     uint8_t thumbnail_dropped_flag = 1;
+                    mm_jpeg_job_q_node_t* data = (mm_jpeg_job_q_node_t*)mm_jpeg_queue_peek(&my_obj->ongoing_job_q);
+                    jobId = data->entry.jobId;
                     mm_jpeg_queue_update_flag(&my_obj->ongoing_job_q,
                                               jobId,
                                               thumbnail_dropped_flag);
@@ -1314,7 +1315,6 @@ OMX_ERRORTYPE mm_jpeg_handle_omx_event(OMX_HANDLETYPE hComponent,
     default:
         break;
     }
-
     return rc;
 }
 
@@ -1398,7 +1398,6 @@ int32_t mm_jpeg_queue_update_flag(mm_jpeg_queue_t* queue, uint32_t job_id, uint8
     while(pos != head) {
         node = member_of(pos, mm_jpeg_q_node_t, list);
         data = (mm_jpeg_job_q_node_t *)node->data;
-
         if (data && (data->entry.jobId == job_id)) {
             job_node = data;
             break;
@@ -1414,6 +1413,5 @@ int32_t mm_jpeg_queue_update_flag(mm_jpeg_queue_t* queue, uint32_t job_id, uint8
         rc = -1;
     }
     pthread_mutex_unlock(&queue->lock);
-
     return rc;
 }

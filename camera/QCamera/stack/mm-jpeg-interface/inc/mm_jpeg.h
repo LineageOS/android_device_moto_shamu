@@ -157,6 +157,7 @@ uint8_t mm_jpeg_util_get_index_by_handler(uint32_t handler);
 /* basic queue functions */
 extern int32_t mm_jpeg_queue_init(mm_jpeg_queue_t* queue);
 extern int32_t mm_jpeg_queue_enq(mm_jpeg_queue_t* queue, void* node);
+extern void* mm_jpeg_queue_peek(mm_jpeg_queue_t* queue);
 extern void* mm_jpeg_queue_deq(mm_jpeg_queue_t* queue);
 extern int32_t mm_jpeg_queue_deinit(mm_jpeg_queue_t* queue);
 extern int32_t mm_jpeg_queue_flush(mm_jpeg_queue_t* queue);

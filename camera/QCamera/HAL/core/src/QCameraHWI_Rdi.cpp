@@ -173,7 +173,7 @@ status_t QCameraStream_Rdi::processRdiFrame(
     }
     mHalCamCtrl->cache_ops((QCameraHalMemInfo_t *)(frame->bufs[0]->mem_info),
                            frame->bufs[0]->buffer,
-                           ION_IOC_CLEAN_CACHES);
+                           ION_IOC_INV_CACHES);
 
     return err;
 }

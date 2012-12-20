@@ -256,7 +256,7 @@ void QCameraStream_record::releaseRecordingFrame(const void *opaque)
                 ALOGE("%s : Buf Done Failed",__func__);
             mHalCamCtrl->cache_ops(&mHalCamCtrl->mRecordingMemory.mem_info[cnt],
                                    (void *)mRecordedFrames[cnt].bufs[0]->buffer,
-                                   ION_IOC_CLEAN_CACHES);
+                                   ION_IOC_INV_CACHES);
             ALOGV("%s : END",__func__);
             return;
         }
@@ -269,7 +269,7 @@ void QCameraStream_record::releaseRecordingFrame(const void *opaque)
                 ALOGE("%s : Buf Done Failed",__func__);
             mHalCamCtrl->cache_ops(&mHalCamCtrl->mRecordingMemory.mem_info[cnt],
                                    (void *)mRecordedFrames[cnt].bufs[0]->buffer,
-                                   ION_IOC_CLEAN_CACHES);
+                                   ION_IOC_INV_CACHES);
             ALOGV("%s : END",__func__);
             return;
         }
