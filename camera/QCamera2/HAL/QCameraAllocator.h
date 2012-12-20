@@ -34,7 +34,7 @@ extern "C" {
 #include <mm_camera_interface.h>
 }
 
-namespace android {
+namespace qcamera {
 
 class QCameraMemory;
 class QCameraHeapMemory;
@@ -46,5 +46,5 @@ public:
     virtual ~QCameraAllocator() {}
 };
 
-};
+}; /* namespace qcamera */
 #endif /* __QCAMERA_ALLOCATOR__ */

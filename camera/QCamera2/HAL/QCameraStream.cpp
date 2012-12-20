@@ -34,7 +34,7 @@
 #include "QCamera2HWI.h"
 #include "QCameraStream.h"
 
-namespace android {
+namespace qcamera {
 
 int32_t QCameraStream::get_bufs(
                      cam_frame_len_offset_t *offset,
@@ -463,4 +463,4 @@ int32_t QCameraStream::getFormat(cam_format_t &fmt)
     return -1;
 }
 
-}; // namespace android
+}; // namespace qcamera

@@ -33,7 +33,7 @@
 #include <pthread.h>
 #include "cam_list.h"
 
-namespace android {
+namespace qcamera {
 
 typedef void (*release_data_fn)(void* data, void *user_data);
 
@@ -60,6 +60,6 @@ private:
     void * m_userData;
 };
 
-}; // namespace android
+}; // namespace qcamera
 
 #endif /* __QCAMERA_QUEUE_H__ */

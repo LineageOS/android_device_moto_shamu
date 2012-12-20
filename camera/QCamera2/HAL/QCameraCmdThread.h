@@ -36,7 +36,7 @@
 #include "cam_types.h"
 #include "QCameraQueue.h"
 
-namespace android {
+namespace qcamera {
 
 typedef enum
 {
@@ -68,6 +68,6 @@ public:
     cam_semaphore_t sync_sem;              /* semaphore for synchronized call signal */
 };
 
-}; // namespace android
+}; // namespace qcamera
 
 #endif /* __QCAMERA_CMD_THREAD_H__ */

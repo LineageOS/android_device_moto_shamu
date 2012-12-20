@@ -39,7 +39,7 @@ extern "C" {
 #include <mm_camera_interface.h>
 }
 
-namespace android {
+namespace qcamera {
 
 // Base class for all memory types. Abstract.
 class QCameraMemory {
@@ -177,6 +177,6 @@ private:
     int mMinUndequeuedBuffers;
 };
 
-}; // namespace android
+}; // namespace qcamera
 
 #endif /* __QCAMERA2HWI_MEM_H__ */

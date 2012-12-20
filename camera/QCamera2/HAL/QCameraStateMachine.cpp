@@ -34,7 +34,7 @@
 #include "QCamera2HWI.h"
 #include "QCameraStateMachine.h"
 
-namespace android {
+namespace qcamera {
 
 /*===========================================================================
  * FUNCTION   : smEvtProcRoutine
@@ -2150,4 +2150,4 @@ bool QCameraStateMachine::isPreviewRunning()
     }
 }
 
-}; // namespace android
+}; // namespace qcamera

@@ -36,7 +36,7 @@ extern "C" {
 }
 #include "QCamera2HWI.h"
 
-namespace android {
+namespace qcamera {
 
 class QCameraExif;
 
@@ -154,6 +154,6 @@ private:
     QCameraCmdThread m_dataNotifyTh;    // thread handling data notify to service layer
 };
 
-}; // namespace android
+}; // namespace qcamera
 
 #endif /* __QCAMERA_POSTPROC_H__ */

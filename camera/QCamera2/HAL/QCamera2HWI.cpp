@@ -41,7 +41,7 @@
 
 #define MAP_TO_DRIVER_COORDINATE(val, base, scale, offset) (val * scale / base + offset)
 
-namespace android {
+namespace qcamera {
 
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 
@@ -2296,4 +2296,4 @@ int32_t QCamera2HardwareInterface::prepareHardwareForSnapshot()
     return mCameraHandle->ops->prepare_snapshot(mCameraHandle->camera_handle);
 }
 
-}; // namespace android
+}; // namespace qcamera
