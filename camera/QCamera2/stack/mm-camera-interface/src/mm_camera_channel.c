@@ -34,7 +34,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <semaphore.h>
+#include <cam_semaphore.h>
 
 #include "mm_camera_dbg.h"
 #include "mm_camera_interface.h"
@@ -227,7 +227,7 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
                 CDBG("%s: Send superbuf to HAL, pending_cnt=%d",
                      __func__, ch_obj->pending_cnt);
 
-                /* send sem_post to wake up cb thread to dispatch super buffer */
+                /* send cam_sem_post to wake up cb thread to dispatch super buffer */
                 cb_node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
                 if (NULL != cb_node) {
                     memset(cb_node, 0, sizeof(mm_camera_cmdcb_t));
@@ -243,7 +243,7 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
                     cam_queue_enq(&(ch_obj->cb_thread.cmd_queue), cb_node);
 
                     /* wake up cb thread */
-                    sem_post(&(ch_obj->cb_thread.cmd_sem));
+                    cam_sem_post(&(ch_obj->cb_thread.cmd_sem));
                 } else {
                     CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
                     /* buf done with the nonuse super buf */
@@ -957,7 +957,7 @@ int32_t mm_channel_request_super_buf(mm_channel_t *my_obj, uint32_t num_buf_requ
 
     /* set pending_cnt
      * will trigger dispatching super frames if pending_cnt > 0 */
-    /* send sem_post to wake up cmd thread to dispatch super buffer */
+    /* send cam_sem_post to wake up cmd thread to dispatch super buffer */
     node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
     if (NULL != node) {
         memset(node, 0, sizeof(mm_camera_cmdcb_t));
@@ -968,7 +968,7 @@ int32_t mm_channel_request_super_buf(mm_channel_t *my_obj, uint32_t num_buf_requ
         cam_queue_enq(&(my_obj->cmd_thread.cmd_queue), node);
 
         /* wake up cmd thread */
-        sem_post(&(my_obj->cmd_thread.cmd_sem));
+        cam_sem_post(&(my_obj->cmd_thread.cmd_sem));
     } else {
         CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
         rc = -1;

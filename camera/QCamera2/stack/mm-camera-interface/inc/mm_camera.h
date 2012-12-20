@@ -30,6 +30,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __MM_CAMERA_H__
 #define __MM_CAMERA_H__
 
+#include <cam_semaphore.h>
+
 #include "mm_camera_interface.h"
 
 /**********************************************************************************
@@ -93,7 +95,7 @@ typedef void (*mm_camera_cmd_cb_t)(mm_camera_cmdcb_t * cmd_cb, void* user_data);
 typedef struct {
     cam_queue_t cmd_queue; /* cmd queue (queuing dataCB, asyncCB, or exitCMD) */
     pthread_t cmd_pid;           /* cmd thread ID */
-    sem_t cmd_sem;               /* semaphore for cmd thread */
+    cam_semaphore_t cmd_sem;     /* semaphore for cmd thread */
     mm_camera_cmd_cb_t cb;       /* cb for cmd */
     void* user_data;             /* user_data for cb */
 } mm_camera_cmd_thread_t;

@@ -985,9 +985,9 @@ void *QCameraPostProcessor::dataNotifyRoutine(void *data)
     ALOGD("%s: E", __func__);
     do {
         do {
-            ret = sem_wait(&cmdThread->cmd_sem);
+            ret = cam_sem_wait(&cmdThread->cmd_sem);
             if (ret != 0 && errno != EINVAL) {
-                ALOGE("%s: sem_wait error (%s)",
+                ALOGE("%s: cam_sem_wait error (%s)",
                            __func__, strerror(errno));
                 return NULL;
             }
@@ -1090,9 +1090,9 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
     ALOGD("%s: E", __func__);
     do {
         do {
-            ret = sem_wait(&cmdThread->cmd_sem);
+            ret = cam_sem_wait(&cmdThread->cmd_sem);
             if (ret != 0 && errno != EINVAL) {
-                ALOGE("%s: sem_wait error (%s)",
+                ALOGE("%s: cam_sem_wait error (%s)",
                            __func__, strerror(errno));
                 return NULL;
             }
@@ -1131,7 +1131,7 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                 pme->m_inputPPQ.flush();
 
                 // signal cmd is completed
-                sem_post(&cmdThread->sync_sem);
+                cam_sem_post(&cmdThread->sync_sem);
             }
             break;
         case CAMERA_CMD_TYPE_DO_NEXT_JOB:

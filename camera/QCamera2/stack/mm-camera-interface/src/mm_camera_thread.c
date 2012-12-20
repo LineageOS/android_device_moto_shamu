@@ -34,7 +34,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <semaphore.h>
+#include <cam_semaphore.h>
 
 #include "mm_camera_dbg.h"
 #include "mm_camera_interface.h"
@@ -466,9 +466,9 @@ static void *mm_camera_cmd_thread(void *data)
 
     do {
         do {
-            ret = sem_wait(&cmd_thread->cmd_sem);
+            ret = cam_sem_wait(&cmd_thread->cmd_sem);
             if (ret != 0 && errno != EINVAL) {
-                CDBG_ERROR("%s: sem_wait error (%s)",
+                CDBG_ERROR("%s: cam_sem_wait error (%s)",
                            __func__, strerror(errno));
                 return NULL;
             }
@@ -504,7 +504,7 @@ int32_t mm_camera_cmd_thread_launch(mm_camera_cmd_thread_t * cmd_thread,
 {
     int32_t rc = 0;
 
-    sem_init(&cmd_thread->cmd_sem, 0, 0);
+    cam_sem_init(&cmd_thread->cmd_sem, 0);
     cam_queue_init(&cmd_thread->cmd_queue);
     cmd_thread->cb = cb;
     cmd_thread->user_data = user_data;
@@ -530,7 +530,7 @@ int32_t mm_camera_cmd_thread_stop(mm_camera_cmd_thread_t * cmd_thread)
     node->cmd_type = MM_CAMERA_CMD_TYPE_EXIT;
 
     cam_queue_enq(&cmd_thread->cmd_queue, node);
-    sem_post(&cmd_thread->cmd_sem);
+    cam_sem_post(&cmd_thread->cmd_sem);
 
     /* wait until cmd thread exits */
     if (pthread_join(cmd_thread->cmd_pid, NULL) != 0) {
@@ -543,7 +543,7 @@ int32_t mm_camera_cmd_thread_destroy(mm_camera_cmd_thread_t * cmd_thread)
 {
     int32_t rc = 0;
     cam_queue_deinit(&cmd_thread->cmd_queue);
-    sem_destroy(&cmd_thread->cmd_sem);
+    cam_sem_destroy(&cmd_thread->cmd_sem);
     memset(cmd_thread, 0, sizeof(mm_camera_cmd_thread_t));
     return rc;
 }

@@ -34,7 +34,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <semaphore.h>
+
+#include <cam_semaphore.h>
 
 #include "mm_camera_dbg.h"
 #include "mm_camera_sock.h"
@@ -192,7 +193,7 @@ static void mm_camera_event_notify(void* user_data)
                 /* enqueue to evt cmd thread */
                 cam_queue_enq(&(my_obj->evt_thread.cmd_queue), node);
                 /* wake up evt cmd thread */
-                sem_post(&(my_obj->evt_thread.cmd_sem));
+                cam_sem_post(&(my_obj->evt_thread.cmd_sem));
             }
         }
     }
@@ -227,7 +228,7 @@ int32_t mm_camera_enqueue_evt(mm_camera_obj_t *my_obj,
         /* enqueue to evt cmd thread */
         cam_queue_enq(&(my_obj->evt_thread.cmd_queue), node);
         /* wake up evt cmd thread */
-        sem_post(&(my_obj->evt_thread.cmd_sem));
+        cam_sem_post(&(my_obj->evt_thread.cmd_sem));
     } else {
         CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
         rc = -1;

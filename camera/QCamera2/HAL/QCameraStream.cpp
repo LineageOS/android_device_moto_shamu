@@ -247,9 +247,9 @@ void *QCameraStream::dataProcRoutine(void *data)
     ALOGI("%s: E", __func__);
     do {
         do {
-            ret = sem_wait(&cmdThread->cmd_sem);
+            ret = cam_sem_wait(&cmdThread->cmd_sem);
             if (ret != 0 && errno != EINVAL) {
-                ALOGE("%s: sem_wait error (%s)",
+                ALOGE("%s: cam_sem_wait error (%s)",
                       __func__, strerror(errno));
                 return NULL;
             }
