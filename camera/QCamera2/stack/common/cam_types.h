@@ -621,6 +621,24 @@ typedef struct {
     int32_t step;
 } cam_control_range_t;
 
-#define CAM_QCOM_FEATURE_SUPPORTED_FACE_DETECTION 0x00000001
+#define CAM_QCOM_FEATURE_FACE_DETECTION (1<<0)
+#define CAM_QCOM_FEATURE_DENOISE2D      (1<<1)
+#define CAM_QCOM_FEATURE_CROP           (1<<2)
+#define CAM_QCOM_FEATURE_ROTATION       (1<<3)
+#define CAM_QCOM_FEATURE_FLIP           (1<<4)
+#define CAM_QCOM_FEATURE_HDR            (1<<5)
+
+// Counter clock wise
+typedef enum {
+    ROTATE_0 = 1<<0,
+    ROTATE_90 = 1<<1,
+    ROTATE_180 = 1<<2,
+    ROTATE_270 = 1<<3,
+} cam_rotation_t;
+
+typedef enum {
+    FLIP_H = 1<<0,
+    FLIP_V = 1<<1,
+} cam_flip_t;
 
 #endif /* __QCAMERA_TYPES_H__ */

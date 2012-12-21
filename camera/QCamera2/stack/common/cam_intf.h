@@ -151,7 +151,8 @@ typedef struct{
 } cam_capability_t;
 
 typedef struct {
-    uint8_t is_crop_valid;         /* flag to indicate if crop field is valid fro get/set */
+    /*TODO: Put zoom crop (on output buffer) into stream specific metadata*/
+    uint8_t is_crop_valid;         /* flag to indicate if crop field is valid fro get */
     cam_rect_t crop;               /* crop information */
 } cam_stream_parm_buffer_t;
 
@@ -186,8 +187,16 @@ typedef struct {
     /* this section is for offline reprocess type stream */
     cam_format_t offline_proc_buf_fmt;    /* input image format for offline process */
     cam_dimension_t offline_proc_buf_dim; /* input dimension for offline process */
-    uint32_t offline_reproc_mask;         /* offline process feature mask */
     cam_stream_buf_plane_info_t offline_buf_planes; /* offline frame buf plane info */
+
+    /* this section is for postprocessing/reprocessing settings */
+    uint32_t feature_mask;
+    cam_denoise_param_t denoise2d;
+    cam_rect_t input_crop; /* only applies to reprocess */
+    cam_rotation_t rotation;
+    uint32_t flip;
+    // Sharpness in parameters can be used for reprocessing.
+    // Revisit whether we need color conversion here.
 
     cam_stream_parm_buffer_t parm_buf;    /* stream based parameters */
 } cam_stream_info_t;
@@ -248,7 +257,6 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_MCE,                      int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_HFR,                      int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_REDEYE_REDUCTION,         int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_WAVELET_DENOISE,          cam_denoise_param_t,         1);
     INCLUDE(CAM_INTF_PARM_HISTOGRAM,                int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_ASD_ENABLE,               int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_RECORDING_HINT,           int32_t,                     1);
