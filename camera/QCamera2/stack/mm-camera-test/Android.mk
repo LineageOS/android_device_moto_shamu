@@ -59,7 +59,7 @@ else
         LOCAL_CFLAGS += -DCAMERA_ION_FALLBACK_HEAP_ID=ION_CAMERA_HEAP_ID
         LOCAL_CFLAGS += -DNUM_RECORDING_BUFFERS=5
 endif
-#LOCAL_CFLAGS += -Wall -Werror
+LOCAL_CFLAGS += -Wall -Werror
 
 LOCAL_SHARED_LIBRARIES:= \
          libcutils libdl

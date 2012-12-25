@@ -120,13 +120,13 @@ typedef struct {
     /* array to store poll fd and cb info
      * for MM_CAMERA_POLL_TYPE_EVT, only index 0 is valid;
      * for MM_CAMERA_POLL_TYPE_DATA, depends on valid stream fd */
-    mm_camera_poll_entry_t poll_entries[MAX_STRAEM_NUM_IN_BUNDLE];
+    mm_camera_poll_entry_t poll_entries[MAX_STREAM_NUM_IN_BUNDLE];
     int32_t pfds[2];
     pthread_t pid;
     int32_t state;
     int timeoutms;
     uint32_t cmd;
-    struct pollfd poll_fds[MAX_STRAEM_NUM_IN_BUNDLE + 1];
+    struct pollfd poll_fds[MAX_STREAM_NUM_IN_BUNDLE + 1];
     uint8_t num_fds;
     pthread_mutex_t mutex;
     pthread_cond_t cond_v;
@@ -193,6 +193,9 @@ typedef struct mm_stream {
 
     /* stream info*/
     cam_stream_info_t *stream_info;
+
+    /* offset */
+    cam_frame_len_offset_t frame_offset;
 
     mm_camera_cmd_thread_t cmd_thread;
 
@@ -272,7 +275,7 @@ typedef struct {
 
 typedef struct {
     uint8_t num_of_bufs;
-    mm_camera_buf_info_t super_buf[MAX_STRAEM_NUM_IN_BUNDLE];
+    mm_camera_buf_info_t super_buf[MAX_STREAM_NUM_IN_BUNDLE];
     uint8_t matched;
 } mm_channel_queue_node_t;
 
@@ -280,7 +283,7 @@ typedef struct {
     cam_queue_t que;
     uint8_t num_streams;
     /* container for bundled stream handlers */
-    uint32_t bundled_streams[MAX_STRAEM_NUM_IN_BUNDLE];
+    uint32_t bundled_streams[MAX_STREAM_NUM_IN_BUNDLE];
     mm_camera_channel_attr_t attr;
     uint32_t expected_frame_id;
     uint32_t match_cnt;
@@ -317,7 +320,7 @@ typedef struct mm_channel {
     mm_camera_poll_thread_t poll_thread[MM_CAMERA_CHANNEL_POLL_THREAD_MAX];
 
     /* container for all streams in channel */
-    mm_stream_t streams[MAX_STRAEM_NUM_IN_BUNDLE];
+    mm_stream_t streams[MAX_STREAM_NUM_IN_BUNDLE];
 
     /* reference to parent cam_obj */
     struct mm_camera_obj* cam_obj;
@@ -364,8 +367,8 @@ typedef struct mm_camera_obj {
 
 typedef struct {
     int8_t num_cam;
-    char video_dev_name[MSM_MAX_CAMERA_SENSORS][MM_CAMERA_DEV_NAME_LEN];
-    mm_camera_obj_t *cam_obj[MSM_MAX_CAMERA_SENSORS];
+    char video_dev_name[MM_CAMERA_MAX_NUM_SENSORS][MM_CAMERA_DEV_NAME_LEN];
+    mm_camera_obj_t *cam_obj[MM_CAMERA_MAX_NUM_SENSORS];
 } mm_camera_ctrl_t;
 
 /**********************************************************************************
@@ -399,9 +402,9 @@ extern int32_t mm_camera_qbuf(mm_camera_obj_t *my_obj,
                               mm_camera_buf_def_t *buf);
 extern int32_t mm_camera_query_capability(mm_camera_obj_t *my_obj);
 extern int32_t mm_camera_set_parms(mm_camera_obj_t *my_obj,
-                                   void *parms);
+                                   set_parm_buffer_t *parms);
 extern int32_t mm_camera_get_parms(mm_camera_obj_t *my_obj,
-                                   void *parms);
+                                   get_parm_buffer_t *parms);
 extern int32_t mm_camera_map_buf(mm_camera_obj_t *my_obj,
                                  uint8_t buf_type,
                                  int fd,
@@ -409,7 +412,7 @@ extern int32_t mm_camera_map_buf(mm_camera_obj_t *my_obj,
 extern int32_t mm_camera_unmap_buf(mm_camera_obj_t *my_obj,
                                    uint8_t buf_type);
 extern int32_t mm_camera_do_action(mm_camera_obj_t *my_obj,
-                                   void *actions);
+                                   set_parm_buffer_t *actions);
 extern uint32_t mm_camera_add_channel(mm_camera_obj_t *my_obj,
                                       mm_camera_channel_attr_t *attr,
                                       mm_camera_buf_notify_t channel_cb,

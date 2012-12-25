@@ -497,7 +497,7 @@ int mm_app_gen_test_cases()
     int tc = 0;
     memset(mm_app_tc, 0, sizeof(mm_app_tc));
     if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_open_close;
-    //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_preview;
+    if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_preview;
     //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_zsl;
     //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_video_preview;
     //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_video_record;

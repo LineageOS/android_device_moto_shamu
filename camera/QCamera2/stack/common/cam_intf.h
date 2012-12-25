@@ -35,11 +35,6 @@
 #include <inttypes.h>
 #include <media/msmb_camera.h>
 
-#define PAD_TO_WORD(a)               (((a)+3)&~3)
-#define PAD_TO_2K(a)                 (((a)+2047)&~2047)
-#define PAD_TO_4K(a)                 (((a)+4095)&~4095)
-#define PAD_TO_8K(a)                 (((a)+8191)&~8191)
-
 #define CEILING32(X) (((X) + 0x0001F) & 0xFFFFFFE0)
 #define CEILING16(X) (((X) + 0x000F) & 0xFFF0)
 #define CEILING4(X)  (((X) + 0x0003) & 0xFFFC)
@@ -51,6 +46,15 @@
 #define MAX_ROI 5
 
 typedef enum {
+    CAM_STATUS_SUCCESS,       /* Operation Succeded */
+    CAM_STATUS_FAILED,        /* Failure in doing operation */
+    CAM_STATUS_INVALID_PARM,  /* Inavlid parameter provided */
+    CAM_STATUS_NOT_SUPPORTED, /* Parameter/operation not supported */
+    CAM_STATUS_ACCEPTED,      /* Parameter accepted */
+    CAM_STATUS_MAX,
+} cam_status_t;
+
+typedef enum {
     CAM_POSITION_BACK,
     CAM_POSITION_FRONT
 } cam_position_t;
@@ -60,7 +64,6 @@ typedef enum {
     CAM_FORMAT_YUV_420_NV21,
     CAM_FORMAT_YUV_420_NV21_ADRENO,
     CAM_FORMAT_BAYER_SBGGR10,
-    CAM_FORMAT_RDI,
     CAM_FORMAT_YUV_420_YV12,
     CAM_FORMAT_YUV_422_NV16,
     CAM_FORMAT_YUV_422_NV61,
@@ -69,40 +72,87 @@ typedef enum {
     CAM_FORMAT_SAWB,
     CAM_FORMAT_SAFC,
     CAM_FORMAT_SHST,
+
+    /* Packed YUV/YVU raw format, 16 bpp: 8 bits Y and 8 bits UV.
+     * U and V are interleaved with Y: YUYV or YVYV */
+    CAM_FORMAT_YUV_RAW_8BIT,
+    /* QCOM RAW formats where data is packed into 64bit word.
+     * 8BPP: 1 64-bit word contains 8 pixels p0 - p7, where p0 is
+     *       stored at LSB.
+     * 10BPP: 1 64-bit word contains 6 pixels p0 - p5, where most
+     *       significant 4 bits are set to 0. P0 is stored at LSB.
+     * 12BPP: 1 64-bit word contains 5 pixels p0 - p4, where most
+     *       significant 4 bits are set to 0. P0 is stored at LSB. */
+    CAM_FORMAT_BAYER_QCOM_RAW_8BPP,
+    CAM_FORMAT_BAYER_QCOM_RAW_10BPP,
+    CAM_FORMAT_BAYER_QCOM_RAW_12BPP,
+    /* MIPI RAW formats based on MIPI CSI-2 specifiction.
+     * 8BPP: Each pixel occupies one bytes, starting at LSB.
+     *       Output with of image has no restrictons.
+     * 10BPP: Four pixels are held in every 5 bytes. The output
+     *       with of image must be a multiple of 4 pixels.
+     * 12BPP: Two pixels are held in every 3 bytes. The output
+     *       width of image must be a multiple of 2 pixels. */
+    CAM_FORMAT_BAYER_MIPI_RAW_8BPP,
+    CAM_FORMAT_BAYER_MIPI_RAW_10BPP,
+    CAM_FORMAT_BAYER_MIPI_RAW_12BPP,
+    /* Ideal raw formats where image data has gone through black
+     * correction, lens rolloff, demux/channel gain, bad pixel
+     * correction, and ABF.
+     * Ideal raw formats could output any of QCOM_RAW and MIPI_RAW
+     * formats, plus plain8 8bbp, plain16 800, plain16 10bpp, and
+     * plain 16 12bpp */
+    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_8BPP,
+    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_10BPP,
+    CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_12BPP,
+    CAM_FORMAT_BAYER_IDEAL_RAW_MIPI_8BPP,
+    CAM_FORMAT_BAYER_IDEAL_RAW_MIPI_10BPP,
+    CAM_FORMAT_BAYER_IDEAL_RAW_MIPI_12BPP,
+    CAM_FORMAT_BAYER_IDEAL_RAW_PLAIN8_8BPP,
+    CAM_FORMAT_BAYER_IDEAL_RAW_PLAIN16_8BPP,
+    CAM_FORMAT_BAYER_IDEAL_RAW_PLAIN16_10BPP,
+    CAM_FORMAT_BAYER_IDEAL_RAW_PLAIN16_12BPP,
+
     CAM_FORMAT_MAX
 } cam_format_t;
 
 typedef enum {
-    CAM_STREAM_TYPE_DEFAULT,   /* default stream type */
-    CAM_STREAM_TYPE_PREVIEW,   /* preview */
-    CAM_STREAM_TYPE_POSTVIEW,  /* postview */
-    CAM_STREAM_TYPE_SNAPSHOT,  /* snapshot */
-    CAM_STREAM_TYPE_VIDEO,     /* video */
+    CAM_STREAM_TYPE_DEFAULT,       /* default stream type */
+    CAM_STREAM_TYPE_PREVIEW,       /* preview */
+    CAM_STREAM_TYPE_POSTVIEW,      /* postview */
+    CAM_STREAM_TYPE_SNAPSHOT,      /* snapshot */
+    CAM_STREAM_TYPE_VIDEO,         /* video */
+    CAM_STREAM_TYPE_RAW,           /* raw dump from camif */
+    CAM_STREAM_TYPE_METADATA,      /* meta data */
+    CAM_STREAM_TYPE_OFFLINE_PROC,  /* offline process */
     CAM_STREAM_TYPE_MAX,
 } cam_stream_type_t;
 
 typedef enum {
-    CAM_PAD_NONE,
-    CAM_PAD_TO_WORD,   /*2 bytes*/
-    CAM_PAD_TO_LONG_WORD, /*4 bytes*/
-    CAM_PAD_TO_8, /*8 bytes*/
-    CAM_PAD_TO_16, /*16 bytes*/
-    CAM_PAD_TO_1K, /*1k bytes*/
-    CAM_PAD_TO_2K, /*2k bytes*/
-    CAM_PAD_TO_4K,
-    CAM_PAD_TO_8K
+    CAM_PAD_NONE = 1,
+    CAM_PAD_TO_2 = 2,
+    CAM_PAD_TO_WORD = CAM_PAD_TO_2,
+    CAM_PAD_TO_4 = 4,
+    CAM_PAD_TO_8 = 8,
+    CAM_PAD_TO_16 = 16,
+    CAM_PAD_TO_32 = 32,
+    CAM_PAD_TO_64 = 64,
+    CAM_PAD_TO_1K = 1024,
+    CAM_PAD_TO_2K = 2048,
+    CAM_PAD_TO_4K = 4096,
+    CAM_PAD_TO_8K = 8192
 } cam_pad_format_t;
 
 typedef enum {
     /* followings are per camera */
-    CAM_MAPPING_BUF_TYPE_HIST_BUF,    /* histogram, need here? or put in meta data stream? */
     CAM_MAPPING_BUF_TYPE_CAPABILITY,  /* mapping camera capability buffer */
     CAM_MAPPING_BUF_TYPE_SETPARM_BUF, /* mapping set_parameters buffer */
     CAM_MAPPING_BUF_TYPE_GETPARM_BUF, /* mapping get_parameters buffer */
 
     /* followings are per stream */
-    CAM_MAPPING_BUF_TYPE_STREAM_BUF,  /* mapping stream buffers */
-    CAM_MAPPING_BUF_TYPE_STREAM_INFO, /* mapping stream information buffer */
+    CAM_MAPPING_BUF_TYPE_STREAM_BUF,        /* mapping stream buffers */
+    CAM_MAPPING_BUF_TYPE_STREAM_INFO,       /* mapping stream information buffer */
+    CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF, /* mapping offline process input buffer */
     CAM_MAPPING_BUF_TYPE_MAX
 } cam_mapping_buf_type;
 
@@ -153,10 +203,16 @@ typedef struct{
 } cam_mp_len_offset_t;
 
 typedef struct {
+    uint32_t width_padding;
+    uint32_t height_padding;
+    uint32_t plane_padding;
+} cam_padding_info_t;
+
+typedef struct {
     int num_planes;
     union {
         cam_sp_len_offset_t sp;
-        cam_mp_len_offset_t mp[8];
+        cam_mp_len_offset_t mp[VIDEO_MAX_PLANES];
     };
     uint32_t frame_len;
 } cam_frame_len_offset_t;
@@ -325,6 +381,11 @@ typedef struct{
     uint8_t supported_picture_fmt_cnt;
     cam_format_t supported_picture_fmts[CAM_FORMAT_MAX];
 
+    /* dimension and supported output format of raw dump from camif */
+    cam_dimension_t raw_dim;
+    uint8_t supported_raw_fmt_cnt;
+    cam_format_t supported_raw_fmts[CAM_FORMAT_MAX];
+
     /* supported effect modes */
     uint8_t supported_effects_cnt;
     cam_effect_mode_type supported_effects[CAM_EFFECT_MODE_MAX];
@@ -392,24 +453,27 @@ typedef enum {
     CAM_STREAMING_MODE_MAX
 } cam_streaming_mode_t;
 
+#define CAM_REPROCESS_MASK_TYPE_WNR (1<<0)
+
 /* stream info */
 typedef struct {
     /* stream type*/
     cam_stream_type_t stream_type;
 
-    /* sensor used */
-    uint32_t sensor_idx;
-
     /* image format */
-    cam_format_t src_fmt;     /* source image format */
-    cam_format_t dest_fmt;    /* dest image format */
+    cam_format_t fmt;
 
     /* image dimension */
-    cam_dimension_t src_dim;  /* source image dimension */
-    cam_dimension_t dest_dim; /* dest image dimension */
+    cam_dimension_t dim;
 
     /* image rotation */
     uint8_t rotation;
+
+    /* bundle identifier
+     * if any stream share the same bundle_id, they are bundled.
+     * All bundled streams need to start and stop at the same time
+     * */
+    uint32_t bundle_id;
 
     /* streaming type */
     cam_streaming_mode_t streaming_mode;
@@ -417,27 +481,35 @@ typedef struct {
      * only valid when streaming_mode = CAM_STREAMING_MODE_BURST */
     uint8_t num_of_burst;
 
-    cam_meta_header_t meta_header;
-    cam_pad_format_t padding_format;
+    /* this section is for offline reprocess type stream */
+    cam_format_t offline_proc_buf_fmt;    /* input image format for offline process */
+    cam_dimension_t offline_proc_buf_dim; /* input dimension for offline process */
+    uint32_t offline_reproc_mask;         /* offline process feature mask */
 
-    /* the following fields are retrived from mctl */
-    cam_frame_len_offset_t offset; /* frame offset */
+    /* this section is for padding information to calc offset */
+    cam_meta_header_t meta_header;
+
+    /* Padding requirements*/
+    cam_pad_format_t width_padding; /* in pixels */
+    cam_pad_format_t height_padding; /* in pixels */
+    cam_pad_format_t plane_padding; /* in bytes */
+
+    /* crop info is retrived from server when ZOOM_DONE evt is recvd*/
     cam_rect_t crop;               /* crop information */
 } cam_stream_info_t;
 
 /* bundle information may put inside setparm buf?? */
-#define MAX_STRAEM_NUM_IN_BUNDLE 4
+#define MAX_STREAM_NUM_IN_BUNDLE 4
 typedef struct {
     uint8_t num;
-    uint32_t stream_ids[MAX_STRAEM_NUM_IN_BUNDLE]; /* stream ids */
+    uint32_t stream_ids[MAX_STREAM_NUM_IN_BUNDLE]; /* stream ids */
 } cam_stream_bundle_t;
 
 /* event from server */
 typedef enum {
-    CAM_EVENT_TYPE_MAP_UNMAP_DONE,
-    CAM_EVENT_TYPE_AUTO_FOCUS_DONE,
-    CAM_EVENT_TYPE_ZOOM_DONE,
-    CAM_EVENT_TYPE_POST_PROC_DONE,
+    CAM_EVENT_TYPE_MAP_UNMAP_DONE  = (1<<0),
+    CAM_EVENT_TYPE_AUTO_FOCUS_DONE = (1<<1),
+    CAM_EVENT_TYPE_ZOOM_DONE       = (1<<2),
     CAM_EVENT_TYPE_MAX
 } cam_event_type_t;
 

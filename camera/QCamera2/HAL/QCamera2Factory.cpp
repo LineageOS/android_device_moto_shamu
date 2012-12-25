@@ -41,15 +41,9 @@ namespace android {
 
 QCamera2Factory gQCamera2Factory;
 
-/* TODO: Once mm-camera-interface is ready, remove this */
-uint8_t get_num_of_cameras()
-{
-    return 2;
-}
-
 QCamera2Factory::QCamera2Factory()
 {
-    for (int i = 0; i < MSM_MAX_CAMERA_SENSORS; i++) {
+    for (int i = 0; i < MM_CAMERA_MAX_NUM_SENSORS; i++) {
         mCameraHardware[i] = NULL;
     }
     mNumOfCameras = get_num_of_cameras();

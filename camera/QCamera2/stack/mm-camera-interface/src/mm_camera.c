@@ -113,14 +113,17 @@ static void mm_camera_event_notify(void* user_data)
                 break;
             case CAM_EVENT_TYPE_AUTO_FOCUS_DONE:
             case CAM_EVENT_TYPE_ZOOM_DONE:
-            case CAM_EVENT_TYPE_POST_PROC_DONE:
                 {
                     node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
                     if (NULL != node) {
                         memset(node, 0, sizeof(mm_camera_cmdcb_t));
                         node->cmd_type = MM_CAMERA_CMD_TYPE_EVT_CB;
                         node->u.evt.server_event_type = msm_evt->command;
-                        node->u.evt.status = msm_evt->status;
+                        if (msm_evt->status == MSM_CAMERA_STATUS_SUCCESS) {
+                            node->u.evt.status = CAM_STATUS_SUCCESS;
+                        } else {
+                            node->u.evt.status = CAM_STATUS_FAILED;
+                        }
                     }
                 }
                 break;
@@ -370,7 +373,7 @@ int32_t mm_camera_query_capability(mm_camera_obj_t *my_obj)
 }
 
 int32_t mm_camera_set_parms(mm_camera_obj_t *my_obj,
-                            void *parms)
+                            set_parm_buffer_t *parms)
 {
     int32_t rc = -1;
     if (parms !=  NULL) {
@@ -381,7 +384,7 @@ int32_t mm_camera_set_parms(mm_camera_obj_t *my_obj,
 }
 
 int32_t mm_camera_get_parms(mm_camera_obj_t *my_obj,
-                            void *parms)
+                            get_parm_buffer_t *parms)
 {
     int32_t rc = -1;
     if (parms != NULL) {
@@ -392,7 +395,7 @@ int32_t mm_camera_get_parms(mm_camera_obj_t *my_obj,
 }
 
 int32_t mm_camera_do_action(mm_camera_obj_t *my_obj,
-                            void *actions)
+                            set_parm_buffer_t *actions)
 {
     int32_t rc = -1;
     if (actions != NULL) {
@@ -813,6 +816,8 @@ void mm_camera_util_wait_for_event(mm_camera_obj_t *my_obj,
         pthread_cond_wait(&my_obj->evt_cond, &my_obj->evt_lock);
     }
     *status = my_obj->evt_rcvd.status;
+    /* reset local storage for recieved event for next event */
+    memset(&my_obj->evt_rcvd, 0, sizeof(mm_camera_event_t));
     pthread_mutex_unlock(&my_obj->evt_lock);
 }
 
@@ -838,29 +843,35 @@ int32_t mm_camera_map_buf(mm_camera_obj_t *my_obj,
                           int fd,
                           uint32_t size)
 {
+    int32_t rc = 0;
     cam_sock_packet_t packet;
     memset(&packet, 0, sizeof(cam_sock_packet_t));
     packet.msg_type = CAM_MAPPING_TYPE_FD_MAPPING;
     packet.payload.buf_map.type = buf_type;
     packet.payload.buf_map.fd = fd;
     packet.payload.buf_map.size = size;
-    return mm_camera_util_sendmsg(my_obj,
-                                  &packet,
-                                  sizeof(cam_sock_packet_t),
-                                  fd);
+    rc = mm_camera_util_sendmsg(my_obj,
+                                &packet,
+                                sizeof(cam_sock_packet_t),
+                                fd);
+    pthread_mutex_unlock(&my_obj->cam_lock);
+    return rc;
 }
 
 int32_t mm_camera_unmap_buf(mm_camera_obj_t *my_obj,
                             uint8_t buf_type)
 {
+    int32_t rc = 0;
     cam_sock_packet_t packet;
     memset(&packet, 0, sizeof(cam_sock_packet_t));
     packet.msg_type = CAM_MAPPING_TYPE_FD_UNMAPPING;
     packet.payload.buf_unmap.type = buf_type;
-    return mm_camera_util_sendmsg(my_obj,
-                                  &packet,
-                                  sizeof(cam_sock_packet_t),
-                                  0);
+    rc = mm_camera_util_sendmsg(my_obj,
+                                &packet,
+                                sizeof(cam_sock_packet_t),
+                                0);
+    pthread_mutex_unlock(&my_obj->cam_lock);
+    return rc;
 }
 
 int32_t mm_camera_util_s_ctrl(int32_t fd,  uint32_t id, int32_t value)

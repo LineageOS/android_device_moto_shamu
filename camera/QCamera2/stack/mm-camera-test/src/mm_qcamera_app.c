@@ -240,7 +240,7 @@ void mm_app_dump_frame(mm_camera_buf_def_t *frame,
         } else {
             for (i = 0; i < frame->num_planes; i++) {
                 write(file_fd,
-                      (const void *)(frame->buffer + frame->planes[i].data_offset),
+                      (uint8_t *)frame->buffer + frame->planes[i].data_offset,
                       frame->planes[i].length);
             }
 
@@ -255,7 +255,6 @@ void mm_app_dump_jpeg_frame(const void * data, uint32_t size, char* name, char* 
     char buf[32];
     int file_fd;
     if ( data != NULL) {
-        char * str;
         snprintf(buf, sizeof(buf), "/data/%s_%d.%s", name, index, ext);
         CDBG("%s: %s size =%d, jobId=%d", __func__, buf, size, index);
         file_fd = open(buf, O_RDWR | O_CREAT, 0777);
@@ -321,45 +320,54 @@ int mm_app_release_bufs(uint8_t num_bufs,
     return rc;
 }
 
-int mm_app_stream_initbuf(uint32_t camera_handle,
-                          uint32_t ch_id,
-                          uint32_t stream_id,
-                          uint8_t num_bufs,
-                          uint8_t *initial_reg_flag,
-                          mm_camera_buf_def_t *bufs,
+int mm_app_stream_initbuf(cam_frame_len_offset_t *frame_offset_info,
+                          uint8_t *num_bufs,
+                          uint8_t **initial_reg_flag,
+                          mm_camera_buf_def_t **bufs,
                           mm_camera_map_unmap_ops_tbl_t *ops_tbl,
                           void *user_data)
 {
     mm_camera_stream_t *stream = (mm_camera_stream_t *)user_data;
+    mm_camera_buf_def_t *pBufs = NULL;
+    uint8_t *reg_flags = NULL;
     int i, rc;
-    cam_frame_len_offset_t *frame_offset_info =
-        &(stream->s_config.stream_info->offset);
 
-    if (MM_CAMERA_MAX_NUM_FRAMES < num_bufs) {
-        CDBG_ERROR("%s: num_bufs (%d) exceeds max (%d)",
-                   __func__, num_bufs, MM_CAMERA_MAX_NUM_FRAMES);
+    memcpy(&stream->offset, frame_offset_info, sizeof(cam_frame_len_offset_t));
+    CDBG("%s: alloc buf for stream_id %d, len=%d",
+         __func__, stream->s_id, frame_offset_info->frame_len);
+
+    pBufs = (mm_camera_buf_def_t *)malloc(sizeof(mm_camera_buf_def_t) * stream->num_of_bufs);
+    reg_flags = (uint8_t *)malloc(sizeof(uint8_t) * stream->num_of_bufs);
+    if (pBufs == NULL || reg_flags == NULL) {
+        CDBG_ERROR("%s: No mem for bufs", __func__);
+        if (pBufs != NULL) {
+            free(pBufs);
+        }
+        if (reg_flags != NULL) {
+            free(reg_flags);
+        }
         return -1;
     }
 
-    CDBG("%s: alloc buf for stream_id %d, len=%d",
-         __func__, stream_id, frame_offset_info->frame_len);
     rc = mm_app_alloc_bufs(&stream->s_bufs[0],
                            frame_offset_info,
-                           num_bufs,
+                           stream->num_of_bufs,
                            1);
 
     if (rc != MM_CAMERA_OK) {
         CDBG_ERROR("%s: mm_stream_alloc_bufs err = %d", __func__, rc);
+        free(pBufs);
+        free(reg_flags);
         return rc;
     }
 
-    for (i = 0; i < num_bufs ; i++) {
+    for (i = 0; i < stream->num_of_bufs; i++) {
         /* mapping stream bufs first */
-        memcpy(&bufs[i], &stream->s_bufs[i].buf, sizeof(mm_camera_buf_def_t));
-        initial_reg_flag[i] = 1;
-        rc = ops_tbl->map_ops(bufs[i].buf_idx,
-                              bufs[i].fd,
-                              bufs[i].frame_len,
+        memcpy(&pBufs[i], &stream->s_bufs[i].buf, sizeof(mm_camera_buf_def_t));
+        reg_flags[i] = 1;
+        rc = ops_tbl->map_ops(pBufs[i].buf_idx,
+                              pBufs[i].fd,
+                              pBufs[i].frame_len,
                               ops_tbl->userdata);
         if (rc != MM_CAMERA_OK) {
             CDBG_ERROR("%s: mapping buf[%d] err = %d", __func__, i, rc);
@@ -370,51 +378,60 @@ int mm_app_stream_initbuf(uint32_t camera_handle,
     if (rc != MM_CAMERA_OK) {
         int j;
         for (j=0; j>i; j++) {
-            ops_tbl->unmap_ops(bufs[j].buf_idx, ops_tbl->userdata);
+            ops_tbl->unmap_ops(pBufs[j].buf_idx, ops_tbl->userdata);
         }
-        mm_app_release_bufs(num_bufs, &stream->s_bufs[0]);
-        memset(bufs, 0, sizeof(mm_camera_buf_def_t) * num_bufs);
-        memset(initial_reg_flag, 0, sizeof(uint8_t) * num_bufs);
+        mm_app_release_bufs(stream->num_of_bufs, &stream->s_bufs[0]);
+        free(pBufs);
+        free(reg_flags);
     }
+
+    *num_bufs = stream->num_of_bufs;
+    *bufs = pBufs;
+    *initial_reg_flag = reg_flags;
 
     CDBG("%s: X",__func__);
     return rc;
 }
 
-int32_t mm_app_stream_deinitbuf(uint32_t camera_handle,
-                                uint32_t ch_id,
-                                uint32_t stream_id,
-                                uint8_t num_bufs,
-                                mm_camera_buf_def_t *bufs,
-                                mm_camera_map_unmap_ops_tbl_t *ops_tbl,
+int32_t mm_app_stream_deinitbuf(mm_camera_map_unmap_ops_tbl_t *ops_tbl,
                                 void *user_data)
 {
     mm_camera_stream_t *stream = (mm_camera_stream_t *)user_data;
-    int i, rc;
+    int i;
 
-    if (MM_CAMERA_MAX_NUM_FRAMES < num_bufs) {
-        CDBG_ERROR("%s: num_bufs (%d) exceeds max (%d)",
-                   __func__, num_bufs, MM_CAMERA_MAX_NUM_FRAMES);
-        return -1;
-    }
-
-    for (i = 0; i < num_bufs ; i++) {
+    for (i = 0; i < stream->num_of_bufs ; i++) {
         /* mapping stream bufs first */
-        ops_tbl->unmap_ops(bufs[i].buf_idx, ops_tbl->userdata);
+        ops_tbl->unmap_ops(stream->s_bufs[i].buf.buf_idx, ops_tbl->userdata);
     }
 
-    mm_app_release_bufs(num_bufs, &stream->s_bufs[0]);
-    memset(bufs, 0, sizeof(mm_camera_buf_def_t) * num_bufs);
+    mm_app_release_bufs(stream->num_of_bufs, &stream->s_bufs[0]);
 
     CDBG("%s: X",__func__);
-    return rc;
+    return 0;
 }
 
 static void notify_evt_cb(uint32_t camera_handle,
                           mm_camera_event_t *evt,
                           void *user_data)
 {
-    CDBG("%s:E evt = %d", __func__, evt->event_type);
+    mm_camera_test_obj_t *test_obj =
+        (mm_camera_test_obj_t *)user_data;
+    if (test_obj == NULL || test_obj->cam->camera_handle != camera_handle) {
+        CDBG_ERROR("%s: Not a valid test obj", __func__);
+        return;
+    }
+
+    CDBG("%s:E evt = %d", __func__, evt->server_event_type);
+    switch (evt->server_event_type) {
+       case CAM_EVENT_TYPE_AUTO_FOCUS_DONE:
+           CDBG("%s: rcvd auto focus done evt", __func__);
+           break;
+       case CAM_EVENT_TYPE_ZOOM_DONE:
+           CDBG("%s: rcvd zoom done evt", __func__);
+           break;
+       default:
+           break;
+    }
 
     CDBG("%s:X", __func__);
 }
@@ -459,8 +476,8 @@ int mm_app_open(mm_camera_app_t *cam_app,
     }
 
     /* alloc ion mem for getparm buf */
-    offset_info.frame_len = sizeof(cam_capapbility_t); /* TODO: change to size of getparm buf */
     memset(&offset_info, 0, sizeof(offset_info));
+    offset_info.frame_len = sizeof(get_parm_buffer_t);
     rc = mm_app_alloc_bufs(&test_obj->getparm_buf,
                            &offset_info,
                            1,
@@ -481,8 +498,8 @@ int mm_app_open(mm_camera_app_t *cam_app,
     }
 
     /* alloc ion mem for setparm buf */
-    offset_info.frame_len = sizeof(cam_capapbility_t); /* TODO: change to size of getparm buf */
     memset(&offset_info, 0, sizeof(offset_info));
+    offset_info.frame_len = sizeof(set_parm_buffer_t);
     rc = mm_app_alloc_bufs(&test_obj->setparm_buf,
                            &offset_info,
                            1,
@@ -662,8 +679,8 @@ mm_camera_stream_t * mm_app_add_stream(mm_camera_test_obj_t *test_obj,
     }
 
     /* alloc ion mem for stream_info buf */
-    offset_info.frame_len = sizeof(cam_stream_info_t);
     memset(&offset_info, 0, sizeof(offset_info));
+    offset_info.frame_len = sizeof(cam_stream_info_t);
     rc = mm_app_alloc_bufs(&stream->s_info_buf,
                            &offset_info,
                            1,
@@ -677,7 +694,7 @@ mm_camera_stream_t * mm_app_add_stream(mm_camera_test_obj_t *test_obj,
         return NULL;
     }
 
-    /* mapping setparm buf */
+    /* mapping streaminfo buf */
     rc = test_obj->cam->ops->map_stream_buf(test_obj->cam->camera_handle,
                                             channel->ch_id,
                                             stream->s_id,

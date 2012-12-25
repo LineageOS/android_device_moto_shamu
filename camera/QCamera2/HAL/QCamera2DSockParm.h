@@ -29,7 +29,7 @@
 #ifndef _QCAMERA2_DSOCK_PARM_H  
 #define _QCAMERA2_DSOCK_PARM_H 
 
-#include "../stack/common/mm_camera_interface.h"
+#include <mm_camera_interface.h>
 
 namespace android{
 
