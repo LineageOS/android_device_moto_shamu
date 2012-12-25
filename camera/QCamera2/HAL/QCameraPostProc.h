@@ -40,7 +40,7 @@ namespace android {
 
 typedef struct {
     int num_exif_entries;
-    exif_tags_info_t *exif_entries;
+    QEXIF_INFO_DATA *exif_entries;
 } qcamera_exif_data_t;
 
 typedef struct {

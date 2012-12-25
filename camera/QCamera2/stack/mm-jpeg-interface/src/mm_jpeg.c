@@ -148,8 +148,10 @@ int32_t mm_jpeg_omx_config_main_buffer_offset(mm_jpeg_obj* my_obj,
 {
     int32_t rc = 0;
     uint8_t i;
-    OMX_INDEXTYPE buf_offset_idx;
-    omx_jpeg_buffer_offset buffer_offset;
+
+#if 0
+ OMX_INDEXTYPE buf_offset_idx;
+    qomx_buffer_offset buffer_offset;
 
     for (i = 0; i < src_buf->num_bufs; i++) {
         OMX_GetExtensionIndex(my_obj->omx_handle,
@@ -204,6 +206,7 @@ int32_t mm_jpeg_omx_config_main_buffer_offset(mm_jpeg_obj* my_obj,
         }
     }
 
+#endif
     return rc;
 }
 
@@ -242,6 +245,7 @@ int32_t mm_jpeg_omx_config_port(mm_jpeg_obj* my_obj, src_image_buffer_info *src_
     return rc;
 }
 
+#if 0
 omx_jpeg_color_format map_jpeg_format(mm_jpeg_color_format color_fmt)
 {
     switch (color_fmt) {
@@ -383,6 +387,7 @@ int32_t mm_jpeg_omx_config_thumbnail(mm_jpeg_obj* my_obj, mm_jpeg_encode_job* jo
     rc = 0;
     return rc;
 }
+#endif
 
 int32_t mm_jpeg_omx_config_main_crop(mm_jpeg_obj* my_obj, src_image_buffer_info *src_buf)
 {
@@ -486,9 +491,10 @@ int32_t mm_jpeg_omx_config_common(mm_jpeg_obj* my_obj, mm_jpeg_encode_job* job)
     int32_t rc;
     int i;
     OMX_INDEXTYPE exif_idx;
-    omx_jpeg_exif_info_tag tag;
+    QEXIF_INFO_DATA tag;
     OMX_CONFIG_ROTATIONTYPE rotate;
 
+#if 0
     /* config user prefernces */
     CDBG("%s: config user preferences", __func__);
     rc = mm_jpeg_omx_config_user_preference(my_obj, job);
@@ -496,6 +502,7 @@ int32_t mm_jpeg_omx_config_common(mm_jpeg_obj* my_obj, mm_jpeg_encode_job* job)
         CDBG_ERROR("%s: config user preferences failed", __func__);
         return rc;
     }
+#endif
 
     /* set rotation */
     memset(&rotate, 0, sizeof(rotate));
@@ -509,7 +516,7 @@ int32_t mm_jpeg_omx_config_common(mm_jpeg_obj* my_obj, mm_jpeg_encode_job* job)
     CDBG("%s: Set rexif tags", __func__);
     OMX_GetExtensionIndex(my_obj->omx_handle, "omx.qcom.jpeg.exttype.exif", &exif_idx);
     for(i = 0; i < job->encode_parm.exif_numEntries; i++) {
-        memcpy(&tag, job->encode_parm.exif_data + i, sizeof(omx_jpeg_exif_info_tag));
+        memcpy(&tag, job->encode_parm.exif_data + i, sizeof(QEXIF_INFO_DATA));
         OMX_SetParameter(my_obj->omx_handle, exif_idx, &tag);
     }
 
@@ -523,35 +530,36 @@ int32_t mm_jpeg_omx_use_buf(mm_jpeg_obj* my_obj,
 {
     int32_t rc = 0;
     uint8_t i;
-    omx_jpeg_pmem_info pmem_info;
+#if 0
+    QOMX_BUFFER_OFFSET buffer_info;
 
     omx_src_buf->num_bufs = src_buf->num_bufs;
     for (i = 0; i < src_buf->num_bufs; i++) {
-        memset(&pmem_info, 0, sizeof(pmem_info));
+        memset(&buffer_info, 0, sizeof(buffer_info));
         switch (src_buf->img_fmt) {
         case JPEG_SRC_IMAGE_FMT_YUV:
-            pmem_info.fd = src_buf->src_image[i].fd;
-            pmem_info.offset = 0;
+            buffer_info.fd = src_buf->src_image[i].fd;
+            buffer_info.offset = 0;
             omx_src_buf->bufs[i].portIdx = port_idx;
             OMX_UseBuffer(my_obj->omx_handle,
                           &omx_src_buf->bufs[i].buf_header,
                           port_idx,
-                          &pmem_info,
+                          &buffer_info,
                           src_buf->src_image[i].offset.frame_len,
                           (void *)src_buf->src_image[i].buf_vaddr);
             CDBG("%s: port_idx=%d, fd=%d, offset=%d, len=%d, ptr=%p",
-                 __func__, port_idx, pmem_info.fd, pmem_info.offset,
+                 __func__, port_idx, buffer_info.fd, buffer_info.offset,
                  src_buf->src_image[i].offset.frame_len,
                  src_buf->src_image[i].buf_vaddr);
             break;
         case JPEG_SRC_IMAGE_FMT_BITSTREAM:
-            pmem_info.fd = src_buf->bit_stream[i].fd;
-            pmem_info.offset = 0;
+            buffer_info.fd = src_buf->bit_stream[i].fd;
+            buffer_info.offset = 0;
             omx_src_buf->bufs[i].portIdx = port_idx;
             OMX_UseBuffer(my_obj->omx_handle,
                           &omx_src_buf->bufs[i].buf_header,
                           port_idx,
-                          &pmem_info,
+                          &buffer_info,
                           src_buf->bit_stream[i].buf_size,
                           (void *)src_buf->bit_stream[i].buf_vaddr);
             break;
@@ -560,7 +568,7 @@ int32_t mm_jpeg_omx_use_buf(mm_jpeg_obj* my_obj,
             break;
         }
     }
-
+#endif
     return rc;
 }
 
@@ -582,11 +590,13 @@ int32_t mm_jpeg_omx_encode(mm_jpeg_obj* my_obj, mm_jpeg_job_entry* job_entry)
 
     /* config thumbnail */
     if (has_thumbnail) {
+#if 0
         rc = mm_jpeg_omx_config_thumbnail(my_obj, job);
         if (0 != rc) {
             CDBG_ERROR("%s: config thumbnail img failed", __func__);
             return rc;
         }
+#endif
     }
 
     /* common config */
@@ -1219,6 +1229,7 @@ OMX_ERRORTYPE mm_jpeg_handle_omx_event(OMX_HANDLETYPE hComponent,
 
     /* signal event */
     switch (eEvent) {
+#if 0
     case  OMX_EVENT_JPEG_ABORT:
         {
             CDBG("%s: eEvent=OMX_EVENT_JPEG_ABORT", __func__);
@@ -1229,6 +1240,7 @@ OMX_ERRORTYPE mm_jpeg_handle_omx_event(OMX_HANDLETYPE hComponent,
             pthread_mutex_unlock(&my_obj->omx_evt_lock);
         }
         break;
+#endif
     case OMX_EventError:
         {
             CDBG("%s: eEvent=OMX_EventError", __func__);
@@ -1244,6 +1256,7 @@ OMX_ERRORTYPE mm_jpeg_handle_omx_event(OMX_HANDLETYPE hComponent,
                                               thumbnail_dropped_flag);
                 }
                 break;
+#if 0
             case OMX_EVENT_JPEG_ERROR:
                 {
                     /* signal error evt */
@@ -1284,6 +1297,7 @@ OMX_ERRORTYPE mm_jpeg_handle_omx_event(OMX_HANDLETYPE hComponent,
                     sem_post(&my_obj->job_mgr.job_sem);
                 }
                 break;
+#endif
             default:
                 break;
             }

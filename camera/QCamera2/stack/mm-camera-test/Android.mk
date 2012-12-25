@@ -25,9 +25,10 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_C_INCLUDES:=$(LOCAL_PATH)/inc
 LOCAL_C_INCLUDES+= \
-        $(TARGET_OUT_INTERMEDIATES)/include/mm-still/jpeg \
-        $(TARGET_OUT_INTERMEDIATES)/include/mm-camera \
-        $(LOCAL_PATH)/../common
+        frameworks/native/include/media/openmax \
+        $(LOCAL_PATH)/../common \
+        $(LOCAL_PATH)/../../../mm-image-codec/qexif \
+        $(LOCAL_PATH)/../../../mm-image-codec/qomx_core
 
 LOCAL_C_INCLUDES+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media
 LOCAL_C_INCLUDES+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include

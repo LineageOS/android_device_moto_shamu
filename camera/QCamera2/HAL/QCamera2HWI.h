@@ -192,7 +192,7 @@ private:
     void getThumbnailSize(int *width, int *height);
     int getJpegQuality();
     int getJpegRotation();
-    int getExifData(exif_tags_info_t **exif_data, int *num_exif_entries);
+    int getExifData(QEXIF_INFO_DATA **exif_data, int *num_exif_entries);
 
     int32_t processAutoFocusEvent(uint32_t status);
     int32_t processZoomEvent(uint32_t status);

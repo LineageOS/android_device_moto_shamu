@@ -28,6 +28,7 @@
 
 #ifndef MM_JPEG_INTERFACE_H_
 #define MM_JPEG_INTERFACE_H_
+#include "QOMX_JpegExtensions.h"
 #include "cam_intf.h"
 
 typedef enum {
@@ -142,7 +143,7 @@ typedef struct {
 
     /* buf to exif entries, caller needs to
      * take care of the memory manage with insider ptr */
-    exif_tags_info_t *exif_data;
+    QEXIF_INFO_DATA *exif_data;
 } mm_jpeg_encode_params;
 
 typedef enum {
@@ -196,5 +197,3 @@ typedef struct {
 uint32_t jpeg_open(mm_jpeg_ops_t *ops);
 
 #endif /* MM_JPEG_INTERFACE_H_ */
-
-
