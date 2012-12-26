@@ -600,6 +600,26 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
         pme->processHistogramStats(&pMetaData->hist_data);
     }
 
+    if (pMetaData->is_focus_valid) {
+        // process focus info
+        qcamera_sm_internal_evt_payload_t *payload =
+            (qcamera_sm_internal_evt_payload_t *)sizeof(qcamera_sm_internal_evt_payload_t);
+        if (NULL != payload) {
+            memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+            payload->evt_type = QCAMERA_INTERNAL_EVT_FOCUS_UPDATE;
+            payload->focus_data = pMetaData->focus_data;
+            int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: processEVt failed", __func__);
+                free(payload);
+                payload = NULL;
+
+            }
+        } else {
+            ALOGE("%s: No memory for qcamera_sm_internal_evt_payload_t", __func__);
+        }
+    }
+
     stream->bufDone(frame->buf_idx);
     free(super_frame);
 

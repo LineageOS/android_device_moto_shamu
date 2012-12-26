@@ -123,7 +123,9 @@ public:
     QCamera2HardwareInterface(int cameraId);
     virtual ~QCamera2HardwareInterface();
     int openCamera(struct hw_device_t **hw_device);
-    int getCapabilities(struct camera_info *info);
+
+    static int getCapabilities(int cameraId, struct camera_info *info);
+    static int initCapabilities(int cameraId);
 
     // Implementation of QCameraAllocator
     virtual QCameraMemory *allocateStreamBuf(cam_stream_type_t stream_type, int size);
@@ -189,7 +191,7 @@ private:
     int getJpegRotation();
     QCameraExif *getExifData();
 
-    int32_t processAutoFocusEvent(uint32_t status);
+    int32_t processAutoFocusEvent(cam_auto_focus_data_t &focus_data);
     int32_t processZoomEvent(uint32_t status);
     int32_t processJpegNotify(qcamera_jpeg_evt_payload_t *jpeg_job);
 
@@ -269,6 +271,7 @@ private:
     camera_device_t   mCameraDevice;
     uint8_t           mCameraId;
     mm_camera_vtbl_t *mCameraHandle;
+    bool mCameraOpened;
 
     preview_stream_ops_t *mPreviewWindow;
     QCameraParameters mParameters;
@@ -292,7 +295,8 @@ private:
     QCameraQueue m_evtNotifyQ;          // evt notify queue
     QCameraCmdThread m_evtNotifyTh;     // thread handling evt notify to service layer
 
-    bool m_bShutterSoundPlayed;     // if shutter sound had been played
+    bool m_bShutterSoundPlayed;         // if shutter sound had been played
+    bool m_bAutoFocusRunning;           // if auto focus is running
 
     camera_frame_metadata_t mRoiData; // meta data for face detection
     camera_face_t mFaces[MAX_ROI];    // meta data for face detection detail info

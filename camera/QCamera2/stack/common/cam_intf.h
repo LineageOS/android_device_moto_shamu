@@ -32,10 +32,14 @@
 
 #include "cam_types.h"
 
+#define CAM_PRIV_IOCTL_BASE (V4L2_CID_PRIVATE_BASE + 14)
 typedef enum {
-    CAM_PRIV_PARM,                  /* session based parameters */
-    CAM_PRIV_STREAM_INFO_SYNC,      /* sync stream info */
-    CAM_PRIV_STREAM_PARM,           /* stream based parameters */
+    CAM_PRIV_PARM = CAM_PRIV_IOCTL_BASE, /* session based parameters */
+    CAM_PRIV_DO_AUTO_FOCUS,              /* session based action: do auto focus */
+    CAM_PRIV_CANCEL_AUTO_FOCUS,          /* session based action: cancel auto focus */
+    CAM_PRIV_PREPARE_SNAPSHOT,           /* session based action: prepare for snapshot */
+    CAM_PRIV_STREAM_INFO_SYNC,           /* sync stream info */
+    CAM_PRIV_STREAM_PARM,                /* stream based parameters */
 } cam_private_ioctl_enum_t;
 
 /* capability struct definition */
@@ -113,9 +117,14 @@ typedef struct{
     uint8_t supported_aec_modes_cnt;
     cam_auto_exposure_mode_type supported_aec_modes[CAM_AEC_MODE_MAX];
 
-    int exposure_compensation_min;       /* min value of exposure compensation */
-    int exposure_compensation_max;       /* max value of exposure compensation */
-    int exposure_compensation_step;      /* exposure compensation step value */
+    /* supported focus algorithms */
+    uint8_t supported_focus_algos_cnt;
+    cam_focus_algorithm_type supported_focus_algos[CAM_FOCUS_ALGO_MAX];
+
+    int exposure_compensation_min;       /* min value of exposure compensation index */
+    int exposure_compensation_max;       /* max value of exposure compensation index */
+    int exposure_compensation_default;   /* default value of exposure compensation index */
+    float exposure_compensation_step;    /* exposure compensation step value */
 
     uint8_t auto_wb_lock_supported;       /* flag if auto white balance lock is supported */
     uint8_t zoom_supported;               /* flag if zoom is supported */
@@ -124,11 +133,20 @@ typedef struct{
     uint8_t video_snapshot_supported;     /* flag if video snapshot is supported */
     uint8_t video_stablization_supported; /* flag id video stablization is supported */
 
-    uint8_t max_num_roi;                  /* max number of roi canbe detected */
+    uint8_t max_num_roi;                  /* max number of roi can be detected */
     uint8_t max_num_focus_areas;          /* max num of focus areas */
     uint8_t max_num_metering_areas;       /* max num opf metering areas */
     uint8_t max_zoom_step;                /* max zoom step value */
 
+    /* QCOM specific control */
+    cam_control_range_t brightness_ctrl;  /* brightness */
+    cam_control_range_t sharpness_ctrl;   /* sharpness */
+    cam_control_range_t contrast_ctrl;    /* contrast */
+    cam_control_range_t saturation_ctrl;  /* saturation */
+    cam_control_range_t sce_ctrl;         /* skintone enhancement factor */
+
+    int qcom_supported_feature_mask;      /* mask of qcom specific features supported:
+                                           * such as CAM_QCOM_FEATURE_SUPPORTED_FACE_DETECTION*/
     cam_padding_info_t padding_info;      /* padding information from PP */
 } cam_capability_t;
 
@@ -200,12 +218,7 @@ typedef union {
 /**************************************************************************************
  *          ID from (cam_intf_parm_type_t)          DATATYPE                     COUNT
  **************************************************************************************/
-    INCLUDE(CAM_INTF_PARM_DO_AUTOFOCUS,             cam_autofocus_cycle_t,       1); //action, not stick
-    INCLUDE(CAM_INTF_PARM_CANCEL_AUTOFOCUS,         int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_PREPARE_SNAPSHOT,         int8_t,                      1);
-
-    INCLUDE(CAM_INTF_PARM_QUERY_FLASH4SNAP,         int,                         1); //read only
-    INCLUDE(CAM_INTF_PARM_FOCUS_DISTANCES,          cam_focus_distances_info_t,  1);
+    INCLUDE(CAM_INTF_PARM_QUERY_FLASH4SNAP,         int32_t,                     1); //read only
 
     INCLUDE(CAM_INTF_PARM_EXPOSURE,                 int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_SHARPNESS,                int32_t,                     1);
@@ -221,13 +234,14 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_EXPOSURE_COMPENSATION,    int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_LED_MODE,                 int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_ROLLOFF,                  int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_MODE,                     cam_mode_t,                  1);
+    INCLUDE(CAM_INTF_PARM_MODE,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_AEC_ALGO_TYPE,            int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_FOCUS_ALGO_TYPE,          int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_AEC_ROI,                  cam_set_aec_roi_t,           1);
     INCLUDE(CAM_INTF_PARM_AF_ROI,                   cam_roi_info_t,              1);
     INCLUDE(CAM_INTF_PARM_FOCUS_MODE,               int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_BESTSHOT_MODE,            int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_STE_FACTOR,               int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_SCE_FACTOR,               int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_FD,                       cam_fd_set_parm_t,           1);
     INCLUDE(CAM_INTF_PARM_AEC_LOCK,                 int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_AWB_LOCK,                 int32_t,                     1);
@@ -235,10 +249,10 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_HFR,                      int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_REDEYE_REDUCTION,         int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_WAVELET_DENOISE,          cam_denoise_param_t,         1);
-    INCLUDE(CAM_INTF_PARM_HISTOGRAM,                int8_t,                      1);
-    INCLUDE(CAM_INTF_PARM_ASD_ENABLE,               uint32_t,                    1);
-    INCLUDE(CAM_INTF_PARM_RECORDING_HINT,           uint32_t,                    1);
-    INCLUDE(CAM_INTF_PARM_DIS_ENABLE,               uint32_t,                    1);
+    INCLUDE(CAM_INTF_PARM_HISTOGRAM,                int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_ASD_ENABLE,               int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_RECORDING_HINT,           int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_DIS_ENABLE,               int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_HDR,                      cam_exp_bracketing_t,        1);
 } parm_type_t;
 

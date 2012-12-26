@@ -338,6 +338,34 @@ typedef struct {
     int32_t (*get_parms) (uint32_t camera_handle,
                           parm_buffer_t *parms);
 
+    /** do_auto_focus: fucntion definition for performing auto focus
+     *    @camera_handle : camer handler
+     *    @sweep_mode    : auto focus sweep mode
+     *  Return value: 0 -- success
+     *                -1 -- failure
+     *  Note: if this call success, we will always assume there will
+     *        be an auto_focus event following up.
+     **/
+    int32_t (*do_auto_focus) (uint32_t camera_handle,
+                              cam_autofocus_cycle_t sweep_mode);
+
+    /** cancel_auto_focus: fucntion definition for cancelling
+     *                     previous auto focus request
+     *    @camera_handle : camer handler
+     *  Return value: current focus state upon end of API call
+     *                CAM_AF_FOCUSED
+     *                CAM_AF_NOT_FOCUSED
+     **/
+    cam_autofocus_state_t (*cancel_auto_focus) (uint32_t camera_handle);
+
+    /** prepare_snapshot: fucntion definition for preparing hardware
+     *                    for snapshot.
+     *    @camera_handle : camer handler
+     *  Return value: 0 -- success
+     *                -1 -- failure
+     **/
+    int32_t (*prepare_snapshot) (uint32_t camera_handle);
+
     /** add_channel: fucntion definition for adding a channel
      *    @camera_handle : camer handler
      *    @ch_id : channel handler

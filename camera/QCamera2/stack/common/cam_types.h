@@ -301,6 +301,7 @@ typedef enum {
     CAM_WB_MODE_CUSTOM,
     CAM_WB_MODE_INCANDESCENT,
     CAM_WB_MODE_FLUORESCENT,
+    CAM_WB_MODE_WARM_FLUORESCENT,
     CAM_WB_MODE_DAYLIGHT,
     CAM_WB_MODE_CLOUDY_DAYLIGHT,
     CAM_WB_MODE_TWILIGHT,
@@ -341,13 +342,21 @@ typedef enum {
     CAM_AEC_MODE_MAX
 } cam_auto_exposure_mode_type;
 
+typedef enum {
+    CAM_FOCUS_ALGO_AUTO,
+    CAM_FOCUS_ALGO_SPOT,
+    CAM_FOCUS_ALGO_CENTER_WEIGHTED,
+    CAM_FOCUS_ALGO_AVERAGE,
+    CAM_FOCUS_ALGO_MAX
+} cam_focus_algorithm_type;
+
 /* Auto focus mode */
 typedef enum {
     CAM_FOCUS_MODE_AUTO,
     CAM_FOCUS_MODE_INFINITY,
     CAM_FOCUS_MODE_MACRO,
-    CAM_FOCUA_MODE_FIXED,
-    CAM_FOCUA_MODE_EDOF,
+    CAM_FOCUS_MODE_FIXED,
+    CAM_FOCUS_MODE_EDOF,
     CAM_FOCUS_MODE_CONTINOUS_VIDEO,
     CAM_FOCUS_MODE_CONTINOUS_PICTURE,
     CAM_FOCUS_MODE_MAX
@@ -431,7 +440,6 @@ typedef enum {
 
 typedef struct {
     cam_hdr_mode mode;
-    uint32_t hdr_enable;
     uint32_t total_frames;
     uint32_t total_hal_frames;
     char values[MAX_EXP_BRACKETING_LENGTH];  /* user defined values */
@@ -511,56 +519,6 @@ typedef struct {
     uint32_t hist_buf[CAM_HISTOGRAM_STATS_SIZE]; /* buf holding histogram stats data */
 } cam_histogram_data_t;
 
-typedef  struct {
-    uint8_t is_hist_valid;                /* if histgram data is valid */
-    cam_histogram_data_t hist_data;      /* histogram data */
-
-    uint8_t is_faces_valid;               /* if face detection data is valid */
-    cam_face_detection_data_t faces_data; /* face detection result */
-} cam_metadata_info_t;
-
-typedef enum {
-    CAM_INTF_PARM_DO_AUTOFOCUS,
-    CAM_INTF_PARM_CANCEL_AUTOFOCUS,
-    CAM_INTF_PARM_PREPARE_SNAPSHOT,
-    CAM_INTF_PARM_QUERY_FLASH4SNAP,
-    CAM_INTF_PARM_FOCUS_DISTANCES,
-    CAM_INTF_PARM_EXPOSURE,
-    CAM_INTF_PARM_SHARPNESS,
-    CAM_INTF_PARM_CONTRAST,
-    CAM_INTF_PARM_SATURATION,
-    CAM_INTF_PARM_BRIGHTNESS,
-    CAM_INTF_PARM_WHITE_BALANCE,
-    CAM_INTF_PARM_ISO,
-    CAM_INTF_PARM_ZOOM,
-    CAM_INTF_PARM_ANTIBANDING,
-    CAM_INTF_PARM_EFFECT,
-    CAM_INTF_PARM_FPS_RANGE,
-    CAM_INTF_PARM_EXPOSURE_COMPENSATION,
-    CAM_INTF_PARM_LED_MODE,
-    CAM_INTF_PARM_ROLLOFF,
-    CAM_INTF_PARM_MODE,
-    CAM_INTF_PARM_FOCUS_ALGO_TYPE,
-    CAM_INTF_PARM_AEC_ROI,
-    CAM_INTF_PARM_AF_ROI,
-    CAM_INTF_PARM_FOCUS_MODE,
-    CAM_INTF_PARM_BESTSHOT_MODE,
-    CAM_INTF_PARM_STE_FACTOR,
-    CAM_INTF_PARM_FD,
-    CAM_INTF_PARM_AEC_LOCK,
-    CAM_INTF_PARM_AWB_LOCK,
-    CAM_INTF_PARM_MCE,
-    CAM_INTF_PARM_HFR,
-    CAM_INTF_PARM_REDEYE_REDUCTION,
-    CAM_INTF_PARM_WAVELET_DENOISE,
-    CAM_INTF_PARM_HISTOGRAM,
-    CAM_INTF_PARM_ASD_ENABLE,
-    CAM_INTF_PARM_RECORDING_HINT,
-    CAM_INTF_PARM_DIS_ENABLE,
-    CAM_INTF_PARM_HDR,
-    CAM_INTF_PARM_MAX
-} cam_intf_parm_type_t;
-
 enum cam_focus_distance_index{
   CAM_FOCUS_DISTANCE_NEAR_INDEX,  /* 0 */
   CAM_FOCUS_DISTANCE_OPTIMAL_INDEX,
@@ -591,8 +549,73 @@ typedef enum {
 } cam_autofocus_cycle_t;
 
 typedef enum {
+    CAM_AF_SCANNING,
     CAM_AF_FOCUSED,
     CAM_AF_NOT_FOCUSED
 } cam_autofocus_state_t;
+
+typedef struct {
+    cam_autofocus_state_t focus_state;           /* state of focus */
+    cam_focus_distances_info_t focus_dist;       /* focus distance */
+} cam_auto_focus_data_t;
+
+typedef  struct {
+    uint8_t is_hist_valid;                /* if histgram data is valid */
+    cam_histogram_data_t hist_data;       /* histogram data */
+
+    uint8_t is_faces_valid;               /* if face detection data is valid */
+    cam_face_detection_data_t faces_data; /* face detection result */
+
+    uint8_t is_focus_valid;               /* if focus data is valid */
+    cam_auto_focus_data_t focus_data;     /* focus data */
+} cam_metadata_info_t;
+
+typedef enum {
+    CAM_INTF_PARM_QUERY_FLASH4SNAP,
+    CAM_INTF_PARM_EXPOSURE,
+    CAM_INTF_PARM_SHARPNESS,
+    CAM_INTF_PARM_CONTRAST,
+    CAM_INTF_PARM_SATURATION,
+    CAM_INTF_PARM_BRIGHTNESS,
+    CAM_INTF_PARM_WHITE_BALANCE,
+    CAM_INTF_PARM_ISO,
+    CAM_INTF_PARM_ZOOM,
+    CAM_INTF_PARM_ANTIBANDING,
+    CAM_INTF_PARM_EFFECT,
+    CAM_INTF_PARM_FPS_RANGE,
+    CAM_INTF_PARM_EXPOSURE_COMPENSATION,
+    CAM_INTF_PARM_LED_MODE,
+    CAM_INTF_PARM_ROLLOFF,
+    CAM_INTF_PARM_MODE,             /* camera mode */
+    CAM_INTF_PARM_AEC_ALGO_TYPE,    /* auto exposure algorithm */
+    CAM_INTF_PARM_FOCUS_ALGO_TYPE,  /* focus algorithm */
+    CAM_INTF_PARM_AEC_ROI,
+    CAM_INTF_PARM_AF_ROI,
+    CAM_INTF_PARM_FOCUS_MODE,
+    CAM_INTF_PARM_BESTSHOT_MODE,
+    CAM_INTF_PARM_SCE_FACTOR,
+    CAM_INTF_PARM_FD,
+    CAM_INTF_PARM_AEC_LOCK,
+    CAM_INTF_PARM_AWB_LOCK,
+    CAM_INTF_PARM_MCE,
+    CAM_INTF_PARM_HFR,
+    CAM_INTF_PARM_REDEYE_REDUCTION,
+    CAM_INTF_PARM_WAVELET_DENOISE,
+    CAM_INTF_PARM_HISTOGRAM,
+    CAM_INTF_PARM_ASD_ENABLE,
+    CAM_INTF_PARM_RECORDING_HINT,
+    CAM_INTF_PARM_DIS_ENABLE,
+    CAM_INTF_PARM_HDR,
+    CAM_INTF_PARM_MAX
+} cam_intf_parm_type_t;
+
+typedef struct {
+    int32_t min_value;
+    int32_t max_value;
+    int32_t def_value;
+    int32_t step;
+} cam_control_range_t;
+
+#define CAM_QCOM_FEATURE_SUPPORTED_FACE_DETECTION 0x00000001
 
 #endif /* __QCAMERA_TYPES_H__ */

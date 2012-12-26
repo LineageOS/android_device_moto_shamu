@@ -73,8 +73,16 @@ void *QCameraStateMachine::smEvtProcRoutine(void *data)
         if (node != NULL) {
             switch (node->cmd) {
             case QCAMERA_SM_CMD_TYPE_API:
+                pme->stateMachine(node->evt, node->evt_payload);
+                // API is in a way sync call, so evt_payload is managed by HWI
+                // no need to free payload for API
+                break;
             case QCAMERA_SM_CMD_TYPE_EVT:
                 pme->stateMachine(node->evt, node->evt_payload);
+
+                // EVT is async call, so payload need to be free after use
+                free(node->evt_payload);
+                node->evt_payload = NULL;
                 break;
             case QCAMERA_SM_CMD_TYPE_EXIT:
                 running = 0;
@@ -82,6 +90,8 @@ void *QCameraStateMachine::smEvtProcRoutine(void *data)
             default:
                 break;
             }
+            free(node);
+            node = NULL;
         }
     } while (running);
     ALOGD("%s: X", __func__);
@@ -473,6 +483,7 @@ int32_t QCameraStateMachine::procEvtPreviewStoppedState(qcamera_sm_evt_enum_t ev
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_EVT_INTERNAL:
     case QCAMERA_SM_EVT_EVT_NOTIFY:
     case QCAMERA_SM_EVT_JPEG_EVT_NOTIFY:
     case QCAMERA_SM_EVT_SNAPSHOT_DONE:
@@ -706,6 +717,7 @@ int32_t QCameraStateMachine::procEvtPreviewReadyState(qcamera_sm_evt_enum_t evt,
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_EVT_INTERNAL:
     case QCAMERA_SM_EVT_EVT_NOTIFY:
     case QCAMERA_SM_EVT_JPEG_EVT_NOTIFY:
     case QCAMERA_SM_EVT_SNAPSHOT_DONE:
@@ -968,13 +980,23 @@ int32_t QCameraStateMachine::procEvtPreviewingState(qcamera_sm_evt_enum_t evt,
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_EVT_INTERNAL:
+        {
+            qcamera_sm_internal_evt_payload_t *internal_evt =
+                (qcamera_sm_internal_evt_payload_t *)payload;
+            switch (internal_evt->evt_type) {
+            case QCAMERA_INTERNAL_EVT_FOCUS_UPDATE:
+                rc = m_parent->processAutoFocusEvent(internal_evt->focus_data);
+                break;
+            default:
+                break;
+            }
+        }
+        break;
     case QCAMERA_SM_EVT_EVT_NOTIFY:
         {
             mm_camera_event_t *cam_evt = (mm_camera_event_t *)payload;
             switch (cam_evt->server_event_type) {
-            case CAM_EVENT_TYPE_AUTO_FOCUS_DONE:
-                rc = m_parent->processAutoFocusEvent(cam_evt->status);
-                break;
             case CAM_EVENT_TYPE_ZOOM_DONE:
                 rc = m_parent->processZoomEvent(cam_evt->status);
                 break;
@@ -1209,13 +1231,23 @@ int32_t QCameraStateMachine::procEvtPicTakingState(qcamera_sm_evt_enum_t evt,
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_EVT_INTERNAL:
+        {
+            qcamera_sm_internal_evt_payload_t *internal_evt =
+                (qcamera_sm_internal_evt_payload_t *)payload;
+            switch (internal_evt->evt_type) {
+            case QCAMERA_INTERNAL_EVT_FOCUS_UPDATE:
+                rc = m_parent->processAutoFocusEvent(internal_evt->focus_data);
+                break;
+            default:
+                break;
+            }
+        }
+        break;
     case QCAMERA_SM_EVT_EVT_NOTIFY:
         {
             mm_camera_event_t *cam_evt = (mm_camera_event_t *)payload;
             switch (cam_evt->server_event_type) {
-            case CAM_EVENT_TYPE_AUTO_FOCUS_DONE:
-                rc = m_parent->processAutoFocusEvent(cam_evt->status);
-                break;
             case CAM_EVENT_TYPE_ZOOM_DONE:
                 rc = m_parent->processZoomEvent(cam_evt->status);
                 break;
@@ -1487,13 +1519,23 @@ int32_t QCameraStateMachine::procEvtRecordingState(qcamera_sm_evt_enum_t evt,
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_EVT_INTERNAL:
+        {
+            qcamera_sm_internal_evt_payload_t *internal_evt =
+                (qcamera_sm_internal_evt_payload_t *)payload;
+            switch (internal_evt->evt_type) {
+            case QCAMERA_INTERNAL_EVT_FOCUS_UPDATE:
+                rc = m_parent->processAutoFocusEvent(internal_evt->focus_data);
+                break;
+            default:
+                break;
+            }
+        }
+        break;
     case QCAMERA_SM_EVT_EVT_NOTIFY:
         {
             mm_camera_event_t *cam_evt = (mm_camera_event_t *)payload;
             switch (cam_evt->server_event_type) {
-            case CAM_EVENT_TYPE_AUTO_FOCUS_DONE:
-                rc = m_parent->processAutoFocusEvent(cam_evt->status);
-                break;
             case CAM_EVENT_TYPE_ZOOM_DONE:
                 rc = m_parent->processZoomEvent(cam_evt->status);
                 break;
@@ -1742,13 +1784,23 @@ int32_t QCameraStateMachine::procEvtVideoPicTakingState(qcamera_sm_evt_enum_t ev
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_EVT_INTERNAL:
+        {
+            qcamera_sm_internal_evt_payload_t *internal_evt =
+                (qcamera_sm_internal_evt_payload_t *)payload;
+            switch (internal_evt->evt_type) {
+            case QCAMERA_INTERNAL_EVT_FOCUS_UPDATE:
+                rc = m_parent->processAutoFocusEvent(internal_evt->focus_data);
+                break;
+            default:
+                break;
+            }
+        }
+        break;
     case QCAMERA_SM_EVT_EVT_NOTIFY:
         {
             mm_camera_event_t *cam_evt = (mm_camera_event_t *)payload;
             switch (cam_evt->server_event_type) {
-            case CAM_EVENT_TYPE_AUTO_FOCUS_DONE:
-                rc = m_parent->processAutoFocusEvent(cam_evt->status);
-                break;
             case CAM_EVENT_TYPE_ZOOM_DONE:
                 rc = m_parent->processZoomEvent(cam_evt->status);
                 break;
@@ -2015,13 +2067,23 @@ int32_t QCameraStateMachine::procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t 
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_EVT_INTERNAL:
+        {
+            qcamera_sm_internal_evt_payload_t *internal_evt =
+                (qcamera_sm_internal_evt_payload_t *)payload;
+            switch (internal_evt->evt_type) {
+            case QCAMERA_INTERNAL_EVT_FOCUS_UPDATE:
+                rc = m_parent->processAutoFocusEvent(internal_evt->focus_data);
+                break;
+            default:
+                break;
+            }
+        }
+        break;
     case QCAMERA_SM_EVT_EVT_NOTIFY:
         {
             mm_camera_event_t *cam_evt = (mm_camera_event_t *)payload;
             switch (cam_evt->server_event_type) {
-            case CAM_EVENT_TYPE_AUTO_FOCUS_DONE:
-                rc = m_parent->processAutoFocusEvent(cam_evt->status);
-                break;
             case CAM_EVENT_TYPE_ZOOM_DONE:
                 rc = m_parent->processZoomEvent(cam_evt->status);
                 break;

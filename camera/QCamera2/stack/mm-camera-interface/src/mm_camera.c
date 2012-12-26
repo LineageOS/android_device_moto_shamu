@@ -544,8 +544,9 @@ int32_t mm_camera_set_parms(mm_camera_obj_t *my_obj,
                             parm_buffer_t *parms)
 {
     int32_t rc = -1;
+    int32_t value = 0;
     if (parms !=  NULL) {
-        rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, CAM_PRIV_PARM, 0);
+        rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, CAM_PRIV_PARM, &value);
     }
     pthread_mutex_unlock(&my_obj->cam_lock);
     return rc;
@@ -573,37 +574,81 @@ int32_t mm_camera_get_parms(mm_camera_obj_t *my_obj,
                             parm_buffer_t *parms)
 {
     int32_t rc = -1;
+    int32_t value = 0;
     if (parms != NULL) {
-        rc = mm_camera_util_g_ctrl(my_obj->ctrl_fd, CAM_PRIV_PARM, 0);
+        rc = mm_camera_util_g_ctrl(my_obj->ctrl_fd, CAM_PRIV_PARM, &value);
     }
     pthread_mutex_unlock(&my_obj->cam_lock);
     return rc;
 }
 
 /*===========================================================================
- * FUNCTION   : mm_camera_do_action
+ * FUNCTION   : mm_camera_do_auto_focus
  *
- * DESCRIPTION: perform actions per camera. Reserved here. Might be removed later,
- *              if functionality is included by mm_camera_set_parms
+ * DESCRIPTION: performing auto focus
  *
  * PARAMETERS :
- *   @my_obj       : camera object
- *   @actions      : ptr to a action struct to be performed by server
+ *   @camera_handle: camera handle
+ *   @sweep_mode   : auto focus sweep mode
  *
  * RETURN     : int32_t type of status
  *              0  -- success
  *              -1 -- failure
- * NOTE       : Assume the actions struct buf is already mapped to server via
- *              domain socket. Actions to be performed by server are already
- *              filled in by upper layer caller.
+ * NOTE       : if this call success, we will always assume there will
+ *              be an auto_focus event following up.
  *==========================================================================*/
-int32_t mm_camera_do_action(mm_camera_obj_t *my_obj,
-                            parm_buffer_t *actions)
+int32_t mm_camera_do_auto_focus(mm_camera_obj_t *my_obj,
+                                cam_autofocus_cycle_t sweep_mode)
 {
     int32_t rc = -1;
-    if (actions != NULL) {
-        rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, CAM_PRIV_PARM, 0);
+    int32_t value = sweep_mode;
+    rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, CAM_PRIV_DO_AUTO_FOCUS, &value);
+    pthread_mutex_unlock(&my_obj->cam_lock);
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : mm_camera_cancel_auto_focus
+ *
+ * DESCRIPTION: cancel auto focus
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *
+ * RETURN     : current focus state upon end of API call
+ *                CAM_AF_FOCUSED
+ *                CAM_AF_NOT_FOCUSED
+ *==========================================================================*/
+cam_autofocus_state_t mm_camera_cancel_auto_focus(mm_camera_obj_t *my_obj)
+{
+    int32_t rc = -1;
+    int32_t value = 0;
+    cam_autofocus_state_t state = CAM_AF_NOT_FOCUSED;
+    rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, CAM_PRIV_CANCEL_AUTO_FOCUS, &value);
+    pthread_mutex_unlock(&my_obj->cam_lock);
+    if (rc == 0) {
+        state = (cam_autofocus_state_t)value;
     }
+    return state;
+}
+
+/*===========================================================================
+ * FUNCTION   : mm_camera_prepare_snapshot
+ *
+ * DESCRIPTION: prepare hardware for snapshot
+ *
+ * PARAMETERS :
+ *   @my_obj       : camera object
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_camera_prepare_snapshot(mm_camera_obj_t *my_obj)
+{
+    int32_t rc = -1;
+    int32_t value = 0;
+    rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, CAM_PRIV_PREPARE_SNAPSHOT, &value);
     pthread_mutex_unlock(&my_obj->cam_lock);
     return rc;
 }
@@ -1409,18 +1454,23 @@ int32_t mm_camera_unmap_buf(mm_camera_obj_t *my_obj,
  *              0  -- success
  *              -1 -- failure
  *==========================================================================*/
-int32_t mm_camera_util_s_ctrl(int32_t fd,  uint32_t id, int32_t value)
+int32_t mm_camera_util_s_ctrl(int32_t fd,  uint32_t id, int32_t *value)
 {
     int rc = 0;
     struct v4l2_control control;
 
     memset(&control, 0, sizeof(control));
     control.id = id;
-    control.value = value;
+    if (value != NULL) {
+        control.value = *value;
+    }
     rc = ioctl(fd, VIDIOC_S_CTRL, &control);
 
     CDBG("%s: fd=%d, S_CTRL, id=0x%x, value = 0x%x, rc = %d\n",
          __func__, fd, id, (uint32_t)value, rc);
+    if (value != NULL) {
+        *value = control.value;
+    }
     return (rc >= 0)? 0 : -1;
 }
 
@@ -1438,15 +1488,20 @@ int32_t mm_camera_util_s_ctrl(int32_t fd,  uint32_t id, int32_t value)
  *              0  -- success
  *              -1 -- failure
  *==========================================================================*/
-int32_t mm_camera_util_g_ctrl( int32_t fd, uint32_t id, int32_t value)
+int32_t mm_camera_util_g_ctrl( int32_t fd, uint32_t id, int32_t *value)
 {
     int rc = 0;
     struct v4l2_control control;
 
     memset(&control, 0, sizeof(control));
     control.id = id;
-    control.value = value;
+    if (value != NULL) {
+        control.value = *value;
+    }
     rc = ioctl(fd, VIDIOC_G_CTRL, &control);
     CDBG("%s: fd=%d, G_CTRL, id=0x%x, rc = %d\n", __func__, fd, id, rc);
+    if (value != NULL) {
+        *value = control.value;
+    }
     return (rc >= 0)? 0 : -1;
 }

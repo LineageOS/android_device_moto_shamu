@@ -43,9 +43,6 @@ QCamera2Factory gQCamera2Factory;
 
 QCamera2Factory::QCamera2Factory()
 {
-    for (int i = 0; i < MM_CAMERA_MAX_NUM_SENSORS; i++) {
-        mCameraHardware[i] = NULL;
-    }
     mNumOfCameras = get_num_of_cameras();
 }
 
@@ -71,18 +68,12 @@ int QCamera2Factory::getNumberOfCameras()
 int QCamera2Factory::getCameraInfo(int camera_id, struct camera_info *info)
 {
     int rc;
-    ALOGV("%s: E", __func__);
+    ALOGE("%s: E, camera_id = %d", __func__, camera_id);
 
     if (!mNumOfCameras || camera_id >= mNumOfCameras || !info)
         return INVALID_OPERATION;
 
-    mCameraHardware[camera_id] = new QCamera2HardwareInterface(camera_id);
-    if (!mCameraHardware[camera_id]) {
-        ALOGE("Allocation of hardware interface failed");
-        return NO_MEMORY;
-    }
-    rc = mCameraHardware[camera_id]->getCapabilities(info);
-
+    rc = QCamera2HardwareInterface::getCapabilities(camera_id, info);
     ALOGV("%s: X", __func__);
     return rc;
 }
@@ -90,12 +81,20 @@ int QCamera2Factory::getCameraInfo(int camera_id, struct camera_info *info)
 int QCamera2Factory::cameraDeviceOpen(int camera_id,
                     struct hw_device_t **hw_device)
 {
+    int rc = NO_ERROR;
     if (camera_id < 0 || camera_id >= mNumOfCameras)
         return BAD_VALUE;
-    if (!mCameraHardware[camera_id])
-        return INVALID_OPERATION;
 
-    return mCameraHardware[camera_id]->openCamera(hw_device);
+    QCamera2HardwareInterface *hw = new QCamera2HardwareInterface(camera_id);
+    if (!hw) {
+        ALOGE("Allocation of hardware interface failed");
+        return NO_MEMORY;
+    }
+    rc = hw->openCamera(hw_device);
+    if (rc != NO_ERROR) {
+        delete hw;
+    }
+    return rc;
 }
 
 int QCamera2Factory::camera_device_open(
