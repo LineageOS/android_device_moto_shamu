@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+Copyright (c) 2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -332,7 +332,7 @@ int mm_app_stream_initbuf(cam_frame_len_offset_t *frame_offset_info,
     uint8_t *reg_flags = NULL;
     int i, rc;
 
-    memcpy(&stream->offset, frame_offset_info, sizeof(cam_frame_len_offset_t));
+    stream->offset = *frame_offset_info;
     CDBG("%s: alloc buf for stream_id %d, len=%d",
          __func__, stream->s_id, frame_offset_info->frame_len);
 
@@ -363,9 +363,10 @@ int mm_app_stream_initbuf(cam_frame_len_offset_t *frame_offset_info,
 
     for (i = 0; i < stream->num_of_bufs; i++) {
         /* mapping stream bufs first */
-        memcpy(&pBufs[i], &stream->s_bufs[i].buf, sizeof(mm_camera_buf_def_t));
+        pBufs[i] = stream->s_bufs[i].buf;
         reg_flags[i] = 1;
         rc = ops_tbl->map_ops(pBufs[i].buf_idx,
+                              -1,
                               pBufs[i].fd,
                               pBufs[i].frame_len,
                               ops_tbl->userdata);
@@ -378,7 +379,7 @@ int mm_app_stream_initbuf(cam_frame_len_offset_t *frame_offset_info,
     if (rc != MM_CAMERA_OK) {
         int j;
         for (j=0; j>i; j++) {
-            ops_tbl->unmap_ops(pBufs[j].buf_idx, ops_tbl->userdata);
+            ops_tbl->unmap_ops(pBufs[j].buf_idx, -1, ops_tbl->userdata);
         }
         mm_app_release_bufs(stream->num_of_bufs, &stream->s_bufs[0]);
         free(pBufs);
@@ -401,7 +402,7 @@ int32_t mm_app_stream_deinitbuf(mm_camera_map_unmap_ops_tbl_t *ops_tbl,
 
     for (i = 0; i < stream->num_of_bufs ; i++) {
         /* mapping stream bufs first */
-        ops_tbl->unmap_ops(stream->s_bufs[i].buf.buf_idx, ops_tbl->userdata);
+        ops_tbl->unmap_ops(stream->s_bufs[i].buf.buf_idx, -1, ops_tbl->userdata);
     }
 
     mm_app_release_bufs(stream->num_of_bufs, &stream->s_bufs[0]);
@@ -455,7 +456,7 @@ int mm_app_open(mm_camera_app_t *cam_app,
 
     /* alloc ion mem for capability buf */
     memset(&offset_info, 0, sizeof(offset_info));
-    offset_info.frame_len = sizeof(cam_capapbility_t);
+    offset_info.frame_len = sizeof(cam_capability_t);
     rc = mm_app_alloc_bufs(&test_obj->cap_buf,
                            &offset_info,
                            1,
@@ -477,8 +478,8 @@ int mm_app_open(mm_camera_app_t *cam_app,
 
     /* alloc ion mem for getparm buf */
     memset(&offset_info, 0, sizeof(offset_info));
-    offset_info.frame_len = sizeof(get_parm_buffer_t);
-    rc = mm_app_alloc_bufs(&test_obj->getparm_buf,
+    offset_info.frame_len = sizeof(parm_buffer_t);
+    rc = mm_app_alloc_bufs(&test_obj->parm_buf,
                            &offset_info,
                            1,
                            0);
@@ -489,34 +490,12 @@ int mm_app_open(mm_camera_app_t *cam_app,
 
     /* mapping getparm buf */
     rc = test_obj->cam->ops->map_buf(test_obj->cam->camera_handle,
-                                     CAM_MAPPING_BUF_TYPE_GETPARM_BUF,
-                                     test_obj->getparm_buf.mem_info.fd,
-                                     test_obj->getparm_buf.mem_info.size);
+                                     CAM_MAPPING_BUF_TYPE_PARM_BUF,
+                                     test_obj->parm_buf.mem_info.fd,
+                                     test_obj->parm_buf.mem_info.size);
     if (rc != MM_CAMERA_OK) {
         CDBG_ERROR("%s:map getparm_buf error\n", __func__);
         goto error_after_getparm_buf_alloc;
-    }
-
-    /* alloc ion mem for setparm buf */
-    memset(&offset_info, 0, sizeof(offset_info));
-    offset_info.frame_len = sizeof(set_parm_buffer_t);
-    rc = mm_app_alloc_bufs(&test_obj->setparm_buf,
-                           &offset_info,
-                           1,
-                           0);
-    if (rc != MM_CAMERA_OK) {
-        CDBG_ERROR("%s:alloc buf for setparm_buf error\n", __func__);
-        goto error_after_getparm_buf_map;
-    }
-
-    /* mapping setparm buf */
-    rc = test_obj->cam->ops->map_buf(test_obj->cam->camera_handle,
-                                     CAM_MAPPING_BUF_TYPE_SETPARM_BUF,
-                                     test_obj->setparm_buf.mem_info.fd,
-                                     test_obj->setparm_buf.mem_info.size);
-    if (rc != MM_CAMERA_OK) {
-        CDBG_ERROR("%s:map setparm_buf error\n", __func__);
-        goto error_after_setparm_buf_alloc;
     }
 
     rc = test_obj->cam->ops->register_event_notify(test_obj->cam->camera_handle,
@@ -525,14 +504,14 @@ int mm_app_open(mm_camera_app_t *cam_app,
     if (rc != MM_CAMERA_OK) {
         CDBG_ERROR("%s: failed register_event_notify", __func__);
         rc = -MM_CAMERA_E_GENERAL;
-        goto error_after_setparm_buf_map;
+        goto error_after_getparm_buf_map;
     }
 
     rc = test_obj->cam->ops->query_capability(test_obj->cam->camera_handle);
     if (rc != MM_CAMERA_OK) {
         CDBG_ERROR("%s: failed query_capability", __func__);
         rc = -MM_CAMERA_E_GENERAL;
-        goto error_after_setparm_buf_map;
+        goto error_after_getparm_buf_map;
     }
 
     memset(&test_obj->jpeg_ops, 0, sizeof(mm_jpeg_ops_t));
@@ -540,21 +519,16 @@ int mm_app_open(mm_camera_app_t *cam_app,
     if (test_obj->jpeg_hdl == 0) {
         CDBG_ERROR("%s: jpeg lib open err", __func__);
         rc = -MM_CAMERA_E_GENERAL;
-        goto error_after_setparm_buf_map;
+        goto error_after_getparm_buf_map;
     }
 
     return rc;
 
-error_after_setparm_buf_map:
-    test_obj->cam->ops->unmap_buf(test_obj->cam->camera_handle,
-                                  CAM_MAPPING_BUF_TYPE_SETPARM_BUF);
-error_after_setparm_buf_alloc:
-    mm_app_release_bufs(1, &test_obj->setparm_buf);
 error_after_getparm_buf_map:
     test_obj->cam->ops->unmap_buf(test_obj->cam->camera_handle,
-                                  CAM_MAPPING_BUF_TYPE_GETPARM_BUF);
+                                  CAM_MAPPING_BUF_TYPE_PARM_BUF);
 error_after_getparm_buf_alloc:
-    mm_app_release_bufs(1, &test_obj->getparm_buf);
+    mm_app_release_bufs(1, &test_obj->parm_buf);
 error_after_cap_buf_map:
     test_obj->cam->ops->unmap_buf(test_obj->cam->camera_handle,
                                   CAM_MAPPING_BUF_TYPE_CAPABILITY);
@@ -582,18 +556,11 @@ int mm_app_close(mm_camera_test_obj_t *test_obj)
         CDBG_ERROR("%s: unmap capability buf failed, rc=%d", __func__, rc);
     }
 
-    /* unmap setparm buf */
+    /* unmap parm buf */
     rc = test_obj->cam->ops->unmap_buf(test_obj->cam->camera_handle,
-                                       CAM_MAPPING_BUF_TYPE_SETPARM_BUF);
+                                       CAM_MAPPING_BUF_TYPE_PARM_BUF);
     if (rc != MM_CAMERA_OK) {
         CDBG_ERROR("%s: unmap setparm buf failed, rc=%d", __func__, rc);
-    }
-
-    /* unmap getparm buf */
-    rc = test_obj->cam->ops->unmap_buf(test_obj->cam->camera_handle,
-                                       CAM_MAPPING_BUF_TYPE_GETPARM_BUF);
-    if (rc != MM_CAMERA_OK) {
-        CDBG_ERROR("%s: unmap getparm buf failed, rc=%d", __func__, rc);
     }
 
     rc = test_obj->cam->ops->close_camera(test_obj->cam->camera_handle);
@@ -617,16 +584,10 @@ int mm_app_close(mm_camera_test_obj_t *test_obj)
         CDBG_ERROR("%s: release capability buf failed, rc=%d", __func__, rc);
     }
 
-    /* dealloc setparm buf */
-    rc = mm_app_release_bufs(1, &test_obj->setparm_buf);
+    /* dealloc parm buf */
+    rc = mm_app_release_bufs(1, &test_obj->parm_buf);
     if (rc != MM_CAMERA_OK) {
         CDBG_ERROR("%s: release setparm buf failed, rc=%d", __func__, rc);
-    }
-
-    /* dealloc getparm buf */
-    rc = mm_app_release_bufs(1, &test_obj->getparm_buf);
-    if (rc != MM_CAMERA_OK) {
-        CDBG_ERROR("%s: release getparm buf failed, rc=%d", __func__, rc);
     }
 
     return MM_CAMERA_OK;
@@ -700,6 +661,7 @@ mm_camera_stream_t * mm_app_add_stream(mm_camera_test_obj_t *test_obj,
                                             stream->s_id,
                                             CAM_MAPPING_BUF_TYPE_STREAM_INFO,
                                             0,
+                                            -1,
                                             stream->s_info_buf.mem_info.fd,
                                             stream->s_info_buf.mem_info.size);
     if (rc != MM_CAMERA_OK) {
@@ -723,7 +685,8 @@ int mm_app_del_stream(mm_camera_test_obj_t *test_obj,
                                          channel->ch_id,
                                          stream->s_id,
                                          CAM_MAPPING_BUF_TYPE_STREAM_INFO,
-                                         0);
+                                         0,
+                                         -1);
     mm_app_deallocate_ion_memory(&stream->s_info_buf);
     test_obj->cam->ops->delete_stream(test_obj->cam->camera_handle,
                                       channel->ch_id,

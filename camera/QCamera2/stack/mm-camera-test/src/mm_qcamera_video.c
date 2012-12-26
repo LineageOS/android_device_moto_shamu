@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+Copyright (c) 2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -61,6 +61,7 @@ mm_camera_stream_t * mm_app_add_video_stream(mm_camera_test_obj_t *test_obj,
 {
     int rc = MM_CAMERA_OK;
     mm_camera_stream_t *stream = NULL;
+    cam_capability_t *cam_cap = (cam_capability_t *)(test_obj->cap_buf.buf.buffer);
 
     stream = mm_app_add_stream(test_obj, channel);
     if (NULL == stream) {
@@ -79,13 +80,10 @@ mm_camera_stream_t * mm_app_add_video_stream(mm_camera_test_obj_t *test_obj,
     memset(stream->s_config.stream_info, 0, sizeof(cam_stream_info_t));
     stream->s_config.stream_info->stream_type = CAM_STREAM_TYPE_VIDEO;
     stream->s_config.stream_info->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
-    stream->s_config.stream_info->meta_header = CAM_META_DATA_TYPE_DEF;
     stream->s_config.stream_info->fmt = DEFAULT_VIDEO_FORMAT;
     stream->s_config.stream_info->dim.width = DEFAULT_VIDEO_WIDTH;
     stream->s_config.stream_info->dim.height = DEFAULT_VIDEO_HEIGHT;
-    stream->s_config.stream_info->width_padding = CAM_PAD_TO_WORD;
-    stream->s_config.stream_info->height_padding = CAM_PAD_TO_WORD;
-    stream->s_config.stream_info->plane_padding = DEFAULT_VIDEO_PADDING;
+    stream->s_config.padding_info = cam_cap->padding_info;
 
     rc = mm_app_config_stream(test_obj, channel, stream, &stream->s_config);
     if (MM_CAMERA_OK != rc) {

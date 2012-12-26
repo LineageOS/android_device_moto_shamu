@@ -983,7 +983,7 @@ int32_t mm_jpeg_start_job(mm_jpeg_obj *my_obj,
     node->type = MM_JPEG_CMD_TYPE_JOB;
     node->entry.client_hdl = client_hdl;
     node->entry.jobId = job_id;
-    memcpy(&node->entry.job, job, sizeof(mm_jpeg_job));
+    node->entry.job = *job;
     node->entry.jpeg_obj = (void*)my_obj; /* save a ptr to jpeg_obj */
 
     rc = mm_jpeg_queue_enq(&my_obj->job_mgr.job_queue, node);

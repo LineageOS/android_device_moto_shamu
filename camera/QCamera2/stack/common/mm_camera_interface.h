@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+Copyright (c) 2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -35,10 +35,11 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cam_intf.h"
 #include "cam_queue.h"
 
-#define MM_CAMERA_MAX_NUM_SENSORS 5
+#define MM_CAMERA_MAX_NUM_SENSORS MSM_MAX_CAMERA_SENSORS
 #define MM_CAMERA_MAX_NUM_FRAMES 16
 /* num of channels allowed in a camera obj */
 #define MM_CAMERA_CHANNEL_MAX 16
+#define MAX_STREAM_NUM_IN_BUNDLE 4
 
 #define PAD_TO_SIZE(size, padding) ((size + padding - 1) & ~(padding - 1))
 
@@ -123,11 +124,15 @@ typedef void (*mm_camera_buf_notify_t) (mm_camera_super_buf_t *bufs,
 /** map_stream_buf_op_t: function definition for operation of
 *   mapping stream buffers via domain socket
 *    @frame_idx : buffer index within stream buffers
+*    @plane_idx    : plane index. If all planes share the same
+*                   fd, plane_idx = -1; otherwise, plean_idx is
+*                   the index to plane (0..num_of_planes)
 *    @fd : file descriptor of the stream buffer
 *    @size: size of the stream buffer
 *    @userdata : user data pointer
 **/
 typedef int32_t (*map_stream_buf_op_t) (uint32_t frame_idx,
+                                        int32_t plane_idx,
                                         int fd,
                                         uint32_t size,
                                         void *userdata);
@@ -136,9 +141,13 @@ typedef int32_t (*map_stream_buf_op_t) (uint32_t frame_idx,
 *                          unmapping stream buffers via domain
 *                          socket
 *    @frame_idx : buffer index within stream buffers
+*    @plane_idx : plane index. If all planes share the same
+*                 fd, plane_idx = -1; otherwise, plean_idx is
+*                 the index to plane (0..num_of_planes)
 *    @userdata : user data pointer
 **/
 typedef int32_t (*unmap_stream_buf_op_t) (uint32_t frame_idx,
+                                          int32_t plane_idx,
                                           void *userdata);
 
 /** mm_camera_map_unmap_ops_tbl_t: virtual table
@@ -177,6 +186,7 @@ typedef struct {
 /** mm_camera_stream_config_t: structure for stream
 *                              configuration
 *    @stream_info : pointer to a stream info structure
+*    @padding_info: padding info obtained from querycapability
 *    @mem_tbl : memory operation table for
 *              allocating/deallocating stream buffers
 *    @stream_cb : callback handling stream frame notify
@@ -184,6 +194,7 @@ typedef struct {
 **/
 typedef struct {
     cam_stream_info_t *stream_info;
+    cam_padding_info_t padding_info;
     mm_camera_stream_mem_vtbl_t mem_vtbl;
     mm_camera_buf_notify_t stream_cb;
     void *userdata;
@@ -246,7 +257,7 @@ typedef struct {
      *    @camera_handle : camer handler
      *  Return value: 0 -- success
      *                -1 -- failure
-     *  Note: would assume cam_capapbility_t is already mapped
+     *  Note: would assume cam_capability_t is already mapped
      **/
     int32_t (*query_capability) (uint32_t camera_handle);
 
@@ -273,7 +284,6 @@ typedef struct {
      *           via domain socket
      *    @camera_handle : camer handler
      *    @buf_type : type of mapping buffers, can be value of
-     *                CAM_MAPPING_BUF_TYPE_HIST_BUF
      *                CAM_MAPPING_BUF_TYPE_CAPABILITY
      *                CAM_MAPPING_BUF_TYPE_SETPARM_BUF
      *                CAM_MAPPING_BUF_TYPE_GETPARM_BUF
@@ -291,7 +301,6 @@ typedef struct {
      *           via domain socket
      *    @camera_handle : camer handler
      *    @buf_type : type of mapping buffers, can be value of
-     *                CAM_MAPPING_BUF_TYPE_HIST_BUF
      *                CAM_MAPPING_BUF_TYPE_CAPABILITY
      *                CAM_MAPPING_BUF_TYPE_SETPARM_BUF
      *                CAM_MAPPING_BUF_TYPE_GETPARM_BUF
@@ -305,43 +314,29 @@ typedef struct {
      *             based parameters to server
      *    @camera_handle : camer handler
      *    @parms : batch for parameters to be set, stored in
-     *               set_parm_buffer_t
+     *               parm_buffer_t
      *  Return value: 0 -- success
      *                -1 -- failure
-     *  Note: would assume set_parm_buffer_t is already mapped, and
+     *  Note: would assume parm_buffer_t is already mapped, and
      *       according parameter entries to be set are filled in the
      *       buf before this call
      **/
     int32_t (*set_parms) (uint32_t camera_handle,
-                          set_parm_buffer_t *parms);
+                          parm_buffer_t *parms);
 
     /** get_parms: fucntion definition for querying camera
      *             based parameters from server
      *    @camera_handle : camer handler
      *    @parms : batch for parameters to be queried, stored in
-     *               get_parm_buffer_t
+     *               parm_buffer_t
      *  Return value: 0 -- success
      *                -1 -- failure
-     *  Note: would assume get_parm_buffer_t is already mapped, and
+     *  Note: would assume parm_buffer_t is already mapped, and
      *       according parameter entries to be queried are filled in
      *       the buf before this call
      **/
     int32_t (*get_parms) (uint32_t camera_handle,
-                          get_parm_buffer_t *parms);
-
-    /** do_action: fucntion definition for performing camera
-     *             based actions
-     *    @camera_handle : camer handler
-     *    @actions : batch for actions to be performed, stored in
-     *               set_parm_buffer_t
-     *  Return value: 0 -- success
-     *                -1 -- failure
-     *  Note: would assume set_parm_buffer_t is already mapped, and
-     *       according action information are filled in the buf
-     *       before this call
-     **/
-    int32_t (*do_action) (uint32_t camera_handle,
-                          set_parm_buffer_t *actions);
+                          parm_buffer_t *parms);
 
     /** add_channel: fucntion definition for adding a channel
      *    @camera_handle : camer handler
@@ -408,7 +403,10 @@ typedef struct {
      *             CAM_MAPPING_BUF_TYPE_STREAM_BUF
      *             CAM_MAPPING_BUF_TYPE_STREAM_INFO
      *             CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF
-     *    @idx : buffer index within the stream buffers
+     *    @buf_idx : buffer index within the stream buffers
+     *    @plane_idx : plane index. If all planes share the same fd,
+     *               plane_idx = -1; otherwise, plean_idx is the
+     *               index to plane (0..num_of_planes)
      *    @fd : file descriptor of the stream buffer
      *    @size :  size of the stream buffer
      *  Return value: 0 -- success
@@ -418,7 +416,8 @@ typedef struct {
                                uint32_t ch_id,
                                uint32_t stream_id,
                                uint8_t buf_type,
-                               uint32_t idx,
+                               uint32_t buf_idx,
+                               int32_t plane_idx,
                                int fd,
                                uint32_t size);
 
@@ -431,7 +430,10 @@ typedef struct {
      *             CAM_MAPPING_BUF_TYPE_STREAM_BUF
      *             CAM_MAPPING_BUF_TYPE_STREAM_INFO
      *             CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF
-     *    @idx : buffer index within the stream buffers
+     *    @buf_idx : buffer index within the stream buffers
+     *    @plane_idx : plane index. If all planes share the same fd,
+     *               plane_idx = -1; otherwise, plean_idx is the
+     *               index to plane (0..num_of_planes)
      *  Return value: 0 -- success
      *                -1 -- failure
      **/
@@ -439,7 +441,8 @@ typedef struct {
                                  uint32_t ch_id,
                                  uint32_t stream_id,
                                  uint8_t buf_type,
-                                 uint32_t idx);
+                                 uint32_t buf_idx,
+                                 int32_t plane_idx);
 
     /** set_stream_parms: fucntion definition for setting stream
      *                    specific parameters to server
@@ -456,7 +459,7 @@ typedef struct {
     int32_t (*set_stream_parms) (uint32_t camera_handle,
                                  uint32_t ch_id,
                                  uint32_t s_id,
-                                 void *parms); /* TODO: change void * to valid data struct of set_parms */
+                                 cam_stream_parm_buffer_t *parms);
 
     /** get_stream_parms: fucntion definition for querying stream
      *                    specific parameters from server
@@ -473,24 +476,7 @@ typedef struct {
     int32_t (*get_stream_parms) (uint32_t camera_handle,
                                  uint32_t ch_id,
                                  uint32_t s_id,
-                                 void *parms); /* TODO: change void * to valid data struct of set_parms */
-
-    /** do_stream_action: fucntion definition for performing stream
-     *                    specific actions
-     *    @camera_handle : camer handler
-     *    @ch_id : channel handler
-     *    @stream_id : stream handler
-     *    @actions : batch for actions to be performed
-     *  Return value: 0 -- success
-     *                -1 -- failure
-     *  Note: would assume action buffer is already mapped, and
-     *       according action entries to be performed are filled in
-     *       the buf before this call
-     **/
-    int32_t (*do_stream_action) (uint32_t camera_handle,
-                                 uint32_t ch_id,
-                                 uint32_t s_id,
-                                 void *actions); /* TODO: change void * to valid data struct of actions*/
+                                 cam_stream_parm_buffer_t *parms);
 
     /** start_channel: fucntion definition for starting a channel
      *    @camera_handle : camer handler

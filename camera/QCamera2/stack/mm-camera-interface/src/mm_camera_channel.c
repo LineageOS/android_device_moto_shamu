@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+Copyright (c) 2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -104,7 +104,18 @@ int32_t mm_channel_superbuf_bufdone_overflow(mm_channel_t *my_obj,
 int32_t mm_channel_superbuf_skip(mm_channel_t *my_obj,
                                  mm_channel_queue_t *queue);
 
-/* channel utility function */
+/*===========================================================================
+ * FUNCTION   : mm_channel_util_get_stream_by_handler
+ *
+ * DESCRIPTION: utility function to get a stream object from its handle
+ *
+ * PARAMETERS :
+ *   @cam_obj: ptr to a channel object
+ *   @handler: stream handle
+ *
+ * RETURN     : ptr to a stream object.
+ *              NULL if failed.
+ *==========================================================================*/
 mm_stream_t * mm_channel_util_get_stream_by_handler(
                                     mm_channel_t * ch_obj,
                                     uint32_t handler)
@@ -121,6 +132,17 @@ mm_stream_t * mm_channel_util_get_stream_by_handler(
     return s_obj;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_dispatch_super_buf
+ *
+ * DESCRIPTION: dispatch super buffer of bundle to registered user
+ *
+ * PARAMETERS :
+ *   @cmd_cb  : ptr storing matched super buf information
+ *   @userdata: user data ptr
+ *
+ * RETURN     : none
+ *==========================================================================*/
 static void mm_channel_dispatch_super_buf(mm_camera_cmdcb_t *cmd_cb,
                                           void* user_data)
 {
@@ -141,7 +163,21 @@ static void mm_channel_dispatch_super_buf(mm_camera_cmdcb_t *cmd_cb,
     }
 }
 
-/* CB for processing stream buffer */
+/*===========================================================================
+ * FUNCTION   : mm_channel_process_stream_buf
+ *
+ * DESCRIPTION: handle incoming buffer from stream in a bundle. In this function,
+ *              matching logic will be performed on imcoming stream frames.
+ *              Will depends on the bundle attribute, either storing matched frames
+ *              in the superbuf queue, or sending matched superbuf frames to upper
+ *              layer through registered callback.
+ *
+ * PARAMETERS :
+ *   @cmd_cb  : ptr storing matched super buf information
+ *   @userdata: user data ptr
+ *
+ * RETURN     : none
+ *==========================================================================*/
 static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
                                           void *user_data)
 {
@@ -230,7 +266,22 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
     }
 }
 
-/* state machine entry */
+/*===========================================================================
+ * FUNCTION   : mm_channel_fsm_fn
+ *
+ * DESCRIPTION: channel finite state machine entry function. Depends on channel
+ *              state, incoming event will be handled differently.
+ *
+ * PARAMETERS :
+ *   @my_obj   : ptr to a channel object
+ *   @evt      : channel event to be processed
+ *   @in_val   : input event payload. Can be NULL if not needed.
+ *   @out_val  : output payload, Can be NULL if not needed.
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_fsm_fn(mm_channel_t *my_obj,
                           mm_channel_evt_type_t evt,
                           void * in_val,
@@ -263,6 +314,22 @@ int32_t mm_channel_fsm_fn(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_fsm_fn_notused
+ *
+ * DESCRIPTION: channel finite state machine function to handle event
+ *              in NOT_USED state.
+ *
+ * PARAMETERS :
+ *   @my_obj   : ptr to a channel object
+ *   @evt      : channel event to be processed
+ *   @in_val   : input event payload. Can be NULL if not needed.
+ *   @out_val  : output payload, Can be NULL if not needed.
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_fsm_fn_notused(mm_channel_t *my_obj,
                                   mm_channel_evt_type_t evt,
                                   void * in_val,
@@ -280,6 +347,22 @@ int32_t mm_channel_fsm_fn_notused(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_fsm_fn_stopped
+ *
+ * DESCRIPTION: channel finite state machine function to handle event
+ *              in STOPPED state.
+ *
+ * PARAMETERS :
+ *   @my_obj   : ptr to a channel object
+ *   @evt      : channel event to be processed
+ *   @in_val   : input event payload. Can be NULL if not needed.
+ *   @out_val  : output payload, Can be NULL if not needed.
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_fsm_fn_stopped(mm_channel_t *my_obj,
                                   mm_channel_evt_type_t evt,
                                   void * in_val,
@@ -371,6 +454,22 @@ int32_t mm_channel_fsm_fn_stopped(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_fsm_fn_active
+ *
+ * DESCRIPTION: channel finite state machine function to handle event
+ *              in ACTIVE state.
+ *
+ * PARAMETERS :
+ *   @my_obj   : ptr to a channel object
+ *   @evt      : channel event to be processed
+ *   @in_val   : input event payload. Can be NULL if not needed.
+ *   @out_val  : output payload, Can be NULL if not needed.
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
                           mm_channel_evt_type_t evt,
                           void * in_val,
@@ -427,6 +526,22 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_fsm_fn_paused
+ *
+ * DESCRIPTION: channel finite state machine function to handle event
+ *              in PAUSED state.
+ *
+ * PARAMETERS :
+ *   @my_obj   : ptr to a channel object
+ *   @evt      : channel event to be processed
+ *   @in_val   : input event payload. Can be NULL if not needed.
+ *   @out_val  : output payload, Can be NULL if not needed.
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_fsm_fn_paused(mm_channel_t *my_obj,
                           mm_channel_evt_type_t evt,
                           void * in_val,
@@ -441,6 +556,25 @@ int32_t mm_channel_fsm_fn_paused(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_init
+ *
+ * DESCRIPTION: initialize a channel
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object be to initialized
+ *   @attr         : bundle attribute of the channel if needed
+ *   @channel_cb   : callback function for bundle data notify
+ *   @userdata     : user data ptr
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : if no bundle data notify is needed, meaning each stream in the
+ *              channel will have its own stream data notify callback, then
+ *              attr, channel_cb, and userdata can be NULL. In this case,
+ *              no matching logic will be performed in channel for the bundling.
+ *==========================================================================*/
 int32_t mm_channel_init(mm_channel_t *my_obj,
                         mm_camera_channel_attr_t *attr,
                         mm_camera_buf_notify_t channel_cb,
@@ -451,7 +585,7 @@ int32_t mm_channel_init(mm_channel_t *my_obj,
     my_obj->bundle.super_buf_notify_cb = channel_cb;
     my_obj->bundle.user_data = userdata;
     if (NULL != attr) {
-        memcpy(&my_obj->bundle.superbuf_queue.attr, attr, sizeof(mm_camera_channel_attr_t));
+        my_obj->bundle.superbuf_queue.attr = *attr;
     }
 
     CDBG("%s : Launch data poll thread in channel open", __func__);
@@ -463,6 +597,17 @@ int32_t mm_channel_init(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_release
+ *
+ * DESCRIPTION: release a channel resource. Channel state will move to UNUSED
+ *              state after this call.
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void mm_channel_release(mm_channel_t *my_obj)
 {
     /* stop data poll thread */
@@ -472,6 +617,18 @@ void mm_channel_release(mm_channel_t *my_obj)
     my_obj->state = MM_CHANNEL_STATE_NOTUSED;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_add_stream
+ *
+ * DESCRIPTION: add a stream into the channel
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *
+ * RETURN     : uint32_t type of stream handle
+ *              0  -- invalid stream handle, meaning the op failed
+ *              >0 -- successfully added a stream with a valid handle
+ *==========================================================================*/
 uint32_t mm_channel_add_stream(mm_channel_t *my_obj)
 {
     int32_t rc = 0;
@@ -514,6 +671,20 @@ uint32_t mm_channel_add_stream(mm_channel_t *my_obj)
     return s_hdl;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_del_stream
+ *
+ * DESCRIPTION: delete a stream from the channel bu its handle
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *   @stream_id    : stream handle
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : assume steam is stooped before it can be deleted
+ *==========================================================================*/
 int32_t mm_channel_del_stream(mm_channel_t *my_obj,
                               uint32_t stream_id)
 {
@@ -535,6 +706,20 @@ int32_t mm_channel_del_stream(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_config_stream
+ *
+ * DESCRIPTION: configure a stream
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *   @stream_id    : stream handle
+ *   @config       : stream configuration
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_config_stream(mm_channel_t *my_obj,
                                    uint32_t stream_id,
                                    mm_camera_stream_config_t *config)
@@ -558,6 +743,18 @@ int32_t mm_channel_config_stream(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_start
+ *
+ * DESCRIPTION: start a channel, which will start all streams in the channel
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_start(mm_channel_t *my_obj)
 {
     int32_t rc = 0;
@@ -567,25 +764,12 @@ int32_t mm_channel_start(mm_channel_t *my_obj)
     mm_stream_t *s_obj = NULL;
 
     for (i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
-        s_obj = mm_channel_util_get_stream_by_handler(my_obj, i);
-        if (NULL != s_obj) {
-            s_objs[num_streams_to_start++] = s_obj;
-        }
-    }
-
-    if (num_streams_to_start > 1) {
-        /* there are more than one streams in the channel, need to tell backend */
-        cam_stream_bundle_t bundle;
-        memset(&bundle, 0, sizeof(bundle));
-
-        for (i = 0; i < num_streams_to_start; i++) {
-            bundle.stream_ids[bundle.num++] = s_objs[i]->my_hdl;
-        }
-
-        /* TODO: how to send via ioctl */
-        if (0 != rc) {
-            CDBG_ERROR("%s: set_bundle failed (rc=%d)", __func__, rc);
-            return -1;
+        if (my_obj->streams[i].my_hdl > 0) {
+            s_obj = mm_channel_util_get_stream_by_handler(my_obj,
+                                                          my_obj->streams[i].my_hdl);
+            if (NULL != s_obj) {
+                s_objs[num_streams_to_start++] = s_obj;
+            }
         }
     }
 
@@ -682,6 +866,18 @@ int32_t mm_channel_start(mm_channel_t *my_obj)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_stop
+ *
+ * DESCRIPTION: stop a channel, which will stop all streams in the channel
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_stop(mm_channel_t *my_obj)
 {
     int32_t rc = 0;
@@ -691,9 +887,12 @@ int32_t mm_channel_stop(mm_channel_t *my_obj)
     mm_stream_t *s_obj = NULL;
 
     for (i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
-        s_obj = mm_channel_util_get_stream_by_handler(my_obj, i);
-        if (NULL != s_obj) {
-            s_objs[num_streams_to_stop++] = s_obj;
+        if (my_obj->streams[i].my_hdl > 0) {
+            s_obj = mm_channel_util_get_stream_by_handler(my_obj,
+                                                          my_obj->streams[i].my_hdl);
+            if (NULL != s_obj) {
+                s_objs[num_streams_to_stop++] = s_obj;
+            }
         }
     }
 
@@ -737,6 +936,20 @@ int32_t mm_channel_stop(mm_channel_t *my_obj)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_request_super_buf
+ *
+ * DESCRIPTION: for burst mode in bundle, reuqest certain amount of matched
+ *              frames from superbuf queue
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *   @num_buf_requested : number of matched frames needed
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_request_super_buf(mm_channel_t *my_obj, uint32_t num_buf_requested)
 {
     int32_t rc = 0;
@@ -764,6 +977,19 @@ int32_t mm_channel_request_super_buf(mm_channel_t *my_obj, uint32_t num_buf_requ
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_cancel_super_buf_request
+ *
+ * DESCRIPTION: for burst mode in bundle, cancel the reuqest for certain amount
+ *              of matched frames from superbuf queue
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_cancel_super_buf_request(mm_channel_t *my_obj)
 {
     int32_t rc = 0;
@@ -772,6 +998,19 @@ int32_t mm_channel_cancel_super_buf_request(mm_channel_t *my_obj)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_qbuf
+ *
+ * DESCRIPTION: enqueue buffer back to kernel
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *   @buf          : buf ptr to be enqueued
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_qbuf(mm_channel_t *my_obj,
                         mm_camera_buf_def_t *buf)
 {
@@ -788,6 +1027,23 @@ int32_t mm_channel_qbuf(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_set_stream_parms
+ *
+ * DESCRIPTION: set parameters per stream
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *   @s_id         : stream handle
+ *   @parms        : ptr to a param struct to be set to server
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : Assume the parms struct buf is already mapped to server via
+ *              domain socket. Corresponding fields of parameters to be set
+ *              are already filled in by upper layer caller.
+ *==========================================================================*/
 int32_t mm_channel_set_stream_parm(mm_channel_t *my_obj,
                                    mm_evt_paylod_set_get_stream_parms_t *payload)
 {
@@ -804,6 +1060,25 @@ int32_t mm_channel_set_stream_parm(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_get_stream_parms
+ *
+ * DESCRIPTION: get parameters per stream
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *   @s_id         : stream handle
+ *   @parms        : ptr to a param struct to be get from server
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : Assume the parms struct buf is already mapped to server via
+ *              domain socket. Parameters to be get from server are already
+ *              filled in by upper layer caller. After this call, corresponding
+ *              fields of requested parameters will be filled in by server with
+ *              detailed information.
+ *==========================================================================*/
 int32_t mm_channel_get_stream_parm(mm_channel_t *my_obj,
                                    mm_evt_paylod_set_get_stream_parms_t *payload)
 {
@@ -820,6 +1095,24 @@ int32_t mm_channel_get_stream_parm(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_do_stream_action
+ *
+ * DESCRIPTION: request server to perform stream based action. Maybe removed later
+ *              if the functionality is included in mm_camera_set_parms
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *   @s_id         : stream handle
+ *   @actions      : ptr to an action struct buf to be performed by server
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : Assume the action struct buf is already mapped to server via
+ *              domain socket. Actions to be performed by server are already
+ *              filled in by upper layer caller.
+ *==========================================================================*/
 int32_t mm_channel_do_stream_action(mm_channel_t *my_obj,
                                    mm_evt_paylod_do_stream_action_t *payload)
 {
@@ -836,6 +1129,19 @@ int32_t mm_channel_do_stream_action(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_map_stream_buf
+ *
+ * DESCRIPTION: mapping stream buffer via domain socket to server
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *   @payload      : ptr to payload for mapping
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_map_stream_buf(mm_channel_t *my_obj,
                                   mm_evt_paylod_map_stream_buf_t *payload)
 {
@@ -845,7 +1151,8 @@ int32_t mm_channel_map_stream_buf(mm_channel_t *my_obj,
     if (NULL != s_obj) {
         rc = mm_stream_map_buf(s_obj,
                                payload->buf_type,
-                               payload->idx,
+                               payload->buf_idx,
+                               payload->plane_idx,
                                payload->fd,
                                payload->size);
     }
@@ -853,6 +1160,19 @@ int32_t mm_channel_map_stream_buf(mm_channel_t *my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_unmap_stream_buf
+ *
+ * DESCRIPTION: unmapping stream buffer via domain socket to server
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *   @payload      : ptr to unmap payload
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_unmap_stream_buf(mm_channel_t *my_obj,
                                     mm_evt_paylod_unmap_stream_buf_t *payload)
 {
@@ -860,22 +1180,61 @@ int32_t mm_channel_unmap_stream_buf(mm_channel_t *my_obj,
     mm_stream_t* s_obj = mm_channel_util_get_stream_by_handler(my_obj,
                                                                payload->stream_id);
     if (NULL != s_obj) {
-        rc = mm_stream_unmap_buf(s_obj, payload->buf_type, payload->idx);
+        rc = mm_stream_unmap_buf(s_obj, payload->buf_type,
+                                 payload->buf_idx, payload->plane_idx);
     }
 
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_superbuf_queue_init
+ *
+ * DESCRIPTION: initialize superbuf queue in the channel
+ *
+ * PARAMETERS :
+ *   @queue   : ptr to superbuf queue to be initialized
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_superbuf_queue_init(mm_channel_queue_t * queue)
 {
     return cam_queue_init(&queue->que);
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_superbuf_queue_deinit
+ *
+ * DESCRIPTION: deinitialize superbuf queue in the channel
+ *
+ * PARAMETERS :
+ *   @queue   : ptr to superbuf queue to be deinitialized
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_superbuf_queue_deinit(mm_channel_queue_t * queue)
 {
     return cam_queue_deinit(&queue->que);
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_util_seq_comp_w_rollover
+ *
+ * DESCRIPTION: utility function to handle sequence number comparison with rollover
+ *
+ * PARAMETERS :
+ *   @v1      : first value to be compared
+ *   @v2      : second value to be compared
+ *
+ * RETURN     : int8_t type of comparison result
+ *              >0  -- v1 larger than v2
+ *              =0  -- vi equal to v2
+ *              <0  -- v1 smaller than v2
+ *==========================================================================*/
 int8_t mm_channel_util_seq_comp_w_rollover(uint32_t v1,
                                            uint32_t v2)
 {
@@ -891,6 +1250,20 @@ int8_t mm_channel_util_seq_comp_w_rollover(uint32_t v1,
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_superbuf_comp_and_enqueue
+ *
+ * DESCRIPTION: implementation for matching logic for superbuf
+ *
+ * PARAMETERS :
+ *   @ch_obj  : channel object
+ *   @queue   : superbuf queue
+ *   @buf_info: new buffer from stream
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_superbuf_comp_and_enqueue(
                         mm_channel_t* ch_obj,
                         mm_channel_queue_t * queue,
@@ -960,7 +1333,7 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
             memset(new_node, 0, sizeof(cam_node_t));
             new_node->data = (void *)new_buf;
             new_buf->num_of_bufs = queue->num_streams;
-            memcpy(&new_buf->super_buf[buf_s_idx], buf_info, sizeof(mm_camera_buf_info_t));
+            new_buf->super_buf[buf_s_idx] = *buf_info;
 
             /* enqueue */
             //cam_list_add_tail_node(&node->list, &queue->que.head.list);
@@ -1019,7 +1392,7 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
             if (is_new) {
                 CDBG("%s: add stream = %d frame id = %d ",
                      __func__, buf_info->stream_id, buf_info->frame_idx);
-                memcpy(&super_buf->super_buf[buf_s_idx], buf_info, sizeof(mm_camera_buf_info_t));
+                super_buf->super_buf[buf_s_idx] = *buf_info;
 
                 /* check if superbuf is all matched */
                 super_buf->matched = 1;
@@ -1050,7 +1423,7 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
                     }
                 }
                 /* add the new frame into the superbuf */
-                memcpy(&super_buf->super_buf[buf_s_idx], buf_info, sizeof(mm_camera_buf_info_t));
+                super_buf->super_buf[buf_s_idx] = *buf_info;
             } else {
                 /* the new frame is older, just ignor */
                 mm_channel_qbuf(ch_obj, buf_info->buf);
@@ -1063,6 +1436,16 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
     return 0;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_superbuf_dequeue_internal
+ *
+ * DESCRIPTION: internal implementation for dequeue from the superbuf queue
+ *
+ * PARAMETERS :
+ *   @queue   : superbuf queue
+ *
+ * RETURN     : ptr to a node from superbuf queue
+ *==========================================================================*/
 mm_channel_queue_node_t* mm_channel_superbuf_dequeue_internal(mm_channel_queue_t * queue)
 {
     cam_node_t* node = NULL;
@@ -1092,6 +1475,16 @@ mm_channel_queue_node_t* mm_channel_superbuf_dequeue_internal(mm_channel_queue_t
     return super_buf;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_superbuf_dequeue
+ *
+ * DESCRIPTION: dequeue from the superbuf queue
+ *
+ * PARAMETERS :
+ *   @queue   : superbuf queue
+ *
+ * RETURN     : ptr to a node from superbuf queue
+ *==========================================================================*/
 mm_channel_queue_node_t* mm_channel_superbuf_dequeue(mm_channel_queue_t * queue)
 {
     mm_channel_queue_node_t* super_buf = NULL;
@@ -1103,6 +1496,20 @@ mm_channel_queue_node_t* mm_channel_superbuf_dequeue(mm_channel_queue_t * queue)
     return super_buf;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_superbuf_bufdone_overflow
+ *
+ * DESCRIPTION: keep superbuf queue no larger than watermark set by upper layer
+ *              via channel attribute
+ *
+ * PARAMETERS :
+ *   @my_obj  : channel object
+ *   @queue   : superbuf queue
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_superbuf_bufdone_overflow(mm_channel_t* my_obj,
                                              mm_channel_queue_t * queue)
 {
@@ -1135,6 +1542,20 @@ int32_t mm_channel_superbuf_bufdone_overflow(mm_channel_t* my_obj,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : mm_channel_superbuf_skip
+ *
+ * DESCRIPTION: depends on the lookback configuration of the channel attribute,
+ *              unwanted superbufs will be removed from the superbuf queue.
+ *
+ * PARAMETERS :
+ *   @my_obj  : channel object
+ *   @queue   : superbuf queue
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
 int32_t mm_channel_superbuf_skip(mm_channel_t* my_obj,
                                  mm_channel_queue_t * queue)
 {

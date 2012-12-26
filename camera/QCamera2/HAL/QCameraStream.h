@@ -50,7 +50,10 @@ class QCameraStream
 {
 public:
     QCameraStream(QCameraAllocator &allocator,
-        uint32_t camHandle, uint32_t chId, mm_camera_ops_t *camOps);
+                  uint32_t camHandle,
+                  uint32_t chId,
+                  mm_camera_ops_t *camOps,
+                  cam_padding_info_t *paddingInfo);
     virtual ~QCameraStream();
     virtual int32_t init(cam_stream_type_t stream_type,
                 stream_cb_routine stream_cb, void *userdata);
@@ -72,7 +75,7 @@ public:
 
 private:
     uint32_t mCamHandle;
-    uint32_t mChannel;
+    uint32_t mChannelHandle;
     uint32_t mHandle; // stream handle from mm-camera-interface
     mm_camera_ops_t *mCamOps;
     cam_stream_info_t *mStreamInfo; // ptr to stream info buf
@@ -89,6 +92,7 @@ private:
     QCameraAllocator &mAllocator;
     mm_camera_buf_def_t mBufDef[MM_CAMERA_MAX_NUM_FRAMES];
     cam_frame_len_offset_t mFrameLenOffset;
+    cam_padding_info_t mPaddingInfo;
 
     static int32_t get_bufs(
                      cam_frame_len_offset_t *offset,

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+Copyright (c) 2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -77,7 +77,7 @@ static void jpeg_encode_cb(jpeg_job_status_t status,
 
 int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_frame)
 {
-    cam_capapbility_t *cam_cap = (cam_capapbility_t *)(test_obj->cap_buf.buf.buffer);
+    cam_capability_t *cam_cap = (cam_capability_t *)(test_obj->cap_buf.buf.buffer);
 
     int rc = -MM_CAMERA_E_GENERAL;
     int i;
@@ -155,7 +155,7 @@ int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_fram
         CDBG_ERROR("%s: No memory for current_job_frames", __func__);
         return rc;
     }
-    memcpy(test_obj->current_job_frames, recvd_frame, sizeof(mm_camera_super_buf_t));
+    *(test_obj->current_job_frames) = *recvd_frame;
 
     memset(&job, 0, sizeof(job));
     job.job_type = JPEG_JOB_TYPE_ENCODE;
@@ -180,18 +180,10 @@ int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_fram
     m_imgbuf_info->num_bufs = 1;
     m_imgbuf_info->src_image[0].fd = m_frame->fd;
     m_imgbuf_info->src_image[0].buf_vaddr = m_frame->buffer;
-    memcpy(&m_imgbuf_info->src_dim,
-           &m_stream->s_config.stream_info->dim,
-           sizeof(cam_dimension_t));
-    memcpy(&m_imgbuf_info->out_dim,
-           &m_stream->s_config.stream_info->dim,
-           sizeof(cam_dimension_t));
-    memcpy(&m_imgbuf_info->crop,
-           &m_stream->s_config.stream_info->crop,
-           sizeof(cam_rect_t));
-    memcpy(&m_imgbuf_info->src_image[0].offset,
-           &m_stream->offset,
-           sizeof(cam_frame_len_offset_t));
+    m_imgbuf_info->src_dim = m_stream->s_config.stream_info->dim;
+    m_imgbuf_info->out_dim = m_stream->s_config.stream_info->dim;
+    m_imgbuf_info->crop = m_stream->s_config.stream_info->parm_buf.crop;
+    m_imgbuf_info->src_image[0].offset = m_stream->offset;
     mm_app_cache_ops((mm_camera_app_meminfo_t *)recvd_frame->bufs[i]->mem_info,
                      ION_IOC_CLEAN_INV_CACHES);
 
@@ -205,18 +197,10 @@ int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_fram
         p_imgbuf_info->num_bufs = 1;
         p_imgbuf_info->src_image[0].fd = p_frame->fd;
         p_imgbuf_info->src_image[0].buf_vaddr = p_frame->buffer;
-        memcpy(&p_imgbuf_info->src_dim,
-               &p_stream->s_config.stream_info->dim,
-               sizeof(cam_dimension_t));
-        memcpy(&p_imgbuf_info->out_dim,
-               &p_stream->s_config.stream_info->dim,
-               sizeof(cam_dimension_t));
-        memcpy(&p_imgbuf_info->crop,
-               &p_stream->s_config.stream_info->crop,
-               sizeof(cam_rect_t));
-        memcpy(&p_imgbuf_info->src_image[0].offset,
-               &p_stream->offset,
-               sizeof(cam_frame_len_offset_t));
+        p_imgbuf_info->src_dim = p_stream->s_config.stream_info->dim;
+        p_imgbuf_info->out_dim = p_stream->s_config.stream_info->dim;
+        p_imgbuf_info->crop = p_stream->s_config.stream_info->parm_buf.crop;
+        p_imgbuf_info->src_image[0].offset = p_stream->offset;
     }
 
     /* fill in sink img param */
@@ -304,6 +288,7 @@ mm_camera_stream_t * mm_app_add_postview_stream(mm_camera_test_obj_t *test_obj,
 {
     int rc = MM_CAMERA_OK;
     mm_camera_stream_t *stream = NULL;
+    cam_capability_t *cam_cap = (cam_capability_t *)(test_obj->cap_buf.buf.buffer);
 
     stream = mm_app_add_stream(test_obj, channel);
     if (NULL == stream) {
@@ -327,13 +312,10 @@ mm_camera_stream_t * mm_app_add_postview_stream(mm_camera_test_obj_t *test_obj,
         stream->s_config.stream_info->streaming_mode = CAM_STREAMING_MODE_BURST;
         stream->s_config.stream_info->num_of_burst = num_burst;
     }
-    stream->s_config.stream_info->meta_header = CAM_META_DATA_TYPE_DEF;
     stream->s_config.stream_info->fmt = DEFAULT_PREVIEW_FORMAT;
     stream->s_config.stream_info->dim.width = DEFAULT_PREVIEW_WIDTH;
     stream->s_config.stream_info->dim.height = DEFAULT_PREVIEW_HEIGHT;
-    stream->s_config.stream_info->width_padding = CAM_PAD_TO_WORD;
-    stream->s_config.stream_info->height_padding = CAM_PAD_TO_WORD;
-    stream->s_config.stream_info->plane_padding = DEFAULT_PREVIEW_PADDING;
+    stream->s_config.padding_info = cam_cap->padding_info;
 
     rc = mm_app_config_stream(test_obj, channel, stream, &stream->s_config);
     if (MM_CAMERA_OK != rc) {

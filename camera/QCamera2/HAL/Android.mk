@@ -7,14 +7,13 @@ LOCAL_SRC_FILES := \
         QCamera2Hal.cpp \
         QCamera2HWI.cpp \
         QCameraMem.cpp \
-        QCamera2DSockParm.cpp \
         QCameraQueue.cpp \
         QCameraCmdThread.cpp \
         QCameraStateMachine.cpp \
         QCameraChannel.cpp \
         QCameraStream.cpp \
 	QCameraPostProc.cpp \
-        QCameraHelperLib.cpp \
+        QCamera2HWICallbacks.cpp \
         QCameraParameters.cpp
 
 LOCAL_CFLAGS = -Wall -Werror

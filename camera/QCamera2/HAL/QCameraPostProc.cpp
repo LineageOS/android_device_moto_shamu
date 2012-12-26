@@ -38,6 +38,16 @@
 
 namespace android {
 
+/*===========================================================================
+ * FUNCTION   : QCameraPostProcessor
+ *
+ * DESCRIPTION: constructor of QCameraPostProcessor.
+ *
+ * PARAMETERS :
+ *   @cam_ctrl : ptr to HWI object
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
     : m_parent(cam_ctrl),
       mJpegCB(NULL),
@@ -52,20 +62,45 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
     memset(&mJpegHandle, 0, sizeof(mJpegHandle));
 }
 
+/*===========================================================================
+ * FUNCTION   : ~QCameraPostProcessor
+ *
+ * DESCRIPTION: deconstructor of QCameraPostProcessor.
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraPostProcessor::~QCameraPostProcessor()
 {
 }
 
+/*===========================================================================
+ * FUNCTION   : init
+ *
+ * DESCRIPTION: initialization of postprocessor
+ *
+ * PARAMETERS :
+ *   @jpeg_cb      : callback to handle jpeg event from mm-camera-interface
+ *   @user_data    : user data ptr for jpeg callback
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraPostProcessor::init(jpeg_encode_callback_t jpeg_cb, void *user_data)
 {
     mJpegCB = jpeg_cb;
     mJpegUserData = user_data;
 
+    //TODO: jpeg_open causes panic. Comment out for now.
+#if 0
     mJpegClientHandle = jpeg_open(&mJpegHandle);
     if(!mJpegClientHandle) {
         ALOGE("%s : jpeg_open did not work", __func__);
-        return -1;
+        return UNKNOWN_ERROR;
     }
+#endif
 
     m_dataProcTh.launch(dataProcessRoutine, this);
     m_dataNotifyTh.launch(dataNotifyRoutine, this);
@@ -73,6 +108,17 @@ int32_t QCameraPostProcessor::init(jpeg_encode_callback_t jpeg_cb, void *user_da
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : deinit
+ *
+ * DESCRIPTION: de-initialization of postprocessor
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraPostProcessor::deinit()
 {
     m_dataProcTh.exit();
@@ -89,6 +135,21 @@ int32_t QCameraPostProcessor::deinit()
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : start
+ *
+ * DESCRIPTION: start postprocessor. Data process thread and data notify thread
+ *              will be launched.
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ * NOTE       : if any offline reprocess is needed, a reprocess channel/stream
+ *              will be started.
+ *==========================================================================*/
 int32_t QCameraPostProcessor::start()
 {
     int32_t rc = NO_ERROR;
@@ -114,6 +175,19 @@ int32_t QCameraPostProcessor::start()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : stop
+ *
+ * DESCRIPTION: stop postprocessor. Data process and notify thread will be stopped.
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ * NOTE       : reprocess channel will be stopped and deleted if there is any
+ *==========================================================================*/
 int32_t QCameraPostProcessor::stop()
 {
     m_dataNotifyTh.sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC, FALSE, TRUE);
@@ -128,6 +202,20 @@ int32_t QCameraPostProcessor::stop()
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : sendEvtNotify
+ *
+ * DESCRIPTION: send event notify through notify callback registered by upper layer
+ *
+ * PARAMETERS :
+ *   @msg_type: msg type of notify
+ *   @ext1    : extension
+ *   @ext2    : extension
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraPostProcessor::sendEvtNotify(int32_t msg_type,
                                             int32_t ext1,
                                             int32_t ext2)
@@ -135,6 +223,22 @@ int32_t QCameraPostProcessor::sendEvtNotify(int32_t msg_type,
     return m_parent->sendEvtNotify(msg_type, ext1, ext2);
 }
 
+/*===========================================================================
+ * FUNCTION   : sendDataNotify
+ *
+ * DESCRIPTION: enqueue data into dataNotify thread
+ *
+ * PARAMETERS :
+ *   @msg_type: data callback msg type
+ *   @data    : ptr to data memory struct
+ *   @index   : index to data buffer
+ *   @metadata: ptr to meta data buffer if there is any
+ *   @jpeg_mem: any tempory heap memory to be released after callback
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraPostProcessor::sendDataNotify(int32_t msg_type,
                                              camera_memory_t *data,
                                              uint8_t index,
@@ -164,6 +268,21 @@ int32_t QCameraPostProcessor::sendDataNotify(int32_t msg_type,
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : processData
+ *
+ * DESCRIPTION: enqueue data into dataNotify thread
+ *
+ * PARAMETERS :
+ *   @frame   : process frame received from mm-camera-interface
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ * NOTE       : depends on if offline reprocess is needed, received frame will
+ *              be sent to either input queue of postprocess or jpeg encoding
+ *==========================================================================*/
 int32_t QCameraPostProcessor::processData(mm_camera_super_buf_t *frame)
 {
     if (m_parent->needOfflineReprocess()) {
@@ -178,6 +297,23 @@ int32_t QCameraPostProcessor::processData(mm_camera_super_buf_t *frame)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : processJpegEvt
+ *
+ * DESCRIPTION: process jpeg event from mm-jpeg-interface.
+ *
+ * PARAMETERS :
+ *   @evt     : payload of jpeg event, including information about jpeg encoding
+ *              status, jpeg size and so on.
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ * NOTE       : This event will also trigger DataProc thread to move to next job
+ *              processing (i.e., send a new jpeg encoding job to mm-jpeg-interface
+ *              if there is any pending job in jpeg input queue)
+ *==========================================================================*/
 int32_t QCameraPostProcessor::processJpegEvt(qcamera_jpeg_evt_payload_t *evt)
 {
     int32_t rc = NO_ERROR;
@@ -279,6 +415,20 @@ end:
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : processPPData
+ *
+ * DESCRIPTION: process received frame after reprocess.
+ *
+ * PARAMETERS :
+ *   @frame   : received frame from reprocess channel.
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ * NOTE       : The frame after reprocess need to send to jpeg encoding.
+ *==========================================================================*/
 int32_t QCameraPostProcessor::processPPData(mm_camera_super_buf_t *frame)
 {
     qcamera_pp_data_t *job = (qcamera_pp_data_t *)m_ongoingPPQ.dequeue();
@@ -303,6 +453,20 @@ int32_t QCameraPostProcessor::processPPData(mm_camera_super_buf_t *frame)
     return 0;
 }
 
+/*===========================================================================
+ * FUNCTION   : findJpegJobByJobId
+ *
+ * DESCRIPTION: find a jpeg job from ongoing Jpeg queue by its job ID
+ *
+ * PARAMETERS :
+ *   @jobId   : job Id of the job
+ *
+ * RETURN     : ptr to a jpeg job struct. NULL if not found.
+ *
+ * NOTE       : Currently only one job is sending to mm-jpeg-interface for jpeg
+ *              encoding. Therefore simply dequeue from the ongoing Jpeg Queue
+ *              will serve the purpose to find the jpeg job.
+ *==========================================================================*/
 qcamera_jpeg_data_t *QCameraPostProcessor::findJpegJobByJobId(uint32_t jobId)
 {
     qcamera_jpeg_data_t * job = NULL;
@@ -316,6 +480,17 @@ qcamera_jpeg_data_t *QCameraPostProcessor::findJpegJobByJobId(uint32_t jobId)
     return job;
 }
 
+/*===========================================================================
+ * FUNCTION   : releaseOutputData
+ *
+ * DESCRIPTION: callback function to release notify data node
+ *
+ * PARAMETERS :
+ *   @data      : ptr to notify data
+ *   @user_data : user data ptr (QCameraReprocessor)
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void QCameraPostProcessor::releaseOutputData(void *data, void *user_data)
 {
     QCameraPostProcessor *pme = (QCameraPostProcessor *)user_data;
@@ -324,6 +499,17 @@ void QCameraPostProcessor::releaseOutputData(void *data, void *user_data)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : releaseOutputData
+ *
+ * DESCRIPTION: callback function to release jpeg input data node
+ *
+ * PARAMETERS :
+ *   @data      : ptr to jpeg input data
+ *   @user_data : user data ptr (QCameraReprocessor)
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void QCameraPostProcessor::releaseJpegInputData(void *data, void *user_data)
 {
     QCameraPostProcessor *pme = (QCameraPostProcessor *)user_data;
@@ -332,6 +518,17 @@ void QCameraPostProcessor::releaseJpegInputData(void *data, void *user_data)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : releasePPInputData
+ *
+ * DESCRIPTION: callback function to release post process input data node
+ *
+ * PARAMETERS :
+ *   @data      : ptr to post process input data
+ *   @user_data : user data ptr (QCameraReprocessor)
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void QCameraPostProcessor::releasePPInputData(void *data, void *user_data)
 {
     QCameraPostProcessor *pme = (QCameraPostProcessor *)user_data;
@@ -345,6 +542,17 @@ void QCameraPostProcessor::releasePPInputData(void *data, void *user_data)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : releaseOngoingJpegData
+ *
+ * DESCRIPTION: callback function to release ongoing jpeg job node
+ *
+ * PARAMETERS :
+ *   @data      : ptr to ongoing jpeg job data
+ *   @user_data : user data ptr (QCameraReprocessor)
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void QCameraPostProcessor::releaseOngoingJpegData(void *data, void *user_data)
 {
     QCameraPostProcessor *pme = (QCameraPostProcessor *)user_data;
@@ -353,6 +561,17 @@ void QCameraPostProcessor::releaseOngoingJpegData(void *data, void *user_data)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : releaseOngoingPPData
+ *
+ * DESCRIPTION: callback function to release ongoing postprocess job node
+ *
+ * PARAMETERS :
+ *   @data      : ptr to onging postprocess job
+ *   @user_data : user data ptr (QCameraReprocessor)
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void QCameraPostProcessor::releaseOngoingPPData(void *data, void *user_data)
 {
     QCameraPostProcessor *pme = (QCameraPostProcessor *)user_data;
@@ -366,6 +585,18 @@ void QCameraPostProcessor::releaseOngoingPPData(void *data, void *user_data)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : releaseNotifyData
+ *
+ * DESCRIPTION: function to release internal resources in notify data struct
+ *
+ * PARAMETERS :
+ *   @app_cb  : ptr to data notify struct
+ *
+ * RETURN     : None
+ *
+ * NOTE       : deallocate jpeg heap memory if it's not NULL
+ *==========================================================================*/
 void QCameraPostProcessor::releaseNotifyData(qcamera_data_argm_t *app_cb)
 {
     if (NULL != app_cb->jpeg_mem) {
@@ -375,6 +606,16 @@ void QCameraPostProcessor::releaseNotifyData(qcamera_data_argm_t *app_cb)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : releaseSuperBuf
+ *
+ * DESCRIPTION: function to release a superbuf frame by returning back to kernel
+ *
+ * PARAMETERS :
+ *   @super_buf : ptr to the superbuf frame
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void QCameraPostProcessor::releaseSuperBuf(mm_camera_super_buf_t *super_buf)
 {
     if (NULL != super_buf) {
@@ -385,6 +626,20 @@ void QCameraPostProcessor::releaseSuperBuf(mm_camera_super_buf_t *super_buf)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : releaseJpegJobData
+ *
+ * DESCRIPTION: function to release internal resources in jpeg job struct
+ *
+ * PARAMETERS :
+ *   @job     : ptr to jpeg job struct
+ *
+ * RETURN     : None
+ *
+ * NOTE       : original source frame need to be queued back to kernel for
+ *              future use. Output buf of jpeg job need to be released since
+ *              it's allocated for each job. Exif object need to be deleted.
+ *==========================================================================*/
 void QCameraPostProcessor::releaseJpegJobData(qcamera_jpeg_data_t *job)
 {
     if (NULL != job) {
@@ -397,14 +652,24 @@ void QCameraPostProcessor::releaseJpegJobData(qcamera_jpeg_data_t *job)
             free(job->out_data);
             job->out_data = NULL;
         }
-        if (NULL != job->exif_data) {
-            releaseExifData(job->exif_data);
-            free(job->exif_data);
-            job->exif_data = NULL;
+
+        if(NULL != job->exif_info) {
+            delete job->exif_info;
+            job->exif_info = NULL;
         }
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : getColorfmtFromImgFmt
+ *
+ * DESCRIPTION: function to return jpeg color format based on its image format
+ *
+ * PARAMETERS :
+ *   @img_fmt : image format
+ *
+ * RETURN     : jpeg color format that can be understandable by omx lib
+ *==========================================================================*/
 mm_jpeg_color_format QCameraPostProcessor::getColorfmtFromImgFmt(cam_format_t img_fmt)
 {
     switch (img_fmt) {
@@ -425,6 +690,16 @@ mm_jpeg_color_format QCameraPostProcessor::getColorfmtFromImgFmt(cam_format_t im
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : getJpegImgTypeFromImgFmt
+ *
+ * DESCRIPTION: function to return jpeg encode image type based on its image format
+ *
+ * PARAMETERS :
+ *   @img_fmt : image format
+ *
+ * RETURN     : return jpeg source image format (YUV or Bitstream)
+ *==========================================================================*/
 jpeg_enc_src_img_fmt_t QCameraPostProcessor::getJpegImgTypeFromImgFmt(cam_format_t img_fmt)
 {
     switch (img_fmt) {
@@ -440,6 +715,22 @@ jpeg_enc_src_img_fmt_t QCameraPostProcessor::getJpegImgTypeFromImgFmt(cam_format
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : fillImgInfo
+ *
+ * DESCRIPTION: function to fill in jpeg encoding image information
+ *
+ * PARAMETERS :
+ *   @stream      : stream object that the frame belongs to
+ *   @frame       : frame object
+ *   @buf_info    : ptr to buffer information struct that needs to be filled out
+ *   @img_type    : jpeg encode source image type (YUV/Bitstream)
+ *   @jpeg_quality: jpeg encoding quality requirement
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraPostProcessor::fillImgInfo(QCameraStream *stream,
                                           mm_camera_buf_def_t *frame,
                                           src_image_buffer_info *buf_info,
@@ -454,14 +745,14 @@ int32_t QCameraPostProcessor::fillImgInfo(QCameraStream *stream,
     case JPEG_SRC_IMAGE_TYPE_MAIN:
         // dump frame into file if enabled
         m_parent->dumpFrameToFile(frame->buffer, frame->frame_len, frame->frame_idx, QCAMERA_DUMP_FRM_SNAPSHOT);
-        // get output size from parameters sent by UI
-        m_parent->getPictureSize(&buf_info->out_dim.width, &buf_info->out_dim.height);
+        // get output dimension
+        stream->getFrameDimension(buf_info->out_dim);
         break;
     case JPEG_SRC_IMAGE_TYPE_THUMB:
         // dump frame into file if enabled
         m_parent->dumpFrameToFile(frame->buffer, frame->frame_len, frame->frame_idx, QCAMERA_DUMP_FRM_THUMBNAIL);
         // get output size from parameters sent by UI
-        m_parent->getThumbnailSize(&buf_info->out_dim.width, &buf_info->out_dim.height);
+        m_parent->getThumbnailSize(buf_info->out_dim);
         break;
     default:
         break;
@@ -500,14 +791,20 @@ int32_t QCameraPostProcessor::fillImgInfo(QCameraStream *stream,
     return rc;
 }
 
-int32_t QCameraPostProcessor::releaseExifData(qcamera_exif_data_t *exif_data)
-{
-    // TODO
-    free(exif_data->exif_entries);
-    exif_data->exif_entries = NULL;
-    return 0;
-}
-
+/*===========================================================================
+ * FUNCTION   : encodeData
+ *
+ * DESCRIPTION: function to prepare encoding job information and send to
+ *              mm-jpeg-interface to do the encoding job
+ *
+ * PARAMETERS :
+ *   @recvd_frame   : frame to be encoded
+ *   @jpeg_job_data : ptr to a struct saving job related information
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
                                          qcamera_jpeg_data_t *jpeg_job_data)
 {
@@ -515,7 +812,6 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
     int32_t ret = NO_ERROR;
     mm_jpeg_job jpg_job;
     uint8_t *out_data = NULL;
-    qcamera_exif_data_t *exif_data = NULL;
     uint32_t jobId = 0;
     QCameraStream *main_stream = NULL;
     mm_camera_buf_def_t *main_frame = NULL;
@@ -585,23 +881,17 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
     }
 
     // get exif data
-    exif_data = (qcamera_exif_data_t *)malloc(sizeof(qcamera_exif_data_t));
-    if (exif_data == NULL) {
-        ALOGE("%s: No mem for exif data struct", __func__);
-        return NO_MEMORY;
-    }
-    ret = m_parent->getExifData(&exif_data->exif_entries, &exif_data->num_exif_entries);
-    if (ret != 0) {
+    jpeg_job_data->exif_info = m_parent->getExifData();
+    if (jpeg_job_data->exif_info == NULL) {
         ALOGE("%s: cannot get exif data", __func__);
-        free(exif_data);
-        return ret;
+        return NO_MEMORY;
     }
 
     jpg_job.job_type = JPEG_JOB_TYPE_ENCODE;
     jpg_job.encode_job.jpeg_cb = mJpegCB;
     jpg_job.encode_job.userdata = mJpegUserData;
-    jpg_job.encode_job.encode_parm.exif_data = exif_data->exif_entries;
-    jpg_job.encode_job.encode_parm.exif_numEntries = exif_data->num_exif_entries;
+    jpg_job.encode_job.encode_parm.exif_data = jpeg_job_data->exif_info->getEntries();
+    jpg_job.encode_job.encode_parm.exif_numEntries = jpeg_job_data->exif_info->getNumOfEntries();
     jpg_job.encode_job.encode_parm.rotation = m_parent->getJpegRotation();
     ALOGV("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.encode_parm.rotation);
     jpg_job.encode_job.encode_parm.buf_info.src_imgs.src_img_num = recvd_frame->num_bufs;
@@ -656,22 +946,32 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
     jpeg_job_data->jobId = jobId;
     jpeg_job_data->out_data = out_data;
     jpeg_job_data->src_frame = recvd_frame;
-    jpeg_job_data->exif_data = exif_data;
 
     ALOGV("%s : X", __func__);
     return NO_ERROR;
 
 on_error:
-    if (exif_data != NULL) {
-        releaseExifData(exif_data);
-        free(exif_data);
-    }
     if (out_data != NULL) {
         free(out_data);
+    }
+    if (jpeg_job_data->exif_info != NULL) {
+        delete jpeg_job_data->exif_info;
+        jpeg_job_data->exif_info = NULL;
     }
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : dataNotifyRoutine
+ *
+ * DESCRIPTION: data notify routine that will send data to upper layer through
+ *              registered data callback
+ *
+ * PARAMETERS :
+ *   @data    : user data ptr (QCameraPostProcessor)
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void *QCameraPostProcessor::dataNotifyRoutine(void *data)
 {
     int running = 1;
@@ -700,7 +1000,7 @@ void *QCameraPostProcessor::dataNotifyRoutine(void *data)
         case CAMERA_CMD_TYPE_START_DATA_PROC:
             isActive = TRUE;
             // init flag to FALSE
-            numOfSnapshotExpected = pme->m_parent->getNumOfSnapshots();
+            numOfSnapshotExpected = pme->m_parent->numOfSnapshotsExpected();
             numOfSnapshotRcvd = 0;
             break;
         case CAMERA_CMD_TYPE_STOP_DATA_PROC:
@@ -767,6 +1067,18 @@ void *QCameraPostProcessor::dataNotifyRoutine(void *data)
     return NULL;
 }
 
+/*===========================================================================
+ * FUNCTION   : dataProcessRoutine
+ *
+ * DESCRIPTION: data process routine that handles input data either from input
+ *              Jpeg Queue to do jpeg encoding, or from input PP Queue to do
+ *              reprocess.
+ *
+ * PARAMETERS :
+ *   @data    : user data ptr (QCameraPostProcessor)
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void *QCameraPostProcessor::dataProcessRoutine(void *data)
 {
     int running = 1;
@@ -938,5 +1250,266 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
     return NULL;
 }
 
+/*===========================================================================
+ * FUNCTION   : QCameraExif
+ *
+ * DESCRIPTION: constructor of QCameraExif
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
+QCameraExif::QCameraExif()
+    : m_nNumEntries(0)
+{
+    memset(m_Entries, 0, sizeof(m_Entries));
+}
+
+/*===========================================================================
+ * FUNCTION   : ~QCameraExif
+ *
+ * DESCRIPTION: deconstructor of QCameraExif. Will release internal memory ptr.
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
+QCameraExif::~QCameraExif()
+{
+    for (uint32_t i = 0; i < m_nNumEntries; i++) {
+        switch (m_Entries[i].tag_entry.type) {
+        case EXIF_BYTE:
+            {
+                if (m_Entries[i].tag_entry.count > 1 &&
+                    m_Entries[i].tag_entry.data._bytes != NULL) {
+                    free(m_Entries[i].tag_entry.data._bytes);
+                    m_Entries[i].tag_entry.data._bytes = NULL;
+                }
+            }
+            break;
+        case EXIF_ASCII:
+            {
+                if (m_Entries[i].tag_entry.data._ascii != NULL) {
+                    free(m_Entries[i].tag_entry.data._ascii);
+                    m_Entries[i].tag_entry.data._ascii = NULL;
+                }
+            }
+            break;
+        case EXIF_SHORT:
+            {
+                if (m_Entries[i].tag_entry.count > 1 &&
+                    m_Entries[i].tag_entry.data._shorts != NULL) {
+                    free(m_Entries[i].tag_entry.data._shorts);
+                    m_Entries[i].tag_entry.data._shorts = NULL;
+                }
+            }
+            break;
+        case EXIF_LONG:
+            {
+                if (m_Entries[i].tag_entry.count > 1 &&
+                    m_Entries[i].tag_entry.data._longs != NULL) {
+                    free(m_Entries[i].tag_entry.data._longs);
+                    m_Entries[i].tag_entry.data._longs = NULL;
+                }
+            }
+            break;
+        case EXIF_RATIONAL:
+            {
+                if (m_Entries[i].tag_entry.count > 1 &&
+                    m_Entries[i].tag_entry.data._rats != NULL) {
+                    free(m_Entries[i].tag_entry.data._rats);
+                    m_Entries[i].tag_entry.data._rats = NULL;
+                }
+            }
+            break;
+        case EXIF_UNDEFINED:
+            {
+                if (m_Entries[i].tag_entry.data._undefined != NULL) {
+                    free(m_Entries[i].tag_entry.data._undefined);
+                    m_Entries[i].tag_entry.data._undefined = NULL;
+                }
+            }
+            break;
+        case EXIF_SLONG:
+            {
+                if (m_Entries[i].tag_entry.count > 1 &&
+                    m_Entries[i].tag_entry.data._slongs != NULL) {
+                    free(m_Entries[i].tag_entry.data._slongs);
+                    m_Entries[i].tag_entry.data._slongs = NULL;
+                }
+            }
+            break;
+        case EXIF_SRATIONAL:
+            {
+                if (m_Entries[i].tag_entry.count > 1 &&
+                    m_Entries[i].tag_entry.data._srats != NULL) {
+                    free(m_Entries[i].tag_entry.data._srats);
+                    m_Entries[i].tag_entry.data._srats = NULL;
+                }
+            }
+            break;
+        }
+    }
+}
+
+/*===========================================================================
+ * FUNCTION   : addEntry
+ *
+ * DESCRIPTION: function to add an entry to exif data
+ *
+ * PARAMETERS :
+ *   @tagid   : exif tag ID
+ *   @type    : data type
+ *   @count   : number of data in uint of its type
+ *   @data    : input data ptr
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraExif::addEntry(exif_tag_id_t tagid,
+                              exif_tag_type_t type,
+                              uint32_t count,
+                              void *data)
+{
+    int32_t rc = NO_ERROR;
+    if(m_nNumEntries >= MAX_EXIF_TABLE_ENTRIES) {
+        ALOGE("%s: Number of entries exceeded limit", __func__);
+        return NO_MEMORY;
+    }
+
+    m_Entries[m_nNumEntries].tag_id = tagid;
+    m_Entries[m_nNumEntries].tag_entry.type = type;
+    m_Entries[m_nNumEntries].tag_entry.count = count;
+    m_Entries[m_nNumEntries].tag_entry.copy = 1;
+    switch (type) {
+    case EXIF_BYTE:
+        {
+            if (count > 1) {
+                uint8_t *values = (uint8_t *)malloc(count);
+                if (values == NULL) {
+                    ALOGE("%s: No memory for byte array", __func__);
+                    rc = NO_MEMORY;
+                } else {
+                    memcpy(values, data, count);
+                    m_Entries[m_nNumEntries].tag_entry.data._bytes = values;
+                }
+            } else {
+                m_Entries[m_nNumEntries].tag_entry.data._byte = *(uint8_t *)data;
+            }
+        }
+        break;
+    case EXIF_ASCII:
+        {
+            char *str = NULL;
+            str = (char *)malloc(count + 1);
+            if (str == NULL) {
+                ALOGE("%s: No memory for ascii string", __func__);
+                rc = NO_MEMORY;
+            } else {
+                memset(str, 0, count + 1);
+                memcpy(str, data, count);
+                m_Entries[m_nNumEntries].tag_entry.data._ascii = str;
+            }
+        }
+        break;
+    case EXIF_SHORT:
+        {
+            if (count > 1) {
+                uint16_t *values = (uint16_t *)malloc(count * sizeof(uint16_t));
+                if (values == NULL) {
+                    ALOGE("%s: No memory for short array", __func__);
+                    rc = NO_MEMORY;
+                } else {
+                    memcpy(values, data, count * sizeof(uint16_t));
+                    m_Entries[m_nNumEntries].tag_entry.data._shorts = values;
+                }
+            } else {
+                m_Entries[m_nNumEntries].tag_entry.data._short = *(uint16_t *)data;
+            }
+        }
+        break;
+    case EXIF_LONG:
+        {
+            if (count > 1) {
+                uint32_t *values = (uint32_t *)malloc(count * sizeof(uint32_t));
+                if (values == NULL) {
+                    ALOGE("%s: No memory for long array", __func__);
+                    rc = NO_MEMORY;
+                } else {
+                    memcpy(values, data, count * sizeof(uint32_t));
+                    m_Entries[m_nNumEntries].tag_entry.data._longs = values;
+                }
+            } else {
+                m_Entries[m_nNumEntries].tag_entry.data._long = *(uint32_t *)data;
+            }
+        }
+        break;
+    case EXIF_RATIONAL:
+        {
+            if (count > 1) {
+                rat_t *values = (rat_t *)malloc(count * sizeof(rat_t));
+                if (values == NULL) {
+                    ALOGE("%s: No memory for rational array", __func__);
+                    rc = NO_MEMORY;
+                } else {
+                    memcpy(values, data, count * sizeof(rat_t));
+                    m_Entries[m_nNumEntries].tag_entry.data._rats = values;
+                }
+            } else {
+                m_Entries[m_nNumEntries].tag_entry.data._rat = *(rat_t *)data;
+            }
+        }
+        break;
+    case EXIF_UNDEFINED:
+        {
+            uint8_t *values = (uint8_t *)malloc(count);
+            if (values == NULL) {
+                ALOGE("%s: No memory for undefined array", __func__);
+                rc = NO_MEMORY;
+            } else {
+                memcpy(values, data, count);
+                m_Entries[m_nNumEntries].tag_entry.data._undefined = values;
+            }
+        }
+        break;
+    case EXIF_SLONG:
+        {
+            if (count > 1) {
+                int32_t *values = (int32_t *)malloc(count * sizeof(int32_t));
+                if (values == NULL) {
+                    ALOGE("%s: No memory for signed long array", __func__);
+                    rc = NO_MEMORY;
+                } else {
+                    memcpy(values, data, count * sizeof(int32_t));
+                    m_Entries[m_nNumEntries].tag_entry.data._slongs = values;
+                }
+            } else {
+                m_Entries[m_nNumEntries].tag_entry.data._slong = *(int32_t *)data;
+            }
+        }
+        break;
+    case EXIF_SRATIONAL:
+        {
+            if (count > 1) {
+                srat_t *values = (srat_t *)malloc(count * sizeof(srat_t));
+                if (values == NULL) {
+                    ALOGE("%s: No memory for signed rational array", __func__);
+                    rc = NO_MEMORY;
+                } else {
+                    memcpy(values, data, count * sizeof(srat_t));
+                    m_Entries[m_nNumEntries].tag_entry.data._srats = values;
+                }
+            } else {
+                m_Entries[m_nNumEntries].tag_entry.data._srat = *(srat_t *)data;
+            }
+        }
+        break;
+    }
+
+    // Increase number of entries
+    m_nNumEntries++;
+    return rc;
+}
 
 }; // namespace android

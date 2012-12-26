@@ -31,7 +31,7 @@
 #define __QCAMERA2HARDWAREINTERFACE_H__
 
 #include <hardware/camera.h>
-#include <camera/QCameraParameters.h>
+#include <QCameraParameters.h>
 
 #include "QCameraQueue.h"
 #include "QCameraCmdThread.h"
@@ -155,7 +155,6 @@ private:
     int cancelPicture();
     int takeLiveSnapshot();
     int cancelLiveSnapshot();
-    int setParameters(const char *parms);
     char* getParameters();
     int putParameters(char *);
     int sendCommand(int32_t cmd, int32_t arg1, int32_t arg2);
@@ -171,28 +170,24 @@ private:
     void waitAPIResult(qcamera_sm_evt_enum_t api_evt);
     void unlockAPI();
     void signalAPIResult(qcamera_api_result_t *result);
-    int getZSLBurstInterval();
-    int getZSLQueueDepth();
-    int getZSLBackLookCount();
-    bool isZSLMode();
-    bool isNoDisplayMode();
-    bool isWNREnabled();
+
+    // update entris to set parameters and check if restart is needed
+    int updateParameters(const char *parms, bool &needRestart);
+    // send request to server to set parameters
+    int commitParameterChanges();
+
     bool needDebugFps();
     bool needOfflineReprocess();
-    int setRecordingHintValue(bool value);
-    uint8_t getNumOfSnapshots();
-    int setParameters(const QCameraParameters& params);
     void debugShowVideoFPS();
     void debugShowPreviewFPS();
     void dumpFrameToFile(const void *data, uint32_t size,
                          int index, int dump_type);
     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
     void playShutter();
-    void getPictureSize(int *picture_width, int *picture_height);
-    void getThumbnailSize(int *width, int *height);
+    void getThumbnailSize(cam_dimension_t &dim);
     int getJpegQuality();
     int getJpegRotation();
-    int getExifData(QEXIF_INFO_DATA **exif_data, int *num_exif_entries);
+    QCameraExif *getExifData();
 
     int32_t processAutoFocusEvent(uint32_t status);
     int32_t processZoomEvent(uint32_t status);
@@ -220,6 +215,14 @@ private:
     void unpreparePreview();
     QCameraChannel *getChannelByHandle(uint32_t channelHandle);
     mm_camera_buf_def_t *getSnapshotFrame(mm_camera_super_buf_t *recvd_frame);
+    int32_t processFaceDetectionReuslt(cam_face_detection_data_t *fd_data);
+    int32_t processHistogramStats(cam_histogram_data_t *hist_data);
+    int32_t setHistogram(bool histogram_en);
+    int32_t setFaceDetection(bool enabled);
+    int32_t prepareHardwareForSnapshot();
+    bool needProcessPreviewFrame() {return m_stateMachine.isPreviewRunning();};
+    bool isNoDisplayMode() {return mParameters.isNoDisplayMode();};
+    uint8_t numOfSnapshotsExpected() {return mParameters.getNumOfSnapshots();};
 
     static void evtHandle(uint32_t camera_handle,
                           mm_camera_event_t *evt,
@@ -234,7 +237,7 @@ private:
 
     static void *evtNotifyRoutine(void *data);
 
-    // helper functions for different data notify cb
+    // functions for different data notify cb
     static void zsl_channel_cb(mm_camera_super_buf_t *recvd_frame, void *userdata);
 
     static void nodisplay_preview_stream_cb_routine(mm_camera_super_buf_t *frame,
@@ -262,17 +265,13 @@ private:
                                             QCameraStream *stream,
                                             void *userdata);
 
-    //TODO: This will be removed once Parameters class is ready.
-    cam_format_t mPreviewFormat;
-    int mPreviewWidth;
-    int mPreviewHeight;
 private:
     camera_device_t   mCameraDevice;
     uint8_t           mCameraId;
     mm_camera_vtbl_t *mCameraHandle;
 
     preview_stream_ops_t *mPreviewWindow;
-    QCameraParameters     mParameters;
+    QCameraParameters mParameters;
     int32_t               mMsgEnabled;
     int                   mStoreMetaDataInFrame;
 
@@ -293,13 +292,11 @@ private:
     QCameraQueue m_evtNotifyQ;          // evt notify queue
     QCameraCmdThread m_evtNotifyTh;     // thread handling evt notify to service layer
 
-    bool mRecordingHint;
-    bool mSmoothZoomRunning;
-    int  mDenoiseValue;
-    int  mDumpFrameEnabled; // mask for type of dumping
-    bool mDebugFps;
-    bool mShutterSoundPlayed;
-    bool mNoDisplayMode; // if true, running no display preview
+    bool m_bShutterSoundPlayed;     // if shutter sound had been played
+
+    camera_frame_metadata_t mRoiData; // meta data for face detection
+    camera_face_t mFaces[MAX_ROI];    // meta data for face detection detail info
+    camera_memory_t *m_pHistBuf;      // memory for histogram info to pass to upper layer
 };
 
 }; // namespace android

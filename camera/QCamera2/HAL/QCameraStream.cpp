@@ -65,9 +65,12 @@ int32_t QCameraStream::put_bufs(
 }
 
 QCameraStream::QCameraStream(QCameraAllocator &allocator,
-            uint32_t camHandle, uint32_t chId, mm_camera_ops_t *camOps) :
+                             uint32_t camHandle,
+                             uint32_t chId,
+                             mm_camera_ops_t *camOps,
+                             cam_padding_info_t *paddingInfo) :
         mCamHandle(camHandle),
-        mChannel(chId),
+        mChannelHandle(chId),
         mHandle(0),
         mCamOps(camOps),
         mStreamInfo(NULL),
@@ -82,12 +85,13 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
     mMemVtbl.put_bufs = put_bufs;
     memset(&mBufDef[0], 0, sizeof(mBufDef));
     memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
+    memcpy(&mPaddingInfo, paddingInfo, sizeof(cam_padding_info_t));
 }
 
 QCameraStream::~QCameraStream()
 {
     int rc = mCamOps->unmap_stream_buf(mCamHandle,
-                mChannel, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO, 0);
+                mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO, 0, -1);
     if (rc < 0) {
         ALOGE("Failed to map stream info buffer");
     }
@@ -96,7 +100,7 @@ QCameraStream::~QCameraStream()
 
     // delete stream
     if (mHandle > 0) {
-        mCamOps->delete_stream(mCamHandle, mChannel, mHandle);
+        mCamOps->delete_stream(mCamHandle, mChannelHandle, mHandle);
         mHandle = 0;
     }
 }
@@ -107,7 +111,7 @@ int32_t QCameraStream::init(cam_stream_type_t stream_type,
     int32_t rc = OK;
     mm_camera_stream_config_t stream_config;
 
-    mHandle = mCamOps->add_stream(mCamHandle, mChannel);
+    mHandle = mCamOps->add_stream(mCamHandle, mChannelHandle);
     if (!mHandle) {
         ALOGE("add_stream failed");
         rc = UNKNOWN_ERROR;
@@ -123,20 +127,22 @@ int32_t QCameraStream::init(cam_stream_type_t stream_type,
     mStreamInfo = reinterpret_cast<cam_stream_info_t *>(mStreamInfoBuf->getPtr(0));
 
     rc = mCamOps->map_stream_buf(mCamHandle,
-                mChannel, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO,
-                0, mStreamInfoBuf->getFd(0), mStreamInfoBuf->getSize(0));
+                mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO,
+                0, mStreamInfoBuf->getFd(0), mStreamInfoBuf->getSize(0), -1);
     if (rc < 0) {
         ALOGE("Failed to map stream info buffer");
         goto err2;
     }
 
     // Configure the stream
+    mStreamInfo->bundle_id = mChannelHandle;
     stream_config.stream_info = mStreamInfo;
     stream_config.mem_vtbl = mMemVtbl;
     stream_config.stream_cb = dataNotifyCB;
+    stream_config.padding_info = mPaddingInfo;
     stream_config.userdata = this;
     rc = mCamOps->config_stream(mCamHandle,
-                mChannel, mHandle, &stream_config);
+                mChannelHandle, mHandle, &stream_config);
     if (rc < 0) {
         ALOGE("Failed to config stream, rc = %d", rc);
         goto err3;
@@ -148,13 +154,13 @@ int32_t QCameraStream::init(cam_stream_type_t stream_type,
 
 err3:
     mCamOps->unmap_stream_buf(mCamHandle,
-                mChannel, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO, 0);
+                mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO, 0, -1);
 
 err2:
     mStreamInfoBuf->deallocate();
     delete mStreamInfoBuf;
 err1:
-    mCamOps->delete_stream(mCamHandle, mChannel, mHandle);
+    mCamOps->delete_stream(mCamHandle, mChannelHandle, mHandle);
 done:
     return rc;
 }
@@ -177,17 +183,23 @@ int32_t QCameraStream::processZoomDone(preview_stream_ops_t *previewWindow)
 {
     int32_t rc = 0;
 
-    // TODO: get stream param for crop info
+    // get stream param for crop info
+    mStreamInfo->parm_buf.is_crop_valid = TRUE;
+    rc = mCamOps->get_stream_parms(mCamHandle,
+                                   mChannelHandle,
+                                   mHandle,
+                                   &mStreamInfo->parm_buf);
+
 
     // update preview window crop if it's preview/postview stream
     if ( (previewWindow != NULL) &&
          (mStreamInfo->stream_type == CAM_STREAM_TYPE_PREVIEW ||
           mStreamInfo->stream_type == CAM_STREAM_TYPE_POSTVIEW) ) {
         rc = previewWindow->set_crop(previewWindow,
-                                     mStreamInfo->crop.left,
-                                     mStreamInfo->crop.top,
-                                     mStreamInfo->crop.width,
-                                     mStreamInfo->crop.height);
+                                     mStreamInfo->parm_buf.crop.left,
+                                     mStreamInfo->parm_buf.crop.top,
+                                     mStreamInfo->parm_buf.crop.width,
+                                     mStreamInfo->parm_buf.crop.height);
     }
 
     return rc;
@@ -218,7 +230,7 @@ void QCameraStream::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
         stream->bufDone(recvd_frame->bufs[0]->buf_idx);
         return;
     }
-    memcpy(frame, recvd_frame, sizeof(mm_camera_super_buf_t));
+    *frame = *recvd_frame;
     stream->processDataNotify(frame);
     return;
 }
@@ -280,7 +292,7 @@ int32_t QCameraStream::bufDone(int index)
     if (index >= mNumBufs)
         return BAD_INDEX;
 
-    rc = mCamOps->qbuf(mCamHandle, mChannel, &mBufDef[index]);
+    rc = mCamOps->qbuf(mCamHandle, mChannelHandle, &mBufDef[index]);
     if (rc < 0)
         return rc;
 
@@ -315,7 +327,7 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
         return INVALID_OPERATION;
     }
 
-    memcpy(&mFrameLenOffset, offset, sizeof(cam_frame_len_offset_t));
+    mFrameLenOffset = *offset;
 
     //Allocate and map stream info buffer
     mStreamBufs = mAllocator.allocateStreamBuf(mStreamInfo->stream_type,
@@ -327,10 +339,13 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
 
     mNumBufs = mStreamBufs->getCnt();
     for (int i = 0; i < mNumBufs; i++) {
-        rc = ops_tbl->map_ops(i, mStreamBufs->getFd(i),
+        rc = ops_tbl->map_ops(i, -1, mStreamBufs->getFd(i),
                 mStreamBufs->getSize(i), ops_tbl->userdata);
         if (rc < 0) {
             ALOGE("getBufs: map_stream_buf failed: %d", rc);
+            for (int j = 0; j < i; j++) {
+                ops_tbl->unmap_ops(j, -1, ops_tbl->userdata);
+            }
             mStreamBufs->deallocate();
             delete mStreamBufs;
             return INVALID_OPERATION;
@@ -341,6 +356,9 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
     regFlags = (uint8_t *)malloc(sizeof(uint8_t) * mNumBufs);
     if (!regFlags) {
         ALOGE("Out of memory");
+        for (int i = 0; i < mNumBufs; i++) {
+            ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
+        }
         mStreamBufs->deallocate();
         delete mStreamBufs;
         return NO_MEMORY;
@@ -352,6 +370,9 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
     rc = mStreamBufs->getRegFlags(regFlags);
     if (rc < 0) {
         ALOGE("getBufs: getRegFlags failed %d", rc);
+        for (int i = 0; i < mNumBufs; i++) {
+            ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
+        }
         mStreamBufs->deallocate();
         delete mStreamBufs;
         return INVALID_OPERATION;
@@ -367,7 +388,7 @@ int32_t QCameraStream::putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl)
 {
     int rc = NO_ERROR;
     for (int i = 0; i < mNumBufs; i++) {
-        rc = ops_tbl->unmap_ops(i, ops_tbl->userdata);
+        rc = ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
         if (rc < 0) {
             ALOGE("getBufs: map_stream_buf failed: %d", rc);
         }
@@ -391,14 +412,14 @@ bool QCameraStream::isTypeOf(cam_stream_type_t type)
 
 int32_t QCameraStream::getFrameOffset(cam_frame_len_offset_t &offset)
 {
-    memcpy(&offset, &mFrameLenOffset, sizeof(cam_frame_len_offset_t));
+    offset = mFrameLenOffset;
     return 0;
 }
 
 int32_t QCameraStream::getCropInfo(cam_rect_t &crop)
 {
     if (mStreamInfo != NULL) {
-        memcpy(&crop, &mStreamInfo->crop, sizeof(cam_rect_t));
+        crop = mStreamInfo->parm_buf.crop;
         return 0;
     }
     return -1;
@@ -407,7 +428,7 @@ int32_t QCameraStream::getCropInfo(cam_rect_t &crop)
 int32_t QCameraStream::getFrameDimension(cam_dimension_t &dim)
 {
     if (mStreamInfo != NULL) {
-        memcpy(&dim, &mStreamInfo->dim, sizeof(cam_dimension_t));
+        dim = mStreamInfo->dim;
         return 0;
     }
     return -1;

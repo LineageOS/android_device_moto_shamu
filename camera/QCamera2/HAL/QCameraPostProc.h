@@ -38,43 +38,59 @@ extern "C" {
 
 namespace android {
 
-typedef struct {
-    int num_exif_entries;
-    QEXIF_INFO_DATA *exif_entries;
-} qcamera_exif_data_t;
+class QCameraExif;
 
 typedef struct {
-    uint32_t jobId;
-    uint32_t client_hdl;
-    uint8_t* out_data;
-    qcamera_exif_data_t *exif_data;
-    mm_camera_super_buf_t *src_frame;
+    uint32_t jobId;                  // job ID
+    uint32_t client_hdl;             // handle of jpeg client (obtained when open jpeg)
+    uint8_t *out_data;               // ptr to output buf (need to be released after job is done)
+    QCameraExif *exif_info;          // ptr to exif object (need to be released after job is done)
+    mm_camera_super_buf_t *src_frame;// source frame (need to be returned back to kernel after done)
 } qcamera_jpeg_data_t;
 
 typedef struct {
-    uint32_t jobId;
-    mm_camera_super_buf_t *src_frame;
+    uint32_t jobId;                  // job ID
+    mm_camera_super_buf_t *src_frame;// source frame (need to be returned back to kernel after done)
 } qcamera_pp_data_t;
 
 typedef struct {
-    mm_camera_super_buf_t *frame;
+    mm_camera_super_buf_t *frame;    // source frame that needs post process
 } qcamera_pp_request_t;
 
 typedef struct {
-    uint32_t jobId;
-    jpeg_job_status_t status;
-    uint8_t thumbnailDroppedFlag;
-    uint8_t* out_data;
-    uint32_t data_size;
+    uint32_t jobId;                  // job ID (obtained when start_jpeg_job)
+    jpeg_job_status_t status;        // jpeg encoding status
+    uint8_t thumbnailDroppedFlag;    // flag indicating if thumbnail is dropped
+    uint8_t* out_data;               // ptr to jpeg output buf
+    uint32_t data_size;              // lenght of valid jpeg buf after encoding
 } qcamera_jpeg_evt_payload_t;
 
 typedef struct {
-    int32_t                  msg_type;
-    camera_memory_t *        data;
-    unsigned int             index;
-    camera_frame_metadata_t *metadata;
+    int32_t                  msg_type; // msg type of data notify
+    camera_memory_t *        data;     // ptr to data memory struct
+    unsigned int             index;    // index of the buf in the whole buffer
+    camera_frame_metadata_t *metadata; // ptr to meta data
     QCameraHeapMemory *      jpeg_mem; // jpeg heap mem for release after CB
 } qcamera_data_argm_t;
+
+#define MAX_EXIF_TABLE_ENTRIES 14
+class QCameraExif
+{
+public:
+    QCameraExif();
+    virtual ~QCameraExif();
+
+    int32_t addEntry(exif_tag_id_t tagid,
+                     exif_tag_type_t type,
+                     uint32_t count,
+                     void *data);
+    uint32_t getNumOfEntries() {return m_nNumEntries;};
+    QEXIF_INFO_DATA *getEntries() {return m_Entries;};
+
+private:
+    QEXIF_INFO_DATA m_Entries[MAX_EXIF_TABLE_ENTRIES];  // exif tags for JPEG encoder
+    uint32_t  m_nNumEntries;                            // number of valid entries
+};
 
 class QCameraPostProcessor
 {
@@ -110,7 +126,6 @@ private:
     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
     void releaseNotifyData(qcamera_data_argm_t *app_cb);
     void releaseJpegJobData(qcamera_jpeg_data_t *job);
-    int32_t releaseExifData(qcamera_exif_data_t *exif_data);
 
     static void releaseOutputData(void *data, void *user_data);
     static void releasePPInputData(void *data, void *user_data);

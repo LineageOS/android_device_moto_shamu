@@ -33,6 +33,15 @@
 
 namespace android {
 
+/*===========================================================================
+ * FUNCTION   : QCameraCmdThread
+ *
+ * DESCRIPTION: default constructor of QCameraCmdThread
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraCmdThread::QCameraCmdThread() :
     cmd_queue()
 {
@@ -41,12 +50,34 @@ QCameraCmdThread::QCameraCmdThread() :
     sem_init(&cmd_sem, 0, 0);
 }
 
+/*===========================================================================
+ * FUNCTION   : ~QCameraCmdThread
+ *
+ * DESCRIPTION: deconstructor of QCameraCmdThread
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraCmdThread::~QCameraCmdThread()
 {
     sem_destroy(&sync_sem);
     sem_destroy(&cmd_sem);
 }
 
+/*===========================================================================
+ * FUNCTION   : launch
+ *
+ * DESCRIPTION: launch Cmd Thread
+ *
+ * PARAMETERS :
+ *   @start_routine : thread routine function ptr
+ *   @user_data     : user data ptr
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraCmdThread::launch(void *(*start_routine)(void *),
                                  void* user_data)
 {
@@ -58,6 +89,22 @@ int32_t QCameraCmdThread::launch(void *(*start_routine)(void *),
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : sendCmd
+ *
+ * DESCRIPTION: send a command to the Cmd Thread
+ *
+ * PARAMETERS :
+ *   @cmd     : command to be executed.
+ *   @sync_cmd: flag to indicate if this is a synchorinzed cmd. If true, this call
+ *              will wait until signal is set after the command is completed.
+ *   @priority: flag to indicate if this is a cmd with priority. If true, the cmd
+ *              will be enqueued to the head with priority.
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraCmdThread::sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd, uint8_t priority)
 {
     camera_cmd_t *node = (camera_cmd_t *)malloc(sizeof(camera_cmd_t));
@@ -83,6 +130,15 @@ int32_t QCameraCmdThread::sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd, uint8
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : getCmd
+ *
+ * DESCRIPTION: dequeue a cmommand from cmd queue
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : cmd dequeued
+ *==========================================================================*/
 camera_cmd_type_t QCameraCmdThread::getCmd()
 {
     camera_cmd_type_t cmd = CAMERA_CMD_TYPE_NONE;
@@ -97,6 +153,17 @@ camera_cmd_type_t QCameraCmdThread::getCmd()
     return cmd;
 }
 
+/*===========================================================================
+ * FUNCTION   : exit
+ *
+ * DESCRIPTION: exit the CMD thread
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraCmdThread::exit()
 {
     int32_t rc = NO_ERROR;
@@ -106,7 +173,7 @@ int32_t QCameraCmdThread::exit()
     }
 
     rc = sendCmd(CAMERA_CMD_TYPE_EXIT, 0, 1);
-    if (0 != rc) {
+    if (NO_ERROR != rc) {
         ALOGE("%s: Error during exit, rc = %d", __func__, rc);
         return rc;
     }

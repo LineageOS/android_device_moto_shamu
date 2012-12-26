@@ -37,10 +37,26 @@
 
 namespace android {
 
+/*===========================================================================
+ * FUNCTION   : zsl_channel_cb
+ *
+ * DESCRIPTION: helper function to handle ZSL superbuf callback directly from
+ *              mm-camera-interface
+ *
+ * PARAMETERS :
+ *   @recvd_frame : received super buffer
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : recvd_frame will be released after this call by caller, so if
+ *             async operation needed for recvd_frame, it's our responsibility
+ *             to save a copy for this variable to be used later.
+ *==========================================================================*/
 void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_frame,
                                                void *userdata)
 {
-    ALOGE("%s: E",__func__);
+    ALOGV("%s: E",__func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -75,6 +91,7 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
         return;
     }
 
+    // save a copy for the superbuf with only snapshot frame we are interested in
     mm_camera_super_buf_t* frame =
                (mm_camera_super_buf_t *)malloc(sizeof(mm_camera_super_buf_t));
     if (frame == NULL) {
@@ -88,11 +105,31 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
     frame->camera_handle = recvd_frame->camera_handle;
     frame->ch_id = recvd_frame->ch_id;
 
+    // send to postprocessor
     pme->m_postprocessor.processData(frame);
 
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
 }
 
+/*===========================================================================
+ * FUNCTION   : preview_stream_cb_routine
+ *
+ * DESCRIPTION: helper function to handle preview frame from preview stream in
+ *              normal case with display.
+ *
+ * PARAMETERS :
+ *   @super_frame : received super buffer
+ *   @stream      : stream object
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : caller passes the ownership of super_frame, it's our
+ *             responsibility to free super_frame once it's done. The new
+ *             preview frame will be sent to display, and an older frame
+ *             will be dequeued from display and needs to be returned back
+ *             to kernel for future use.
+ *==========================================================================*/
 void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t *super_frame,
                                                           QCameraStream * stream,
                                                           void *userdata)
@@ -103,24 +140,35 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
 
     if (pme == NULL) {
         ALOGE("%s: Invalid hardware object", __func__);
+        free(super_frame);
         return;
     }
     if (memory == NULL) {
         ALOGE("%s: Invalid memory object", __func__);
+        free(super_frame);
         return;
     }
 
     ALOGV("%s : BEGIN", __func__);
 
+    mm_camera_buf_def_t *frame = super_frame->bufs[0];
+    if (NULL == frame) {
+        ALOGE("%s: preview frame is NLUL", __func__);
+        free(super_frame);
+        return;
+    }
+
+    if (!pme->needProcessPreviewFrame()) {
+        ALOGD("%s: preview is not running, no need to process", __func__);
+        stream->bufDone(frame->buf_idx);
+        free(super_frame);
+        return;
+    }
+
     if (pme->needDebugFps()) {
         pme->debugShowPreviewFPS();
     }
 
-    mm_camera_buf_def_t *frame = super_frame->bufs[0];
-    if (NULL == frame) {
-        ALOGE("%s: preview frame is NLUL", __func__);
-        return;
-    }
     pme->dumpFrameToFile(frame->buffer, frame->frame_len,
                          frame->frame_idx, QCAMERA_DUMP_FRM_PREVIEW);
 
@@ -129,8 +177,9 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
     // Display the buffer.
     int dequeuedIdx = memory->displayBuffer(idx);
     if (dequeuedIdx < 0 || dequeuedIdx >= memory->getCnt()) {
-        ALOGE("preview_stream_cb_routine: Invalid dequeued buffer index %d",
-                                                                dequeuedIdx);
+        ALOGD("%s: Invalid dequeued buffer index %d",
+              __func__, dequeuedIdx);
+        free(super_frame);
         return;
     }
 
@@ -145,23 +194,28 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
         camera_memory_t *previewMem = NULL;
         camera_memory_t *data = NULL;
         int previewBufSize;
+        cam_dimension_t preview_dim;
+        cam_format_t previewFmt;
+        stream->getFrameDimension(preview_dim);
+        stream->getFormat(previewFmt);
+
         /* The preview buffer size in the callback should be (width*height*bytes_per_pixel)
          * As all preview formats we support, use 12 bits per pixel, buffer size = previewWidth * previewHeight * 3/2.
-         * We need to put a check if some other formats are supported in future. (punits) */
-        if ((pme->mPreviewFormat == CAM_FORMAT_YUV_420_NV21) ||
-            (pme->mPreviewFormat == CAM_FORMAT_YUV_420_NV12) ||
-            (pme->mPreviewFormat == CAM_FORMAT_YUV_420_YV12)) {
-            if(pme->mPreviewFormat == CAM_FORMAT_YUV_420_YV12) {
-                previewBufSize = ((pme->mPreviewWidth+15)/16) * 16 * pme->mPreviewHeight +
-                                 ((pme->mPreviewWidth/2+15)/16) * 16* pme->mPreviewHeight;
+         * We need to put a check if some other formats are supported in future. */
+        if ((previewFmt == CAM_FORMAT_YUV_420_NV21) ||
+            (previewFmt == CAM_FORMAT_YUV_420_NV12) ||
+            (previewFmt == CAM_FORMAT_YUV_420_YV12)) {
+            if(previewFmt == CAM_FORMAT_YUV_420_YV12) {
+                previewBufSize = ((preview_dim.width+15)/16) * 16 * preview_dim.height +
+                                 ((preview_dim.width/2+15)/16) * 16* preview_dim.height;
                 } else {
-                    previewBufSize = pme->mPreviewWidth * pme->mPreviewHeight * 3/2;
+                    previewBufSize = preview_dim.width * preview_dim.height * 3/2;
                 }
             if(previewBufSize != memory->getSize(idx)) {
                 previewMem = pme->mGetMemory(memory->getFd(idx),
                            previewBufSize, 1, pme->mCallbackCookie);
                 if (!previewMem || !previewMem->data) {
-                    ALOGE("mGetMemory failed.\n");
+                    ALOGE("%s: mGetMemory failed.\n", __func__);
                 } else {
                     data = previewMem;
                 }
@@ -169,7 +223,7 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
                 data = memory->getMemory(idx, false);
         } else {
             data = memory->getMemory(idx, false);
-            ALOGE("Invalid preview format, buffer size in preview callback may be wrong.");
+            ALOGE("%s: Invalid preview format, buffer size in preview callback may be wrong.", __func__);
         }
         pme->mDataCb(CAMERA_MSG_PREVIEW_FRAME, data, 0, NULL, pme->mCallbackCookie);
         if (previewMem) {
@@ -178,10 +232,27 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
         ALOGD("end of cb");
     }
 
+    free(super_frame);
     ALOGV("%s : END", __func__);
     return;
 }
 
+/*===========================================================================
+ * FUNCTION   : nodisplay_preview_stream_cb_routine
+ *
+ * DESCRIPTION: helper function to handle preview frame from preview stream in
+ *              no-display case
+ *
+ * PARAMETERS :
+ *   @super_frame : received super buffer
+ *   @stream      : stream object
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : caller passes the ownership of super_frame, it's our
+ *             responsibility to free super_frame once it's done.
+ *==========================================================================*/
 void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
                                                           mm_camera_super_buf_t *super_frame,
                                                           QCameraStream *stream,
@@ -198,6 +269,18 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
         return;
     }
     mm_camera_buf_def_t *frame = super_frame->bufs[0];
+    if (NULL == frame) {
+        ALOGE("%s: preview frame is NLUL", __func__);
+        free(super_frame);
+        return;
+    }
+
+    if (!pme->needProcessPreviewFrame()) {
+        ALOGD("%s: preview is not running, no need to process", __func__);
+        stream->bufDone(frame->buf_idx);
+        free(super_frame);
+        return;
+    }
 
     if (pme->needDebugFps()) {
         pme->debugShowPreviewFPS();
@@ -210,7 +293,8 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
         previewMemObj->getMemory(frame->buf_idx, false);
     if (NULL != previewMemObj && NULL != preview_mem) {
         previewMemObj->cleanCache(frame->buf_idx);
-        if (pme->mDataCb != NULL &&
+        if (pme->needProcessPreviewFrame() &&
+            pme->mDataCb != NULL &&
             pme->msgTypeEnabled(CAMERA_MSG_PREVIEW_FRAME) > 0 ) {
             //Sending preview callback if corresponding Msgs are enabled
             pme->mDataCb(CAMERA_MSG_PREVIEW_FRAME, preview_mem,
@@ -223,13 +307,87 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
     free(super_frame);
 }
 
+/*===========================================================================
+ * FUNCTION   : postview_stream_cb_routine
+ *
+ * DESCRIPTION: helper function to handle post frame from postview stream
+ *
+ * PARAMETERS :
+ *   @super_frame : received super buffer
+ *   @stream      : stream object
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : caller passes the ownership of super_frame, it's our
+ *             responsibility to free super_frame once it's done.
+ *==========================================================================*/
 void QCamera2HardwareInterface::postview_stream_cb_routine(mm_camera_super_buf_t *super_frame,
                                                            QCameraStream *stream,
                                                            void *userdata)
 {
-    preview_stream_cb_routine(super_frame, stream, userdata);
+    int err = NO_ERROR;
+    QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
+    QCameraGrallocMemory *memory = (QCameraGrallocMemory *)super_frame->bufs[0]->mem_info;
+
+    if (pme == NULL) {
+        ALOGE("%s: Invalid hardware object", __func__);
+        free(super_frame);
+        return;
+    }
+    if (memory == NULL) {
+        ALOGE("%s: Invalid memory object", __func__);
+        free(super_frame);
+        return;
+    }
+
+    ALOGV("%s : BEGIN", __func__);
+
+    mm_camera_buf_def_t *frame = super_frame->bufs[0];
+    if (NULL == frame) {
+        ALOGE("%s: preview frame is NLUL", __func__);
+        free(super_frame);
+        return;
+    }
+
+    // Display the buffer.
+    int dequeuedIdx = memory->displayBuffer(frame->buf_idx);
+    if (dequeuedIdx < 0 || dequeuedIdx >= memory->getCnt()) {
+        ALOGD("%s: Invalid dequeued buffer index %d",
+              __func__, dequeuedIdx);
+        free(super_frame);
+        return;
+    }
+
+    // Return dequeued buffer back to driver
+    err = stream->bufDone(dequeuedIdx);
+    if ( err < 0) {
+        ALOGE("stream bufDone failed %d", err);
+    }
+
+    free(super_frame);
+    ALOGV("%s : END", __func__);
+    return;
 }
 
+/*===========================================================================
+ * FUNCTION   : video_stream_cb_routine
+ *
+ * DESCRIPTION: helper function to handle video frame from video stream
+ *
+ * PARAMETERS :
+ *   @super_frame : received super buffer
+ *   @stream      : stream object
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : caller passes the ownership of super_frame, it's our
+ *             responsibility to free super_frame once it's done. video
+ *             frame will be sent to video encoder. Once video encoder is
+ *             done with the video frame, it will call another API
+ *             (release_recording_frame) to return the frame back
+ *==========================================================================*/
 void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *super_frame,
                                                         QCameraStream */*stream*/,
                                                         void *userdata)
@@ -279,6 +437,24 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
     ALOGV("%s : END", __func__);
 }
 
+/*===========================================================================
+ * FUNCTION   : snapshot_stream_cb_routine
+ *
+ * DESCRIPTION: helper function to handle snapshot frame from snapshot stream
+ *
+ * PARAMETERS :
+ *   @super_frame : received super buffer
+ *   @stream      : stream object
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : caller passes the ownership of super_frame, it's our
+ *             responsibility to free super_frame once it's done. For
+ *             snapshot, it need to send to postprocessor for jpeg
+ *             encoding, therefore the ownership of super_frame will be
+ *             hand to postprocessor.
+ *==========================================================================*/
 void QCamera2HardwareInterface::snapshot_stream_cb_routine(mm_camera_super_buf_t *super_frame,
                                                            QCameraStream * /*stream*/,
                                                            void *userdata)
@@ -299,8 +475,27 @@ void QCamera2HardwareInterface::snapshot_stream_cb_routine(mm_camera_super_buf_t
     ALOGE("%s: X", __func__);
 }
 
+/*===========================================================================
+ * FUNCTION   : raw_stream_cb_routine
+ *
+ * DESCRIPTION: helper function to handle raw dump frame from raw stream
+ *
+ * PARAMETERS :
+ *   @super_frame : received super buffer
+ *   @stream      : stream object
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : caller passes the ownership of super_frame, it's our
+ *             responsibility to free super_frame once it's done. For raw
+ *             frame, there is no need to send to postprocessor for jpeg
+ *             encoding. this function will play shutter and send the data
+ *             callback to upper layer. Raw frame buffer will be returned
+ *             back to kernel, and frame will be free after use.
+ *==========================================================================*/
 void QCamera2HardwareInterface::raw_stream_cb_routine(mm_camera_super_buf_t * super_frame,
-                                                      QCameraStream * /*stream*/,
+                                                      QCameraStream * stream,
                                                       void * userdata)
 {
     ALOGV("%s : BEGIN", __func__);
@@ -330,7 +525,7 @@ void QCamera2HardwareInterface::raw_stream_cb_routine(mm_camera_super_buf_t * su
             pme->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE) > 0) {
             pme->mDataCb(CAMERA_MSG_RAW_IMAGE,
                          raw_mem,
-                         1,
+                         0,
                          NULL,
                          pme->mCallbackCookie);
         }
@@ -342,7 +537,7 @@ void QCamera2HardwareInterface::raw_stream_cb_routine(mm_camera_super_buf_t * su
 
         // send data callback for COMPRESSED_IMAGE
         rawMemObj->cleanCache(frame->buf_idx);
-        if ((pme->mDataCbTimestamp != NULL) &&
+        if ((pme->mDataCb != NULL) &&
             pme->msgTypeEnabled(CAMERA_MSG_COMPRESSED_IMAGE) > 0) {
             pme->mDataCb(CAMERA_MSG_COMPRESSED_IMAGE,
                          raw_mem,
@@ -352,23 +547,89 @@ void QCamera2HardwareInterface::raw_stream_cb_routine(mm_camera_super_buf_t * su
         }
     }
 
+    stream->bufDone(frame->buf_idx);
     free(super_frame);
 
     ALOGV("%s : END", __func__);
 }
 
-void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t * /*super_frame*/,
-                                                           QCameraStream * /*stream*/,
-                                                           void * /*userdata*/)
+/*===========================================================================
+ * FUNCTION   : metadata_stream_cb_routine
+ *
+ * DESCRIPTION: helper function to handle metadata frame from metadata stream
+ *
+ * PARAMETERS :
+ *   @super_frame : received super buffer
+ *   @stream      : stream object
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : caller passes the ownership of super_frame, it's our
+ *             responsibility to free super_frame once it's done. Metadata
+ *             could have valid entries for face detection result or
+ *             histogram statistics information.
+ *==========================================================================*/
+void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t * super_frame,
+                                                           QCameraStream * stream,
+                                                           void * userdata)
 {
-    // TODO
+    ALOGV("%s : BEGIN", __func__);
+    QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
+    if (pme == NULL ||
+        pme->mCameraHandle == NULL ||
+        pme->mCameraHandle->camera_handle != super_frame->camera_handle){
+        ALOGE("%s: camera obj not valid", __func__);
+        // simply free super frame
+        free(super_frame);
+        return;
+    }
+
+    mm_camera_buf_def_t *frame = super_frame->bufs[0];
+    QCameraMemory *metaMemObj = (QCameraMemory *)frame->mem_info;
+    camera_memory_t *meta_mem = metaMemObj->getMemory(frame->buf_idx, false);
+    cam_metadata_info_t *pMetaData = (cam_metadata_info_t *)meta_mem->data;
+
+    if (pMetaData->is_faces_valid) {
+        // process face detection result
+        pme->processFaceDetectionReuslt(&pMetaData->faces_data);
+    }
+
+    if (pMetaData->is_hist_valid) {
+        // process histogram statistics info
+        pme->processHistogramStats(&pMetaData->hist_data);
+    }
+
+    stream->bufDone(frame->buf_idx);
+    free(super_frame);
+
+    ALOGV("%s : END", __func__);
 }
 
+/*===========================================================================
+ * FUNCTION   : reprocess_stream_cb_routine
+ *
+ * DESCRIPTION: helper function to handle reprocess frame from reprocess stream
+                (after reprocess, e.g., ZSL snapshot frame after WNR if
+ *              WNR is enabled)
+ *
+ * PARAMETERS :
+ *   @super_frame : received super buffer
+ *   @stream      : stream object
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : caller passes the ownership of super_frame, it's our
+ *             responsibility to free super_frame once it's done. In this
+ *             case, reprocessed frame need to be passed to postprocessor
+ *             for jpeg encoding.
+ *==========================================================================*/
 void QCamera2HardwareInterface::reprocess_stream_cb_routine(mm_camera_super_buf_t * super_frame,
                                                             QCameraStream * /*stream*/,
                                                             void * userdata)
 {
-    ALOGE("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -381,15 +642,30 @@ void QCamera2HardwareInterface::reprocess_stream_cb_routine(mm_camera_super_buf_
 
     pme->m_postprocessor.processPPData(super_frame);
 
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
 }
 
+/*===========================================================================
+ * FUNCTION   : dumpFrameToFile
+ *
+ * DESCRIPTION: helper function to dump frame into file for debug purpose.
+ *
+ * PARAMETERS :
+ *    @data : data ptr
+ *    @size : length of data buffer
+ *    @index : identifier for data
+ *    @dump_type : type of the frame to be dumped. Only such
+ *                 dump type is enabled, the frame will be
+ *                 dumped into a file.
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void QCamera2HardwareInterface::dumpFrameToFile(const void *data,
                                                 uint32_t size,
                                                 int index,
                                                 int dump_type)
 {
-    if ((mDumpFrameEnabled & dump_type) == 0) {
+    if ((mParameters.getEnabledFileDumpMask() & dump_type) == 0) {
         ALOGV("dumping frame to file not enabled");
         return;
     }
@@ -425,6 +701,15 @@ void QCamera2HardwareInterface::dumpFrameToFile(const void *data,
     close(file_fd);
 }
 
+/*===========================================================================
+ * FUNCTION   : debugShowVideoFPS
+ *
+ * DESCRIPTION: helper function to log video frame FPS for debug purpose.
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void QCamera2HardwareInterface::debugShowVideoFPS()
 {
     static int n_vFrameCount = 0;
@@ -442,6 +727,15 @@ void QCamera2HardwareInterface::debugShowVideoFPS()
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : debugShowPreviewFPS
+ *
+ * DESCRIPTION: helper function to log preview frame FPS for debug purpose.
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void QCamera2HardwareInterface::debugShowPreviewFPS()
 {
     static int n_pFrameCount = 0;
