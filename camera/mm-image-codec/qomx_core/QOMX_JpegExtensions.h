@@ -46,6 +46,14 @@ typedef enum {
  OMX_EVENT_THUMBNAIL_DROPPED = OMX_EventVendorStartUnused+1
 } QOMX_IMAGE_EXT_EVENTS;
 
+/**
+*  The following macros defines the string to be used for
+*  getting the extension indices.
+**/
+#define QOMX_IMAGE_EXT_EXIF_NAME                  "OMX.QCOM.image.exttype.exif"
+#define QOMX_IMAGE_EXT_THUMBNAIL_NAME        "OMX.QCOM.image.exttype.thumbnail"
+#define QOMX_IMAGE_EXT_BUFFER_OFFSET_NAME "OMX.QCOM.image.exttype.bufferOffset"
+#define QOMX_IMAGE_EXT_MOBICAT_NAME            "OMX.QCOM.image.exttype.mobicat"
 
 /** QOMX_IMAGE_EXT_INDEXTYPE
 *  This enum is an extension of the OMX_INDEXTYPE enum and
@@ -61,7 +69,7 @@ typedef enum {
   //Name: OMX.QCOM.image.exttype.thumbnail
   QOMX_IMAGE_EXT_THUMBNAIL = 0x07F00001,
 
-  //Name: OMX.QCOM.image.exttype.bufferoffset
+  //Name: OMX.QCOM.image.exttype.bufferOffset
   QOMX_IMAGE_EXT_BUFFER_OFFSET = 0x07F00002,
 
   //Name: OMX.QCOM.image.exttype.mobicat
@@ -167,6 +175,24 @@ typedef struct {
   OMX_U32 mobicatDataLength;
 } QOMX_MOBICAT;
 
+/** QOMX_IMG_COLOR_FORMATTYPE
+*  This enum is an extension of the OMX_COLOR_FORMATTYPE enum.
+*  It specifies Qcom supported color formats.
+**/
+typedef enum QOMX_IMG_COLOR_FORMATTYPE {
+  OMX_QCOM_IMG_COLOR_FormatYVU420SemiPlanar = OMX_COLOR_FormatVendorStartUnused + 0x300,
+  OMX_QCOM_IMG_COLOR_FormatYVU422SemiPlanar,
+  OMX_QCOM_IMG_COLOR_FormatYVU422SemiPlanar_h1v2,
+  OMX_QCOM_IMG_COLOR_FormatYUV422SemiPlanar_h1v2,
+  OMX_QCOM_IMG_COLOR_FormatYVU444SemiPlanar,
+  OMX_QCOM_IMG_COLOR_FormatYUV444SemiPlanar,
+  OMX_QCOM_IMG_COLOR_FormatYVU420Planar,
+  OMX_QCOM_IMG_COLOR_FormatYVU422Planar,
+  OMX_QCOM_IMG_COLOR_FormatYVU422Planar_h1v2,
+  OMX_QCOM_IMG_COLOR_FormatYUV422Planar_h1v2,
+  OMX_QCOM_IMG_COLOR_FormatYVU444Planar,
+  OMX_QCOM_IMG_COLOR_FormatYUV444Planar
+} QOMX_IMG_COLOR_FORMATTYPE;
 
 #ifdef __cplusplus
  }

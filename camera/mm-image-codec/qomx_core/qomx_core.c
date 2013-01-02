@@ -54,16 +54,16 @@ static int getIndexFromHandle(OMX_IN OMX_HANDLETYPE *ahComp, int *acompIndex,
 OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Init()
 {
   OMX_ERRORTYPE lrc = OMX_ErrorNone;
-  if(gomx_core_components) {
-    if(gomx_core_components->is_initialized){
+  if (gomx_core_components) {
+    if (gomx_core_components->is_initialized) {
       return lrc;
     }
   }
   gomx_core_components = malloc(sizeof(omx_core));
-  if(gomx_core_components) {
+  if (gomx_core_components) {
     gomx_core_components->is_initialized = TRUE;
     pthread_mutex_init(&gomx_core_components->core_lock, NULL);
-  }else{
+  } else {
     lrc = OMX_ErrorInsufficientResources;
   }
   return lrc;
@@ -76,7 +76,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Init()
 ==============================================================================*/
 OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Deinit()
 {
-  if(gomx_core_components) {
+  if (gomx_core_components) {
     gomx_core_components->is_initialized = FALSE;
     pthread_mutex_destroy(&gomx_core_components->core_lock);
     free(gomx_core_components);
@@ -96,16 +96,16 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Deinit()
 static int getComponentFromList(char *acomponentName){
   int lindex = -1, i =0;
 
-  if(acomponentName) {
-    for(i=0;i < OMX_COMP_MAX_NUM; i++) {
-      if(gomx_core_components->component[i]){
-        if(!strcmp(gomx_core_components->component[i]->name,acomponentName)) {
+  if (acomponentName) {
+    for (i=0;i < OMX_COMP_MAX_NUM; i++) {
+      if (gomx_core_components->component[i]){
+        if (!strcmp(gomx_core_components->component[i]->name,acomponentName)) {
           lindex = i;
           return lindex;
         }
         i++;
       }
-      else{
+      else {
         return i;
       }
     }
@@ -124,8 +124,8 @@ static uint8_t getLibName(char *acomponentName, char *alibName)
 {
   uint8_t cnt;
 
-  for(cnt=0; cnt < (sizeof(libNameMapping)/sizeof(libNameMapping[0])); cnt++) {
-    if(!strcmp(libNameMapping[cnt].componentName, acomponentName)) {
+  for (cnt=0; cnt < (sizeof(libNameMapping)/sizeof(libNameMapping[0])); cnt++) {
+    if (!strcmp(libNameMapping[cnt].componentName, acomponentName)) {
       strlcpy(alibName, libNameMapping[cnt].libName, BUFF_SIZE);
       break;
     }
@@ -144,8 +144,8 @@ static int getInstanceIndex(omx_core_component *acomponent)
   int linstance_index = -1;
   int i = 0;
 
-  for(i=0; i<OMX_COMP_MAX_INSTANCES; i++) {
-    if(!acomponent->handle[i]) {
+  for (i=0; i<OMX_COMP_MAX_INSTANCES; i++) {
+    if (!acomponent->handle[i]) {
       linstance_index = i;
     }
   }
@@ -285,10 +285,10 @@ static int getIndexFromHandle(OMX_IN OMX_HANDLETYPE *ahComp, int *acompIndex,
 {
   int lcompIndex = -1, lindex = -1;
   uint8_t lisPresent = FALSE;
-  for(lcompIndex = 0; lcompIndex < OMX_COMP_MAX_NUM; lcompIndex++) {
-    for(lindex = 0; lindex < OMX_COMP_MAX_INSTANCES; lindex++) {
-      if(gomx_core_components->component[lcompIndex]) {
-        if((OMX_COMPONENTTYPE *)gomx_core_components->
+  for (lcompIndex = 0; lcompIndex < OMX_COMP_MAX_NUM; lcompIndex++) {
+    for (lindex = 0; lindex < OMX_COMP_MAX_INSTANCES; lindex++) {
+      if (gomx_core_components->component[lcompIndex]) {
+        if ((OMX_COMPONENTTYPE *)gomx_core_components->
           component[lcompIndex]->handle[lindex] ==
           (OMX_COMPONENTTYPE *)ahComp ) {
           lisPresent = TRUE;
@@ -309,13 +309,14 @@ static int getIndexFromHandle(OMX_IN OMX_HANDLETYPE *ahComp, int *acompIndex,
 ==============================================================================*/
 static uint8_t isCompActive(omx_core_component *acomp)
 {
-  uint8_t lindex = FALSE;
-  for(lindex = 0; lindex < OMX_COMP_MAX_INSTANCES; lindex++) {
-    if(acomp->handle[lindex] != NULL) {
+  uint8_t lindex = 0;
+  uint8_t lret = FALSE;
+  for (lindex = 0; lindex < OMX_COMP_MAX_INSTANCES; lindex++) {
+    if (acomp->handle[lindex] != NULL) {
       return TRUE;
     }
   }
-  return lindex;
+  return lret;
 }
 
 /*==============================================================================
@@ -355,9 +356,11 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(
         gomx_core_components->component[lcomponentIndex]->open = FALSE;
         free(gomx_core_components->component[lcomponentIndex]);
         gomx_core_components->component[lcomponentIndex] = NULL;
-        if(lrc) {
+        if (lrc) {
           ALOGE("\n Failed to unload the cmponent");
         }
+      } else {
+        ALOGE("%s %d:Component is still Active", __func__, __LINE__);
       }
     } else {
       ALOGE("%s : Failed to release the cmponent", __func__);
