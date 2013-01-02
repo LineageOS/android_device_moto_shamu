@@ -31,13 +31,14 @@
 #define __QCAMERA_STATEMACHINE_H__
 
 #include <pthread.h>
-#include <semaphore.h>
-#include "QCameraQueue.h"
-#include "QCameraChannel.h"
 
+#include <cam_semaphore.h>
 extern "C" {
 #include <mm_camera_interface.h>
 }
+
+#include "QCameraQueue.h"
+#include "QCameraChannel.h"
 
 namespace android {
 
@@ -181,7 +182,7 @@ private:
     QCameraQueue api_queue;               // cmd queue for APIs
     QCameraQueue evt_queue;               // cmd queue for evt from mm-camera-intf/mm-jpeg-intf
     pthread_t cmd_pid;                    // cmd thread ID
-    sem_t cmd_sem;                        // semaphore for cmd thread
+    cam_semaphore_t cmd_sem;              // semaphore for cmd thread
 
 };
 

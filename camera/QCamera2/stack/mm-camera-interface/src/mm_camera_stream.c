@@ -35,7 +35,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 #include <poll.h>
 #include <time.h>
-#include <semaphore.h>
+#include <cam_semaphore.h>
 #include <media/msm_media_info.h>
 
 #include "mm_camera_dbg.h"
@@ -138,7 +138,7 @@ void mm_stream_handle_rcvd_buf(mm_stream_t *my_obj,
     if (my_obj->is_bundled) {
         mm_camera_cmdcb_t* node = NULL;
 
-        /* send sem_post to wake up channel cmd thread to enqueue to super buffer */
+        /* send cam_sem_post to wake up channel cmd thread to enqueue to super buffer */
         node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
         if (NULL != node) {
             memset(node, 0, sizeof(mm_camera_cmdcb_t));
@@ -149,7 +149,7 @@ void mm_stream_handle_rcvd_buf(mm_stream_t *my_obj,
             cam_queue_enq(&(my_obj->ch_obj->cmd_thread.cmd_queue), node);
 
             /* wake up cmd thread */
-            sem_post(&(my_obj->ch_obj->cmd_thread.cmd_sem));
+            cam_sem_post(&(my_obj->ch_obj->cmd_thread.cmd_sem));
         } else {
             CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
         }
@@ -158,7 +158,7 @@ void mm_stream_handle_rcvd_buf(mm_stream_t *my_obj,
     if(has_cb) {
         mm_camera_cmdcb_t* node = NULL;
 
-        /* send sem_post to wake up cmd thread to dispatch dataCB */
+        /* send cam_sem_post to wake up cmd thread to dispatch dataCB */
         node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
         if (NULL != node) {
             memset(node, 0, sizeof(mm_camera_cmdcb_t));
@@ -169,7 +169,7 @@ void mm_stream_handle_rcvd_buf(mm_stream_t *my_obj,
             cam_queue_enq(&(my_obj->cmd_thread.cmd_queue), node);
 
             /* wake up cmd thread */
-            sem_post(&(my_obj->cmd_thread.cmd_sem));
+            cam_sem_post(&(my_obj->cmd_thread.cmd_sem));
         } else {
             CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
         }

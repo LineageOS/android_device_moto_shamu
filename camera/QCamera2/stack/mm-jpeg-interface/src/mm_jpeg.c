@@ -34,7 +34,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <semaphore.h>
 
 #include "mm_jpeg_dbg.h"
 #include "mm_jpeg_interface.h"
@@ -783,9 +782,9 @@ static void *mm_jpeg_jobmgr_thread(void *data)
 
     do {
         do {
-            rc = sem_wait(&cmd_thread->job_sem);
+            rc = cam_sem_wait(&cmd_thread->job_sem);
             if (rc != 0 && errno != EINVAL) {
-                CDBG_ERROR("%s: sem_wait error (%s)",
+                CDBG_ERROR("%s: cam_sem_wait error (%s)",
                            __func__, strerror(errno));
                 return NULL;
             }
@@ -826,7 +825,7 @@ int32_t mm_jpeg_jobmgr_thread_launch(mm_jpeg_obj * my_obj)
     int32_t rc = 0;
     mm_jpeg_job_cmd_thread_t * job_mgr = &my_obj->job_mgr;
 
-    sem_init(&job_mgr->job_sem, 0, 0);
+    cam_sem_init(&job_mgr->job_sem, 0);
     mm_jpeg_queue_init(&job_mgr->job_queue);
 
     /* launch the thread */
@@ -852,7 +851,7 @@ int32_t mm_jpeg_jobmgr_thread_release(mm_jpeg_obj * my_obj)
     node->type = MM_JPEG_CMD_TYPE_EXIT;
 
     mm_jpeg_queue_enq(&cmd_thread->job_queue, node);
-    sem_post(&cmd_thread->job_sem);
+    cam_sem_post(&cmd_thread->job_sem);
 
     /* wait until cmd thread exits */
     if (pthread_join(cmd_thread->pid, NULL) != 0) {
@@ -860,7 +859,7 @@ int32_t mm_jpeg_jobmgr_thread_release(mm_jpeg_obj * my_obj)
     }
     mm_jpeg_queue_deinit(&cmd_thread->job_queue);
 
-    sem_destroy(&cmd_thread->job_sem);
+    cam_sem_destroy(&cmd_thread->job_sem);
     memset(cmd_thread, 0, sizeof(mm_jpeg_job_cmd_thread_t));
     return rc;
 }
@@ -988,7 +987,7 @@ int32_t mm_jpeg_start_job(mm_jpeg_obj *my_obj,
 
     rc = mm_jpeg_queue_enq(&my_obj->job_mgr.job_queue, node);
     if (0 == rc) {
-        sem_post(&my_obj->job_mgr.job_sem);
+        cam_sem_post(&my_obj->job_mgr.job_sem);
         *jobId = job_id;
     }
 
@@ -1044,7 +1043,7 @@ abort_done:
     pthread_mutex_unlock(&my_obj->job_lock);
 
     /* wake up jobMgr thread to work on new job if there is any */
-    sem_post(&my_obj->job_mgr.job_sem);
+    cam_sem_post(&my_obj->job_mgr.job_sem);
 
     return rc;
 }
@@ -1204,7 +1203,7 @@ OMX_ERRORTYPE mm_jpeg_ftbdone(OMX_HANDLETYPE hComponent,
     pthread_mutex_unlock(&my_obj->job_lock);
 
     /* Wake up jobMgr thread to work on next job if there is any */
-    sem_post(&my_obj->job_mgr.job_sem);
+    cam_sem_post(&my_obj->job_mgr.job_sem);
 
     return rc;
 }

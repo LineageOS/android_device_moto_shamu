@@ -30,6 +30,7 @@
 #ifndef MM_JPEG_H_
 #define MM_JPEG_H_
 
+#include <cam_semaphore.h>
 #include "mm_jpeg_interface.h"
 #include "cam_list.h"
 #include "OMX_Types.h"
@@ -37,7 +38,6 @@
 #include "OMX_Core.h"
 #include "OMX_Component.h"
 #include "QOMX_JpegExtensions.h"
-#include <semaphore.h>
 
 typedef struct {
     struct cam_list list;
@@ -96,7 +96,7 @@ typedef struct {
 
 typedef struct {
     pthread_t pid;                  /* job cmd thread ID */
-    sem_t job_sem;                  /* semaphore for job cmd thread */
+    cam_semaphore_t job_sem;        /* semaphore for job cmd thread */
     mm_jpeg_queue_t job_queue;      /* queue for job to do */
 } mm_jpeg_job_cmd_thread_t;
 

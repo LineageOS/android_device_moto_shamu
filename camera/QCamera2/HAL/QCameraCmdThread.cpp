@@ -46,8 +46,8 @@ QCameraCmdThread::QCameraCmdThread() :
     cmd_queue()
 {
     cmd_pid = 0;
-    sem_init(&sync_sem, 0, 0);
-    sem_init(&cmd_sem, 0, 0);
+    cam_sem_init(&sync_sem, 0);
+    cam_sem_init(&cmd_sem, 0);
 }
 
 /*===========================================================================
@@ -61,8 +61,8 @@ QCameraCmdThread::QCameraCmdThread() :
  *==========================================================================*/
 QCameraCmdThread::~QCameraCmdThread()
 {
-    sem_destroy(&sync_sem);
-    sem_destroy(&cmd_sem);
+    cam_sem_destroy(&sync_sem);
+    cam_sem_destroy(&cmd_sem);
 }
 
 /*===========================================================================
@@ -121,11 +121,11 @@ int32_t QCameraCmdThread::sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd, uint8
     } else {
         cmd_queue.enqueue((void *)node);
     }
-    sem_post(&cmd_sem);
+    cam_sem_post(&cmd_sem);
 
     /* if is a sync call, need to wait until it returns */
     if (sync_cmd) {
-        sem_wait(&sync_sem);
+        cam_sem_wait(&sync_sem);
     }
     return NO_ERROR;
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,47 +27,59 @@
  *
  */
 
-#ifndef __QCAMERA_CMD_THREAD_H__
-#define __QCAMERA_CMD_THREAD_H__
+#ifndef __QCAMERA_SEMAPHORE_H__
+#define __QCAMERA_SEMAPHORE_H__
 
-#include <pthread.h>
-#include <cam_semaphore.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include "cam_types.h"
-#include "QCameraQueue.h"
-
-namespace android {
-
-typedef enum
-{
-    CAMERA_CMD_TYPE_NONE,
-    CAMERA_CMD_TYPE_START_DATA_PROC,
-    CAMERA_CMD_TYPE_STOP_DATA_PROC,
-    CAMERA_CMD_TYPE_DO_NEXT_JOB,
-    CAMERA_CMD_TYPE_EXIT,
-    CAMERA_CMD_TYPE_MAX
-} camera_cmd_type_t;
+/* Implement semaphore with mutex and conditional variable.
+ * Reason being, POSIX semaphore on Android are not used or
+ * well tested.
+ */
 
 typedef struct {
-    camera_cmd_type_t cmd;
-} camera_cmd_t;
+    int val;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+} cam_semaphore_t;
 
-class QCameraCmdThread {
-public:
-    QCameraCmdThread();
-    ~QCameraCmdThread();
+static inline void cam_sem_init(cam_semaphore_t *s, int n)
+{
+    pthread_mutex_init(&(s->mutex), NULL);
+    pthread_cond_init(&(s->cond), NULL);
+    s->val = n;
+}
 
-    int32_t launch(void *(*start_routine)(void *), void* user_data);
-    int32_t exit();
-    int32_t sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd, uint8_t priority);
-    camera_cmd_type_t getCmd();
+static inline void cam_sem_post(cam_semaphore_t *s)
+{
+    pthread_mutex_lock(&(s->mutex));
+    s->val++;
+    pthread_cond_signal(&(s->cond));
+    pthread_mutex_unlock(&(s->mutex));
+}
 
-    QCameraQueue cmd_queue;      /* cmd queue */
-    pthread_t cmd_pid;           /* cmd thread ID */
-    cam_semaphore_t cmd_sem;               /* semaphore for cmd thread */
-    cam_semaphore_t sync_sem;              /* semaphore for synchronized call signal */
-};
+static inline int cam_sem_wait(cam_semaphore_t *s)
+{
+    int rc = 0;
+    pthread_mutex_lock(&(s->mutex));
+    while (s->val == 0)
+        rc = pthread_cond_wait(&(s->cond), &(s->mutex));
+    s->val--;
+    pthread_mutex_unlock(&(s->mutex));
+    return rc;
+}
 
-}; // namespace android
+static inline void cam_sem_destroy(cam_semaphore_t *s)
+{
+    pthread_mutex_destroy(&(s->mutex));
+    pthread_cond_destroy(&(s->cond));
+    s->val = 0;
+}
 
-#endif /* __QCAMERA_CMD_THREAD_H__ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __QCAMERA_SEMAPHORE_H__ */

@@ -55,9 +55,9 @@ void *QCameraStateMachine::smEvtProcRoutine(void *data)
     ALOGD("%s: E", __func__);
     do {
         do {
-            ret = sem_wait(&pme->cmd_sem);
+            ret = cam_sem_wait(&pme->cmd_sem);
             if (ret != 0 && errno != EINVAL) {
-                ALOGE("%s: sem_wait error (%s)",
+                ALOGE("%s: cam_sem_wait error (%s)",
                            __func__, strerror(errno));
                 return NULL;
             }
@@ -115,7 +115,7 @@ QCameraStateMachine::QCameraStateMachine(QCamera2HardwareInterface *ctrl) :
     m_parent = ctrl;
     m_state = QCAMERA_SM_STATE_PREVIEW_STOPPED;
     cmd_pid = 0;
-    sem_init(&cmd_sem, 0, 0);
+    cam_sem_init(&cmd_sem, 0);
     pthread_create(&cmd_pid,
                    NULL,
                    smEvtProcRoutine,
@@ -141,7 +141,7 @@ QCameraStateMachine::~QCameraStateMachine()
             node->cmd = QCAMERA_SM_CMD_TYPE_EXIT;
 
             api_queue.enqueue((void *)node);
-            sem_post(&cmd_sem);
+            cam_sem_post(&cmd_sem);
 
             /* wait until cmd thread exits */
             if (pthread_join(cmd_pid, NULL) != 0) {
@@ -150,7 +150,7 @@ QCameraStateMachine::~QCameraStateMachine()
         }
         cmd_pid = 0;
     }
-    sem_destroy(&cmd_sem);
+    cam_sem_destroy(&cmd_sem);
 }
 
 /*===========================================================================
@@ -181,7 +181,7 @@ int32_t QCameraStateMachine::procAPI(qcamera_sm_evt_enum_t evt,
     node->evt = evt;
     node->evt_payload = api_payload;
     if (api_queue.enqueue((void *)node)) {
-        sem_post(&cmd_sem);
+        cam_sem_post(&cmd_sem);
         return NO_ERROR;
     } else {
         free(node);
@@ -218,7 +218,7 @@ int32_t QCameraStateMachine::procEvt(qcamera_sm_evt_enum_t evt,
     node->evt = evt;
     node->evt_payload = evt_payload;
     if (evt_queue.enqueue((void *)node)) {
-        sem_post(&cmd_sem);
+        cam_sem_post(&cmd_sem);
         return NO_ERROR;
     } else {
         free(node);

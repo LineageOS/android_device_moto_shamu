@@ -35,7 +35,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 #include <poll.h>
 #include <linux/media.h>
-#include <semaphore.h>
 
 #include "mm_camera_dbg.h"
 #include "mm_camera_interface.h"
