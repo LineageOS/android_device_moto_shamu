@@ -893,7 +893,7 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
         streamInfo->offline_proc_buf_fmt = streamInfo->fmt;
         streamInfo->offline_proc_buf_dim = streamInfo->dim;
         if (needOfflineReprocess()) {
-            streamInfo->offline_reproc_mask |= CAM_REPROCESS_MASK_TYPE_WNR;
+            streamInfo->feature_mask |= CAM_QCOM_FEATURE_DENOISE2D;
         }
         break;
     default:
