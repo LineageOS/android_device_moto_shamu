@@ -33,7 +33,9 @@
 #include <utils/Errors.h>
 #include "QCameraChannel.h"
 
-namespace android {
+using namespace android;
+
+namespace qcamera {
 
 QCameraChannel::QCameraChannel(uint32_t cam_handle,
                                mm_camera_ops_t *cam_ops)
@@ -277,4 +279,4 @@ int32_t QCameraReprocessChannel::doReprocess(mm_camera_super_buf_t *frame)
     return rc;
 }
 
-}; // namespace android
+}; // namespace qcamera

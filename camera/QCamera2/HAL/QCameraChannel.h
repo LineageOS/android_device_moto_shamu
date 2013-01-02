@@ -37,7 +37,7 @@ extern "C" {
 #include <mm_camera_interface.h>
 }
 
-namespace android {
+namespace qcamera {
 
 class QCameraChannel
 {
@@ -106,6 +106,6 @@ public:
     int32_t doReprocess(mm_camera_super_buf_t *frame);
 };
 
-}; // namespace android
+}; // namespace qcamera
 
 #endif /* __QCAMERA_CHANNEL_H__ */

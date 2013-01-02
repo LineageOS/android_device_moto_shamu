@@ -36,7 +36,7 @@
 #include "QCamera2HWI.h"
 #include "QCameraPostProc.h"
 
-namespace android {
+namespace qcamera {
 
 /*===========================================================================
  * FUNCTION   : QCameraPostProcessor
@@ -1512,4 +1512,4 @@ int32_t QCameraExif::addEntry(exif_tag_id_t tagid,
     return rc;
 }
 
-}; // namespace android
+}; // namespace qcamera

@@ -31,7 +31,7 @@
 #include <utils/Errors.h>
 #include "QCameraQueue.h"
 
-namespace android {
+namespace qcamera {
 
 /*===========================================================================
  * FUNCTION   : QCameraQueue
@@ -243,4 +243,4 @@ void QCameraQueue::flush(){
     pthread_mutex_unlock(&m_lock);
 }
 
-}; // namespace android
+}; // namespace qcamera

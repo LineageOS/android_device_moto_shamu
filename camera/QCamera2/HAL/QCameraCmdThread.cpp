@@ -31,7 +31,9 @@
 #include <utils/Errors.h>
 #include "QCameraCmdThread.h"
 
-namespace android {
+using namespace android;
+
+namespace qcamera {
 
 /*===========================================================================
  * FUNCTION   : QCameraCmdThread
@@ -186,4 +188,4 @@ int32_t QCameraCmdThread::exit()
     return rc;
 }
 
-}; // namespace android
+}; // namespace qcamera

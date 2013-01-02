@@ -40,7 +40,7 @@ extern "C" {
 #include "QCameraQueue.h"
 #include "QCameraChannel.h"
 
-namespace android {
+namespace qcamera {
 
 class QCamera2HardwareInterface;
 
@@ -186,6 +186,6 @@ private:
 
 };
 
-}; // namespace android
+}; // namespace qcamera
 
 #endif /* __QCAMERA_STATEMACHINE_H__ */

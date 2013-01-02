@@ -36,13 +36,13 @@ static hw_module_t camera_common = {
     id: CAMERA_HARDWARE_MODULE_ID,
     name: "QCamera Module",
     author: "Qualcomm Innovation Center Inc",
-    methods: &android::QCamera2Factory::mModuleMethods,
+    methods: &qcamera::QCamera2Factory::mModuleMethods,
     dso: NULL,
     reserved:  {0},
 };
 
 camera_module_t HAL_MODULE_INFO_SYM = {
     common: camera_common,
-    get_number_of_cameras: android::QCamera2Factory::get_number_of_cameras,
-    get_camera_info: android::QCamera2Factory::get_camera_info,
+    get_number_of_cameras: qcamera::QCamera2Factory::get_number_of_cameras,
+    get_camera_info: qcamera::QCamera2Factory::get_camera_info,
 };

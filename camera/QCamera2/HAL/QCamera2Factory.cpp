@@ -37,7 +37,7 @@
 
 #include "QCamera2Factory.h"
 
-namespace android {
+namespace qcamera {
 
 QCamera2Factory gQCamera2Factory;
 
@@ -117,4 +117,4 @@ struct hw_module_methods_t QCamera2Factory::mModuleMethods = {
     open: QCamera2Factory::camera_device_open,
 };
 
-}; // namespace android
+}; // namespace qcamera

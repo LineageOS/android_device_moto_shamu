@@ -43,7 +43,9 @@ extern "C" {
 #include <mm_camera_interface.h>
 }
 
-namespace android {
+using namespace android;
+
+namespace qcamera {
 
 // QCaemra2Memory base class
 
@@ -818,4 +820,4 @@ void *QCameraGrallocMemory::getPtr(int index) const
     return mCameraMemory[index]->data;
 }
 
-}; //namespace android
+}; //namespace qcamera

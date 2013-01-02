@@ -35,7 +35,7 @@
 #include <utils/Timers.h>
 #include "QCamera2HWI.h"
 
-namespace android {
+namespace qcamera {
 
 /*===========================================================================
  * FUNCTION   : zsl_channel_cb
@@ -769,4 +769,4 @@ void QCamera2HardwareInterface::debugShowPreviewFPS()
     }
 }
 
-}; // namespace android
+}; // namespace qcamera

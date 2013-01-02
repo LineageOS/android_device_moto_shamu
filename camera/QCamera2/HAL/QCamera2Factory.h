@@ -36,7 +36,7 @@
 
 #include "QCamera2HWI.h"
 
-namespace android {
+namespace qcamera {
 
 class QCamera2Factory
 {
@@ -61,7 +61,7 @@ private:
     int mNumOfCameras;
 };
 
-}; /*namespace android*/
+}; /*namespace qcamera*/
 
 extern camera_module_t HAL_MODULE_INFO_SYM;
 

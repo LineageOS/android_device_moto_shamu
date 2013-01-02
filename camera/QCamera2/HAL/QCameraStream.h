@@ -39,7 +39,7 @@ extern "C" {
 #include <mm_camera_interface.h>
 }
 
-namespace android {
+namespace qcamera {
 
 class QCameraStream;
 typedef void (*stream_cb_routine)(mm_camera_super_buf_t *frame,
@@ -114,6 +114,6 @@ private:
 
 };
 
-}; // namespace android
+}; // namespace qcamera
 
 #endif /* __QCAMERA_STREAM_H__ */

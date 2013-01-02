@@ -33,7 +33,9 @@ extern "C" {
 #include <mm_jpeg_interface.h>
 }
 
-namespace android {
+using namespace android;
+
+namespace qcamera {
 
 struct FPSRange{
     int minFPS;
@@ -473,6 +475,6 @@ private:
     DefaultKeyedVector<String8,String8> m_tempMap; // map for temororily store parameters to be set
 };
 
-}; // namespace android
+}; // namespace qcamera
 
 #endif

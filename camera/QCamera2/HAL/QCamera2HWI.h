@@ -46,7 +46,7 @@ extern "C" {
 #include <mm_jpeg_interface.h>
 }
 
-namespace android {
+namespace qcamera {
 
 #ifndef TRUE
 #define TRUE 1
@@ -303,6 +303,6 @@ private:
     camera_memory_t *m_pHistBuf;      // memory for histogram info to pass to upper layer
 };
 
-}; // namespace android
+}; // namespace qcamera
 
 #endif /* __QCAMERA2HARDWAREINTERFACE_H__ */
