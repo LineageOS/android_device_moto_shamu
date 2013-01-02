@@ -90,7 +90,7 @@ private:
     QCameraHeapMemory *mStreamInfoBuf;
     QCameraMemory *mStreamBufs;
     QCameraAllocator &mAllocator;
-    mm_camera_buf_def_t mBufDef[MM_CAMERA_MAX_NUM_FRAMES];
+    mm_camera_buf_def_t *mBufDefs;
     cam_frame_len_offset_t mFrameLenOffset;
     cam_padding_info_t mPaddingInfo;
 

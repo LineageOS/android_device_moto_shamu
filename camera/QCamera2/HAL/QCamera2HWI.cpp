@@ -81,10 +81,11 @@ int QCamera2HardwareInterface::set_preview_window(struct camera_device *device,
         struct preview_stream_ops *window)
 {
     int rc = NO_ERROR;
+    ALOGI("%s: %p",__func__, window);
     QCamera2HardwareInterface *hw =
         reinterpret_cast<QCamera2HardwareInterface *>(device->priv);
     if (!hw) {
-        ALOGE("NULL camera device");
+        ALOGE("%s: NULL camera device", __func__);
         return BAD_VALUE;
     }
 
@@ -953,8 +954,8 @@ int QCamera2HardwareInterface::startPreview()
         return NO_MEMORY;
     }
 
-    // start meta data stream
-    rc = startChannel(QCAMERA_CH_TYPE_METADATA);
+    // TODO: commented out for now: start meta data stream
+    //rc = startChannel(QCAMERA_CH_TYPE_METADATA);
 
     // start preview stream
     if (mParameters.isZSLMode()) {
@@ -980,8 +981,8 @@ int QCamera2HardwareInterface::stopPreview()
         stopChannel(QCAMERA_CH_TYPE_PREVIEW);
     }
 
-    // stop meta data stream
-    stopChannel(QCAMERA_CH_TYPE_METADATA);
+    // TODO: commented out for now: stop meta data stream
+    //stopChannel(QCAMERA_CH_TYPE_METADATA);
     if (m_pHistBuf != NULL) {
         m_pHistBuf->release(m_pHistBuf);
         m_pHistBuf = NULL;
@@ -1466,11 +1467,7 @@ int32_t QCamera2HardwareInterface::processZoomEvent(uint32_t /*status*/)
 
     for (int i = 0; i < QCAMERA_CH_TYPE_MAX; i++) {
         if (m_channels[i] != NULL) {
-            preview_stream_ops_t *previewWindow = NULL;
-            if (!mParameters.isSmoothZoomRunning()) {
-                previewWindow = mPreviewWindow;
-            }
-            ret = m_channels[i]->processZoomDone(previewWindow);
+            ret = m_channels[i]->processZoomDone(mPreviewWindow);
         }
     }
     return ret;
@@ -1488,11 +1485,12 @@ void QCamera2HardwareInterface::lockAPI()
 
 void QCamera2HardwareInterface::waitAPIResult(qcamera_sm_evt_enum_t api_evt)
 {
+    ALOGD("%s: wait for API result of evt (%d)", __func__, api_evt);
     memset(&m_apiResult, 0, sizeof(qcamera_api_result_t));
     while (m_apiResult.request_api != api_evt) {
         pthread_cond_wait(&m_cond, &m_lock);
     }
-    ALOGD("%s: return from API result wait", __func__);
+    ALOGD("%s: return from API result wait for evt (%d)", __func__, api_evt);
 }
 
 void QCamera2HardwareInterface::unlockAPI()
@@ -1928,7 +1926,8 @@ int32_t QCamera2HardwareInterface::stopChannel(qcamera_ch_type_enum_t ch_type)
 int32_t QCamera2HardwareInterface::preparePreview()
 {
     int32_t rc = NO_ERROR;
-    rc = addChannel(QCAMERA_CH_TYPE_METADATA);
+    // TODO: commented out for now
+    //rc = addChannel(QCAMERA_CH_TYPE_METADATA);
     if (rc != NO_ERROR) {
         return rc;
     }

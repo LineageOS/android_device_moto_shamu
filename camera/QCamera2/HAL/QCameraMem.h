@@ -58,6 +58,7 @@ public:
     virtual int getRegFlags(uint8_t *regFlags) const = 0;
     virtual camera_memory_t *getMemory(int index, bool metadata) const = 0;
     virtual int getMatchBufIndex(const void *opaque, bool metadata) const = 0;
+    virtual void *getPtr(int index) const= 0;
 
     QCameraMemory();
     virtual ~QCameraMemory();
@@ -96,8 +97,8 @@ public:
     virtual int getRegFlags(uint8_t *regFlags) const;
     virtual camera_memory_t *getMemory(int index, bool metadata) const;
     virtual int getMatchBufIndex(const void *opaque, bool metadata) const;
+	virtual void *getPtr(int index) const;
 
-    void *getPtr(int index);
 private:
     void *mPtr[MM_CAMERA_MAX_NUM_FRAMES];
 };
@@ -115,6 +116,7 @@ public:
     virtual int getRegFlags(uint8_t *regFlags) const;
     virtual camera_memory_t *getMemory(int index, bool metadata) const;
     virtual int getMatchBufIndex(const void *opaque, bool metadata) const;
+	virtual void *getPtr(int index) const;
 
 protected:
     camera_request_memory mGetMemory;
@@ -156,6 +158,7 @@ public:
     virtual int getRegFlags(uint8_t *regFlags) const;
     virtual camera_memory_t *getMemory(int index, bool metadata) const;
     virtual int getMatchBufIndex(const void *opaque, bool metadata) const;
+	virtual void *getPtr(int index) const;
 
     void setWindowInfo(preview_stream_ops_t *window, int width, int height, int format);
     // Enqueue/display buffer[index] onto the native window,

@@ -128,10 +128,9 @@ uint32_t mm_stream_get_v4l2_fmt(cam_format_t fmt);
  * RETURN     : none
  *==========================================================================*/
 void mm_stream_handle_rcvd_buf(mm_stream_t *my_obj,
-                               mm_camera_buf_info_t *buf_info)
+                               mm_camera_buf_info_t *buf_info,
+                               uint8_t has_cb)
 {
-    int32_t i;
-    uint8_t has_cb = 0;
     CDBG("%s: E, my_handle = 0x%x, fd = %d, state = %d",
          __func__, my_obj->my_hdl, my_obj->fd, my_obj->state);
 
@@ -156,12 +155,6 @@ void mm_stream_handle_rcvd_buf(mm_stream_t *my_obj,
         }
     }
 
-    /* check if has CB */
-    for (i=0 ; i< MM_CAMERA_STREAM_BUF_CB_MAX; i++) {
-        if(NULL != my_obj->buf_cb[i].cb) {
-            has_cb = 1;
-        }
-    }
     if(has_cb) {
         mm_camera_cmdcb_t* node = NULL;
 
@@ -215,15 +208,23 @@ static void mm_stream_data_notify(void* user_data)
     }
 
     memset(&buf_info, 0, sizeof(mm_camera_buf_info_t));
-
-    pthread_mutex_lock(&my_obj->buf_lock);
     rc = mm_stream_read_msm_frame(my_obj, &buf_info, my_obj->frame_offset.num_planes);
     if (rc != 0) {
-        pthread_mutex_unlock(&my_obj->buf_lock);
         return;
     }
     idx = buf_info.buf->buf_idx;
 
+    pthread_mutex_lock(&my_obj->cb_lock);
+    for (i = 0; i < MM_CAMERA_STREAM_BUF_CB_MAX; i++) {
+        if(NULL != my_obj->buf_cb[i].cb) {
+            /* for every CB, add ref count */
+            has_cb = 1;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&my_obj->cb_lock);
+
+    pthread_mutex_lock(&my_obj->buf_lock);
     /* update buffer location */
     my_obj->buf_status[idx].in_kernel = 0;
 
@@ -232,17 +233,10 @@ static void mm_stream_data_notify(void* user_data)
         /* need to add into super buf since bundled, add ref count */
         my_obj->buf_status[idx].buf_refcnt++;
     }
-
-    for (i=0; i < MM_CAMERA_STREAM_BUF_CB_MAX; i++) {
-        if(NULL != my_obj->buf_cb[i].cb) {
-            /* for every CB, add ref count */
-            my_obj->buf_status[idx].buf_refcnt++;
-            has_cb = 1;
-        }
-    }
+    my_obj->buf_status[idx].buf_refcnt += has_cb;
     pthread_mutex_unlock(&my_obj->buf_lock);
 
-    mm_stream_handle_rcvd_buf(my_obj, &buf_info);
+    mm_stream_handle_rcvd_buf(my_obj, &buf_info, has_cb);
 }
 
 /*===========================================================================
@@ -283,7 +277,6 @@ static void mm_stream_dispatch_app_data(mm_camera_cmdcb_t *cmd_cb,
     super_buf.camera_handle = my_obj->ch_obj->cam_obj->my_hdl;
     super_buf.ch_id = my_obj->ch_obj->my_hdl;
 
-
     pthread_mutex_lock(&my_obj->cb_lock);
     for(i = 0; i < MM_CAMERA_STREAM_BUF_CB_MAX; i++) {
         if(NULL != my_obj->buf_cb[i].cb) {
@@ -291,6 +284,13 @@ static void mm_stream_dispatch_app_data(mm_camera_cmdcb_t *cmd_cb,
                 /* if <0, means infinite CB
                  * if >0, means CB for certain times
                  * both case we need to call CB */
+
+                /* increase buf ref cnt */
+                pthread_mutex_lock(&my_obj->buf_lock);
+                my_obj->buf_status[buf_info->buf->buf_idx].buf_refcnt++;
+                pthread_mutex_unlock(&my_obj->buf_lock);
+
+                /* callback */
                 my_obj->buf_cb[i].cb(&super_buf,
                                      my_obj->buf_cb[i].user_data);
             }
@@ -307,6 +307,9 @@ static void mm_stream_dispatch_app_data(mm_camera_cmdcb_t *cmd_cb,
         }
     }
     pthread_mutex_unlock(&my_obj->cb_lock);
+
+    /* do buf_done since we increased refcnt by one when has_cb */
+    mm_stream_buf_done(my_obj, buf_info->buf);
 }
 
 /*===========================================================================
@@ -945,7 +948,6 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
     int32_t rc = 0;
     struct v4l2_buffer vb;
     struct v4l2_plane planes[VIDEO_MAX_PLANES];
-    uint32_t i = 0;
     CDBG("%s: E, my_handle = 0x%x, fd = %d, state = %d",
          __func__, my_obj->my_hdl, my_obj->fd, my_obj->state);
 
@@ -960,6 +962,7 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
         CDBG_ERROR("%s: VIDIOC_DQBUF ioctl call failed (rc=%d)\n",
                    __func__, rc);
     } else {
+		ALOGE("%s: VIDIOC_DQBUF buf_index %d\n", __func__, vb.index);
         int8_t idx = vb.index;
         buf_info->buf = &my_obj->buf[idx];
         buf_info->frame_idx = vb.sequence;
@@ -970,17 +973,8 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
         buf_info->buf->frame_idx = vb.sequence;
         buf_info->buf->ts.tv_sec  = vb.timestamp.tv_sec;
         buf_info->buf->ts.tv_nsec = vb.timestamp.tv_usec * 1000;
-
-        for(i = 0; i < vb.length; i++) {
-            CDBG("%s plane %d addr offset: %d data offset:%d\n",
-                 __func__, i, vb.m.planes[i].reserved[0],
-                 vb.m.planes[i].data_offset);
-            buf_info->buf->planes[i].reserved[0] =
-                vb.m.planes[i].reserved[0];
-            buf_info->buf->planes[i].data_offset =
-                vb.m.planes[i].data_offset;
-        }
     }
+
     CDBG("%s :X rc = %d",__func__,rc);
     return rc;
 }
@@ -1118,18 +1112,22 @@ int32_t mm_stream_qbuf(mm_stream_t *my_obj, mm_camera_buf_def_t *buf)
 {
     int32_t rc = 0;
     struct v4l2_buffer buffer;
+	struct v4l2_plane planes[VIDEO_MAX_PLANES];
     CDBG("%s: E, my_handle = 0x%x, fd = %d, state = %d",
          __func__, my_obj->my_hdl, my_obj->fd, my_obj->state);
 
+	memcpy(planes, buf->planes, sizeof(planes));
     memset(&buffer, 0, sizeof(buffer));
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     buffer.memory = V4L2_MEMORY_USERPTR;
     buffer.index = buf->buf_idx;
-    buffer.m.planes = &buf->planes[0];
+    buffer.m.planes = &planes[0];
     buffer.length = buf->num_planes;
 
-    CDBG("%s:stream_hdl=%d,fd=%d,frame idx=%d,num_planes = %d\n", __func__,
-         buf->stream_id, buf->fd, buffer.index, buffer.length);
+    CDBG("%s:plane 0: stream_hdl=%d,fd=%d,frame idx=%d,num_planes = %d, offset = %d, data_offset = %d\n", __func__,
+         buf->stream_id, buf->fd, buffer.index, buffer.length, buf->planes[0].reserved[0], buf->planes[0].data_offset);
+	CDBG("%s:plane 1: stream_hdl=%d,fd=%d,frame idx=%d,num_planes = %d, offset = %d, data_offset = %d\n", __func__,
+         buf->stream_id, buf->fd, buffer.index, buffer.length, buf->planes[1].reserved[0], buf->planes[1].data_offset);
 
     rc = ioctl(my_obj->fd, VIDIOC_QBUF, &buffer);
     CDBG("%s: qbuf idx:%d, rc:%d", __func__, buffer.index, rc);
@@ -1487,8 +1485,6 @@ int32_t mm_stream_reg_buf(mm_stream_t * my_obj)
 
     pthread_mutex_lock(&my_obj->buf_lock);
     for(i = 0; i < my_obj->buf_num; i++){
-        my_obj->buf[i].buf_idx = i;
-
         /* check if need to qbuf initially */
         if (my_obj->buf_status[i].initial_reg_flag) {
             rc = mm_stream_qbuf(my_obj, &my_obj->buf[i]);
