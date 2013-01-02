@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -82,8 +82,8 @@ void mm_camera_app_done()
 int mm_app_load_hal(mm_camera_app_t *my_cam_app)
 {
     memset(&my_cam_app->hal_lib, 0, sizeof(hal_interface_lib_t));
-    my_cam_app->hal_lib.ptr = dlopen("libmmcamera_interface3.so", RTLD_NOW);
-    my_cam_app->hal_lib.ptr_jpeg = dlopen("libmmjpeg_interface3.so", RTLD_NOW);
+    my_cam_app->hal_lib.ptr = dlopen("libmmcamera_interface.so", RTLD_NOW);
+    my_cam_app->hal_lib.ptr_jpeg = dlopen("libmmjpeg_interface.so", RTLD_NOW);
     if (!my_cam_app->hal_lib.ptr) {
         CDBG_ERROR("%s Error opening HAL library %s\n", __func__, dlerror());
         return -MM_CAMERA_E_GENERAL;

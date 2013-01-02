@@ -1,5 +1,5 @@
 
-#ifeq ($(call is-board-platform,msm8960),true)
+ifeq ($(USE_CAMERA_STUB),true)
 
 LOCAL_PATH:= $(call my-dir)
 LOCAL_DIR_PATH:= $(call my-dir)
@@ -48,4 +48,4 @@ LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)
 
-#endif
+endif
