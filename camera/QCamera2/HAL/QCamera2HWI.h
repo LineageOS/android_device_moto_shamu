@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -232,7 +232,7 @@ private:
     static void jpegEvtHandle(jpeg_job_status_t status,
                               uint32_t client_hdl,
                               uint32_t jobId,
-                              mm_jpeg_buf_t *p_buf,
+                              mm_jpeg_output_t *p_buf,
                               void *userdata);
 
     static void *evtNotifyRoutine(void *data);
@@ -294,7 +294,11 @@ private:
     QCameraCmdThread m_evtNotifyTh;     // thread handling evt notify to service layer
 
     bool m_bShutterSoundPlayed;         // if shutter sound had been played
-    bool m_bAutoFocusRunning;           // if auto focus is running
+
+    // if auto focus is running, in other words, when auto_focus is called from service,
+    // and beforeany focus callback/cancel_focus happens. This flag is not an indication
+    // of whether lens is moving or not.
+    bool m_bAutoFocusRunning;
 
     camera_frame_metadata_t mRoiData; // meta data for face detection
     camera_face_t mFaces[MAX_ROI];    // meta data for face detection detail info

@@ -72,6 +72,7 @@ public:
     int32_t getCropInfo(cam_rect_t &crop);
     int32_t getFrameDimension(cam_dimension_t &dim);
     int32_t getFormat(cam_format_t &fmt);
+    QCameraMemory *getStreamBufs() {return mStreamBufs;};
 
 private:
     uint32_t mCamHandle;

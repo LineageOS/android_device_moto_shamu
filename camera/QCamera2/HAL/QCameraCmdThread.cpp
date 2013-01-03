@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -117,7 +117,6 @@ int32_t QCameraCmdThread::sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd, uint8
     memset(node, 0, sizeof(camera_cmd_t));
     node->cmd = cmd;
 
-    ALOGD("%s: enqueue cmd %d", __func__, cmd);
     if (priority) {
         cmd_queue.enqueueWithPriority((void *)node);
     } else {

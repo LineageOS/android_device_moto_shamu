@@ -1,7 +1,7 @@
 /*
 **
 ** Copyright 2008, The Android Open Source Project
-** Copyright (c) 2012, The Linux Foundation. All rights reserved.
+** Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
 ** Not a Contribution. Apache license notifications and license are
 ** retained for attribution purposes only.
 **
@@ -58,10 +58,7 @@ static const char ExifUndefinedPrefix[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 #define EXIF_ASCII_PREFIX_SIZE           8   //(sizeof(ExifAsciiPrefix))
 #define FOCAL_LENGTH_DECIMAL_PRECISION   100
 
-typedef enum {
-    CAMERA_PICTURE_TYPE_JPEG = 1,
-    CAMERA_PICTURE_TYPE_RAW = 2
-} QCameraPictureType;
+#define CAMERA_PICTURE_TYPE_JPEG 0
 
 class QCameraParameters: public CameraParameters
 {
@@ -134,6 +131,7 @@ public:
     static const char KEY_QC_CAPTURE_BURST_EXPOSURE[];
     static const char KEY_QC_NUM_SNAPSHOT_PER_SHUTTER[];
     static const char KEY_QC_NO_DISPLAY_MODE[];
+    static const char KEY_QC_RAW_PICUTRE_SIZE[];
 
     // DENOISE
     static const char KEY_QC_DENOISE[];
@@ -174,9 +172,75 @@ public:
     static const char SCENE_MODE_FLOWERS[];
     static const char SCENE_MODE_AR[];
     static const char PIXEL_FORMAT_YUV420SP_ADRENO[]; // ADRENO
-    static const char PIXEL_FORMAT_RAW[];
     static const char PIXEL_FORMAT_YV12[]; // NV12
     static const char PIXEL_FORMAT_NV12[]; //NV12
+
+    // Values for raw picture format
+    static const char QC_PIXEL_FORMAT_YUV_RAW_8BIT[];
+    static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_10GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_10GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_10RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_10BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_12GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_12GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_12RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_12BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_MIPI_RAW_8GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_MIPI_RAW_8GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_MIPI_RAW_8RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_MIPI_RAW_8BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_MIPI_RAW_10GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_MIPI_RAW_10GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_MIPI_RAW_10RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_MIPI_RAW_10BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_MIPI_RAW_12GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_MIPI_RAW_12GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_MIPI_RAW_12RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_MIPI_RAW_12BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_QCOM_8GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_QCOM_8GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_QCOM_8RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_QCOM_8BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_QCOM_10GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_QCOM_10GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_QCOM_10RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_QCOM_10BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_QCOM_12GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_QCOM_12GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_QCOM_12RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_QCOM_12BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_MIPI_8GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_MIPI_8GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_MIPI_8RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_MIPI_8BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_MIPI_10GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_MIPI_10GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_MIPI_10RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_MIPI_10BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_MIPI_12GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_MIPI_12GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_MIPI_12RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_MIPI_12BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN8_8GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN8_8GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN8_8RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN8_8BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN16_8GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN16_8GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN16_8RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN16_8BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN16_10GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN16_10GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN16_10RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN16_10BGGR[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN16_12GBRG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN16_12GRBG[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN16_12RGGB[];
+    static const char QC_PIXEL_FORMAT_BAYER_IDEAL_PLAIN16_12BGGR[];
 
     // ISO values
     static const char ISO_AUTO[];
@@ -288,7 +352,6 @@ public:
     int32_t getStreamDimension(cam_stream_type_t streamType,
                                 cam_dimension_t &dim);
     void getThumbnailSize(int *width, int *height) const;
-    QCameraPictureType getPictureType();
 
     int getZSLBurstInterval();
     int getZSLQueueDepth();
@@ -320,7 +383,8 @@ public:
     int32_t setFaceDetection(bool enabled);
     int getEnabledFileDumpMask() {return m_nDumpFrameEnabled;};
 
-    cam_focus_mode_type getFocusMode();
+    cam_focus_mode_type getFocusMode() const {return mFocusMode;};
+    bool isJpegPictureFormat() {return (mPictureFormat == CAMERA_PICTURE_TYPE_JPEG);};
 
 private:
     int32_t setPreviewSize(const QCameraParameters& );
@@ -468,6 +532,7 @@ private:
     int  m_nDumpFrameEnabled;       // mask for type of dumping enabled
     cam_focus_mode_type mFocusMode;
     cam_format_t mPreviewFormat;
+    int32_t mPictureFormat;         // could be CAMERA_PICTURE_TYPE_JPEG or cam_format_t
     bool m_bNeedRestart;            // if preview needs restart after parameters updated
     bool m_bNoDisplayMode;
     bool m_bWNROn;

@@ -131,6 +131,7 @@ typedef struct {
     mm_camera_app_buf_t cap_buf;
     mm_camera_app_buf_t parm_buf;
 
+    uint32_t current_jpeg_sess_id;
     mm_camera_super_buf_t* current_job_frames;
     uint32_t current_job_id;
     mm_camera_app_buf_t jpeg_buf;

@@ -53,6 +53,9 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
       mJpegCB(NULL),
       mJpegUserData(NULL),
       mJpegClientHandle(0),
+      mJpegSessionId(0),
+      m_pJpegOutputMem(NULL),
+      m_pJpegExifObj(NULL),
       m_inputPPQ(releasePPInputData, this),
       m_ongoingPPQ(releaseOngoingPPData, this),
       m_inputJpegQ(releaseJpegInputData, this),
@@ -73,6 +76,15 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
  *==========================================================================*/
 QCameraPostProcessor::~QCameraPostProcessor()
 {
+    if (m_pJpegOutputMem != NULL) {
+        m_pJpegOutputMem->deallocate();
+        delete m_pJpegOutputMem;
+        m_pJpegOutputMem = NULL;
+    }
+    if (m_pJpegExifObj != NULL) {
+        delete m_pJpegExifObj;
+        m_pJpegExifObj = NULL;
+    }
 }
 
 /*===========================================================================
@@ -93,14 +105,11 @@ int32_t QCameraPostProcessor::init(jpeg_encode_callback_t jpeg_cb, void *user_da
     mJpegCB = jpeg_cb;
     mJpegUserData = user_data;
 
-    //TODO: jpeg_open causes panic. Comment out for now.
-#if 0
     mJpegClientHandle = jpeg_open(&mJpegHandle);
     if(!mJpegClientHandle) {
         ALOGE("%s : jpeg_open did not work", __func__);
         return UNKNOWN_ERROR;
     }
-#endif
 
     m_dataProcTh.launch(dataProcessRoutine, this);
     m_dataNotifyTh.launch(dataNotifyRoutine, this);
@@ -203,6 +212,124 @@ int32_t QCameraPostProcessor::stop()
 }
 
 /*===========================================================================
+ * FUNCTION   : getJpegEncodingConfig
+ *
+ * DESCRIPTION: function to prepare encoding job information
+ *
+ * PARAMETERS :
+ *   @encode_parm   : param to be filled with encoding configuration
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& encode_parm,
+                                                    QCameraStream *main_stream)
+{
+    ALOGV("%s : E", __func__);
+    int32_t ret = NO_ERROR;
+    camera_memory_t *jpeg_mem = NULL;
+
+    encode_parm.jpeg_cb = mJpegCB;
+    encode_parm.userdata = mJpegUserData;
+    encode_parm.encode_thumbnail = 1; // need encode thumbnail
+
+    // get color format
+    cam_format_t img_fmt = CAM_FORMAT_YUV_420_NV12;
+    main_stream->getFormat(img_fmt);
+    encode_parm.color_format = getColorfmtFromImgFmt(img_fmt);
+
+    // get jpeg quality
+    encode_parm.quality = m_parent->getJpegQuality();
+    if (encode_parm.quality <= 0) {
+        encode_parm.quality = 85;
+    }
+#if 0
+    // get exif data
+    if (m_pJpegExifObj != NULL) {
+        delete m_pJpegExifObj;
+        m_pJpegExifObj = NULL;
+    }
+    m_pJpegExifObj = m_parent->getExifData();
+    if (m_pJpegExifObj != NULL) {
+        encode_parm.exif_info.exif_data = m_pJpegExifObj->getEntries();
+        encode_parm.exif_info.numOfEntries = m_pJpegExifObj->getNumOfEntries();
+    }
+#endif
+    cam_frame_len_offset_t offset;
+    memset(&offset, 0, sizeof(cam_frame_len_offset_t));
+    main_stream->getFrameOffset(offset);
+
+    // src buf config
+    QCameraMemory *pStreamMem = main_stream->getStreamBufs();
+    if (pStreamMem == NULL) {
+        ALOGE("%s: cannot get stream bufs from stream", __func__);
+        ret = BAD_VALUE;
+        goto on_error;
+    }
+    encode_parm.num_src_bufs = pStreamMem->getCnt();
+    for (uint32_t i = 0; i < encode_parm.num_src_bufs; i++) {
+        camera_memory_t *stream_mem = pStreamMem->getMemory(i, false);
+        if (stream_mem != NULL) {
+            encode_parm.src_main_buf[i].index = i;
+            encode_parm.src_main_buf[i].buf_size = stream_mem->size;
+            encode_parm.src_main_buf[i].buf_vaddr = (uint8_t *)stream_mem->data;
+            encode_parm.src_main_buf[i].fd = pStreamMem->getFd(0);
+            encode_parm.src_main_buf[i].format = MM_JPEG_FMT_YUV;
+            encode_parm.src_main_buf[i].offset = offset;
+        }
+    }
+
+    // allocate output buf for jpeg encoding
+    if (m_pJpegOutputMem != NULL) {
+        m_pJpegOutputMem->deallocate();
+        delete m_pJpegOutputMem;
+        m_pJpegOutputMem = NULL;
+    }
+    m_pJpegOutputMem = new QCameraStreamMemory(m_parent->mGetMemory);
+    if (NULL == m_pJpegOutputMem) {
+        ret = NO_MEMORY;
+        ALOGE("%s : No memory for m_pJpegOutputMem", __func__);
+        goto on_error;
+    }
+    ret = m_pJpegOutputMem->allocate(1, offset.frame_len);
+    if(ret != OK) {
+        ret = NO_MEMORY;
+        ALOGE("%s : No memory for m_pJpegOutputMem", __func__);
+        goto on_error;
+    }
+    jpeg_mem = m_pJpegOutputMem->getMemory(0, false);
+    if (NULL == jpeg_mem) {
+        ret = NO_MEMORY;
+        ALOGE("%s : initHeapMem for jpeg, ret = NO_MEMORY", __func__);
+        goto on_error;
+    }
+    encode_parm.num_dst_bufs = 1;
+    encode_parm.dest_buf[0].index = 0;
+    encode_parm.dest_buf[0].buf_size = jpeg_mem->size;
+    encode_parm.dest_buf[0].buf_vaddr = (uint8_t *)jpeg_mem->data;
+    encode_parm.dest_buf[0].fd = m_pJpegOutputMem->getFd(0);
+    encode_parm.dest_buf[0].format = MM_JPEG_FMT_YUV;
+    encode_parm.dest_buf[0].offset = offset;
+
+    ALOGV("%s : X", __func__);
+    return NO_ERROR;
+
+on_error:
+    if (m_pJpegOutputMem != NULL) {
+        m_pJpegOutputMem->deallocate();
+        delete m_pJpegOutputMem;
+        m_pJpegOutputMem = NULL;
+    }
+    if (m_pJpegExifObj != NULL) {
+        delete m_pJpegExifObj;
+        m_pJpegExifObj = NULL;
+    }
+    ALOGV("%s : X with error %d", __func__, ret);
+    return ret;
+}
+
+/*===========================================================================
  * FUNCTION   : sendEvtNotify
  *
  * DESCRIPTION: send event notify through notify callback registered by upper layer
@@ -242,8 +369,7 @@ int32_t QCameraPostProcessor::sendEvtNotify(int32_t msg_type,
 int32_t QCameraPostProcessor::sendDataNotify(int32_t msg_type,
                                              camera_memory_t *data,
                                              uint8_t index,
-                                             camera_frame_metadata_t *metadata,
-                                             QCameraHeapMemory *jpeg_mem)
+                                             camera_frame_metadata_t *metadata)
 {
     qcamera_data_argm_t *data_cb = (qcamera_data_argm_t *)malloc(sizeof(qcamera_data_argm_t));
     if (NULL == data_cb) {
@@ -255,7 +381,6 @@ int32_t QCameraPostProcessor::sendDataNotify(int32_t msg_type,
     data_cb->data = data;
     data_cb->index = index;
     data_cb->metadata = metadata;
-    data_cb->jpeg_mem = jpeg_mem;
 
     // enqueue jpeg_data into jpeg data queue
     if (m_dataNotifyQ.enqueue((void *)data_cb)) {
@@ -286,9 +411,11 @@ int32_t QCameraPostProcessor::sendDataNotify(int32_t msg_type,
 int32_t QCameraPostProcessor::processData(mm_camera_super_buf_t *frame)
 {
     if (m_parent->needOfflineReprocess()) {
+        ALOGD("%s: need offline reprocess", __func__);
         // enqueu to post proc input queue
         m_inputPPQ.enqueue((void *)frame);
     } else {
+        ALOGD("%s: no need offline reprocess, sending to jpeg encoding", __func__);
         // enqueu to jpeg input queue
         m_inputJpegQ.enqueue((void *)frame);
     }
@@ -317,7 +444,6 @@ int32_t QCameraPostProcessor::processData(mm_camera_super_buf_t *frame)
 int32_t QCameraPostProcessor::processJpegEvt(qcamera_jpeg_evt_payload_t *evt)
 {
     int32_t rc = NO_ERROR;
-    QCameraHeapMemory *jpegMemObj = NULL;
     camera_memory_t *jpeg_mem = NULL;
 
     // find job by jobId
@@ -344,47 +470,26 @@ int32_t QCameraPostProcessor::processJpegEvt(qcamera_jpeg_evt_payload_t *evt)
         goto end;
     }
 
-    if(evt->thumbnailDroppedFlag) {
-        ALOGE("%s : Error in thumbnail encoding, thumbnail dropped",
-              __func__);
-    }
-
-    m_parent->dumpFrameToFile(evt->out_data,
-                              evt->data_size,
+    m_parent->dumpFrameToFile(evt->out_data.buf_vaddr,
+                              evt->out_data.buf_filled_len,
                               evt->jobId,
                               QCAMERA_DUMP_FRM_JPEG);
-    ALOGD("%s: Dump jpeg_size=%d", __func__, evt->data_size);
+    ALOGD("%s: Dump jpeg_size=%d", __func__, evt->out_data.buf_filled_len);
 
-    // alloc jpeg memory from heap
-    jpegMemObj = new QCameraHeapMemory();
-    if (NULL != jpegMemObj) {
-        rc = NO_MEMORY;
-        ALOGE("%s : new QCameraHeapMemory for jpeg, ret = NO_MEMORY",
-              __func__);
-        goto end;
-    }
-
-    rc = jpegMemObj->allocate(1, evt->data_size);
-    if(rc != OK) {
-        rc = NO_MEMORY;
-        ALOGE("%s : initHeapMem for jpeg, ret = NO_MEMORY", __func__);
-        goto end;
-    }
-
-    jpeg_mem = jpegMemObj->getMemory(0, false);
+    // alloc jpeg memory to pass to upper layer
+    jpeg_mem = m_parent->mGetMemory(-1, evt->out_data.buf_filled_len, 1, m_parent->mCallbackCookie);
     if (NULL == jpeg_mem) {
         rc = NO_MEMORY;
-        ALOGE("%s : initHeapMem for jpeg, ret = NO_MEMORY", __func__);
+        ALOGE("%s : getMemory for jpeg, ret = NO_MEMORY", __func__);
         goto end;
     }
-    memcpy(jpeg_mem->data, evt->out_data, evt->data_size);
+    memcpy(jpeg_mem->data, evt->out_data.buf_vaddr, evt->out_data.buf_filled_len);
 
     ALOGE("%s : Calling upperlayer callback to store JPEG image", __func__);
     rc = sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
                         jpeg_mem,
                         0,
-                        NULL,
-                        jpegMemObj);
+                        NULL);
 
 end:
     if (rc != NO_ERROR) {
@@ -392,13 +497,11 @@ end:
         sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
                        NULL,
                        0,
-                       NULL,
                        NULL);
 
-        if (NULL != jpegMemObj) {
-            jpegMemObj->deallocate();
-            delete jpegMemObj;
-            jpegMemObj = NULL;
+        if (NULL != jpeg_mem) {
+            jpeg_mem->release(jpeg_mem);
+            jpeg_mem = NULL;
         }
     }
 
@@ -599,10 +702,9 @@ void QCameraPostProcessor::releaseOngoingPPData(void *data, void *user_data)
  *==========================================================================*/
 void QCameraPostProcessor::releaseNotifyData(qcamera_data_argm_t *app_cb)
 {
-    if (NULL != app_cb->jpeg_mem) {
-        app_cb->jpeg_mem->deallocate();
-        delete app_cb->jpeg_mem;
-        app_cb->jpeg_mem = NULL;
+    if (NULL != app_cb->data) {
+        app_cb->data->release(app_cb->data);
+        app_cb->data = NULL;
     }
 }
 
@@ -642,22 +744,15 @@ void QCameraPostProcessor::releaseSuperBuf(mm_camera_super_buf_t *super_buf)
  *==========================================================================*/
 void QCameraPostProcessor::releaseJpegJobData(qcamera_jpeg_data_t *job)
 {
+    ALOGV("%s: E", __func__);
     if (NULL != job) {
         if (NULL != job->src_frame) {
             releaseSuperBuf(job->src_frame);
             free(job->src_frame);
             job->src_frame = NULL;
         }
-        if (NULL != job->out_data) {
-            free(job->out_data);
-            job->out_data = NULL;
-        }
-
-        if(NULL != job->exif_info) {
-            delete job->exif_info;
-            job->exif_info = NULL;
-        }
     }
+    ALOGV("%s: X", __func__);
 }
 
 /*===========================================================================
@@ -716,84 +811,6 @@ mm_jpeg_format_t QCameraPostProcessor::getJpegImgTypeFromImgFmt(cam_format_t img
 }
 
 /*===========================================================================
- * FUNCTION   : fillImgInfo
- *
- * DESCRIPTION: function to fill in jpeg encoding image information
- *
- * PARAMETERS :
- *   @stream      : stream object that the frame belongs to
- *   @frame       : frame object
- *   @buf_info    : ptr to buffer information struct that needs to be filled out
- *   @img_type    : jpeg encode source image type (YUV/Bitstream)
- *   @jpeg_quality: jpeg encoding quality requirement
- *
- * RETURN     : int32_t type of status
- *              NO_ERROR  -- success
- *              none-zero failure code
- *==========================================================================*/
-int32_t QCameraPostProcessor::fillImgInfo(QCameraStream *stream,
-                                          mm_camera_buf_def_t *frame,
-                                          uint32_t jpeg_quality)
-{
-    int32_t rc = 0;
-    (void)stream;
-    (void)frame;
-    (void)jpeg_quality;
-#if 0
-    buf_info->type = img_type;
-    buf_info->quality = jpeg_quality;
-
-    switch (img_type) {
-    case JPEG_SRC_IMAGE_TYPE_MAIN:
-        // dump frame into file if enabled
-        m_parent->dumpFrameToFile(frame->buffer, frame->frame_len, frame->frame_idx, QCAMERA_DUMP_FRM_SNAPSHOT);
-        // get output dimension
-        stream->getFrameDimension(buf_info->out_dim);
-        break;
-    case JPEG_SRC_IMAGE_TYPE_THUMB:
-        // dump frame into file if enabled
-        m_parent->dumpFrameToFile(frame->buffer, frame->frame_len, frame->frame_idx, QCAMERA_DUMP_FRM_THUMBNAIL);
-        // get output size from parameters sent by UI
-        m_parent->getThumbnailSize(buf_info->out_dim);
-        break;
-    default:
-        break;
-    }
-
-    cam_format_t img_fmt = CAM_FORMAT_YUV_420_NV12;
-    rc = stream->getFormat(img_fmt);
-    if (rc != 0) {
-        return rc;
-    }
-    buf_info->color_format = getColorfmtFromImgFmt(img_fmt);
-    buf_info->img_fmt = getJpegImgTypeFromImgFmt(img_fmt);
-
-    rc = stream->getCropInfo(buf_info->crop);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = stream->getFrameDimension(buf_info->src_dim);
-    if (rc != 0) {
-        return rc;
-    }
-
-    buf_info->num_bufs = 1;
-    switch (buf_info->img_fmt) {
-    case JPEG_SRC_IMAGE_FMT_YUV:
-        buf_info->src_image[0].fd = frame->fd;
-        buf_info->src_image[0].buf_vaddr = (uint8_t*) frame->buffer;
-        rc = stream->getFrameOffset(buf_info->src_image[0].offset);
-        break;
-    case JPEG_SRC_IMAGE_FMT_BITSTREAM:
-        // TODO: support later for bit stream
-        break;
-    }
-#endif
-    return rc;
-}
-
-/*===========================================================================
  * FUNCTION   : encodeData
  *
  * DESCRIPTION: function to prepare encoding job information and send to
@@ -802,31 +819,23 @@ int32_t QCameraPostProcessor::fillImgInfo(QCameraStream *stream,
  * PARAMETERS :
  *   @recvd_frame   : frame to be encoded
  *   @jpeg_job_data : ptr to a struct saving job related information
+ *   @needNewSess   : flag to indicate if a new jpeg encoding session need
+ *                    to be created. After creation, this flag will be toggled
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
 int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
-                                         qcamera_jpeg_data_t *jpeg_job_data)
+                                         qcamera_jpeg_data_t *jpeg_job_data,
+                                         uint8_t &needNewSess)
 {
-    (void)recvd_frame;
-    (void)jpeg_job_data;
-    return 0;
-#if 0
     ALOGV("%s : E", __func__);
     int32_t ret = NO_ERROR;
-    mm_jpeg_job jpg_job;
-    uint8_t *out_data = NULL;
+    mm_jpeg_job_t jpg_job;
     uint32_t jobId = 0;
     QCameraStream *main_stream = NULL;
     mm_camera_buf_def_t *main_frame = NULL;
-    QCameraStream *meta_stream = NULL;
-    mm_camera_buf_def_t *meta_frame = NULL;
-    QCameraStream *thumb_stream = NULL;
-    mm_camera_buf_def_t *thumb_frame = NULL;
-
-    memset(&jpg_job, 0, sizeof(mm_jpeg_job));
 
     // find channel
     QCameraChannel *pChannel = m_parent->getChannelByHandle(recvd_frame->ch_id);
@@ -836,18 +845,16 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
         return BAD_VALUE;
     }
 
-    // find snapshot frame and snapshot meta data frame if any
+    // find snapshot frame
     for (int i = 0; i < recvd_frame->num_bufs; i++) {
         QCameraStream *pStream =
             pChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
         if (pStream != NULL) {
-            if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT)) {
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
+                pStream->isTypeOf(CAM_STREAM_TYPE_OFFLINE_PROC)) {
                 main_stream = pStream;
                 main_frame = recvd_frame->bufs[i];
-            } else if (pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)) {
-                // snapshot metadata
-                meta_stream = pStream;
-                meta_frame = recvd_frame->bufs[i];
+                break;
             }
         }
     }
@@ -856,6 +863,10 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
        ALOGE("%s : Main frame is NULL", __func__);
        return BAD_VALUE;
     }
+
+    // dump snapshot frame if enabled
+    m_parent->dumpFrameToFile(main_frame->buffer, main_frame->frame_len,
+                              main_frame->frame_idx, QCAMERA_DUMP_FRM_SNAPSHOT);
 
     QCameraMemory *memObj = (QCameraMemory *)main_frame->mem_info;
     if (NULL == memObj) {
@@ -880,92 +891,62 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
     // clean and invalidate cache ops through mem obj of the frame
     memObj->cleanInvalidateCache(main_frame->buf_idx);
 
-    // get jpeg quality
-    int jpeg_quality = m_parent->getJpegQuality();
-    if (jpeg_quality <= 0) {
-        jpeg_quality = 85;
-    }
-
-    // get exif data
-    jpeg_job_data->exif_info = m_parent->getExifData();
-    if (jpeg_job_data->exif_info == NULL) {
-        ALOGE("%s: cannot get exif data", __func__);
-        return NO_MEMORY;
-    }
-
-    jpg_job.job_type = JPEG_JOB_TYPE_ENCODE;
-    jpg_job.encode_job.jpeg_cb = mJpegCB;
-    jpg_job.encode_job.userdata = mJpegUserData;
-    jpg_job.encode_job.encode_parm.exif_data = jpeg_job_data->exif_info->getEntries();
-    jpg_job.encode_job.encode_parm.exif_numEntries = jpeg_job_data->exif_info->getNumOfEntries();
-    jpg_job.encode_job.encode_parm.rotation = m_parent->getJpegRotation();
-    ALOGV("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.encode_parm.rotation);
-    jpg_job.encode_job.encode_parm.buf_info.src_imgs.src_img_num = recvd_frame->num_bufs;
-    jpg_job.encode_job.encode_parm.buf_info.src_imgs.is_video_frame = FALSE;
-
-    // fill in the src_img info
-    src_image_buffer_info *main_buf_info =
-        &jpg_job.encode_job.encode_parm.buf_info.src_imgs.src_img[JPEG_SRC_IMAGE_TYPE_MAIN];
-    ret = fillImgInfo(main_stream, main_frame, main_buf_info, JPEG_SRC_IMAGE_TYPE_MAIN, jpeg_quality);
-    if (ret != 0) {
-        ALOGE("%s: Error filling main image info for jpeg job", __func__);
-        goto on_error;
-    }
-
-    // use the main frame for thumbnail encoding
-    thumb_stream = main_stream;
-    thumb_frame = main_frame;
-    if (thumb_frame && thumb_stream) {
-        /* fill in thumbnail src img encode param */
-        src_image_buffer_info *thumb_buf_info =
-            &jpg_job.encode_job.encode_parm.buf_info.src_imgs.src_img[JPEG_SRC_IMAGE_TYPE_THUMB];
-        ret = fillImgInfo(thumb_stream, thumb_frame, thumb_buf_info, JPEG_SRC_IMAGE_TYPE_THUMB, jpeg_quality);
-        if (ret != 0) {
-            ALOGE("%s: Error filling thumbnail image info for jpeg job", __func__);
-            goto on_error;
-        }
-    }
-
-    //fill in the sink img info
-    out_data = (uint8_t *)malloc(main_frame->frame_len);
-    if (NULL == out_data) {
-        ALOGE("%s: ERROR: no memory for sink_img buf", __func__);
-        ret = -1;
-        goto on_error;
-    }
-
-    jpg_job.encode_job.encode_parm.buf_info.sink_img.buf_len = main_frame->frame_len;
-    jpg_job.encode_job.encode_parm.buf_info.sink_img.buf_vaddr = out_data;
-
-    if (mJpegClientHandle > 0) {
-        ret = mJpegHandle.start_job(mJpegClientHandle, &jpg_job, &jobId);
-    } else {
+    if (mJpegClientHandle <= 0) {
         ALOGE("%s: Error: bug here, mJpegClientHandle is 0", __func__);
-        ret = UNKNOWN_ERROR;
+        return UNKNOWN_ERROR;
     }
 
-    if (ret != 0) {
-        goto on_error;
+    if (needNewSess) {
+        // create jpeg encoding session
+        mm_jpeg_encode_params_t encodeParam;
+        memset(&encodeParam, 0, sizeof(mm_jpeg_encode_params_t));
+        getJpegEncodingConfig(encodeParam, main_stream);
+        ret = mJpegHandle.create_session(mJpegClientHandle, &encodeParam, &mJpegSessionId);
+        if (ret != NO_ERROR) {
+            ALOGE("%s: error creating a new jpeg encoding session", __func__);
+            return ret;
+        }
+        needNewSess = FALSE;
     }
 
-    // remember job info
-    jpeg_job_data->jobId = jobId;
-    jpeg_job_data->out_data = out_data;
-    jpeg_job_data->src_frame = recvd_frame;
+    // Fill in new job
+    memset(&jpg_job, 0, sizeof(mm_jpeg_job_t));
+    jpg_job.job_type = JPEG_JOB_TYPE_ENCODE;
+    jpg_job.encode_job.session_id = mJpegSessionId;
+    jpg_job.encode_job.src_index = main_frame->buf_idx;
+    jpg_job.encode_job.dst_index = 0;
 
-    ALOGV("%s : X", __func__);
-    return NO_ERROR;
+    cam_rect_t crop;
+    memset(&crop, 0, sizeof(cam_rect_t));
+    main_stream->getCropInfo(crop);
 
-on_error:
-    if (out_data != NULL) {
-        free(out_data);
+    cam_dimension_t src_dim;
+    memset(&src_dim, 0, sizeof(cam_dimension_t));
+    main_stream->getFrameDimension(src_dim);
+
+    // main dim
+    jpg_job.encode_job.main_dim.src_dim = src_dim;
+    jpg_job.encode_job.main_dim.dst_dim = src_dim;
+    jpg_job.encode_job.main_dim.crop = crop;
+
+    // thumbnail dim
+    jpg_job.encode_job.thumb_dim.src_dim = src_dim;
+    m_parent->getThumbnailSize(jpg_job.encode_job.thumb_dim.dst_dim);
+    jpg_job.encode_job.thumb_dim.crop = crop;
+
+    // rotation
+    jpg_job.encode_job.rotation = m_parent->getJpegRotation();
+    ALOGV("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.rotation);
+
+    ret = mJpegHandle.start_job(&jpg_job, &jobId);
+    if (ret == NO_ERROR) {
+        // remember job info
+        jpeg_job_data->jobId = jobId;
+        jpeg_job_data->src_frame = recvd_frame;
     }
-    if (jpeg_job_data->exif_info != NULL) {
-        delete jpeg_job_data->exif_info;
-        jpeg_job_data->exif_info = NULL;
-    }
+
+    ALOGD("%s : X", __func__);
     return ret;
-#endif
 }
 
 /*===========================================================================
@@ -1091,6 +1072,7 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
     int running = 1;
     int ret;
     uint8_t is_active = FALSE;
+    uint8_t needNewSess = TRUE;
     QCameraPostProcessor *pme = (QCameraPostProcessor *)data;
     QCameraCmdThread *cmdThread = &pme->m_dataProcTh;
 
@@ -1107,26 +1089,44 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
 
         // we got notified about new cmd avail in cmd queue
         camera_cmd_type_t cmd = cmdThread->getCmd();
-        ALOGD("%s: get cmd %d", __func__, cmd);
         switch (cmd) {
         case CAMERA_CMD_TYPE_START_DATA_PROC:
+            ALOGD("%s: start data proc", __func__);
             is_active = TRUE;
+            needNewSess = TRUE;
             break;
         case CAMERA_CMD_TYPE_STOP_DATA_PROC:
             {
+                ALOGD("%s: stop data proc", __func__);
                 is_active = FALSE;
 
                 // cancel all ongoing jpeg jobs
                 qcamera_jpeg_data_t *jpeg_job =
                     (qcamera_jpeg_data_t *)pme->m_ongoingJpegQ.dequeue();
                 while (jpeg_job != NULL) {
-                    pme->mJpegHandle.abort_job(pme->mJpegClientHandle, jpeg_job->jobId);
+                    pme->mJpegHandle.abort_job(jpeg_job->jobId);
 
                     pme->releaseJpegJobData(jpeg_job);
                     free(jpeg_job);
 
                     jpeg_job = (qcamera_jpeg_data_t *)pme->m_ongoingJpegQ.dequeue();
                 }
+
+                // destroy jpeg encoding session
+                pme->mJpegHandle.destroy_session(pme->mJpegSessionId);
+                pme->mJpegSessionId = 0;
+
+                // free jpeg out buf and exif obj
+                if (pme->m_pJpegOutputMem != NULL) {
+                    pme->m_pJpegOutputMem->deallocate();
+                    delete pme->m_pJpegOutputMem;
+                    pme->m_pJpegOutputMem = NULL;
+                }
+                if (pme->m_pJpegExifObj != NULL) {
+                    delete pme->m_pJpegExifObj;
+                    pme->m_pJpegExifObj = NULL;
+                }
+                needNewSess = TRUE;
 
                 // flush ongoing postproc Queue
                 pme->m_ongoingPPQ.flush();
@@ -1143,7 +1143,7 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
             break;
         case CAMERA_CMD_TYPE_DO_NEXT_JOB:
             {
-                ALOGD("%s: active is %d", __func__, is_active);
+                ALOGD("%s: Do next job, active is %d", __func__, is_active);
                 if (is_active == TRUE) {
                     // check if there is any ongoing jpeg jobs
                     if (pme->m_ongoingJpegQ.isEmpty()) {
@@ -1159,12 +1159,12 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                                 (qcamera_jpeg_data_t *)malloc(sizeof(qcamera_jpeg_data_t));
                             if (jpeg_job != NULL) {
                                 memset(jpeg_job, 0, sizeof(qcamera_jpeg_data_t));
-                                ret = pme->encodeData(super_buf, jpeg_job);
+                                ret = pme->encodeData(super_buf, jpeg_job, needNewSess);
                             } else {
                                 ALOGE("%s: no mem for qcamera_jpeg_data_t", __func__);
-                                ret = -1;
+                                ret = NO_MEMORY;
                             }
-                            if (0 != ret) {
+                            if (NO_ERROR != ret) {
                                 pme->releaseSuperBuf(super_buf);
                                 free(super_buf);
                                 if (jpeg_job != NULL) {
@@ -1173,7 +1173,6 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                                 pme->sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
                                                     NULL,
                                                     0,
-                                                    NULL,
                                                     NULL);
                             } else {
                                 // add into ongoing jpeg job Q
@@ -1217,7 +1216,6 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                             pme->sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
                                                 NULL,
                                                 0,
-                                                NULL,
                                                 NULL);
                         } else {
                             // free request buf
@@ -1255,6 +1253,27 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
     } while (running);
     ALOGD("%s: X", __func__);
     return NULL;
+}
+
+/*===========================================================================
+ * FUNCTION   : getJpegPaddingReq
+ *
+ * DESCRIPTION: function to add an entry to exif data
+ *
+ * PARAMETERS :
+ *   @padding_info : jpeg specific padding requirement
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraPostProcessor::getJpegPaddingReq(cam_padding_info_t &padding_info)
+{
+    // TODO: hardcode for now, needs to query from mm-jpeg-interface
+    padding_info.width_padding  = CAM_PAD_NONE;
+    padding_info.height_padding  = CAM_PAD_TO_16;
+    padding_info.plane_padding  = CAM_PAD_TO_WORD;
+    return NO_ERROR;
 }
 
 /*===========================================================================
