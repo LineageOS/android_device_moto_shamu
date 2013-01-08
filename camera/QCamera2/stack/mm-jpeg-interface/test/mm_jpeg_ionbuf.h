@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,44 +27,55 @@
  *
  */
 
-#ifndef __MM_JPEG_DBG_H__
-#define __MM_JPEG_DBG_H__
+#ifndef __MM_JPEG_IONBUF_H__
+#define __MM_JPEG_IONBUF_H__
 
-#define LOG_DEBUG
 
-#ifndef LOG_DEBUG
-  #ifdef _ANDROID_
-    #undef LOG_NIDEBUG
-    #undef LOG_TAG
-    #define LOG_NIDEBUG 0
-    #define LOG_TAG "mm-jpeg-intf"
-    #include <utils/Log.h>
-  #else
-    #include <stdio.h>
-    #define ALOGE CDBG
-  #endif
-  #undef CDBG
-  #define CDBG(fmt, args...) do{}while(0)
-#else
-  #ifdef _ANDROID_
-    #undef LOG_NIDEBUG
-    #undef LOG_TAG
-    #define LOG_NIDEBUG 0
-    #define LOG_TAG "mm-jpeg-intf"
-    #include <utils/Log.h>
-    #define CDBG(fmt, args...) ALOGE(fmt, ##args)
-  #else
-    #include <stdio.h>
-    #define CDBG(fmt, args...) fprintf(stderr, fmt, ##args)
-    #define ALOGE(fmt, args...) fprintf(stderr, fmt, ##args)
-  #endif
+#include <stdio.h>
+#include <linux/msm_ion.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <errno.h>
+#include <linux/android_pmem.h>
+#include <fcntl.h>
+#include "mm_jpeg_dbg.h"
+
+typedef struct  {
+  struct ion_fd_data ion_info_fd;
+  struct ion_allocation_data alloc;
+  int p_pmem_fd;
+  long size;
+  int ion_fd;
+  uint8_t *addr;
+} buffer_test_t;
+
+/** buffer_allocate:
+ *
+ *  Arguments:
+ *     @p_buffer: ION buffer
+ *
+ *  Return:
+ *     buffer address
+ *
+ *  Description:
+ *      allocates ION buffer
+ *
+ **/
+void* buffer_allocate(buffer_test_t *p_buffer);
+
+/** buffer_deallocate:
+ *
+ *  Arguments:
+ *     @p_buffer: ION buffer
+ *
+ *  Return:
+ *     buffer address
+ *
+ *  Description:
+ *      deallocates ION buffer
+ *
+ **/
+int buffer_deallocate(buffer_test_t *p_buffer);
+
 #endif
 
-#ifdef _ANDROID_
-  #define CDBG_HIGH(fmt, args...)  ALOGE(fmt, ##args)
-  #define CDBG_ERROR(fmt, args...)  ALOGE(fmt, ##args)
-#else
-  #define CDBG_HIGH(fmt, args...) fprintf(stderr, fmt, ##args)
-  #define CDBG_ERROR(fmt, args...) fprintf(stderr, fmt, ##args)
-#endif
-#endif /* __MM_JPEG_DBG_H__ */

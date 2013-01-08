@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -115,13 +115,11 @@ private:
                            QCameraHeapMemory *jpeg_mem);
     qcamera_jpeg_data_t *findJpegJobByJobId(uint32_t jobId);
     mm_jpeg_color_format getColorfmtFromImgFmt(cam_format_t img_fmt);
-    jpeg_enc_src_img_fmt_t getJpegImgTypeFromImgFmt(cam_format_t img_fmt);
+    mm_jpeg_format_t getJpegImgTypeFromImgFmt(cam_format_t img_fmt);
     int32_t encodeData(mm_camera_super_buf_t *recvd_frame,
                        qcamera_jpeg_data_t *jpeg_job_data);
     int32_t fillImgInfo(QCameraStream *stream,
                         mm_camera_buf_def_t *frame,
-                        src_image_buffer_info *buf_info,
-                        jpeg_enc_src_img_type_t img_type,
                         uint32_t jpeg_quality);
     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
     void releaseNotifyData(qcamera_data_argm_t *app_cb);

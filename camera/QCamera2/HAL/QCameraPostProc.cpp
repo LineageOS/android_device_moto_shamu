@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -700,7 +700,7 @@ mm_jpeg_color_format QCameraPostProcessor::getColorfmtFromImgFmt(cam_format_t im
  *
  * RETURN     : return jpeg source image format (YUV or Bitstream)
  *==========================================================================*/
-jpeg_enc_src_img_fmt_t QCameraPostProcessor::getJpegImgTypeFromImgFmt(cam_format_t img_fmt)
+mm_jpeg_format_t QCameraPostProcessor::getJpegImgTypeFromImgFmt(cam_format_t img_fmt)
 {
     switch (img_fmt) {
     case CAM_FORMAT_YUV_420_NV21:
@@ -709,9 +709,9 @@ jpeg_enc_src_img_fmt_t QCameraPostProcessor::getJpegImgTypeFromImgFmt(cam_format
     case CAM_FORMAT_YUV_420_YV12:
     case CAM_FORMAT_YUV_422_NV61:
     case CAM_FORMAT_YUV_422_NV16:
-        return JPEG_SRC_IMAGE_FMT_YUV;
+        return MM_JPEG_FMT_YUV;
     default:
-        return JPEG_SRC_IMAGE_FMT_YUV;
+        return MM_JPEG_FMT_YUV;
     }
 }
 
@@ -733,11 +733,13 @@ jpeg_enc_src_img_fmt_t QCameraPostProcessor::getJpegImgTypeFromImgFmt(cam_format
  *==========================================================================*/
 int32_t QCameraPostProcessor::fillImgInfo(QCameraStream *stream,
                                           mm_camera_buf_def_t *frame,
-                                          src_image_buffer_info *buf_info,
-                                          jpeg_enc_src_img_type_t img_type,
                                           uint32_t jpeg_quality)
 {
     int32_t rc = 0;
+    (void)stream;
+    (void)frame;
+    (void)jpeg_quality;
+#if 0
     buf_info->type = img_type;
     buf_info->quality = jpeg_quality;
 
@@ -787,7 +789,7 @@ int32_t QCameraPostProcessor::fillImgInfo(QCameraStream *stream,
         // TODO: support later for bit stream
         break;
     }
-
+#endif
     return rc;
 }
 
@@ -808,6 +810,10 @@ int32_t QCameraPostProcessor::fillImgInfo(QCameraStream *stream,
 int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
                                          qcamera_jpeg_data_t *jpeg_job_data)
 {
+    (void)recvd_frame;
+    (void)jpeg_job_data;
+    return 0;
+#if 0
     ALOGV("%s : E", __func__);
     int32_t ret = NO_ERROR;
     mm_jpeg_job jpg_job;
@@ -959,6 +965,7 @@ on_error:
         jpeg_job_data->exif_info = NULL;
     }
     return ret;
+#endif
 }
 
 /*===========================================================================
