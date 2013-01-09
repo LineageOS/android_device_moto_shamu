@@ -508,6 +508,7 @@ int32_t QCameraStateMachine::procEvtPreviewStoppedState(qcamera_sm_evt_enum_t ev
     case QCAMERA_SM_EVT_EVT_NOTIFY:
     case QCAMERA_SM_EVT_JPEG_EVT_NOTIFY:
     case QCAMERA_SM_EVT_SNAPSHOT_DONE:
+    case QCAMERA_SM_EVT_THERMAL_NOTIFY:
     default:
         ALOGE("%s: cannot handle evt(%d) in state(%d)", __func__, evt, m_state);
         break;
@@ -742,6 +743,7 @@ int32_t QCameraStateMachine::procEvtPreviewReadyState(qcamera_sm_evt_enum_t evt,
     case QCAMERA_SM_EVT_EVT_NOTIFY:
     case QCAMERA_SM_EVT_JPEG_EVT_NOTIFY:
     case QCAMERA_SM_EVT_SNAPSHOT_DONE:
+    case QCAMERA_SM_EVT_THERMAL_NOTIFY:
     default:
         ALOGE("%s: cannot handle evt(%d) in state(%d)", __func__, evt, m_state);
         break;
@@ -1028,6 +1030,9 @@ int32_t QCameraStateMachine::procEvtPreviewingState(qcamera_sm_evt_enum_t evt,
             }
         }
         break;
+    case QCAMERA_SM_EVT_THERMAL_NOTIFY:
+        //TODO: Adjust FPS.
+        break;
     case QCAMERA_SM_EVT_JPEG_EVT_NOTIFY:
     case QCAMERA_SM_EVT_SNAPSHOT_DONE:
     default:
@@ -1292,6 +1297,7 @@ int32_t QCameraStateMachine::procEvtPicTakingState(qcamera_sm_evt_enum_t evt,
             m_state = QCAMERA_SM_STATE_PREVIEW_STOPPED;
         }
         break;
+    case QCAMERA_SM_EVT_THERMAL_NOTIFY:
     default:
         ALOGE("%s: cannot handle evt(%d) in state(%d)", __func__, evt, m_state);
         break;
@@ -1566,6 +1572,9 @@ int32_t QCameraStateMachine::procEvtRecordingState(qcamera_sm_evt_enum_t evt,
                 break;
             }
         }
+        break;
+    case QCAMERA_SM_EVT_THERMAL_NOTIFY:
+        //TODO: Adjust FPS
         break;
     case QCAMERA_SM_EVT_JPEG_EVT_NOTIFY:
     case QCAMERA_SM_EVT_SNAPSHOT_DONE:
@@ -1844,6 +1853,9 @@ int32_t QCameraStateMachine::procEvtVideoPicTakingState(qcamera_sm_evt_enum_t ev
             rc = m_parent->cancelLiveSnapshot();
             m_state = QCAMERA_SM_STATE_RECORDING;
         }
+        break;
+    case QCAMERA_SM_EVT_THERMAL_NOTIFY:
+        //TODO: Adjust FPS.
         break;
     default:
         ALOGE("%s: cannot handle evt(%d) in state(%d)", __func__, evt, m_state);
@@ -2127,6 +2139,9 @@ int32_t QCameraStateMachine::procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t 
             rc = m_parent->cancelLiveSnapshot();
             m_state = QCAMERA_SM_STATE_PREVIEWING;
         }
+        break;
+    case QCAMERA_SM_EVT_THERMAL_NOTIFY:
+        //TODO: Adjust FPS
         break;
     default:
         ALOGE("%s: cannot handle evt(%d) in state(%d)", __func__, evt, m_state);

@@ -564,6 +564,7 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       mStoreMetaDataInFrame(0),
       m_stateMachine(this),
       m_postprocessor(this),
+      m_thermalAdapter(QCameraThermalAdapter::getInstance()),
       m_bShutterSoundPlayed(false),
       m_bAutoFocusRunning(false),
       m_pHistBuf(NULL)
@@ -573,6 +574,7 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
     mCameraDevice.common.close = close_camera_device;
     mCameraDevice.ops = &mCameraOps;
     mCameraDevice.priv = this;
+
 
     pthread_mutex_init(&m_lock, NULL);
     pthread_cond_init(&m_cond, NULL);
@@ -625,7 +627,7 @@ int QCamera2HardwareInterface::openCamera()
 
     m_evtNotifyTh.launch(evtNotifyRoutine, this);
     mCameraHandle->ops->register_event_notify(mCameraHandle->camera_handle,
-                                              evtHandle,
+                                              camEvtHandle,
                                               (void *) this);
 
     int32_t rc = m_postprocessor.init(jpegEvtHandle, this);
@@ -647,6 +649,11 @@ int QCamera2HardwareInterface::openCamera()
         gCamCapability[mCameraId]->padding_info.plane_padding = padding_info.plane_padding;
     }
 
+    rc = m_thermalAdapter.init(this);
+    if (rc != 0) {
+        ALOGE("Init thermal adapter failed");
+    }
+
     mParameters.init(gCamCapability[mCameraId], mCameraHandle);
     mCameraOpened = true;
 
@@ -664,6 +671,8 @@ int QCamera2HardwareInterface::closeCamera()
     // stop and deinit postprocessor
     m_postprocessor.stop();
     m_postprocessor.deinit();
+
+    m_thermalAdapter.deinit();
 
     // delete all channels if not already deleted
     for (i = 0; i < QCAMERA_CH_TYPE_MAX; i++) {
@@ -1340,7 +1349,7 @@ int QCamera2HardwareInterface::processEvt(qcamera_sm_evt_enum_t evt, void *evt_p
     return m_stateMachine.procEvt(evt, evt_payload);
 }
 
-void QCamera2HardwareInterface::evtHandle(uint32_t /*camera_handle*/,
+void QCamera2HardwareInterface::camEvtHandle(uint32_t /*camera_handle*/,
                                           mm_camera_event_t *evt,
                                           void *user_data)
 {
@@ -1379,6 +1388,14 @@ void QCamera2HardwareInterface::jpegEvtHandle(jpeg_job_status_t status,
     } else {
         ALOGE("%s: NULL user_data", __func__);
     }
+}
+
+int QCamera2HardwareInterface::thermalEvtHandle(char *name,
+                                                 int threshold,
+                                                 int level)
+{
+    ALOGI("%s: name: %s, threshold: %d, level: %d", __func__, name, threshold, level);
+    return NO_ERROR;
 }
 
 void *QCamera2HardwareInterface::evtNotifyRoutine(void *data)
