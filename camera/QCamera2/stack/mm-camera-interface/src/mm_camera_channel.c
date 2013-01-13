@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -58,6 +58,8 @@ int32_t mm_channel_del_stream(mm_channel_t *my_obj,
 int32_t mm_channel_config_stream(mm_channel_t *my_obj,
                                  uint32_t stream_id,
                                  mm_camera_stream_config_t *config);
+int32_t mm_channel_get_bundle_info(mm_channel_t *my_obj,
+                                   cam_bundle_config_t *bundle_info);
 int32_t mm_channel_start(mm_channel_t *my_obj);
 int32_t mm_channel_stop(mm_channel_t *my_obj);
 int32_t mm_channel_request_super_buf(mm_channel_t *my_obj,
@@ -404,6 +406,13 @@ int32_t mm_channel_fsm_fn_stopped(mm_channel_t *my_obj,
                                           payload->config);
         }
         break;
+    case MM_CHANNEL_EVT_GET_BUNDLE_INFO:
+        {
+            cam_bundle_config_t *payload =
+                (cam_bundle_config_t *)in_val;
+            rc = mm_channel_get_bundle_info(my_obj, payload);
+        }
+        break;
     case MM_CHANNEL_EVT_DELETE:
         {
             mm_channel_release(my_obj);
@@ -740,6 +749,50 @@ int32_t mm_channel_config_stream(mm_channel_t *my_obj,
                           (void *)config,
                           NULL);
     CDBG("%s : X rc = %d",__func__,rc);
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : mm_channel_get_bundle_info
+ *
+ * DESCRIPTION: query bundle info of the channel, which should include all
+ *              streams within this channel
+ *
+ * PARAMETERS :
+ *   @my_obj       : channel object
+ *   @bundle_info  : bundle info to be filled in
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_channel_get_bundle_info(mm_channel_t *my_obj,
+                                   cam_bundle_config_t *bundle_info)
+{
+    int i;
+    mm_stream_t *s_obj = NULL;
+    int32_t rc = 0;
+
+    memset(bundle_info, 0, sizeof(cam_bundle_config_t));
+    bundle_info->bundle_id = my_obj->my_hdl;
+    bundle_info->num_of_streams = 0;
+    for (i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
+        if (my_obj->streams[i].my_hdl > 0) {
+            s_obj = mm_channel_util_get_stream_by_handler(my_obj,
+                                                          my_obj->streams[i].my_hdl);
+            if (NULL != s_obj) {
+                bundle_info->stream_ids[bundle_info->num_of_streams++] =
+                    s_obj->server_stream_id;
+            } else {
+                rc = -1;
+                break;
+            }
+        }
+    }
+    if (rc != 0) {
+        /* error, reset to 0 */
+        memset(bundle_info, 0, sizeof(cam_bundle_config_t));
+    }
     return rc;
 }
 

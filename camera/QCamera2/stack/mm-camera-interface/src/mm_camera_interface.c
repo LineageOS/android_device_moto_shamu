@@ -458,6 +458,44 @@ static int32_t mm_camera_intf_del_channel(uint32_t camera_handle,
 }
 
 /*===========================================================================
+ * FUNCTION   : mm_camera_intf_get_bundle_info
+ *
+ * DESCRIPTION: query bundle info of the channel
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *   @bundle_info  : bundle info to be filled in
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : all streams in the channel should be stopped already before
+ *              this channel can be deleted.
+ *==========================================================================*/
+static int32_t mm_camera_intf_get_bundle_info(uint32_t camera_handle,
+                                              uint32_t ch_id,
+                                              cam_bundle_config_t *bundle_info)
+{
+    int32_t rc = -1;
+    mm_camera_obj_t * my_obj = NULL;
+
+    CDBG("%s :E ch_id = %d", __func__, ch_id);
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
+
+    if(my_obj) {
+        pthread_mutex_lock(&my_obj->cam_lock);
+        pthread_mutex_unlock(&g_intf_lock);
+        rc = mm_camera_get_bundle_info(my_obj, ch_id, bundle_info);
+    } else {
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+    CDBG("%s :X", __func__);
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : mm_camera_intf_register_event_notify
  *
  * DESCRIPTION: register for event notify
@@ -1150,6 +1188,7 @@ static mm_camera_ops_t mm_camera_ops = {
     .unmap_buf = mm_camera_intf_unmap_buf,
     .add_channel = mm_camera_intf_add_channel,
     .delete_channel = mm_camera_intf_del_channel,
+    .get_bundle_info = mm_camera_intf_get_bundle_info,
     .add_stream = mm_camera_intf_add_stream,
     .delete_stream = mm_camera_intf_del_stream,
     .config_stream = mm_camera_intf_config_stream,

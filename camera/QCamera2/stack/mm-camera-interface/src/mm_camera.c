@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -738,6 +738,44 @@ int32_t mm_camera_del_channel(mm_camera_obj_t *my_obj,
 
         pthread_mutex_destroy(&ch_obj->ch_lock);
         memset(ch_obj, 0, sizeof(mm_channel_t));
+    } else {
+        pthread_mutex_unlock(&my_obj->cam_lock);
+    }
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : mm_camera_get_bundle_info
+ *
+ * DESCRIPTION: query bundle info of the channel
+ *
+ * PARAMETERS :
+ *   @my_obj       : camera object
+ *   @ch_id        : channel handle
+ *   @bundle_info  : bundle info to be filled in
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ * NOTE       : all streams in the channel should be stopped already before
+ *              this channel can be deleted.
+ *==========================================================================*/
+int32_t mm_camera_get_bundle_info(mm_camera_obj_t *my_obj,
+                                  uint32_t ch_id,
+                                  cam_bundle_config_t *bundle_info)
+{
+    int32_t rc = -1;
+    mm_channel_t * ch_obj =
+        mm_camera_util_get_channel_by_handler(my_obj, ch_id);
+
+    if (NULL != ch_obj) {
+        pthread_mutex_lock(&ch_obj->ch_lock);
+        pthread_mutex_unlock(&my_obj->cam_lock);
+
+        rc = mm_channel_fsm_fn(ch_obj,
+                               MM_CHANNEL_EVT_GET_BUNDLE_INFO,
+                               (void *)bundle_info,
+                               NULL);
     } else {
         pthread_mutex_unlock(&my_obj->cam_lock);
     }

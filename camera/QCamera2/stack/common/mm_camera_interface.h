@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -39,7 +39,6 @@
 #define MM_CAMERA_MAX_NUM_FRAMES 16
 /* num of channels allowed in a camera obj */
 #define MM_CAMERA_CHANNEL_MAX 16
-#define MAX_STREAM_NUM_IN_BUNDLE 4
 
 #define PAD_TO_SIZE(size, padding) ((size + padding - 1) & ~(padding - 1))
 
@@ -390,6 +389,18 @@ typedef struct {
      **/
     int32_t (*delete_channel) (uint32_t camera_handle,
                                uint32_t ch_id);
+
+    /** get_bundle_info: function definition for querying bundle
+     *  info of the channel
+     *    @camera_handle : camera handler
+     *    @ch_id         : channel handler
+     *    @bundle_info   : bundle info to be filled in
+     *  Return value: 0 -- success
+     *                -1 -- failure
+     **/
+    int32_t (*get_bundle_info) (uint32_t camera_handle,
+                                uint32_t ch_id,
+                                cam_bundle_config_t *bundle_info);
 
     /** add_stream: fucntion definition for adding a stream
      *    @camera_handle : camer handler

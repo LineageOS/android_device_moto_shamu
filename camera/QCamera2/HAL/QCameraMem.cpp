@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -71,7 +71,7 @@ int QCameraMemory::cacheOpsInternal(int index, unsigned int cmd, void *vaddr)
     int ret = OK;
 
     if (index >= mBufferCount) {
-        ALOGE("index %d out of bound [0, %d)", index, mBufferCount);
+        ALOGE("%s: index %d out of bound [0, %d)", __func__, index, mBufferCount);
         return BAD_INDEX;
     }
 
@@ -84,8 +84,8 @@ int QCameraMemory::cacheOpsInternal(int index, unsigned int cmd, void *vaddr)
     custom_data.cmd = cmd;
     custom_data.arg = (unsigned long)&cache_inv_data;
 
-    ALOGD("addr = %p, fd = %d, handle = %p length = %d, ION Fd = %d",
-         cache_inv_data.vaddr, cache_inv_data.fd,
+    ALOGD("%s: addr = %p, fd = %d, handle = %p length = %d, ION Fd = %d",
+         __func__, cache_inv_data.vaddr, cache_inv_data.fd,
          cache_inv_data.handle, cache_inv_data.length,
          mMemInfo[index].main_ion_fd);
     ret = ioctl(mMemInfo[index].main_ion_fd, ION_IOC_CUSTOM, &custom_data);
@@ -269,7 +269,7 @@ void *QCameraHeapMemory::getPtr(int index) const
 
 int QCameraHeapMemory::allocate(int count, int size)
 {
-    int heap_mask = (0x1 << ION_CP_MM_HEAP_ID | 0x1 << ION_CAMERA_HEAP_ID);
+    int heap_mask = (0x1 << ION_CP_MM_HEAP_ID | 0x1 << ION_IOMMU_HEAP_ID);
     int rc = alloc(count, size, heap_mask);
     if (rc < 0)
         return rc;
@@ -354,7 +354,7 @@ QCameraStreamMemory::~QCameraStreamMemory()
 
 int QCameraStreamMemory::allocate(int count, int size)
 {
-    int heap_mask = (0x1 << ION_CP_MM_HEAP_ID | 0x1 << ION_CAMERA_HEAP_ID);
+    int heap_mask = (0x1 << ION_CP_MM_HEAP_ID | 0x1 << ION_IOMMU_HEAP_ID);
     int rc = alloc(count, size, heap_mask);
     if (rc < 0)
         return rc;
@@ -625,7 +625,7 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
          goto end;
     }
 
-    gralloc_usage = GRALLOC_USAGE_PRIVATE_MM_HEAP;
+    gralloc_usage = GRALLOC_USAGE_PRIVATE_MM_HEAP | GRALLOC_USAGE_PRIVATE_IOMMU_HEAP;
     err = mWindow->set_usage(mWindow, gralloc_usage);
     if(err != 0) {
         /* set_usage error out */

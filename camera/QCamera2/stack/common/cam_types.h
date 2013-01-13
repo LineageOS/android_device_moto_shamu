@@ -41,9 +41,10 @@
 #define CEILING2(X)  (((X) + 0x0001) & 0xFFFE)
 
 #define MAX_ZOOMS_CNT 64
-#define MAX_SIZES_CNT 12
+#define MAX_SIZES_CNT 24
 #define MAX_EXP_BRACKETING_LENGTH 32
 #define MAX_ROI 5
+#define MAX_STREAM_NUM_IN_BUNDLE 4
 
 typedef enum {
     CAM_STATUS_SUCCESS,       /* Operation Succeded */
@@ -251,6 +252,10 @@ typedef struct {
 typedef struct{
     uint32_t len;
     uint32_t offset;
+    int32_t offset_x;
+    int32_t offset_y;
+    int32_t stride;
+    int32_t scanline;
 } cam_mp_len_offset_t;
 
 typedef struct {
@@ -274,10 +279,6 @@ typedef struct {
 } cam_dimension_t;
 
 typedef struct {
-    int32_t offset_x;
-    int32_t offset_y;
-    int32_t stride;
-    int32_t scanline;
     cam_frame_len_offset_t plane_info;
 } cam_stream_buf_plane_info_t;
 
@@ -615,6 +616,7 @@ typedef enum {
     CAM_INTF_PARM_RECORDING_HINT,
     CAM_INTF_PARM_DIS_ENABLE,
     CAM_INTF_PARM_HDR,
+    CAM_INTF_PARM_SET_BUNDLE,
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 
@@ -644,5 +646,11 @@ typedef enum {
     FLIP_H = 1<<0,
     FLIP_V = 1<<1,
 } cam_flip_t;
+
+typedef struct {
+    int32_t bundle_id;                            /* bundle id */
+    uint8_t num_of_streams;                       /* number of streams in the bundle */
+    int32_t stream_ids[MAX_STREAM_NUM_IN_BUNDLE]; /* array of stream ids to be bundled */
+} cam_bundle_config_t;
 
 #endif /* __QCAMERA_TYPES_H__ */
