@@ -65,7 +65,7 @@ LOCAL_CFLAGS += -Wall -Werror
 LOCAL_SHARED_LIBRARIES:= \
          libcutils libdl
 
-LOCAL_MODULE:= mm-qcamera-app3
+LOCAL_MODULE:= mm-qcamera-app
 
 LOCAL_MODULE_TAGS := optional
 

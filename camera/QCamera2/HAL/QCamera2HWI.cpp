@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -2072,6 +2072,8 @@ int32_t QCamera2HardwareInterface::processFaceDetectionReuslt(cam_face_detection
             mFaces[i].mouth[0] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].mouth_center.y, display_dim.height, 2000, -1000);
 
+
+#if 0 //Disable for now before these fields are added in camera_face_t in frameworks
             mFaces[i].smile_degree = fd_data->faces[i].smile_degree;
             mFaces[i].smile_score = fd_data->faces[i].smile_confidence;
             mFaces[i].blink_detected = fd_data->faces[i].blink_detected;
@@ -2087,6 +2089,7 @@ int32_t QCamera2HardwareInterface::processFaceDetectionReuslt(cam_face_detection
             mFaces[i].reye_blink = fd_data->faces[i].right_blink;
             mFaces[i].left_right_gaze = fd_data->faces[i].left_right_gaze;
             mFaces[i].top_bottom_gaze = fd_data->faces[i].top_bottom_gaze;
+#endif
         }
     }
 
