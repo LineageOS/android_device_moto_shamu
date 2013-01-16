@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -257,10 +257,10 @@ void *QCameraStream::dataProcRoutine(void *data)
 
         // we got notified about new cmd avail in cmd queue
         camera_cmd_type_t cmd = cmdThread->getCmd();
-        ALOGD("%s: get cmd %d", __func__, cmd);
         switch (cmd) {
         case CAMERA_CMD_TYPE_DO_NEXT_JOB:
             {
+                ALOGD("%s: Do next job", __func__);
                 mm_camera_super_buf_t *frame =
                     (mm_camera_super_buf_t *)pme->mDataQ.dequeue();
                 if (NULL != frame) {
@@ -275,6 +275,7 @@ void *QCameraStream::dataProcRoutine(void *data)
             }
             break;
         case CAMERA_CMD_TYPE_EXIT:
+            ALOGD("%s: Exit", __func__);
             /* flush data buf queue */
             pme->mDataQ.flush();
             running = 0;
@@ -325,7 +326,7 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
     uint8_t *regFlags;
 
     if (!ops_tbl) {
-        ALOGE("getBufs: ops_tbl is NULL");
+        ALOGE("%s: ops_tbl is NULL", __func__);
         return INVALID_OPERATION;
     }
 
@@ -335,7 +336,7 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
     mStreamBufs = mAllocator.allocateStreamBuf(mStreamInfo->stream_type,
                                 mFrameLenOffset.frame_len);
     if (!mStreamBufs) {
-        ALOGE("Failed to allocate stream buffers");
+        ALOGE("%s: Failed to allocate stream buffers", __func__);
         return NO_MEMORY;
     }
 
@@ -344,7 +345,7 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
         rc = ops_tbl->map_ops(i, -1, mStreamBufs->getFd(i),
                 mStreamBufs->getSize(i), ops_tbl->userdata);
         if (rc < 0) {
-            ALOGE("getBufs: map_stream_buf failed: %d", rc);
+            ALOGE("%s: map_stream_buf failed: %d", __func__, rc);
             for (int j = 0; j < i; j++) {
                 ops_tbl->unmap_ops(j, -1, ops_tbl->userdata);
             }
@@ -358,7 +359,7 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
     //regFlags array is allocated by us, but consumed and freed by mm-camera-interface
     regFlags = (uint8_t *)malloc(sizeof(uint8_t) * mNumBufs);
     if (!regFlags) {
-        ALOGE("Out of memory");
+        ALOGE("%s: Out of memory", __func__);
         for (int i = 0; i < mNumBufs; i++) {
             ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
         }
@@ -370,7 +371,7 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
 
     mBufDefs = (mm_camera_buf_def_t *)malloc(mNumBufs * sizeof(mm_camera_buf_def_t));
     if (mBufDefs == NULL) {
-        ALOGE("getBufs: getRegFlags failed %d", rc);
+        ALOGE("%s: getRegFlags failed %d", __func__, rc);
         for (int i = 0; i < mNumBufs; i++) {
             ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
         }
@@ -385,7 +386,7 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
 
     rc = mStreamBufs->getRegFlags(regFlags);
     if (rc < 0) {
-        ALOGE("getBufs: getRegFlags failed %d", rc);
+        ALOGE("%s: getRegFlags failed %d", __func__, rc);
         for (int i = 0; i < mNumBufs; i++) {
             ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
         }
@@ -409,7 +410,7 @@ int32_t QCameraStream::putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl)
     for (int i = 0; i < mNumBufs; i++) {
         rc = ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
         if (rc < 0) {
-            ALOGE("getBufs: map_stream_buf failed: %d", rc);
+            ALOGE("%s: map_stream_buf failed: %d", __func__, rc);
         }
     }
     mBufDefs = NULL; // mBufDefs just keep a ptr to the buffer

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -70,8 +70,9 @@ int QCamera2Factory::getCameraInfo(int camera_id, struct camera_info *info)
     int rc;
     ALOGE("%s: E, camera_id = %d", __func__, camera_id);
 
-    if (!mNumOfCameras || camera_id >= mNumOfCameras || !info)
+    if (!mNumOfCameras || camera_id >= mNumOfCameras || !info) {
         return INVALID_OPERATION;
+    }
 
     rc = QCamera2HardwareInterface::getCapabilities(camera_id, info);
     ALOGV("%s: X", __func__);

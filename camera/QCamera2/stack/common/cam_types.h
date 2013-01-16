@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -66,6 +66,10 @@ typedef enum {
     CAM_FORMAT_YUV_420_YV12,
     CAM_FORMAT_YUV_422_NV16,
     CAM_FORMAT_YUV_422_NV61,
+
+    /* Please note below are the defintions for raw image.
+     * Any format other than raw image format should be declared
+     * before this line!!!!!!!!!!!!! */
 
     /* Packed YUV/YVU raw format, 16 bpp: 8 bits Y and 8 bits UV.
      * U and V are interleaved with Y: YUYV or YVYV */

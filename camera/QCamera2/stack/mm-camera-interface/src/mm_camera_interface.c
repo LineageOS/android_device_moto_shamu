@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -990,7 +990,7 @@ static int32_t mm_camera_intf_map_stream_buf(uint32_t camera_handle,
     my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
 
     CDBG("%s :E camera_handle = %d, ch_id = %d, s_id = %d, buf_idx = %d, plane_idx = %d",
-         __func__, camera_handle, ch_id, stream_id, buf_idx);
+         __func__, camera_handle, ch_id, stream_id, buf_idx, plane_idx);
 
     if(my_obj) {
         pthread_mutex_lock(&my_obj->cam_lock);

@@ -44,6 +44,7 @@
 namespace qcamera {
 
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
+static pthread_mutex_t g_camlock = PTHREAD_MUTEX_INITIALIZER;
 
 camera_device_ops_t QCamera2HardwareInterface::mCameraOps = {
     set_preview_window:         QCamera2HardwareInterface::set_preview_window,
@@ -633,6 +634,19 @@ int QCamera2HardwareInterface::openCamera()
         return UNKNOWN_ERROR;
     }
 
+    // update padding info from jpeg
+    cam_padding_info_t padding_info;
+    m_postprocessor.getJpegPaddingReq(padding_info);
+    if (gCamCapability[mCameraId]->padding_info.width_padding < padding_info.width_padding) {
+        gCamCapability[mCameraId]->padding_info.width_padding = padding_info.width_padding;
+    }
+    if (gCamCapability[mCameraId]->padding_info.height_padding < padding_info.height_padding) {
+        gCamCapability[mCameraId]->padding_info.height_padding = padding_info.height_padding;
+    }
+    if (gCamCapability[mCameraId]->padding_info.plane_padding < padding_info.plane_padding) {
+        gCamCapability[mCameraId]->padding_info.plane_padding = padding_info.plane_padding;
+    }
+
     mParameters.init(gCamCapability[mCameraId], mCameraHandle);
     mCameraOpened = true;
 
@@ -736,10 +750,13 @@ int QCamera2HardwareInterface::getCapabilities(int cameraId,
 {
     int rc = NO_ERROR;
 
+    pthread_mutex_lock(&g_camlock);
     if (NULL == gCamCapability[cameraId]) {
         rc = initCapabilities(cameraId);
-        if (rc < 0)
+        if (rc < 0) {
+            pthread_mutex_unlock(&g_camlock);
             return rc;
+        }
     }
 
     switch(gCamCapability[cameraId]->position) {
@@ -757,7 +774,8 @@ int QCamera2HardwareInterface::getCapabilities(int cameraId,
         break;
     }
 
-    info->orientation=gCamCapability[cameraId]->sensor_mount_angle;
+    info->orientation = gCamCapability[cameraId]->sensor_mount_angle;
+    pthread_mutex_unlock(&g_camlock);
     return rc;
 }
 
@@ -1061,7 +1079,7 @@ int QCamera2HardwareInterface::autoFocus()
         {
             cam_autofocus_state_t state =
                 mCameraHandle->ops->cancel_auto_focus(mCameraHandle->camera_handle);
-            m_bAutoFocusRunning = false;
+            m_bAutoFocusRunning = true;
 
             // send evt notify that foucs is done
             rc = sendEvtNotify(CAMERA_MSG_FOCUS,
@@ -1087,7 +1105,7 @@ int QCamera2HardwareInterface::autoFocus()
     case CAM_FOCUS_MODE_FIXED:
     case CAM_FOCUS_MODE_EDOF:
     default:
-        ALOGE("%s: Not supported in focusMode (%d)", __func__, focusMode);
+        ALOGE("%s: No ops in focusMode (%d)", __func__, focusMode);
         m_bAutoFocusRunning = false;
         rc = BAD_VALUE;
         break;
@@ -1103,23 +1121,30 @@ int QCamera2HardwareInterface::cancelAutoFocus()
     switch (focusMode) {
     case CAM_FOCUS_MODE_AUTO:
     case CAM_FOCUS_MODE_MACRO:
-        mCameraHandle->ops->cancel_auto_focus(mCameraHandle->camera_handle);
-        m_bAutoFocusRunning = false;
-        rc = NO_ERROR;
+        if (m_bAutoFocusRunning) {
+            rc = mCameraHandle->ops->cancel_auto_focus(mCameraHandle->camera_handle);
+            if (rc == NO_ERROR) {
+                m_bAutoFocusRunning = false;
+            }
+        }
         break;
     case CAM_FOCUS_MODE_CONTINOUS_VIDEO:
     case CAM_FOCUS_MODE_CONTINOUS_PICTURE:
-        // resume CAF
-        rc = mCameraHandle->ops->do_auto_focus(mCameraHandle->camera_handle,
-                                               CAM_AF_START_CONTINUOUS_SWEEP);
-        m_bAutoFocusRunning = false;
+        if (m_bAutoFocusRunning) {
+            // resume CAF
+            rc = mCameraHandle->ops->do_auto_focus(mCameraHandle->camera_handle,
+                                                   CAM_AF_START_CONTINUOUS_SWEEP);
+            if (rc == NO_ERROR) {
+                m_bAutoFocusRunning = false;
+            }
+        }
         break;
     case CAM_FOCUS_MODE_INFINITY:
     case CAM_FOCUS_MODE_FIXED:
     case CAM_FOCUS_MODE_EDOF:
     default:
-        ALOGE("%s: Not supported in focusMode (%d)", __func__, focusMode);
-        rc = BAD_VALUE;
+        ALOGI("%s: No ops in focusMode (%d)", __func__, focusMode);
+        m_bAutoFocusRunning = false;
         break;
     }
     return rc;
@@ -1130,23 +1155,22 @@ int QCamera2HardwareInterface::takePicture()
     int rc = NO_ERROR;
     uint8_t numSnapshots = mParameters.getNumOfSnapshots();
 
-    // start postprocessor
-    m_postprocessor.start();
-
     if (mParameters.isZSLMode()) {
         QCameraPicChannel *pZSLChannel =
             (QCameraPicChannel *)m_channels[QCAMERA_CH_TYPE_ZSL];
         if (NULL != pZSLChannel) {
+            // start postprocessor
+            m_postprocessor.start();
+
             rc = pZSLChannel->takePicture(numSnapshots);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: cannot take ZSL picture", __func__);
+                m_postprocessor.stop();
+                return rc;
+            }
         } else {
             ALOGE("%s: ZSL channel is NULL", __func__);
             rc = UNKNOWN_ERROR;
-        }
-
-        if (rc != NO_ERROR) {
-            ALOGE("%s: cannot take ZSL picture", __func__);
-            m_postprocessor.stop();
-            return rc;
         }
     } else {
         // normal capture case
@@ -1158,14 +1182,32 @@ int QCamera2HardwareInterface::takePicture()
         delChannel(QCAMERA_CH_TYPE_PREVIEW);
 
         // start snapshot
-        rc = addCaptureChannel();
-        if (rc == NO_ERROR) {
-            rc = startChannel(QCAMERA_CH_TYPE_CAPTURE);
-            if (rc != NO_ERROR) {
-                ALOGE("%s: cannot start capture channel", __func__);
-                delChannel(QCAMERA_CH_TYPE_CAPTURE);
-                m_postprocessor.stop();
-                return rc;
+        if (mParameters.isJpegPictureFormat()) {
+            ALOGD("%s: take JPEG picture", __func__);
+            rc = addCaptureChannel();
+            if (rc == NO_ERROR) {
+                // start postprocessor
+                m_postprocessor.start();
+
+                // start catpure channel
+                rc = startChannel(QCAMERA_CH_TYPE_CAPTURE);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: cannot start capture channel", __func__);
+                    m_postprocessor.stop();
+                    delChannel(QCAMERA_CH_TYPE_CAPTURE);
+                    return rc;
+                }
+            }
+        } else {
+            ALOGD("%s: take RAW picture", __func__);
+            rc = addRawChannel();
+            if (rc == NO_ERROR) {
+                rc = startChannel(QCAMERA_CH_TYPE_RAW);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: cannot start raw channel", __func__);
+                    delChannel(QCAMERA_CH_TYPE_RAW);
+                    return rc;
+                }
             }
         }
     }
@@ -1175,10 +1217,10 @@ int QCamera2HardwareInterface::takePicture()
 
 int QCamera2HardwareInterface::cancelPicture()
 {
-    //stop post processor
-    m_postprocessor.stop();
-
     if (mParameters.isZSLMode()) {
+        //stop post processor
+        m_postprocessor.stop();
+
         QCameraPicChannel *pZSLChannel =
             (QCameraPicChannel *)m_channels[QCAMERA_CH_TYPE_ZSL];
         if (NULL != pZSLChannel) {
@@ -1188,8 +1230,16 @@ int QCamera2HardwareInterface::cancelPicture()
         }
     } else {
         // normal capture case
-        stopChannel(QCAMERA_CH_TYPE_CAPTURE);
-        delChannel(QCAMERA_CH_TYPE_CAPTURE);
+        if (mParameters.isJpegPictureFormat()) {
+            //stop post processor
+            m_postprocessor.stop();
+
+            stopChannel(QCAMERA_CH_TYPE_CAPTURE);
+            delChannel(QCAMERA_CH_TYPE_CAPTURE);
+        } else {
+            stopChannel(QCAMERA_CH_TYPE_RAW);
+            delChannel(QCAMERA_CH_TYPE_RAW);
+        }
     }
     return NO_ERROR;
 }
@@ -1198,13 +1248,11 @@ int QCamera2HardwareInterface::takeLiveSnapshot()
 {
     int rc = NO_ERROR;
 
-    // start post processor
-    m_postprocessor.start();
-
     // start snapshot channel
     rc = startChannel(QCAMERA_CH_TYPE_SNAPSHOT);
-    if (rc != NO_ERROR) {
-        m_postprocessor.stop();
+    if (rc == NO_ERROR) {
+        // start post processor
+        m_postprocessor.start();
     }
     return rc;
 }
@@ -1312,19 +1360,20 @@ void QCamera2HardwareInterface::evtHandle(uint32_t /*camera_handle*/,
 void QCamera2HardwareInterface::jpegEvtHandle(jpeg_job_status_t status,
                                               uint32_t /*client_hdl*/,
                                               uint32_t jobId,
-                                              mm_jpeg_buf_t *p_buf,
+                                              mm_jpeg_output_t *p_output,
                                               void *userdata)
 {
     QCamera2HardwareInterface *obj = (QCamera2HardwareInterface *)userdata;
     if (obj) {
         qcamera_jpeg_evt_payload_t *payload =
             (qcamera_jpeg_evt_payload_t *)malloc(sizeof(qcamera_jpeg_evt_payload_t));
-        if (NULL != payload && (JPEG_JOB_STATUS_DONE == status)) {
+        if (NULL != payload) {
             memset(payload, 0, sizeof(qcamera_jpeg_evt_payload_t));
             payload->status = status;
             payload->jobId = jobId;
-            payload->out_data = p_buf->buf_vaddr;
-            payload->data_size = p_buf->buf_size;
+            if (p_output != NULL) {
+                payload->out_data = *p_output;
+            }
             obj->processEvt(QCAMERA_SM_EVT_JPEG_EVT_NOTIFY, payload);
         }
     } else {
@@ -1426,26 +1475,28 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
             ret = sendEvtNotify(CAMERA_MSG_FOCUS,
                                 (focus_data.focus_state == CAM_AF_FOCUSED)? true : false,
                                 0);
+            m_bAutoFocusRunning = false;
+        } else {
+            ret = UNKNOWN_ERROR;
+            ALOGE("%s: autoFocusEvent when no auto_focus running", __func__);
         }
         break;
     case CAM_FOCUS_MODE_CONTINOUS_VIDEO:
     case CAM_FOCUS_MODE_CONTINOUS_PICTURE:
-        if (m_bAutoFocusRunning) {
+        if (focus_data.focus_state == CAM_AF_FOCUSED ||
+            focus_data.focus_state == CAM_AF_NOT_FOCUSED) {
             // update focus distance
             mParameters.updateFocusDistances(&focus_data.focus_dist);
-            ret = sendEvtNotify(CAMERA_MSG_FOCUS,
-                                (focus_data.focus_state == CAM_AF_FOCUSED)? true : false,
-                                0);
-        } else {
-            if (focus_data.focus_state == CAM_AF_FOCUSED ||
-                focus_data.focus_state == CAM_AF_NOT_FOCUSED) {
-                // update focus distance
-                mParameters.updateFocusDistances(&focus_data.focus_dist);
+            if (m_bAutoFocusRunning) {
+                ret = sendEvtNotify(CAMERA_MSG_FOCUS,
+                      (focus_data.focus_state == CAM_AF_FOCUSED)? true : false,
+                      0);
+                m_bAutoFocusRunning = false;
             }
-            ret = sendEvtNotify(CAMERA_MSG_FOCUS_MOVE,
-                                (focus_data.focus_state == CAM_AF_SCANNING)? true : false,
-                                0);
         }
+        ret = sendEvtNotify(CAMERA_MSG_FOCUS_MOVE,
+                (focus_data.focus_state == CAM_AF_SCANNING)? true : false,
+                0);
         break;
     case CAM_FOCUS_MODE_INFINITY:
     case CAM_FOCUS_MODE_FIXED:
@@ -1487,7 +1538,8 @@ void QCamera2HardwareInterface::waitAPIResult(qcamera_sm_evt_enum_t api_evt)
     while (m_apiResult.request_api != api_evt) {
         pthread_cond_wait(&m_cond, &m_lock);
     }
-    ALOGD("%s: return from API result wait for evt (%d)", __func__, api_evt);
+    ALOGD("%s: return (%d) from API result wait for evt (%d)",
+          __func__, m_apiResult.status, api_evt);
 }
 
 void QCamera2HardwareInterface::unlockAPI()
@@ -1756,6 +1808,8 @@ int32_t QCamera2HardwareInterface::addCaptureChannel()
         return rc;
     }
 
+    // TODO: commented out for now
+#if 0
     rc = pChannel->addStream(*this, CAM_STREAM_TYPE_POSTVIEW,
                              &gCamCapability[mCameraId]->padding_info,
                              postview_stream_cb_routine, this);
@@ -1765,7 +1819,7 @@ int32_t QCamera2HardwareInterface::addCaptureChannel()
         delete pChannel;
         return rc;
     }
-
+#endif
     rc = pChannel->addStream(*this, CAM_STREAM_TYPE_SNAPSHOT,
                              &gCamCapability[mCameraId]->padding_info,
                              snapshot_stream_cb_routine, this);
@@ -1949,13 +2003,14 @@ int32_t QCamera2HardwareInterface::preparePreview()
                 delChannel(QCAMERA_CH_TYPE_PREVIEW);
                 return rc;
             }
-
+#if 0 //TODO: hardcoded for now to bring up video recording
             rc = addChannel(QCAMERA_CH_TYPE_SNAPSHOT);
             if (rc != NO_ERROR) {
                 delChannel(QCAMERA_CH_TYPE_METADATA);
                 delChannel(QCAMERA_CH_TYPE_PREVIEW);
                 delChannel(QCAMERA_CH_TYPE_VIDEO);
             }
+#endif
         }
     }
 
@@ -2182,6 +2237,8 @@ QCameraExif *QCamera2HardwareInterface::getExifData()
                        EXIF_ASCII,
                        count,
                        (void *)dateTime);
+    } else {
+        ALOGE("%s: getExifDateTime failed", __func__);
     }
 
     rat_t focalLength;
@@ -2209,6 +2266,8 @@ QCameraExif *QCamera2HardwareInterface::getExifData()
                        EXIF_ASCII,
                        count,
                        (void *)gpsProcessingMethod);
+    } else {
+        ALOGE("%s: getExifGpsProcessingMethod failed", __func__);
     }
 
     rat_t latitude[3];

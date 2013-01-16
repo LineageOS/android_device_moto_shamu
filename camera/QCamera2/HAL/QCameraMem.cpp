@@ -448,6 +448,14 @@ int QCameraVideoMemory::allocate(int count, int size)
             QCameraStreamMemory::deallocate();
             return NO_MEMORY;
         }
+        struct encoder_media_buffer_type * packet =
+            (struct encoder_media_buffer_type *)mMetadata[i]->data;
+        packet->meta_handle = native_handle_create(1, 2); //1 fd, 1 offset and 1 size
+        packet->buffer_type = kMetadataBufferTypeCameraSource;
+        native_handle_t * nh = const_cast<native_handle_t *>(packet->meta_handle);
+        nh->data[0] = mMemInfo[i].fd;
+        nh->data[1] = 0;
+        nh->data[2] = mMemInfo[i].size;
     }
     mBufferCount = count;
     return NO_ERROR;

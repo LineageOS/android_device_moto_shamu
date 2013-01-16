@@ -43,8 +43,6 @@ class QCameraExif;
 typedef struct {
     uint32_t jobId;                  // job ID
     uint32_t client_hdl;             // handle of jpeg client (obtained when open jpeg)
-    uint8_t *out_data;               // ptr to output buf (need to be released after job is done)
-    QCameraExif *exif_info;          // ptr to exif object (need to be released after job is done)
     mm_camera_super_buf_t *src_frame;// source frame (need to be returned back to kernel after done)
 } qcamera_jpeg_data_t;
 
@@ -60,9 +58,7 @@ typedef struct {
 typedef struct {
     uint32_t jobId;                  // job ID (obtained when start_jpeg_job)
     jpeg_job_status_t status;        // jpeg encoding status
-    uint8_t thumbnailDroppedFlag;    // flag indicating if thumbnail is dropped
-    uint8_t* out_data;               // ptr to jpeg output buf
-    uint32_t data_size;              // lenght of valid jpeg buf after encoding
+    mm_jpeg_output_t out_data;         // ptr to jpeg output buf
 } qcamera_jpeg_evt_payload_t;
 
 typedef struct {
@@ -70,7 +66,6 @@ typedef struct {
     camera_memory_t *        data;     // ptr to data memory struct
     unsigned int             index;    // index of the buf in the whole buffer
     camera_frame_metadata_t *metadata; // ptr to meta data
-    QCameraHeapMemory *      jpeg_mem; // jpeg heap mem for release after CB
 } qcamera_data_argm_t;
 
 #define MAX_EXIF_TABLE_ENTRIES 14
@@ -105,22 +100,22 @@ public:
     int32_t processData(mm_camera_super_buf_t *frame);
     int32_t processPPData(mm_camera_super_buf_t *frame);
     int32_t processJpegEvt(qcamera_jpeg_evt_payload_t *evt);
+    int32_t getJpegPaddingReq(cam_padding_info_t &padding_info);
 
 private:
     int32_t sendEvtNotify(int32_t msg_type, int32_t ext1, int32_t ext2);
     int32_t sendDataNotify(int32_t msg_type,
                            camera_memory_t *data,
                            uint8_t index,
-                           camera_frame_metadata_t *metadata,
-                           QCameraHeapMemory *jpeg_mem);
+                           camera_frame_metadata_t *metadata);
     qcamera_jpeg_data_t *findJpegJobByJobId(uint32_t jobId);
     mm_jpeg_color_format getColorfmtFromImgFmt(cam_format_t img_fmt);
     mm_jpeg_format_t getJpegImgTypeFromImgFmt(cam_format_t img_fmt);
+    int32_t getJpegEncodingConfig(mm_jpeg_encode_params_t& encode_parm,
+                                  QCameraStream *main_stream);
     int32_t encodeData(mm_camera_super_buf_t *recvd_frame,
-                       qcamera_jpeg_data_t *jpeg_job_data);
-    int32_t fillImgInfo(QCameraStream *stream,
-                        mm_camera_buf_def_t *frame,
-                        uint32_t jpeg_quality);
+                       qcamera_jpeg_data_t *jpeg_job_data,
+                       uint8_t &needNewSess);
     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
     void releaseNotifyData(qcamera_data_argm_t *app_cb);
     void releaseJpegJobData(qcamera_jpeg_data_t *job);
@@ -140,8 +135,10 @@ private:
     void *                     mJpegUserData;
     mm_jpeg_ops_t              mJpegHandle;
     uint32_t                   mJpegClientHandle;
+    uint32_t                   mJpegSessionId;
 
-    QCameraReprocessChannel *  m_pReprocessChannel;
+    QCameraStreamMemory *      m_pJpegOutputMem;
+    QCameraExif *              m_pJpegExifObj;
 
     QCameraQueue m_inputPPQ;            // input queue for postproc
     QCameraQueue m_ongoingPPQ;          // ongoing postproc queue

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -336,7 +336,7 @@ void QCamera2HardwareInterface::postview_stream_cb_routine(mm_camera_super_buf_t
         return;
     }
 
-    ALOGV("%s : BEGIN", __func__);
+    ALOGD("%s : BEGIN", __func__);
 
     mm_camera_buf_def_t *frame = super_frame->bufs[0];
     if (NULL == frame) {
@@ -361,7 +361,7 @@ void QCamera2HardwareInterface::postview_stream_cb_routine(mm_camera_super_buf_t
     }
 
     free(super_frame);
-    ALOGV("%s : END", __func__);
+    ALOGD("%s : END", __func__);
     return;
 }
 
