@@ -34,15 +34,15 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 #define BUFF_SIZE 255
 
-omx_core *gomx_core_components;
+static omx_core_t *g_omxcore;
 
 //Map the library name with the component name
-component_libname_mapping libNameMapping[] =
+static const comp_info_t g_comp_info[] =
 {
-  { "OMX.qcom.image.jpeg.encoder", "libqomx_jpegenc.so"},
+  { "OMX.qcom.image.jpeg.encoder", "libqomx_jpegenc.so" },
 };
 
-static int getIndexFromHandle(OMX_IN OMX_HANDLETYPE *ahComp, int *acompIndex,
+static int get_idx_from_handle(OMX_IN OMX_HANDLETYPE *ahComp, int *acompIndex,
   int *ainstanceIndex);
 
 /*==============================================================================
@@ -53,21 +53,38 @@ static int getIndexFromHandle(OMX_IN OMX_HANDLETYPE *ahComp, int *acompIndex,
 ==============================================================================*/
 OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Init()
 {
-  OMX_ERRORTYPE lrc = OMX_ErrorNone;
-  if (gomx_core_components) {
-    if (gomx_core_components->is_initialized) {
-      return lrc;
+  OMX_ERRORTYPE rc = OMX_ErrorNone;
+  int i = 0;
+  int comp_cnt = sizeof(g_comp_info)/sizeof(g_comp_info[0]);
+
+  /* check if core is created */
+  if (g_omxcore)
+    return rc;
+
+  if (comp_cnt > OMX_COMP_MAX_NUM) {
+    ALOGE("%s:%d] cannot exceed max number of components",
+      __func__, __LINE__);
+    return OMX_ErrorUndefined;
+  }
+  /* create new global object */
+  g_omxcore = malloc(sizeof(omx_core_t));
+  if (g_omxcore) {
+    memset(g_omxcore, 0x0, sizeof(omx_core_t));
+    pthread_mutex_init(&g_omxcore->core_lock, NULL);
+
+    /* populate the library name and component name */
+    for (i = 0; i < comp_cnt; i++) {
+      g_omxcore->component[i].comp_name = g_comp_info[i].comp_name;
+      g_omxcore->component[i].lib_name = g_comp_info[i].lib_name;
     }
-  }
-  gomx_core_components = malloc(sizeof(omx_core));
-  if (gomx_core_components) {
-    gomx_core_components->is_initialized = TRUE;
-    pthread_mutex_init(&gomx_core_components->core_lock, NULL);
+    g_omxcore->comp_cnt = comp_cnt;
   } else {
-    lrc = OMX_ErrorInsufficientResources;
+    rc = OMX_ErrorInsufficientResources;
   }
-  return lrc;
+  ALOGE("%s:%d] Complete %d", __func__, __LINE__, comp_cnt);
+  return rc;
 }
+
 /*==============================================================================
 * Function : OMX_Deinit
 * Parameters: None
@@ -76,95 +93,58 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Init()
 ==============================================================================*/
 OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Deinit()
 {
-  if (gomx_core_components) {
-    gomx_core_components->is_initialized = FALSE;
-    pthread_mutex_destroy(&gomx_core_components->core_lock);
-    free(gomx_core_components);
-    gomx_core_components = NULL;
+  if (g_omxcore) {
+    pthread_mutex_destroy(&g_omxcore->core_lock);
+    free(g_omxcore);
+    g_omxcore = NULL;
   }
-  ALOGE("%s %d: Complete", __func__, __LINE__);
+  ALOGE("%s:%d] Complete", __func__, __LINE__);
   return OMX_ErrorNone;
 }
 
 /*==============================================================================
-* Function : getComponentFromList
+* Function : get_comp_from_list
 * Parameters: componentName
 * Return Value : component_index
 * Description: If the componnt is already present in the list, return the
 * component index. If not return the next index to create the component.
 ==============================================================================*/
-static int getComponentFromList(char *acomponentName){
-  int lindex = -1, i =0;
-
-  if (acomponentName) {
-    for (i=0;i < OMX_COMP_MAX_NUM; i++) {
-      if (gomx_core_components->component[i]){
-        if (!strcmp(gomx_core_components->component[i]->name,acomponentName)) {
-          lindex = i;
-          return lindex;
-        }
-        i++;
-      }
-      else {
-        return i;
-      }
-    }
-  }
-  return lindex;
-}
-
-/*==============================================================================
-* Function : getLibName
-* Parameters: componentName, libName
-* Return Value : library name associated with the component name
-* Description: Get the library name associated with the component name from the
-* component name - library name mapping.
-*============================================================================*/
-static uint8_t getLibName(char *acomponentName, char *alibName)
+static int get_comp_from_list(char *comp_name)
 {
-  uint8_t cnt;
+  int index = -1, i = 0;
 
-  for (cnt=0; cnt < (sizeof(libNameMapping)/sizeof(libNameMapping[0])); cnt++) {
-    if (!strcmp(libNameMapping[cnt].componentName, acomponentName)) {
-      strlcpy(alibName, libNameMapping[cnt].libName, BUFF_SIZE);
+  if (NULL == comp_name)
+    return -1;
+
+  for (i = 0; i < g_omxcore->comp_cnt; i++) {
+    if (!strcmp(g_omxcore->component[i].comp_name, comp_name)) {
+      index = i;
       break;
     }
   }
-  return 1;
+  return index;
 }
+
 /*==============================================================================
-* Function : getLibName
-* Parameters: corecomponent
+* Function : get_free_inst_idx
+* Parameters: p_comp
 * Return Value : The next instance index if available
 * Description: Get the next available index for to store the new instance of the
-* component being created.
+*            component being created.
 *============================================================================*/
-static int getInstanceIndex(omx_core_component *acomponent)
+static int get_free_inst_idx(omx_core_component_t *p_comp)
 {
-  int linstance_index = -1;
-  int i = 0;
+  int idx = -1, i = 0;
 
-  for (i=0; i<OMX_COMP_MAX_INSTANCES; i++) {
-    if (!acomponent->handle[i]) {
-      linstance_index = i;
+  for (i = 0; i < OMX_COMP_MAX_INSTANCES; i++) {
+    if (NULL == p_comp->handle[i]) {
+      idx = i;
+      break;
     }
   }
-  return linstance_index;
+  return idx;
 }
-/*==============================================================================
-* Function : loadComponent
-* Parameters: corecomponent
-* Return Value : The next instance index if available
-* Description: Get the next available index for to store the new instance of the
-* component being created.
-*============================================================================*/
-static void * loadComponent(char *alibName)
-{
-  void *lhandle = NULL;
 
-  lhandle = dlopen(alibName, RTLD_NOW);
-  return lhandle;
-}
 /*==============================================================================
 * Function : OMX_GetHandle
 * Parameters: handle, componentName, appData, callbacks
@@ -177,99 +157,98 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(
   OMX_IN OMX_PTR appData,
   OMX_IN OMX_CALLBACKTYPE* callBacks)
 {
-  int lcomp_index, linstance_index = 0;
-  omx_core_component *core_comp = NULL;
+  OMX_ERRORTYPE rc = OMX_ErrorNone;
+  int comp_idx = 0, inst_idx = 0;
   char libName[BUFF_SIZE] = {0};
-  void *lhandle, *lfnaddress, *lobj_ptr, *lhandle_ptr;
-  OMX_COMPONENTTYPE *lcomp;
+  void *p_obj = NULL;
+  OMX_COMPONENTTYPE *p_comp = NULL;
+  omx_core_component_t *p_core_comp = NULL;
+  OMX_BOOL close_handle = OMX_FALSE;
 
-  getLibName(componentName, libName);
-  if (libName == NULL) {
-     return OMX_ErrorInvalidComponent;
+  comp_idx = get_comp_from_list(componentName);
+  if (comp_idx < 0) {
+    ALOGE("%s:%d] Cannot find the component", __func__, __LINE__);
+    return OMX_ErrorInvalidComponent;
   }
 
-  pthread_mutex_lock(&gomx_core_components->core_lock);
-  if (handle) {
-    *handle = NULL;
-    //Get the component index from the list
-    lcomp_index = getComponentFromList(componentName);
-    if (lcomp_index >= 0) {
-      //If component already present get the instance index
-      if (gomx_core_components->component[lcomp_index]) {
-        linstance_index =
-          getInstanceIndex(gomx_core_components->component[lcomp_index]);
-      }
-        if (linstance_index >= 0) {
-          //Open the library dynamically if its not already open
-          if (!gomx_core_components->component[lcomp_index]) {
-             core_comp = malloc(sizeof(omx_core_component));
-             core_comp->name = componentName;
-             core_comp->lib_handle = loadComponent(libName);
-             if (core_comp->lib_handle) {
-              core_comp->open = TRUE;
-              //Init the component and get component functions
-              core_comp->comp_func_ptr = dlsym(core_comp->lib_handle,
-                "create_component_fns");
-              //Get Instance of the component
-              core_comp->obj_ptr = dlsym(core_comp->lib_handle, "getInstance");
-              } else{
-                ALOGE("%s : Error: Cannot Create Component",__func__);
-                pthread_mutex_unlock(&gomx_core_components->core_lock);
-                return OMX_ErrorNotImplemented;
-              }
-            }
-            if (core_comp->obj_ptr) {
-              //Call the function from the address to create the obj
-              lobj_ptr = (*core_comp->obj_ptr)();
-              ALOGE("%s: get intsance pts is %p", __func__, lobj_ptr);
-              //Get function mapping for the component
-              if (core_comp->comp_func_ptr) {
-                //Call the function from the address to get the func ptrs
-                lcomp = (*core_comp->comp_func_ptr)(lobj_ptr);
-                *handle = core_comp->handle[linstance_index] =
-                   (OMX_HANDLETYPE)lcomp;
-                gomx_core_components->component[lcomp_index] = core_comp;
-
-                ALOGD("%s %d: handle = %p Instanceindex = %d,"
-                  "coreComp = %p lcomp_index %d g_ptr %p", __func__,__LINE__,
-                  core_comp->handle[linstance_index], linstance_index,
-                  gomx_core_components->component[lcomp_index],
-                  lcomp_index, gomx_core_components);
-
-                lcomp->SetCallbacks(lcomp, callBacks, appData);
-              } else {
-                ALOGE("%s:L#%d: Failed to find symbol dlerror=%s\n",
-                  __func__, __LINE__, dlerror());
-                free(core_comp);
-                pthread_mutex_unlock(&gomx_core_components->core_lock);
-                return OMX_ErrorInvalidComponent;
-              }
-            } else {
-               ALOGE("%s:L#%d: Failed to find symbol dlerror=%s\n",
-                __func__, __LINE__, dlerror());
-                free(core_comp);
-                pthread_mutex_unlock(&gomx_core_components->core_lock);
-                return OMX_ErrorInvalidComponent;
-            }
-         } else {
-             ALOGE("%s : Error: Exceeded max number of components",
-               __func__);
-             pthread_mutex_unlock(&gomx_core_components->core_lock);
-             return OMX_ErrorNotImplemented;
-          }
-        } else {
-           ALOGE("%s : Error: Component Not found",__func__);
-           pthread_mutex_unlock(&gomx_core_components->core_lock);
-           return OMX_ErrorNotImplemented;
-        }
-  } else {
-    ALOGE("\n OMX_GetHandle: NULL handle \n");
-    pthread_mutex_unlock(&gomx_core_components->core_lock);
-    return OMX_ErrorBadParameter;;
+  if (NULL == handle) {
+    ALOGE("%s:%d] Error invalid input ", __func__, __LINE__);
+    return OMX_ErrorBadParameter;
   }
-  pthread_mutex_unlock(&gomx_core_components->core_lock);
-  ALOGD("%s:%d] Success", __func__, __LINE__);
+  p_core_comp = &g_omxcore->component[comp_idx];
+
+  pthread_mutex_lock(&g_omxcore->core_lock);
+  *handle = NULL;
+
+  //If component already present get the instance index
+  inst_idx = get_free_inst_idx(p_core_comp);
+  if (inst_idx < 0) {
+    ALOGE("%s:%d] Cannot alloc new instance", __func__, __LINE__);
+    rc = OMX_ErrorInvalidComponent;
+    goto error;
+  }
+
+  if (FALSE == p_core_comp->open) {
+    /* load the library */
+    p_core_comp->lib_handle = dlopen(p_core_comp->lib_name, RTLD_NOW);
+    if (NULL == p_core_comp->lib_handle) {
+      ALOGE("%s:%d] Cannot load the library", __func__, __LINE__);
+      rc = OMX_ErrorInvalidComponent;
+      goto error;
+    }
+
+    p_core_comp->open = TRUE;
+    /* Init the component and get component functions */
+    p_core_comp->create_comp_func = dlsym(p_core_comp->lib_handle,
+      "create_component_fns");
+    p_core_comp->get_instance = dlsym(p_core_comp->lib_handle, "getInstance");
+
+    close_handle = OMX_TRUE;
+    if (!p_core_comp->create_comp_func || !p_core_comp->get_instance) {
+      ALOGE("%s:%d] Cannot maps the symbols", __func__, __LINE__);
+      rc = OMX_ErrorInvalidComponent;
+      goto error;
+    }
+  }
+
+  /* Call the function from the address to create the obj */
+  p_obj = (*p_core_comp->get_instance)();
+  ALOGE("%s:%d] get instance pts is %p", __func__, __LINE__, p_obj);
+  if (NULL == p_obj) {
+    ALOGE("%s:%d] Error cannot create object", __func__, __LINE__);
+    rc = OMX_ErrorInvalidComponent;
+    goto error;
+  }
+
+  /* Call the function from the address to get the func ptrs */
+  p_comp = (*p_core_comp->create_comp_func)(p_obj);
+  if (NULL == p_comp) {
+    ALOGE("%s:%d] Error cannot create component", __func__, __LINE__);
+    rc = OMX_ErrorInvalidComponent;
+    goto error;
+  }
+
+  *handle = p_core_comp->handle[inst_idx] = (OMX_HANDLETYPE)p_comp;
+
+  ALOGD("%s:%d] handle = %x Instanceindex = %d,"
+    "comp_idx %d g_ptr %p", __func__, __LINE__,
+    (int)p_core_comp->handle[inst_idx], inst_idx,
+    comp_idx, g_omxcore);
+
+  p_comp->SetCallbacks(p_comp, callBacks, appData);
+  pthread_mutex_unlock(&g_omxcore->core_lock);
+  ALOGE("%s:%d] Success", __func__, __LINE__);
   return OMX_ErrorNone;
+
+error:
+
+  if (OMX_TRUE == close_handle) {
+    dlclose(p_core_comp->lib_handle);
+    p_core_comp->lib_handle = NULL;
+  }
+  pthread_mutex_unlock(&g_omxcore->core_lock);
+  ALOGE("%s:%d] Error %d", __func__, __LINE__, rc);
+  return rc;
 }
 
 /*==============================================================================
@@ -280,43 +259,39 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(
 * Description: Check if the handle is present in the list and get the component
 * index and instance index for the component handle.
 ==============================================================================*/
-static int getIndexFromHandle(OMX_IN OMX_HANDLETYPE *ahComp, int *acompIndex,
-  int *ainstanceIndex)
+static int get_idx_from_handle(OMX_IN OMX_HANDLETYPE *ahComp, int *aCompIdx,
+  int *aInstIdx)
 {
-  int lcompIndex = -1, lindex = -1;
-  uint8_t lisPresent = FALSE;
-  for (lcompIndex = 0; lcompIndex < OMX_COMP_MAX_NUM; lcompIndex++) {
-    for (lindex = 0; lindex < OMX_COMP_MAX_INSTANCES; lindex++) {
-      if (gomx_core_components->component[lcompIndex]) {
-        if ((OMX_COMPONENTTYPE *)gomx_core_components->
-          component[lcompIndex]->handle[lindex] ==
-          (OMX_COMPONENTTYPE *)ahComp ) {
-          lisPresent = TRUE;
-          *acompIndex = lcompIndex;
-          *ainstanceIndex = lindex;
-        }
+  int i = 0, j = 0;
+  for (i = 0; i < g_omxcore->comp_cnt; i++) {
+    for (j = 0; j < OMX_COMP_MAX_INSTANCES; j++) {
+      if ((OMX_COMPONENTTYPE *)g_omxcore->component[i].handle[j] ==
+        (OMX_COMPONENTTYPE *)ahComp) {
+        ALOGE("%s:%d] comp_idx %d inst_idx %d", __func__, __LINE__, i, j);
+        *aCompIdx = i;
+        *aInstIdx = j;
+        return TRUE;
       }
     }
   }
-  return lisPresent;
+  return FALSE;
 }
 
 /*==============================================================================
-* Function : isCompActive
-* Parameters: aComp
+* Function : is_comp_active
+* Parameters: p_core_comp
 * Return Value : int
 * Description: Check if the component has any active instances
 ==============================================================================*/
-static uint8_t isCompActive(omx_core_component *acomp)
+static uint8_t is_comp_active(omx_core_component_t *p_core_comp)
 {
-  uint8_t lindex = 0;
-  uint8_t lret = FALSE;
-  for (lindex = 0; lindex < OMX_COMP_MAX_INSTANCES; lindex++) {
-    if (acomp->handle[lindex] != NULL) {
+  uint8_t i = 0;
+  for (i = 0; i < OMX_COMP_MAX_INSTANCES; i++) {
+    if (NULL != p_core_comp->handle[i]) {
       return TRUE;
     }
   }
-  return lret;
+  return FALSE;
 }
 
 /*==============================================================================
@@ -328,47 +303,42 @@ static uint8_t isCompActive(omx_core_component *acomp)
 OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(
   OMX_IN OMX_HANDLETYPE hComp)
 {
-  int lret = OMX_ErrorNone, lrc;
-  int lcomponentIndex, lInstanceIndex;
-  OMX_COMPONENTTYPE *lcomp;
+  OMX_ERRORTYPE rc = OMX_ErrorNone;
+  int comp_idx, inst_idx;
+  OMX_COMPONENTTYPE *p_comp = NULL;
+  omx_core_component_t *p_core_comp = NULL;
 
-  ALOGE("%s %d", __func__, __LINE__);
+  ALOGE("%s:%d] ", __func__, __LINE__);
   if (hComp == NULL) {
     return OMX_ErrorBadParameter;
   }
 
-  lcomp = (OMX_COMPONENTTYPE *)hComp;
-
-  if (getIndexFromHandle(hComp, &lcomponentIndex, &lInstanceIndex)) {
-    pthread_mutex_lock(&gomx_core_components->core_lock);
-    //Deinit the component;
-    lret = lcomp->ComponentDeInit(hComp);
-    if (lret == OMX_ErrorNone) {
-      //Remove the handle from the comp structure
-      gomx_core_components->component[lcomponentIndex]->
-        handle[lInstanceIndex] = NULL;
-      if (!isCompActive(gomx_core_components->component[lcomponentIndex])) {
-        lrc = dlclose(gomx_core_components->component[lcomponentIndex]->
-          lib_handle);
-        gomx_core_components->component[lcomponentIndex]->lib_handle = NULL;
-        gomx_core_components->component[lcomponentIndex]->obj_ptr = NULL;
-        gomx_core_components->component[lcomponentIndex]->comp_func_ptr = NULL;
-        gomx_core_components->component[lcomponentIndex]->open = FALSE;
-        free(gomx_core_components->component[lcomponentIndex]);
-        gomx_core_components->component[lcomponentIndex] = NULL;
-        if (lrc) {
-          ALOGE("\n Failed to unload the cmponent");
-        }
-      } else {
-        ALOGE("%s %d:Component is still Active", __func__, __LINE__);
-      }
-    } else {
-      ALOGE("%s : Failed to release the cmponent", __func__);
-    }
-    pthread_mutex_unlock(&gomx_core_components->core_lock);
-  } else {
-    ALOGE("\n Component Instance not found \n");
-    return OMX_ErrorBadParameter;
+  p_comp = (OMX_COMPONENTTYPE *)hComp;
+  if (FALSE == get_idx_from_handle(hComp, &comp_idx, &inst_idx)) {
+    ALOGE("%s:%d] Error invalid component", __func__, __LINE__);
+    return OMX_ErrorInvalidComponent;
   }
-  return lret;
+
+  pthread_mutex_lock(&g_omxcore->core_lock);
+  //Deinit the component;
+  rc = p_comp->ComponentDeInit(hComp);
+  if (rc != OMX_ErrorNone) {
+    /* Remove the handle from the comp structure */
+    ALOGE("%s:%d] Error comp deinit failed", __func__, __LINE__);
+    return OMX_ErrorInvalidComponent;
+  }
+  p_core_comp = &g_omxcore->component[comp_idx];
+  p_core_comp->handle[inst_idx] = NULL;
+  if (!is_comp_active(p_core_comp)) {
+    rc = dlclose(p_core_comp->lib_handle);
+    p_core_comp->lib_handle = NULL;
+    p_core_comp->get_instance = NULL;
+    p_core_comp->create_comp_func = NULL;
+    p_core_comp->open = FALSE;
+  } else {
+    ALOGE("%s:%d] Error Component is still Active", __func__, __LINE__);
+  }
+  pthread_mutex_unlock(&g_omxcore->core_lock);
+  ALOGE("%s:%d] Success", __func__, __LINE__);
+  return rc;
 }

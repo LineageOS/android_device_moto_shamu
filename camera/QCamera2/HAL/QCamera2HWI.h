@@ -230,11 +230,9 @@ private:
                           mm_camera_event_t *evt,
                           void *user_data);
     static void jpegEvtHandle(jpeg_job_status_t status,
-                              uint8_t thumbnailDroppedFlag,
                               uint32_t client_hdl,
                               uint32_t jobId,
-                              uint8_t* out_data,
-                              uint32_t data_size,
+                              mm_jpeg_buf_t *p_buf,
                               void *userdata);
 
     static void *evtNotifyRoutine(void *data);

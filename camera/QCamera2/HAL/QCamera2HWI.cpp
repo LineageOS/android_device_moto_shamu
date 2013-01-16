@@ -1310,24 +1310,21 @@ void QCamera2HardwareInterface::evtHandle(uint32_t /*camera_handle*/,
 }
 
 void QCamera2HardwareInterface::jpegEvtHandle(jpeg_job_status_t status,
-                                              uint8_t thumbnailDroppedFlag,
                                               uint32_t /*client_hdl*/,
                                               uint32_t jobId,
-                                              uint8_t* out_data,
-                                              uint32_t data_size,
+                                              mm_jpeg_buf_t *p_buf,
                                               void *userdata)
 {
     QCamera2HardwareInterface *obj = (QCamera2HardwareInterface *)userdata;
     if (obj) {
         qcamera_jpeg_evt_payload_t *payload =
             (qcamera_jpeg_evt_payload_t *)malloc(sizeof(qcamera_jpeg_evt_payload_t));
-        if (NULL != payload) {
+        if (NULL != payload && (JPEG_JOB_STATUS_DONE == status)) {
             memset(payload, 0, sizeof(qcamera_jpeg_evt_payload_t));
             payload->status = status;
             payload->jobId = jobId;
-            payload->thumbnailDroppedFlag = thumbnailDroppedFlag;
-            payload->out_data = out_data;
-            payload->data_size = data_size;
+            payload->out_data = p_buf->buf_vaddr;
+            payload->data_size = p_buf->buf_size;
             obj->processEvt(QCAMERA_SM_EVT_JPEG_EVT_NOTIFY, payload);
         }
     } else {

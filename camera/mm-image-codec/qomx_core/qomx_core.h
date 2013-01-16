@@ -40,17 +40,27 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #define FALSE 0
 #define OMX_COMP_MAX_INSTANCES 3
 #define OMX_CORE_MAX_ROLES 1
-#define OMX_COMP_MAX_NUM 1
+#define OMX_COMP_MAX_NUM 3
 #define OMX_SPEC_VERSION 0x00000101
 
-typedef void * (*get_Instance)(void);
-typedef void * (*create_component_functions)(OMX_PTR aobj);
+typedef void *(*get_instance_t)(void);
+typedef void *(*create_comp_func_t)(OMX_PTR aobj);
 
+/** comp_info_t: Structure containing the mapping
+*    between the library name and the corresponding .so name
+*    @comp_name: name of the component
+     @lib_name: Name of the .so library
+**/
+typedef struct comp_info_t {
+  char *comp_name;
+  char *lib_name;
+} comp_info_t;
 
-/** _omx_core_component: OMX Component structure
+/** omx_core_component_t: OMX Component structure
 *    @handle: array of number of instances of the component
 *    @roles: array of roles played by the component
-*    @name: Name of the component
+*    @comp_info: Component information such as libname,
+*              component name
 *    @open: Is the component active
 *    @lib_handle: Library handle after dlopen
 *    @obj_ptr: Function ptr to get the instance of the component
@@ -58,41 +68,29 @@ typedef void * (*create_component_functions)(OMX_PTR aobj);
 *     OMX handle to its respective function implementation in
 *     the component
 **/
-typedef struct _omx_core_component
-{
+typedef struct _omx_core_component_t {
   OMX_HANDLETYPE *handle[OMX_COMP_MAX_INSTANCES];  //Instance handle
   char *roles[OMX_CORE_MAX_ROLES];  //Roles played by the component
   char *name;  //Component Name
   uint8_t open;  //Is component active
   void *lib_handle;
-  get_Instance obj_ptr;
-  create_component_functions comp_func_ptr;
-}omx_core_component;
+  get_instance_t get_instance;
+  create_comp_func_t create_comp_func;
+  char *comp_name;
+  char *lib_name;
+} omx_core_component_t;
 
-
-/** _omx_core: Global structure that contains all the active
+/** omx_core_t: Global structure that contains all the active
 *   components
 *    @component: array of active components
 *    @is_initialized: Flag to check if the OMX core has been
 *    initialized
 *    @core_lock: Lock to syncronize the omx core operations
 **/
-typedef struct _omx_core
-{
-  omx_core_component *component[OMX_COMP_MAX_NUM];  //Array of pointers to components
-  uint8_t is_initialized;  //Is the component initiaziled
+typedef struct _omx_core_t {
+  omx_core_component_t component[OMX_COMP_MAX_NUM];  //Array of pointers to components
+  int comp_cnt;
   pthread_mutex_t core_lock;
-}omx_core;
-
-
-/** _component_libname_mapping: Structure containing the mapping
-*    between the library name and the corresponding .so name
-*    @componenName: name of the component
-     @libName: Name of the .so library
-**/
-typedef struct _component_libname_mapping{
-  char * componentName;
-  char * libName;
-}component_libname_mapping;
+} omx_core_t;
 
 #endif

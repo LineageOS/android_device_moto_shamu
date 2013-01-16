@@ -31,6 +31,7 @@
 #include "mm_qcamera_app.h"
 
 /* This callback is received once the complete JPEG encoding is done */
+#if 0
 static void jpeg_encode_cb(jpeg_job_status_t status,
                            uint8_t thumbnailDroppedFlag,
                            uint32_t client_hdl,
@@ -74,9 +75,14 @@ static void jpeg_encode_cb(jpeg_job_status_t status,
     /* signal snapshot is done */
     mm_camera_app_done();
 }
+#endif
 
 int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_frame)
 {
+    (void)test_obj;
+    (void)recvd_frame;
+    return 0;
+#if 0
     cam_capability_t *cam_cap = (cam_capability_t *)(test_obj->cap_buf.buf.buffer);
 
     int rc = -MM_CAMERA_E_GENERAL;
@@ -218,6 +224,7 @@ int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_fram
     }
 
     return rc;
+#endif
 }
 
 static void mm_app_snapshot_notify_cb(mm_camera_super_buf_t *bufs,
