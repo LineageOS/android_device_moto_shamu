@@ -244,7 +244,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
     if (encode_parm.quality <= 0) {
         encode_parm.quality = 85;
     }
-#if 0
+
     // get exif data
     if (m_pJpegExifObj != NULL) {
         delete m_pJpegExifObj;
@@ -255,7 +255,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
         encode_parm.exif_info.exif_data = m_pJpegExifObj->getEntries();
         encode_parm.exif_info.numOfEntries = m_pJpegExifObj->getNumOfEntries();
     }
-#endif
+
     cam_frame_len_offset_t offset;
     memset(&offset, 0, sizeof(cam_frame_len_offset_t));
     main_stream->getFrameOffset(offset);
@@ -1010,19 +1010,18 @@ void *QCameraPostProcessor::dataNotifyRoutine(void *data)
                     if (NULL != app_cb) {
                         ALOGE("%s: data notify cb", __func__);
                         if (pme->m_parent->msgTypeEnabled(app_cb->msg_type)) {
-                            numOfSnapshotRcvd++;
-                            if (numOfSnapshotExpected > 0 &&
-                                numOfSnapshotExpected == numOfSnapshotRcvd) {
-                                // notify HWI that snapshot is done
-                                pme->m_parent->processEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE, NULL);
-                            }
-
                             if (pme->m_parent->mDataCb) {
                                 pme->m_parent->mDataCb(app_cb->msg_type,
                                                        app_cb->data,
                                                        app_cb->index,
                                                        app_cb->metadata,
                                                        pme->m_parent->mCallbackCookie);
+                            }
+                            numOfSnapshotRcvd++;
+                            if (numOfSnapshotExpected > 0 &&
+                                numOfSnapshotExpected == numOfSnapshotRcvd) {
+                                // notify HWI that snapshot is done
+                                pme->m_parent->processEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE, NULL);
                             }
                         }
                         // free app_cb

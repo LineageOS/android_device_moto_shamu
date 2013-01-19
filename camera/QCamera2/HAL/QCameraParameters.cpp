@@ -935,8 +935,8 @@ int32_t QCameraParameters::setPreviewFpsRange(const QCameraParameters& params)
     }
     for(int i = 0; i < m_pCapability->fps_ranges_tbl_cnt; i++) {
         // if the value is in the supported list
-        if(minFps >= m_pCapability->fps_ranges_tbl[i].min_fps &&
-           maxFps <= m_pCapability->fps_ranges_tbl[i].max_fps) {
+        if(minFps >= m_pCapability->fps_ranges_tbl[i].min_fps * 1000 &&
+           maxFps <= m_pCapability->fps_ranges_tbl[i].max_fps * 1000) {
             found = true;
             ALOGD("%s: FPS i=%d : minFps = %d, maxFps = %d ", __func__, i, minFps, maxFps);
             setPreviewFpsRange(minFps, maxFps);
@@ -950,6 +950,16 @@ int32_t QCameraParameters::setPreviewFpsRange(const QCameraParameters& params)
 end:
     ALOGV("%s: X", __func__);
     return rc;
+}
+
+int32_t QCameraParameters::setPreviewFrameRate(const QCameraParameters& params)
+{
+    ALOGV("%s: E",__func__);
+    uint16_t fps = (uint16_t)params.getPreviewFrameRate();
+    ALOGV("%s: requested preview frame rate is %d", __func__, fps);
+    CameraParameters::setPreviewFrameRate(fps);
+    ALOGV("%s: X",__func__);
+    return NO_ERROR;
 }
 
 int32_t QCameraParameters::setEffect(const QCameraParameters& params)
@@ -1609,6 +1619,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setRecordingHint(params)))                final_rc = rc;
 
     if ((rc = setPreviewFpsRange(params)))              final_rc = rc;
+    if ((rc = setPreviewFrameRate(params)))             final_rc = rc;
     if ((rc = setAutoExposure(params)))                 final_rc = rc;
     if ((rc = setEffect(params)))                       final_rc = rc;
     if ((rc = setBrightness(params)))                   final_rc = rc;
@@ -1783,7 +1794,8 @@ int32_t QCameraParameters::initDefaultParameters()
         String8 fpsValues = createFpsString(m_pCapability->fps_ranges_tbl,
                                             m_pCapability->fps_ranges_tbl_cnt);
         set(KEY_SUPPORTED_PREVIEW_FRAME_RATES, fpsValues.string());
-        CameraParameters::setPreviewFrameRate((int)(m_pCapability->fps_ranges_tbl[0].max_fps));
+        CameraParameters::setPreviewFrameRate(
+           (int)(m_pCapability->fps_ranges_tbl[0].max_fps * 1000));
     } else {
         ALOGE("%s: supported fps ranges cnt is 0!!!", __func__);
     }
@@ -2144,7 +2156,7 @@ int32_t QCameraParameters::setPreviewFpsRange(int minFPS, int maxFPS)
     snprintf(str, sizeof(str), "%d,%d", minFPS, maxFPS);
     ALOGD("%s: Setting preview fps range %s", __func__, str);
     updateParamEntry(KEY_PREVIEW_FPS_RANGE, str);
-    cam_fps_range_t fps_range = {minFPS, maxFPS};
+    cam_fps_range_t fps_range = {minFPS / 1000.0, maxFPS / 1000.0};
     return AddSetParmEntryToBatch(m_pParamBuf,
                                   CAM_INTF_PARM_FPS_RANGE,
                                   sizeof(cam_fps_range_t),
@@ -3282,6 +3294,33 @@ int32_t QCameraParameters::setFaceDetection(bool enabled)
 
     m_bFaceDetectionEnabled = enabled;
     ALOGD(" FaceDetection -> %s", m_bFaceDetectionEnabled ? "Enabled" : "Disabled");
+
+    return rc;
+}
+
+int32_t QCameraParameters::setBundleInfo(cam_bundle_config_t &bundle_info)
+{
+    int32_t rc = NO_ERROR;
+
+    if(initBatchUpdate(m_pParamBuf) < 0 ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return BAD_TYPE;
+    }
+
+    rc = AddSetParmEntryToBatch(m_pParamBuf,
+                                CAM_INTF_PARM_SET_BUNDLE,
+                                sizeof(cam_bundle_config_t),
+                                &bundle_info);
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to update table", __func__);
+        return rc;
+    }
+
+    rc = commitSetBatch();
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to set bundle info parm", __func__);
+        return rc;
+    }
 
     return rc;
 }

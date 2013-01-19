@@ -1958,7 +1958,7 @@ int32_t QCamera2HardwareInterface::startChannel(qcamera_ch_type_enum_t ch_type)
 {
     int32_t rc = UNKNOWN_ERROR;
     if (m_channels[ch_type] != NULL) {
-        rc = m_channels[ch_type]->start();
+        rc = m_channels[ch_type]->start(mParameters);
     }
 
     return rc;

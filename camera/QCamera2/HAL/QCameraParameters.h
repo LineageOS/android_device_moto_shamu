@@ -37,19 +37,6 @@ using namespace android;
 
 namespace qcamera {
 
-struct FPSRange{
-    int minFPS;
-    int maxFPS;
-    FPSRange(){
-        minFPS = 0;
-        maxFPS = 0;
-    };
-    FPSRange(int min,int max){
-        minFPS = min;
-        maxFPS = max;
-    };
-};
-
 //EXIF globals
 static const char ExifAsciiPrefix[] = { 0x41, 0x53, 0x43, 0x49, 0x49, 0x0, 0x0, 0x0 };          // "ASCII\0\0\0"
 static const char ExifUndefinedPrefix[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };   // "\0\0\0\0\0\0\0\0"
@@ -381,6 +368,7 @@ public:
     bool isFaceDetectionEnabled() {return m_bFaceDetectionEnabled;};
     int32_t setHistogram(bool enabled);
     int32_t setFaceDetection(bool enabled);
+    int32_t setBundleInfo(cam_bundle_config_t &bundle_info);
     int getEnabledFileDumpMask() {return m_nDumpFrameEnabled;};
 
     cam_focus_mode_type getFocusMode() const {return mFocusMode;};
@@ -396,6 +384,7 @@ private:
     int32_t setJpegThumbnailSize(const QCameraParameters& );
     int32_t setJpegQuality(const QCameraParameters& );
     int32_t setPreviewFpsRange(const QCameraParameters& );
+    int32_t setPreviewFrameRate(const QCameraParameters& );
     int32_t setAutoExposure(const QCameraParameters& );
     int32_t setEffect(const QCameraParameters& );
     int32_t setBrightness(const QCameraParameters& );

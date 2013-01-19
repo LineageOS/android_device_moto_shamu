@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -235,6 +235,7 @@ typedef enum {
     MM_CHANNEL_EVT_ADD_STREAM,
     MM_CHANNEL_EVT_DEL_STREAM,
     MM_CHANNEL_EVT_CONFIG_STREAM,
+    MM_CHANNEL_EVT_GET_BUNDLE_INFO,
     MM_CHANNEL_EVT_START,
     MM_CHANNEL_EVT_STOP,
     MM_CHANNEL_EVT_PAUSE,
@@ -430,6 +431,9 @@ extern uint32_t mm_camera_add_channel(mm_camera_obj_t *my_obj,
                                       void *userdata);
 extern int32_t mm_camera_del_channel(mm_camera_obj_t *my_obj,
                                      uint32_t ch_id);
+extern int32_t mm_camera_get_bundle_info(mm_camera_obj_t *my_obj,
+                                         uint32_t ch_id,
+                                         cam_bundle_config_t *bundle_info);
 extern uint32_t mm_camera_add_stream(mm_camera_obj_t *my_obj,
                                      uint32_t ch_id);
 extern int32_t mm_camera_del_stream(mm_camera_obj_t *my_obj,

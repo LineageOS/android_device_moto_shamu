@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -262,6 +262,7 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_RECORDING_HINT,           int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_DIS_ENABLE,               int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_HDR,                      cam_exp_bracketing_t,        1);
+    INCLUDE(CAM_INTF_PARM_SET_BUNDLE,               cam_bundle_config_t,         1);
 } parm_type_t;
 
 /****************************DO NOT MODIFY BELOW THIS LINE!!!!*********************/

@@ -90,13 +90,16 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
 
 QCameraStream::~QCameraStream()
 {
-    int rc = mCamOps->unmap_stream_buf(mCamHandle,
-                mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO, 0, -1);
-    if (rc < 0) {
-        ALOGE("Failed to map stream info buffer");
+    if (mStreamInfoBuf != NULL) {
+        int rc = mCamOps->unmap_stream_buf(mCamHandle,
+                    mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO, 0, -1);
+        if (rc < 0) {
+            ALOGE("Failed to map stream info buffer");
+        }
+        mStreamInfoBuf->deallocate();
+        delete mStreamInfoBuf;
+        mStreamInfoBuf = NULL;
     }
-    mStreamInfoBuf->deallocate();
-    delete mStreamInfoBuf;
 
     // delete stream
     if (mHandle > 0) {
@@ -159,8 +162,10 @@ err3:
 err2:
     mStreamInfoBuf->deallocate();
     delete mStreamInfoBuf;
+    mStreamInfoBuf = NULL;
 err1:
     mCamOps->delete_stream(mCamHandle, mChannelHandle, mHandle);
+    mHandle = 0;
 done:
     return rc;
 }
@@ -309,6 +314,7 @@ int32_t QCameraStream::bufDone(const void *opaque, bool isMetaData)
 
     int index = mStreamBufs->getMatchBufIndex(opaque, isMetaData);
     if (index == -1 || index >= mNumBufs) {
+        ALOGE("%s: Cannot find buf for opaque data = %p", __func__, opaque);
         return BAD_INDEX;
     }
 

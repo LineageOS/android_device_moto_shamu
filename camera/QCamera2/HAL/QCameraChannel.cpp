@@ -31,6 +31,7 @@
 
 #include <utils/Log.h>
 #include <utils/Errors.h>
+#include "QCameraParameters.h"
 #include "QCameraChannel.h"
 
 using namespace android;
@@ -118,16 +119,41 @@ int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
     return rc;
 }
 
-int32_t QCameraChannel::start()
+int32_t QCameraChannel::start(QCameraParameters &param)
 {
     int32_t rc = NO_ERROR;
-    for (int i = 0; i < m_numStreams; i++) {
-        if (mStreams[i] != NULL) {
-            rc = mStreams[i]->start();
+
+    if (m_numStreams > 1) {
+        // there is more than one stream in the channel
+        // we need to notify mctl that all streams in this channel need to be bundled
+        cam_bundle_config_t bundleInfo;
+        memset(&bundleInfo, 0, sizeof(bundleInfo));
+        rc = m_camOps->get_bundle_info(m_camHandle, m_handle, &bundleInfo);
+        if (rc != NO_ERROR || m_numStreams != bundleInfo.num_of_streams) {
+            ALOGE("%s: num of streams not matching (%d, %d)",
+                  __func__, m_numStreams, bundleInfo.num_of_streams);
+            return rc;
+        }
+        rc = param.setBundleInfo(bundleInfo);
+        if (rc != NO_ERROR) {
+            return rc;
         }
     }
 
+    for (int i = 0; i < m_numStreams; i++) {
+        if (mStreams[i] != NULL) {
+            mStreams[i]->start();
+        }
+    }
     rc = m_camOps->start_channel(m_camHandle, m_handle);
+
+    if (rc != NO_ERROR) {
+        for (int i = 0; i < m_numStreams; i++) {
+            if (mStreams[i] != NULL) {
+                mStreams[i]->stop();
+            }
+        }
+    }
 
     return rc;
 }
