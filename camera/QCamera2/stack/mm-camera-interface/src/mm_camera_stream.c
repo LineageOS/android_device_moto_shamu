@@ -1083,7 +1083,7 @@ int32_t mm_stream_set_ext_mode(mm_stream_t * my_obj)
          __func__, my_obj->my_hdl, my_obj->fd, my_obj->state);
 
     memset(&s_parm, 0, sizeof(s_parm));
-    s_parm.type =  V4L2_BUF_TYPE_PRIVATE;
+    s_parm.type =  V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 
     rc = ioctl(my_obj->fd, VIDIOC_S_PARM, &s_parm);
     CDBG("%s:stream fd=%d, rc=%d, extended_mode=%d\n",
@@ -2324,7 +2324,7 @@ int32_t mm_stream_set_fmt(mm_stream_t *my_obj)
 
     memset(&fmt, 0, sizeof(fmt));
     memset(&msm_fmt, 0, sizeof(msm_fmt));
-    fmt.type = V4L2_BUF_TYPE_PRIVATE;
+    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     msm_fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     msm_fmt.width = my_obj->stream_info->dim.width;
     msm_fmt.height = my_obj->stream_info->dim.height;
