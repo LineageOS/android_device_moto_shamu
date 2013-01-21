@@ -120,7 +120,8 @@ private:
     mm_jpeg_color_format getColorfmtFromImgFmt(cam_format_t img_fmt);
     mm_jpeg_format_t getJpegImgTypeFromImgFmt(cam_format_t img_fmt);
     int32_t getJpegEncodingConfig(mm_jpeg_encode_params_t& encode_parm,
-                                  QCameraStream *main_stream);
+                                  QCameraStream *main_stream,
+                                  QCameraStream *thumb_stream);
     int32_t encodeData(mm_camera_super_buf_t *recvd_frame,
                        qcamera_jpeg_data_t *jpeg_job_data,
                        uint8_t &needNewSess);

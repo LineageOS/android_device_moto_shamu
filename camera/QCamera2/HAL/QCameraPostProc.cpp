@@ -225,7 +225,8 @@ int32_t QCameraPostProcessor::stop()
  *              none-zero failure code
  *==========================================================================*/
 int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& encode_parm,
-                                                    QCameraStream *main_stream)
+                                                    QCameraStream *main_stream,
+                                                    QCameraStream *thumb_stream)
 {
     ALOGV("%s : E", __func__);
     int32_t ret = NO_ERROR;
@@ -264,7 +265,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
     // src buf config
     QCameraMemory *pStreamMem = main_stream->getStreamBufs();
     if (pStreamMem == NULL) {
-        ALOGE("%s: cannot get stream bufs from stream", __func__);
+        ALOGE("%s: cannot get stream bufs from main stream", __func__);
         ret = BAD_VALUE;
         goto on_error;
     }
@@ -278,6 +279,28 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
             encode_parm.src_main_buf[i].fd = pStreamMem->getFd(0);
             encode_parm.src_main_buf[i].format = MM_JPEG_FMT_YUV;
             encode_parm.src_main_buf[i].offset = offset;
+        }
+    }
+
+    if (thumb_stream != NULL) {
+        pStreamMem = thumb_stream->getStreamBufs();
+        if (pStreamMem == NULL) {
+            ALOGE("%s: cannot get stream bufs from thumb stream", __func__);
+            ret = BAD_VALUE;
+            goto on_error;
+        }
+        memset(&offset, 0, sizeof(cam_frame_len_offset_t));
+        thumb_stream->getFrameOffset(offset);
+        for (int i = 0; i < pStreamMem->getCnt(); i++) {
+            camera_memory_t *stream_mem = pStreamMem->getMemory(i, false);
+            if (stream_mem != NULL) {
+                encode_parm.src_thumb_buf[i].index = i;
+                encode_parm.src_thumb_buf[i].buf_size = stream_mem->size;
+                encode_parm.src_thumb_buf[i].buf_vaddr = (uint8_t *)stream_mem->data;
+                encode_parm.src_thumb_buf[i].fd = pStreamMem->getFd(0);
+                encode_parm.src_thumb_buf[i].format = MM_JPEG_FMT_YUV;
+                encode_parm.src_thumb_buf[i].offset = offset;
+            }
         }
     }
 
@@ -873,6 +896,8 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
     uint32_t jobId = 0;
     QCameraStream *main_stream = NULL;
     mm_camera_buf_def_t *main_frame = NULL;
+    QCameraStream *thumb_stream = NULL;
+    mm_camera_buf_def_t *thumb_frame = NULL;
 
     // find channel
     QCameraChannel *pChannel = m_parent->getChannelByHandle(recvd_frame->ch_id);
@@ -891,7 +916,10 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
                 pStream->isTypeOf(CAM_STREAM_TYPE_OFFLINE_PROC)) {
                 main_stream = pStream;
                 main_frame = recvd_frame->bufs[i];
-                break;
+            } else if (pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
+                       pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW)) {
+                thumb_stream = pStream;
+                thumb_frame = recvd_frame->bufs[i];
             }
         }
     }
@@ -937,7 +965,7 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
         // create jpeg encoding session
         mm_jpeg_encode_params_t encodeParam;
         memset(&encodeParam, 0, sizeof(mm_jpeg_encode_params_t));
-        getJpegEncodingConfig(encodeParam, main_stream);
+        getJpegEncodingConfig(encodeParam, main_stream, thumb_stream);
         ret = mJpegHandle.create_session(mJpegClientHandle, &encodeParam, &mJpegSessionId);
         if (ret != NO_ERROR) {
             ALOGE("%s: error creating a new jpeg encoding session", __func__);

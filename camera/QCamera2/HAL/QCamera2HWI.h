@@ -245,7 +245,8 @@ private:
 
     // functions for different data notify cb
     static void zsl_channel_cb(mm_camera_super_buf_t *recvd_frame, void *userdata);
-
+    static void capture_channel_cb_routine(mm_camera_super_buf_t *recvd_frame,
+                                           void *userdata);
     static void nodisplay_preview_stream_cb_routine(mm_camera_super_buf_t *frame,
                                                     QCameraStream *stream,
                                                     void *userdata);

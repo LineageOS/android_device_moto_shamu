@@ -2697,9 +2697,12 @@ int32_t QCamera2HardwareInterface::addCaptureChannel()
     }
 
     // Capture channel, only need snapshot and postview streams start together
-    rc = pChannel->init(NULL,
-                        NULL,
-                        NULL);
+    mm_camera_channel_attr_t attr;
+    memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
+    attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
+    rc = pChannel->init(&attr,
+                        capture_channel_cb_routine,
+                        this);
     if (rc != NO_ERROR) {
         ALOGE("%s: init capture channel failed, ret = %d", __func__, rc);
         delete pChannel;
@@ -2720,7 +2723,7 @@ int32_t QCamera2HardwareInterface::addCaptureChannel()
 #endif
     rc = pChannel->addStream(*this, CAM_STREAM_TYPE_SNAPSHOT,
                              &gCamCapability[mCameraId]->padding_info,
-                             snapshot_stream_cb_routine, this);
+                             NULL, this);
     if (rc != NO_ERROR) {
         ALOGE("%s: add snapshot stream failed, ret = %d", __func__, rc);
         delete pChannel;
