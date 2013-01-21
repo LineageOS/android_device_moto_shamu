@@ -41,30 +41,92 @@ namespace qcamera {
 
 QCamera2Factory gQCamera2Factory;
 
+/*===========================================================================
+ * FUNCTION   : QCamera2Factory
+ *
+ * DESCRIPTION: default constructor of QCamera2Factory
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCamera2Factory::QCamera2Factory()
 {
     mNumOfCameras = get_num_of_cameras();
 }
 
+/*===========================================================================
+ * FUNCTION   : ~QCamera2Factory
+ *
+ * DESCRIPTION: deconstructor of QCamera2Factory
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCamera2Factory::~QCamera2Factory()
 {
 }
 
+/*===========================================================================
+ * FUNCTION   : get_number_of_cameras
+ *
+ * DESCRIPTION: static function to query number of cameras detected
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : number of cameras detected
+ *==========================================================================*/
 int QCamera2Factory::get_number_of_cameras()
 {
     return gQCamera2Factory.getNumberOfCameras();
 }
 
+/*===========================================================================
+ * FUNCTION   : get_camera_info
+ *
+ * DESCRIPTION: static function to query camera information with its ID
+ *
+ * PARAMETERS :
+ *   @camera_id : camera ID
+ *   @info      : ptr to camera info struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2Factory::get_camera_info(int camera_id, struct camera_info *info)
 {
     return gQCamera2Factory.getCameraInfo(camera_id, info);
 }
 
+/*===========================================================================
+ * FUNCTION   : getNumberOfCameras
+ *
+ * DESCRIPTION: query number of cameras detected
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : number of cameras detected
+ *==========================================================================*/
 int QCamera2Factory::getNumberOfCameras()
 {
     return mNumOfCameras;
 }
 
+/*===========================================================================
+ * FUNCTION   : getCameraInfo
+ *
+ * DESCRIPTION: query camera information with its ID
+ *
+ * PARAMETERS :
+ *   @camera_id : camera ID
+ *   @info      : ptr to camera info struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2Factory::getCameraInfo(int camera_id, struct camera_info *info)
 {
     int rc;
@@ -79,6 +141,19 @@ int QCamera2Factory::getCameraInfo(int camera_id, struct camera_info *info)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : cameraDeviceOpen
+ *
+ * DESCRIPTION: open a camera device with its ID
+ *
+ * PARAMETERS :
+ *   @camera_id : camera ID
+ *   @hw_device : ptr to struct storing camera hardware device info
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2Factory::cameraDeviceOpen(int camera_id,
                     struct hw_device_t **hw_device)
 {
@@ -98,6 +173,19 @@ int QCamera2Factory::cameraDeviceOpen(int camera_id,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : camera_device_open
+ *
+ * DESCRIPTION: static function to open a camera device by its ID
+ *
+ * PARAMETERS :
+ *   @camera_id : camera ID
+ *   @hw_device : ptr to struct storing camera hardware device info
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2Factory::camera_device_open(
     const struct hw_module_t *module, const char *id,
     struct hw_device_t **hw_device)

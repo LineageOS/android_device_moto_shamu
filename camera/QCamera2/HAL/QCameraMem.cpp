@@ -48,6 +48,15 @@ namespace qcamera {
 
 // QCaemra2Memory base class
 
+/*===========================================================================
+ * FUNCTION   : QCameraMemory
+ *
+ * DESCRIPTION: default constructor of QCameraMemory
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraMemory::QCameraMemory()
 {
     mBufferCount = 0;
@@ -59,10 +68,33 @@ QCameraMemory::QCameraMemory()
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : ~QCameraMemory
+ *
+ * DESCRIPTION: deconstructor of QCameraMemory
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraMemory::~QCameraMemory()
 {
 }
 
+/*===========================================================================
+ * FUNCTION   : cacheOpsInternal
+ *
+ * DESCRIPTION: ion related memory cache operations
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer
+ *   @cmd     : cache ops command
+ *   @vaddr   : ptr to the virtual address
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraMemory::cacheOpsInternal(int index, unsigned int cmd, void *vaddr)
 {
     struct ion_flush_data cache_inv_data;
@@ -94,6 +126,16 @@ int QCameraMemory::cacheOpsInternal(int index, unsigned int cmd, void *vaddr)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : getFd
+ *
+ * DESCRIPTION: return file descriptor of the indexed buffer
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer
+ *
+ * RETURN     : file descriptor
+ *==========================================================================*/
 int QCameraMemory::getFd(int index) const
 {
     if (index >= mBufferCount)
@@ -102,6 +144,16 @@ int QCameraMemory::getFd(int index) const
     return mMemInfo[index].fd;
 }
 
+/*===========================================================================
+ * FUNCTION   : getSize
+ *
+ * DESCRIPTION: return buffer size of the indexed buffer
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer
+ *
+ * RETURN     : buffer size
+ *==========================================================================*/
 int QCameraMemory::getSize(int index) const
 {
     if (index >= mBufferCount)
@@ -110,11 +162,32 @@ int QCameraMemory::getSize(int index) const
     return (int)mMemInfo[index].size;
 }
 
+/*===========================================================================
+ * FUNCTION   : getCnt
+ *
+ * DESCRIPTION: query number of buffers allocated
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : number of buffers allocated
+ *==========================================================================*/
 int QCameraMemory::getCnt() const
 {
     return mBufferCount;
 }
 
+/*===========================================================================
+ * FUNCTION   : getBufDef
+ *
+ * DESCRIPTION: query detailed buffer information
+ *
+ * PARAMETERS :
+ *   @offset  : [input] frame buffer offset
+ *   @bufDef  : [output] reference to struct to store buffer definition
+ *   @index   : [input] index of the buffer
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraMemory::getBufDef(const cam_frame_len_offset_t &offset,
         mm_camera_buf_def_t &bufDef, int index) const
 {
@@ -144,6 +217,20 @@ void QCameraMemory::getBufDef(const cam_frame_len_offset_t &offset,
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : alloc
+ *
+ * DESCRIPTION: allocate requested number of buffers of certain size
+ *
+ * PARAMETERS :
+ *   @count   : number of buffers to be allocated
+ *   @size    : lenght of the buffer to be allocated
+ *   @heap_id : heap id to indicate where the buffers will be allocated from
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraMemory::alloc(int count, int size, int heap_id)
 {
     int rc = OK;
@@ -168,12 +255,35 @@ int QCameraMemory::alloc(int count, int size, int heap_id)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : dealloc
+ *
+ * DESCRIPTION: deallocate buffers
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraMemory::dealloc()
 {
     for (int i = 0; i < mBufferCount; i++)
         deallocOneBuffer(mMemInfo[i]);
 }
 
+/*===========================================================================
+ * FUNCTION   : allocOneBuffer
+ *
+ * DESCRIPTION: impl of allocating one buffers of certain size
+ *
+ * PARAMETERS :
+ *   @memInfo : [output] reference to struct to store additional memory allocation info
+ *   @heap    : [input] heap id to indicate where the buffers will be allocated from
+ *   @size    : [input] lenght of the buffer to be allocated
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraMemory::allocOneBuffer(QCameraMemInfo &memInfo, int heap_id, int size)
 {
     int rc = OK;
@@ -225,6 +335,16 @@ ION_OPEN_FAILED:
     return NO_MEMORY;
 }
 
+/*===========================================================================
+ * FUNCTION   : deallocOneBuffer
+ *
+ * DESCRIPTION: impl of deallocating one buffers
+ *
+ * PARAMETERS :
+ *   @memInfo : reference to struct that stores additional memory allocation info
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraMemory::deallocOneBuffer(QCameraMemInfo &memInfo)
 {
     struct ion_handle_data handle_data;
@@ -245,7 +365,15 @@ void QCameraMemory::deallocOneBuffer(QCameraMemInfo &memInfo)
     memInfo.size = 0;
 }
 
-// QCameraHeapMemory for ion memory used internally in HAL.
+/*===========================================================================
+ * FUNCTION   : QCameraHeapMemory
+ *
+ * DESCRIPTION: constructor of QCameraHeapMemory for ion memory used internally in HAL
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 QCameraHeapMemory::QCameraHeapMemory()
     : QCameraMemory()
 {
@@ -253,10 +381,29 @@ QCameraHeapMemory::QCameraHeapMemory()
         mPtr[i] = NULL;
 }
 
+/*===========================================================================
+ * FUNCTION   : ~QCameraHeapMemory
+ *
+ * DESCRIPTION: deconstructor of QCameraHeapMemory
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 QCameraHeapMemory::~QCameraHeapMemory()
 {
 }
 
+/*===========================================================================
+ * FUNCTION   : getPtr
+ *
+ * DESCRIPTION: return buffer pointer
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer
+ *
+ * RETURN     : buffer ptr
+ *==========================================================================*/
 void *QCameraHeapMemory::getPtr(int index) const
 {
     if (index >= mBufferCount) {
@@ -266,6 +413,19 @@ void *QCameraHeapMemory::getPtr(int index) const
     return mPtr[index];
 }
 
+/*===========================================================================
+ * FUNCTION   : allocate
+ *
+ * DESCRIPTION: allocate requested number of buffers of certain size
+ *
+ * PARAMETERS :
+ *   @count   : number of buffers to be allocated
+ *   @size    : lenght of the buffer to be allocated
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraHeapMemory::allocate(int count, int size)
 {
     int heap_mask = (0x1 << ION_CP_MM_HEAP_ID | 0x1 << ION_IOMMU_HEAP_ID);
@@ -293,6 +453,15 @@ int QCameraHeapMemory::allocate(int count, int size)
     return OK;
 }
 
+/*===========================================================================
+ * FUNCTION   : deallocate
+ *
+ * DESCRIPTION: deallocate buffers
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraHeapMemory::deallocate()
 {
     for (int i = 0; i < mBufferCount; i++) {
@@ -303,6 +472,19 @@ void QCameraHeapMemory::deallocate()
     mBufferCount = 0;
 }
 
+/*===========================================================================
+ * FUNCTION   : cacheOps
+ *
+ * DESCRIPTION: ion related memory cache operations
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer
+ *   @cmd     : cache ops command
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraHeapMemory::cacheOps(int index, unsigned int cmd)
 {
     if (index >= mBufferCount)
@@ -310,17 +492,53 @@ int QCameraHeapMemory::cacheOps(int index, unsigned int cmd)
     return cacheOpsInternal(index, cmd, mPtr[index]);
 }
 
+/*===========================================================================
+ * FUNCTION   : getRegFlags
+ *
+ * DESCRIPTION: query initial reg flags
+ *
+ * PARAMETERS :
+ *   @regFlags: initial reg flags of the allocated buffers
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraHeapMemory::getRegFlags(uint8_t * /*regFlags*/) const
 {
     return INVALID_OPERATION;
 }
 
+/*===========================================================================
+ * FUNCTION   : getMemory
+ *
+ * DESCRIPTION: get camera memory
+ *
+ * PARAMETERS :
+ *   @index   : buffer index
+ *   @metadata: flag if it's metadata
+ *
+ * RETURN     : camera memory ptr
+ *              NULL if not supported or failed
+ *==========================================================================*/
 camera_memory_t *QCameraHeapMemory::getMemory(
                 int /*index*/, bool /*metadata*/) const
 {
     return NULL;
 }
 
+/*===========================================================================
+ * FUNCTION   : getMatchBufIndex
+ *
+ * DESCRIPTION: query buffer index by opaque ptr
+ *
+ * PARAMETERS :
+ *   @opaque  : opaque ptr
+ *   @metadata: flag if it's metadata
+ *
+ * RETURN     : buffer index if match found,
+ *              -1 if failed
+ *==========================================================================*/
 int QCameraHeapMemory::getMatchBufIndex(const void *opaque,
                                         bool metadata) const
 {
@@ -337,9 +555,17 @@ int QCameraHeapMemory::getMatchBufIndex(const void *opaque,
     return index;
 }
 
-
-// QCameraStreamMemory for ION memory allocated directly from /dev/ion
-// and shared with framework
+/*===========================================================================
+ * FUNCTION   : QCameraStreamMemory
+ *
+ * DESCRIPTION: constructor of QCameraStreamMemory
+ *              ION memory allocated directly from /dev/ion and shared with framework
+ *
+ * PARAMETERS :
+ *   @getMemory : camera memory request ops table
+ *
+ * RETURN     : none
+ *==========================================================================*/
 QCameraStreamMemory::QCameraStreamMemory(camera_request_memory getMemory) :
         mGetMemory(getMemory)
 {
@@ -347,10 +573,32 @@ QCameraStreamMemory::QCameraStreamMemory(camera_request_memory getMemory) :
         mCameraMemory[i] = NULL;
 }
 
+/*===========================================================================
+ * FUNCTION   : ~QCameraStreamMemory
+ *
+ * DESCRIPTION: deconstructor of QCameraStreamMemory
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 QCameraStreamMemory::~QCameraStreamMemory()
 {
 }
 
+/*===========================================================================
+ * FUNCTION   : allocate
+ *
+ * DESCRIPTION: allocate requested number of buffers of certain size
+ *
+ * PARAMETERS :
+ *   @count   : number of buffers to be allocated
+ *   @size    : lenght of the buffer to be allocated
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraStreamMemory::allocate(int count, int size)
 {
     int heap_mask = (0x1 << ION_CP_MM_HEAP_ID | 0x1 << ION_IOMMU_HEAP_ID);
@@ -365,6 +613,15 @@ int QCameraStreamMemory::allocate(int count, int size)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : deallocate
+ *
+ * DESCRIPTION: deallocate buffers
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraStreamMemory::deallocate()
 {
     for (int i = 0; i < mBufferCount; i ++) {
@@ -375,6 +632,19 @@ void QCameraStreamMemory::deallocate()
     mBufferCount = 0;
 }
 
+/*===========================================================================
+ * FUNCTION   : cacheOps
+ *
+ * DESCRIPTION: ion related memory cache operations
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer
+ *   @cmd     : cache ops command
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraStreamMemory::cacheOps(int index, unsigned int cmd)
 {
     if (index >= mBufferCount)
@@ -382,6 +652,18 @@ int QCameraStreamMemory::cacheOps(int index, unsigned int cmd)
     return cacheOpsInternal(index, cmd, mCameraMemory[index]->data);
 }
 
+/*===========================================================================
+ * FUNCTION   : getRegFlags
+ *
+ * DESCRIPTION: query initial reg flags
+ *
+ * PARAMETERS :
+ *   @regFlags: initial reg flags of the allocated buffers
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraStreamMemory::getRegFlags(uint8_t *regFlags) const
 {
     for (int i = 0; i < mBufferCount; i ++)
@@ -389,6 +671,18 @@ int QCameraStreamMemory::getRegFlags(uint8_t *regFlags) const
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : getMemory
+ *
+ * DESCRIPTION: get camera memory
+ *
+ * PARAMETERS :
+ *   @index   : buffer index
+ *   @metadata: flag if it's metadata
+ *
+ * RETURN     : camera memory ptr
+ *              NULL if not supported or failed
+ *==========================================================================*/
 camera_memory_t *QCameraStreamMemory::getMemory(int index, bool metadata) const
 {
     if (index >= mBufferCount || metadata)
@@ -396,6 +690,18 @@ camera_memory_t *QCameraStreamMemory::getMemory(int index, bool metadata) const
     return mCameraMemory[index];
 }
 
+/*===========================================================================
+ * FUNCTION   : getMatchBufIndex
+ *
+ * DESCRIPTION: query buffer index by opaque ptr
+ *
+ * PARAMETERS :
+ *   @opaque  : opaque ptr
+ *   @metadata: flag if it's metadata
+ *
+ * RETURN     : buffer index if match found,
+ *              -1 if failed
+ *==========================================================================*/
 int QCameraStreamMemory::getMatchBufIndex(const void *opaque,
                                           bool metadata) const
 {
@@ -412,6 +718,16 @@ int QCameraStreamMemory::getMatchBufIndex(const void *opaque,
     return index;
 }
 
+/*===========================================================================
+ * FUNCTION   : getPtr
+ *
+ * DESCRIPTION: return buffer pointer
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer
+ *
+ * RETURN     : buffer ptr
+ *==========================================================================*/
 void *QCameraStreamMemory::getPtr(int index) const
 {
     if (index >= mBufferCount) {
@@ -421,16 +737,49 @@ void *QCameraStreamMemory::getPtr(int index) const
     return mCameraMemory[index]->data;
 }
 
+/*===========================================================================
+ * FUNCTION   : QCameraVideoMemory
+ *
+ * DESCRIPTION: constructor of QCameraVideoMemory
+ *              VideoStream buffers also include metadata buffers
+ *
+ * PARAMETERS :
+ *   @getMemory : camera memory request ops table
+ *
+ * RETURN     : none
+ *==========================================================================*/
 QCameraVideoMemory::QCameraVideoMemory(camera_request_memory getMemory)
     : QCameraStreamMemory(getMemory)
 {
     memset(mMetadata, 0, sizeof(mMetadata));
 }
 
+/*===========================================================================
+ * FUNCTION   : ~QCameraVideoMemory
+ *
+ * DESCRIPTION: deconstructor of QCameraVideoMemory
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 QCameraVideoMemory::~QCameraVideoMemory()
 {
 }
 
+/*===========================================================================
+ * FUNCTION   : allocate
+ *
+ * DESCRIPTION: allocate requested number of buffers of certain size
+ *
+ * PARAMETERS :
+ *   @count   : number of buffers to be allocated
+ *   @size    : lenght of the buffer to be allocated
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraVideoMemory::allocate(int count, int size)
 {
     int rc = QCameraStreamMemory::allocate(count, size);
@@ -460,6 +809,15 @@ int QCameraVideoMemory::allocate(int count, int size)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : deallocate
+ *
+ * DESCRIPTION: deallocate buffers
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraVideoMemory::deallocate()
 {
     for (int i = 0; i < mBufferCount; i ++) {
@@ -470,6 +828,18 @@ void QCameraVideoMemory::deallocate()
     mBufferCount = 0;
 }
 
+/*===========================================================================
+ * FUNCTION   : getMemory
+ *
+ * DESCRIPTION: get camera memory
+ *
+ * PARAMETERS :
+ *   @index   : buffer index
+ *   @metadata: flag if it's metadata
+ *
+ * RETURN     : camera memory ptr
+ *              NULL if not supported or failed
+ *==========================================================================*/
 camera_memory_t *QCameraVideoMemory::getMemory(int index, bool metadata) const
 {
     if (index >= mBufferCount)
@@ -480,6 +850,18 @@ camera_memory_t *QCameraVideoMemory::getMemory(int index, bool metadata) const
         return mCameraMemory[index];
 }
 
+/*===========================================================================
+ * FUNCTION   : getMatchBufIndex
+ *
+ * DESCRIPTION: query buffer index by opaque ptr
+ *
+ * PARAMETERS :
+ *   @opaque  : opaque ptr
+ *   @metadata: flag if it's metadata
+ *
+ * RETURN     : buffer index if match found,
+ *              -1 if failed
+ *==========================================================================*/
 int QCameraVideoMemory::getMatchBufIndex(const void *opaque,
                                          bool metadata) const
 {
@@ -500,7 +882,17 @@ int QCameraVideoMemory::getMatchBufIndex(const void *opaque,
     return index;
 }
 
-// QCameraGrallocMemory for memory allocated from native_window
+/*===========================================================================
+ * FUNCTION   : QCameraGrallocMemory
+ *
+ * DESCRIPTION: constructor of QCameraGrallocMemory
+ *              preview stream buffers are allocated from gralloc native_windoe
+ *
+ * PARAMETERS :
+ *   @getMemory : camera memory request ops table
+ *
+ * RETURN     : none
+ *==========================================================================*/
 QCameraGrallocMemory::QCameraGrallocMemory(camera_request_memory getMemory)
         : QCameraMemory()
 {
@@ -516,10 +908,32 @@ QCameraGrallocMemory::QCameraGrallocMemory(camera_request_memory getMemory)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : ~QCameraGrallocMemory
+ *
+ * DESCRIPTION: deconstructor of QCameraGrallocMemory
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 QCameraGrallocMemory::~QCameraGrallocMemory()
 {
 }
 
+/*===========================================================================
+ * FUNCTION   : setWindowInfo
+ *
+ * DESCRIPTION: set native window gralloc ops table
+ *
+ * PARAMETERS :
+ *   @window  : gralloc ops table ptr
+ *   @width   : width of preview frame
+ *   @height  : height of preview frame
+ *   @foramt  : format of preview image
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraGrallocMemory::setWindowInfo(preview_stream_ops_t *window,
         int width, int height, int format)
 {
@@ -529,6 +943,18 @@ void QCameraGrallocMemory::setWindowInfo(preview_stream_ops_t *window,
     mFormat = format;
 }
 
+/*===========================================================================
+ * FUNCTION   : displayBuffer
+ *
+ * DESCRIPTION: send received frame to display
+ *
+ * PARAMETERS :
+ *   @index   : index of preview frame
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraGrallocMemory::displayBuffer(int index)
 {
     int err = NO_ERROR;
@@ -567,6 +993,19 @@ int QCameraGrallocMemory::displayBuffer(int index)
     return dequeuedIdx;
 }
 
+/*===========================================================================
+ * FUNCTION   : allocate
+ *
+ * DESCRIPTION: allocate requested number of buffers of certain size
+ *
+ * PARAMETERS :
+ *   @count   : number of buffers to be allocated
+ *   @size    : lenght of the buffer to be allocated
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraGrallocMemory::allocate(int count, int /*size*/)
 {
     int err = 0;
@@ -689,6 +1128,15 @@ end:
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : deallocate
+ *
+ * DESCRIPTION: deallocate buffers
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraGrallocMemory::deallocate()
 {
     ALOGI("%s: E ", __FUNCTION__);
@@ -718,6 +1166,19 @@ void QCameraGrallocMemory::deallocate()
     ALOGI(" %s : X ",__FUNCTION__);
 }
 
+/*===========================================================================
+ * FUNCTION   : cacheOps
+ *
+ * DESCRIPTION: ion related memory cache operations
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer
+ *   @cmd     : cache ops command
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraGrallocMemory::cacheOps(int index, unsigned int cmd)
 {
     if (index >= mBufferCount)
@@ -725,6 +1186,18 @@ int QCameraGrallocMemory::cacheOps(int index, unsigned int cmd)
     return cacheOpsInternal(index, cmd, mCameraMemory[index]->data);
 }
 
+/*===========================================================================
+ * FUNCTION   : getRegFlags
+ *
+ * DESCRIPTION: query initial reg flags
+ *
+ * PARAMETERS :
+ *   @regFlags: initial reg flags of the allocated buffers
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraGrallocMemory::getRegFlags(uint8_t *regFlags) const
 {
     int i = 0;
@@ -735,6 +1208,18 @@ int QCameraGrallocMemory::getRegFlags(uint8_t *regFlags) const
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : getMemory
+ *
+ * DESCRIPTION: get camera memory
+ *
+ * PARAMETERS :
+ *   @index   : buffer index
+ *   @metadata: flag if it's metadata
+ *
+ * RETURN     : camera memory ptr
+ *              NULL if not supported or failed
+ *==========================================================================*/
 camera_memory_t *QCameraGrallocMemory::getMemory(int index, bool metadata) const
 {
     if (index >= mBufferCount || metadata)
@@ -742,6 +1227,18 @@ camera_memory_t *QCameraGrallocMemory::getMemory(int index, bool metadata) const
     return mCameraMemory[index];
 }
 
+/*===========================================================================
+ * FUNCTION   : getMatchBufIndex
+ *
+ * DESCRIPTION: query buffer index by opaque ptr
+ *
+ * PARAMETERS :
+ *   @opaque  : opaque ptr
+ *   @metadata: flag if it's metadata
+ *
+ * RETURN     : buffer index if match found,
+ *              -1 if failed
+ *==========================================================================*/
 int QCameraGrallocMemory::getMatchBufIndex(const void *opaque,
                                            bool metadata) const
 {
@@ -758,6 +1255,16 @@ int QCameraGrallocMemory::getMatchBufIndex(const void *opaque,
     return index;
 }
 
+/*===========================================================================
+ * FUNCTION   : getPtr
+ *
+ * DESCRIPTION: return buffer pointer
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer
+ *
+ * RETURN     : buffer ptr
+ *==========================================================================*/
 void *QCameraGrallocMemory::getPtr(int index) const
 {
     if (index >= mBufferCount) {

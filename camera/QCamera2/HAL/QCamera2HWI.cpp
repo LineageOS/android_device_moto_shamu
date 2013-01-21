@@ -78,6 +78,19 @@ camera_device_ops_t QCamera2HardwareInterface::mCameraOps = {
     dump:                       QCamera2HardwareInterface::dump,
 };
 
+/*===========================================================================
+ * FUNCTION   : set_preview_window
+ *
+ * DESCRIPTION: set preview window.
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *   @window  : window ops table
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::set_preview_window(struct camera_device *device,
         struct preview_stream_ops *window)
 {
@@ -101,6 +114,21 @@ int QCamera2HardwareInterface::set_preview_window(struct camera_device *device,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : set_CallBacks
+ *
+ * DESCRIPTION: set callbacks for notify and data
+ *
+ * PARAMETERS :
+ *   @device     : ptr to camera device struct
+ *   @notify_cb  : notify cb
+ *   @data_cb    : data cb
+ *   @data_cb_timestamp  : video data cd with timestamp
+ *   @get_memory : ops table for request gralloc memory
+ *   @user       : user data ptr
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::set_CallBacks(struct camera_device *device,
         camera_notify_callback notify_cb,
         camera_data_callback data_cb,
@@ -130,6 +158,17 @@ void QCamera2HardwareInterface::set_CallBacks(struct camera_device *device,
     hw->unlockAPI();
 }
 
+/*===========================================================================
+ * FUNCTION   : enable_msg_type
+ *
+ * DESCRIPTION: enable certain msg type
+ *
+ * PARAMETERS :
+ *   @device     : ptr to camera device struct
+ *   @msg_type   : msg type mask
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::enable_msg_type(struct camera_device *device, int32_t msg_type)
 {
     QCamera2HardwareInterface *hw =
@@ -146,6 +185,17 @@ void QCamera2HardwareInterface::enable_msg_type(struct camera_device *device, in
     hw->unlockAPI();
 }
 
+/*===========================================================================
+ * FUNCTION   : disable_msg_type
+ *
+ * DESCRIPTION: disable certain msg type
+ *
+ * PARAMETERS :
+ *   @device     : ptr to camera device struct
+ *   @msg_type   : msg type mask
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::disable_msg_type(struct camera_device *device, int32_t msg_type)
 {
     QCamera2HardwareInterface *hw =
@@ -162,6 +212,18 @@ void QCamera2HardwareInterface::disable_msg_type(struct camera_device *device, i
     hw->unlockAPI();
 }
 
+/*===========================================================================
+ * FUNCTION   : msg_type_enabled
+ *
+ * DESCRIPTION: if certain msg type is enabled
+ *
+ * PARAMETERS :
+ *   @device     : ptr to camera device struct
+ *   @msg_type   : msg type mask
+ *
+ * RETURN     : 1 -- enabled
+ *              0 -- not enabled
+ *==========================================================================*/
 int QCamera2HardwareInterface::msg_type_enabled(struct camera_device *device, int32_t msg_type)
 {
     int ret = NO_ERROR;
@@ -182,6 +244,18 @@ int QCamera2HardwareInterface::msg_type_enabled(struct camera_device *device, in
    return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : start_preview
+ *
+ * DESCRIPTION: start preview
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::start_preview(struct camera_device *device)
 {
     int ret = NO_ERROR;
@@ -206,6 +280,16 @@ int QCamera2HardwareInterface::start_preview(struct camera_device *device)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : stop_preview
+ *
+ * DESCRIPTION: stop preview
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::stop_preview(struct camera_device *device)
 {
     QCamera2HardwareInterface *hw =
@@ -222,6 +306,17 @@ void QCamera2HardwareInterface::stop_preview(struct camera_device *device)
     hw->unlockAPI();
 }
 
+/*===========================================================================
+ * FUNCTION   : preview_enabled
+ *
+ * DESCRIPTION: if preview is running
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : 1 -- running
+ *              0 -- not running
+ *==========================================================================*/
 int QCamera2HardwareInterface::preview_enabled(struct camera_device *device)
 {
     int ret = NO_ERROR;
@@ -243,6 +338,19 @@ int QCamera2HardwareInterface::preview_enabled(struct camera_device *device)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : store_meta_data_in_buffers
+ *
+ * DESCRIPTION: if need to store meta data in buffers for video frame
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *   @enable  : flag if enable
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::store_meta_data_in_buffers(
                 struct camera_device *device, int enable)
 {
@@ -265,6 +373,18 @@ int QCamera2HardwareInterface::store_meta_data_in_buffers(
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : start_recording
+ *
+ * DESCRIPTION: start recording
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::start_recording(struct camera_device *device)
 {
     int ret = NO_ERROR;
@@ -285,6 +405,16 @@ int QCamera2HardwareInterface::start_recording(struct camera_device *device)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : stop_recording
+ *
+ * DESCRIPTION: stop recording
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::stop_recording(struct camera_device *device)
 {
     QCamera2HardwareInterface *hw =
@@ -301,6 +431,17 @@ void QCamera2HardwareInterface::stop_recording(struct camera_device *device)
     hw->unlockAPI();
 }
 
+/*===========================================================================
+ * FUNCTION   : recording_enabled
+ *
+ * DESCRIPTION: if recording is running
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : 1 -- running
+ *              0 -- not running
+ *==========================================================================*/
 int QCamera2HardwareInterface::recording_enabled(struct camera_device *device)
 {
     int ret = NO_ERROR;
@@ -321,6 +462,17 @@ int QCamera2HardwareInterface::recording_enabled(struct camera_device *device)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : release_recording_frame
+ *
+ * DESCRIPTION: return recording frame back
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *   @opaque  : ptr to frame to be returned
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::release_recording_frame(
             struct camera_device *device, const void *opaque)
 {
@@ -338,6 +490,18 @@ void QCamera2HardwareInterface::release_recording_frame(
     hw->unlockAPI();
 }
 
+/*===========================================================================
+ * FUNCTION   : auto_focus
+ *
+ * DESCRIPTION: start auto focus
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::auto_focus(struct camera_device *device)
 {
     int ret = NO_ERROR;
@@ -358,6 +522,18 @@ int QCamera2HardwareInterface::auto_focus(struct camera_device *device)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : cancel_auto_focus
+ *
+ * DESCRIPTION: cancel auto focus
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::cancel_auto_focus(struct camera_device *device)
 {
     int ret = NO_ERROR;
@@ -378,6 +554,18 @@ int QCamera2HardwareInterface::cancel_auto_focus(struct camera_device *device)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : take_picture
+ *
+ * DESCRIPTION: take picture
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::take_picture(struct camera_device *device)
 {
     int ret = NO_ERROR;
@@ -398,6 +586,18 @@ int QCamera2HardwareInterface::take_picture(struct camera_device *device)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : cancel_picture
+ *
+ * DESCRIPTION: cancel current take picture request
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::cancel_picture(struct camera_device *device)
 {
     int ret = NO_ERROR;
@@ -418,6 +618,19 @@ int QCamera2HardwareInterface::cancel_picture(struct camera_device *device)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : set_parameters
+ *
+ * DESCRIPTION: set camera parameters
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *   @parms   : string of packed parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::set_parameters(struct camera_device *device,
                                               const char *parms)
 {
@@ -439,6 +652,16 @@ int QCamera2HardwareInterface::set_parameters(struct camera_device *device,
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : get_parameters
+ *
+ * DESCRIPTION: query camera parameters
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : packed parameters in a string
+ *==========================================================================*/
 char* QCamera2HardwareInterface::get_parameters(struct camera_device *device)
 {
     char *ret = NULL;
@@ -459,6 +682,17 @@ char* QCamera2HardwareInterface::get_parameters(struct camera_device *device)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : put_parameters
+ *
+ * DESCRIPTION: return camera parameters string back to HAL
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *   @parm    : ptr to parameter string to be returned
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::put_parameters(struct camera_device *device,
                                                char *parm)
 {
@@ -476,6 +710,21 @@ void QCamera2HardwareInterface::put_parameters(struct camera_device *device,
     hw->unlockAPI();
 }
 
+/*===========================================================================
+ * FUNCTION   : send_command
+ *
+ * DESCRIPTION: command to be executed
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *   @cmd     : cmd to be executed
+ *   @arg1    : ptr to optional argument1
+ *   @arg2    : ptr to optional argument2
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::send_command(struct camera_device *device,
                                             int32_t cmd,
                                             int32_t arg1,
@@ -505,6 +754,16 @@ int QCamera2HardwareInterface::send_command(struct camera_device *device,
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : release
+ *
+ * DESCRIPTION: release camera resource
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::release(struct camera_device *device)
 {
     QCamera2HardwareInterface *hw =
@@ -521,6 +780,19 @@ void QCamera2HardwareInterface::release(struct camera_device *device)
     hw->unlockAPI();
 }
 
+/*===========================================================================
+ * FUNCTION   : dump
+ *
+ * DESCRIPTION: dump camera status
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *   @fd      : fd for status to be dumped to
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::dump(struct camera_device *device, int fd)
 {
     int ret = NO_ERROR;
@@ -541,6 +813,18 @@ int QCamera2HardwareInterface::dump(struct camera_device *device, int fd)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : close_camera_device
+ *
+ * DESCRIPTION: close camera device
+ *
+ * PARAMETERS :
+ *   @device  : ptr to camera device struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::close_camera_device(hw_device_t *hw_dev)
 {
     int ret = NO_ERROR;
@@ -555,6 +839,16 @@ int QCamera2HardwareInterface::close_camera_device(hw_device_t *hw_dev)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : QCamera2HardwareInterface
+ *
+ * DESCRIPTION: constructor of QCamera2HardwareInterface
+ *
+ * PARAMETERS :
+ *   @cameraId  : camera ID
+ *
+ * RETURN     : none
+ *==========================================================================*/
 QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
     : mCameraId(cameraId),
       mCameraHandle(NULL),
@@ -585,6 +879,15 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
     memset(&mRoiData, 0, sizeof(mRoiData));
 }
 
+/*===========================================================================
+ * FUNCTION   : ~QCamera2HardwareInterface
+ *
+ * DESCRIPTION: destructor of QCamera2HardwareInterface
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 QCamera2HardwareInterface::~QCamera2HardwareInterface()
 {
     closeCamera();
@@ -597,6 +900,18 @@ QCamera2HardwareInterface::~QCamera2HardwareInterface()
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : openCamera
+ *
+ * DESCRIPTION: open camera
+ *
+ * PARAMETERS :
+ *   @hw_device  : double ptr for camera device struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::openCamera(struct hw_device_t **hw_device)
 {
     int rc = NO_ERROR;
@@ -613,6 +928,17 @@ int QCamera2HardwareInterface::openCamera(struct hw_device_t **hw_device)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : openCamera
+ *
+ * DESCRIPTION: open camera
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::openCamera()
 {
     if (mCameraHandle) {
@@ -660,6 +986,17 @@ int QCamera2HardwareInterface::openCamera()
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : closeCamera
+ *
+ * DESCRIPTION: close camera
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::closeCamera()
 {
     int rc = NO_ERROR;
@@ -694,6 +1031,18 @@ int QCamera2HardwareInterface::closeCamera()
 
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 
+/*===========================================================================
+ * FUNCTION   : initCapabilities
+ *
+ * DESCRIPTION: initialize camera capabilities in static data struct
+ *
+ * PARAMETERS :
+ *   @cameraId  : camera Id
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::initCapabilities(int cameraId)
 {
     int rc = NO_ERROR;
@@ -754,6 +1103,19 @@ open_failed:
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : getCapabilities
+ *
+ * DESCRIPTION: query camera capabilities
+ *
+ * PARAMETERS :
+ *   @cameraId  : camera Id
+ *   @info      : camera info struct to be filled in with camera capabilities
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::getCapabilities(int cameraId,
                                     struct camera_info *info)
 {
@@ -788,6 +1150,18 @@ int QCamera2HardwareInterface::getCapabilities(int cameraId,
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : allocateStreamBuf
+ *
+ * DESCRIPTION: alocate stream buffers
+ *
+ * PARAMETERS :
+ *   @stream_type  : type of stream
+ *   @size         : size of buffer
+ *
+ * RETURN     : ptr to a memory obj that holds stream buffers.
+ *              NULL if failed
+ *==========================================================================*/
 QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(
     cam_stream_type_t stream_type, int size)
 {
@@ -879,6 +1253,17 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(
     return mem;
 }
 
+/*===========================================================================
+ * FUNCTION   : allocateStreamInfoBuf
+ *
+ * DESCRIPTION: alocate stream info buffer
+ *
+ * PARAMETERS :
+ *   @stream_type  : type of stream
+ *
+ * RETURN     : ptr to a memory obj that holds stream info buffer.
+ *              NULL if failed
+ *==========================================================================*/
 QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
     cam_stream_type_t stream_type)
 {
@@ -930,6 +1315,18 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
     return streamInfoBuf;
 }
 
+/*===========================================================================
+ * FUNCTION   : setPreviewWindow
+ *
+ * DESCRIPTION: set preview window impl
+ *
+ * PARAMETERS :
+ *   @window  : ptr to window ops table struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::setPreviewWindow(
         struct preview_stream_ops *window)
 {
@@ -937,6 +1334,22 @@ int QCamera2HardwareInterface::setPreviewWindow(
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setCallBacks
+ *
+ * DESCRIPTION: set callbacks impl
+ *
+ * PARAMETERS :
+ *   @notify_cb  : notify cb
+ *   @data_cb    : data cb
+ *   @data_cb_timestamp : data cb with time stamp
+ *   @get_memory : request memory ops table
+ *   @user       : user data ptr
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::setCallBacks(camera_notify_callback notify_cb,
                                             camera_data_callback data_cb,
                                             camera_data_timestamp_callback data_cb_timestamp,
@@ -951,23 +1364,69 @@ int QCamera2HardwareInterface::setCallBacks(camera_notify_callback notify_cb,
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : enableMsgType
+ *
+ * DESCRIPTION: enable msg type impl
+ *
+ * PARAMETERS :
+ *   @msg_type  : msg type mask to be enabled
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::enableMsgType(int32_t msg_type)
 {
     mMsgEnabled |= msg_type;
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : disableMsgType
+ *
+ * DESCRIPTION: disable msg type impl
+ *
+ * PARAMETERS :
+ *   @msg_type  : msg type mask to be disabled
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::disableMsgType(int32_t msg_type)
 {
     mMsgEnabled &= ~msg_type;
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : msgTypeEnabled
+ *
+ * DESCRIPTION: impl to determine if certain msg_type is enabled
+ *
+ * PARAMETERS :
+ *   @msg_type  : msg type mask
+ *
+ * RETURN     : 0 -- not enabled
+ *              none 0 -- enabled
+ *==========================================================================*/
 int QCamera2HardwareInterface::msgTypeEnabled(int32_t msg_type)
 {
     return (mMsgEnabled & msg_type);
 }
 
+/*===========================================================================
+ * FUNCTION   : startPreview
+ *
+ * DESCRIPTION: start preview impl
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::startPreview()
 {
     int32_t rc = NO_ERROR;
@@ -999,6 +1458,17 @@ int QCamera2HardwareInterface::startPreview()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : stopPreview
+ *
+ * DESCRIPTION: stop preview impl
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::stopPreview()
 {
     // stop preview stream
@@ -1020,12 +1490,35 @@ int QCamera2HardwareInterface::stopPreview()
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : storeMetaDataInBuffers
+ *
+ * DESCRIPTION: enable store meta data in buffers for video frames impl
+ *
+ * PARAMETERS :
+ *   @enable  : flag if need enable
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::storeMetaDataInBuffers(int enable)
 {
     mStoreMetaDataInFrame = enable;
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : startRecording
+ *
+ * DESCRIPTION: start recording impl
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::startRecording()
 {
     int32_t rc = NO_ERROR;
@@ -1050,11 +1543,34 @@ int QCamera2HardwareInterface::startRecording()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : stopRecording
+ *
+ * DESCRIPTION: stop recording impl
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::stopRecording()
 {
     return stopChannel(QCAMERA_CH_TYPE_VIDEO);
 }
 
+/*===========================================================================
+ * FUNCTION   : releaseRecordingFrame
+ *
+ * DESCRIPTION: return video frame impl
+ *
+ * PARAMETERS :
+ *   @opaque  : ptr to video frame to be returned
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::releaseRecordingFrame(const void * opaque)
 {
     int32_t rc = UNKNOWN_ERROR;
@@ -1066,6 +1582,17 @@ int QCamera2HardwareInterface::releaseRecordingFrame(const void * opaque)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : autoFocus
+ *
+ * DESCRIPTION: start auto focus impl
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::autoFocus()
 {
     int rc = NO_ERROR;
@@ -1122,6 +1649,17 @@ int QCamera2HardwareInterface::autoFocus()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : cancelAutoFocus
+ *
+ * DESCRIPTION: cancel auto focus impl
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::cancelAutoFocus()
 {
     int rc = NO_ERROR;
@@ -1159,6 +1697,17 @@ int QCamera2HardwareInterface::cancelAutoFocus()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : takePicture
+ *
+ * DESCRIPTION: take picture impl
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::takePicture()
 {
     int rc = NO_ERROR;
@@ -1231,6 +1780,17 @@ int QCamera2HardwareInterface::takePicture()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : cancelPicture
+ *
+ * DESCRIPTION: cancel picture impl
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::cancelPicture()
 {
     //stop post processor
@@ -1257,6 +1817,17 @@ int QCamera2HardwareInterface::cancelPicture()
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : takeLiveSnapshot
+ *
+ * DESCRIPTION: take live snapshot during recording
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::takeLiveSnapshot()
 {
     int rc = NO_ERROR;
@@ -1270,6 +1841,17 @@ int QCamera2HardwareInterface::takeLiveSnapshot()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : cancelLiveSnapshot
+ *
+ * DESCRIPTION: cancel current live snapshot request
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::cancelLiveSnapshot()
 {
     int rc = NO_ERROR;
@@ -1283,6 +1865,15 @@ int QCamera2HardwareInterface::cancelLiveSnapshot()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : getParameters
+ *
+ * DESCRIPTION: get parameters impl
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : a string containing parameter pairs
+ *==========================================================================*/
 char* QCamera2HardwareInterface::getParameters()
 {
     char* strParams = NULL;
@@ -1297,12 +1888,38 @@ char* QCamera2HardwareInterface::getParameters()
     return strParams;
 }
 
+/*===========================================================================
+ * FUNCTION   : putParameters
+ *
+ * DESCRIPTION: put parameters string impl
+ *
+ * PARAMETERS :
+ *   @parms   : parameters string to be released
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::putParameters(char *parms)
 {
     free(parms);
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : sendCommand
+ *
+ * DESCRIPTION: send command impl
+ *
+ * PARAMETERS :
+ *   @command : command to be executed
+ *   @arg1    : optional argument 1
+ *   @arg2    : optional argument 2
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::sendCommand(int32_t command, int32_t /*arg1*/, int32_t /*arg2*/)
 {
     int rc = NO_ERROR;
@@ -1324,6 +1941,17 @@ int QCamera2HardwareInterface::sendCommand(int32_t command, int32_t /*arg1*/, in
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : release
+ *
+ * DESCRIPTION: release camera resource impl
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::release()
 {
     // stop and delete all channels
@@ -1337,22 +1965,72 @@ int QCamera2HardwareInterface::release()
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : dump
+ *
+ * DESCRIPTION: camera status dump impl
+ *
+ * PARAMETERS :
+ *   @fd      : fd for the buffer to be dumped with camera status
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::dump(int /*fd*/)
 {
     ALOGE("%s: not supported yet", __func__);
     return INVALID_OPERATION;
 }
 
+/*===========================================================================
+ * FUNCTION   : processAPI
+ *
+ * DESCRIPTION: process API calls from upper layer
+ *
+ * PARAMETERS :
+ *   @api         : API to be processed
+ *   @api_payload : ptr to API payload if any
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::processAPI(qcamera_sm_evt_enum_t api, void *api_payload)
 {
     return m_stateMachine.procAPI(api, api_payload);
 }
 
+/*===========================================================================
+ * FUNCTION   : processEvt
+ *
+ * DESCRIPTION: process Evt from backend via mm-camera-interface
+ *
+ * PARAMETERS :
+ *   @evt         : event type to be processed
+ *   @evt_payload : ptr to event payload if any
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::processEvt(qcamera_sm_evt_enum_t evt, void *evt_payload)
 {
     return m_stateMachine.procEvt(evt, evt_payload);
 }
 
+/*===========================================================================
+ * FUNCTION   : evtHandle
+ *
+ * DESCRIPTION: Function registerd to mm-camera-interface to handle backend events
+ *
+ * PARAMETERS :
+ *   @camera_handle : event type to be processed
+ *   @evt           : ptr to event
+ *   @user_data     : user data ptr
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::camEvtHandle(uint32_t /*camera_handle*/,
                                           mm_camera_event_t *evt,
                                           void *user_data)
@@ -1370,6 +2048,20 @@ void QCamera2HardwareInterface::camEvtHandle(uint32_t /*camera_handle*/,
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : jpegEvtHandle
+ *
+ * DESCRIPTION: Function registerd to mm-jpeg-interface to handle jpeg events
+ *
+ * PARAMETERS :
+ *   @status    : status of jpeg job
+ *   @client_hdl: jpeg client handle
+ *   @jobId     : jpeg job Id
+ *   @p_ouput   : ptr to jpeg output result struct
+ *   @userdata  : user data ptr
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::jpegEvtHandle(jpeg_job_status_t status,
                                               uint32_t /*client_hdl*/,
                                               uint32_t jobId,
@@ -1394,6 +2086,20 @@ void QCamera2HardwareInterface::jpegEvtHandle(jpeg_job_status_t status,
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : thermalEvtHandle
+ *
+ * DESCRIPTION: routine to handle thermal event notification
+ *
+ * PARAMETERS :
+ *   @name       : "camera" or "camcorder"
+ *   @threshold  : thermal threshold
+ *   @level      : thermal level
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::thermalEvtHandle(char *name,
                                                  int threshold,
                                                  int level)
@@ -1402,6 +2108,16 @@ int QCamera2HardwareInterface::thermalEvtHandle(char *name,
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : evtNotifyRoutine
+ *
+ * DESCRIPTION: thread routine to handle event notify
+ *
+ * PARAMETERS :
+ *   @data  : user data ptr
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void *QCamera2HardwareInterface::evtNotifyRoutine(void *data)
 {
     int running = 1;
@@ -1457,6 +2173,20 @@ void *QCamera2HardwareInterface::evtNotifyRoutine(void *data)
     return NULL;
 }
 
+/*===========================================================================
+ * FUNCTION   : sendEvtNotify
+ *
+ * DESCRIPTION: send event notify to notify thread
+ *
+ * PARAMETERS :
+ *   @msg_type: msg type to be sent
+ *   @ext1    : optional extension1
+ *   @ext2    : optional extension2
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::sendEvtNotify(int32_t msg_type,
                                                  int32_t ext1,
                                                  int32_t ext2)
@@ -1482,6 +2212,18 @@ int32_t QCamera2HardwareInterface::sendEvtNotify(int32_t msg_type,
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : processAutoFocusEvent
+ *
+ * DESCRIPTION: process auto focus event
+ *
+ * PARAMETERS :
+ *   @focus_data: struct containing auto focus result info
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &focus_data)
 {
     int32_t ret = NO_ERROR;
@@ -1530,6 +2272,18 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : processZoomEvent
+ *
+ * DESCRIPTION: process zoom event
+ *
+ * PARAMETERS :
+ *   @status  : zoom operation status
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::processZoomEvent(uint32_t /*status*/)
 {
     int32_t ret = NO_ERROR;
@@ -1542,16 +2296,48 @@ int32_t QCamera2HardwareInterface::processZoomEvent(uint32_t /*status*/)
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : processJpegNotify
+ *
+ * DESCRIPTION: process jpeg event
+ *
+ * PARAMETERS :
+ *   @jpeg_evt: ptr to jpeg event payload
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::processJpegNotify(qcamera_jpeg_evt_payload_t *jpeg_evt)
 {
     return m_postprocessor.processJpegEvt(jpeg_evt);
 }
 
+/*===========================================================================
+ * FUNCTION   : lockAPI
+ *
+ * DESCRIPTION: lock to process API
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::lockAPI()
 {
     pthread_mutex_lock(&m_lock);
 }
 
+/*===========================================================================
+ * FUNCTION   : waitAPIResult
+ *
+ * DESCRIPTION: wait for API result coming back. This is a blocking call, it will
+ *              return only cerntain API event type arrives
+ *
+ * PARAMETERS :
+ *   @api_evt : API event type
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::waitAPIResult(qcamera_sm_evt_enum_t api_evt)
 {
     ALOGD("%s: wait for API result of evt (%d)", __func__, api_evt);
@@ -1563,11 +2349,30 @@ void QCamera2HardwareInterface::waitAPIResult(qcamera_sm_evt_enum_t api_evt)
           __func__, m_apiResult.status, api_evt);
 }
 
+/*===========================================================================
+ * FUNCTION   : unlockAPI
+ *
+ * DESCRIPTION: API processing is done, unlock
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::unlockAPI()
 {
     pthread_mutex_unlock(&m_lock);
 }
 
+/*===========================================================================
+ * FUNCTION   : signalAPIResult
+ *
+ * DESCRIPTION: signal condition viarable that cerntain API event type arrives
+ *
+ * PARAMETERS :
+ *   @result  : API result
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::signalAPIResult(qcamera_api_result_t *result)
 {
     pthread_mutex_lock(&m_lock);
@@ -1576,6 +2381,17 @@ void QCamera2HardwareInterface::signalAPIResult(qcamera_api_result_t *result)
     pthread_mutex_unlock(&m_lock);
 }
 
+/*===========================================================================
+ * FUNCTION   : addPreviewChannel
+ *
+ * DESCRIPTION: add a preview channel that contains a preview stream
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::addPreviewChannel()
 {
     int32_t rc = NO_ERROR;
@@ -1623,6 +2439,17 @@ int32_t QCamera2HardwareInterface::addPreviewChannel()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : addVideoChannel
+ *
+ * DESCRIPTION: add a video channel that contains a video stream
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::addVideoChannel()
 {
     int32_t rc = NO_ERROR;
@@ -1662,6 +2489,19 @@ int32_t QCamera2HardwareInterface::addVideoChannel()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : addSnapshotChannel
+ *
+ * DESCRIPTION: add a snapshot channel that contains a snapshot stream
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ * NOTE       : Add this channel for live snapshot usecase. Regular capture will
+ *              use addCaptureChannel.
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::addSnapshotChannel()
 {
     int32_t rc = NO_ERROR;
@@ -1701,6 +2541,17 @@ int32_t QCamera2HardwareInterface::addSnapshotChannel()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : addRawChannel
+ *
+ * DESCRIPTION: add a raw channel that contains a raw image stream
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::addRawChannel()
 {
     int32_t rc = NO_ERROR;
@@ -1740,6 +2591,18 @@ int32_t QCamera2HardwareInterface::addRawChannel()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : addZSLChannel
+ *
+ * DESCRIPTION: add a ZSL channel that contains a preview stream and
+ *              a snapshot stream
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::addZSLChannel()
 {
     int32_t rc = NO_ERROR;
@@ -1802,6 +2665,20 @@ int32_t QCamera2HardwareInterface::addZSLChannel()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : addCaptureChannel
+ *
+ * DESCRIPTION: add a capture channel that contains a snapshot stream
+ *              and a postview stream
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ * NOTE       : Add this channel for regular capture usecase.
+ *              For Live snapshot usecase, use addSnapshotChannel.
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::addCaptureChannel()
 {
     int32_t rc = NO_ERROR;
@@ -1854,6 +2731,17 @@ int32_t QCamera2HardwareInterface::addCaptureChannel()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : addMetaDataChannel
+ *
+ * DESCRIPTION: add a meta data channel that contains a metadata stream
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::addMetaDataChannel()
 {
     int32_t rc = NO_ERROR;
@@ -1894,6 +2782,17 @@ int32_t QCamera2HardwareInterface::addMetaDataChannel()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : addReprocessChannel
+ *
+ * DESCRIPTION: add a reprocess channel that contains a offline-process stream
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::addReprocessChannel()
 {
     int32_t rc = NO_ERROR;
@@ -1931,6 +2830,18 @@ int32_t QCamera2HardwareInterface::addReprocessChannel()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : addChannel
+ *
+ * DESCRIPTION: add a channel by its type
+ *
+ * PARAMETERS :
+ *   @ch_type : channel type
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::addChannel(qcamera_ch_type_enum_t ch_type)
 {
     int32_t rc = UNKNOWN_ERROR;
@@ -1965,6 +2876,18 @@ int32_t QCamera2HardwareInterface::addChannel(qcamera_ch_type_enum_t ch_type)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : delChannel
+ *
+ * DESCRIPTION: delete a channel by its type
+ *
+ * PARAMETERS :
+ *   @ch_type : channel type
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::delChannel(qcamera_ch_type_enum_t ch_type)
 {
     if (m_channels[ch_type] != NULL) {
@@ -1975,6 +2898,18 @@ int32_t QCamera2HardwareInterface::delChannel(qcamera_ch_type_enum_t ch_type)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : startChannel
+ *
+ * DESCRIPTION: start a channel by its type
+ *
+ * PARAMETERS :
+ *   @ch_type : channel type
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::startChannel(qcamera_ch_type_enum_t ch_type)
 {
     int32_t rc = UNKNOWN_ERROR;
@@ -1985,6 +2920,18 @@ int32_t QCamera2HardwareInterface::startChannel(qcamera_ch_type_enum_t ch_type)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : stopChannel
+ *
+ * DESCRIPTION: stop a channel by its type
+ *
+ * PARAMETERS :
+ *   @ch_type : channel type
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::stopChannel(qcamera_ch_type_enum_t ch_type)
 {
     int32_t rc = UNKNOWN_ERROR;
@@ -1995,6 +2942,17 @@ int32_t QCamera2HardwareInterface::stopChannel(qcamera_ch_type_enum_t ch_type)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : preparePreview
+ *
+ * DESCRIPTION: add channels needed for preview
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::preparePreview()
 {
     int32_t rc = NO_ERROR;
@@ -2038,6 +2996,15 @@ int32_t QCamera2HardwareInterface::preparePreview()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : unpreparePreview
+ *
+ * DESCRIPTION: delete channels for preview
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::unpreparePreview()
 {
     if (mParameters.isZSLMode()) {
@@ -2053,6 +3020,15 @@ void QCamera2HardwareInterface::unpreparePreview()
     delChannel(QCAMERA_CH_TYPE_METADATA);
 }
 
+/*===========================================================================
+ * FUNCTION   : playShutter
+ *
+ * DESCRIPTION: send request to play shutter sound
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::playShutter(){
      ALOGV("%s : E", __func__);
      if (mNotifyCb == NULL ||
@@ -2069,6 +3045,16 @@ void QCamera2HardwareInterface::playShutter(){
      ALOGV("%s : X", __func__);
 }
 
+/*===========================================================================
+ * FUNCTION   : getChannelByHandle
+ *
+ * DESCRIPTION: return a channel by its handle
+ *
+ * PARAMETERS :
+ *   @channelHandle : channel handle
+ *
+ * RETURN     : a channel obj if found, NULL if not found
+ *==========================================================================*/
 QCameraChannel *QCamera2HardwareInterface::getChannelByHandle(uint32_t channelHandle)
 {
     for(int i = 0; i < QCAMERA_CH_TYPE_MAX; i++) {
@@ -2081,6 +3067,18 @@ QCameraChannel *QCamera2HardwareInterface::getChannelByHandle(uint32_t channelHa
     return NULL;
 }
 
+/*===========================================================================
+ * FUNCTION   : processFaceDetectionReuslt
+ *
+ * DESCRIPTION: process face detection reuslt
+ *
+ * PARAMETERS :
+ *   @fd_data : ptr to face detection result struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::processFaceDetectionReuslt(cam_face_detection_data_t *fd_data)
 {
     if (!mParameters.isFaceDetectionEnabled()) {
@@ -2170,6 +3168,18 @@ int32_t QCamera2HardwareInterface::processFaceDetectionReuslt(cam_face_detection
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : processHistogramStats
+ *
+ * DESCRIPTION: process histogram stats
+ *
+ * PARAMETERS :
+ *   @hist_data : ptr to histogram stats struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::processHistogramStats(cam_histogram_data_t *hist_data)
 {
     if (!mParameters.isHistogramEnabled()) {
@@ -2197,6 +3207,19 @@ int32_t QCamera2HardwareInterface::processHistogramStats(cam_histogram_data_t *h
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : updateParameters
+ *
+ * DESCRIPTION: update parameters
+ *
+ * PARAMETERS :
+ *   @parms       : input parameters string
+ *   @needRestart : output, flag to indicate if preview restart is needed
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCamera2HardwareInterface::updateParameters(const char *parms, bool &needRestart)
 {
     String8 str = String8(parms);
@@ -2204,16 +3227,49 @@ int QCamera2HardwareInterface::updateParameters(const char *parms, bool &needRes
     return mParameters.updateParameters(param, needRestart);
 }
 
+/*===========================================================================
+ * FUNCTION   : commitParameterChanges
+ *
+ * DESCRIPTION: commit parameter changes to the backend to take effect
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ * NOTE       : This function must be called after updateParameters.
+ *              Otherwise, no change will be passed to backend to take effect.
+ *==========================================================================*/
 int QCamera2HardwareInterface::commitParameterChanges()
 {
     return mParameters.commitParameters();
 }
 
+/*===========================================================================
+ * FUNCTION   : needDebugFps
+ *
+ * DESCRIPTION: if fps log info need to be printed out
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: need print out fps log
+ *              false: no need to print out fps log
+ *==========================================================================*/
 bool QCamera2HardwareInterface::needDebugFps()
 {
     return mParameters.isFpsDebugEnabled();
 }
 
+/*===========================================================================
+ * FUNCTION   : needOfflineReprocess
+ *
+ * DESCRIPTION: if offline reprocess is needed
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
 bool QCamera2HardwareInterface::needOfflineReprocess()
 {
     if (mParameters.isJpegPictureFormat()) {
@@ -2225,20 +3281,57 @@ bool QCamera2HardwareInterface::needOfflineReprocess()
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : getThumbnailSize
+ *
+ * DESCRIPTION: get user set thumbnail size
+ *
+ * PARAMETERS :
+ *   @dim     : output of thumbnail dimension
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCamera2HardwareInterface::getThumbnailSize(cam_dimension_t &dim)
 {
     mParameters.getThumbnailSize(&dim.width, &dim.height);
 }
 
+/*===========================================================================
+ * FUNCTION   : getJpegQuality
+ *
+ * DESCRIPTION: get user set jpeg quality
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : jpeg quality setting
+ *==========================================================================*/
 int QCamera2HardwareInterface::getJpegQuality()
 {
     return mParameters.getJpegQuality();
 }
 
+/*===========================================================================
+ * FUNCTION   : getJpegRotation
+ *
+ * DESCRIPTION: get rotation information to be passed into jpeg encoding
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : rotation information
+ *==========================================================================*/
 int QCamera2HardwareInterface::getJpegRotation() {
     return mParameters.getJpegRotation();
 }
 
+/*===========================================================================
+ * FUNCTION   : getExifData
+ *
+ * DESCRIPTION: get exif data to be passed into jpeg encoding
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : exif data from user setting and GPS
+ *==========================================================================*/
 QCameraExif *QCamera2HardwareInterface::getExifData()
 {
     QCameraExif *exif = new QCameraExif();
@@ -2363,16 +3456,51 @@ QCameraExif *QCamera2HardwareInterface::getExifData()
     return exif;
 }
 
+/*===========================================================================
+ * FUNCTION   : setHistogram
+ *
+ * DESCRIPTION: set if histogram should be enabled
+ *
+ * PARAMETERS :
+ *   @histogram_en : bool flag if histogram should be enabled
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::setHistogram(bool histogram_en)
 {
     return mParameters.setHistogram(histogram_en);
 }
 
+/*===========================================================================
+ * FUNCTION   : setFaceDetection
+ *
+ * DESCRIPTION: set if face detection should be enabled
+ *
+ * PARAMETERS :
+ *   @enabled : bool flag if face detection should be enabled
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::setFaceDetection(bool enabled)
 {
     return mParameters.setFaceDetection(enabled);
 }
 
+/*===========================================================================
+ * FUNCTION   : prepareHardwareForSnapshot
+ *
+ * DESCRIPTION: prepare hardware for snapshot, such as LED
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCamera2HardwareInterface::prepareHardwareForSnapshot()
 {
     return mCameraHandle->ops->prepare_snapshot(mCameraHandle->camera_handle);
