@@ -2632,7 +2632,7 @@ int32_t QCameraParameters::setSceneMode(const char *sceneModeStr)
             ALOGD("%s: Setting SceneMode %s", __func__, sceneModeStr);
             updateParamEntry(KEY_SCENE_MODE, sceneModeStr);
             int32_t rc = AddSetParmEntryToBatch(m_pParamBuf,
-                                                CAM_INTF_PARM_FOCUS_ALGO_TYPE,
+                                                CAM_INTF_PARM_BESTSHOT_MODE,
                                                 sizeof(value),
                                                 &value);
             return rc;

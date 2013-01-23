@@ -546,7 +546,6 @@ int QCameraGrallocMemory::displayBuffer(int index)
         ALOGE("buffer to be enqueued is not locked");
     }
 
-    cleanInvalidateCache(index);
     err = mWindow->enqueue_buffer(mWindow, (buffer_handle_t *)mBufferHandle[index]);
     if(err != 0) {
         ALOGE("%s: enqueue_buffer failed, err = %d", __func__, err);
