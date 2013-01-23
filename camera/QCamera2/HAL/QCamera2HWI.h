@@ -40,6 +40,7 @@
 #include "QCameraStateMachine.h"
 #include "QCameraAllocator.h"
 #include "QCameraPostProc.h"
+#include "QCameraThermalAdapter.h"
 
 extern "C" {
 #include <mm_camera_interface.h>
@@ -81,7 +82,8 @@ typedef struct {
 #define QCAMERA_DUMP_FRM_RAW        1<<4
 #define QCAMERA_DUMP_FRM_JPEG       1<<5
 
-class QCamera2HardwareInterface : public QCameraAllocator
+class QCamera2HardwareInterface : public QCameraAllocator,
+                                    public QCameraThermalCallback
 {
 public:
     /* static variable and functions accessed by camera service */
@@ -130,6 +132,10 @@ public:
     // Implementation of QCameraAllocator
     virtual QCameraMemory *allocateStreamBuf(cam_stream_type_t stream_type, int size);
     virtual QCameraHeapMemory *allocateStreamInfoBuf(cam_stream_type_t stream_type);
+
+    // Implementation of QCameraThermalCallback
+    virtual int thermalEvtHandle(char *name,
+                              int threshold, int level);
 
     friend class QCameraStateMachine;
     friend class QCameraPostProcessor;
@@ -226,7 +232,7 @@ private:
     bool isNoDisplayMode() {return mParameters.isNoDisplayMode();};
     uint8_t numOfSnapshotsExpected() {return mParameters.getNumOfSnapshots();};
 
-    static void evtHandle(uint32_t camera_handle,
+    static void camEvtHandle(uint32_t camera_handle,
                           mm_camera_event_t *evt,
                           void *user_data);
     static void jpegEvtHandle(jpeg_job_status_t status,
@@ -284,6 +290,7 @@ private:
 
     QCameraStateMachine m_stateMachine;   // state machine
     QCameraPostProcessor m_postprocessor; // post processor
+    QCameraThermalAdapter &m_thermalAdapter;
     pthread_mutex_t m_lock;
     pthread_cond_t m_cond;
     qcamera_api_result_t m_apiResult;
