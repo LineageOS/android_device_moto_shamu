@@ -1,3 +1,4 @@
+ifeq ($(call is-vendor-board-platform,QCOM),true)
 OLD_LOCAL_PATH := $(LOCAL_PATH)
 LOCAL_PATH := $(call my-dir)
 
@@ -30,10 +31,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 LOCAL_C_INCLUDES += hardware/qcom/media/mm-core/inc
 
-ifeq ($(PLATFORM_VERSION), 4.2)
-  LOCAL_CFLAGS += -include bionic/libc/include/sys/socket.h
-  LOCAL_CFLAGS += -include bionic/libc/include/sys/un.h
-else
+ifneq ($(call is-platform-sdk-version-at-least,17),true)
   LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/socket.h
   LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/un.h
 endif
@@ -49,3 +47,4 @@ LOCAL_MODULE_TAGS := optional
 include $(BUILD_SHARED_LIBRARY)
 
 LOCAL_PATH := $(OLD_LOCAL_PATH)
+endif
