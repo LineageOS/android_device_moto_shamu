@@ -62,10 +62,16 @@ typedef struct {
 } qcamera_jpeg_evt_payload_t;
 
 typedef struct {
+    camera_memory_t *        data;     // ptr to data memory struct
+    mm_camera_super_buf_t *  frame;    // ptr to frame
+} qcamera_release_data_t;
+
+typedef struct {
     int32_t                  msg_type; // msg type of data notify
     camera_memory_t *        data;     // ptr to data memory struct
     unsigned int             index;    // index of the buf in the whole buffer
     camera_frame_metadata_t *metadata; // ptr to meta data
+    qcamera_release_data_t   release_data; // any data needs to be release after notify
 } qcamera_data_argm_t;
 
 #define MAX_EXIF_TABLE_ENTRIES 14
@@ -98,16 +104,18 @@ public:
     int32_t start();
     int32_t stop();
     int32_t processData(mm_camera_super_buf_t *frame);
+    int32_t processRawData(mm_camera_super_buf_t *frame);
     int32_t processPPData(mm_camera_super_buf_t *frame);
     int32_t processJpegEvt(qcamera_jpeg_evt_payload_t *evt);
     int32_t getJpegPaddingReq(cam_padding_info_t &padding_info);
 
 private:
-    int32_t sendEvtNotify(int32_t msg_type, int32_t ext1, int32_t ext2);
     int32_t sendDataNotify(int32_t msg_type,
                            camera_memory_t *data,
                            uint8_t index,
-                           camera_frame_metadata_t *metadata);
+                           camera_frame_metadata_t *metadata,
+                           qcamera_release_data_t *release_data);
+    int32_t sendEvtNotify(int32_t msg_type, int32_t ext1, int32_t ext2);
     qcamera_jpeg_data_t *findJpegJobByJobId(uint32_t jobId);
     mm_jpeg_color_format getColorfmtFromImgFmt(cam_format_t img_fmt);
     mm_jpeg_format_t getJpegImgTypeFromImgFmt(cam_format_t img_fmt);
@@ -119,6 +127,7 @@ private:
     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
     void releaseNotifyData(qcamera_data_argm_t *app_cb);
     void releaseJpegJobData(qcamera_jpeg_data_t *job);
+    int32_t processRawImageImpl(mm_camera_super_buf_t *recvd_frame);
 
     static void releaseOutputData(void *data, void *user_data);
     static void releasePPInputData(void *data, void *user_data);
@@ -144,6 +153,7 @@ private:
     QCameraQueue m_ongoingPPQ;          // ongoing postproc queue
     QCameraQueue m_inputJpegQ;          // input jpeg job queue
     QCameraQueue m_ongoingJpegQ;        // ongoing jpeg job queue
+    QCameraQueue m_inputRawQ;           // input raw job queue
     QCameraCmdThread m_dataProcTh;      // thread for data processing
     QCameraQueue m_dataNotifyQ;         // data notify queue
     QCameraCmdThread m_dataNotifyTh;    // thread handling data notify to service layer

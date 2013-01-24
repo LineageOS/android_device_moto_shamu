@@ -60,6 +60,7 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
       m_ongoingPPQ(releaseOngoingPPData, this),
       m_inputJpegQ(releaseJpegInputData, this),
       m_ongoingJpegQ(releaseOngoingJpegData, this),
+      m_inputRawQ(releaseJpegInputData, this),
       m_dataNotifyQ(releaseOutputData, this)
 {
     memset(&mJpegHandle, 0, sizeof(mJpegHandle));
@@ -361,6 +362,8 @@ int32_t QCameraPostProcessor::sendEvtNotify(int32_t msg_type,
  *   @index   : index to data buffer
  *   @metadata: ptr to meta data buffer if there is any
  *   @jpeg_mem: any tempory heap memory to be released after callback
+ *   @release_data : ptr to struct indicating if data need to be released
+ *                   after notify
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
@@ -369,7 +372,8 @@ int32_t QCameraPostProcessor::sendEvtNotify(int32_t msg_type,
 int32_t QCameraPostProcessor::sendDataNotify(int32_t msg_type,
                                              camera_memory_t *data,
                                              uint8_t index,
-                                             camera_frame_metadata_t *metadata)
+                                             camera_frame_metadata_t *metadata,
+                                             qcamera_release_data_t *release_data)
 {
     qcamera_data_argm_t *data_cb = (qcamera_data_argm_t *)malloc(sizeof(qcamera_data_argm_t));
     if (NULL == data_cb) {
@@ -381,6 +385,9 @@ int32_t QCameraPostProcessor::sendDataNotify(int32_t msg_type,
     data_cb->data = data;
     data_cb->index = index;
     data_cb->metadata = metadata;
+    if (release_data != NULL) {
+        data_cb->release_data = *release_data;
+    }
 
     // enqueue jpeg_data into jpeg data queue
     if (m_dataNotifyQ.enqueue((void *)data_cb)) {
@@ -396,7 +403,7 @@ int32_t QCameraPostProcessor::sendDataNotify(int32_t msg_type,
 /*===========================================================================
  * FUNCTION   : processData
  *
- * DESCRIPTION: enqueue data into dataNotify thread
+ * DESCRIPTION: enqueue data into dataProc thread
  *
  * PARAMETERS :
  *   @frame   : process frame received from mm-camera-interface
@@ -421,6 +428,26 @@ int32_t QCameraPostProcessor::processData(mm_camera_super_buf_t *frame)
     }
     m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
 
+    return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : processRawData
+ *
+ * DESCRIPTION: enqueue raw data into dataProc thread
+ *
+ * PARAMETERS :
+ *   @frame   : process frame received from mm-camera-interface
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraPostProcessor::processRawData(mm_camera_super_buf_t *frame)
+{
+    // enqueu to raw input queue
+    m_inputRawQ.enqueue((void *)frame);
+    m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
     return NO_ERROR;
 }
 
@@ -486,10 +513,14 @@ int32_t QCameraPostProcessor::processJpegEvt(qcamera_jpeg_evt_payload_t *evt)
     memcpy(jpeg_mem->data, evt->out_data.buf_vaddr, evt->out_data.buf_filled_len);
 
     ALOGE("%s : Calling upperlayer callback to store JPEG image", __func__);
+    qcamera_release_data_t release_data;
+    memset(&release_data, 0, sizeof(qcamera_release_data_t));
+    release_data.data = jpeg_mem;
     rc = sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
                         jpeg_mem,
                         0,
-                        NULL);
+                        NULL,
+                        &release_data);
 
 end:
     if (rc != NO_ERROR) {
@@ -497,6 +528,7 @@ end:
         sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
                        NULL,
                        0,
+                       NULL,
                        NULL);
 
         if (NULL != jpeg_mem) {
@@ -702,9 +734,14 @@ void QCameraPostProcessor::releaseOngoingPPData(void *data, void *user_data)
  *==========================================================================*/
 void QCameraPostProcessor::releaseNotifyData(qcamera_data_argm_t *app_cb)
 {
-    if (NULL != app_cb->data) {
-        app_cb->data->release(app_cb->data);
-        app_cb->data = NULL;
+    if (app_cb && NULL != app_cb->release_data.data) {
+        app_cb->release_data.data->release(app_cb->release_data.data);
+        app_cb->release_data.data = NULL;
+    }
+    if (app_cb && NULL != app_cb->release_data.frame) {
+        releaseSuperBuf(app_cb->release_data.frame);
+        free(app_cb->release_data.frame);
+        app_cb->release_data.frame = NULL;
     }
 }
 
@@ -864,15 +901,18 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
        return BAD_VALUE;
     }
 
-    // dump snapshot frame if enabled
-    m_parent->dumpFrameToFile(main_frame->buffer, main_frame->frame_len,
-                              main_frame->frame_idx, QCAMERA_DUMP_FRM_SNAPSHOT);
-
     QCameraMemory *memObj = (QCameraMemory *)main_frame->mem_info;
     if (NULL == memObj) {
         ALOGE("%s : Memeory Obj of main frame is NULL", __func__);
         return NO_MEMORY;
     }
+
+    // clean and invalidate cache ops through mem obj of the frame
+    memObj->cleanInvalidateCache(main_frame->buf_idx);
+
+    // dump snapshot frame if enabled
+    m_parent->dumpFrameToFile(main_frame->buffer, main_frame->frame_len,
+                              main_frame->frame_idx, QCAMERA_DUMP_FRM_SNAPSHOT);
 
     // send upperlayer callback for raw image
     camera_memory_t *mem = memObj->getMemory(main_frame->buf_idx, false);
@@ -887,9 +927,6 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
         m_parent->mNotifyCb(CAMERA_MSG_RAW_IMAGE_NOTIFY,
                             0, 0, m_parent->mCallbackCookie);
     }
-
-    // clean and invalidate cache ops through mem obj of the frame
-    memObj->cleanInvalidateCache(main_frame->buf_idx);
 
     if (mJpegClientHandle <= 0) {
         ALOGE("%s: Error: bug here, mJpegClientHandle is 0", __func__);
@@ -947,6 +984,68 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
 
     ALOGD("%s : X", __func__);
     return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : processRawImageImpl
+ *
+ * DESCRIPTION: function to send raw image to upper layer
+ *
+ * PARAMETERS :
+ *   @recvd_frame   : frame to be encoded
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_frame)
+{
+    int32_t rc = NO_ERROR;
+
+    mm_camera_buf_def_t *frame = recvd_frame->bufs[0];
+    QCameraMemory *rawMemObj = (QCameraMemory *)frame->mem_info;
+    camera_memory_t *raw_mem = rawMemObj->getMemory(frame->buf_idx, false);
+
+    if (NULL != rawMemObj && NULL != raw_mem) {
+        // send data callback for COMPRESSED_IMAGE
+        rawMemObj->cleanCache(frame->buf_idx);
+
+        // dump frame into file
+        m_parent->dumpFrameToFile(frame->buffer, frame->frame_len,
+                                  frame->buf_idx, QCAMERA_DUMP_FRM_RAW);
+
+        // send data callback / notify for RAW_IMAGE
+        if (NULL != m_parent->mDataCb &&
+            m_parent->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE) > 0) {
+            m_parent->mDataCb(CAMERA_MSG_RAW_IMAGE,
+                         raw_mem,
+                         0,
+                         NULL,
+                         m_parent->mCallbackCookie);
+        }
+        if (NULL != m_parent->mNotifyCb &&
+            m_parent->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE_NOTIFY) > 0) {
+            m_parent->mNotifyCb(CAMERA_MSG_RAW_IMAGE_NOTIFY,
+                                0, 0, m_parent->mCallbackCookie);
+        }
+
+        if ((m_parent->mDataCb != NULL) &&
+            m_parent->msgTypeEnabled(CAMERA_MSG_COMPRESSED_IMAGE) > 0) {
+            qcamera_release_data_t release_data;
+            memset(&release_data, 0, sizeof(qcamera_release_data_t));
+            release_data.frame = recvd_frame;
+            sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
+                           raw_mem,
+                           0,
+                           NULL,
+                           &release_data);
+        }
+    } else {
+        ALOGE("%s: Cannot get raw mem", __func__);
+        rc = UNKNOWN_ERROR;
+    }
+
+    return rc;
 }
 
 /*===========================================================================
@@ -1136,6 +1235,9 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                 // flush input Postproc Queue
                 pme->m_inputPPQ.flush();
 
+                // flush input raw Queue
+                pme->m_inputRawQ.flush();
+
                 // signal cmd is completed
                 cam_sem_post(&cmdThread->sync_sem);
             }
@@ -1172,11 +1274,31 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                                 pme->sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
                                                     NULL,
                                                     0,
+                                                    NULL,
                                                     NULL);
                             } else {
                                 // add into ongoing jpeg job Q
                                 pme->m_ongoingJpegQ.enqueue((void *)jpeg_job);
                             }
+                        }
+                    }
+
+                    // process raw data if any
+                    mm_camera_super_buf_t *super_buf =
+                        (mm_camera_super_buf_t *)pme->m_inputRawQ.dequeue();
+
+                    if (NULL != super_buf) {
+                        //play shutter sound
+                        pme->m_parent->playShutter();
+                        ret = pme->processRawImageImpl(super_buf);
+                        if (NO_ERROR != ret) {
+                            pme->releaseSuperBuf(super_buf);
+                            free(super_buf);
+                            pme->sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
+                                                NULL,
+                                                0,
+                                                NULL,
+                                                NULL);
                         }
                     }
 
@@ -1215,6 +1337,7 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                             pme->sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
                                                 NULL,
                                                 0,
+                                                NULL,
                                                 NULL);
                         } else {
                             // free request buf
@@ -1228,6 +1351,11 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                     // not active, simply return buf and do no op
                     mm_camera_super_buf_t *super_buf =
                         (mm_camera_super_buf_t *)pme->m_inputJpegQ.dequeue();
+                    if (NULL != super_buf) {
+                        pme->releaseSuperBuf(super_buf);
+                        free(super_buf);
+                    }
+                    super_buf = (mm_camera_super_buf_t *)pme->m_inputRawQ.dequeue();
                     if (NULL != super_buf) {
                         pme->releaseSuperBuf(super_buf);
                         free(super_buf);

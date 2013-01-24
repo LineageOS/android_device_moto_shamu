@@ -1164,13 +1164,13 @@ int QCamera2HardwareInterface::takePicture()
     int rc = NO_ERROR;
     uint8_t numSnapshots = mParameters.getNumOfSnapshots();
 
+    // start postprocessor
+    m_postprocessor.start();
+
     if (mParameters.isZSLMode()) {
         QCameraPicChannel *pZSLChannel =
             (QCameraPicChannel *)m_channels[QCAMERA_CH_TYPE_ZSL];
         if (NULL != pZSLChannel) {
-            // start postprocessor
-            m_postprocessor.start();
-
             rc = pZSLChannel->takePicture(numSnapshots);
             if (rc != NO_ERROR) {
                 ALOGE("%s: cannot take ZSL picture", __func__);
@@ -1179,7 +1179,8 @@ int QCamera2HardwareInterface::takePicture()
             }
         } else {
             ALOGE("%s: ZSL channel is NULL", __func__);
-            rc = UNKNOWN_ERROR;
+            m_postprocessor.stop();
+            return UNKNOWN_ERROR;
         }
     } else {
         // normal capture case
@@ -1195,9 +1196,6 @@ int QCamera2HardwareInterface::takePicture()
             ALOGD("%s: take JPEG picture", __func__);
             rc = addCaptureChannel();
             if (rc == NO_ERROR) {
-                // start postprocessor
-                m_postprocessor.start();
-
                 // start catpure channel
                 rc = startChannel(QCAMERA_CH_TYPE_CAPTURE);
                 if (rc != NO_ERROR) {
@@ -1206,6 +1204,10 @@ int QCamera2HardwareInterface::takePicture()
                     delChannel(QCAMERA_CH_TYPE_CAPTURE);
                     return rc;
                 }
+            } else {
+                ALOGE("%s: cannot add capture channel", __func__);
+                m_postprocessor.stop();
+                return rc;
             }
         } else {
             ALOGD("%s: take RAW picture", __func__);
@@ -1214,9 +1216,14 @@ int QCamera2HardwareInterface::takePicture()
                 rc = startChannel(QCAMERA_CH_TYPE_RAW);
                 if (rc != NO_ERROR) {
                     ALOGE("%s: cannot start raw channel", __func__);
+                    m_postprocessor.stop();
                     delChannel(QCAMERA_CH_TYPE_RAW);
                     return rc;
                 }
+            } else {
+                ALOGE("%s: cannot add raw channel", __func__);
+                m_postprocessor.stop();
+                return rc;
             }
         }
     }
@@ -1226,10 +1233,10 @@ int QCamera2HardwareInterface::takePicture()
 
 int QCamera2HardwareInterface::cancelPicture()
 {
-    if (mParameters.isZSLMode()) {
-        //stop post processor
-        m_postprocessor.stop();
+    //stop post processor
+    m_postprocessor.stop();
 
+    if (mParameters.isZSLMode()) {
         QCameraPicChannel *pZSLChannel =
             (QCameraPicChannel *)m_channels[QCAMERA_CH_TYPE_ZSL];
         if (NULL != pZSLChannel) {
@@ -1240,9 +1247,6 @@ int QCamera2HardwareInterface::cancelPicture()
     } else {
         // normal capture case
         if (mParameters.isJpegPictureFormat()) {
-            //stop post processor
-            m_postprocessor.stop();
-
             stopChannel(QCAMERA_CH_TYPE_CAPTURE);
             delChannel(QCAMERA_CH_TYPE_CAPTURE);
         } else {
@@ -2212,7 +2216,9 @@ bool QCamera2HardwareInterface::needDebugFps()
 
 bool QCamera2HardwareInterface::needOfflineReprocess()
 {
-    if (mParameters.isZSLMode() && mParameters.isWNREnabled()) {
+    if (mParameters.isJpegPictureFormat()) {
+        return false;
+    } else if (mParameters.isZSLMode() && mParameters.isWNREnabled()) {
         return true;
     } else {
         return false;

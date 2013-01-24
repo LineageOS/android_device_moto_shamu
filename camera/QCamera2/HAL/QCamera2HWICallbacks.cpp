@@ -167,10 +167,12 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
     if (pme->needDebugFps()) {
         pme->debugShowPreviewFPS();
     }
+
+    int idx = frame->buf_idx;
+    memory->cleanCache(idx);
     pme->dumpFrameToFile(frame->buffer, frame->frame_len,
                          frame->buf_idx, QCAMERA_DUMP_FRM_PREVIEW);
 
-    int idx = frame->buf_idx;
     // Display the buffer.
     int dequeuedIdx = memory->displayBuffer(idx);
     if (dequeuedIdx < 0 || dequeuedIdx >= memory->getCnt()) {
@@ -280,14 +282,16 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
     if (pme->needDebugFps()) {
         pme->debugShowPreviewFPS();
     }
-    pme->dumpFrameToFile(frame->buffer, frame->frame_len,
-                         frame->buf_idx, QCAMERA_DUMP_FRM_PREVIEW);
 
     QCameraMemory *previewMemObj = (QCameraMemory *)frame->mem_info;
     camera_memory_t *preview_mem =
         previewMemObj->getMemory(frame->buf_idx, false);
     if (NULL != previewMemObj && NULL != preview_mem) {
         previewMemObj->cleanCache(frame->buf_idx);
+
+        pme->dumpFrameToFile(frame->buffer, frame->frame_len,
+                             frame->buf_idx, QCAMERA_DUMP_FRM_PREVIEW);
+
         if (pme->needProcessPreviewFrame() &&
             pme->mDataCb != NULL &&
             pme->msgTypeEnabled(CAMERA_MSG_PREVIEW_FRAME) > 0 ) {
@@ -343,6 +347,14 @@ void QCamera2HardwareInterface::postview_stream_cb_routine(mm_camera_super_buf_t
         ALOGE("%s: preview frame is NLUL", __func__);
         free(super_frame);
         return;
+    }
+
+    QCameraMemory *memObj = (QCameraMemory *)frame->mem_info;
+    if (NULL != memObj) {
+        memObj->cleanCache(frame->buf_idx);
+
+        pme->dumpFrameToFile(frame->buffer, frame->frame_len,
+                             frame->buf_idx, QCAMERA_DUMP_FRM_THUMBNAIL);
     }
 
     // Display the buffer.
@@ -409,7 +421,6 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
           frame->ts.tv_sec,
           frame->ts.tv_nsec);
 
-    pme->dumpFrameToFile(frame->buffer, frame->frame_len, frame->buf_idx, QCAMERA_DUMP_FRM_VIDEO);
     nsecs_t timeStamp = nsecs_t(frame->ts.tv_sec) * 1000000000LL + frame->ts.tv_nsec;
     ALOGE("Send Video frame to services/encoder TimeStamp : %lld", timeStamp);
 
@@ -418,6 +429,8 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
         videoMemObj->getMemory(frame->buf_idx, (pme->mStoreMetaDataInFrame > 0)? true : false);
     if (NULL != videoMemObj && NULL != video_mem) {
         videoMemObj->cleanCache(frame->buf_idx);
+        pme->dumpFrameToFile(frame->buffer, frame->frame_len,
+                             frame->buf_idx, QCAMERA_DUMP_FRM_VIDEO);
         if ((pme->mDataCbTimestamp != NULL) &&
             pme->msgTypeEnabled(CAMERA_MSG_VIDEO_FRAME) > 0) {
             pme->mDataCbTimestamp(timeStamp,
@@ -490,7 +503,7 @@ void QCamera2HardwareInterface::snapshot_stream_cb_routine(mm_camera_super_buf_t
  *             back to kernel, and frame will be free after use.
  *==========================================================================*/
 void QCamera2HardwareInterface::raw_stream_cb_routine(mm_camera_super_buf_t * super_frame,
-                                                      QCameraStream * stream,
+                                                      QCameraStream * /*stream*/,
                                                       void * userdata)
 {
     ALOGV("%s : BEGIN", __func__);
@@ -504,47 +517,7 @@ void QCamera2HardwareInterface::raw_stream_cb_routine(mm_camera_super_buf_t * su
         return;
     }
 
-    //play shutter sound
-    pme->playShutter();
-
-    // dump frame into file
-    mm_camera_buf_def_t *frame = super_frame->bufs[0];
-    pme->dumpFrameToFile(frame->buffer, frame->frame_len, frame->buf_idx, QCAMERA_DUMP_FRM_RAW);
-
-    QCameraMemory *rawMemObj = (QCameraMemory *)frame->mem_info;
-    camera_memory_t *raw_mem = rawMemObj->getMemory(frame->buf_idx, false);
-
-    if (NULL != rawMemObj && NULL != raw_mem) {
-        // send data callback / notify for RAW_IMAGE
-        if (NULL != pme->mDataCb &&
-            pme->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE) > 0) {
-            pme->mDataCb(CAMERA_MSG_RAW_IMAGE,
-                         raw_mem,
-                         0,
-                         NULL,
-                         pme->mCallbackCookie);
-        }
-        if (NULL != pme->mNotifyCb &&
-            pme->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE_NOTIFY) > 0) {
-            pme->mNotifyCb(CAMERA_MSG_RAW_IMAGE_NOTIFY,
-                           0, 0, pme->mCallbackCookie);
-        }
-
-        // send data callback for COMPRESSED_IMAGE
-        rawMemObj->cleanCache(frame->buf_idx);
-        if ((pme->mDataCb != NULL) &&
-            pme->msgTypeEnabled(CAMERA_MSG_COMPRESSED_IMAGE) > 0) {
-            pme->mDataCb(CAMERA_MSG_COMPRESSED_IMAGE,
-                         raw_mem,
-                         0,
-                         NULL,
-                         pme->mCallbackCookie);
-        }
-    }
-
-    stream->bufDone(frame->buf_idx);
-    free(super_frame);
-
+    pme->m_postprocessor.processRawData(super_frame);
     ALOGV("%s : END", __func__);
 }
 

@@ -1938,8 +1938,8 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
             PAD_TO_SIZE(buf_planes->plane_info.mp[0].len, CAM_PAD_TO_4K);
         buf_planes->plane_info.mp[0].offset_x =0;
         buf_planes->plane_info.mp[0].offset_y = 0;
-        buf_planes->plane_info.mp[0].stride = buf_planes->plane_info.mp[0].len;
-        buf_planes->plane_info.mp[0].scanline = 1;
+        buf_planes->plane_info.mp[0].stride = stride;
+        buf_planes->plane_info.mp[0].scanline = scanline;
         break;
     case CAM_FORMAT_BAYER_QCOM_RAW_8BPP_GBRG:
     case CAM_FORMAT_BAYER_QCOM_RAW_8BPP_GRBG:
@@ -1970,8 +1970,8 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
             PAD_TO_SIZE(buf_planes->plane_info.mp[0].len, CAM_PAD_TO_4K);
         buf_planes->plane_info.mp[0].offset_x =0;
         buf_planes->plane_info.mp[0].offset_y = 0;
-        buf_planes->plane_info.mp[0].stride = buf_planes->plane_info.mp[0].len;
-        buf_planes->plane_info.mp[0].scanline = 1;
+        buf_planes->plane_info.mp[0].stride = stride;
+        buf_planes->plane_info.mp[0].scanline = scanline;
         break;
     case CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GBRG:
     case CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GRBG:
@@ -1989,8 +1989,8 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
             PAD_TO_SIZE(buf_planes->plane_info.mp[0].len, CAM_PAD_TO_4K);
         buf_planes->plane_info.mp[0].offset_x =0;
         buf_planes->plane_info.mp[0].offset_y = 0;
-        buf_planes->plane_info.mp[0].stride = buf_planes->plane_info.mp[0].len;
-        buf_planes->plane_info.mp[0].scanline = 1;
+        buf_planes->plane_info.mp[0].stride = stride;
+        buf_planes->plane_info.mp[0].scanline = scanline;
         break;
     case CAM_FORMAT_BAYER_QCOM_RAW_12BPP_GBRG:
     case CAM_FORMAT_BAYER_QCOM_RAW_12BPP_GRBG:
@@ -2008,8 +2008,8 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
             PAD_TO_SIZE(buf_planes->plane_info.mp[0].len, CAM_PAD_TO_4K);
         buf_planes->plane_info.mp[0].offset_x =0;
         buf_planes->plane_info.mp[0].offset_y = 0;
-        buf_planes->plane_info.mp[0].stride = buf_planes->plane_info.mp[0].len;
-        buf_planes->plane_info.mp[0].scanline = 1;
+        buf_planes->plane_info.mp[0].stride = stride;
+        buf_planes->plane_info.mp[0].scanline = scanline;
         break;
     case CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GBRG:
     case CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GRBG:
@@ -2027,8 +2027,8 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
             PAD_TO_SIZE(buf_planes->plane_info.mp[0].len, CAM_PAD_TO_4K);
         buf_planes->plane_info.mp[0].offset_x =0;
         buf_planes->plane_info.mp[0].offset_y = 0;
-        buf_planes->plane_info.mp[0].stride = buf_planes->plane_info.mp[0].len;
-        buf_planes->plane_info.mp[0].scanline = 1;
+        buf_planes->plane_info.mp[0].stride = stride;
+        buf_planes->plane_info.mp[0].scanline = scanline;
         break;
     case CAM_FORMAT_BAYER_MIPI_RAW_12BPP_GBRG:
     case CAM_FORMAT_BAYER_MIPI_RAW_12BPP_GRBG:
@@ -2046,8 +2046,8 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
             PAD_TO_SIZE(buf_planes->plane_info.mp[0].len, CAM_PAD_TO_4K);
         buf_planes->plane_info.mp[0].offset_x =0;
         buf_planes->plane_info.mp[0].offset_y = 0;
-        buf_planes->plane_info.mp[0].stride = buf_planes->plane_info.mp[0].len;
-        buf_planes->plane_info.mp[0].scanline = 1;
+        buf_planes->plane_info.mp[0].stride = stride;
+        buf_planes->plane_info.mp[0].scanline = scanline;
         break;
     case CAM_FORMAT_BAYER_IDEAL_RAW_PLAIN16_8BPP_GBRG:
     case CAM_FORMAT_BAYER_IDEAL_RAW_PLAIN16_8BPP_GRBG:
@@ -2069,8 +2069,8 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
             PAD_TO_SIZE(buf_planes->plane_info.mp[0].len, CAM_PAD_TO_4K);
         buf_planes->plane_info.mp[0].offset_x =0;
         buf_planes->plane_info.mp[0].offset_y = 0;
-        buf_planes->plane_info.mp[0].stride = buf_planes->plane_info.mp[0].len;
-        buf_planes->plane_info.mp[0].scanline = 1;
+        buf_planes->plane_info.mp[0].stride = stride;
+        buf_planes->plane_info.mp[0].scanline = scanline;
         break;
     default:
         CDBG_ERROR("%s: Invalid cam_format %d for raw stream",
