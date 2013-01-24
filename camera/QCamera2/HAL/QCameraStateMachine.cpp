@@ -381,9 +381,13 @@ int32_t QCameraStateMachine::procEvtPreviewStoppedState(qcamera_sm_evt_enum_t ev
     case QCAMERA_SM_EVT_START_PREVIEW:
         {
             if (m_parent->mPreviewWindow == NULL) {
-                // preview window is not set yet, move to previewReady state
-                m_state = QCAMERA_SM_STATE_PREVIEW_READY;
-                rc = NO_ERROR;
+                rc = m_parent->preparePreview();
+                if(rc == NO_ERROR) {
+                    // preview window is not set yet, move to previewReady state
+                    m_state = QCAMERA_SM_STATE_PREVIEW_READY;
+                } else {
+                    ALOGE("%s: preparePreview failed",__func__);
+                }
             } else {
                 rc = m_parent->preparePreview();
                 if (rc == NO_ERROR) {
