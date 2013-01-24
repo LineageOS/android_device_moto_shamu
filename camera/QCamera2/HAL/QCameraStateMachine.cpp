@@ -838,9 +838,18 @@ int32_t QCameraStateMachine::procEvtPreviewingState(qcamera_sm_evt_enum_t evt,
                     // stop preview
                     m_parent->stopPreview();
                     // commit parameter changes to server
-                    rc = m_parent->commitParameterChanges();
+                    m_parent->commitParameterChanges();
                     // start preview again
-                    m_parent->startPreview();
+                    rc = m_parent->preparePreview();
+                    if (rc == NO_ERROR) {
+                        rc = m_parent->startPreview();
+                        if (rc != NO_ERROR) {
+                            m_parent->unpreparePreview();
+                        }
+                    }
+                    if (rc != NO_ERROR) {
+                        m_state = QCAMERA_SM_STATE_PREVIEW_STOPPED;
+                    }
                 } else {
                     rc = m_parent->commitParameterChanges();
                 }
@@ -1940,9 +1949,18 @@ int32_t QCameraStateMachine::procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t 
                     // stop preview
                     m_parent->stopPreview();
                     // commit parameter changes to server
-                    rc = m_parent->commitParameterChanges();
+                    m_parent->commitParameterChanges();
                     // start preview again
-                    m_parent->startPreview();
+                    rc = m_parent->preparePreview();
+                    if (rc == NO_ERROR) {
+                        rc = m_parent->startPreview();
+                        if (rc != NO_ERROR) {
+                            m_parent->unpreparePreview();
+                        }
+                    }
+                    if (rc != NO_ERROR) {
+                        m_state = QCAMERA_SM_STATE_PIC_TAKING;
+                    }
                 } else {
                     rc = m_parent->commitParameterChanges();
                 }
