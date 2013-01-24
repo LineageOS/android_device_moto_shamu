@@ -34,7 +34,6 @@
 #include <sys/mman.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>
-#include <genlock.h>
 #include <gralloc_priv.h>
 #include <QComOMXMetadata.h>
 #include "QCameraMem.h"
@@ -535,15 +534,9 @@ int QCameraGrallocMemory::displayBuffer(int index)
     int err = NO_ERROR;
     int dequeuedIdx = BAD_INDEX;
 
-    if (BUFFER_LOCKED == mLocalFlag[index]) {
-        if (GENLOCK_FAILURE == genlock_unlock_buffer((native_handle_t*)
-                        (*mBufferHandle[index]))) {
-            ALOGE("genlock_unlock_buffer failed");
-        } else {
-            mLocalFlag[index] = BUFFER_UNLOCKED;
-        }
-    } else {
-        ALOGE("buffer to be enqueued is not locked");
+    if (BUFFER_NOT_OWNED == mLocalFlag[index]) {
+        ALOGE("%s: buffer to be enqueued is not owned", __func__);
+        return INVALID_OPERATION;
     }
 
     err = mWindow->enqueue_buffer(mWindow, (buffer_handle_t *)mBufferHandle[index]);
@@ -563,19 +556,9 @@ int QCameraGrallocMemory::displayBuffer(int index)
         for(i = 0; i < mBufferCount; i++) {
             if(mBufferHandle[i] == buffer_handle) {
                 ALOGV("%s: Found buffer in idx:%d", __func__, i);
-                mLocalFlag[i] = BUFFER_UNLOCKED;
-                break;
-            }
-        }
-        if (i < mBufferCount ) {
-            err = mWindow->lock_buffer(mWindow, buffer_handle);
-            ALOGD("camera call genlock_lock: hdl =%p", *buffer_handle);
-            if (GENLOCK_FAILURE == genlock_lock_buffer((native_handle_t*)
-                    (*buffer_handle), GENLOCK_WRITE_LOCK, GENLOCK_MAX_TIMEOUT)) {
-                ALOGE("%s: genlock_lock_buffer(WRITE) failed", __func__);
-            } else  {
-                mLocalFlag[i] = BUFFER_LOCKED;
+                mLocalFlag[i] = BUFFER_OWNED;
                 dequeuedIdx = i;
+                break;
             }
         }
     } else {
@@ -641,18 +624,7 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
         err = mWindow->dequeue_buffer(mWindow, &mBufferHandle[cnt], &stride);
         if(!err) {
             ALOGV("dequeue buf hdl =%p", mBufferHandle[cnt]);
-            err = mWindow->lock_buffer(mWindow, mBufferHandle[cnt]);
-            // lock the buffer using genlock
-            ALOGV("camera call genlock_lock, hdl=%p", *mBufferHandle[cnt]);
-            if (GENLOCK_NO_ERROR != genlock_lock_buffer(
-                            (native_handle_t *)(*mBufferHandle[cnt]),
-                            GENLOCK_WRITE_LOCK, GENLOCK_MAX_TIMEOUT)) {
-                ALOGE("%s: genlock_lock_buffer(WRITE) failed", __func__);
-                mLocalFlag[cnt] = BUFFER_UNLOCKED;
-            } else {
-                ALOGV("genlock_lock_buffer hdl =%p", *mBufferHandle[cnt]);
-                mLocalFlag[cnt] = BUFFER_LOCKED;
-            }
+            mLocalFlag[cnt] = BUFFER_OWNED;
         } else {
             mLocalFlag[cnt] = BUFFER_NOT_OWNED;
             ALOGE("%s: dequeue_buffer idx = %d err = %d", __func__, cnt, err);
@@ -665,16 +637,6 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
                   __func__, strerror(-err), -err);
             ret = UNKNOWN_ERROR;
             for(int i = 0; i < cnt; i++) {
-                if (BUFFER_LOCKED == mLocalFlag[i]) {
-                    ALOGD("%s: camera call genlock_unlock", __func__);
-                    if (GENLOCK_FAILURE == genlock_unlock_buffer((native_handle_t *)
-                                                  (*(mBufferHandle[i])))) {
-                        ALOGE("%s: genlock_unlock_buffer failed: hdl =%p",
-                              __func__, (*(mBufferHandle[i])) );
-                     } else {
-                         mLocalFlag[i] = BUFFER_UNLOCKED;
-                     }
-                }
                 if(mLocalFlag[i] != BUFFER_NOT_OWNED) {
                     err = mWindow->cancel_buffer(mWindow, mBufferHandle[i]);
                     ALOGD("%s: cancel_buffer: hdl =%p", __func__, (*mBufferHandle[i]));
@@ -718,15 +680,6 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
 
     //Cancel min_undequeued_buffer buffers back to the window
     for (int i = 0; i < mMinUndequeuedBuffers; i ++) {
-        if (BUFFER_LOCKED == mLocalFlag[i]) {
-            if (GENLOCK_FAILURE == genlock_unlock_buffer((native_handle_t *)
-                                          (*(mBufferHandle[i])))) {
-                ALOGE("%s: genlock_unlock_buffer failed: hdl =%p",
-                      __func__, (*(mBufferHandle[i])));
-            } else {
-                mLocalFlag[i] = BUFFER_UNLOCKED;
-            }
-        }
         err = mWindow->cancel_buffer(mWindow, mBufferHandle[i]);
         mLocalFlag[i] = BUFFER_NOT_OWNED;
     }
@@ -749,19 +702,6 @@ void QCameraGrallocMemory::deallocate()
             ALOGE("ion free failed");
         }
         close(mMemInfo[cnt].main_ion_fd);
-        if (BUFFER_LOCKED == mLocalFlag[cnt]) {
-            ALOGD("camera call genlock_unlock");
-            if (GENLOCK_FAILURE == genlock_unlock_buffer((native_handle_t *)
-                                                    (*(mBufferHandle[cnt])))) {
-                ALOGE("genlock_unlock_buffer failed, handle =%p",
-                    (*(mBufferHandle[cnt])));
-                continue;
-            } else {
-                ALOGD("genlock_unlock_buffer, handle =%p",
-                    (*(mBufferHandle[cnt])));
-                mLocalFlag[cnt] = BUFFER_UNLOCKED;
-            }
-        }
         if(mLocalFlag[cnt] != BUFFER_NOT_OWNED) {
             if (mWindow) {
                 mWindow->cancel_buffer(mWindow, mBufferHandle[cnt]);
