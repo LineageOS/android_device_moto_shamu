@@ -1451,9 +1451,6 @@ int QCamera2HardwareInterface::startPreview()
         return NO_MEMORY;
     }
 
-    // TODO: commented out for now: start meta data stream
-    //rc = startChannel(QCAMERA_CH_TYPE_METADATA);
-
     // start preview stream
     if (mParameters.isZSLMode()) {
         rc = startChannel(QCAMERA_CH_TYPE_ZSL);
@@ -1489,8 +1486,6 @@ int QCamera2HardwareInterface::stopPreview()
         stopChannel(QCAMERA_CH_TYPE_PREVIEW);
     }
 
-    // TODO: commented out for now: stop meta data stream
-    //stopChannel(QCAMERA_CH_TYPE_METADATA);
     if (m_pHistBuf != NULL) {
         m_pHistBuf->release(m_pHistBuf);
         m_pHistBuf = NULL;
@@ -2444,6 +2439,17 @@ int32_t QCamera2HardwareInterface::addPreviewChannel()
         return rc;
     }
 
+    // meta data stream always coexists with preview if applicable
+    rc = pChannel->addStream(*this, CAM_STREAM_TYPE_METADATA,
+                             &gCamCapability[mCameraId]->padding_info,
+                             metadata_stream_cb_routine, this);
+
+    if (rc != NO_ERROR) {
+        ALOGE("%s: add metadata stream failed, ret = %d", __func__, rc);
+        delete pChannel;
+        return rc;
+    }
+
     if (isNoDisplayMode()) {
         rc = pChannel->addStream(*this,
                                  CAM_STREAM_TYPE_PREVIEW,
@@ -2603,6 +2609,17 @@ int32_t QCamera2HardwareInterface::addRawChannel()
         return rc;
     }
 
+    // meta data stream always coexists with snapshot in regular RAW capture case
+    rc = pChannel->addStream(*this, CAM_STREAM_TYPE_METADATA,
+                             &gCamCapability[mCameraId]->padding_info,
+                             metadata_stream_cb_routine, this);
+
+    if (rc != NO_ERROR) {
+        ALOGE("%s: add metadata stream failed, ret = %d", __func__, rc);
+        delete pChannel;
+        return rc;
+    }
+
     rc = pChannel->addStream(*this, CAM_STREAM_TYPE_RAW,
                              &gCamCapability[mCameraId]->padding_info,
                              raw_stream_cb_routine, this);
@@ -2659,6 +2676,17 @@ int32_t QCamera2HardwareInterface::addZSLChannel()
                         this);
     if (rc != 0) {
         ALOGE("%s: init ZSL channel failed, ret = %d", __func__, rc);
+        delete pChannel;
+        return rc;
+    }
+
+    // meta data stream always coexists with preview if applicable
+    rc = pChannel->addStream(*this, CAM_STREAM_TYPE_METADATA,
+                             &gCamCapability[mCameraId]->padding_info,
+                             metadata_stream_cb_routine, this);
+
+    if (rc != NO_ERROR) {
+        ALOGE("%s: add metadata stream failed, ret = %d", __func__, rc);
         delete pChannel;
         return rc;
     }
@@ -2737,6 +2765,17 @@ int32_t QCamera2HardwareInterface::addCaptureChannel()
 
     // TODO: commented out for now
 #if 0
+    // meta data stream always coexists with snapshot in regular capture case
+    rc = pChannel->addStream(*this, CAM_STREAM_TYPE_METADATA,
+                             &gCamCapability[mCameraId]->padding_info,
+                             metadata_stream_cb_routine, this);
+
+    if (rc != NO_ERROR) {
+        ALOGE("%s: add metadata stream failed, ret = %d", __func__, rc);
+        delete pChannel;
+        return rc;
+    }
+
     rc = pChannel->addStream(*this, CAM_STREAM_TYPE_POSTVIEW,
                              &gCamCapability[mCameraId]->padding_info,
                              postview_stream_cb_routine, this);
@@ -2985,29 +3024,21 @@ int32_t QCamera2HardwareInterface::stopChannel(qcamera_ch_type_enum_t ch_type)
 int32_t QCamera2HardwareInterface::preparePreview()
 {
     int32_t rc = NO_ERROR;
-    // TODO: commented out for now
-    //rc = addChannel(QCAMERA_CH_TYPE_METADATA);
-    if (rc != NO_ERROR) {
-        return rc;
-    }
 
     if (mParameters.isZSLMode()) {
         rc = addChannel(QCAMERA_CH_TYPE_ZSL);
         if (rc != NO_ERROR) {
-            delChannel(QCAMERA_CH_TYPE_METADATA);
             return rc;
         }
     } else {
         rc = addChannel(QCAMERA_CH_TYPE_PREVIEW);
         if (rc != NO_ERROR) {
-            delChannel(QCAMERA_CH_TYPE_METADATA);
             return rc;
         }
 
         if(mParameters.getRecordingHintValue() == true) {
             rc = addChannel(QCAMERA_CH_TYPE_VIDEO);
             if (rc != NO_ERROR) {
-                delChannel(QCAMERA_CH_TYPE_METADATA);
                 delChannel(QCAMERA_CH_TYPE_PREVIEW);
                 return rc;
             }
@@ -3045,8 +3076,6 @@ void QCamera2HardwareInterface::unpreparePreview()
             delChannel(QCAMERA_CH_TYPE_SNAPSHOT);
         }
     }
-
-    delChannel(QCAMERA_CH_TYPE_METADATA);
 }
 
 /*===========================================================================
@@ -3212,7 +3241,7 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera2HardwareInterface::processHistogramStats(cam_histogram_data_t *hist_data)
+int32_t QCamera2HardwareInterface::processHistogramStats(cam_stats_data_t &stats_data)
 {
     if (!mParameters.isHistogramEnabled()) {
         ALOGD("%s: Histogram not enabled, no ops here", __func__);
@@ -3230,7 +3259,14 @@ int32_t QCamera2HardwareInterface::processHistogramStats(cam_histogram_data_t *h
         return UNKNOWN_ERROR;
     }
 
-    *pHistData = *hist_data;
+    switch (stats_data.type) {
+    case CAM_HISTOGRAM_TYPE_BAYER:
+        *pHistData = stats_data.bayer_stats.gb_stats;
+        break;
+    case CAM_HISTOGRAM_TYPE_YUV:
+        *pHistData = stats_data.yuv_stats;
+        break;
+    }
 
     if ((NULL != mDataCb) && (msgTypeEnabled(CAMERA_MSG_STATS_DATA) > 0)) {
         mDataCb(CAMERA_MSG_STATS_DATA, m_pHistBuf, 0, NULL, mCallbackCookie);

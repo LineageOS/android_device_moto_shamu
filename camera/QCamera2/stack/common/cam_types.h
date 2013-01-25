@@ -535,6 +535,26 @@ typedef struct {
     uint32_t hist_buf[CAM_HISTOGRAM_STATS_SIZE]; /* buf holding histogram stats data */
 } cam_histogram_data_t;
 
+typedef struct {
+    cam_histogram_data_t r_stats;
+    cam_histogram_data_t b_stats;
+    cam_histogram_data_t gr_stats;
+    cam_histogram_data_t gb_stats;
+} cam_bayer_hist_stats_t;
+
+typedef enum {
+    CAM_HISTOGRAM_TYPE_BAYER,
+    CAM_HISTOGRAM_TYPE_YUV
+} cam_histogram_type_t;
+
+typedef struct {
+    cam_histogram_type_t type;
+    union {
+        cam_bayer_hist_stats_t bayer_stats;
+        cam_histogram_data_t yuv_stats;
+    };
+} cam_stats_data_t;
+
 enum cam_focus_distance_index{
   CAM_FOCUS_DISTANCE_NEAR_INDEX,  /* 0 */
   CAM_FOCUS_DISTANCE_OPTIMAL_INDEX,
@@ -576,8 +596,8 @@ typedef struct {
 } cam_auto_focus_data_t;
 
 typedef  struct {
-    uint8_t is_hist_valid;                /* if histgram data is valid */
-    cam_histogram_data_t hist_data;       /* histogram data */
+    uint8_t is_stats_valid;               /* if histgram data is valid */
+    cam_stats_data_t stats_data;          /* histogram data */
 
     uint8_t is_faces_valid;               /* if face detection data is valid */
     cam_face_detection_data_t faces_data; /* face detection result */

@@ -200,14 +200,15 @@ int32_t QCameraChannel::start(QCameraParameters &param)
         cam_bundle_config_t bundleInfo;
         memset(&bundleInfo, 0, sizeof(bundleInfo));
         rc = m_camOps->get_bundle_info(m_camHandle, m_handle, &bundleInfo);
-        if (rc != NO_ERROR || m_numStreams != bundleInfo.num_of_streams) {
-            ALOGE("%s: num of streams not matching (%d, %d)",
-                  __func__, m_numStreams, bundleInfo.num_of_streams);
+        if (rc != NO_ERROR) {
+            ALOGE("%s: get_bundle_info failed", __func__);
             return rc;
         }
-        rc = param.setBundleInfo(bundleInfo);
-        if (rc != NO_ERROR) {
-            return rc;
+        if (bundleInfo.num_of_streams > 1) {
+            rc = param.setBundleInfo(bundleInfo);
+            if (rc != NO_ERROR) {
+                return rc;
+            }
         }
     }
 
