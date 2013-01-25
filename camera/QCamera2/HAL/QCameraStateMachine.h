@@ -149,7 +149,7 @@ private:
         QCAMERA_SM_STATE_PIC_TAKING,               // taking picture (preview stopped)
         QCAMERA_SM_STATE_RECORDING,                // recording (preview running)
         QCAMERA_SM_STATE_VIDEO_PIC_TAKING,         // taking live snapshot during recording (preview running)
-        QCAMERA_SM_STATE_PREVIEW_PIC_TAKING        // taking live snapshot (recording stopped but preview running)
+        QCAMERA_SM_STATE_PREVIEW_PIC_TAKING        // taking ZSL/live snapshot (recording stopped but preview running)
     } qcamera_state_enum_t;
 
     typedef enum
