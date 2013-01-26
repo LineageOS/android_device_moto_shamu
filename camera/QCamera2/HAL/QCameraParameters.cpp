@@ -482,6 +482,15 @@ const QCameraParameters::QCameraMap QCameraParameters::TRUE_FALSE_MODES_MAP[] = 
 #define DEFAULT_CAMERA_AREA "(0, 0, 0, 0, 0)"
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 
+/*===========================================================================
+ * FUNCTION   : QCameraParameters
+ *
+ * DESCRIPTION: default constructor of QCameraParameters
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraParameters::QCameraParameters()
     : CameraParameters(),
       m_pCapability(NULL),
@@ -510,6 +519,16 @@ QCameraParameters::QCameraParameters()
     m_nDumpFrameEnabled = atoi(value);
 }
 
+/*===========================================================================
+ * FUNCTION   : QCameraParameters
+ *
+ * DESCRIPTION: constructor of QCameraParameters
+ *
+ * PARAMETERS :
+ *   @params  : parameters in string
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraParameters::QCameraParameters(const String8 &params)
     : CameraParameters(params),
     m_pCapability(NULL),
@@ -532,11 +551,31 @@ QCameraParameters::QCameraParameters(const String8 &params)
 {
 }
 
+/*===========================================================================
+ * FUNCTION   : ~QCameraParameters
+ *
+ * DESCRIPTION: deconstructor of QCameraParameters
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraParameters::~QCameraParameters()
 {
     deinit();
 }
 
+/*===========================================================================
+ * FUNCTION   : createSizesString
+ *
+ * DESCRIPTION: create string obj contains array of dimensions
+ *
+ * PARAMETERS :
+ *   @sizes   : array of dimensions
+ *   @len     : size of dimension array
+ *
+ * RETURN     : string obj
+ *==========================================================================*/
 String8 QCameraParameters::createSizesString(const cam_dimension_t *sizes, int len)
 {
     String8 str;
@@ -553,6 +592,20 @@ String8 QCameraParameters::createSizesString(const cam_dimension_t *sizes, int l
     return str;
 }
 
+/*===========================================================================
+ * FUNCTION   : createValuesString
+ *
+ * DESCRIPTION: create string obj contains array of values from map when matched
+ *              from input values array
+ *
+ * PARAMETERS :
+ *   @values  : array of values
+ *   @len     : size of values array
+ *   @map     : map contains the mapping between values and enums
+ *   @map_len : size of the map
+ *
+ * RETURN     : string obj
+ *==========================================================================*/
 String8 QCameraParameters::createValuesString(const int *values,
                                               int len,
                                               const QCameraMap* map,
@@ -577,6 +630,17 @@ String8 QCameraParameters::createValuesString(const int *values,
     return str;
 }
 
+/*===========================================================================
+ * FUNCTION   : createValuesStringFromMap
+ *
+ * DESCRIPTION: create string obj contains array of values directly from map
+ *
+ * PARAMETERS :
+ *   @map     : map contains the mapping between values and enums
+ *   @map_len : size of the map
+ *
+ * RETURN     : string obj
+ *==========================================================================*/
 String8 QCameraParameters::createValuesStringFromMap(const QCameraMap* map,
                                                      int map_len)
 {
@@ -593,6 +657,17 @@ String8 QCameraParameters::createValuesStringFromMap(const QCameraMap* map,
     return str;
 }
 
+/*===========================================================================
+ * FUNCTION   : createZoomRatioValuesString
+ *
+ * DESCRIPTION: create string obj contains array of zoom ratio values
+ *
+ * PARAMETERS :
+ *   @zoomRaios  : array of zoom ratios
+ *   @length     : size of the array
+ *
+ * RETURN     : string obj
+ *==========================================================================*/
 String8 QCameraParameters::createZoomRatioValuesString(int *zoomRatios, int length)
 {
     String8 str;
@@ -611,6 +686,20 @@ String8 QCameraParameters::createZoomRatioValuesString(int *zoomRatios, int leng
     return str;
 }
 
+/*===========================================================================
+ * FUNCTION   : createHfrValuesString
+ *
+ * DESCRIPTION: create string obj contains array of hfr values from map when
+ *              matched from input hfr values
+ *
+ * PARAMETERS :
+ *   @values  : array of hfr info
+ *   @len     : size of the array
+ *   @map     : map of hfr string value and enum
+ *   map_len  : size of map
+ *
+ * RETURN     : string obj
+ *==========================================================================*/
 String8 QCameraParameters::createHfrValuesString(
                                 const cam_hfr_info_t *values,
                                 int len,
@@ -636,6 +725,17 @@ String8 QCameraParameters::createHfrValuesString(
     return str;
 }
 
+/*===========================================================================
+ * FUNCTION   : createHfrSizesString
+ *
+ * DESCRIPTION: create string obj contains array of hfr sizes
+ *
+ * PARAMETERS :
+ *   @values  : array of hfr info
+ *   @len     : size of the array
+ *
+ * RETURN     : string obj
+ *==========================================================================*/
 String8 QCameraParameters::createHfrSizesString(
                                 const cam_hfr_info_t *values,
                                 int len)
@@ -656,6 +756,17 @@ String8 QCameraParameters::createHfrSizesString(
     return str;
 }
 
+/*===========================================================================
+ * FUNCTION   : createFpsString
+ *
+ * DESCRIPTION: create string obj contains array of FPS rates
+ *
+ * PARAMETERS :
+ *   @fps     : array of fps ranges
+ *   @len     : size of the array
+ *
+ * RETURN     : string obj
+ *==========================================================================*/
 String8 QCameraParameters::createFpsString(const cam_fps_range_t *fps, int len)
 {
     String8 str;
@@ -670,6 +781,17 @@ String8 QCameraParameters::createFpsString(const cam_fps_range_t *fps, int len)
     return str;
 }
 
+/*===========================================================================
+ * FUNCTION   : createFpsRangeString
+ *
+ * DESCRIPTION: create string obj contains array of FPS ranges
+ *
+ * PARAMETERS :
+ *   @fps     : array of fps ranges
+ *   @len     : size of the array
+ *
+ * RETURN     : string obj
+ *==========================================================================*/
 String8 QCameraParameters::createFpsRangeString(const cam_fps_range_t* fps, int len)
 {
     String8 str;
@@ -690,6 +812,19 @@ String8 QCameraParameters::createFpsRangeString(const cam_fps_range_t* fps, int 
     return str;
 }
 
+/*===========================================================================
+ * FUNCTION   : lookupAttr
+ *
+ * DESCRIPTION: lookup a value by its name
+ *
+ * PARAMETERS :
+ *   @attr    : map contains <name, value>
+ *   @len     : size of the map
+ *   @name    : name to be looked up
+ *
+ * RETURN     : valid value if found
+ *              NAME_NOT_FOUND if not found
+ *==========================================================================*/
 int QCameraParameters::lookupAttr(const QCameraMap arr[], int len, const char *name)
 {
     if (name) {
@@ -701,6 +836,18 @@ int QCameraParameters::lookupAttr(const QCameraMap arr[], int len, const char *n
     return NAME_NOT_FOUND;
 }
 
+/*===========================================================================
+ * FUNCTION   : setPreviewSize
+ *
+ * DESCRIPTION: set preview size from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setPreviewSize(const QCameraParameters& params)
 {
     int width, height;
@@ -730,6 +877,18 @@ int32_t QCameraParameters::setPreviewSize(const QCameraParameters& params)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setPictureSize
+ *
+ * DESCRIPTION: set picture size from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setPictureSize(const QCameraParameters& params)
 {
     int width, height;
@@ -760,7 +919,18 @@ int32_t QCameraParameters::setPictureSize(const QCameraParameters& params)
     return BAD_VALUE;
 }
 
-
+/*===========================================================================
+ * FUNCTION   : setVideoSize
+ *
+ * DESCRIPTION: set video size from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setVideoSize(const QCameraParameters& params)
 {
     const char *str= NULL;
@@ -802,6 +972,18 @@ int32_t QCameraParameters::setVideoSize(const QCameraParameters& params)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setPreviewFormat
+ *
+ * DESCRIPTION: set preview format from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setPreviewFormat(const QCameraParameters& params)
 {
     const char *str = params.getPreviewFormat();
@@ -820,6 +1002,18 @@ int32_t QCameraParameters::setPreviewFormat(const QCameraParameters& params)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setPictureFormat
+ *
+ * DESCRIPTION: set picture format from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setPictureFormat(const QCameraParameters& params)
 {
     const char *str = params.getPictureFormat();
@@ -838,6 +1032,18 @@ int32_t QCameraParameters::setPictureFormat(const QCameraParameters& params)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setJpegThumbnailSize
+ *
+ * DESCRIPTION: set jpeg thumbnail size from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setJpegThumbnailSize(const QCameraParameters& params)
 {
     int width = params.getInt(KEY_JPEG_THUMBNAIL_WIDTH);
@@ -863,6 +1069,18 @@ int32_t QCameraParameters::setJpegThumbnailSize(const QCameraParameters& params)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setJpegQuality
+ *
+ * DESCRIPTION: set jpeg encpding quality from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setJpegQuality(const QCameraParameters& params)
 {
     int32_t rc = NO_ERROR;
@@ -887,6 +1105,18 @@ int32_t QCameraParameters::setJpegQuality(const QCameraParameters& params)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : setOrientaion
+ *
+ * DESCRIPTION: set orientaion from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setOrientation(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_QC_ORIENTATION);
@@ -904,6 +1134,18 @@ int32_t QCameraParameters::setOrientation(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setAutoExposure
+ *
+ * DESCRIPTION: set auto exposure value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setAutoExposure(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_QC_AUTO_EXPOSURE);
@@ -917,6 +1159,18 @@ int32_t QCameraParameters::setAutoExposure(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setPreviewFpsRange
+ *
+ * DESCRIPTION: set preview FPS range from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setPreviewFpsRange(const QCameraParameters& params)
 {
     ALOGV("%s: E", __func__);
@@ -954,6 +1208,18 @@ end:
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : setPreviewFrameRate
+ *
+ * DESCRIPTION: set preview frame rate from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setPreviewFrameRate(const QCameraParameters& params)
 {
     ALOGV("%s: E",__func__);
@@ -964,6 +1230,18 @@ int32_t QCameraParameters::setPreviewFrameRate(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setEffect
+ *
+ * DESCRIPTION: set effect value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setEffect(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_EFFECT);
@@ -977,6 +1255,18 @@ int32_t QCameraParameters::setEffect(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setFocusMode
+ *
+ * DESCRIPTION: set focus mode from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setFocusMode(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_FOCUS_MODE);
@@ -990,6 +1280,18 @@ int32_t QCameraParameters::setFocusMode(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setBrightness
+ *
+ * DESCRIPTION: set brightness control value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setBrightness(const QCameraParameters& params)
 {
     int currentBrightness = getInt(KEY_QC_BRIGHTNESS);
@@ -1012,6 +1314,18 @@ int32_t QCameraParameters::setBrightness(const QCameraParameters& params)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : setSharpness
+ *
+ * DESCRIPTION: set sharpness control value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setSharpness(const QCameraParameters& params)
 {
     int shaprness = params.getInt(KEY_QC_SHARPNESS);
@@ -1034,6 +1348,18 @@ int32_t QCameraParameters::setSharpness(const QCameraParameters& params)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : setSkintoneEnahancement
+ *
+ * DESCRIPTION: set skin tone enhancement factor from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setSkinToneEnhancement(const QCameraParameters& params)
 {
     int sceFactor = params.getInt(KEY_QC_SCE_FACTOR);
@@ -1056,6 +1382,18 @@ int32_t QCameraParameters::setSkinToneEnhancement(const QCameraParameters& param
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : setSaturation
+ *
+ * DESCRIPTION: set saturation control value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setSaturation(const QCameraParameters& params)
 {
     int saturation = params.getInt(KEY_QC_SATURATION);
@@ -1078,6 +1416,18 @@ int32_t QCameraParameters::setSaturation(const QCameraParameters& params)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : setContrast
+ *
+ * DESCRIPTION: set contrast control value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setContrast(const QCameraParameters& params)
 {
     int contrast = params.getInt(KEY_QC_CONTRAST);
@@ -1101,6 +1451,18 @@ int32_t QCameraParameters::setContrast(const QCameraParameters& params)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : setExposureCompensation
+ *
+ * DESCRIPTION: set exposure compensation value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setExposureCompensation(const QCameraParameters & params)
 {
     int expComp = params.getInt(KEY_EXPOSURE_COMPENSATION);
@@ -1123,6 +1485,18 @@ int32_t QCameraParameters::setExposureCompensation(const QCameraParameters & par
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : setWhiteBalance
+ *
+ * DESCRIPTION: set white balance value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setWhiteBalance(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_WHITE_BALANCE);
@@ -1136,6 +1510,18 @@ int32_t QCameraParameters::setWhiteBalance(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setAntibanding
+ *
+ * DESCRIPTION: set antibanding value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setAntibanding(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_ANTIBANDING);
@@ -1149,6 +1535,18 @@ int32_t QCameraParameters::setAntibanding(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setSceneDetect
+ *
+ * DESCRIPTION: set scenen detect value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setSceneDetect(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_QC_SCENE_DETECT);
@@ -1162,6 +1560,18 @@ int32_t QCameraParameters::setSceneDetect(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setZoom
+ *
+ * DESCRIPTION: set zoom value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setZoom(const QCameraParameters& params)
 {
     if ((m_pCapability->zoom_supported == 0 ||
@@ -1188,6 +1598,18 @@ int32_t QCameraParameters::setZoom(const QCameraParameters& params)
     return setZoom(zoomLevel);
 }
 
+/*===========================================================================
+ * FUNCTION   : setISOValue
+ *
+ * DESCRIPTION: set ISO value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t  QCameraParameters::setISOValue(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_QC_ISO_MODE);
@@ -1201,6 +1623,18 @@ int32_t  QCameraParameters::setISOValue(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setRotation
+ *
+ * DESCRIPTION: set rotation value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setRotation(const QCameraParameters& params)
 {
     int rotation = params.getInt(KEY_ROTATION);
@@ -1216,6 +1650,18 @@ int32_t QCameraParameters::setRotation(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setFlash
+ *
+ * DESCRIPTION: set flash mode from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setFlash(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_FLASH_MODE);
@@ -1229,6 +1675,18 @@ int32_t QCameraParameters::setFlash(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setAecLock
+ *
+ * DESCRIPTION: set AEC lock value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setAecLock(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_AUTO_EXPOSURE_LOCK);
@@ -1242,6 +1700,18 @@ int32_t QCameraParameters::setAecLock(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setAwbLock
+ *
+ * DESCRIPTION: set AWB lock from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setAwbLock(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_AUTO_WHITEBALANCE_LOCK);
@@ -1255,6 +1725,18 @@ int32_t QCameraParameters::setAwbLock(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setMCEValue
+ *
+ * DESCRIPTION: set memory color enhancement value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setMCEValue(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_QC_MEMORY_COLOR_ENHANCEMENT);
@@ -1268,6 +1750,18 @@ int32_t QCameraParameters::setMCEValue(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setHighFrameRate
+ *
+ * DESCRIPTION: set hight frame rate value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setHighFrameRate(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_QC_VIDEO_HIGH_FRAME_RATE);
@@ -1281,6 +1775,18 @@ int32_t QCameraParameters::setHighFrameRate(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setLensShadeValue
+ *
+ * DESCRIPTION: set lens shade value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setLensShadeValue(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_QC_LENSSHADE);
@@ -1294,6 +1800,18 @@ int32_t QCameraParameters::setLensShadeValue(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setFocusAreas
+ *
+ * DESCRIPTION: set focus areas from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setFocusAreas(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_FOCUS_AREAS);
@@ -1313,6 +1831,18 @@ int32_t QCameraParameters::setFocusAreas(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setMeteringAreas
+ *
+ * DESCRIPTION: set metering areas from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setMeteringAreas(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_METERING_AREAS);
@@ -1332,6 +1862,18 @@ int32_t QCameraParameters::setMeteringAreas(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setSceneMode
+ *
+ * DESCRIPTION: set scenen mode from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setSceneMode(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_SCENE_MODE);
@@ -1350,6 +1892,18 @@ int32_t QCameraParameters::setSceneMode(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setSelectableZoneAf
+ *
+ * DESCRIPTION: set selectable zone auto focus value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setSelectableZoneAf(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_QC_SELECTABLE_ZONE_AF);
@@ -1363,6 +1917,18 @@ int32_t QCameraParameters::setSelectableZoneAf(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setAEBracket
+ *
+ * DESCRIPTION: set AE bracket from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setAEBracket(const QCameraParameters& params)
 {
     const char *expStr = params.get(KEY_QC_CAPTURE_BURST_EXPOSURE);
@@ -1390,6 +1956,18 @@ int32_t QCameraParameters::setAEBracket(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setRedeyeReduction
+ *
+ * DESCRIPTION: set red eye reduction setting from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setRedeyeReduction(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_QC_REDEYE_REDUCTION);
@@ -1403,6 +1981,18 @@ int32_t QCameraParameters::setRedeyeReduction(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setGpsLocation
+ *
+ * DESCRIPTION: set GPS location information from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setGpsLocation(const QCameraParameters& params)
 {
     const char *method = params.get(KEY_GPS_PROCESSING_METHOD);
@@ -1470,6 +2060,18 @@ int32_t QCameraParameters::setGpsLocation(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setNumOfSnapshot
+ *
+ * DESCRIPTION: set number of snapshot per shutter from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setNumOfSnapshot(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_QC_NUM_SNAPSHOT_PER_SHUTTER);
@@ -1481,6 +2083,18 @@ int32_t QCameraParameters::setNumOfSnapshot(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setRecordingHint
+ *
+ * DESCRIPTION: set recording hint value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setRecordingHint(const QCameraParameters& params)
 {
     const char * str = params.get(KEY_RECORDING_HINT);
@@ -1503,6 +2117,18 @@ int32_t QCameraParameters::setRecordingHint(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setNoDisplayMode
+ *
+ * DESCRIPTION: set no display mode from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setNoDisplayMode(const QCameraParameters& params)
 {
     const char *str_val  = params.get(KEY_QC_NO_DISPLAY_MODE);
@@ -1520,6 +2146,18 @@ int32_t QCameraParameters::setNoDisplayMode(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setZslMode
+ *
+ * DESCRIPTION: set ZSL mode from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setZslMode(const QCameraParameters& params)
 {
     const char *str_val  = params.get(KEY_QC_ZSL);
@@ -1545,6 +2183,18 @@ int32_t QCameraParameters::setZslMode(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setWaveletDenoise
+ *
+ * DESCRIPTION: set wavelet denoise value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setWaveletDenoise(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_QC_DENOISE);
@@ -1558,6 +2208,18 @@ int32_t QCameraParameters::setWaveletDenoise(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setCameraMode
+ *
+ * DESCRIPTION: set camera mode from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setCameraMode(const QCameraParameters& params)
 {
     const char *str = params.get(KEY_QC_CAMERA_MODE);
@@ -1569,6 +2231,18 @@ int32_t QCameraParameters::setCameraMode(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setZslAttributes
+ *
+ * DESCRIPTION: set ZSL related attributes from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setZslAttributes(const QCameraParameters& params)
 {
     // TODO: may switch to pure param instead of sysprop
@@ -1604,6 +2278,19 @@ int32_t QCameraParameters::setZslAttributes(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : updateParameters
+ *
+ * DESCRIPTION: update parameters from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *   @needRestart : [output] if preview need restart upon setting changes
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::updateParameters(QCameraParameters& params,
                                             bool &needRestart)
 {
@@ -1668,11 +2355,33 @@ UPDATE_PARAM_DONE:
     return final_rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : commitParameters
+ *
+ * DESCRIPTION: commit parameter changes to backend
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::commitParameters()
 {
     return commitSetBatch();
 }
 
+/*===========================================================================
+ * FUNCTION   : initDefaultParameters
+ *
+ * DESCRIPTION: initialize default parameters for the first time
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::initDefaultParameters()
 {
     int32_t rc = NO_ERROR;
@@ -2040,6 +2749,19 @@ int32_t QCameraParameters::initDefaultParameters()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : init
+ *
+ * DESCRIPTION: initialize parameter obj
+ *
+ * PARAMETERS :
+ *   @capabilities  : ptr to camera capabilities
+ *   @mmops         : ptr to memory ops table for mapping/unmapping
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::init(cam_capability_t *capabilities, mm_camera_vtbl_t *mmOps)
 {
     int32_t rc = NO_ERROR;
@@ -2083,6 +2805,15 @@ TRANS_INIT_DONE:
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : deinit
+ *
+ * DESCRIPTION: deinitialize
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraParameters::deinit()
 {
     //clear all entries in the map
@@ -2106,7 +2837,22 @@ void QCameraParameters::deinit()
     m_tempMap.clear();
 }
 
-// Parse string like "640x480" or "10000,20000"
+/*===========================================================================
+ * FUNCTION   : parse_pair
+ *
+ * DESCRIPTION: helper function to parse string like "640x480" or "10000,20000"
+ *
+ * PARAMETERS :
+ *   @str     : input string to be parse
+ *   @first   : [output] first value of the pair
+ *   @second  : [output]  second value of the pair
+ *   @delim   : [input] delimeter to seperate the pair
+ *   @endptr  : [output] ptr to the end of the pair string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::parse_pair(const char *str,
                                       int *first,
                                       int *second,
@@ -2135,6 +2881,17 @@ int32_t QCameraParameters::parse_pair(const char *str,
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : parseSizesList
+ *
+ * DESCRIPTION: helper function to parse string containing sizes
+ *
+ * PARAMETERS :
+ *   @sizesStr: [input] input string to be parse
+ *   @sizes   : [output] reference to store parsed sizes
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraParameters::parseSizesList(const char *sizesStr, Vector<Size> &sizes)
 {
     if (sizesStr == 0) {
@@ -2160,12 +2917,35 @@ void QCameraParameters::parseSizesList(const char *sizesStr, Vector<Size> &sizes
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : getSupportedHfrSizes
+ *
+ * DESCRIPTION: return supported HFR sizes
+ *
+ * PARAMETERS :
+ *   @sizes  : [output] reference to a vector storing supported HFR sizes
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraParameters::getSupportedHfrSizes(Vector<Size> &sizes)
 {
     const char *hfrSizesStr = get(KEY_QC_SUPPORTED_HFR_SIZES);
     parseSizesList(hfrSizesStr, sizes);
 }
 
+/*===========================================================================
+ * FUNCTION   : setPreviewFpsRanges
+ *
+ * DESCRIPTION: set preview FPS ranges
+ *
+ * PARAMETERS :
+ *   @minFPS  : min FPS value
+ *   @maxFPS  : max FPS value
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setPreviewFpsRange(int minFPS, int maxFPS)
 {
     char str[32];
@@ -2179,6 +2959,18 @@ int32_t QCameraParameters::setPreviewFpsRange(int minFPS, int maxFPS)
                                   &fps_range);
 }
 
+/*===========================================================================
+ * FUNCTION   : setAutoExposure
+ *
+ * DESCRIPTION: set auto exposure
+ *
+ * PARAMETERS :
+ *   @autoExp : auto exposure value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setAutoExposure(const char *autoExp)
 {
     if (autoExp != NULL) {
@@ -2198,6 +2990,18 @@ int32_t QCameraParameters::setAutoExposure(const char *autoExp)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setEffect
+ *
+ * DESCRIPTION: set effect
+ *
+ * PARAMETERS :
+ *   @effect  : effect value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setEffect(const char *effect)
 {
     if (effect != NULL) {
@@ -2217,6 +3021,18 @@ int32_t QCameraParameters::setEffect(const char *effect)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setBrightness
+ *
+ * DESCRIPTION: set brightness control value
+ *
+ * PARAMETERS :
+ *   @brightness  : brightness control value
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setBrightness(int brightness)
 {
     char val[16];
@@ -2231,6 +3047,18 @@ int32_t QCameraParameters::setBrightness(int brightness)
                                   &value);
 }
 
+/*===========================================================================
+ * FUNCTION   : setFocusMode
+ *
+ * DESCRIPTION: set focus mode
+ *
+ * PARAMETERS :
+ *   @focusMode  : focus mode value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setFocusMode(const char *focusMode)
 {
     if (focusMode != NULL) {
@@ -2251,6 +3079,18 @@ int32_t QCameraParameters::setFocusMode(const char *focusMode)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setSharpness
+ *
+ * DESCRIPTION: set sharpness control value
+ *
+ * PARAMETERS :
+ *   @sharpness  : sharpness control value
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setSharpness(int sharpness)
 {
     char val[16];
@@ -2265,6 +3105,18 @@ int32_t QCameraParameters::setSharpness(int sharpness)
                                   &value);
 }
 
+/*===========================================================================
+ * FUNCTION   : setSkinToneEnhancement
+ *
+ * DESCRIPTION: set skin tone enhancement value
+ *
+ * PARAMETERS :
+ *   @sceFactore  : skin tone enhancement factor value
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setSkinToneEnhancement(int sceFactor)
 {
     char val[16];
@@ -2279,6 +3131,18 @@ int32_t QCameraParameters::setSkinToneEnhancement(int sceFactor)
                                   &value);
 }
 
+/*===========================================================================
+ * FUNCTION   : setSaturation
+ *
+ * DESCRIPTION: set saturation control value
+ *
+ * PARAMETERS :
+ *   @saturation : saturation control value
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setSaturation(int saturation)
 {
     char val[16];
@@ -2293,6 +3157,18 @@ int32_t QCameraParameters::setSaturation(int saturation)
                                   &value);
 }
 
+/*===========================================================================
+ * FUNCTION   : setContrast
+ *
+ * DESCRIPTION: set contrast control value
+ *
+ * PARAMETERS :
+ *   @contrast : contrast control value
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setContrast(int contrast)
 {
     char val[16];
@@ -2307,15 +3183,27 @@ int32_t QCameraParameters::setContrast(int contrast)
                                   &value);
 }
 
-int32_t QCameraParameters::setSceneDetect(const char *scendDetect)
+/*===========================================================================
+ * FUNCTION   : setSceneDetect
+ *
+ * DESCRIPTION: set scenen detect value
+ *
+ * PARAMETERS :
+ *   @sceneDetect  : scene detect value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setSceneDetect(const char *sceneDetect)
 {
-    if (scendDetect != NULL) {
+    if (sceneDetect != NULL) {
         int32_t value = lookupAttr(TRUE_FALSE_MODES_MAP,
                                    sizeof(TRUE_FALSE_MODES_MAP)/sizeof(QCameraMap),
-                                   scendDetect);
+                                   sceneDetect);
         if (value != NAME_NOT_FOUND) {
-            ALOGD("%s: Setting Scene Detect %s", __func__, scendDetect);
-            updateParamEntry(KEY_QC_SCENE_DETECT, scendDetect);
+            ALOGD("%s: Setting Scene Detect %s", __func__, sceneDetect);
+            updateParamEntry(KEY_QC_SCENE_DETECT, sceneDetect);
             return AddSetParmEntryToBatch(m_pParamBuf,
                                           CAM_INTF_PARM_ASD_ENABLE,
                                           sizeof(value),
@@ -2323,10 +3211,22 @@ int32_t QCameraParameters::setSceneDetect(const char *scendDetect)
         }
     }
     ALOGE("Invalid Scene Detect value: %s",
-          (scendDetect == NULL) ? "NULL" : scendDetect);
+          (sceneDetect == NULL) ? "NULL" : sceneDetect);
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setZoom
+ *
+ * DESCRIPTION: set zoom level
+ *
+ * PARAMETERS :
+ *   @zoom_level : zoom level
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setZoom(int zoom_level)
 {
     char val[16];
@@ -2340,6 +3240,18 @@ int32_t QCameraParameters::setZoom(int zoom_level)
                                   &value);
 }
 
+/*===========================================================================
+ * FUNCTION   : setISOValue
+ *
+ * DESCRIPTION: set ISO value
+ *
+ * PARAMETERS :
+ *   @isoValue : ISO value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t  QCameraParameters::setISOValue(const char *isoValue)
 {
     if (isoValue != NULL) {
@@ -2360,6 +3272,18 @@ int32_t  QCameraParameters::setISOValue(const char *isoValue)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setFlash
+ *
+ * DESCRIPTION: set f;ash mode
+ *
+ * PARAMETERS :
+ *   @flashStr : LED flash mode value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setFlash(const char *flashStr)
 {
     if (flashStr != NULL) {
@@ -2379,6 +3303,18 @@ int32_t QCameraParameters::setFlash(const char *flashStr)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setAecLock
+ *
+ * DESCRIPTION: set AEC lock value
+ *
+ * PARAMETERS :
+ *   @aecLockStr : AEC lock value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setAecLock(const char *aecLockStr)
 {
     if (aecLockStr != NULL) {
@@ -2398,6 +3334,18 @@ int32_t QCameraParameters::setAecLock(const char *aecLockStr)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setAwbLock
+ *
+ * DESCRIPTION: set AWB lock value
+ *
+ * PARAMETERS :
+ *   @awbLockStr : AWB lock value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setAwbLock(const char *awbLockStr)
 {
     if (awbLockStr != NULL) {
@@ -2417,6 +3365,18 @@ int32_t QCameraParameters::setAwbLock(const char *awbLockStr)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setMCEValue
+ *
+ * DESCRIPTION: set memory color enhancement value
+ *
+ * PARAMETERS :
+ *   @mceStr : MCE value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setMCEValue(const char *mceStr)
 {
     if (mceStr != NULL) {
@@ -2436,6 +3396,18 @@ int32_t QCameraParameters::setMCEValue(const char *mceStr)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setHighFrameRate
+ *
+ * DESCRIPTION: set high frame rate
+ *
+ * PARAMETERS :
+ *   @hfrStr : HFR value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setHighFrameRate(const char *hfrStr)
 {
     if (hfrStr != NULL) {
@@ -2458,6 +3430,18 @@ int32_t QCameraParameters::setHighFrameRate(const char *hfrStr)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setLensShadeValue
+ *
+ * DESCRIPTION: set lens shade value
+ *
+ * PARAMETERS :
+ *   @lensSahdeStr : lens shade value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setLensShadeValue(const char *lensShadeStr)
 {
     if (lensShadeStr != NULL) {
@@ -2478,6 +3462,18 @@ int32_t QCameraParameters::setLensShadeValue(const char *lensShadeStr)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setExposureCompensation
+ *
+ * DESCRIPTION: set exposure compensation value
+ *
+ * PARAMETERS :
+ *   @expComp : exposure compensation value
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setExposureCompensation(int expComp)
 {
     char val[16];
@@ -2492,6 +3488,18 @@ int32_t QCameraParameters::setExposureCompensation(int expComp)
                                   &expComp);
 }
 
+/*===========================================================================
+ * FUNCTION   : setWhiteBalance
+ *
+ * DESCRIPTION: set white balance mode
+ *
+ * PARAMETERS :
+ *   @wbStr   : white balance mode value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setWhiteBalance(const char *wbStr)
 {
     if (wbStr != NULL) {
@@ -2511,6 +3519,18 @@ int32_t QCameraParameters::setWhiteBalance(const char *wbStr)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setAntibanding
+ *
+ * DESCRIPTION: set antibanding value
+ *
+ * PARAMETERS :
+ *   @antiBandingStr : antibanding value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setAntibanding(const char *antiBandingStr)
 {
     if (antiBandingStr != NULL) {
@@ -2531,6 +3551,18 @@ int32_t QCameraParameters::setAntibanding(const char *antiBandingStr)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setFocusAreas
+ *
+ * DESCRIPTION: set focus areas
+ *
+ * PARAMETERS :
+ *   @focusAreasStr : focus areas value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setFocusAreas(const char *focusAreasStr)
 {
     if (m_pCapability->max_num_focus_areas == 0 ||
@@ -2581,6 +3613,18 @@ int32_t QCameraParameters::setFocusAreas(const char *focusAreasStr)
                                   &af_roi_value);
 }
 
+/*===========================================================================
+ * FUNCTION   : setMeteringAreas
+ *
+ * DESCRIPTION: set metering areas value
+ *
+ * PARAMETERS :
+ *   @meteringAreasStr : metering areas value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setMeteringAreas(const char *meteringAreasStr)
 {
     if (m_pCapability->max_num_metering_areas == 0 ||
@@ -2638,6 +3682,18 @@ int32_t QCameraParameters::setMeteringAreas(const char *meteringAreasStr)
                                   &aec_roi_value);
 }
 
+/*===========================================================================
+ * FUNCTION   : setSceneMode
+ *
+ * DESCRIPTION: set scene mode
+ *
+ * PARAMETERS :
+ *   @sceneModeStr : scene mode value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setSceneMode(const char *sceneModeStr)
 {
     if (sceneModeStr != NULL) {
@@ -2659,6 +3715,18 @@ int32_t QCameraParameters::setSceneMode(const char *sceneModeStr)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setSelectableZoneAf
+ *
+ * DESCRIPTION: set selectable zone AF algorithm
+ *
+ * PARAMETERS :
+ *   @selZoneAFStr : selectable zone AF algorithm value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setSelectableZoneAf(const char *selZoneAFStr)
 {
     if (selZoneAFStr != NULL) {
@@ -2679,6 +3747,18 @@ int32_t QCameraParameters::setSelectableZoneAf(const char *selZoneAFStr)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setAEBracket
+ *
+ * DESCRIPTION: set AE bracket value
+ *
+ * PARAMETERS :
+ *   @aecBracketStr : AE bracket value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setAEBracket(const char *aecBracketStr)
 {
     cam_exp_bracketing_t expBracket;
@@ -2736,6 +3816,18 @@ int32_t QCameraParameters::setAEBracket(const char *aecBracketStr)
                                   &expBracket);
 }
 
+/*===========================================================================
+ * FUNCTION   : setRedeyeReduction
+ *
+ * DESCRIPTION: set red eye reduction value
+ *
+ * PARAMETERS :
+ *   @redeyeStr : red eye reduction value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setRedeyeReduction(const char *redeyeStr)
 {
     if (redeyeStr != NULL) {
@@ -2756,6 +3848,18 @@ int32_t QCameraParameters::setRedeyeReduction(const char *redeyeStr)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setWaveletDenoise
+ *
+ * DESCRIPTION: set wavelet denoise value
+ *
+ * PARAMETERS :
+ *   @wnrStr : wavelet denoise value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setWaveletDenoise(const char *wnrStr)
 {
     if (wnrStr != NULL) {
@@ -2804,16 +3908,45 @@ int32_t QCameraParameters::setWaveletDenoise(const char *wnrStr)
     return BAD_VALUE;
 }
 
+/*===========================================================================
+ * FUNCTION   : setPreviewFrameRateMode
+ *
+ * DESCRIPTION: set preview frame rate mode
+ *
+ * PARAMETERS :
+ *   @mode    : preview frame rate mode
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraParameters::setPreviewFrameRateMode(const char *mode)
 {
     set(KEY_QC_PREVIEW_FRAME_RATE_MODE, mode);
 }
 
+/*===========================================================================
+ * FUNCTION   : getPreviewFrameRateMode
+ *
+ * DESCRIPTION: get preview frame rate mode
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : preview frame rate mode string
+ *==========================================================================*/
 const char *QCameraParameters::getPreviewFrameRateMode() const
 {
     return get(KEY_QC_PREVIEW_FRAME_RATE_MODE);
 }
 
+/*===========================================================================
+ * FUNCTION   : setTouchIndexAec
+ *
+ * DESCRIPTION: set touch index AEC
+ *
+ * PARAMETERS :
+ *   @x,y     :
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraParameters::setTouchIndexAec(int x, int y)
 {
     char str[32];
@@ -2821,6 +3954,16 @@ void QCameraParameters::setTouchIndexAec(int x, int y)
     set(KEY_QC_TOUCH_INDEX_AEC, str);
 }
 
+/*===========================================================================
+ * FUNCTION   : getTouchIndexAec
+ *
+ * DESCRIPTION: get touch index AEC
+ *
+ * PARAMETERS :
+ *   @x,y     :
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraParameters::getTouchIndexAec(int *x, int *y)
 {
     *x = -1;
@@ -2838,6 +3981,16 @@ void QCameraParameters::getTouchIndexAec(int *x, int *y)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : setTouchIndexAf
+ *
+ * DESCRIPTION: set touch index AF
+ *
+ * PARAMETERS :
+ *   @x,y     :
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraParameters::setTouchIndexAf(int x, int y)
 {
     char str[32];
@@ -2845,6 +3998,16 @@ void QCameraParameters::setTouchIndexAf(int x, int y)
     set(KEY_QC_TOUCH_INDEX_AF, str);
 }
 
+/*===========================================================================
+ * FUNCTION   : getTouchIndexAf
+ *
+ * DESCRIPTION: get touch index AF
+ *
+ * PARAMETERS :
+ *   @x,y     :
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraParameters::getTouchIndexAf(int *x, int *y)
 {
     *x = -1;
@@ -2862,6 +4025,19 @@ void QCameraParameters::getTouchIndexAf(int *x, int *y)
 	}
 }
 
+/*===========================================================================
+ * FUNCTION   : getStreamFormat
+ *
+ * DESCRIPTION: get stream format by its type
+ *
+ * PARAMETERS :
+ *   @streamType : [input] stream type
+ *   @format     : [output] stream format
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::getStreamFormat(cam_stream_type_t streamType,
                                             cam_format_t &format)
 {
@@ -2897,6 +4073,19 @@ int32_t QCameraParameters::getStreamFormat(cam_stream_type_t streamType,
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : getStreamDimension
+ *
+ * DESCRIPTION: get stream dimension by its type
+ *
+ * PARAMETERS :
+ *   @streamType : [input] stream type
+ *   @dim        : [output] stream dimension
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::getStreamDimension(cam_stream_type_t streamType,
                                                cam_dimension_t &dim)
 {
@@ -2937,6 +4126,15 @@ int32_t QCameraParameters::getStreamDimension(cam_stream_type_t streamType,
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : getPreviewHalPixelFormat
+ *
+ * DESCRIPTION: get preview HAL pixel format
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : HAL pixel format
+ *==========================================================================*/
 int QCameraParameters::getPreviewHalPixelFormat() const
 {
     int32_t halPixelFormat;
@@ -2964,12 +4162,31 @@ int QCameraParameters::getPreviewHalPixelFormat() const
     return halPixelFormat;
 }
 
+/*===========================================================================
+ * FUNCTION   : getthumbnailSize
+ *
+ * DESCRIPTION: get thumbnail size
+ *
+ * PARAMETERS :
+ *   @width, height : [output] thumbnail width and height
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraParameters::getThumbnailSize(int *width, int *height) const
 {
     *width = getInt(KEY_JPEG_THUMBNAIL_WIDTH);
     *height = getInt(KEY_JPEG_THUMBNAIL_HEIGHT);
 }
 
+/*===========================================================================
+ * FUNCTION   : getZSLBurstInterval
+ *
+ * DESCRIPTION: get ZSL burst interval setting
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : ZSL burst interval value
+ *==========================================================================*/
 int QCameraParameters::getZSLBurstInterval()
 {
     int interval = getInt(KEY_QC_ZSL_BURST_INTERVAL);
@@ -2979,6 +4196,15 @@ int QCameraParameters::getZSLBurstInterval()
     return interval;
 }
 
+/*===========================================================================
+ * FUNCTION   : getZSLQueueDepth
+ *
+ * DESCRIPTION: get ZSL queue depth
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : ZSL queue depth value
+ *==========================================================================*/
 int QCameraParameters::getZSLQueueDepth()
 {
     int qdepth = getInt(KEY_QC_ZSL_QUEUE_DEPTH);
@@ -2988,6 +4214,15 @@ int QCameraParameters::getZSLQueueDepth()
     return qdepth;
 }
 
+/*===========================================================================
+ * FUNCTION   : getZSLBackLookCount
+ *
+ * DESCRIPTION: get ZSL backlook count setting
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : ZSL backlook count value
+ *==========================================================================*/
 int QCameraParameters::getZSLBackLookCount()
 {
     int look_back = getInt(KEY_QC_ZSL_BURST_LOOKBACK);
@@ -2997,6 +4232,18 @@ int QCameraParameters::getZSLBackLookCount()
     return look_back;
 }
 
+/*===========================================================================
+ * FUNCTION   : setRecordingHintValue
+ *
+ * DESCRIPTION: set recording hint
+ *
+ * PARAMETERS :
+ *   @value   : video hint value
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraParameters::setRecordingHintValue(int32_t value)
 {
     ALOGD("%s: VideoHint = %d", __func__, value);
@@ -3007,6 +4254,15 @@ int QCameraParameters::setRecordingHintValue(int32_t value)
                                   &value);
 }
 
+/*===========================================================================
+ * FUNCTION   : getNumOfSnapshots
+ *
+ * DESCRIPTION: get number of snapshot per shutter
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : number of snapshot per shutter
+ *==========================================================================*/
 uint8_t QCameraParameters::getNumOfSnapshots()
 {
     int numOfSnapshot = getInt(KEY_QC_NUM_SNAPSHOT_PER_SHUTTER);
@@ -3016,6 +4272,15 @@ uint8_t QCameraParameters::getNumOfSnapshots()
     return (uint8_t)numOfSnapshot;
 }
 
+/*===========================================================================
+ * FUNCTION   : getJpegQuality
+ *
+ * DESCRIPTION: get jpeg encoding quality
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : jpeg encoding quality
+ *==========================================================================*/
 int QCameraParameters::getJpegQuality()
 {
     int quality = getInt(KEY_JPEG_QUALITY);
@@ -3025,6 +4290,15 @@ int QCameraParameters::getJpegQuality()
     return quality;
 }
 
+/*===========================================================================
+ * FUNCTION   : getJpegRotation
+ *
+ * DESCRIPTION: get rotation value
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : rotation value
+ *==========================================================================*/
 int QCameraParameters::getJpegRotation() {
     int rotation = getInt(KEY_ROTATION);
     if (rotation < 0) {
@@ -3033,6 +4307,19 @@ int QCameraParameters::getJpegRotation() {
     return rotation;
 }
 
+/*===========================================================================
+ * FUNCTION   : parseGPSCoordinate
+ *
+ * DESCRIPTION: parse GPS coordinate string
+ *
+ * PARAMETERS :
+ *   @coord_str : [input] coordinate string
+ *   @coord     : [output]  ptr to struct to store coordinate
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int QCameraParameters::parseGPSCoordinate(const char *coord_str, rat_t* coord)
 {
     if(coord == NULL) {
@@ -3052,6 +4339,19 @@ int QCameraParameters::parseGPSCoordinate(const char *coord_str, rat_t* coord)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : getExifDateTime
+ *
+ * DESCRIPTION: query exif date time
+ *
+ * PARAMETERS :
+ *   @dateTime : string to store exif date time
+ *   @count    : lenght of the dateTime string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::getExifDateTime(char *dateTime, uint32_t &count)
 {
     //get time and date from system
@@ -3070,6 +4370,20 @@ int32_t QCameraParameters::getExifDateTime(char *dateTime, uint32_t &count)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : getRational
+ *
+ * DESCRIPTION: compose rational struct
+ *
+ * PARAMETERS :
+ *   @rat     : ptr to struct to store rational info
+ *   @num     :num of the rational
+ *   @denom   : denom of the rational
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::getRational(rat_t *rat, int num, int denom)
 {
     if (NULL == rat) {
@@ -3081,6 +4395,18 @@ int32_t QCameraParameters::getRational(rat_t *rat, int num, int denom)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : getExifFocalLength
+ *
+ * DESCRIPTION: get exif focal lenght
+ *
+ * PARAMETERS :
+ *   @focalLength : ptr to rational strcut to store focal lenght
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::getExifFocalLength(rat_t *focalLength)
 {
     int focalLengthValue =
@@ -3088,6 +4414,15 @@ int32_t QCameraParameters::getExifFocalLength(rat_t *focalLength)
     return getRational(focalLength, focalLengthValue, FOCAL_LENGTH_DECIMAL_PRECISION);
 }
 
+/*===========================================================================
+ * FUNCTION   : getExifIsoSpeed
+ *
+ * DESCRIPTION: get exif ISO speed
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : ISO speed value
+ *==========================================================================*/
 uint16_t QCameraParameters::getExifIsoSpeed()
 {
     uint16_t isoSpeed = 0;
@@ -3120,6 +4455,19 @@ uint16_t QCameraParameters::getExifIsoSpeed()
     return isoSpeed;
 }
 
+/*===========================================================================
+ * FUNCTION   : getExifGpsProcessingMethod
+ *
+ * DESCRIPTION: get GPS processing method
+ *
+ * PARAMETERS :
+ *   @gpsProcessingMethod : string to store GPS process method
+ *   @count               : lenght of the string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::getExifGpsProcessingMethod(char *gpsProcessingMethod,
                                                       uint32_t &count)
 {
@@ -3136,6 +4484,19 @@ int32_t QCameraParameters::getExifGpsProcessingMethod(char *gpsProcessingMethod,
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : getExifLatitude
+ *
+ * DESCRIPTION: get exif latitude
+ *
+ * PARAMETERS :
+ *   @latitude : ptr to rational struct to store latitude info
+ *   @ladRef   : charater to indicate latitude reference
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::getExifLatitude(rat_t *latitude,
                                            char *latRef)
 {
@@ -3157,6 +4518,19 @@ int32_t QCameraParameters::getExifLatitude(rat_t *latitude,
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : getExifLongitude
+ *
+ * DESCRIPTION: get exif longitude
+ *
+ * PARAMETERS :
+ *   @latitude : ptr to rational struct to store longitude info
+ *   @ladRef   : charater to indicate longitude reference
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::getExifLongitude(rat_t *longitude,
                                             char *lonRef)
 {
@@ -3178,6 +4552,19 @@ int32_t QCameraParameters::getExifLongitude(rat_t *longitude,
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : getExifAltitude
+ *
+ * DESCRIPTION: get exif altitude
+ *
+ * PARAMETERS :
+ *   @latitude : ptr to rational struct to store altitude info
+ *   @ladRef   : charater to indicate altitude reference
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::getExifAltitude(rat_t *altitude,
                                            char *altRef)
 {
@@ -3195,6 +4582,20 @@ int32_t QCameraParameters::getExifAltitude(rat_t *altitude,
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : getExifGpsDateTimeStamp
+ *
+ * DESCRIPTION: get exif GPS date time stamp
+ *
+ * PARAMETERS :
+ *   @gpsDateStamp : GPS date time stamp string
+ *   @bufLen       : length of the string
+ *   @gpsTimeStamp : ptr to rational struct to store time stamp info
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::getExifGpsDateTimeStamp(char *gpsDateStamp,
                                                    uint32_t bufLen,
                                                    rat_t *gpsTimeStamp)
@@ -3216,6 +4617,18 @@ int32_t QCameraParameters::getExifGpsDateTimeStamp(char *gpsDateStamp,
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : updateFocusDistances
+ *
+ * DESCRIPTION: update focus distances
+ *
+ * PARAMETERS :
+ *   @focusDistances : ptr to focus distance info
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::updateFocusDistances(cam_focus_distances_info_t *focusDistances)
 {
     String8 str;
@@ -3236,6 +4649,18 @@ int32_t QCameraParameters::updateFocusDistances(cam_focus_distances_info_t *focu
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setHistogram
+ *
+ * DESCRIPTION: set histogram
+ *
+ * PARAMETERS :
+ *   @enabled : if histogram is enabled
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setHistogram(bool enabled)
 {
     if(m_bHistogramEnabled == enabled) {
@@ -3273,6 +4698,18 @@ int32_t QCameraParameters::setHistogram(bool enabled)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : setFaceDetection
+ *
+ * DESCRIPTION: set face detection
+ *
+ * PARAMETERS :
+ *   @enabled : if face detection is enabled
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setFaceDetection(bool enabled)
 {
     if(m_bFaceDetectionEnabled == enabled) {
@@ -3314,6 +4751,18 @@ int32_t QCameraParameters::setFaceDetection(bool enabled)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : setBundleInfo
+ *
+ * DESCRIPTION: send bundle info of a channel to backend
+ *
+ * PARAMETERS :
+ *   @bundle_info : reference to bundle info struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::setBundleInfo(cam_bundle_config_t &bundle_info)
 {
     int32_t rc = NO_ERROR;
@@ -3341,8 +4790,22 @@ int32_t QCameraParameters::setBundleInfo(cam_bundle_config_t &bundle_info)
     return rc;
 }
 
-// Parse string like "(1, 2, 3, 4, ..., N)"
-// num is pointer to an allocated array of size N
+/*===========================================================================
+ * FUNCTION   : parseNDimVector
+ *
+ * DESCRIPTION: helper function to parse a string like "(1, 2, 3, 4, ..., N)"
+ *              into N-dimension vector
+ *
+ * PARAMETERS :
+ *   @str     : string to be parsed
+ *   @num     : output array of size N to store vector element values
+ *   @N       : number of dimension
+ *   @delim   : delimeter to seperete string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::parseNDimVector(const char *str, int *num, int N, char delim = ',')
 {
     char *start, *end;
@@ -3371,7 +4834,22 @@ int32_t QCameraParameters::parseNDimVector(const char *str, int *num, int N, cha
     return NO_ERROR;
 }
 
-// parse string like "(1, 2, 3, 4, 5),(1, 2, 3, 4, 5),..."
+/*===========================================================================
+ * FUNCTION   : parseCameraAreaString
+ *
+ * DESCRIPTION: helper function to parse a string of camera areas like
+ *              "(1, 2, 3, 4, 5),(1, 2, 3, 4, 5),..."
+ *
+ * PARAMETERS :
+ *   @str             : string to be parsed
+ *   @max_num_areas   : max number of areas
+ *   @pAreas          : ptr to struct to store areas
+ *   @num_areas_found : number of areas found
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::parseCameraAreaString(const char *str,
                                                  int max_num_areas,
                                                  cam_rect_t *pAreas,
@@ -3419,6 +4897,18 @@ int32_t QCameraParameters::parseCameraAreaString(const char *str,
     return 0;
 }
 
+/*===========================================================================
+ * FUNCTION   : validateCameraAreas
+ *
+ * DESCRIPTION: helper function to validate camera areas within (-1000, 1000)
+ *
+ * PARAMETERS :
+ *   @areas     : ptr to array of areas
+ *   @num_areas : number of areas
+ *
+ * RETURN     : true --  area is in valid range
+ *              false -- not valid
+ *==========================================================================*/
 bool QCameraParameters::validateCameraAreas(cam_rect_t *areas, int num_areas)
 {
     for(int i = 0; i < num_areas; i++) {
@@ -3445,6 +4935,18 @@ bool QCameraParameters::validateCameraAreas(cam_rect_t *areas, int num_areas)
     return true;
 }
 
+/*===========================================================================
+ * FUNCTION   : initBatchUpdate
+ *
+ * DESCRIPTION: init camera parameters buf entries
+ *
+ * PARAMETERS :
+ *   @p_table : ptr to parameter buffer
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::initBatchUpdate(parm_buffer_t *p_table)
 {
     m_tempMap.clear();
@@ -3454,6 +4956,21 @@ int32_t QCameraParameters::initBatchUpdate(parm_buffer_t *p_table)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : AddSetParmEntryToBatch
+ *
+ * DESCRIPTION: add set parameter entry into batch
+ *
+ * PARAMETERS :
+ *   @p_table     : ptr to parameter buffer
+ *   @paramType   : parameter type
+ *   @paramLength : length of parameter value
+ *   @paramValue  : ptr to parameter value
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::AddSetParmEntryToBatch(parm_buffer_t *p_table,
                                                   cam_intf_parm_type_t paramType,
                                                   uint32_t paramLength,
@@ -3496,6 +5013,19 @@ int32_t QCameraParameters::AddSetParmEntryToBatch(parm_buffer_t *p_table,
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : AddGetParmEntryToBatch
+ *
+ * DESCRIPTION: add get parameter entry into batch
+ *
+ * PARAMETERS :
+ *   @p_table     : ptr to parameter buffer
+ *   @paramType   : parameter type
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::AddGetParmEntryToBatch(parm_buffer_t *p_table,
                                                   cam_intf_parm_type_t paramType)
 {
@@ -3527,6 +5057,17 @@ int32_t QCameraParameters::AddGetParmEntryToBatch(parm_buffer_t *p_table,
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : commitSetBatch
+ *
+ * DESCRIPTION: commit all set parameters in the batch work to backend
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::commitSetBatch()
 {
     int32_t rc = m_pCamOpsTbl->ops->set_parms(m_pCamOpsTbl->camera_handle, m_pParamBuf);
@@ -3537,17 +5078,52 @@ int32_t QCameraParameters::commitSetBatch()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : commitGetBatch
+ *
+ * DESCRIPTION: commit all get parameters in the batch work to backend
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::commitGetBatch()
 {
     return m_pCamOpsTbl->ops->get_parms(m_pCamOpsTbl->camera_handle, m_pParamBuf);
 }
 
+/*===========================================================================
+ * FUNCTION   : updateParamEntry
+ *
+ * DESCRIPTION: update a parameter entry in the local temp map obj
+ *
+ * PARAMETERS :
+ *   @key     : key of the entry
+ *   @value   : value of the entry
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::updateParamEntry(const char *key, const char *value)
 {
     m_tempMap.replaceValueFor(String8(key), String8(value));
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : commitParamChanges
+ *
+ * DESCRIPTION: commit all changes in local temp map obj into parameter obj
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraParameters::commitParamChanges()
 {
     size_t size = m_tempMap.size();

@@ -36,6 +36,24 @@
 
 namespace qcamera {
 
+/*===========================================================================
+ * FUNCTION   : get_bufs
+ *
+ * DESCRIPTION: static function entry to allocate stream buffers
+ *
+ * PARAMETERS :
+ *   @offset     : offset info of stream buffers
+ *   @num_bufs   : number of buffers allocated
+ *   @initial_reg_flag: flag to indicate if buffer needs to be registered
+ *                      at kernel initially
+ *   @bufs       : output of allocated buffers
+ *   @ops_tbl    : ptr to buf mapping/unmapping ops
+ *   @user_data  : user data ptr of ops_tbl
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::get_bufs(
                      cam_frame_len_offset_t *offset,
                      uint8_t *num_bufs,
@@ -52,6 +70,19 @@ int32_t QCameraStream::get_bufs(
     return stream->getBufs(offset, num_bufs, initial_reg_flag, bufs, ops_tbl);
 }
 
+/*===========================================================================
+ * FUNCTION   : put_bufs
+ *
+ * DESCRIPTION: static function entry to deallocate stream buffers
+ *
+ * PARAMETERS :
+ *   @ops_tbl    : ptr to buf mapping/unmapping ops
+ *   @user_data  : user data ptr of ops_tbl
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::put_bufs(
                      mm_camera_map_unmap_ops_tbl_t *ops_tbl,
                      void *user_data)
@@ -64,6 +95,20 @@ int32_t QCameraStream::put_bufs(
     return stream->putBufs(ops_tbl);
 }
 
+/*===========================================================================
+ * FUNCTION   : QCameraStream
+ *
+ * DESCRIPTION: constructor of QCameraStream
+ *
+ * PARAMETERS :
+ *   @allocator  : memory allocator obj
+ *   @camHandle  : camera handle
+ *   @chId       : channel handle
+ *   @camOps     : ptr to camera ops table
+ *   @paddingInfo: ptr to padding info
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraStream::QCameraStream(QCameraAllocator &allocator,
                              uint32_t camHandle,
                              uint32_t chId,
@@ -88,6 +133,15 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
     memcpy(&mPaddingInfo, paddingInfo, sizeof(cam_padding_info_t));
 }
 
+/*===========================================================================
+ * FUNCTION   : ~QCameraStream
+ *
+ * DESCRIPTION: deconstructor of QCameraStream
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 QCameraStream::~QCameraStream()
 {
     if (mStreamInfoBuf != NULL) {
@@ -108,6 +162,20 @@ QCameraStream::~QCameraStream()
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : init
+ *
+ * DESCRIPTION: initialize stream obj
+ *
+ * PARAMETERS :
+ *   @stream_type : type of the stream
+ *   @stream_cb   : stream data notify callback. Can be NULL if not needed
+ *   @userdata    : user data ptr
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::init(cam_stream_type_t stream_type,
                          stream_cb_routine stream_cb, void *userdata)
 {
@@ -170,6 +238,18 @@ done:
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : start
+ *
+ * DESCRIPTION: start stream. Will start main stream thread to handle stream
+ *              related ops.
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::start()
 {
     int32_t rc = 0;
@@ -177,6 +257,17 @@ int32_t QCameraStream::start()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : stop
+ *
+ * DESCRIPTION: stop stream. Will stop main stream thread
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::stop()
 {
     int32_t rc = 0;
@@ -184,6 +275,18 @@ int32_t QCameraStream::stop()
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : processZoomDone
+ *
+ * DESCRIPTION: process zoom done event
+ *
+ * PARAMETERS :
+ *   @previewWindoe : preview window ops table to set preview crop window
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::processZoomDone(preview_stream_ops_t *previewWindow)
 {
     int32_t rc = 0;
@@ -210,6 +313,18 @@ int32_t QCameraStream::processZoomDone(preview_stream_ops_t *previewWindow)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : processDataNotify
+ *
+ * DESCRIPTION: process stream data notify
+ *
+ * PARAMETERS :
+ *   @frame   : stream frame received
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::processDataNotify(mm_camera_super_buf_t *frame)
 {
     ALOGI("%s:\n", __func__);
@@ -217,6 +332,18 @@ int32_t QCameraStream::processDataNotify(mm_camera_super_buf_t *frame)
     return mProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
 }
 
+/*===========================================================================
+ * FUNCTION   : dataNotifyCB
+ *
+ * DESCRIPTION: callback for data notify. This function is registered with
+ *              mm-camera-interface to handle data notify
+ *
+ * PARAMETERS :
+ *   @recvd_frame   : stream frame received
+ *   userdata       : user data ptr
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void QCameraStream::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
                                  void *userdata)
 {
@@ -242,6 +369,16 @@ void QCameraStream::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
     return;
 }
 
+/*===========================================================================
+ * FUNCTION   : dataProcRoutine
+ *
+ * DESCRIPTION: function to process data in the main stream thread
+ *
+ * PARAMETERS :
+ *   @data    : user data ptr
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void *QCameraStream::dataProcRoutine(void *data)
 {
     int running = 1;
@@ -293,6 +430,18 @@ void *QCameraStream::dataProcRoutine(void *data)
     return NULL;
 }
 
+/*===========================================================================
+ * FUNCTION   : bufDone
+ *
+ * DESCRIPTION: return stream buffer to kernel
+ *
+ * PARAMETERS :
+ *   @index   : index of buffer to be returned
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::bufDone(int index)
 {
     int32_t rc = NO_ERROR;
@@ -308,6 +457,19 @@ int32_t QCameraStream::bufDone(int index)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : bufDone
+ *
+ * DESCRIPTION: return stream buffer to kernel
+ *
+ * PARAMETERS :
+ *   @opaque    : stream frame/metadata buf to be returned
+ *   @isMetaData: flag if returned opaque is a metadatabuf or the real frame ptr
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::bufDone(const void *opaque, bool isMetaData)
 {
     int32_t rc = NO_ERROR;
@@ -322,6 +484,23 @@ int32_t QCameraStream::bufDone(const void *opaque, bool isMetaData)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : getBufs
+ *
+ * DESCRIPTION: allocate stream buffers
+ *
+ * PARAMETERS :
+ *   @offset     : offset info of stream buffers
+ *   @num_bufs   : number of buffers allocated
+ *   @initial_reg_flag: flag to indicate if buffer needs to be registered
+ *                      at kernel initially
+ *   @bufs       : output of allocated buffers
+ *   @ops_tbl    : ptr to buf mapping/unmapping ops
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
                      uint8_t *num_bufs,
                      uint8_t **initial_reg_flag,
@@ -410,6 +589,18 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : putBufs
+ *
+ * DESCRIPTION: deallocate stream buffers
+ *
+ * PARAMETERS :
+ *   @ops_tbl    : ptr to buf mapping/unmapping ops
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl)
 {
     int rc = NO_ERROR;
@@ -428,6 +619,16 @@ int32_t QCameraStream::putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl)
     return rc;
 }
 
+/*===========================================================================
+ * FUNCTION   : isTypeOf
+ *
+ * DESCRIPTION: helper function to determine if the stream is of the queried type
+ *
+ * PARAMETERS :
+ *   @type    : stream type as of queried
+ *
+ * RETURN     : true/false
+ *==========================================================================*/
 bool QCameraStream::isTypeOf(cam_stream_type_t type)
 {
     if (mStreamInfo != NULL && (mStreamInfo->stream_type == type)) {
@@ -437,12 +638,36 @@ bool QCameraStream::isTypeOf(cam_stream_type_t type)
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : getFrameOffset
+ *
+ * DESCRIPTION: query stream buffer frame offset info
+ *
+ * PARAMETERS :
+ *   @offset  : reference to struct to store the queried frame offset info
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::getFrameOffset(cam_frame_len_offset_t &offset)
 {
     offset = mFrameLenOffset;
     return 0;
 }
 
+/*===========================================================================
+ * FUNCTION   : getCropInfo
+ *
+ * DESCRIPTION: query crop info of the stream
+ *
+ * PARAMETERS :
+ *   @crop    : reference to struct to store the queried crop info
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::getCropInfo(cam_rect_t &crop)
 {
     if (mStreamInfo != NULL) {
@@ -452,6 +677,18 @@ int32_t QCameraStream::getCropInfo(cam_rect_t &crop)
     return -1;
 }
 
+/*===========================================================================
+ * FUNCTION   : getFrameDimension
+ *
+ * DESCRIPTION: query stream frame dimension info
+ *
+ * PARAMETERS :
+ *   @dim     : reference to struct to store the queried frame dimension
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::getFrameDimension(cam_dimension_t &dim)
 {
     if (mStreamInfo != NULL) {
@@ -461,6 +698,18 @@ int32_t QCameraStream::getFrameDimension(cam_dimension_t &dim)
     return -1;
 }
 
+/*===========================================================================
+ * FUNCTION   : getFormat
+ *
+ * DESCRIPTION: query stream format
+ *
+ * PARAMETERS :
+ *   @fmt     : reference to stream format
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 int32_t QCameraStream::getFormat(cam_format_t &fmt)
 {
     if (mStreamInfo != NULL) {
