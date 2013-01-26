@@ -72,26 +72,7 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
         return;
     }
 
-    // get snapshto frame index in the super buf
-    // we only need to post proc snapshot frame in the ZSL super buf
-    QCameraStream *pStream = NULL;
-    int snapshot_idx = -1;
-    for (int i = 0; i < recvd_frame->num_bufs; i++) {
-        pStream = pChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
-        if (pStream != NULL) {
-            if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT)) {
-                snapshot_idx = i;
-            } else {
-                pStream->bufDone(recvd_frame->bufs[i]->buf_idx);
-            }
-        }
-    }
-    if (snapshot_idx < 0) {
-        ALOGE("%s: cannot find snapshot frame from super buf", __func__);
-        return;
-    }
-
-    // save a copy for the superbuf with only snapshot frame we are interested in
+    // save a copy for the superbuf
     mm_camera_super_buf_t* frame =
                (mm_camera_super_buf_t *)malloc(sizeof(mm_camera_super_buf_t));
     if (frame == NULL) {
@@ -99,16 +80,65 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
         pChannel->bufDone(recvd_frame);
         return;
     }
-    memset(frame, 0, sizeof(mm_camera_super_buf_t));
-    frame->num_bufs = 1;
-    frame->bufs[0] = recvd_frame->bufs[snapshot_idx];
-    frame->camera_handle = recvd_frame->camera_handle;
-    frame->ch_id = recvd_frame->ch_id;
+    *frame = *recvd_frame;
 
     // send to postprocessor
     pme->m_postprocessor.processData(frame);
 
     ALOGV("%s: X", __func__);
+}
+
+/*===========================================================================
+ * FUNCTION   : capture_channel_cb_routine
+ *
+ * DESCRIPTION: helper function to handle snapshot superbuf callback directly from
+ *              mm-camera-interface
+ *
+ * PARAMETERS :
+ *   @recvd_frame : received super buffer
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : recvd_frame will be released after this call by caller, so if
+ *             async operation needed for recvd_frame, it's our responsibility
+ *             to save a copy for this variable to be used later.
+*==========================================================================*/
+void QCamera2HardwareInterface::capture_channel_cb_routine(mm_camera_super_buf_t *recvd_frame,
+                                                           void *userdata)
+{
+    ALOGD("%s: E", __func__);
+    QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
+    if (pme == NULL ||
+        pme->mCameraHandle == NULL ||
+        pme->mCameraHandle->camera_handle != recvd_frame->camera_handle){
+        ALOGE("%s: camera obj not valid", __func__);
+        // simply free super frame
+        free(recvd_frame);
+        return;
+    }
+
+    QCameraChannel *pChannel = pme->m_channels[QCAMERA_CH_TYPE_CAPTURE];
+    if (pChannel == NULL ||
+        pChannel->getMyHandle() != recvd_frame->ch_id) {
+        ALOGE("%s: Capture channel doesn't exist, return here", __func__);
+        return;
+    }
+
+    // save a copy for the superbuf
+    mm_camera_super_buf_t* frame =
+               (mm_camera_super_buf_t *)malloc(sizeof(mm_camera_super_buf_t));
+    if (frame == NULL) {
+        ALOGE("%s: Error allocating memory to save received_frame structure.", __func__);
+        pChannel->bufDone(recvd_frame);
+        return;
+    }
+    *frame = *recvd_frame;
+
+    // send to postprocessor
+    pme->m_postprocessor.processData(frame);
+
+    ALOGD("%s: X", __func__);
 }
 
 /*===========================================================================
@@ -423,7 +453,6 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
 
     nsecs_t timeStamp = nsecs_t(frame->ts.tv_sec) * 1000000000LL + frame->ts.tv_nsec;
     ALOGE("Send Video frame to services/encoder TimeStamp : %lld", timeStamp);
-
     QCameraMemory *videoMemObj = (QCameraMemory *)frame->mem_info;
     camera_memory_t *video_mem =
         videoMemObj->getMemory(frame->buf_idx, (pme->mStoreMetaDataInFrame > 0)? true : false);
@@ -440,7 +469,6 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
                                   pme->mCallbackCookie);
         }
     }
-
     free(super_frame);
     ALOGV("%s : END", __func__);
 }
