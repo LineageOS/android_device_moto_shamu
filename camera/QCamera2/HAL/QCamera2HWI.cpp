@@ -914,6 +914,10 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
             streamInfo->num_of_burst = mParameters.getNumOfSnapshots();
         }
         break;
+    case CAM_STREAM_TYPE_POSTVIEW:
+        streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
+        streamInfo->num_of_burst = mParameters.getNumOfSnapshots();
+        break;
     case CAM_STREAM_TYPE_OFFLINE_PROC:
         // right now offline process is only for WNR in ZSL case
         // use the same format and dimension for input and output
@@ -1241,8 +1245,6 @@ int QCamera2HardwareInterface::cancelPicture()
             (QCameraPicChannel *)m_channels[QCAMERA_CH_TYPE_ZSL];
         if (NULL != pZSLChannel) {
             pZSLChannel->cancelPicture();
-            stopChannel(QCAMERA_CH_TYPE_ZSL);
-            delChannel(QCAMERA_CH_TYPE_ZSL);
         }
     } else {
         // normal capture case

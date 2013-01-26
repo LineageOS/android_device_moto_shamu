@@ -610,8 +610,21 @@ int32_t QCameraStateMachine::procEvtPreviewReadyState(qcamera_sm_evt_enum_t evt,
             bool needRestart = false;
             rc = m_parent->updateParameters((char*)payload, needRestart);
             if (rc == NO_ERROR) {
-                rc = m_parent->commitParameterChanges();
+                if (needRestart) {
+                    // need restart preview for parameters to take effect
+                    m_parent->unpreparePreview();
+                    // commit parameter changes to server
+                    m_parent->commitParameterChanges();
+                    // prepare preview again
+                    rc = m_parent->preparePreview();
+                    if (rc != NO_ERROR) {
+                        m_state = QCAMERA_SM_STATE_PREVIEW_STOPPED;
+                    }
+                } else {
+                    rc = m_parent->commitParameterChanges();
+                }
             }
+
             result.status = rc;
             result.request_api = evt;
             result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
@@ -979,7 +992,11 @@ int32_t QCameraStateMachine::procEvtPreviewingState(qcamera_sm_evt_enum_t evt,
             rc = m_parent->takePicture();
             if (rc == NO_ERROR) {
                 // move state to picture taking state
-                m_state = QCAMERA_SM_STATE_PIC_TAKING;
+                if (m_parent->isZSLMode()) {
+                    m_state = QCAMERA_SM_STATE_PREVIEW_PIC_TAKING;
+                } else {
+                    m_state = QCAMERA_SM_STATE_PIC_TAKING;
+                }
             } else {
                 // move state to preview stopped state
                 m_state = QCAMERA_SM_STATE_PREVIEW_STOPPED;

@@ -230,6 +230,7 @@ private:
     int32_t prepareHardwareForSnapshot();
     bool needProcessPreviewFrame() {return m_stateMachine.isPreviewRunning();};
     bool isNoDisplayMode() {return mParameters.isNoDisplayMode();};
+    bool isZSLMode() {return mParameters.isZSLMode();};
     uint8_t numOfSnapshotsExpected() {return mParameters.getNumOfSnapshots();};
 
     static void camEvtHandle(uint32_t camera_handle,

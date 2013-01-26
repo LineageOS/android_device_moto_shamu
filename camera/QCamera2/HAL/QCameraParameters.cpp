@@ -1801,15 +1801,17 @@ int32_t QCameraParameters::initDefaultParameters()
         String8 fpsRangeValues = createFpsRangeString(m_pCapability->fps_ranges_tbl,
                                                       m_pCapability->fps_ranges_tbl_cnt);
         set(KEY_SUPPORTED_PREVIEW_FPS_RANGE, fpsRangeValues.string());
-        setPreviewFpsRange(int(m_pCapability->fps_ranges_tbl[0].min_fps * 1000),
-                           int(m_pCapability->fps_ranges_tbl[0].max_fps * 1000));
+        int min_fps =
+            int(m_pCapability->fps_ranges_tbl[m_pCapability->fps_ranges_tbl_cnt - 1].min_fps * 1000);
+        int max_fps =
+            int(m_pCapability->fps_ranges_tbl[m_pCapability->fps_ranges_tbl_cnt - 1].max_fps * 1000);
+        setPreviewFpsRange(min_fps, max_fps);
 
         // Set legacy preview fps
         String8 fpsValues = createFpsString(m_pCapability->fps_ranges_tbl,
                                             m_pCapability->fps_ranges_tbl_cnt);
         set(KEY_SUPPORTED_PREVIEW_FRAME_RATES, fpsValues.string());
-        CameraParameters::setPreviewFrameRate(
-           (int)(m_pCapability->fps_ranges_tbl[0].max_fps * 1000));
+        CameraParameters::setPreviewFrameRate(max_fps);
     } else {
         ALOGE("%s: supported fps ranges cnt is 0!!!", __func__);
     }
