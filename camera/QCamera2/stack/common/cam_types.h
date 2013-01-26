@@ -72,6 +72,8 @@ typedef enum {
      * Any format other than raw image format should be declared
      * before this line!!!!!!!!!!!!! */
 
+    /* Note: For all raw formats, each scanline needs to be 16 bytes aligned */
+
     /* Packed YUV/YVU raw format, 16 bpp: 8 bits Y and 8 bits UV.
      * U and V are interleaved with Y: YUYV or YVYV */
     CAM_FORMAT_YUV_RAW_8BIT,
