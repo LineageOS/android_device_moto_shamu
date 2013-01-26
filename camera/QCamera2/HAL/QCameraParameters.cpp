@@ -99,6 +99,7 @@ const char QCameraParameters::SCENE_MODE_ASD[] = "asd";   // corresponds to CAME
 const char QCameraParameters::SCENE_MODE_BACKLIGHT[] = "backlight";
 const char QCameraParameters::SCENE_MODE_FLOWERS[] = "flowers";
 const char QCameraParameters::SCENE_MODE_AR[] = "AR";
+const char QCameraParameters::SCENE_MODE_HDR[] = "hdr";
 
 // Formats for setPreviewFormat and setPictureFormat.
 const char QCameraParameters::PIXEL_FORMAT_YUV420SP_ADRENO[] = "yuv420sp-adreno";
@@ -399,6 +400,7 @@ const QCameraParameters::QCameraMap QCameraParameters::SCENE_MODES_MAP[] = {
     { SCENE_MODE_BACKLIGHT,      CAM_SCENE_MODE_BACKLIGHT },
     { SCENE_MODE_FLOWERS,        CAM_SCENE_MODE_FLOWERS },
     { SCENE_MODE_AR,             CAM_SCENE_MODE_AR },
+    { SCENE_MODE_HDR,            CAM_SCENE_MODE_OFF },
 };
 
 const QCameraParameters::QCameraMap QCameraParameters::FLASH_MODES_MAP[] = {
@@ -1337,7 +1339,12 @@ int32_t QCameraParameters::setSceneMode(const QCameraParameters& params)
     if (str != NULL) {
         if (prev_str == NULL ||
             strcmp(str, prev_str) != 0) {
-            return setMeteringAreas(str);
+            if ((strcmp(str, SCENE_MODE_HDR) == 0) ||
+                ((prev_str != NULL) && (strcmp(prev_str, SCENE_MODE_HDR) == 0))) {
+                ALOGD("%s: scene mode changed between HDR and non-HDR, need restart", __func__);
+                m_bNeedRestart = true;
+            }
+            return setSceneMode(str);
         }
     }
     return NO_ERROR;
@@ -1365,7 +1372,14 @@ int32_t QCameraParameters::setAEBracket(const QCameraParameters& params)
         remove(KEY_QC_CAPTURE_BURST_EXPOSURE);
     }
 
-    const char *str = params.get(KEY_QC_AE_BRACKET_HDR);
+    const char *str = NULL;
+    const char *scene_mode = params.get(KEY_SCENE_MODE);
+    if (scene_mode != NULL && strcmp(scene_mode, SCENE_MODE_HDR) == 0) {
+        str = AE_BRACKET_HDR;
+    } else {
+        str = params.get(KEY_QC_AE_BRACKET_HDR);
+    }
+
     const char *prev_str = get(KEY_QC_AE_BRACKET_HDR);
     if (str != NULL) {
         if (prev_str == NULL ||
