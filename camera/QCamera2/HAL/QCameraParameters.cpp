@@ -29,6 +29,7 @@
 
 #define LOG_TAG "QCameraParameters"
 
+#include <cutils/properties.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>
 #include <string.h>
@@ -2074,11 +2075,20 @@ int32_t QCameraParameters::setGpsLocation(const QCameraParameters& params)
  *==========================================================================*/
 int32_t QCameraParameters::setNumOfSnapshot(const QCameraParameters& params)
 {
-    const char *str = params.get(KEY_QC_NUM_SNAPSHOT_PER_SHUTTER);
-    if (str != NULL) {
-        updateParamEntry(KEY_QC_NUM_SNAPSHOT_PER_SHUTTER, str);
+    char prop[PROPERTY_VALUE_MAX];
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.camera.snapshot.number", prop, "0");
+    if (atoi(prop)) {
+        ALOGE("%s: Reading maximum no of snapshots = %d"
+             "from properties", __func__, atoi(prop));
+        updateParamEntry(KEY_QC_NUM_SNAPSHOT_PER_SHUTTER, prop);
     } else {
-        updateParamEntry(KEY_QC_NUM_SNAPSHOT_PER_SHUTTER, "1");
+        const char *str = params.get(KEY_QC_NUM_SNAPSHOT_PER_SHUTTER);
+        if (str != NULL) {
+            updateParamEntry(KEY_QC_NUM_SNAPSHOT_PER_SHUTTER, str);
+        } else {
+            updateParamEntry(KEY_QC_NUM_SNAPSHOT_PER_SHUTTER, "1");
+        }
     }
     return NO_ERROR;
 }
@@ -2730,6 +2740,8 @@ int32_t QCameraParameters::initDefaultParameters()
 
     //Set ZSL
     set(KEY_QC_SUPPORTED_ZSL_MODES, onOffValues);
+    set(KEY_QC_ZSL, VALUE_OFF);
+    m_bZslMode =false;
 
     //Set Touch AF/AEC
     set(KEY_QC_SUPPORTED_TOUCH_AF_AEC, onOffValues);
@@ -4266,7 +4278,7 @@ int QCameraParameters::setRecordingHintValue(int32_t value)
 uint8_t QCameraParameters::getNumOfSnapshots()
 {
     int numOfSnapshot = getInt(KEY_QC_NUM_SNAPSHOT_PER_SHUTTER);
-    if (numOfSnapshot < 0) {
+    if (numOfSnapshot <= 0) {
         numOfSnapshot = 1; // set to default value
     }
     return (uint8_t)numOfSnapshot;
@@ -5070,7 +5082,10 @@ int32_t QCameraParameters::AddGetParmEntryToBatch(parm_buffer_t *p_table,
  *==========================================================================*/
 int32_t QCameraParameters::commitSetBatch()
 {
-    int32_t rc = m_pCamOpsTbl->ops->set_parms(m_pCamOpsTbl->camera_handle, m_pParamBuf);
+    int32_t rc = NO_ERROR;
+    if (m_pParamBuf->first_flagged_entry < CAM_INTF_PARM_MAX) {
+        rc = m_pCamOpsTbl->ops->set_parms(m_pCamOpsTbl->camera_handle, m_pParamBuf);
+    }
     if (rc == NO_ERROR) {
         // commit change from temp storage into param map
         rc = commitParamChanges();
@@ -5091,7 +5106,11 @@ int32_t QCameraParameters::commitSetBatch()
  *==========================================================================*/
 int32_t QCameraParameters::commitGetBatch()
 {
-    return m_pCamOpsTbl->ops->get_parms(m_pCamOpsTbl->camera_handle, m_pParamBuf);
+    if (m_pParamBuf->first_flagged_entry < CAM_INTF_PARM_MAX) {
+        return m_pCamOpsTbl->ops->get_parms(m_pCamOpsTbl->camera_handle, m_pParamBuf);
+    } else {
+        return NO_ERROR;
+    }
 }
 
 /*===========================================================================
