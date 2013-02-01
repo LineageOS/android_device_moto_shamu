@@ -375,6 +375,8 @@ public:
     cam_focus_mode_type getFocusMode() const {return mFocusMode;};
     bool isJpegPictureFormat() {return (mPictureFormat == CAMERA_PICTURE_TYPE_JPEG);};
 
+    int32_t adjustPreviewFpsRange(cam_fps_range_t *fpsRange);
+
 private:
     int32_t setPreviewSize(const QCameraParameters& );
     int32_t setVideoSize(const QCameraParameters& );

@@ -2103,11 +2103,72 @@ void QCamera2HardwareInterface::jpegEvtHandle(jpeg_job_status_t status,
  *              none-zero failure code
  *==========================================================================*/
 int QCamera2HardwareInterface::thermalEvtHandle(char *name,
-                                                 int threshold,
-                                                 int level)
+                                                int threshold,
+                                                qcamera_thermal_level_enum_t level)
 {
-    ALOGI("%s: name: %s, threshold: %d, level: %d", __func__, name, threshold, level);
-    return NO_ERROR;
+    int ret = NO_ERROR;
+    cam_fps_range_t adjustedRange;
+    int minFPS, maxFPS;
+
+    mParameters.getPreviewFpsRange(&minFPS, &maxFPS);
+
+    switch(level) {
+    case QCAMERA_THERMAL_NO_ADJUSTMENT:
+        {
+            adjustedRange.min_fps = minFPS/1000.0f;
+            adjustedRange.max_fps = maxFPS/1000.0f;
+        }
+        break;
+    case QCAMERA_THERMAL_SLIGHT_ADJUSTMENT:
+        {
+            adjustedRange.min_fps = minFPS/1000.0f;
+            adjustedRange.max_fps = (maxFPS / 2 ) / 1000.0f;
+            if ( adjustedRange.max_fps < adjustedRange.min_fps ) {
+                adjustedRange.max_fps = adjustedRange.min_fps;
+            }
+        }
+        break;
+    case QCAMERA_THERMAL_BIG_ADJUSTMENT:
+        {
+            adjustedRange.min_fps = minFPS/1000.0f;
+            adjustedRange.max_fps = adjustedRange.min_fps;
+        }
+        break;
+    case QCAMERA_THERMAL_SHUTDOWN:
+        {
+            // Stop Preview?
+            // Set lowest FPS range for now
+            adjustedRange.min_fps = minFPS/1000.0f;
+            adjustedRange.max_fps = maxFPS/1000.0f;
+            for ( int i = 0 ; i < gCamCapability[mCameraId]->fps_ranges_tbl_cnt ; i++ ) {
+                if ( gCamCapability[mCameraId]->fps_ranges_tbl[i].min_fps < adjustedRange.min_fps ) {
+                    adjustedRange.min_fps = gCamCapability[mCameraId]->fps_ranges_tbl[i].min_fps;
+                }
+                if ( gCamCapability[mCameraId]->fps_ranges_tbl[i].max_fps < adjustedRange.max_fps ) {
+                    adjustedRange.max_fps = gCamCapability[mCameraId]->fps_ranges_tbl[i].max_fps;
+                }
+            }
+        }
+        break;
+    default:
+        {
+            ALOGE("%s: Invalid thermal level %d", __func__, level);
+            return BAD_VALUE;
+        }
+        break;
+    }
+
+    ALOGI("%s: Thermal level %d, threshold %d, FPS range [%3.2f,%3.2f], name %s",
+          __func__,
+          level,
+          threshold,
+          adjustedRange.min_fps,
+          adjustedRange.max_fps,
+          name);
+
+    ret = processAPI(QCAMERA_SM_EVT_THERMAL_NOTIFY, &adjustedRange);
+
+    return ret;
 }
 
 /*===========================================================================
@@ -3210,6 +3271,23 @@ int32_t QCamera2HardwareInterface::processHistogramStats(cam_histogram_data_t *h
     }
 
     return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : updateThermalFPS
+ *
+ * DESCRIPTION: update FPS depending on thermal events
+ *
+ * PARAMETERS :
+ *   @fpsRange  : adjusted min/max FPS range
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCamera2HardwareInterface::updateThermalFPS(cam_fps_range_t *fpsRange)
+{
+    return mParameters.adjustPreviewFpsRange(fpsRange);
 }
 
 /*===========================================================================

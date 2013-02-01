@@ -32,11 +32,19 @@
 
 namespace qcamera {
 
+typedef enum {
+    QCAMERA_THERMAL_NO_ADJUSTMENT = 0,
+    QCAMERA_THERMAL_SLIGHT_ADJUSTMENT,
+    QCAMERA_THERMAL_BIG_ADJUSTMENT,
+    QCAMERA_THERMAL_SHUTDOWN
+} qcamera_thermal_level_enum_t;
+
 class QCameraThermalCallback
 {
 public:
-    virtual int thermalEvtHandle(char *name, int threshold,
-                                    int level) = 0;
+    virtual int thermalEvtHandle(char *name,
+                                 int threshold,
+                                 qcamera_thermal_level_enum_t level) = 0;
     virtual ~QCameraThermalCallback() {}
 };
 

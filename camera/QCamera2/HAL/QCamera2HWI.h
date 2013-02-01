@@ -135,7 +135,8 @@ public:
 
     // Implementation of QCameraThermalCallback
     virtual int thermalEvtHandle(char *name,
-                              int threshold, int level);
+                                 int threshold,
+                                 qcamera_thermal_level_enum_t level);
 
     friend class QCameraStateMachine;
     friend class QCameraPostProcessor;
@@ -178,6 +179,8 @@ private:
     void waitAPIResult(qcamera_sm_evt_enum_t api_evt);
     void unlockAPI();
     void signalAPIResult(qcamera_api_result_t *result);
+
+    int updateThermalFPS(cam_fps_range_t *fpsRange);
 
     // update entris to set parameters and check if restart is needed
     int updateParameters(const char *parms, bool &needRestart);
