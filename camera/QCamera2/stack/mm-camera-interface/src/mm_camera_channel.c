@@ -65,6 +65,7 @@ int32_t mm_channel_stop(mm_channel_t *my_obj);
 int32_t mm_channel_request_super_buf(mm_channel_t *my_obj,
                                      uint32_t num_buf_requested);
 int32_t mm_channel_cancel_super_buf_request(mm_channel_t *my_obj);
+int32_t mm_channel_flush_super_buf_queue(mm_channel_t *my_obj);
 int32_t mm_channel_set_stream_parm(mm_channel_t *my_obj,
                                    mm_evt_paylod_set_get_stream_parms_t *payload);
 int32_t mm_channel_get_stream_parm(mm_channel_t *my_obj,
@@ -200,6 +201,8 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
         /* skip frames if needed */
         ch_obj->pending_cnt = cmd_cb->u.req_buf.num_buf_requested;
         mm_channel_superbuf_skip(ch_obj, &ch_obj->bundle.superbuf_queue);
+    } else if (MM_CAMERA_CMD_TYPE_FLUSH_QUEUE  == cmd_cb->cmd_type) {
+        return;
     }
 
     notify_mode = ch_obj->bundle.superbuf_queue.attr.notify_mode;
@@ -503,6 +506,11 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
     case MM_CHANNEL_EVT_CANCEL_REQUEST_SUPER_BUF:
         {
             rc = mm_channel_cancel_super_buf_request(my_obj);
+        }
+        break;
+    case MM_CHANNEL_EVT_FLUSH_SUPER_BUF_QUEUE:
+        {
+            rc = mm_channel_flush_super_buf_queue(my_obj);
         }
         break;
     case MM_CHANNEL_EVT_SET_STREAM_PARM:
@@ -1052,6 +1060,41 @@ int32_t mm_channel_cancel_super_buf_request(mm_channel_t *my_obj)
 }
 
 /*===========================================================================
+ * FUNCTION   : mm_channel_flush_super_buf_queue
+ *
+ * DESCRIPTION: flush superbuf queue
+ *
+ * PARAMETERS :
+ *   @my_obj  : channel object
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_channel_flush_super_buf_queue(mm_channel_t *my_obj)
+{
+    int32_t rc = 0;
+    mm_camera_cmdcb_t* node = NULL;
+
+    node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
+    if (NULL != node) {
+        memset(node, 0, sizeof(mm_camera_cmdcb_t));
+        node->cmd_type = MM_CAMERA_CMD_TYPE_FLUSH_QUEUE;
+
+        /* enqueue to cmd thread */
+        cam_queue_enq(&(my_obj->cmd_thread.cmd_queue), node);
+
+        /* wake up cmd thread */
+        cam_sem_post(&(my_obj->cmd_thread.cmd_sem));
+    } else {
+        CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
+        rc = -1;
+    }
+
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : mm_channel_qbuf
  *
  * DESCRIPTION: enqueue buffer back to kernel
@@ -1496,10 +1539,12 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
  *
  * PARAMETERS :
  *   @queue   : superbuf queue
+ *   @matched_only : if dequeued buf should be matched
  *
  * RETURN     : ptr to a node from superbuf queue
  *==========================================================================*/
-mm_channel_queue_node_t* mm_channel_superbuf_dequeue_internal(mm_channel_queue_t * queue)
+mm_channel_queue_node_t* mm_channel_superbuf_dequeue_internal(mm_channel_queue_t * queue,
+                                                              uint8_t matched_only)
 {
     cam_node_t* node = NULL;
     struct cam_list *head = NULL;
@@ -1512,16 +1557,21 @@ mm_channel_queue_node_t* mm_channel_superbuf_dequeue_internal(mm_channel_queue_t
         /* get the first node */
         node = member_of(pos, cam_node_t, list);
         super_buf = (mm_channel_queue_node_t*)node->data;
+        if ( (NULL != super_buf) &&
+             (matched_only == TRUE) &&
+             (super_buf->matched == FALSE) ) {
+            /* require to dequeue matched frame only, but this superbuf is not matched,
+               simply set return ptr to NULL */
+            super_buf = NULL;
+        }
         if (NULL != super_buf) {
-            if (super_buf->matched) {
-                /* we found a mtaching super buf, dequeue it */
-                cam_list_del_node(&node->list);
-                queue->que.size--;
+            /* remove from the queue */
+            cam_list_del_node(&node->list);
+            queue->que.size--;
+            if (super_buf->matched == TRUE) {
                 queue->match_cnt--;
-                free(node);
-            } else {
-                super_buf = NULL;
             }
+            free(node);
         }
     }
 
@@ -1543,7 +1593,7 @@ mm_channel_queue_node_t* mm_channel_superbuf_dequeue(mm_channel_queue_t * queue)
     mm_channel_queue_node_t* super_buf = NULL;
 
     pthread_mutex_lock(&queue->que.lock);
-    super_buf = mm_channel_superbuf_dequeue_internal(queue);
+    super_buf = mm_channel_superbuf_dequeue_internal(queue, TRUE);
     pthread_mutex_unlock(&queue->que.lock);
 
     return super_buf;
@@ -1578,7 +1628,7 @@ int32_t mm_channel_superbuf_bufdone_overflow(mm_channel_t* my_obj,
     /* bufdone overflowed bufs */
     pthread_mutex_lock(&queue->que.lock);
     while (queue->match_cnt > queue->attr.water_mark) {
-        super_buf = mm_channel_superbuf_dequeue_internal(queue);
+        super_buf = mm_channel_superbuf_dequeue_internal(queue, TRUE);
         if (NULL != super_buf) {
             for (i=0; i<super_buf->num_of_bufs; i++) {
                 if (NULL != super_buf->super_buf[i].buf) {
@@ -1622,7 +1672,7 @@ int32_t mm_channel_superbuf_skip(mm_channel_t* my_obj,
     /* bufdone overflowed bufs */
     pthread_mutex_lock(&queue->que.lock);
     while (queue->match_cnt > queue->attr.look_back) {
-        super_buf = mm_channel_superbuf_dequeue_internal(queue);
+        super_buf = mm_channel_superbuf_dequeue_internal(queue, TRUE);
         if (NULL != super_buf) {
             for (i=0; i<super_buf->num_of_bufs; i++) {
                 if (NULL != super_buf->super_buf[i].buf) {
@@ -1631,6 +1681,42 @@ int32_t mm_channel_superbuf_skip(mm_channel_t* my_obj,
             }
             free(super_buf);
         }
+    }
+    pthread_mutex_unlock(&queue->que.lock);
+
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : mm_channel_superbuf_flush
+ *
+ * DESCRIPTION: flush the superbuf queue.
+ *
+ * PARAMETERS :
+ *   @my_obj  : channel object
+ *   @queue   : superbuf queue
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_channel_superbuf_flush(mm_channel_t* my_obj,
+                                  mm_channel_queue_t * queue)
+{
+    int32_t rc = 0, i;
+    mm_channel_queue_node_t* super_buf = NULL;
+
+    /* bufdone bufs */
+    pthread_mutex_lock(&queue->que.lock);
+    super_buf = mm_channel_superbuf_dequeue_internal(queue, FALSE);
+    while (super_buf != NULL) {
+        for (i=0; i<super_buf->num_of_bufs; i++) {
+            if (NULL != super_buf->super_buf[i].buf) {
+                mm_channel_qbuf(my_obj, super_buf->super_buf[i].buf);
+            }
+        }
+        free(super_buf);
+        super_buf = mm_channel_superbuf_dequeue_internal(queue, FALSE);
     }
     pthread_mutex_unlock(&queue->que.lock);
 

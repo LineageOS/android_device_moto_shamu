@@ -172,12 +172,6 @@ typedef struct {
        offset_x, offset_y, stride, scanline, plane offset */
     cam_stream_buf_plane_info_t buf_planes;
 
-    /* bundle identifier
-     * if any stream share the same bundle_id, they are bundled.
-     * All bundled streams need to start and stop at the same time
-     * */
-    uint32_t bundle_id;
-
     /* streaming type */
     cam_streaming_mode_t streaming_mode;
     /* num of frames needs to be generated.

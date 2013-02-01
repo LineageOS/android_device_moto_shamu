@@ -40,6 +40,9 @@
 #include "QCameraMem.h"
 
 #define MAP_TO_DRIVER_COORDINATE(val, base, scale, offset) (val * scale / base + offset)
+#define CAMERA_MIN_STREAMING_BUFFERS     3
+#define CAMERA_MIN_JPEG_ENCODING_BUFFERS 2
+#define CAMERA_MIN_VIDEO_BUFFERS         9
 
 namespace qcamera {
 
@@ -95,7 +98,6 @@ int QCamera2HardwareInterface::set_preview_window(struct camera_device *device,
         struct preview_stream_ops *window)
 {
     int rc = NO_ERROR;
-    ALOGI("%s: %p",__func__, window);
     QCamera2HardwareInterface *hw =
         reinterpret_cast<QCamera2HardwareInterface *>(device->priv);
     if (!hw) {
@@ -1168,40 +1170,38 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(
     int rc = NO_ERROR;
     QCameraMemory *mem = NULL;
     int bufferCnt = 0;
-    const int minStreamingBuffers = 3;
-    const int minCaptureBuffers = mParameters.getNumOfSnapshots();
-    const int minVideoBuffers = 9;
-    int zslQueueDepth = mParameters.getZSLQueueDepth();
+    int minCaptureBuffers = mParameters.getNumOfSnapshots();
+    int zslBuffers = mParameters.getZSLQueueDepth();
+    if (CAMERA_MIN_JPEG_ENCODING_BUFFERS < minCaptureBuffers) {
+        zslBuffers += minCaptureBuffers;
+    } else {
+        zslBuffers += CAMERA_MIN_JPEG_ENCODING_BUFFERS;
+    }
 
     // Get buffer count for the particular stream type
     switch (stream_type) {
     case CAM_STREAM_TYPE_PREVIEW:
-        bufferCnt = minStreamingBuffers;
-        if (m_channels[QCAMERA_CH_TYPE_ZSL])
-            bufferCnt += zslQueueDepth;
+        bufferCnt = CAMERA_MIN_STREAMING_BUFFERS;
+        if (m_channels[QCAMERA_CH_TYPE_ZSL]) {
+            bufferCnt += zslBuffers;
+        }
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
         bufferCnt = minCaptureBuffers;
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
-        if (m_channels[QCAMERA_CH_TYPE_ZSL])
-            bufferCnt = minStreamingBuffers + zslQueueDepth;
-        else
+    case CAM_STREAM_TYPE_RAW:
+        if (m_channels[QCAMERA_CH_TYPE_ZSL]) {
+            bufferCnt = CAMERA_MIN_STREAMING_BUFFERS + zslBuffers;
+        } else {
             bufferCnt = minCaptureBuffers;
+        }
         break;
     case CAM_STREAM_TYPE_VIDEO:
-        bufferCnt = minVideoBuffers;
-        break;
-    case CAM_STREAM_TYPE_RAW:
-        bufferCnt = minCaptureBuffers;
+        bufferCnt = CAMERA_MIN_VIDEO_BUFFERS;
         break;
     case CAM_STREAM_TYPE_METADATA:
-        if (m_channels[QCAMERA_CH_TYPE_ZSL])
-            bufferCnt = minStreamingBuffers + zslQueueDepth;
-        else if (m_channels[QCAMERA_CH_TYPE_SNAPSHOT])
-            bufferCnt = minCaptureBuffers;
-        else
-            bufferCnt = minStreamingBuffers;
+        bufferCnt = CAMERA_MIN_STREAMING_BUFFERS + zslBuffers;
         break;
     case CAM_STREAM_TYPE_OFFLINE_PROC:
         bufferCnt = minCaptureBuffers;
@@ -1746,7 +1746,6 @@ int QCamera2HardwareInterface::takePicture()
 
         // start snapshot
         if (mParameters.isJpegPictureFormat()) {
-            ALOGD("%s: take JPEG picture", __func__);
             rc = addCaptureChannel();
             if (rc == NO_ERROR) {
                 // start catpure channel
@@ -1763,7 +1762,6 @@ int QCamera2HardwareInterface::takePicture()
                 return rc;
             }
         } else {
-            ALOGD("%s: take RAW picture", __func__);
             rc = addRawChannel();
             if (rc == NO_ERROR) {
                 rc = startChannel(QCAMERA_CH_TYPE_RAW);
@@ -2127,7 +2125,6 @@ void *QCamera2HardwareInterface::evtNotifyRoutine(void *data)
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)data;
     QCameraCmdThread *cmdThread = &pme->m_evtNotifyTh;
 
-    ALOGD("%s: E", __func__);
     do {
         do {
             ret = cam_sem_wait(&cmdThread->cmd_sem);
@@ -2140,7 +2137,6 @@ void *QCamera2HardwareInterface::evtNotifyRoutine(void *data)
 
         /* we got notified about new cmd avail in cmd queue */
         camera_cmd_type_t cmd = cmdThread->getCmd();
-        ALOGD("%s: get cmd %d", __func__, cmd);
         switch (cmd) {
         case CAMERA_CMD_TYPE_DO_NEXT_JOB:
             {
@@ -2171,7 +2167,6 @@ void *QCamera2HardwareInterface::evtNotifyRoutine(void *data)
             break;
         }
     } while (running);
-    ALOGD("%s: X", __func__);
     return NULL;
 }
 
@@ -2342,12 +2337,12 @@ void QCamera2HardwareInterface::lockAPI()
  *==========================================================================*/
 void QCamera2HardwareInterface::waitAPIResult(qcamera_sm_evt_enum_t api_evt)
 {
-    ALOGD("%s: wait for API result of evt (%d)", __func__, api_evt);
+    ALOGV("%s: wait for API result of evt (%d)", __func__, api_evt);
     memset(&m_apiResult, 0, sizeof(qcamera_api_result_t));
     while (m_apiResult.request_api != api_evt) {
         pthread_cond_wait(&m_cond, &m_lock);
     }
-    ALOGD("%s: return (%d) from API result wait for evt (%d)",
+    ALOGV("%s: return (%d) from API result wait for evt (%d)",
           __func__, m_apiResult.status, api_evt);
 }
 
@@ -3035,7 +3030,6 @@ void QCamera2HardwareInterface::unpreparePreview()
  * RETURN     : none
  *==========================================================================*/
 void QCamera2HardwareInterface::playShutter(){
-     ALOGV("%s : E", __func__);
      if (mNotifyCb == NULL ||
          msgTypeEnabled(CAMERA_MSG_SHUTTER) == 0){
          ALOGV("%s: shutter msg not enabled or NULL cb", __func__);
@@ -3047,7 +3041,6 @@ void QCamera2HardwareInterface::playShutter(){
      }
      mNotifyCb(CAMERA_MSG_SHUTTER, 0, false, mCallbackCookie);
      m_bShutterSoundPlayed = false;
-     ALOGV("%s : X", __func__);
 }
 
 /*===========================================================================
@@ -3247,7 +3240,12 @@ int QCamera2HardwareInterface::updateParameters(const char *parms, bool &needRes
  *==========================================================================*/
 int QCamera2HardwareInterface::commitParameterChanges()
 {
-    return mParameters.commitParameters();
+    int rc = mParameters.commitParameters();
+    if (rc == NO_ERROR) {
+        // update number of snapshot based on committed parameters setting
+        rc = mParameters.setNumOfSnapshot();
+    }
+    return rc;
 }
 
 /*===========================================================================

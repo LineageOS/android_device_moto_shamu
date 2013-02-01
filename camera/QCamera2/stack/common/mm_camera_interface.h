@@ -573,6 +573,15 @@ typedef struct {
     int32_t (*cancel_super_buf_request) (uint32_t camera_handle,
                                          uint32_t ch_id);
 
+    /** flush_super_buf_queue: fucntion definition for flushing out
+     *                     all frames in the superbuf queue
+     *    @camera_handle : camer handler
+     *    @ch_id : channel handler
+     *  Return value: 0 -- success
+     *                -1 -- failure
+     **/
+    int32_t (*flush_super_buf_queue) (uint32_t camera_handle,
+                                      uint32_t ch_id);
 } mm_camera_ops_t;
 
 /** mm_camera_vtbl_t: virtual table for camera operations

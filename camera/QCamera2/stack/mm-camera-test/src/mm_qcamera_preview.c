@@ -166,7 +166,6 @@ mm_camera_stream_t * mm_app_add_preview_stream(mm_camera_test_obj_t *test_obj,
 
     stream->s_config.stream_info = (cam_stream_info_t *)stream->s_info_buf.buf.buffer;
     memset(stream->s_config.stream_info, 0, sizeof(cam_stream_info_t));
-    stream->s_config.stream_info->bundle_id = channel->ch_id;
     stream->s_config.stream_info->stream_type = CAM_STREAM_TYPE_PREVIEW;
     stream->s_config.stream_info->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
     stream->s_config.stream_info->fmt = DEFAULT_PREVIEW_FORMAT;
@@ -209,7 +208,6 @@ mm_camera_stream_t * mm_app_add_snapshot_stream(mm_camera_test_obj_t *test_obj,
 
     stream->s_config.stream_info = (cam_stream_info_t *)stream->s_info_buf.buf.buffer;
     memset(stream->s_config.stream_info, 0, sizeof(cam_stream_info_t));
-    stream->s_config.stream_info->bundle_id = channel->ch_id;
     stream->s_config.stream_info->stream_type = CAM_STREAM_TYPE_SNAPSHOT;
     if (num_burst == 0) {
         stream->s_config.stream_info->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;

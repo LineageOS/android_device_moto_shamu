@@ -440,13 +440,12 @@ typedef enum {
 } cam_event_type_t;
 
 typedef enum {
-    CAM_HDR_BRACKETING_OFF,
-    CAM_HDR_MODE,
-    CAM_EXP_BRACKETING_MODE
-} cam_hdr_mode;
+    CAM_EXP_BRACKETING_OFF,
+    CAM_EXP_BRACKETING_ON
+} cam_bracket_mode;
 
 typedef struct {
-    cam_hdr_mode mode;
+    cam_bracket_mode mode;
     char values[MAX_EXP_BRACKETING_LENGTH];  /* user defined values */
 } cam_exp_bracketing_t;
 

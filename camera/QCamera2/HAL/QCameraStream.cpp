@@ -206,7 +206,6 @@ int32_t QCameraStream::init(cam_stream_type_t stream_type,
     }
 
     // Configure the stream
-    mStreamInfo->bundle_id = mChannelHandle;
     stream_config.stream_info = mStreamInfo;
     stream_config.mem_vtbl = mMemVtbl;
     stream_config.stream_cb = dataNotifyCB;
