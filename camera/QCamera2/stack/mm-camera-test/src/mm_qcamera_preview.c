@@ -293,6 +293,7 @@ int mm_app_start_preview(mm_camera_test_obj_t *test_obj)
     int rc = MM_CAMERA_OK;
     mm_camera_channel_t *channel = NULL;
     mm_camera_stream_t *stream = NULL;
+    uint8_t i;
 
     channel =  mm_app_add_preview_channel(test_obj);
     if (NULL == channel) {
@@ -303,7 +304,10 @@ int mm_app_start_preview(mm_camera_test_obj_t *test_obj)
     rc = mm_app_start_channel(test_obj, channel);
     if (MM_CAMERA_OK != rc) {
         CDBG_ERROR("%s:start preview failed rc=%d\n", __func__, rc);
-        mm_app_del_stream(test_obj, channel, stream);
+        for (i = 0; i < channel->num_streams; i++) {
+            stream = &channel->streams[i];
+            mm_app_del_stream(test_obj, channel, stream);
+        }
         mm_app_del_channel(test_obj, channel);
         return rc;
     }

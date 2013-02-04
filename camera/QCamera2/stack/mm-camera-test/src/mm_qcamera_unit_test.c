@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -101,7 +101,7 @@ int mm_app_tc_start_stop_preview(mm_camera_app_t *cam_app)
             }
         }
 
-        rc = mm_app_close(&test_obj);
+        rc |= mm_app_close(&test_obj);
         if (rc != MM_CAMERA_OK) {
             CDBG_ERROR("%s:mm_app_close() cam_idx=%d, err=%d\n",
                        __func__, i, rc);
@@ -498,7 +498,7 @@ int mm_app_gen_test_cases()
     int tc = 0;
     memset(mm_app_tc, 0, sizeof(mm_app_tc));
     if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_open_close;
-    //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_preview;
+    if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_preview;
     //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_zsl;
     //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_video_preview;
     //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_video_record;
