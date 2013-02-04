@@ -3279,7 +3279,7 @@ int32_t  QCameraParameters::setISOValue(const char *isoValue)
                                           &value);
         }
     }
-    ALOGE("Invalid Scene Detect value: %s",
+    ALOGE("Invalid ISO value: %s",
           (isoValue == NULL) ? "NULL" : isoValue);
     return BAD_VALUE;
 }
