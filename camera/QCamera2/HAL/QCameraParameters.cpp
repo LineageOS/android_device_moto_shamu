@@ -788,24 +788,35 @@ String8 QCameraParameters::createFpsString(const cam_fps_range_t *fps, int len)
  * PARAMETERS :
  *   @fps     : array of fps ranges
  *   @len     : size of the array
+ *   @default_fps_index : reference to index of default fps range
  *
  * RETURN     : string obj
  *==========================================================================*/
-String8 QCameraParameters::createFpsRangeString(const cam_fps_range_t* fps, int len)
+String8 QCameraParameters::createFpsRangeString(const cam_fps_range_t* fps,
+                                                int len,
+                                                int &default_fps_index)
 {
     String8 str;
     char buffer[32];
+    int max_range = 0;
+    int min_fps, max_fps;
 
     if (len > 0) {
-        snprintf(buffer, sizeof(buffer), "(%d,%d)",
-                 int(fps[0].min_fps * 1000),
-                 int(fps[0].max_fps * 1000));
+        min_fps = int(fps[0].min_fps * 1000);
+        max_fps = int(fps[0].max_fps * 1000);
+        max_range = max_fps - min_fps;
+        default_fps_index = 0;
+        snprintf(buffer, sizeof(buffer), "(%d,%d)", min_fps, max_fps);
         str.append(buffer);
     }
     for (int i = 1; i < len; i++) {
-        snprintf(buffer, sizeof(buffer), ",(%d,%d)",
-                 int(fps[i].min_fps * 1000),
-                 int(fps[i].max_fps * 1000));
+        min_fps = int(fps[i].min_fps * 1000);
+        max_fps = int(fps[i].max_fps * 1000);
+        if (max_range < (max_fps - min_fps)) {
+            max_range = max_fps - min_fps;
+            default_fps_index = i;
+        }
+        snprintf(buffer, sizeof(buffer), ",(%d,%d)", min_fps, max_fps);
         str.append(buffer);
     }
     return str;
@@ -2538,13 +2549,16 @@ int32_t QCameraParameters::initDefaultParameters()
 
     // Set FPS ranges
     if (m_pCapability->fps_ranges_tbl_cnt > 0) {
+        int default_fps_index = 0;
         String8 fpsRangeValues = createFpsRangeString(m_pCapability->fps_ranges_tbl,
-                                                      m_pCapability->fps_ranges_tbl_cnt);
+                                                      m_pCapability->fps_ranges_tbl_cnt,
+                                                      default_fps_index);
         set(KEY_SUPPORTED_PREVIEW_FPS_RANGE, fpsRangeValues.string());
+
         int min_fps =
-            int(m_pCapability->fps_ranges_tbl[m_pCapability->fps_ranges_tbl_cnt - 1].min_fps * 1000);
+            int(m_pCapability->fps_ranges_tbl[default_fps_index].min_fps * 1000);
         int max_fps =
-            int(m_pCapability->fps_ranges_tbl[m_pCapability->fps_ranges_tbl_cnt - 1].max_fps * 1000);
+            int(m_pCapability->fps_ranges_tbl[default_fps_index].max_fps * 1000);
         setPreviewFpsRange(min_fps, max_fps);
 
         // Set legacy preview fps
