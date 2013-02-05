@@ -66,7 +66,6 @@ typedef enum {
     QCAMERA_CH_TYPE_SNAPSHOT,
     QCAMERA_CH_TYPE_RAW,
     QCAMERA_CH_TYPE_METADATA,
-    QCAMERA_CH_TYPE_REPROCESS,
     QCAMERA_CH_TYPE_MAX
 } qcamera_ch_type_enum_t;
 
@@ -122,6 +121,9 @@ public:
     static int dump(struct camera_device *, int fd);
     static int close_camera_device(hw_device_t *);
 
+    static int register_face_image(struct camera_device *,
+                                   void *img_ptr,
+                                   cam_pp_offline_src_config_t *config);
 public:
     QCamera2HardwareInterface(int cameraId);
     virtual ~QCamera2HardwareInterface();
@@ -131,7 +133,9 @@ public:
     static int initCapabilities(int cameraId);
 
     // Implementation of QCameraAllocator
-    virtual QCameraMemory *allocateStreamBuf(cam_stream_type_t stream_type, int size);
+    virtual QCameraMemory *allocateStreamBuf(cam_stream_type_t stream_type,
+                                             int size,
+                                             uint8_t &bufferCnt);
     virtual QCameraHeapMemory *allocateStreamInfoBuf(cam_stream_type_t stream_type);
 
     // Implementation of QCameraThermalCallback
@@ -170,6 +174,9 @@ private:
     int sendCommand(int32_t cmd, int32_t arg1, int32_t arg2);
     int release();
     int dump(int fd);
+    int registerFaceImage(void *img_ptr,
+                          cam_pp_offline_src_config_t *config,
+                          int32_t &faceID);
 
     int openCamera();
     int closeCamera();
@@ -189,7 +196,7 @@ private:
     int commitParameterChanges();
 
     bool needDebugFps();
-    bool needOfflineReprocess();
+    bool needReprocess();
     void debugShowVideoFPS();
     void debugShowPreviewFPS();
     void dumpFrameToFile(const void *data, uint32_t size,
@@ -202,7 +209,7 @@ private:
     QCameraExif *getExifData();
 
     int32_t processAutoFocusEvent(cam_auto_focus_data_t &focus_data);
-    int32_t processZoomEvent(uint32_t status);
+    int32_t processZoomEvent(cam_crop_data_t &crop_info);
     int32_t processJpegNotify(qcamera_jpeg_evt_payload_t *jpeg_job);
 
     int32_t sendEvtNotify(int32_t msg_type, int32_t ext1, int32_t ext2);
@@ -222,7 +229,16 @@ private:
     int32_t addCaptureChannel();
     int32_t addRawChannel();
     int32_t addMetaDataChannel();
-    int32_t addReprocessChannel();
+    QCameraReprocessChannel *addOnlineReprocChannel(QCameraChannel *pInputChannel);
+    QCameraReprocessChannel *addOfflineReprocChannel(
+                                                cam_pp_offline_src_config_t &img_config,
+                                                cam_pp_feature_config_t &pp_feature,
+                                                stream_cb_routine stream_cb,
+                                                void *userdata);
+    int32_t addStreamToChannel(QCameraChannel *pChannel,
+                               cam_stream_type_t streamType,
+                               stream_cb_routine streamCB,
+                               void *userData);
     int32_t preparePreview();
     void unpreparePreview();
     QCameraChannel *getChannelByHandle(uint32_t channelHandle);
@@ -236,6 +252,7 @@ private:
     bool isNoDisplayMode() {return mParameters.isNoDisplayMode();};
     bool isZSLMode() {return mParameters.isZSLMode();};
     uint8_t numOfSnapshotsExpected() {return mParameters.getNumOfSnapshots();};
+    uint8_t getBufNumRequired(cam_stream_type_t stream_type);
 
     static void camEvtHandle(uint32_t camera_handle,
                           mm_camera_event_t *evt,
@@ -252,6 +269,8 @@ private:
     static void zsl_channel_cb(mm_camera_super_buf_t *recvd_frame, void *userdata);
     static void capture_channel_cb_routine(mm_camera_super_buf_t *recvd_frame,
                                            void *userdata);
+    static void postproc_channel_cb_routine(mm_camera_super_buf_t *recvd_frame,
+                                            void *userdata);
     static void nodisplay_preview_stream_cb_routine(mm_camera_super_buf_t *frame,
                                                     QCameraStream *stream,
                                                     void *userdata);

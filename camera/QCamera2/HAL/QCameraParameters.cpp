@@ -291,7 +291,7 @@ const QCameraParameters::QCameraMap QCameraParameters::PREVIEW_FORMATS_MAP[] = {
 };
 
 const QCameraParameters::QCameraMap QCameraParameters::PICTURE_TYPES_MAP[] = {
-    {PIXEL_FORMAT_JPEG,                          CAMERA_PICTURE_TYPE_JPEG},
+    {PIXEL_FORMAT_JPEG,                          CAM_FORMAT_JPEG},
     {QC_PIXEL_FORMAT_YUV_RAW_8BIT_YUYV,          CAM_FORMAT_YUV_RAW_8BIT_YUYV},
     {QC_PIXEL_FORMAT_YUV_RAW_8BIT_YVYU,          CAM_FORMAT_YUV_RAW_8BIT_YVYU},
     {QC_PIXEL_FORMAT_YUV_RAW_8BIT_UYVY,          CAM_FORMAT_YUV_RAW_8BIT_UYVY},
@@ -515,7 +515,7 @@ QCameraParameters::QCameraParameters()
       m_nDumpFrameEnabled(0),
       mFocusMode(CAM_FOCUS_MODE_MAX),
       mPreviewFormat(CAM_FORMAT_YUV_420_NV21),
-      mPictureFormat(CAMERA_PICTURE_TYPE_JPEG),
+      mPictureFormat(CAM_FORMAT_JPEG),
       m_bNeedRestart(false),
       m_bNoDisplayMode(false),
       m_bWNROn(false),
@@ -565,7 +565,7 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_nDumpFrameEnabled(0),
     mFocusMode(CAM_FOCUS_MODE_MAX),
     mPreviewFormat(CAM_FORMAT_YUV_420_NV21),
-    mPictureFormat(CAMERA_PICTURE_TYPE_JPEG),
+    mPictureFormat(CAM_FORMAT_JPEG),
     m_bNeedRestart(false),
     m_bNoDisplayMode(false),
     m_bWNROn(false),
@@ -4045,6 +4045,35 @@ int32_t QCameraParameters::setRedeyeReduction(const char *redeyeStr)
 }
 
 /*===========================================================================
+ * FUNCTION   : getWaveletDenoiseProcessPlate
+ *
+ * DESCRIPTION: query wavelet denoise process plate
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : WNR prcocess plate vlaue
+ *==========================================================================*/
+cam_denoise_process_type_t QCameraParameters::getWaveletDenoiseProcessPlate()
+{
+    char prop[PROPERTY_VALUE_MAX];
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.denoise.process.plates", prop, "0");
+    int processPlate = atoi(prop);
+    switch(processPlate) {
+    case 0:
+        return CAM_WAVELET_DENOISE_YCBCR_PLANE;
+    case 1:
+        return CAM_WAVELET_DENOISE_CBCR_ONLY;
+    case 2:
+        return CAM_WAVELET_DENOISE_STREAMLINE_YCBCR;
+    case 3:
+        return CAM_WAVELET_DENOISE_STREAMLINED_CBCR;
+    default:
+        return CAM_WAVELET_DENOISE_STREAMLINE_YCBCR;
+    }
+}
+
+/*===========================================================================
  * FUNCTION   : setWaveletDenoise
  *
  * DESCRIPTION: set wavelet denoise value
@@ -4070,27 +4099,7 @@ int32_t QCameraParameters::setWaveletDenoise(const char *wnrStr)
             temp.denoise_enable = value;
             m_bWNROn = (value != 0);
             if (m_bWNROn) {
-                char prop[PROPERTY_VALUE_MAX];
-                memset(prop, 0, sizeof(prop));
-                property_get("persist.denoise.process.plates", prop, "0");
-                int processPlate = atoi(prop);
-                switch(processPlate) {
-                case 0:
-                    temp.process_plates = CAM_WAVELET_DENOISE_YCBCR_PLANE;
-                    break;
-                case 1:
-                    temp.process_plates = CAM_WAVELET_DENOISE_CBCR_ONLY;
-                    break;
-                case 2:
-                    temp.process_plates = CAM_WAVELET_DENOISE_STREAMLINE_YCBCR;
-                    break;
-                case 3:
-                    temp.process_plates = CAM_WAVELET_DENOISE_STREAMLINED_CBCR;
-                    break;
-                default:
-                    temp.process_plates = CAM_WAVELET_DENOISE_STREAMLINE_YCBCR;
-                    break;
-                }
+                temp.process_plates = getWaveletDenoiseProcessPlate();
             }
             ALOGI("%s: Denoise enable=%d, plates=%d",
                   __func__, temp.denoise_enable, temp.process_plates);
@@ -4246,7 +4255,6 @@ int32_t QCameraParameters::getStreamFormat(cam_stream_type_t streamType,
         format = mPreviewFormat;
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
-    case CAM_STREAM_TYPE_OFFLINE_PROC:
         format = CAM_FORMAT_YUV_420_NV21;
         break;
     case CAM_STREAM_TYPE_VIDEO:
@@ -4261,6 +4269,7 @@ int32_t QCameraParameters::getStreamFormat(cam_stream_type_t streamType,
         }
         break;
     case CAM_STREAM_TYPE_METADATA:
+    case CAM_STREAM_TYPE_OFFLINE_PROC:
     case CAM_STREAM_TYPE_DEFAULT:
     default:
         break;
@@ -4310,7 +4319,6 @@ int32_t QCameraParameters::getStreamDimension(cam_stream_type_t streamType,
         dim.height = 1;
         break;
     case CAM_STREAM_TYPE_OFFLINE_PROC:
-        getPictureSize(&dim.width, &dim.height);
         break;
     case CAM_STREAM_TYPE_DEFAULT:
     default:

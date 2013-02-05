@@ -45,6 +45,7 @@
 #define MAX_EXP_BRACKETING_LENGTH 32
 #define MAX_ROI 5
 #define MAX_STREAM_NUM_IN_BUNDLE 4
+#define MAX_NUM_STREAMS          8
 
 typedef enum {
     CAM_STATUS_SUCCESS,       /* Operation Succeded */
@@ -61,6 +62,7 @@ typedef enum {
 } cam_position_t;
 
 typedef enum {
+    CAM_FORMAT_JPEG = 0,
     CAM_FORMAT_YUV_420_NV12 = 1,
     CAM_FORMAT_YUV_420_NV21,
     CAM_FORMAT_YUV_420_NV21_ADRENO,
@@ -595,6 +597,16 @@ typedef struct {
     cam_focus_distances_info_t focus_dist;       /* focus distance */
 } cam_auto_focus_data_t;
 
+typedef struct {
+    uint32_t stream_id;
+    cam_rect_t crop;
+} cam_stream_crop_info_t;
+
+typedef struct {
+    uint8_t num_of_streams;
+    cam_stream_crop_info_t crop_info[MAX_NUM_STREAMS];
+} cam_crop_data_t;
+
 typedef  struct {
     uint8_t is_stats_valid;               /* if histgram data is valid */
     cam_hist_stats_t stats_data;          /* histogram data */
@@ -604,6 +616,9 @@ typedef  struct {
 
     uint8_t is_focus_valid;               /* if focus data is valid */
     cam_auto_focus_data_t focus_data;     /* focus data */
+
+    uint8_t is_crop_valid;                /* if crop data is valid */
+    cam_crop_data_t crop_data;            /* crop data */
 } cam_metadata_info_t;
 
 typedef enum {
@@ -660,6 +675,7 @@ typedef struct {
 #define CAM_QCOM_FEATURE_ROTATION       (1<<3)
 #define CAM_QCOM_FEATURE_FLIP           (1<<4)
 #define CAM_QCOM_FEATURE_HDR            (1<<5)
+#define CAM_QCOM_FEATURE_REGISTER_FACE  (1<<6)
 
 // Counter clock wise
 typedef enum {
@@ -675,9 +691,60 @@ typedef enum {
 } cam_flip_t;
 
 typedef struct {
-    int32_t bundle_id;                            /* bundle id */
-    uint8_t num_of_streams;                       /* number of streams in the bundle */
-    int32_t stream_ids[MAX_STREAM_NUM_IN_BUNDLE]; /* array of stream ids to be bundled */
+    uint32_t bundle_id;                            /* bundle id */
+    uint8_t num_of_streams;                        /* number of streams in the bundle */
+    uint32_t stream_ids[MAX_STREAM_NUM_IN_BUNDLE]; /* array of stream ids to be bundled */
 } cam_bundle_config_t;
+
+typedef enum {
+    CAM_ONLINE_REPROCESS_TYPE,    /* online reprocess, frames from running streams */
+    CAM_OFFLINE_REPROCESS_TYPE,   /* offline reprocess, frames from external source */
+} cam_reprocess_type_enum_t;
+
+typedef struct {
+    /* reprocess feature mask */
+    uint32_t feature_mask;
+
+    /* individual setting for features to be reprocessed */
+    cam_denoise_param_t denoise2d;
+    cam_rect_t input_crop;
+    cam_rotation_t rotation;
+    uint32_t flip;
+    // Sharpness in parameters can be used for reprocessing.
+    // Revisit whether we need color conversion here.
+} cam_pp_feature_config_t;
+
+typedef struct {
+    uint32_t input_stream_id;
+} cam_pp_online_src_config_t;
+
+typedef struct {
+    /* image format */
+    cam_format_t input_fmt;
+
+    /* image dimension */
+    cam_dimension_t input_dim;
+
+    /* buffer plane information, will be calc based on stream_type, fmt,
+       dim, and padding_info(from stream config). Info including:
+       offset_x, offset_y, stride, scanline, plane offset */
+    cam_stream_buf_plane_info_t input_buf_planes;
+
+    /* number of input reprocess buffers */
+    uint8_t num_of_bufs;
+} cam_pp_offline_src_config_t;
+
+/* reprocess stream input configuration */
+typedef struct {
+    /* input source config */
+    cam_reprocess_type_enum_t pp_type;
+    union {
+        cam_pp_online_src_config_t online;
+        cam_pp_offline_src_config_t offline;
+    };
+
+    /* pp feature config */
+    cam_pp_feature_config_t pp_feature_config;
+} cam_stream_reproc_config_t;
 
 #endif /* __QCAMERA_TYPES_H__ */

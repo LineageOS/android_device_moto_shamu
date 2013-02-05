@@ -55,9 +55,12 @@ public:
                   mm_camera_ops_t *camOps,
                   cam_padding_info_t *paddingInfo);
     virtual ~QCameraStream();
-    virtual int32_t init(cam_stream_type_t stream_type,
-                stream_cb_routine stream_cb, void *userdata);
-    virtual int32_t processZoomDone(preview_stream_ops_t *previewWindow);
+    virtual int32_t init(QCameraHeapMemory *streamInfoBuf,
+                         uint8_t minStreamBufNum,
+                         stream_cb_routine stream_cb,
+                         void *userdata);
+    virtual int32_t processZoomDone(preview_stream_ops_t *previewWindow,
+                                    cam_crop_data_t &crop_info);
     virtual int32_t bufDone(int index);
     virtual int32_t bufDone(const void *opaque, bool isMetaData);
     virtual int32_t processDataNotify(mm_camera_super_buf_t *bufs);
@@ -73,6 +76,12 @@ public:
     int32_t getFrameDimension(cam_dimension_t &dim);
     int32_t getFormat(cam_format_t &fmt);
     QCameraMemory *getStreamBufs() {return mStreamBufs;};
+    uint32_t getMyServerID();
+
+    int32_t mapBuf(uint8_t buf_type, uint32_t buf_idx,
+                   int32_t plane_idx, int fd, uint32_t size);
+    int32_t unmapBuf(uint8_t buf_type, uint32_t buf_idx, int32_t plane_idx);
+    int32_t setParameter(cam_stream_parm_buffer_t &param);
 
 private:
     uint32_t mCamHandle;
@@ -81,7 +90,7 @@ private:
     mm_camera_ops_t *mCamOps;
     cam_stream_info_t *mStreamInfo; // ptr to stream info buf
     mm_camera_stream_mem_vtbl_t mMemVtbl;
-    int mNumBufs;
+    uint8_t mNumBufs;
     stream_cb_routine mDataCB;
     void *mUserData;
 
@@ -94,6 +103,8 @@ private:
     mm_camera_buf_def_t *mBufDefs;
     cam_frame_len_offset_t mFrameLenOffset;
     cam_padding_info_t mPaddingInfo;
+    cam_rect_t mCropInfo;
+    pthread_mutex_t mCropLock; // lock to protect crop info
 
     static int32_t get_bufs(
                      cam_frame_len_offset_t *offset,

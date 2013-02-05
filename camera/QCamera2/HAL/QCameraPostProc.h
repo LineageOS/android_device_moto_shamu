@@ -101,7 +101,7 @@ public:
 
     int32_t init(jpeg_encode_callback_t jpeg_cb, void *user_data);
     int32_t deinit();
-    int32_t start();
+    int32_t start(QCameraChannel *pSrcChannel);
     int32_t stop();
     int32_t processData(mm_camera_super_buf_t *frame);
     int32_t processRawData(mm_camera_super_buf_t *frame);
@@ -150,6 +150,7 @@ private:
     QCameraStreamMemory *      m_pJpegOutputMem;
     QCameraExif *              m_pJpegExifObj;
     int8_t                     m_bThumbnailNeeded;
+    QCameraReprocessChannel *  m_pReprocChannel;
 
     QCameraQueue m_inputPPQ;            // input queue for postproc
     QCameraQueue m_ongoingPPQ;          // ongoing postproc queue

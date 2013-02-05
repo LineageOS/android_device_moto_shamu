@@ -76,6 +76,7 @@ typedef enum {
 
     QCAMERA_SM_EVT_RELEASE,                  // release camera resource
     QCAMERA_SM_EVT_DUMP,                     // dump
+    QCAMERA_SM_EVT_REG_FACE_IMAGE,           // register a face image in imaging lib
     /*******END OF: API EVT*********/
 
     QCAMERA_SM_EVT_EVT_INTERNAL,             // internal evt notify
@@ -90,6 +91,7 @@ typedef enum {
     QCAMERA_API_RESULT_TYPE_DEF,             // default type, no additional info
     QCAMERA_API_RESULT_TYPE_ENABLE_FLAG,     // msg_enabled, preview_enabled, recording_enabled
     QCAMERA_API_RESULT_TYPE_PARAMS,          // returned parameters in string
+    QCAMERA_API_RESULT_TYPE_HANDLE,          // returned handle in int
     QCAMERA_API_RESULT_TYPE_MAX
 } qcamera_api_result_type_t;
 
@@ -100,6 +102,7 @@ typedef struct {
     union {
         int enabled;                          // result_type == QCAMERA_API_RESULT_TYPE_ENABLE_FLAG
         char *params;                         // result_type == QCAMERA_API_RESULT_TYPE_PARAMS
+        int handle;                           // result_type ==QCAMERA_API_RESULT_TYPE_HANDLE
     };
 } qcamera_api_result_t;
 
@@ -118,6 +121,12 @@ typedef struct {
     int32_t arg1;
     int32_t arg2;
 } qcamera_sm_evt_command_payload_t;
+
+// definition for payload type of sending command
+typedef struct {
+    void *img_ptr;
+    cam_pp_offline_src_config_t *config;
+} qcamera_sm_evt_reg_face_payload_t;
 
 typedef enum {
     QCAMERA_INTERNAL_EVT_FOCUS_UPDATE,       // internal event for focus updating
