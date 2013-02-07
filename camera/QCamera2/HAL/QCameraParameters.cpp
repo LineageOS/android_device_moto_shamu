@@ -2946,6 +2946,50 @@ void QCameraParameters::getSupportedHfrSizes(Vector<Size> &sizes)
 }
 
 /*===========================================================================
+ * FUNCTION   : adjustPreviewFpsRanges
+ *
+ * DESCRIPTION: adjust preview FPS ranges
+ *              according to external events
+ *
+ * PARAMETERS :
+ *   @minFPS  : min FPS value
+ *   @maxFPS  : max FPS value
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::adjustPreviewFpsRange(cam_fps_range_t *fpsRange)
+{
+    if ( fpsRange == NULL ) {
+        return BAD_VALUE;
+    }
+
+    int32_t rc = initBatchUpdate(m_pParamBuf);
+    if ( rc != NO_ERROR ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return rc;
+    }
+
+    rc = AddSetParmEntryToBatch(m_pParamBuf,
+                                  CAM_INTF_PARM_FPS_RANGE,
+                                  sizeof(cam_fps_range_t),
+                                  fpsRange);
+    if ( rc != NO_ERROR ) {
+        ALOGE("%s: Parameters batch failed",__func__);
+        return rc;
+    }
+
+    rc = commitSetBatch();
+    if ( rc != NO_ERROR ) {
+        ALOGE("%s:Failed to commit batch parameters", __func__);
+        return rc;
+    }
+
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : setPreviewFpsRanges
  *
  * DESCRIPTION: set preview FPS ranges

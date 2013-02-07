@@ -137,8 +137,9 @@ int QCameraThermalAdapter::thermalCallback(char * name,
     int rc = 0;
     ALOGV("%s E", __func__);
     QCameraThermalAdapter& instance = getInstance();
+    qcamera_thermal_level_enum_t lvl = (qcamera_thermal_level_enum_t) level;
     if (instance.mCallback)
-        rc = instance.mCallback->thermalEvtHandle(name, threshold, level);
+        rc = instance.mCallback->thermalEvtHandle(name, threshold, lvl);
     ALOGV("%s X", __func__);
     return rc;
 }
