@@ -76,7 +76,11 @@ typedef enum {
 
     /* Packed YUV/YVU raw format, 16 bpp: 8 bits Y and 8 bits UV.
      * U and V are interleaved with Y: YUYV or YVYV */
-    CAM_FORMAT_YUV_RAW_8BIT,
+    CAM_FORMAT_YUV_RAW_8BIT_YUYV,
+    CAM_FORMAT_YUV_RAW_8BIT_YVYU,
+    CAM_FORMAT_YUV_RAW_8BIT_UYVY,
+    CAM_FORMAT_YUV_RAW_8BIT_VYUY,
+
     /* QCOM RAW formats where data is packed into 64bit word.
      * 8BPP: 1 64-bit word contains 8 pixels p0 - p7, where p0 is
      *       stored at LSB.

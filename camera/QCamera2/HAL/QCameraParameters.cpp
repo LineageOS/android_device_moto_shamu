@@ -108,7 +108,10 @@ const char QCameraParameters::PIXEL_FORMAT_YV12[] = "yuv420p";
 const char QCameraParameters::PIXEL_FORMAT_NV12[] = "nv12";
 
 // Values for raw image formats
-const char QCameraParameters::QC_PIXEL_FORMAT_YUV_RAW_8BIT[] = "yuv-raw8";
+const char QCameraParameters::QC_PIXEL_FORMAT_YUV_RAW_8BIT_YUYV[] = "yuv-raw8-yuyv";
+const char QCameraParameters::QC_PIXEL_FORMAT_YUV_RAW_8BIT_YVYU[] = "yuv-raw8-yvyu";
+const char QCameraParameters::QC_PIXEL_FORMAT_YUV_RAW_8BIT_UYVY[] = "yuv-raw8-uyvy";
+const char QCameraParameters::QC_PIXEL_FORMAT_YUV_RAW_8BIT_VYUY[] = "yuv-raw8-vyuy";
 const char QCameraParameters::QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8GBRG[] = "bayer-qcom-8gbrg";
 const char QCameraParameters::QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8GRBG[] = "bayer-qcom-8grbg";
 const char QCameraParameters::QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8RGGB[] = "bayer-qcom-8rggb";
@@ -284,7 +287,10 @@ const QCameraParameters::QCameraMap QCameraParameters::PREVIEW_FORMATS_MAP[] = {
 
 const QCameraParameters::QCameraMap QCameraParameters::PICTURE_TYPES_MAP[] = {
     {PIXEL_FORMAT_JPEG,                          CAMERA_PICTURE_TYPE_JPEG},
-    {QC_PIXEL_FORMAT_YUV_RAW_8BIT,               CAM_FORMAT_YUV_RAW_8BIT},
+    {QC_PIXEL_FORMAT_YUV_RAW_8BIT_YUYV,          CAM_FORMAT_YUV_RAW_8BIT_YUYV},
+    {QC_PIXEL_FORMAT_YUV_RAW_8BIT_YVYU,          CAM_FORMAT_YUV_RAW_8BIT_YVYU},
+    {QC_PIXEL_FORMAT_YUV_RAW_8BIT_UYVY,          CAM_FORMAT_YUV_RAW_8BIT_UYVY},
+    {QC_PIXEL_FORMAT_YUV_RAW_8BIT_VYUY,          CAM_FORMAT_YUV_RAW_8BIT_VYUY},
     {QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8GBRG,       CAM_FORMAT_BAYER_QCOM_RAW_8BPP_GBRG},
     {QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8GRBG,       CAM_FORMAT_BAYER_QCOM_RAW_8BPP_GRBG},
     {QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8RGGB,       CAM_FORMAT_BAYER_QCOM_RAW_8BPP_RGGB},
@@ -4123,7 +4129,7 @@ int32_t QCameraParameters::getStreamFormat(cam_stream_type_t streamType,
         format = CAM_FORMAT_YUV_420_NV12;
         break;
     case CAM_STREAM_TYPE_RAW:
-        if (mPictureFormat >= CAM_FORMAT_YUV_RAW_8BIT) {
+        if (mPictureFormat >= CAM_FORMAT_YUV_RAW_8BIT_YUYV) {
             format = (cam_format_t)mPictureFormat;
         } else {
             ALOGE("%s: invalid raw picture format: %d", __func__, mPictureFormat);

@@ -164,7 +164,10 @@ public:
     static const char PIXEL_FORMAT_NV12[]; //NV12
 
     // Values for raw picture format
-    static const char QC_PIXEL_FORMAT_YUV_RAW_8BIT[];
+    static const char QC_PIXEL_FORMAT_YUV_RAW_8BIT_YUYV[];
+    static const char QC_PIXEL_FORMAT_YUV_RAW_8BIT_YVYU[];
+    static const char QC_PIXEL_FORMAT_YUV_RAW_8BIT_UYVY[];
+    static const char QC_PIXEL_FORMAT_YUV_RAW_8BIT_VYUY[];
     static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8GBRG[];
     static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8GRBG[];
     static const char QC_PIXEL_FORMAT_BAYER_QCOM_RAW_8RGGB[];
