@@ -319,7 +319,6 @@ mm_camera_stream_t * mm_app_add_postview_stream(mm_camera_test_obj_t *test_obj,
 
     stream->s_config.stream_info = (cam_stream_info_t *)stream->s_info_buf.buf.buffer;
     memset(stream->s_config.stream_info, 0, sizeof(cam_stream_info_t));
-    stream->s_config.stream_info->bundle_id = channel->ch_id;
     stream->s_config.stream_info->stream_type = CAM_STREAM_TYPE_POSTVIEW;
     if (num_burst == 0) {
         stream->s_config.stream_info->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;

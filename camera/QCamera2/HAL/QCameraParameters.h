@@ -114,7 +114,7 @@ public:
     static const char KEY_QC_HIGH_DYNAMIC_RANGE_IMAGING[];
     static const char KEY_QC_SUPPORTED_HDR_IMAGING_MODES[];
     static const char KEY_QC_AE_BRACKET_HDR[];
-    static const char KEY_QC_SUPPORTED_AE_BRACKET_HDR_MODES[];
+    static const char KEY_QC_SUPPORTED_AE_BRACKET_MODES[];
     static const char KEY_QC_CAPTURE_BURST_EXPOSURE[];
     static const char KEY_QC_NUM_SNAPSHOT_PER_SHUTTER[];
     static const char KEY_QC_NO_DISPLAY_MODE[];
@@ -286,9 +286,8 @@ public:
     static const char FOCUS_ALGO_CENTER_WEIGHTED[];
     static const char FOCUS_ALGO_FRAME_AVERAGE[];
 
-    // Values for HDR Bracketing settings.
-    static const char AE_BRACKET_HDR_OFF[];
-    static const char AE_BRACKET_HDR[];
+    // Values for AE Bracketing settings.
+    static const char AE_BRACKET_OFF[];
     static const char AE_BRACKET[];
 
     // Values for HFR settings.
@@ -348,6 +347,7 @@ public:
     bool isNoDisplayMode() {return m_bNoDisplayMode;};
     bool isWNREnabled() {return m_bWNROn;};
     uint8_t getNumOfSnapshots();
+    int getBurstNum();
     bool getRecordingHintValue() {return m_bRecordingHint;}; // return local copy of video hint
     int setRecordingHintValue(int32_t value); // set local copy of video hint and send to server
                                               // no change in parameters value
@@ -374,6 +374,7 @@ public:
 
     cam_focus_mode_type getFocusMode() const {return mFocusMode;};
     bool isJpegPictureFormat() {return (mPictureFormat == CAMERA_PICTURE_TYPE_JPEG);};
+    int32_t setNumOfSnapshot();
 
     int32_t adjustPreviewFpsRange(cam_fps_range_t *fpsRange);
 
@@ -416,7 +417,6 @@ private:
     int32_t setAEBracket(const QCameraParameters& );
     int32_t setRedeyeReduction(const QCameraParameters& );
     int32_t setGpsLocation(const QCameraParameters& );
-    int32_t setNumOfSnapshot(const QCameraParameters& );
     int32_t setRecordingHint(const QCameraParameters& );
     int32_t setNoDisplayMode(const QCameraParameters& );
     int32_t setWaveletDenoise(const QCameraParameters& );
@@ -505,7 +505,7 @@ private:
     static const QCameraMap ANTIBANDING_MODES_MAP[];
     static const QCameraMap ISO_MODES_MAP[];
     static const QCameraMap HFR_MODES_MAP[];
-    static const QCameraMap HDR_BRACKETING_MODES_MAP[];
+    static const QCameraMap BRACKETING_MODES_MAP[];
     static const QCameraMap ON_OFF_MODES_MAP[];
     static const QCameraMap ENABLE_DISABLE_MODES_MAP[];
     static const QCameraMap DENOISE_ON_OFF_MODES_MAP[];

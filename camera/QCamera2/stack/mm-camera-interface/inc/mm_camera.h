@@ -67,6 +67,7 @@ typedef enum
     MM_CAMERA_CMD_TYPE_EXIT,       /* EXIT */
     MM_CAMERA_CMD_TYPE_REQ_DATA_CB,/* request data */
     MM_CAMERA_CMD_TYPE_SUPER_BUF_DATA_CB,    /* superbuf dataB CMD */
+    MM_CAMERA_CMD_TYPE_FLUSH_QUEUE, /* flush queue */
     MM_CAMERA_CMD_TYPE_MAX
 } mm_camera_cmdcb_type_t;
 
@@ -242,6 +243,7 @@ typedef enum {
     MM_CHANNEL_EVT_RESUME,
     MM_CHANNEL_EVT_REQUEST_SUPER_BUF,
     MM_CHANNEL_EVT_CANCEL_REQUEST_SUPER_BUF,
+    MM_CHANNEL_EVT_FLUSH_SUPER_BUF_QUEUE,
     MM_CHANNEL_EVT_MAP_STREAM_BUF,
     MM_CHANNEL_EVT_UNMAP_STREAM_BUF,
     MM_CHANNEL_EVT_SET_STREAM_PARM,
@@ -452,6 +454,8 @@ extern int32_t mm_camera_request_super_buf(mm_camera_obj_t *my_obj,
                                            uint32_t num_buf_requested);
 extern int32_t mm_camera_cancel_super_buf_request(mm_camera_obj_t *my_obj,
                                                   uint32_t ch_id);
+extern int32_t mm_camera_flush_super_buf_queue(mm_camera_obj_t *my_obj,
+                                               uint32_t ch_id);
 extern int32_t mm_camera_set_stream_parms(mm_camera_obj_t *my_obj,
                                           uint32_t ch_id,
                                           uint32_t s_id,
