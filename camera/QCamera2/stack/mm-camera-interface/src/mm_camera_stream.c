@@ -1580,8 +1580,17 @@ uint32_t mm_stream_get_v4l2_fmt(cam_format_t fmt)
     case CAM_FORMAT_YUV_422_NV61:
         val= V4L2_PIX_FMT_NV61;
         break;
-    case CAM_FORMAT_YUV_RAW_8BIT:
+    case CAM_FORMAT_YUV_RAW_8BIT_YUYV:
         val= V4L2_PIX_FMT_YUYV;
+        break;
+    case CAM_FORMAT_YUV_RAW_8BIT_YVYU:
+        val= V4L2_PIX_FMT_YVYU;
+        break;
+    case CAM_FORMAT_YUV_RAW_8BIT_UYVY:
+        val= V4L2_PIX_FMT_UYVY;
+        break;
+    case CAM_FORMAT_YUV_RAW_8BIT_VYUY:
+        val= V4L2_PIX_FMT_VYUY;
         break;
     case CAM_FORMAT_YUV_420_YV12:
         val= V4L2_PIX_FMT_NV12;
@@ -1931,7 +1940,10 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
     int scanline = dim->height;
 
     switch (fmt) {
-    case CAM_FORMAT_YUV_RAW_8BIT:
+    case CAM_FORMAT_YUV_RAW_8BIT_YUYV:
+    case CAM_FORMAT_YUV_RAW_8BIT_YVYU:
+    case CAM_FORMAT_YUV_RAW_8BIT_UYVY:
+    case CAM_FORMAT_YUV_RAW_8BIT_VYUY:
         /* 1 plane */
         /* Every 16 pixels occupy 16 bytes */
         stride = PAD_TO_SIZE(dim->width, CAM_PAD_TO_16);

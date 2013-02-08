@@ -276,7 +276,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
             encode_parm.src_main_buf[i].index = i;
             encode_parm.src_main_buf[i].buf_size = stream_mem->size;
             encode_parm.src_main_buf[i].buf_vaddr = (uint8_t *)stream_mem->data;
-            encode_parm.src_main_buf[i].fd = pStreamMem->getFd(0);
+            encode_parm.src_main_buf[i].fd = pStreamMem->getFd(i);
             encode_parm.src_main_buf[i].format = MM_JPEG_FMT_YUV;
             encode_parm.src_main_buf[i].offset = offset;
         }
