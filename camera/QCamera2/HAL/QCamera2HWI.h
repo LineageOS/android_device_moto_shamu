@@ -180,7 +180,7 @@ private:
     void unlockAPI();
     void signalAPIResult(qcamera_api_result_t *result);
 
-    int updateThermalFPS(cam_fps_range_t *fpsRange);
+    int updateThermalLevel(qcamera_thermal_level_enum_t level);
 
     // update entris to set parameters and check if restart is needed
     int updateParameters(const char *parms, bool &needRestart);

@@ -39,6 +39,11 @@ typedef enum {
     QCAMERA_THERMAL_SHUTDOWN
 } qcamera_thermal_level_enum_t;
 
+typedef enum {
+    QCAMERA_THERMAL_ADJUST_FPS,
+    QCAMERA_THERMAL_ADJUST_FRAMESKIP,
+} qcamera_thermal_mode;
+
 class QCameraThermalCallback
 {
 public:

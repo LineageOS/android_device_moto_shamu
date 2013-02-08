@@ -2104,69 +2104,13 @@ int QCamera2HardwareInterface::thermalEvtHandle(char *name,
                                                 int threshold,
                                                 qcamera_thermal_level_enum_t level)
 {
-    int ret = NO_ERROR;
-    cam_fps_range_t adjustedRange;
-    int minFPS, maxFPS;
-
-    mParameters.getPreviewFpsRange(&minFPS, &maxFPS);
-
-    switch(level) {
-    case QCAMERA_THERMAL_NO_ADJUSTMENT:
-        {
-            adjustedRange.min_fps = minFPS/1000.0f;
-            adjustedRange.max_fps = maxFPS/1000.0f;
-        }
-        break;
-    case QCAMERA_THERMAL_SLIGHT_ADJUSTMENT:
-        {
-            adjustedRange.min_fps = minFPS/1000.0f;
-            adjustedRange.max_fps = (maxFPS / 2 ) / 1000.0f;
-            if ( adjustedRange.max_fps < adjustedRange.min_fps ) {
-                adjustedRange.max_fps = adjustedRange.min_fps;
-            }
-        }
-        break;
-    case QCAMERA_THERMAL_BIG_ADJUSTMENT:
-        {
-            adjustedRange.min_fps = minFPS/1000.0f;
-            adjustedRange.max_fps = adjustedRange.min_fps;
-        }
-        break;
-    case QCAMERA_THERMAL_SHUTDOWN:
-        {
-            // Stop Preview?
-            // Set lowest FPS range for now
-            adjustedRange.min_fps = minFPS/1000.0f;
-            adjustedRange.max_fps = maxFPS/1000.0f;
-            for ( int i = 0 ; i < gCamCapability[mCameraId]->fps_ranges_tbl_cnt ; i++ ) {
-                if ( gCamCapability[mCameraId]->fps_ranges_tbl[i].min_fps < adjustedRange.min_fps ) {
-                    adjustedRange.min_fps = gCamCapability[mCameraId]->fps_ranges_tbl[i].min_fps;
-                }
-                if ( gCamCapability[mCameraId]->fps_ranges_tbl[i].max_fps < adjustedRange.max_fps ) {
-                    adjustedRange.max_fps = gCamCapability[mCameraId]->fps_ranges_tbl[i].max_fps;
-                }
-            }
-        }
-        break;
-    default:
-        {
-            ALOGE("%s: Invalid thermal level %d", __func__, level);
-            return BAD_VALUE;
-        }
-        break;
-    }
-
-    ALOGI("%s: Thermal level %d, threshold %d, FPS range [%3.2f,%3.2f], name %s",
-          __func__,
-          level,
-          threshold,
-          adjustedRange.min_fps,
-          adjustedRange.max_fps,
-          name);
-
-    ret = processAPI(QCAMERA_SM_EVT_THERMAL_NOTIFY, &adjustedRange);
-
-    return ret;
+    // Make sure thermal events are logged
+    ALOGE("%s: name = %s, threshold = %d, level = %d",
+        __func__, name, threshold, level);
+    //We don't need to lockAPI, waitAPI here. QCAMERA_SM_EVT_THERMAL_NOTIFY
+    // becomes an aync call. This also means we can only pass payload
+    // by value, not by address.
+    return processAPI(QCAMERA_SM_EVT_THERMAL_NOTIFY, (void *)level);
 }
 
 /*===========================================================================
@@ -3267,20 +3211,92 @@ int32_t QCamera2HardwareInterface::processHistogramStats(cam_histogram_data_t *h
 }
 
 /*===========================================================================
- * FUNCTION   : updateThermalFPS
+ * FUNCTION   : updateThermalLevel
  *
- * DESCRIPTION: update FPS depending on thermal events
+ * DESCRIPTION: update thermal level depending on thermal events
  *
  * PARAMETERS :
- *   @fpsRange  : adjusted min/max FPS range
+ *   @level   : thermal level
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int QCamera2HardwareInterface::updateThermalFPS(cam_fps_range_t *fpsRange)
+int QCamera2HardwareInterface::updateThermalLevel(
+            qcamera_thermal_level_enum_t level)
 {
-    return mParameters.adjustPreviewFpsRange(fpsRange);
+    int ret = NO_ERROR;
+    cam_fps_range_t adjustedRange;
+    int minFPS, maxFPS;
+    qcamera_thermal_mode thermalMode = mParameters.getThermalMode();
+    enum msm_vfe_frame_skip_pattern skipPattern;
+
+    mParameters.getPreviewFpsRange(&minFPS, &maxFPS);
+
+    switch(level) {
+    case QCAMERA_THERMAL_NO_ADJUSTMENT:
+        {
+            adjustedRange.min_fps = minFPS/1000.0f;
+            adjustedRange.max_fps = maxFPS/1000.0f;
+            skipPattern = NO_SKIP;
+        }
+        break;
+    case QCAMERA_THERMAL_SLIGHT_ADJUSTMENT:
+        {
+            adjustedRange.min_fps = minFPS/1000.0f;
+            adjustedRange.max_fps = (maxFPS / 2 ) / 1000.0f;
+            if ( adjustedRange.max_fps < adjustedRange.min_fps ) {
+                adjustedRange.max_fps = adjustedRange.min_fps;
+            }
+            skipPattern = EVERY_2FRAME;
+        }
+        break;
+    case QCAMERA_THERMAL_BIG_ADJUSTMENT:
+        {
+            adjustedRange.min_fps = minFPS/1000.0f;
+            adjustedRange.max_fps = adjustedRange.min_fps;
+            skipPattern = EVERY_4FRAME;
+        }
+        break;
+    case QCAMERA_THERMAL_SHUTDOWN:
+        {
+            // Stop Preview?
+            // Set lowest min FPS for now
+            adjustedRange.min_fps = minFPS/1000.0f;
+            adjustedRange.max_fps = minFPS/1000.0f;
+            for ( int i = 0 ; i < gCamCapability[mCameraId]->fps_ranges_tbl_cnt ; i++ ) {
+                if ( gCamCapability[mCameraId]->fps_ranges_tbl[i].min_fps < adjustedRange.min_fps ) {
+                    adjustedRange.min_fps = gCamCapability[mCameraId]->fps_ranges_tbl[i].min_fps;
+                    adjustedRange.max_fps = adjustedRange.min_fps;
+                }
+            }
+            skipPattern = MAX_SKIP;
+        }
+        break;
+    default:
+        {
+            ALOGE("%s: Invalid thermal level %d", __func__, level);
+            return BAD_VALUE;
+        }
+        break;
+    }
+
+    ALOGI("%s: Thermal level %d, FPS range [%3.2f,%3.2f], frameskip %d",
+          __func__,
+          level,
+          adjustedRange.min_fps,
+          adjustedRange.max_fps,
+          skipPattern);
+
+    if (thermalMode == QCAMERA_THERMAL_ADJUST_FPS)
+        ret = mParameters.adjustPreviewFpsRange(&adjustedRange);
+    else if (thermalMode == QCAMERA_THERMAL_ADJUST_FRAMESKIP)
+        ret = mParameters.setFrameSkip(skipPattern);
+    else
+        ALOGE("%s: Incorrect thermal mode %d", __func__, thermalMode);
+
+    return ret;
+
 }
 
 /*===========================================================================

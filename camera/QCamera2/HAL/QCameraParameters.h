@@ -28,6 +28,7 @@
 #include <utils/Errors.h>
 #include "cam_intf.h"
 #include "QCameraMem.h"
+#include "QCameraThermalAdapter.h"
 
 extern "C" {
 #include <mm_jpeg_interface.h>
@@ -373,7 +374,9 @@ public:
     int32_t setHistogram(bool enabled);
     int32_t setFaceDetection(bool enabled);
     int32_t setBundleInfo(cam_bundle_config_t &bundle_info);
+    int32_t setFrameSkip(enum msm_vfe_frame_skip_pattern pattern);
     int getEnabledFileDumpMask() {return m_nDumpFrameEnabled;};
+    qcamera_thermal_mode getThermalMode() {return m_ThermalMode;};
 
     cam_focus_mode_type getFocusMode() const {return mFocusMode;};
     bool isJpegPictureFormat() {return (mPictureFormat == CAMERA_PICTURE_TYPE_JPEG);};
@@ -533,6 +536,7 @@ private:
     bool m_bNeedRestart;            // if preview needs restart after parameters updated
     bool m_bNoDisplayMode;
     bool m_bWNROn;
+    qcamera_thermal_mode m_ThermalMode; // adjust fps vs adjust frameskip
 
     DefaultKeyedVector<String8,String8> m_tempMap; // map for temororily store parameters to be set
 };
