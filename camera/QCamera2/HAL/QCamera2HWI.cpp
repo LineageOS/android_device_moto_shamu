@@ -3138,7 +3138,7 @@ QCameraChannel *QCamera2HardwareInterface::getChannelByHandle(uint32_t channelHa
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera2HardwareInterface::processFaceDetectionReuslt(cam_face_detection_data_t *fd_data)
+int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection_data_t *fd_data)
 {
     if (!mParameters.isFaceDetectionEnabled()) {
         ALOGD("%s: FaceDetection not enabled, no ops here", __func__);
@@ -3223,7 +3223,12 @@ int32_t QCamera2HardwareInterface::processFaceDetectionReuslt(cam_face_detection
         }
     }
 
-    mDataCb(CAMERA_MSG_PREVIEW_METADATA, NULL, 0, &mRoiData, mCallbackCookie);
+    camera_memory_t *dummyBuffer = mGetMemory(-1, 1, 1, mCallbackCookie);
+    if ( dummyBuffer ) {
+        mDataCb(CAMERA_MSG_PREVIEW_METADATA, dummyBuffer, 0, &mRoiData, mCallbackCookie);
+        dummyBuffer->release(dummyBuffer);
+    }
+
     return NO_ERROR;
 }
 

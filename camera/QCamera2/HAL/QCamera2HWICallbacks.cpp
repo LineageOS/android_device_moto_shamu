@@ -588,7 +588,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
 
     if (pMetaData->is_faces_valid) {
         // process face detection result
-        pme->processFaceDetectionReuslt(&pMetaData->faces_data);
+        pme->processFaceDetectionResult(&pMetaData->faces_data);
     }
 
     if (pMetaData->is_hist_valid) {
