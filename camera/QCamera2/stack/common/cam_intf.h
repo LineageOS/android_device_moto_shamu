@@ -30,6 +30,7 @@
 #ifndef __QCAMERA_INTF_H__
 #define __QCAMERA_INTF_H__
 
+#include <media/msmb_isp.h>
 #include "cam_types.h"
 
 #define CAM_PRIV_IOCTL_BASE (V4L2_CID_PRIVATE_BASE + 14)
@@ -257,6 +258,7 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_DIS_ENABLE,               int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_HDR,                      cam_exp_bracketing_t,        1);
     INCLUDE(CAM_INTF_PARM_SET_BUNDLE,               cam_bundle_config_t,         1);
+    INCLUDE(CAM_INTF_PARM_FRAMESKIP,                int32_t,                     1);
 } parm_type_t;
 
 /****************************DO NOT MODIFY BELOW THIS LINE!!!!*********************/
