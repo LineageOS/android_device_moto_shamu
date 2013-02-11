@@ -56,6 +56,7 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
       mJpegSessionId(0),
       m_pJpegOutputMem(NULL),
       m_pJpegExifObj(NULL),
+      m_bThumbnailNeeded(TRUE),
       m_inputPPQ(releasePPInputData, this),
       m_ongoingPPQ(releaseOngoingPPData, this),
       m_inputJpegQ(releaseJpegInputData, this),
@@ -234,7 +235,16 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
 
     encode_parm.jpeg_cb = mJpegCB;
     encode_parm.userdata = mJpegUserData;
-    encode_parm.encode_thumbnail = 1; // need encode thumbnail
+
+    m_bThumbnailNeeded = TRUE; // need encode thumbnail by default
+    cam_dimension_t thumbnailSize;
+    memset(&thumbnailSize, 0, sizeof(cam_dimension_t));
+    m_parent->getThumbnailSize(thumbnailSize);
+    if (thumbnailSize.width == 0 && thumbnailSize.height == 0) {
+        // (0,0) means no thumbnail
+        m_bThumbnailNeeded = FALSE;
+    }
+    encode_parm.encode_thumbnail = m_bThumbnailNeeded;
 
     // get color format
     cam_format_t img_fmt = CAM_FORMAT_YUV_420_NV12;
@@ -282,7 +292,10 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
         }
     }
 
-    if (thumb_stream != NULL) {
+    if (m_bThumbnailNeeded == TRUE) {
+        if (thumb_stream == NULL) {
+            thumb_stream = main_stream;
+        }
         pStreamMem = thumb_stream->getStreamBufs();
         if (pStreamMem == NULL) {
             ALOGE("%s: cannot get stream bufs from thumb stream", __func__);
@@ -297,7 +310,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
                 encode_parm.src_thumb_buf[i].index = i;
                 encode_parm.src_thumb_buf[i].buf_size = stream_mem->size;
                 encode_parm.src_thumb_buf[i].buf_vaddr = (uint8_t *)stream_mem->data;
-                encode_parm.src_thumb_buf[i].fd = pStreamMem->getFd(0);
+                encode_parm.src_thumb_buf[i].fd = pStreamMem->getFd(i);
                 encode_parm.src_thumb_buf[i].format = MM_JPEG_FMT_YUV;
                 encode_parm.src_thumb_buf[i].offset = offset;
             }
@@ -956,6 +969,18 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
                             0, 0, m_parent->mCallbackCookie);
     }
 
+    if (thumb_frame != NULL) {
+        QCameraMemory *thumb_memObj = (QCameraMemory *)thumb_frame->mem_info;
+        if (NULL != thumb_memObj) {
+            // clean and invalidate cache ops through mem obj of the frame
+            thumb_memObj->cleanInvalidateCache(thumb_frame->buf_idx);
+        }
+
+        // dump thumbnail frame if enabled
+        m_parent->dumpFrameToFile(thumb_frame->buffer, thumb_frame->frame_len,
+                                  thumb_frame->frame_idx, QCAMERA_DUMP_FRM_THUMBNAIL);
+    }
+
     if (mJpegClientHandle <= 0) {
         ALOGE("%s: Error: bug here, mJpegClientHandle is 0", __func__);
         return UNKNOWN_ERROR;
@@ -995,9 +1020,20 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
     jpg_job.encode_job.main_dim.crop = crop;
 
     // thumbnail dim
-    jpg_job.encode_job.thumb_dim.src_dim = src_dim;
-    m_parent->getThumbnailSize(jpg_job.encode_job.thumb_dim.dst_dim);
-    jpg_job.encode_job.thumb_dim.crop = crop;
+    if (m_bThumbnailNeeded == TRUE) {
+        if (thumb_stream == NULL) {
+            // need jpeg thumbnail, but no postview/preview stream exists
+            // we use the main stream/frame to encode thumbnail
+            thumb_stream = main_stream;
+        }
+        memset(&crop, 0, sizeof(cam_rect_t));
+        thumb_stream->getCropInfo(crop);
+        memset(&src_dim, 0, sizeof(cam_dimension_t));
+        thumb_stream->getFrameDimension(src_dim);
+        jpg_job.encode_job.thumb_dim.src_dim = src_dim;
+        m_parent->getThumbnailSize(jpg_job.encode_job.thumb_dim.dst_dim);
+        jpg_job.encode_job.thumb_dim.crop = crop;
+    }
 
     // rotation
     jpg_job.encode_job.rotation = m_parent->getJpegRotation();

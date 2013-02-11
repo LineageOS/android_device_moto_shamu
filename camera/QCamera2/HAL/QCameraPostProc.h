@@ -149,6 +149,7 @@ private:
 
     QCameraStreamMemory *      m_pJpegOutputMem;
     QCameraExif *              m_pJpegExifObj;
+    int8_t                     m_bThumbnailNeeded;
 
     QCameraQueue m_inputPPQ;            // input queue for postproc
     QCameraQueue m_ongoingPPQ;          // ongoing postproc queue
