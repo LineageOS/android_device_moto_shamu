@@ -151,6 +151,7 @@ typedef struct{
     int qcom_supported_feature_mask;      /* mask of qcom specific features supported:
                                            * such as CAM_QCOM_FEATURE_SUPPORTED_FACE_DETECTION*/
     cam_padding_info_t padding_info;      /* padding information from PP */
+    int8_t min_num_pp_bufs;               /* minimum number of buffers needed by postproc module */
 } cam_capability_t;
 
 typedef enum {

@@ -1220,18 +1220,28 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
         zslBuffers += CAMERA_MIN_JPEG_ENCODING_BUFFERS;
     }
 
+    // TODO: hardcode for now until mctl add support for min_num_pp_bufs
+    gCamCapability[mCameraId]->min_num_pp_bufs = 2;
+
     // Get buffer count for the particular stream type
     switch (stream_type) {
     case CAM_STREAM_TYPE_PREVIEW:
-        bufferCnt = CAMERA_MIN_STREAMING_BUFFERS;
+        bufferCnt = CAMERA_MIN_STREAMING_BUFFERS +
+                    gCamCapability[mCameraId]->min_num_pp_bufs;
         if (mParameters.isZSLMode()) {
             bufferCnt += zslBuffers;
         }
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
-        bufferCnt = minCaptureBuffers;
+        bufferCnt = minCaptureBuffers + gCamCapability[mCameraId]->min_num_pp_bufs;
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
+        if (mParameters.isZSLMode()) {
+            bufferCnt = CAMERA_MIN_STREAMING_BUFFERS + zslBuffers;
+        } else {
+            bufferCnt = minCaptureBuffers + gCamCapability[mCameraId]->min_num_pp_bufs;
+        }
+        break;
     case CAM_STREAM_TYPE_RAW:
         if (mParameters.isZSLMode()) {
             bufferCnt = CAMERA_MIN_STREAMING_BUFFERS + zslBuffers;
@@ -1240,7 +1250,8 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
         }
         break;
     case CAM_STREAM_TYPE_VIDEO:
-        bufferCnt = CAMERA_MIN_VIDEO_BUFFERS;
+        bufferCnt = CAMERA_MIN_VIDEO_BUFFERS +
+                    gCamCapability[mCameraId]->min_num_pp_bufs;
         break;
     case CAM_STREAM_TYPE_METADATA:
         bufferCnt = CAMERA_MIN_STREAMING_BUFFERS + zslBuffers;
