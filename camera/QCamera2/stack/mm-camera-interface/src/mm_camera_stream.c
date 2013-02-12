@@ -2174,8 +2174,8 @@ int32_t mm_stream_calc_offset_video(cam_dimension_t *dim,
     buf_planes->plane_info.mp[0].stride = stride;
     buf_planes->plane_info.mp[0].scanline = scanline;
 
-    stride = dim->width / 2;
-    scanline = dim->height;
+    stride = dim->width;
+    scanline = dim->height / 2;
     buf_planes->plane_info.mp[1].len =
         PAD_TO_SIZE(stride * scanline, CAM_PAD_TO_2K);
     buf_planes->plane_info.mp[1].offset = 0;
