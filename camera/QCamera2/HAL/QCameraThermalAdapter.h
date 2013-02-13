@@ -47,9 +47,8 @@ typedef enum {
 class QCameraThermalCallback
 {
 public:
-    virtual int thermalEvtHandle(char *name,
-                                 int threshold,
-                                 qcamera_thermal_level_enum_t level) = 0;
+    virtual int thermalEvtHandle(qcamera_thermal_level_enum_t level,
+            void *userdata, void *data) = 0;
     virtual ~QCameraThermalCallback() {}
 };
 
@@ -65,12 +64,15 @@ private:
     static char mStrCamera[];
     static char mStrCamcorder[];
 
-    static int thermalCallback(char *name, int threshold, int level);
+    static int thermalCallback(int level, void *userdata, void *data);
 
     QCameraThermalCallback *mCallback;
     void *mHandle;
-    int (*mRegister)(char *name, int (*callback)(char *, int, int), void *data);
-    int (*mUnregister)(char *name);
+    int (*mRegister)(char *name,
+            int (*callback)(int, void *userdata, void *data), void *data);
+    int (*mUnregister)(int handle);
+    int mCameraHandle;
+    int mCamcorderHandle;
 
     QCameraThermalAdapter();
     QCameraThermalAdapter(QCameraThermalAdapter const& copy); // not implemented
