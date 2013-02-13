@@ -622,6 +622,7 @@ typedef enum {
     CAM_INTF_PARM_DIS_ENABLE,
     CAM_INTF_PARM_HDR,
     CAM_INTF_PARM_SET_BUNDLE,
+    CAM_INTF_PARM_FRAMESKIP,
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 
