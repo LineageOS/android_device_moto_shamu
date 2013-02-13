@@ -46,6 +46,25 @@
 #define JOB_ID_MAGICVAL 0x1
 #define JOB_HIST_MAX 10000
 
+/** DUMP_TO_FILE:
+ *  @filename: file name
+ *  @p_addr: address of the buffer
+ *  @len: buffer length
+ *
+ *  dump the image to the file
+ **/
+#define DUMP_TO_FILE(filename, p_addr, len) ({ \
+  int rc = 0; \
+  FILE *fp = fopen(filename, "w+"); \
+  if (fp) { \
+    rc = fwrite(p_addr, 1, len, fp); \
+    CDBG_ERROR("%s:%d] written size %d", __func__, __LINE__, len); \
+    fclose(fp); \
+  } else { \
+    CDBG_ERROR("%s:%d] open %s failed", __func__, __LINE__, filename); \
+  } \
+})
+
 #define MM_JPEG_CHK_ABORT(p, ret, label) ({ \
   if (OMX_TRUE == p->abort_flag) { \
     CDBG_ERROR("%s:%d] jpeg abort", __func__, __LINE__); \
@@ -670,8 +689,20 @@ OMX_ERRORTYPE mm_jpeg_session_config_thumbnail(mm_jpeg_job_session_t* p_session)
   thumbnail_info.crop_info.nHeight = p_thumb_dim->crop.height;
   thumbnail_info.crop_info.nLeft = p_thumb_dim->crop.left;
   thumbnail_info.crop_info.nTop = p_thumb_dim->crop.top;
-  thumbnail_info.output_width = p_thumb_dim->dst_dim.width;
-  thumbnail_info.output_height = p_thumb_dim->dst_dim.height;
+  if ((p_thumb_dim->dst_dim.width > p_thumb_dim->src_dim.width)
+    || (p_thumb_dim->dst_dim.height > p_thumb_dim->src_dim.height)) {
+    CDBG_ERROR("%s:%d] Incorrect thumbnail dim %dx%d resetting to %dx%d",
+      __func__, __LINE__,
+      p_thumb_dim->dst_dim.width,
+      p_thumb_dim->dst_dim.height,
+      p_thumb_dim->src_dim.width,
+      p_thumb_dim->src_dim.height);
+    thumbnail_info.output_width = p_thumb_dim->src_dim.width;
+    thumbnail_info.output_height = p_thumb_dim->src_dim.height;
+  } else {
+    thumbnail_info.output_width = p_thumb_dim->dst_dim.width;
+    thumbnail_info.output_height = p_thumb_dim->dst_dim.height;
+  }
 
   ret = OMX_SetParameter(p_session->omx_handle, thumb_indextype,
     &thumbnail_info);
@@ -1128,6 +1159,12 @@ static OMX_ERRORTYPE mm_jpeg_session_encode(mm_jpeg_job_session_t *p_session)
   pthread_mutex_unlock(&p_session->lock);
 
   MM_JPEG_CHK_ABORT(p_session, ret, error);
+
+#ifdef MM_JPEG_DUMP_INPUT
+  DUMP_TO_FILE("/data/mm_jpeg_int.yuv",
+    p_session->p_in_omx_buf[p_jobparams->src_index]->pBuffer,
+    (int)p_session->p_in_omx_buf[p_jobparams->src_index]->nAllocLen);
+#endif
 
   ret = OMX_EmptyThisBuffer(p_session->omx_handle,
     p_session->p_in_omx_buf[p_jobparams->src_index]);
