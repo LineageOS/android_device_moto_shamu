@@ -106,6 +106,7 @@ error3:
     mUnregister(mStrCamera);
 error2:
     dlclose(mHandle);
+    mHandle = NULL;
 error:
     ALOGV("%s X", __func__);
     return rc;
