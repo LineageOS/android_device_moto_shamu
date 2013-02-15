@@ -522,6 +522,18 @@ QCameraParameters::QCameraParameters()
     m_bDebugFps = atoi(value) > 0 ? true : false;
     property_get("persist.camera.dumpimg", value, "0");
     m_nDumpFrameEnabled = atoi(value);
+
+    // For thermal mode, it should be set as system property
+    // because system property applies to all applications, while
+    // parameters only apply to specific app.
+    property_get("persist.camera.thermal.mode", value, "fps");
+    if (!strcmp(value, "frameskip")) {
+        m_ThermalMode = QCAMERA_THERMAL_ADJUST_FRAMESKIP;
+    } else {
+        if (strcmp(value, "fps"))
+            ALOGE("%s: Invalid camera thermal mode %s", __func__, value);
+        m_ThermalMode = QCAMERA_THERMAL_ADJUST_FPS;
+    }
 }
 
 /*===========================================================================
@@ -4894,6 +4906,46 @@ int32_t QCameraParameters::setBundleInfo(cam_bundle_config_t &bundle_info)
     rc = commitSetBatch();
     if (rc != NO_ERROR) {
         ALOGE("%s:Failed to set bundle info parm", __func__);
+        return rc;
+    }
+
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : setFrameSkip
+ *
+ * DESCRIPTION: send ISP frame skip pattern to camera daemon
+ *
+ * PARAMETERS :
+ *   @pattern : skip pattern for ISP
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setFrameSkip(enum msm_vfe_frame_skip_pattern pattern)
+{
+    int32_t rc = NO_ERROR;
+    int32_t value = (int32_t)pattern;
+
+    if(initBatchUpdate(m_pParamBuf) < 0 ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return BAD_TYPE;
+    }
+
+    rc = AddSetParmEntryToBatch(m_pParamBuf,
+                                CAM_INTF_PARM_FRAMESKIP,
+                                sizeof(value),
+                                &value);
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to update table", __func__);
+        return rc;
+    }
+
+    rc = commitSetBatch();
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to set frameskip info parm", __func__);
         return rc;
     }
 
