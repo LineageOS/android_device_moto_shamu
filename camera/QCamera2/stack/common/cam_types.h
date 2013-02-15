@@ -299,6 +299,7 @@ typedef enum {
     CAM_HFR_MODE_90FPS,
     CAM_HFR_MODE_120FPS,
     CAM_HFR_MODE_150FPS,
+    CAM_HFR_MODE_MAX
 } cam_hfr_mode_t;
 
 typedef struct {
