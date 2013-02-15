@@ -2173,15 +2173,21 @@ int32_t QCameraParameters::setNumOfSnapshot()
             switch (value) {
             case CAM_EXP_BRACKETING_ON:
                 {
-                    nExpnum = 1;
+                    nExpnum = 0;
                     const char *str_val = get(KEY_QC_CAPTURE_BURST_EXPOSURE);
                     if ((str_val != NULL) && (strlen(str_val) > 0)) {
+                        char prop[PROPERTY_VALUE_MAX];
+                        memset(prop, 0, sizeof(prop));
+                        strcpy(prop, str_val);
                         char *saveptr = NULL;
-                        char *token = strtok_r((char *)str_val, ",", &saveptr);
+                        char *token = strtok_r(prop, ",", &saveptr);
                         while (token != NULL) {
                             token = strtok_r(NULL, ",", &saveptr);
                             nExpnum++;
                         }
+                    }
+                    if (nExpnum == 0) {
+                        nExpnum = 1;
                     }
                 }
                 break;
@@ -2799,6 +2805,12 @@ int32_t QCameraParameters::initDefaultParameters()
     }
 
     // Set Bracketing/HDR
+    char prop[PROPERTY_VALUE_MAX];
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.capture.burst.exposures", prop, "");
+    if (strlen(prop) > 0) {
+        set(KEY_QC_CAPTURE_BURST_EXPOSURE, prop);
+    }
     String8 bracketingValues = createValuesStringFromMap(
             BRACKETING_MODES_MAP,
             sizeof(BRACKETING_MODES_MAP) / sizeof(QCameraMap));
