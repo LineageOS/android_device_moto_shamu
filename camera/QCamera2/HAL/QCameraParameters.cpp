@@ -2455,7 +2455,7 @@ int32_t QCameraParameters::initDefaultParameters()
         m_pCapability->auto_wb_lock_supported? VALUE_TRUE : VALUE_FALSE);
     set(KEY_QC_SUPPORTED_CAMERA_FEATURES,
         m_pCapability->qcom_supported_feature_mask);
-    set(KEY_MAX_NUM_DETECTED_FACES_HW, 0);
+    set(KEY_MAX_NUM_DETECTED_FACES_HW, m_pCapability->max_num_roi);
     set(KEY_MAX_NUM_DETECTED_FACES_SW, m_pCapability->max_num_roi);
     set(KEY_QC_MAX_NUM_REQUESTED_FACES, m_pCapability->max_num_roi);
     // Set focal length, horizontal view angle, and vertical view angle
