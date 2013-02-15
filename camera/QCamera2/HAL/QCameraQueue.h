@@ -36,6 +36,7 @@
 namespace qcamera {
 
 typedef void (*release_data_fn)(void* data, void *user_data);
+typedef bool (*match_fn)(void *data, void *user_data);
 
 class QCameraQueue {
 public:
@@ -45,6 +46,7 @@ public:
     bool enqueue(void *data);
     bool enqueueWithPriority(void *data);
     void flush();
+    void flushNodes(match_fn match);
     void* dequeue();
     bool isEmpty();
 private:

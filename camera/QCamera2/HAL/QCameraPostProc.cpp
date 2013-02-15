@@ -62,8 +62,7 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
       m_ongoingPPQ(releaseOngoingPPData, this),
       m_inputJpegQ(releaseJpegInputData, this),
       m_ongoingJpegQ(releaseOngoingJpegData, this),
-      m_inputRawQ(releaseJpegInputData, this),
-      m_dataNotifyQ(releaseOutputData, this)
+      m_inputRawQ(releaseJpegInputData, this)
 {
     memset(&mJpegHandle, 0, sizeof(mJpegHandle));
 }
@@ -120,7 +119,6 @@ int32_t QCameraPostProcessor::init(jpeg_encode_callback_t jpeg_cb, void *user_da
     }
 
     m_dataProcTh.launch(dataProcessRoutine, this);
-    m_dataNotifyTh.launch(dataNotifyRoutine, this);
 
     return NO_ERROR;
 }
@@ -139,7 +137,6 @@ int32_t QCameraPostProcessor::init(jpeg_encode_callback_t jpeg_cb, void *user_da
 int32_t QCameraPostProcessor::deinit()
 {
     m_dataProcTh.exit();
-    m_dataNotifyTh.exit();
 
     if(mJpegClientHandle > 0) {
         int rc = mJpegHandle.close(mJpegClientHandle);
@@ -193,7 +190,7 @@ int32_t QCameraPostProcessor::start(QCameraChannel *pSrcChannel)
     }
 
     m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, FALSE, FALSE);
-    m_dataNotifyTh.sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, FALSE, FALSE);
+    m_parent->m_cbNotifier.startSnapshots();
 
     return rc;
 }
@@ -213,7 +210,7 @@ int32_t QCameraPostProcessor::start(QCameraChannel *pSrcChannel)
  *==========================================================================*/
 int32_t QCameraPostProcessor::stop()
 {
-    m_dataNotifyTh.sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC, FALSE, TRUE);
+    m_parent->m_cbNotifier.stopSnapshots();
     // dataProc Thread need to process "stop" as sync call because abort jpeg job should be a sync call
     m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC, TRUE, TRUE);
 
@@ -410,7 +407,6 @@ int32_t QCameraPostProcessor::sendEvtNotify(int32_t msg_type,
  *   @data    : ptr to data memory struct
  *   @index   : index to data buffer
  *   @metadata: ptr to meta data buffer if there is any
- *   @jpeg_mem: any tempory heap memory to be released after callback
  *   @release_data : ptr to struct indicating if data need to be released
  *                   after notify
  *
@@ -438,15 +434,23 @@ int32_t QCameraPostProcessor::sendDataNotify(int32_t msg_type,
         data_cb->release_data = *release_data;
     }
 
-    // enqueue jpeg_data into jpeg data queue
-    if (m_dataNotifyQ.enqueue((void *)data_cb)) {
-        m_dataNotifyTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
-    } else {
+    qcamera_callback_argm_t cbArg;
+    memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+    cbArg.cb_type = QCAMERA_DATA_SNAPSHOT_CALLBACK;
+    cbArg.msg_type = msg_type;
+    cbArg.data = data;
+    cbArg.metadata = metadata;
+    cbArg.user_data = data_cb;
+    cbArg.cookie = this;
+    cbArg.release_cb = releaseNotifyData;
+    int rc = m_parent->m_cbNotifier.notifyCallback(cbArg);
+    if ( NO_ERROR != rc ) {
         ALOGE("%s: Error enqueuing jpeg data into notify queue", __func__);
         free(data_cb);
         return UNKNOWN_ERROR;
     }
-    return NO_ERROR;
+
+    return rc;
 }
 
 /*===========================================================================
@@ -665,26 +669,7 @@ qcamera_jpeg_data_t *QCameraPostProcessor::findJpegJobByJobId(uint32_t jobId)
 }
 
 /*===========================================================================
- * FUNCTION   : releaseOutputData
- *
- * DESCRIPTION: callback function to release notify data node
- *
- * PARAMETERS :
- *   @data      : ptr to notify data
- *   @user_data : user data ptr (QCameraReprocessor)
- *
- * RETURN     : None
- *==========================================================================*/
-void QCameraPostProcessor::releaseOutputData(void *data, void *user_data)
-{
-    QCameraPostProcessor *pme = (QCameraPostProcessor *)user_data;
-    if (NULL != pme) {
-        pme->releaseNotifyData((qcamera_data_argm_t *)data);
-    }
-}
-
-/*===========================================================================
- * FUNCTION   : releaseOutputData
+ * FUNCTION   : releaseJpegInputData
  *
  * DESCRIPTION: callback function to release jpeg input data node
  *
@@ -770,22 +755,27 @@ void QCameraPostProcessor::releaseOngoingPPData(void *data, void *user_data)
  * DESCRIPTION: function to release internal resources in notify data struct
  *
  * PARAMETERS :
- *   @app_cb  : ptr to data notify struct
+ *   @user_data  : ptr user data
+ *   @cookie     : callback cookie
  *
  * RETURN     : None
  *
  * NOTE       : deallocate jpeg heap memory if it's not NULL
  *==========================================================================*/
-void QCameraPostProcessor::releaseNotifyData(qcamera_data_argm_t *app_cb)
+void QCameraPostProcessor::releaseNotifyData(void *user_data, void *cookie)
 {
-    if (app_cb && NULL != app_cb->release_data.data) {
-        app_cb->release_data.data->release(app_cb->release_data.data);
-        app_cb->release_data.data = NULL;
-    }
-    if (app_cb && NULL != app_cb->release_data.frame) {
-        releaseSuperBuf(app_cb->release_data.frame);
-        free(app_cb->release_data.frame);
-        app_cb->release_data.frame = NULL;
+    qcamera_data_argm_t *app_cb = ( qcamera_data_argm_t * ) user_data;
+    QCameraPostProcessor *postProc = ( QCameraPostProcessor * ) cookie;
+    if ( ( NULL != app_cb ) && ( NULL != postProc ) ) {
+        if (app_cb && NULL != app_cb->release_data.data) {
+            app_cb->release_data.data->release(app_cb->release_data.data);
+            app_cb->release_data.data = NULL;
+        }
+        if (app_cb && NULL != app_cb->release_data.frame) {
+            postProc->releaseSuperBuf(app_cb->release_data.frame);
+            free(app_cb->release_data.frame);
+            app_cb->release_data.frame = NULL;
+        }
     }
 }
 
@@ -967,14 +957,23 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
     camera_memory_t *mem = memObj->getMemory(main_frame->buf_idx, false);
     if (NULL != m_parent->mDataCb &&
         m_parent->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE) > 0) {
-        m_parent->mDataCb(CAMERA_MSG_RAW_IMAGE,
-                          mem, 1, NULL,
-                          m_parent->mCallbackCookie);
+        qcamera_callback_argm_t cbArg;
+        memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+        cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+        cbArg.msg_type = CAMERA_MSG_RAW_IMAGE;
+        cbArg.data = mem;
+        cbArg.index = 1;
+        m_parent->m_cbNotifier.notifyCallback(cbArg);
     }
     if (NULL != m_parent->mNotifyCb &&
         m_parent->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE_NOTIFY) > 0) {
-        m_parent->mNotifyCb(CAMERA_MSG_RAW_IMAGE_NOTIFY,
-                            0, 0, m_parent->mCallbackCookie);
+        qcamera_callback_argm_t cbArg;
+        memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+        cbArg.cb_type = QCAMERA_NOTIFY_CALLBACK;
+        cbArg.msg_type = CAMERA_MSG_RAW_IMAGE_NOTIFY;
+        cbArg.ext1 = 0;
+        cbArg.ext2 = 0;
+        m_parent->m_cbNotifier.notifyCallback(cbArg);
     }
 
     if (thumb_frame != NULL) {
@@ -1089,16 +1088,23 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
         // send data callback / notify for RAW_IMAGE
         if (NULL != m_parent->mDataCb &&
             m_parent->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE) > 0) {
-            m_parent->mDataCb(CAMERA_MSG_RAW_IMAGE,
-                         raw_mem,
-                         0,
-                         NULL,
-                         m_parent->mCallbackCookie);
+            qcamera_callback_argm_t cbArg;
+            memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+            cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+            cbArg.msg_type = CAMERA_MSG_RAW_IMAGE;
+            cbArg.data = raw_mem;
+            cbArg.index = 0;
+            m_parent->m_cbNotifier.notifyCallback(cbArg);
         }
         if (NULL != m_parent->mNotifyCb &&
             m_parent->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE_NOTIFY) > 0) {
-            m_parent->mNotifyCb(CAMERA_MSG_RAW_IMAGE_NOTIFY,
-                                0, 0, m_parent->mCallbackCookie);
+            qcamera_callback_argm_t cbArg;
+            memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+            cbArg.cb_type = QCAMERA_NOTIFY_CALLBACK;
+            cbArg.msg_type = CAMERA_MSG_RAW_IMAGE_NOTIFY;
+            cbArg.ext1 = 0;
+            cbArg.ext2 = 0;
+            m_parent->m_cbNotifier.notifyCallback(cbArg);
         }
 
         if ((m_parent->mDataCb != NULL) &&
@@ -1118,111 +1124,6 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
     }
 
     return rc;
-}
-
-/*===========================================================================
- * FUNCTION   : dataNotifyRoutine
- *
- * DESCRIPTION: data notify routine that will send data to upper layer through
- *              registered data callback
- *
- * PARAMETERS :
- *   @data    : user data ptr (QCameraPostProcessor)
- *
- * RETURN     : None
- *==========================================================================*/
-void *QCameraPostProcessor::dataNotifyRoutine(void *data)
-{
-    int running = 1;
-    int ret;
-    QCameraPostProcessor *pme = (QCameraPostProcessor *)data;
-    QCameraCmdThread *cmdThread = &pme->m_dataNotifyTh;
-    uint8_t isActive = FALSE;
-    uint32_t numOfSnapshotExpected = 0;
-    uint32_t numOfSnapshotRcvd = 0;
-
-    ALOGD("%s: E", __func__);
-    do {
-        do {
-            ret = cam_sem_wait(&cmdThread->cmd_sem);
-            if (ret != 0 && errno != EINVAL) {
-                ALOGE("%s: cam_sem_wait error (%s)",
-                           __func__, strerror(errno));
-                return NULL;
-            }
-        } while (ret != 0);
-
-        // we got notified about new cmd avail in cmd queue
-        camera_cmd_type_t cmd = cmdThread->getCmd();
-        ALOGD("%s: get cmd %d", __func__, cmd);
-        switch (cmd) {
-        case CAMERA_CMD_TYPE_START_DATA_PROC:
-            isActive = TRUE;
-            // init flag to FALSE
-            numOfSnapshotExpected = pme->m_parent->numOfSnapshotsExpected();
-            numOfSnapshotRcvd = 0;
-            break;
-        case CAMERA_CMD_TYPE_STOP_DATA_PROC:
-            // flush jpeg data queue
-            pme->m_dataNotifyQ.flush();
-
-            // set flag to FALSE
-            isActive = FALSE;
-
-            numOfSnapshotExpected = 0;
-            numOfSnapshotRcvd = 0;
-            break;
-        case CAMERA_CMD_TYPE_DO_NEXT_JOB:
-            {
-                if (TRUE == isActive) {
-                    // first check if there is any pending jpeg notify
-                    qcamera_data_argm_t *app_cb =
-                        (qcamera_data_argm_t *)pme->m_dataNotifyQ.dequeue();
-                    if (NULL != app_cb) {
-                        ALOGE("%s: data notify cb", __func__);
-                        if (pme->m_parent->msgTypeEnabled(app_cb->msg_type)) {
-                            if (pme->m_parent->mDataCb) {
-                                pme->m_parent->mDataCb(app_cb->msg_type,
-                                                       app_cb->data,
-                                                       app_cb->index,
-                                                       app_cb->metadata,
-                                                       pme->m_parent->mCallbackCookie);
-                            }
-                            numOfSnapshotRcvd++;
-                            if (numOfSnapshotExpected > 0 &&
-                                numOfSnapshotExpected == numOfSnapshotRcvd) {
-                                // notify HWI that snapshot is done
-                                pme->m_parent->processEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE, NULL);
-                            }
-                        }
-                        // free app_cb
-                        pme->releaseNotifyData(app_cb);
-                        free(app_cb);
-                    }
-                } else {
-                    // do no op if not active
-                    qcamera_data_argm_t *app_cb =
-                        (qcamera_data_argm_t *)pme->m_dataNotifyQ.dequeue();
-                    if (NULL != app_cb) {
-                        // free app_cb
-                        free(app_cb);
-                    }
-                }
-            }
-            break;
-        case CAMERA_CMD_TYPE_EXIT:
-            {
-                // flush jpeg data queue
-                pme->m_dataNotifyQ.flush();
-                running = 0;
-            }
-            break;
-        default:
-            break;
-        }
-    } while (running);
-    ALOGD("%s: X", __func__);
-    return NULL;
 }
 
 /*===========================================================================

@@ -901,9 +901,9 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       m_stateMachine(this),
       m_postprocessor(this),
       m_thermalAdapter(QCameraThermalAdapter::getInstance()),
+      m_cbNotifier(this),
       m_bShutterSoundPlayed(false),
       m_bAutoFocusRunning(false),
-      m_pHistBuf(NULL),
       m_pPowerModule(NULL)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
@@ -918,14 +918,13 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
     memset(&m_apiResult, 0, sizeof(qcamera_api_result_t));
 
     memset(m_channels, 0, sizeof(m_channels));
-    memset(mFaces, 0, sizeof(mFaces));
-    memset(&mRoiData, 0, sizeof(mRoiData));
 
 #ifdef QCOM_POWER_H_EXTENDED
     if (hw_get_module(POWER_HARDWARE_MODULE_ID, (const hw_module_t **)&m_pPowerModule)) {
         ALOGE("%s: %s module not found", __func__, POWER_HARDWARE_MODULE_ID);
     }
 #endif
+
 }
 
 /*===========================================================================
@@ -942,11 +941,6 @@ QCamera2HardwareInterface::~QCamera2HardwareInterface()
     closeCamera();
     pthread_mutex_destroy(&m_lock);
     pthread_cond_destroy(&m_cond);
-
-    if (m_pHistBuf != NULL) {
-        m_pHistBuf->release(m_pHistBuf);
-        m_pHistBuf = NULL;
-    }
 }
 
 /*===========================================================================
@@ -1000,7 +994,6 @@ int QCamera2HardwareInterface::openCamera()
         return UNKNOWN_ERROR;
     }
 
-    m_evtNotifyTh.launch(evtNotifyRoutine, this);
     mCameraHandle->ops->register_event_notify(mCameraHandle->camera_handle,
                                               camEvtHandle,
                                               (void *) this);
@@ -1071,8 +1064,6 @@ int QCamera2HardwareInterface::closeCamera()
 
     rc = mCameraHandle->ops->close_camera(mCameraHandle->camera_handle);
     mCameraHandle = NULL;
-
-    m_evtNotifyTh.exit();
     mCameraOpened = false;
 
     return rc;
@@ -1435,6 +1426,7 @@ int QCamera2HardwareInterface::setCallBacks(camera_notify_callback notify_cb,
     mDataCbTimestamp = data_cb_timestamp;
     mGetMemory       = get_memory;
     mCallbackCookie  = user;
+    m_cbNotifier.setCallbacks(notify_cb, data_cb, data_cb_timestamp, user);
     return NO_ERROR;
 }
 
@@ -1505,25 +1497,11 @@ int QCamera2HardwareInterface::startPreview()
 {
     int32_t rc = NO_ERROR;
 
-    // allocate memory for histgrame data to be passed to upper layer
-    if (m_pHistBuf == NULL) {
-        m_pHistBuf = mGetMemory(-1, sizeof(cam_histogram_data_t), 1, mCallbackCookie);
-    }
-    if (!m_pHistBuf) {
-        ALOGE("%s: Unable to allocate m_pHistBuf", __func__);
-        return NO_MEMORY;
-    }
-
     // start preview stream
     if (mParameters.isZSLMode()) {
         rc = startChannel(QCAMERA_CH_TYPE_ZSL);
     } else {
         rc = startChannel(QCAMERA_CH_TYPE_PREVIEW);
-    }
-
-    if (rc != NO_ERROR) {
-        m_pHistBuf->release(m_pHistBuf);
-        m_pHistBuf = NULL;
     }
 
     return rc;
@@ -1549,13 +1527,9 @@ int QCamera2HardwareInterface::stopPreview()
         stopChannel(QCAMERA_CH_TYPE_PREVIEW);
     }
 
-    if (m_pHistBuf != NULL) {
-        m_pHistBuf->release(m_pHistBuf);
-        m_pHistBuf = NULL;
-    }
-
     // delete all channels from preparePreview
     unpreparePreview();
+
     return NO_ERROR;
 }
 
@@ -2280,68 +2254,6 @@ int QCamera2HardwareInterface::thermalEvtHandle(
 }
 
 /*===========================================================================
- * FUNCTION   : evtNotifyRoutine
- *
- * DESCRIPTION: thread routine to handle event notify
- *
- * PARAMETERS :
- *   @data  : user data ptr
- *
- * RETURN     : none
- *==========================================================================*/
-void *QCamera2HardwareInterface::evtNotifyRoutine(void *data)
-{
-    int running = 1;
-    int ret;
-    QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)data;
-    QCameraCmdThread *cmdThread = &pme->m_evtNotifyTh;
-
-    do {
-        do {
-            ret = cam_sem_wait(&cmdThread->cmd_sem);
-            if (ret != 0 && errno != EINVAL) {
-                ALOGE("%s: cam_sem_wait error (%s)",
-                           __func__, strerror(errno));
-                return NULL;
-            }
-        } while (ret != 0);
-
-        /* we got notified about new cmd avail in cmd queue */
-        camera_cmd_type_t cmd = cmdThread->getCmd();
-        switch (cmd) {
-        case CAMERA_CMD_TYPE_DO_NEXT_JOB:
-            {
-                qcamera_evt_argm_t *evt_cb =
-                    (qcamera_evt_argm_t *)pme->m_evtNotifyQ.dequeue();
-                if (NULL != evt_cb) {
-                    /* send notify to upper layer */
-                    if (NULL != pme->mNotifyCb &&
-                        pme->msgTypeEnabled(evt_cb->msg_type) > 0) {
-                        pme->mNotifyCb(evt_cb->msg_type,
-                                       evt_cb->ext1,
-                                       evt_cb->ext2,
-                                       pme->mCallbackCookie);
-                    }
-                    /* free evt_cb */
-                    free(evt_cb);
-                }
-            }
-            break;
-        case CAMERA_CMD_TYPE_EXIT:
-            {
-                /* flush evt notify queue */
-                pme->m_evtNotifyQ.flush();
-                running = 0;
-            }
-            break;
-        default:
-            break;
-        }
-    } while (running);
-    return NULL;
-}
-
-/*===========================================================================
  * FUNCTION   : sendEvtNotify
  *
  * DESCRIPTION: send event notify to notify thread
@@ -2359,25 +2271,13 @@ int32_t QCamera2HardwareInterface::sendEvtNotify(int32_t msg_type,
                                                  int32_t ext1,
                                                  int32_t ext2)
 {
-    qcamera_evt_argm_t *evt_cb = (qcamera_evt_argm_t *)malloc(sizeof(qcamera_evt_argm_t));
-    if (NULL == evt_cb) {
-        ALOGE("%s: no mem for qcamera_evt_argm_t", __func__);
-        return NO_MEMORY;
-    }
-    memset(evt_cb, 0, sizeof(qcamera_evt_argm_t));
-    evt_cb->msg_type = msg_type;
-    evt_cb->ext1 = ext1;
-    evt_cb->ext2 = ext2;
-
-    /* enqueue evt into notify queue */
-    if (m_evtNotifyQ.enqueue((void *)evt_cb)) {
-        m_evtNotifyTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
-    } else {
-        ALOGE("%s: Error enqueue into event notify queue", __func__);
-        free(evt_cb);
-        return UNKNOWN_ERROR;
-    }
-    return NO_ERROR;
+    qcamera_callback_argm_t cbArg;
+    memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+    cbArg.cb_type = QCAMERA_NOTIFY_CALLBACK;
+    cbArg.msg_type = msg_type;
+    cbArg.ext1 = ext1;
+    cbArg.ext2 = ext2;
+    return m_cbNotifier.notifyCallback(cbArg);
 }
 
 /*===========================================================================
@@ -3354,10 +3254,18 @@ void QCamera2HardwareInterface::playShutter(){
          return;
      }
 
+     qcamera_callback_argm_t cbArg;
+     memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+     cbArg.cb_type = QCAMERA_NOTIFY_CALLBACK;
+     cbArg.msg_type = CAMERA_MSG_SHUTTER;
+     cbArg.ext1 = 0;
+
      if(!m_bShutterSoundPlayed){
-         mNotifyCb(CAMERA_MSG_SHUTTER, 0, true, mCallbackCookie);
+         cbArg.ext2 = true;
+         m_cbNotifier.notifyCallback(cbArg);
      }
-     mNotifyCb(CAMERA_MSG_SHUTTER, 0, false, mCallbackCookie);
+     cbArg.ext2 = false;
+     m_cbNotifier.notifyCallback(cbArg);
      m_bShutterSoundPlayed = false;
 }
 
@@ -3416,77 +3324,139 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
     }
 
     // process face detection result
-    memset(&mRoiData, 0, sizeof(mRoiData));
-    memset(mFaces, 0, sizeof(mFaces));
-    mRoiData.number_of_faces = fd_data->num_faces_detected;
-    mRoiData.faces = mFaces;
-    if (mRoiData.number_of_faces > 0) {
-        for (int i = 0; i < mRoiData.number_of_faces; i++) {
-            mFaces[i].id = fd_data->faces[i].face_id;
-            mFaces[i].score = fd_data->faces[i].score;
+    size_t faceResultSize = sizeof(camera_frame_metadata_t);
+    faceResultSize += sizeof(camera_face_t) * MAX_ROI;
+    camera_memory_t *faceResultBuffer = mGetMemory(-1,
+                                                   faceResultSize,
+                                                   1,
+                                                   mCallbackCookie);
+    if ( NULL == faceResultBuffer ) {
+        ALOGE("%s: Not enough memory for face result data",
+              __func__);
+        return NO_MEMORY;
+    }
+
+    void *faceData = faceResultBuffer->data;
+    memset(faceData, 0, faceResultSize);
+    camera_frame_metadata_t *roiData = (camera_frame_metadata_t * ) faceData;
+    camera_face_t *faces = (camera_face_t *) faceData + sizeof(camera_frame_metadata_t);
+
+    roiData->number_of_faces = fd_data->num_faces_detected;
+    roiData->faces = faces;
+    if (roiData->number_of_faces > 0) {
+        for (int i = 0; i < roiData->number_of_faces; i++) {
+            faces[i].id = fd_data->faces[i].face_id;
+            faces[i].score = fd_data->faces[i].score;
 
             // left
-            mFaces[i].rect[0] =
+            faces[i].rect[0] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].face_boundary.left, display_dim.width, 2000, -1000);
 
             // top
-            mFaces[i].rect[1] =
+            faces[i].rect[1] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].face_boundary.top, display_dim.height, 2000, -1000);
 
             // right
-            mFaces[i].rect[2] = mFaces[i].rect[0] +
+            faces[i].rect[2] = faces[i].rect[0] +
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].face_boundary.width, display_dim.width, 2000, 0);
 
              // bottom
-            mFaces[i].rect[3] = mFaces[i].rect[1] +
+            faces[i].rect[3] = faces[i].rect[1] +
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].face_boundary.height, display_dim.height, 2000, 0);
 
             // Center of left eye
-            mFaces[i].left_eye[0] =
+            faces[i].left_eye[0] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].left_eye_center.x, display_dim.width, 2000, -1000);
-            mFaces[i].left_eye[1] =
+
+            faces[i].left_eye[1] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].left_eye_center.y, display_dim.height, 2000, -1000);
 
             // Center of right eye
-            mFaces[i].right_eye[0] =
+            faces[i].right_eye[0] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].right_eye_center.x, display_dim.width, 2000, -1000);
-            mFaces[i].right_eye[1] =
+
+            faces[i].right_eye[1] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].right_eye_center.y, display_dim.height, 2000, -1000);
 
             // Center of mouth
-            mFaces[i].mouth[0] =
+            faces[i].mouth[0] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].mouth_center.x, display_dim.width, 2000, -1000);
-            mFaces[i].mouth[1] =
+
+            faces[i].mouth[1] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].mouth_center.y, display_dim.height, 2000, -1000);
 
 
 #if 0 //Disable for now before these fields are added in camera_face_t in frameworks
-            mFaces[i].smile_degree = fd_data->faces[i].smile_degree;
-            mFaces[i].smile_score = fd_data->faces[i].smile_confidence;
-            mFaces[i].blink_detected = fd_data->faces[i].blink_detected;
-            mFaces[i].face_recognised = fd_data->faces[i].face_recognised;
-            mFaces[i].gaze_angle = fd_data->faces[i].gaze_angle;
+            faces[i].smile_degree = fd_data->faces[i].smile_degree;
+            faces[i].smile_score = fd_data->faces[i].smile_confidence;
+            faces[i].blink_detected = fd_data->faces[i].blink_detected;
+            faces[i].face_recognised = fd_data->faces[i].face_recognised;
+            faces[i].gaze_angle = fd_data->faces[i].gaze_angle;
 
             // upscale by 2 to recover from demaen downscaling
-            mFaces[i].updown_dir = fd_data->faces[i].updown_dir * 2;
-            mFaces[i].leftright_dir = fd_data->faces[i].leftright_dir * 2;
-            mFaces[i].roll_dir = fd_data->faces[i].roll_dir * 2;
+            faces[i].updown_dir = fd_data->faces[i].updown_dir * 2;
+            faces[i].leftright_dir = fd_data->faces[i].leftright_dir * 2;
+            faces[i].roll_dir = fd_data->faces[i].roll_dir * 2;
 
-            mFaces[i].leye_blink = fd_data->faces[i].left_blink;
-            mFaces[i].reye_blink = fd_data->faces[i].right_blink;
-            mFaces[i].left_right_gaze = fd_data->faces[i].left_right_gaze;
-            mFaces[i].top_bottom_gaze = fd_data->faces[i].top_bottom_gaze;
+            faces[i].leye_blink = fd_data->faces[i].left_blink;
+            faces[i].reye_blink = fd_data->faces[i].right_blink;
+            faces[i].left_right_gaze = fd_data->faces[i].left_right_gaze;
+            faces[i].top_bottom_gaze = fd_data->faces[i].top_bottom_gaze;
 #endif
         }
     }
 
-    camera_memory_t *dummyBuffer = mGetMemory(-1, 1, 1, mCallbackCookie);
-    if ( dummyBuffer ) {
-        mDataCb(CAMERA_MSG_PREVIEW_METADATA, dummyBuffer, 0, &mRoiData, mCallbackCookie);
-        dummyBuffer->release(dummyBuffer);
-    }
+    qcamera_callback_argm_t cbArg;
+    memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+    cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+    cbArg.msg_type = CAMERA_MSG_PREVIEW_METADATA;
+    cbArg.data = faceResultBuffer;
+    cbArg.metadata = roiData;
+    cbArg.user_data = faceResultBuffer;
+    cbArg.cookie = this;
+    cbArg.release_cb = releaseCameraMemory;
+    m_cbNotifier.notifyCallback(cbArg);
 
     return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : releaseCameraMemory
+ *
+ * DESCRIPTION: releases camera memory objects
+ *
+ * PARAMETERS :
+ *   @data    : buffer to be released
+ *   @cookie  : context data
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void QCamera2HardwareInterface::releaseCameraMemory(void *data, void */*cookie*/)
+{
+    camera_memory_t *mem = ( camera_memory_t * ) data;
+    if ( NULL != mem ) {
+        mem->release(mem);
+    }
+}
+
+/*===========================================================================
+ * FUNCTION   : returnStreamBuffer
+ *
+ * DESCRIPTION: returns back a stream buffer
+ *
+ * PARAMETERS :
+ *   @data    : buffer to be released
+ *   @cookie  : context data
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void QCamera2HardwareInterface::returnStreamBuffer(void *data, void *cookie)
+{
+    QCameraStream *stream = ( QCameraStream * ) cookie;
+    int idx = ( int ) data;
+    if ( ( NULL != stream )) {
+        stream->bufDone(idx);
+    }
 }
 
 /*===========================================================================
@@ -3508,12 +3478,17 @@ int32_t QCamera2HardwareInterface::processHistogramStats(cam_hist_stats_t &stats
         return NO_ERROR;
     }
 
-    if (m_pHistBuf == NULL) {
-        ALOGE("%s: m_pHistBuf is NULL", __func__);
-        return UNKNOWN_ERROR;
+    camera_memory_t *histBuffer = mGetMemory(-1,
+                                             sizeof(cam_histogram_data_t),
+                                             1,
+                                             mCallbackCookie);
+    if ( NULL == histBuffer ) {
+        ALOGE("%s: Not enough memory for histogram data",
+              __func__);
+        return NO_MEMORY;
     }
 
-    cam_histogram_data_t *pHistData = (cam_histogram_data_t *)m_pHistBuf->data;
+    cam_histogram_data_t *pHistData = (cam_histogram_data_t *)histBuffer->data;
     if (pHistData == NULL) {
         ALOGE("%s: memory data ptr is NULL", __func__);
         return UNKNOWN_ERROR;
@@ -3528,9 +3503,15 @@ int32_t QCamera2HardwareInterface::processHistogramStats(cam_hist_stats_t &stats
         break;
     }
 
-    if ((NULL != mDataCb) && (msgTypeEnabled(CAMERA_MSG_STATS_DATA) > 0)) {
-        mDataCb(CAMERA_MSG_STATS_DATA, m_pHistBuf, 0, NULL, mCallbackCookie);
-    }
+    qcamera_callback_argm_t cbArg;
+    memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+    cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+    cbArg.msg_type = CAMERA_MSG_STATS_DATA;
+    cbArg.data = histBuffer;
+    cbArg.user_data = histBuffer;
+    cbArg.cookie = this;
+    cbArg.release_cb = releaseCameraMemory;
+    m_cbNotifier.notifyCallback(cbArg);
 
     return NO_ERROR;
 }
