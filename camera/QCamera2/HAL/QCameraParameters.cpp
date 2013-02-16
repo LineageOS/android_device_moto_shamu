@@ -3368,11 +3368,10 @@ int32_t QCameraParameters::setZoom(int zoom_level)
     sprintf(val, "%d", zoom_level);
     updateParamEntry(KEY_ZOOM, val);
 
-    int32_t value = m_pCapability->zoom_ratio_tbl[zoom_level];
     return AddSetParmEntryToBatch(m_pParamBuf,
                                   CAM_INTF_PARM_ZOOM,
-                                  sizeof(value),
-                                  &value);
+                                  sizeof(zoom_level),
+                                  &zoom_level);
 }
 
 /*===========================================================================
