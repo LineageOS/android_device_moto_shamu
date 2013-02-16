@@ -3333,8 +3333,8 @@ int32_t QCameraParameters::setContrast(int contrast)
 int32_t QCameraParameters::setSceneDetect(const char *sceneDetect)
 {
     if (sceneDetect != NULL) {
-        int32_t value = lookupAttr(TRUE_FALSE_MODES_MAP,
-                                   sizeof(TRUE_FALSE_MODES_MAP)/sizeof(QCameraMap),
+        int32_t value = lookupAttr(ON_OFF_MODES_MAP,
+                                   sizeof(ON_OFF_MODES_MAP)/sizeof(QCameraMap),
                                    sceneDetect);
         if (value != NAME_NOT_FOUND) {
             ALOGD("%s: Setting Scene Detect %s", __func__, sceneDetect);

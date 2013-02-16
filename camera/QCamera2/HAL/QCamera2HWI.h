@@ -31,6 +31,7 @@
 #define __QCAMERA2HARDWAREINTERFACE_H__
 
 #include <hardware/camera.h>
+#include <hardware/power.h>
 #include <QCameraParameters.h>
 
 #include "QCameraQueue.h"
@@ -315,6 +316,9 @@ private:
     camera_frame_metadata_t mRoiData; // meta data for face detection
     camera_face_t mFaces[MAX_ROI];    // meta data for face detection detail info
     camera_memory_t *m_pHistBuf;      // memory for histogram info to pass to upper layer
+
+    power_module_t *m_pPowerModule;   // power module
+
 };
 
 }; // namespace qcamera

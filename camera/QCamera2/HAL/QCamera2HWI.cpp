@@ -863,7 +863,8 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       m_thermalAdapter(QCameraThermalAdapter::getInstance()),
       m_bShutterSoundPlayed(false),
       m_bAutoFocusRunning(false),
-      m_pHistBuf(NULL)
+      m_pHistBuf(NULL),
+      m_pPowerModule(NULL)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = HARDWARE_DEVICE_API_VERSION(1, 0);
@@ -879,6 +880,12 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
     memset(m_channels, 0, sizeof(m_channels));
     memset(mFaces, 0, sizeof(mFaces));
     memset(&mRoiData, 0, sizeof(mRoiData));
+
+#ifdef QCOM_POWER_H_EXTENDED
+    if (hw_get_module(POWER_HARDWARE_MODULE_ID, (const hw_module_t **)&m_pPowerModule)) {
+        ALOGE("%s: %s module not found", __func__, POWER_HARDWARE_MODULE_ID);
+    }
+#endif
 }
 
 /*===========================================================================
@@ -1544,6 +1551,15 @@ int QCamera2HardwareInterface::startRecording()
         rc = startChannel(QCAMERA_CH_TYPE_VIDEO);
     }
 
+#ifdef QCOM_POWER_H_EXTENDED
+    if (rc == NO_ERROR) {
+        if (m_pPowerModule) {
+            if (m_pPowerModule->powerHint) {
+                m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE, (void *)"state=1");
+            }
+        }
+    }
+#endif
     return rc;
 }
 
@@ -1560,7 +1576,15 @@ int QCamera2HardwareInterface::startRecording()
  *==========================================================================*/
 int QCamera2HardwareInterface::stopRecording()
 {
-    return stopChannel(QCAMERA_CH_TYPE_VIDEO);
+    int rc = stopChannel(QCAMERA_CH_TYPE_VIDEO);
+#ifdef QCOM_POWER_H_EXTENDED
+    if (m_pPowerModule) {
+        if (m_pPowerModule->powerHint) {
+            m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE, (void *)"state=0");
+        }
+    }
+#endif
+    return rc;
 }
 
 /*===========================================================================
