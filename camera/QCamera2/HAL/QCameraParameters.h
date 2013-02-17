@@ -100,6 +100,8 @@ public:
     static const char KEY_QC_GPS_STATUS[];
     static const char KEY_QC_MEMORY_COLOR_ENHANCEMENT[];
     static const char KEY_QC_SUPPORTED_MEM_COLOR_ENHANCE_MODES[];
+    static const char KEY_QC_DIS[];
+    static const char KEY_QC_SUPPORTED_DIS_MODES[];
 
     static const char KEY_QC_ZSL[];
     static const char KEY_QC_SUPPORTED_ZSL_MODES[];
@@ -411,6 +413,7 @@ private:
     int32_t setAecLock(const QCameraParameters& );
     int32_t setAwbLock(const QCameraParameters& );
     int32_t setMCEValue(const QCameraParameters& );
+    int32_t setDISValue(const QCameraParameters& params);
     int32_t setHighFrameRate(const QCameraParameters& );
     int32_t setLensShadeValue(const QCameraParameters& );
     int32_t setExposureCompensation(const QCameraParameters& );
@@ -446,6 +449,7 @@ private:
     int32_t setAecLock(const char *aecStr);
     int32_t setAwbLock(const char *awbStr);
     int32_t setMCEValue(const char *mceStr);
+    int32_t setDISValue(const char *disStr);
     int32_t setHighFrameRate(const char *hfrStr);
     int32_t setLensShadeValue(const char *lensShadeStr);
     int32_t setExposureCompensation(int expComp);

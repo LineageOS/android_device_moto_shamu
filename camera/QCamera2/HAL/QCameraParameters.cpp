@@ -66,6 +66,8 @@ const char QCameraParameters::KEY_QC_FACE_DETECTION[] = "face-detection";
 const char QCameraParameters::KEY_QC_SUPPORTED_FACE_DETECTION[] = "face-detection-values";
 const char QCameraParameters::KEY_QC_MEMORY_COLOR_ENHANCEMENT[] = "mce";
 const char QCameraParameters::KEY_QC_SUPPORTED_MEM_COLOR_ENHANCE_MODES[] = "mce-values";
+const char QCameraParameters::KEY_QC_DIS[] = "dis";
+const char QCameraParameters::KEY_QC_SUPPORTED_DIS_MODES[] = "dis-values";
 const char QCameraParameters::KEY_QC_VIDEO_HIGH_FRAME_RATE[] = "video-hfr";
 const char QCameraParameters::KEY_QC_SUPPORTED_VIDEO_HIGH_FRAME_RATE_MODES[] = "video-hfr-values";
 const char QCameraParameters::KEY_QC_REDEYE_REDUCTION[] = "redeye-reduction";
@@ -1801,6 +1803,31 @@ int32_t QCameraParameters::setMCEValue(const QCameraParameters& params)
 }
 
 /*===========================================================================
+ * FUNCTION   : setDISValue
+ *
+ * DESCRIPTION: enable/disable DIS from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setDISValue(const QCameraParameters& params)
+{
+    const char *str = params.get(KEY_QC_DIS);
+    const char *prev_str = get(KEY_QC_DIS);
+    if (str != NULL) {
+        if (prev_str == NULL ||
+            strcmp(str, prev_str) != 0) {
+            return setDISValue(str);
+        }
+    }
+    return NO_ERROR;
+}
+
+/*===========================================================================
  * FUNCTION   : setHighFrameRate
  *
  * DESCRIPTION: set hight frame rate value from user setting
@@ -2423,6 +2450,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setAwbLock(params)))                      final_rc = rc;
     if ((rc = setLensShadeValue(params)))               final_rc = rc;
     if ((rc = setMCEValue(params)))                     final_rc = rc;
+    if ((rc = setDISValue(params)))                     final_rc = rc;
     if ((rc = setHighFrameRate(params)))                final_rc = rc;
     if ((rc = setAntibanding(params)))                  final_rc = rc;
     if ((rc = setExposureCompensation(params)))         final_rc = rc;
@@ -2794,6 +2822,10 @@ int32_t QCameraParameters::initDefaultParameters()
     // Set MCE
     set(KEY_QC_SUPPORTED_MEM_COLOR_ENHANCE_MODES, enableDisableValues);
     setMCEValue(VALUE_ENABLE);
+
+    // Set DIS
+    set(KEY_QC_SUPPORTED_DIS_MODES, enableDisableValues);
+    setDISValue(VALUE_DISABLE);
 
     // Set Histogram
     set(KEY_QC_SUPPORTED_HISTOGRAM_MODES, enableDisableValues);
@@ -3528,6 +3560,37 @@ int32_t QCameraParameters::setMCEValue(const char *mceStr)
         }
     }
     ALOGE("Invalid MCE value: %s", (mceStr == NULL) ? "NULL" : mceStr);
+    return BAD_VALUE;
+}
+
+/*===========================================================================
+ * FUNCTION   : setDISValue
+ *
+ * DESCRIPTION: set DIS value
+ *
+ * PARAMETERS :
+ *   @disStr : DIS value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setDISValue(const char *disStr)
+{
+    if (disStr != NULL) {
+        int32_t value = lookupAttr(ENABLE_DISABLE_MODES_MAP,
+                                   sizeof(ENABLE_DISABLE_MODES_MAP)/sizeof(QCameraMap),
+                                   disStr);
+        if (value != NAME_NOT_FOUND) {
+            ALOGD("%s: Setting DIS value %s", __func__, disStr);
+            updateParamEntry(KEY_QC_DIS, disStr);
+            return AddSetParmEntryToBatch(m_pParamBuf,
+                                          CAM_INTF_PARM_DIS_ENABLE,
+                                          sizeof(value),
+                                          &value);
+        }
+    }
+    ALOGE("Invalid DIS value: %s", (disStr == NULL) ? "NULL" : disStr);
     return BAD_VALUE;
 }
 
