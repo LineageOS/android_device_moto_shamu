@@ -3423,25 +3423,25 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].face_boundary.width, display_dim.width, 2000, 0);
 
              // bottom
-            mFaces[i].rect[2] = mFaces[i].rect[1] +
+            mFaces[i].rect[3] = mFaces[i].rect[1] +
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].face_boundary.height, display_dim.height, 2000, 0);
 
             // Center of left eye
             mFaces[i].left_eye[0] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].left_eye_center.x, display_dim.width, 2000, -1000);
-            mFaces[i].left_eye[0] =
+            mFaces[i].left_eye[1] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].left_eye_center.y, display_dim.height, 2000, -1000);
 
             // Center of right eye
             mFaces[i].right_eye[0] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].right_eye_center.x, display_dim.width, 2000, -1000);
-            mFaces[i].right_eye[0] =
+            mFaces[i].right_eye[1] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].right_eye_center.y, display_dim.height, 2000, -1000);
 
             // Center of mouth
             mFaces[i].mouth[0] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].mouth_center.x, display_dim.width, 2000, -1000);
-            mFaces[i].mouth[0] =
+            mFaces[i].mouth[1] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].mouth_center.y, display_dim.height, 2000, -1000);
 
 
