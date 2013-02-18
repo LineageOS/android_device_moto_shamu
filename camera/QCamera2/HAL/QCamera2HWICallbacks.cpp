@@ -599,7 +599,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
     if (pMetaData->is_focus_valid) {
         // process focus info
         qcamera_sm_internal_evt_payload_t *payload =
-            (qcamera_sm_internal_evt_payload_t *)sizeof(qcamera_sm_internal_evt_payload_t);
+            (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
         if (NULL != payload) {
             memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
             payload->evt_type = QCAMERA_INTERNAL_EVT_FOCUS_UPDATE;
