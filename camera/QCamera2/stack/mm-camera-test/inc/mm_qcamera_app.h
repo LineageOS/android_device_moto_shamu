@@ -49,6 +49,7 @@
 #define VIDEO_BUF_NUM 7
 #define ISP_PIX_BUF_NUM 9
 #define STATS_BUF_NUM 4
+#define RDI_BUF_NUM 8
 
 #define DEFAULT_PREVIEW_FORMAT    CAM_FORMAT_YUV_420_NV21
 #define DEFAULT_PREVIEW_WIDTH     800
@@ -91,6 +92,7 @@ typedef enum {
     MM_CHANNEL_TYPE_PREVIEW,  /* preview only */
     MM_CHANNEL_TYPE_SNAPSHOT, /* snapshot main only */
     MM_CHANNEL_TYPE_VIDEO,    /* video only */
+    MM_CHANNEL_TYPE_RDI,      /* rdi only */
     MM_CHANNEL_TYPE_MAX
 } mm_camera_channel_type_t;
 
@@ -242,6 +244,8 @@ extern int mm_app_stop_live_snapshot(mm_camera_test_obj_t *test_obj);
 extern int mm_app_start_capture(mm_camera_test_obj_t *test_obj,
                                 uint8_t num_snapshots);
 extern int mm_app_stop_capture(mm_camera_test_obj_t *test_obj);
+extern int mm_app_start_rdi(mm_camera_test_obj_t *test_obj, uint8_t num_burst);
+extern int mm_app_stop_rdi(mm_camera_test_obj_t *test_obj);
 
 #endif /* __MM_QCAMERA_APP_H__ */
 
