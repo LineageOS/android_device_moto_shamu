@@ -90,6 +90,8 @@ const char QCameraParameters::KEY_QC_CAPTURE_BURST_EXPOSURE[] = "capture-burst-e
 const char QCameraParameters::KEY_QC_NUM_SNAPSHOT_PER_SHUTTER[] = "num-snaps-per-shutter";
 const char QCameraParameters::KEY_QC_NO_DISPLAY_MODE[] = "no-display-mode";
 const char QCameraParameters::KEY_QC_RAW_PICUTRE_SIZE[] = "raw-size";
+const char QCameraParameters::KEY_QC_SUPPORTED_SKIN_TONE_ENHANCEMENT_MODES[] = "skinToneEnhancement-values";
+
 // Values for effect settings.
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
 const char QCameraParameters::EFFECT_SKETCH[] = "sketch";
@@ -2692,8 +2694,8 @@ int32_t QCameraParameters::initDefaultParameters()
     setContrast(m_pCapability->contrast_ctrl.def_value);
 
     // Set SCE factor
-    set(KEY_QC_MIN_SCE_FACTOR, m_pCapability->sce_ctrl.min_value); // -10
-    set(KEY_QC_MAX_SCE_FACTOR, m_pCapability->sce_ctrl.max_value); // 10
+    set(KEY_QC_MIN_SCE_FACTOR, m_pCapability->sce_ctrl.min_value); // -100
+    set(KEY_QC_MAX_SCE_FACTOR, m_pCapability->sce_ctrl.max_value); // 100
     set(KEY_QC_SCE_FACTOR_STEP, m_pCapability->sce_ctrl.step);     // 10
     setSkinToneEnhancement(m_pCapability->sce_ctrl.def_value);     // 0
 
@@ -2846,6 +2848,9 @@ int32_t QCameraParameters::initDefaultParameters()
     //Set Red Eye Reduction
     set(KEY_QC_SUPPORTED_REDEYE_REDUCTION, enableDisableValues);
     setRedeyeReduction(VALUE_DISABLE);
+
+    //Set SkinTone Enhancement
+    set(KEY_QC_SUPPORTED_SKIN_TONE_ENHANCEMENT_MODES, enableDisableValues);
 
     // Set feature on/off
     String8 onOffValues = createValuesStringFromMap(
