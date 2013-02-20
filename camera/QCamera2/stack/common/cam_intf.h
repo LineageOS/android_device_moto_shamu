@@ -41,6 +41,8 @@ typedef enum {
     CAM_PRIV_PREPARE_SNAPSHOT,           /* session based action: prepare for snapshot */
     CAM_PRIV_STREAM_INFO_SYNC,           /* sync stream info */
     CAM_PRIV_STREAM_PARM,                /* stream based parameters */
+    CAM_PRIV_START_ZSL_SNAPSHOT,         /* start ZSL snapshot */
+    CAM_PRIV_STOP_ZSL_SNAPSHOT,          /* stop ZSL snapshot */
 } cam_private_ioctl_enum_t;
 
 /* capability struct definition */
