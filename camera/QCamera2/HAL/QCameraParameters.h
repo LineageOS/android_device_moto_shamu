@@ -133,6 +133,10 @@ public:
     static const char KEY_QC_FACE_DETECTION[];
     static const char KEY_QC_SUPPORTED_FACE_DETECTION[];
 
+    //Face Recognition
+    static const char KEY_QC_FACE_RECOGNITION[];
+    static const char KEY_QC_SUPPORTED_FACE_RECOGNITION[];
+
     // supported camera features to be queried by Snapdragon SDK
     //Read only
     static const char KEY_QC_SUPPORTED_CAMERA_FEATURES[];
@@ -370,7 +374,7 @@ public:
 
     bool isFpsDebugEnabled() {return m_bDebugFps;};
     bool isHistogramEnabled() {return m_bHistogramEnabled;};
-    bool isFaceDetectionEnabled() {return m_bFaceDetectionEnabled;};
+    bool isFaceDetectionEnabled() {return ((m_nFaceProcMask & CAM_FACE_PROCESS_MASK_DETECTION) != 0);};
     int32_t setHistogram(bool enabled);
     int32_t setFaceDetection(bool enabled);
     int32_t setBundleInfo(cam_bundle_config_t &bundle_info);
@@ -430,6 +434,7 @@ private:
     int32_t setZslMode(const QCameraParameters& );
     int32_t setZslAttributes(const QCameraParameters& );
     int32_t setCameraMode(const QCameraParameters& );
+    int32_t setFaceRecognition(const QCameraParameters& );
 
     int32_t setAutoExposure(const char *autoExp);
     int32_t setPreviewFpsRange(int minFPS,int maxFPS);
@@ -460,6 +465,7 @@ private:
     int32_t setAEBracket(const char *aecBracketStr);
     int32_t setRedeyeReduction(const char *redeyeStr);
     int32_t setWaveletDenoise(const char *wnrStr);
+    int32_t setFaceRecognition(const char *faceRecog, int maxFaces);
 
     int32_t parse_pair(const char *str, int *first, int *second,
                        char delim, char **endptr);
@@ -529,7 +535,7 @@ private:
     bool m_bZslMode;                // if ZSL is enabled
     bool m_bRecordingHint;          // local copy of recording hint
     bool m_bHistogramEnabled;       // if histogram is enabled
-    bool m_bFaceDetectionEnabled;   // if face detection is enabled
+    int  m_nFaceProcMask;           // face process mask
     bool m_bDebugFps;               // if FPS need to be logged
     int  m_nDumpFrameEnabled;       // mask for type of dumping enabled
     cam_focus_mode_type mFocusMode;

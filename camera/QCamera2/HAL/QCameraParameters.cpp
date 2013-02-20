@@ -64,6 +64,8 @@ const char QCameraParameters::KEY_QC_FOCUS_ALGO[] = "selectable-zone-af";
 const char QCameraParameters::KEY_QC_SUPPORTED_FOCUS_ALGOS[] = "selectable-zone-af-values";
 const char QCameraParameters::KEY_QC_FACE_DETECTION[] = "face-detection";
 const char QCameraParameters::KEY_QC_SUPPORTED_FACE_DETECTION[] = "face-detection-values";
+const char QCameraParameters::KEY_QC_FACE_RECOGNITION[] = "face-recognition";
+const char QCameraParameters::KEY_QC_SUPPORTED_FACE_RECOGNITION[] = "face-recognition-values";
 const char QCameraParameters::KEY_QC_MEMORY_COLOR_ENHANCEMENT[] = "mce";
 const char QCameraParameters::KEY_QC_SUPPORTED_MEM_COLOR_ENHANCE_MODES[] = "mce-values";
 const char QCameraParameters::KEY_QC_DIS[] = "dis";
@@ -510,7 +512,7 @@ QCameraParameters::QCameraParameters()
       m_bZslMode(false),
       m_bRecordingHint(false),
       m_bHistogramEnabled(false),
-      m_bFaceDetectionEnabled(false),
+      m_nFaceProcMask(0),
       m_bDebugFps(false),
       m_nDumpFrameEnabled(0),
       mFocusMode(CAM_FOCUS_MODE_MAX),
@@ -560,7 +562,7 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bZslMode(false),
     m_bRecordingHint(false),
     m_bHistogramEnabled(false),
-    m_bFaceDetectionEnabled(false),
+    m_nFaceProcMask(0),
     m_bDebugFps(false),
     m_nDumpFrameEnabled(0),
     mFocusMode(CAM_FOCUS_MODE_MAX),
@@ -1613,6 +1615,32 @@ int32_t QCameraParameters::setSceneDetect(const QCameraParameters& params)
 }
 
 /*===========================================================================
+ * FUNCTION   : setFaceRecognition
+ *
+ * DESCRIPTION: set face recognition mode from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setFaceRecognition(const QCameraParameters& params)
+{
+    const char *str = params.get(KEY_QC_FACE_RECOGNITION);
+    const char *prev_str = get(KEY_QC_FACE_RECOGNITION);
+    if (str != NULL) {
+        if (prev_str == NULL ||
+            strcmp(str, prev_str) != 0) {
+            int maxFaces = params.getInt(KEY_QC_MAX_NUM_REQUESTED_FACES);
+            return setFaceRecognition(str, maxFaces);
+        }
+    }
+    return NO_ERROR;
+}
+
+/*===========================================================================
  * FUNCTION   : setZoom
  *
  * DESCRIPTION: set zoom value from user setting
@@ -2469,6 +2497,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setAEBracket(params)))                    final_rc = rc;
     if ((rc = setGpsLocation(params)))                  final_rc = rc;
     if ((rc = setWaveletDenoise(params)))               final_rc = rc;
+    if ((rc = setFaceRecognition(params)))              final_rc = rc;
 
 UPDATE_PARAM_DONE:
     needRestart = m_bNeedRestart;
@@ -2858,6 +2887,10 @@ int32_t QCameraParameters::initDefaultParameters()
     //Set Face Detection
     set(KEY_QC_SUPPORTED_FACE_DETECTION, onOffValues);
     set(KEY_QC_FACE_DETECTION, VALUE_OFF);
+
+    //Set Face Recognition
+    set(KEY_QC_SUPPORTED_FACE_RECOGNITION, onOffValues);
+    set(KEY_QC_FACE_RECOGNITION, VALUE_OFF);
 
     //Set ZSL
     set(KEY_QC_SUPPORTED_ZSL_MODES, onOffValues);
@@ -3391,6 +3424,59 @@ int32_t QCameraParameters::setSceneDetect(const char *sceneDetect)
     }
     ALOGE("Invalid Scene Detect value: %s",
           (sceneDetect == NULL) ? "NULL" : sceneDetect);
+    return BAD_VALUE;
+}
+
+/*===========================================================================
+ * FUNCTION   : setFaceRecognition
+ *
+ * DESCRIPTION: set face recognition value
+ *
+ * PARAMETERS :
+ *   @faceRecog  : face recognition value string
+ *   @maxFaces   : number of max faces to be detected/recognized
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setFaceRecognition(const char *faceRecog, int maxFaces)
+{
+    if (faceRecog != NULL) {
+        int32_t value = lookupAttr(ON_OFF_MODES_MAP,
+                                   sizeof(ON_OFF_MODES_MAP)/sizeof(QCameraMap),
+                                   faceRecog);
+        if (value != NAME_NOT_FOUND) {
+            ALOGD("%s: Setting face recognition %s", __func__, faceRecog);
+            updateParamEntry(KEY_QC_FACE_RECOGNITION, faceRecog);
+
+            int faceProcMask = m_nFaceProcMask;
+            if (value > 0) {
+                faceProcMask |= CAM_FACE_PROCESS_MASK_RECOGNITION;
+            } else {
+                faceProcMask &= ~CAM_FACE_PROCESS_MASK_RECOGNITION;
+            }
+
+            if(m_nFaceProcMask == faceProcMask) {
+                ALOGD("%s: face process mask not changed, no ops here", __func__);
+                return NO_ERROR;
+            }
+            m_nFaceProcMask = faceProcMask;
+            ALOGD("%s: FaceProcMask -> %d", __func__, m_nFaceProcMask);
+
+            // set parm for face process
+            cam_fd_set_parm_t fd_set_parm;
+            memset(&fd_set_parm, 0, sizeof(cam_fd_set_parm_t));
+            fd_set_parm.fd_mode = m_nFaceProcMask;
+            fd_set_parm.num_fd = maxFaces;
+
+            return AddSetParmEntryToBatch(m_pParamBuf,
+                                        CAM_INTF_PARM_FD,
+                                        sizeof(fd_set_parm),
+                                        &fd_set_parm);
+        }
+    }
+    ALOGE("Invalid face recognition value: %s", (faceRecog == NULL) ? "NULL" : faceRecog);
     return BAD_VALUE;
 }
 
@@ -4940,16 +5026,24 @@ int32_t QCameraParameters::setHistogram(bool enabled)
  *==========================================================================*/
 int32_t QCameraParameters::setFaceDetection(bool enabled)
 {
-    if(m_bFaceDetectionEnabled == enabled) {
-        ALOGD("%s: face detection flag not changed, no ops here", __func__);
+    int faceProcMask = m_nFaceProcMask;
+    // set face detection mask
+    if (enabled) {
+        faceProcMask |= CAM_FACE_PROCESS_MASK_DETECTION;
+    } else {
+        faceProcMask &= ~CAM_FACE_PROCESS_MASK_DETECTION;
+    }
+
+    if(m_nFaceProcMask == faceProcMask) {
+        ALOGD("%s: face process mask not changed, no ops here", __func__);
         return NO_ERROR;
     }
 
     // set parm for face detection
-    int requested_faces = getInt(QCameraParameters::KEY_QC_MAX_NUM_REQUESTED_FACES);
+    int requested_faces = getInt(KEY_QC_MAX_NUM_REQUESTED_FACES);
     cam_fd_set_parm_t fd_set_parm;
     memset(&fd_set_parm, 0, sizeof(cam_fd_set_parm_t));
-    fd_set_parm.fd_mode = enabled;
+    fd_set_parm.fd_mode = faceProcMask;
     fd_set_parm.num_fd = requested_faces;
 
     if(initBatchUpdate(m_pParamBuf) < 0 ) {
@@ -4973,8 +5067,8 @@ int32_t QCameraParameters::setFaceDetection(bool enabled)
         return rc;
     }
 
-    m_bFaceDetectionEnabled = enabled;
-    ALOGD(" FaceDetection -> %s", m_bFaceDetectionEnabled ? "Enabled" : "Disabled");
+    m_nFaceProcMask = faceProcMask;
+    ALOGD("%s: FaceProcMask -> %d", __func__, m_nFaceProcMask);
 
     return rc;
 }
