@@ -553,7 +553,7 @@ typedef struct {
         cam_bayer_hist_stats_t bayer_stats;
         cam_histogram_data_t yuv_stats;
     };
-} cam_stats_data_t;
+} cam_hist_stats_t;
 
 enum cam_focus_distance_index{
   CAM_FOCUS_DISTANCE_NEAR_INDEX,  /* 0 */
@@ -597,7 +597,7 @@ typedef struct {
 
 typedef  struct {
     uint8_t is_stats_valid;               /* if histgram data is valid */
-    cam_stats_data_t stats_data;          /* histogram data */
+    cam_hist_stats_t stats_data;          /* histogram data */
 
     uint8_t is_faces_valid;               /* if face detection data is valid */
     cam_face_detection_data_t faces_data; /* face detection result */
