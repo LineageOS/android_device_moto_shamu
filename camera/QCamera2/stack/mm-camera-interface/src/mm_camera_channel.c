@@ -789,9 +789,13 @@ int32_t mm_channel_get_bundle_info(mm_channel_t *my_obj,
             s_obj = mm_channel_util_get_stream_by_handler(my_obj,
                                                           my_obj->streams[i].my_hdl);
             if (NULL != s_obj) {
-                bundle_info->stream_ids[bundle_info->num_of_streams++] =
-                    s_obj->server_stream_id;
+                if (CAM_STREAM_TYPE_METADATA != s_obj->stream_info->stream_type) {
+                    bundle_info->stream_ids[bundle_info->num_of_streams++] =
+                                                        s_obj->server_stream_id;
+                }
             } else {
+                CDBG_ERROR("%s: cannot find stream obj (%d) by handler (%d)",
+                           __func__, i, my_obj->streams[i].my_hdl);
                 rc = -1;
                 break;
             }
@@ -823,15 +827,27 @@ int32_t mm_channel_start(mm_channel_t *my_obj)
     mm_stream_t *s_objs[MAX_STREAM_NUM_IN_BUNDLE] = {NULL};
     uint8_t num_streams_to_start = 0;
     mm_stream_t *s_obj = NULL;
+    int meta_stream_idx = 0;
 
     for (i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
         if (my_obj->streams[i].my_hdl > 0) {
             s_obj = mm_channel_util_get_stream_by_handler(my_obj,
                                                           my_obj->streams[i].my_hdl);
             if (NULL != s_obj) {
+                /* remember meta data stream index */
+                if (s_obj->stream_info->stream_type == CAM_STREAM_TYPE_METADATA) {
+                    meta_stream_idx = num_streams_to_start;
+                }
                 s_objs[num_streams_to_start++] = s_obj;
             }
         }
+    }
+
+    if (meta_stream_idx > 0 ) {
+        /* always start meta data stream first, so switch the stream object with the first one */
+        s_obj = s_objs[0];
+        s_objs[0] = s_objs[meta_stream_idx];
+        s_objs[meta_stream_idx] = s_obj;
     }
 
     if (NULL != my_obj->bundle.super_buf_notify_cb) {
@@ -946,15 +962,27 @@ int32_t mm_channel_stop(mm_channel_t *my_obj)
     mm_stream_t *s_objs[MAX_STREAM_NUM_IN_BUNDLE] = {NULL};
     uint8_t num_streams_to_stop = 0;
     mm_stream_t *s_obj = NULL;
+    int meta_stream_idx = 0;
 
     for (i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
         if (my_obj->streams[i].my_hdl > 0) {
             s_obj = mm_channel_util_get_stream_by_handler(my_obj,
                                                           my_obj->streams[i].my_hdl);
             if (NULL != s_obj) {
+                /* remember meta data stream index */
+                if (s_obj->stream_info->stream_type == CAM_STREAM_TYPE_METADATA) {
+                    meta_stream_idx = num_streams_to_stop;
+                }
                 s_objs[num_streams_to_stop++] = s_obj;
             }
         }
+    }
+
+    if (meta_stream_idx < num_streams_to_stop - 1 ) {
+        /* always stop meta data stream last, so switch the stream object with the last one */
+        s_obj = s_objs[num_streams_to_stop - 1];
+        s_objs[num_streams_to_stop - 1] = s_objs[meta_stream_idx];
+        s_objs[meta_stream_idx] = s_obj;
     }
 
     for (i = 0; i < num_streams_to_stop; i++) {

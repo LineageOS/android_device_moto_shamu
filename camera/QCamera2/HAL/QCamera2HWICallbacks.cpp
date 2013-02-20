@@ -570,7 +570,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
                                                            QCameraStream * stream,
                                                            void * userdata)
 {
-    ALOGV("%s : BEGIN", __func__);
+    ALOGD("%s : BEGIN", __func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -591,9 +591,9 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
         pme->processFaceDetectionResult(&pMetaData->faces_data);
     }
 
-    if (pMetaData->is_hist_valid) {
+    if (pMetaData->is_stats_valid) {
         // process histogram statistics info
-        pme->processHistogramStats(&pMetaData->hist_data);
+        pme->processHistogramStats(pMetaData->stats_data);
     }
 
     if (pMetaData->is_focus_valid) {
@@ -619,7 +619,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
     stream->bufDone(frame->buf_idx);
     free(super_frame);
 
-    ALOGV("%s : END", __func__);
+    ALOGD("%s : END", __func__);
 }
 
 /*===========================================================================
