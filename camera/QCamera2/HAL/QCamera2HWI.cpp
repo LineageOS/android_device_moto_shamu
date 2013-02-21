@@ -3241,7 +3241,7 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera2HardwareInterface::processHistogramStats(cam_stats_data_t &stats_data)
+int32_t QCamera2HardwareInterface::processHistogramStats(cam_hist_stats_t &stats_data)
 {
     if (!mParameters.isHistogramEnabled()) {
         ALOGD("%s: Histogram not enabled, no ops here", __func__);
