@@ -266,6 +266,7 @@ private:
 
     int32_t processAutoFocusEvent(cam_auto_focus_data_t &focus_data);
     int32_t processZoomEvent(cam_crop_data_t &crop_info);
+    int32_t processPrepSnapshotDoneEvent(cam_prep_snapshot_state_t prep_snapshot_state);
     int32_t processJpegNotify(qcamera_jpeg_evt_payload_t *jpeg_job);
 
     int32_t sendEvtNotify(int32_t msg_type, int32_t ext1, int32_t ext2);
@@ -388,6 +389,9 @@ private:
     // and beforeany focus callback/cancel_focus happens. This flag is not an indication
     // of whether lens is moving or not.
     bool m_bAutoFocusRunning;
+
+    // If start_zsl_snapshot is called to notify camera daemon about zsl snapshot
+    bool m_bStartZSLSnapshotCalled;
 
     power_module_t *m_pPowerModule;   // power module
 

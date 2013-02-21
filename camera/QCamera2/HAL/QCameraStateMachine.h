@@ -67,6 +67,7 @@ typedef enum {
     QCAMERA_SM_EVT_RECORDING_ENABLED,        // query if recording is running
     QCAMERA_SM_EVT_RELEASE_RECORIDNG_FRAME,  // release recording frame
 
+    QCAMERA_SM_EVT_PREPARE_SNAPSHOT,         // prepare snapshot in case LED needs to be flashed
     QCAMERA_SM_EVT_TAKE_PICTURE,             // take picutre (zsl, regualr capture, live snapshot
     QCAMERA_SM_EVT_CANCEL_PICTURE,           // cancel picture
 
@@ -129,7 +130,8 @@ typedef struct {
 } qcamera_sm_evt_reg_face_payload_t;
 
 typedef enum {
-    QCAMERA_INTERNAL_EVT_FOCUS_UPDATE,       // internal event for focus updating
+    QCAMERA_INTERNAL_EVT_FOCUS_UPDATE,       // focus updating result
+    QCAMERA_INTERNAL_EVT_PREP_SNAPSHOT_DONE, // prepare snapshot done
     QCAMERA_INTERNAL_EVT_MAX
 } qcamera_internal_evt_type_t;
 
@@ -137,6 +139,7 @@ typedef struct {
     qcamera_internal_evt_type_t evt_type;
     union {
         cam_auto_focus_data_t focus_data;
+        cam_prep_snapshot_state_t prep_snapshot_state;
     };
 } qcamera_sm_internal_evt_payload_t;
 
@@ -155,6 +158,8 @@ private:
         QCAMERA_SM_STATE_PREVIEW_STOPPED,          // preview is stopped
         QCAMERA_SM_STATE_PREVIEW_READY,            // preview started but preview window is not set yet
         QCAMERA_SM_STATE_PREVIEWING,               // previewing
+        QCAMERA_SM_STATE_PREPARE_SNAPSHOT,         // prepare snapshot in case aec estimation is
+                                                   // needed for LED flash
         QCAMERA_SM_STATE_PIC_TAKING,               // taking picture (preview stopped)
         QCAMERA_SM_STATE_RECORDING,                // recording (preview running)
         QCAMERA_SM_STATE_VIDEO_PIC_TAKING,         // taking live snapshot during recording (preview running)
@@ -179,6 +184,7 @@ private:
     int32_t procEvtPreviewStoppedState(qcamera_sm_evt_enum_t evt, void *payload);
     int32_t procEvtPreviewReadyState(qcamera_sm_evt_enum_t evt, void *payload);
     int32_t procEvtPreviewingState(qcamera_sm_evt_enum_t evt, void *payload);
+    int32_t procEvtPrepareSnapshotState(qcamera_sm_evt_enum_t evt, void *payload);
     int32_t procEvtPicTakingState(qcamera_sm_evt_enum_t evt, void *payload);
     int32_t procEvtRecordingState(qcamera_sm_evt_enum_t evt, void *payload);
     int32_t procEvtVideoPicTakingState(qcamera_sm_evt_enum_t evt, void *payload);

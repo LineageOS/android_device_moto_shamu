@@ -88,6 +88,7 @@ typedef struct {
         mm_camera_event_t evt;       /* evt if evtCB */
         mm_camera_super_buf_t superbuf; /* superbuf if superbuf dataCB*/
         mm_camera_req_buf_t req_buf; /* num of buf requested */
+        uint32_t frame_idx; /* frame idx boundary for flush superbuf queue*/
     } u;
 } mm_camera_cmdcb_t;
 
@@ -427,6 +428,8 @@ extern int32_t mm_camera_do_auto_focus(mm_camera_obj_t *my_obj,
                                         cam_autofocus_cycle_t sweep_mode);
 extern cam_autofocus_state_t mm_camera_cancel_auto_focus(mm_camera_obj_t *my_obj);
 extern int32_t mm_camera_prepare_snapshot(mm_camera_obj_t *my_obj);
+extern int32_t mm_camera_start_zsl_snapshot(mm_camera_obj_t *my_obj);
+extern int32_t mm_camera_stop_zsl_snapshot(mm_camera_obj_t *my_obj);
 extern uint32_t mm_camera_add_channel(mm_camera_obj_t *my_obj,
                                       mm_camera_channel_attr_t *attr,
                                       mm_camera_buf_notify_t channel_cb,
@@ -455,7 +458,8 @@ extern int32_t mm_camera_request_super_buf(mm_camera_obj_t *my_obj,
 extern int32_t mm_camera_cancel_super_buf_request(mm_camera_obj_t *my_obj,
                                                   uint32_t ch_id);
 extern int32_t mm_camera_flush_super_buf_queue(mm_camera_obj_t *my_obj,
-                                               uint32_t ch_id);
+                                               uint32_t ch_id,
+                                               uint32_t frame_idx);
 extern int32_t mm_camera_set_stream_parms(mm_camera_obj_t *my_obj,
                                           uint32_t ch_id,
                                           uint32_t s_id,
