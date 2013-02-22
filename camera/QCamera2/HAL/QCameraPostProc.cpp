@@ -716,13 +716,8 @@ void QCameraPostProcessor::releaseJpegInputData(void *data, void *user_data)
 void QCameraPostProcessor::releasePPInputData(void *data, void *user_data)
 {
     QCameraPostProcessor *pme = (QCameraPostProcessor *)user_data;
-    qcamera_pp_request_t *request = (qcamera_pp_request_t *)data;
     if (NULL != pme) {
-        if (request->frame != NULL) {
-            pme->releaseSuperBuf(request->frame);
-            free(request->frame);
-            request->frame = NULL;
-        }
+        pme->releaseSuperBuf((mm_camera_super_buf_t *)data);
     }
 }
 
@@ -1379,17 +1374,17 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                         }
                     }
 
-                    qcamera_pp_request_t *request =
-                        (qcamera_pp_request_t *)pme->m_inputPPQ.dequeue();
-                    if (NULL != request) {
+                    mm_camera_super_buf_t *pp_frame =
+                        (mm_camera_super_buf_t *)pme->m_inputPPQ.dequeue();
+                    if (NULL != pp_frame) {
                         qcamera_pp_data_t *pp_job =
                             (qcamera_pp_data_t *)malloc(sizeof(qcamera_pp_data_t));
                         if (pp_job != NULL) {
                             memset(pp_job, 0, sizeof(qcamera_pp_data_t));
                             if (pme->m_pReprocChannel != NULL) {
-                                ret = pme->m_pReprocChannel->doReprocess(request->frame);
+                                ret = pme->m_pReprocChannel->doReprocess(pp_frame);
                                 if (ret == 0) {
-                                    pp_job->src_frame = request->frame;
+                                    pp_job->src_frame = pp_frame;
                                 }
                             } else {
                                 ALOGE("%s: Reprocess channel is NULL", __func__);
@@ -1402,12 +1397,10 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
 
                         if (0 != ret) {
                             // free frame
-                            if (request->frame != NULL) {
-                                pme->releaseSuperBuf(request->frame);
-                                free(request->frame);
+                            if (pp_frame != NULL) {
+                                pme->releaseSuperBuf(pp_frame);
+                                free(pp_frame);
                             }
-                            // free request buf
-                            free(request);
                             // send error notify
                             pme->sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
                                                 NULL,
@@ -1415,9 +1408,6 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                                                 NULL,
                                                 NULL);
                         } else {
-                            // free request buf
-                            free(request);
-
                             // add into ongoing jpeg job Q
                             pme->m_ongoingPPQ.enqueue((void *)pp_job);
                         }
@@ -1435,13 +1425,10 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                         pme->releaseSuperBuf(super_buf);
                         free(super_buf);
                     }
-                    qcamera_pp_request_t *request =
-                        (qcamera_pp_request_t *)pme->m_inputPPQ.dequeue();
-                    if (NULL != request) {
-                        if (request->frame != NULL) {
-                            pme->releaseSuperBuf(request->frame);
-                        }
-                        free(request);
+                    super_buf = (mm_camera_super_buf_t *)pme->m_inputPPQ.dequeue();
+                    if (NULL != super_buf) {
+                        pme->releaseSuperBuf(super_buf);
+                        free(super_buf);
                     }
                 }
             }

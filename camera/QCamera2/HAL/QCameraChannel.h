@@ -69,6 +69,7 @@ public:
 protected:
     uint32_t m_camHandle;
     mm_camera_ops_t *m_camOps;
+    bool m_bIsActive;
 
     uint32_t m_handle;
     uint8_t m_numStreams;

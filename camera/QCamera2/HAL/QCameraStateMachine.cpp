@@ -1579,9 +1579,10 @@ int32_t QCameraStateMachine::procEvtRecordingState(qcamera_sm_evt_enum_t evt,
         break;
     case QCAMERA_SM_EVT_TAKE_PICTURE:
         {
+            m_state = QCAMERA_SM_STATE_VIDEO_PIC_TAKING;
             rc = m_parent->takeLiveSnapshot();
-            if (rc == 0) {
-                m_state = QCAMERA_SM_STATE_VIDEO_PIC_TAKING;
+            if (rc != NO_ERROR) {
+                m_state = QCAMERA_SM_STATE_RECORDING;
             }
             result.status = rc;
             result.request_api = evt;
