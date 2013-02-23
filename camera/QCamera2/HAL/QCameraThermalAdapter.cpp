@@ -51,14 +51,16 @@ QCameraThermalAdapter::QCameraThermalAdapter() :
                                         mCallback(NULL),
                                         mHandle(NULL),
                                         mRegister(NULL),
-                                        mUnregister(NULL)
+                                        mUnregister(NULL),
+                                        mCameraHandle(0),
+                                        mCamcorderHandle(0)
 {
 }
 
 int QCameraThermalAdapter::init(QCameraThermalCallback *thermalCb)
 {
     const char *error = NULL;
-    int rc;
+    int rc = NO_ERROR;
 
     ALOGV("%s E", __func__);
     mHandle = dlopen("/system/lib/libthermalclient.so", RTLD_NOW);
@@ -69,7 +71,7 @@ int QCameraThermalAdapter::init(QCameraThermalCallback *thermalCb)
         rc = UNKNOWN_ERROR;
         goto error;
     }
-    *(void **)&mRegister = dlsym(mHandle, "thermal_register_callback");
+    *(void **)&mRegister = dlsym(mHandle, "thermal_client_register_callback");
     if (!mRegister) {
         error = dlerror();
         ALOGE("%s: dlsym failed with error code %s",
@@ -77,7 +79,7 @@ int QCameraThermalAdapter::init(QCameraThermalCallback *thermalCb)
         rc = UNKNOWN_ERROR;
         goto error2;
     }
-    *(void **)&mUnregister = dlsym(mHandle, "thermal_unregister_callback");
+    *(void **)&mUnregister = dlsym(mHandle, "thermal_client_unregister_callback");
     if (!mUnregister) {
         error = dlerror();
         ALOGE("%s: dlsym failed with error code %s",
@@ -87,14 +89,18 @@ int QCameraThermalAdapter::init(QCameraThermalCallback *thermalCb)
     }
 
     // Register camera and camcorder callbacks
-    rc = mRegister(mStrCamera, thermalCallback, NULL);
-    if (rc < 0) {
-        ALOGE("%s: thermal_register_callback failed %d", __func__, rc);
+    mCameraHandle = mRegister(mStrCamera, thermalCallback, NULL);
+    if (mCameraHandle < 0) {
+        ALOGE("%s: thermal_client_register_callback failed %d",
+                        __func__, mCameraHandle);
+        rc = UNKNOWN_ERROR;
         goto error2;
     }
-    rc = mRegister(mStrCamcorder, thermalCallback, NULL);
-    if (rc < 0) {
-        ALOGE("%s: thermal_register_callback failed %d", __func__, rc);
+    mCamcorderHandle = mRegister(mStrCamcorder, thermalCallback, NULL);
+    if (mCamcorderHandle < 0) {
+        ALOGE("%s: thermal_client_register_callback failed %d",
+                        __func__, mCamcorderHandle);
+        rc = UNKNOWN_ERROR;
         goto error3;
     }
 
@@ -103,8 +109,10 @@ int QCameraThermalAdapter::init(QCameraThermalCallback *thermalCb)
     return rc;
 
 error3:
-    mUnregister(mStrCamera);
+    mCamcorderHandle = 0;
+    mUnregister(mCameraHandle);
 error2:
+    mCameraHandle = 0;
     dlclose(mHandle);
     mHandle = NULL;
 error:
@@ -116,8 +124,14 @@ void QCameraThermalAdapter::deinit()
 {
     ALOGV("%s E", __func__);
     if (mUnregister) {
-        mUnregister(mStrCamera);
-        mUnregister(mStrCamcorder);
+        if (mCameraHandle) {
+            mUnregister(mCameraHandle);
+            mCameraHandle = 0;
+        }
+        if (mCamcorderHandle) {
+            mUnregister(mCamcorderHandle);
+            mCamcorderHandle = 0;
+        }
     }
     if (mHandle)
         dlclose(mHandle);
@@ -132,15 +146,15 @@ void QCameraThermalAdapter::deinit()
 char QCameraThermalAdapter::mStrCamera[] = "camera";
 char QCameraThermalAdapter::mStrCamcorder[] = "camcorder";
 
-int QCameraThermalAdapter::thermalCallback(char * name,
-                                int threshold, int level)
+int QCameraThermalAdapter::thermalCallback(int level,
+                void *userdata, void *data)
 {
     int rc = 0;
     ALOGV("%s E", __func__);
     QCameraThermalAdapter& instance = getInstance();
     qcamera_thermal_level_enum_t lvl = (qcamera_thermal_level_enum_t) level;
     if (instance.mCallback)
-        rc = instance.mCallback->thermalEvtHandle(name, threshold, lvl);
+        rc = instance.mCallback->thermalEvtHandle(lvl, userdata, data);
     ALOGV("%s X", __func__);
     return rc;
 }

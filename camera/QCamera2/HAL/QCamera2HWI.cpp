@@ -2111,21 +2111,20 @@ void QCamera2HardwareInterface::jpegEvtHandle(jpeg_job_status_t status,
  * DESCRIPTION: routine to handle thermal event notification
  *
  * PARAMETERS :
- *   @name       : "camera" or "camcorder"
- *   @threshold  : thermal threshold
  *   @level      : thermal level
+ *   @userdata   : userdata passed in during registration
+ *   @data       : opaque data from thermal client
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int QCamera2HardwareInterface::thermalEvtHandle(char *name,
-                                                int threshold,
-                                                qcamera_thermal_level_enum_t level)
+int QCamera2HardwareInterface::thermalEvtHandle(
+        qcamera_thermal_level_enum_t level, void *userdata, void *data)
 {
     // Make sure thermal events are logged
-    ALOGE("%s: name = %s, threshold = %d, level = %d",
-        __func__, name, threshold, level);
+    ALOGI("%s: level = %d, userdata = %p, data = %p",
+        __func__, level, userdata, data);
     //We don't need to lockAPI, waitAPI here. QCAMERA_SM_EVT_THERMAL_NOTIFY
     // becomes an aync call. This also means we can only pass payload
     // by value, not by address.

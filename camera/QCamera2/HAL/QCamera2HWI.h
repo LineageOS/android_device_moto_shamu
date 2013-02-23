@@ -135,9 +135,8 @@ public:
     virtual QCameraHeapMemory *allocateStreamInfoBuf(cam_stream_type_t stream_type);
 
     // Implementation of QCameraThermalCallback
-    virtual int thermalEvtHandle(char *name,
-                                 int threshold,
-                                 qcamera_thermal_level_enum_t level);
+    virtual int thermalEvtHandle(qcamera_thermal_level_enum_t level,
+            void *userdata, void *data);
 
     friend class QCameraStateMachine;
     friend class QCameraPostProcessor;
