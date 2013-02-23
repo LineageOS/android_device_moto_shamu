@@ -62,8 +62,6 @@ public:
     static const char KEY_QC_SUPPORTED_PREVIEW_FRAME_RATE_MODES[];
     static const char KEY_QC_PREVIEW_FRAME_RATE_AUTO_MODE[];
     static const char KEY_QC_PREVIEW_FRAME_RATE_FIXED_MODE[];
-
-    static const char KEY_QC_SKIN_TONE_ENHANCEMENT[] ;
     static const char KEY_QC_SUPPORTED_SKIN_TONE_ENHANCEMENT_MODES[] ;
 
     // Supported Raw formats
