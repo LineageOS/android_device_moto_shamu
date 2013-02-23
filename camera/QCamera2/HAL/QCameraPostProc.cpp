@@ -57,6 +57,7 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
       m_pJpegOutputMem(NULL),
       m_pJpegExifObj(NULL),
       m_bThumbnailNeeded(TRUE),
+      m_pReprocChannel(NULL),
       m_inputPPQ(releasePPInputData, this),
       m_ongoingPPQ(releaseOngoingPPData, this),
       m_inputJpegQ(releaseJpegInputData, this),
@@ -86,6 +87,11 @@ QCameraPostProcessor::~QCameraPostProcessor()
     if (m_pJpegExifObj != NULL) {
         delete m_pJpegExifObj;
         m_pJpegExifObj = NULL;
+    }
+    if (m_pReprocChannel != NULL) {
+        m_pReprocChannel->stop();
+        delete m_pReprocChannel;
+        m_pReprocChannel = NULL;
     }
 }
 
@@ -152,30 +158,36 @@ int32_t QCameraPostProcessor::deinit()
  * DESCRIPTION: start postprocessor. Data process thread and data notify thread
  *              will be launched.
  *
- * PARAMETERS : None
+ * PARAMETERS :
+ *   @pSrcChannel : source channel obj ptr that possibly needs reprocess
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *
- * NOTE       : if any offline reprocess is needed, a reprocess channel/stream
+ * NOTE       : if any reprocess is needed, a reprocess channel/stream
  *              will be started.
  *==========================================================================*/
-int32_t QCameraPostProcessor::start()
+int32_t QCameraPostProcessor::start(QCameraChannel *pSrcChannel)
 {
     int32_t rc = NO_ERROR;
-    if (m_parent->needOfflineReprocess()) {
-        // if offline reprocess is needed, start reprocess channel
-        rc = m_parent->addChannel(QCAMERA_CH_TYPE_REPROCESS);
-        if (rc != 0) {
+    if (m_parent->needReprocess()) {
+        if (m_pReprocChannel != NULL) {
+            delete m_pReprocChannel;
+            m_pReprocChannel = NULL;
+        }
+        // if reprocess is needed, start reprocess channel
+        m_pReprocChannel = m_parent->addOnlineReprocChannel(pSrcChannel);
+        if (m_pReprocChannel == NULL) {
             ALOGE("%s: cannot add reprocess channel", __func__);
-            return rc;
+            return UNKNOWN_ERROR;
         }
 
-        rc = m_parent->startChannel(QCAMERA_CH_TYPE_REPROCESS);
+        rc = m_pReprocChannel->start(m_parent->mParameters);
         if (rc != 0) {
             ALOGE("%s: cannot start reprocess channel", __func__);
-            m_parent->delChannel(QCAMERA_CH_TYPE_REPROCESS);
+            delete m_pReprocChannel;
+            m_pReprocChannel = NULL;
             return rc;
         }
     }
@@ -205,9 +217,10 @@ int32_t QCameraPostProcessor::stop()
     // dataProc Thread need to process "stop" as sync call because abort jpeg job should be a sync call
     m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC, TRUE, TRUE);
 
-    if (m_parent->needOfflineReprocess()) {
-        m_parent->stopChannel(QCAMERA_CH_TYPE_REPROCESS);
-        m_parent->delChannel(QCAMERA_CH_TYPE_REPROCESS);
+    if (m_pReprocChannel != NULL) {
+        m_pReprocChannel->stop();
+        delete m_pReprocChannel;
+        m_pReprocChannel = NULL;
     }
 
     return NO_ERROR;
@@ -453,8 +466,8 @@ int32_t QCameraPostProcessor::sendDataNotify(int32_t msg_type,
  *==========================================================================*/
 int32_t QCameraPostProcessor::processData(mm_camera_super_buf_t *frame)
 {
-    if (m_parent->needOfflineReprocess()) {
-        ALOGD("%s: need offline reprocess", __func__);
+    if (m_parent->needReprocess()) {
+        ALOGD("%s: need reprocess", __func__);
         // enqueu to post proc input queue
         m_inputPPQ.enqueue((void *)frame);
     } else {
@@ -1373,10 +1386,8 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                             (qcamera_pp_data_t *)malloc(sizeof(qcamera_pp_data_t));
                         if (pp_job != NULL) {
                             memset(pp_job, 0, sizeof(qcamera_pp_data_t));
-                            QCameraReprocessChannel *reproc_channel =
-                                (QCameraReprocessChannel *)pme->m_parent->m_channels[QCAMERA_CH_TYPE_REPROCESS];
-                            if (reproc_channel != NULL) {
-                                ret = reproc_channel->doReprocess(request->frame);
+                            if (pme->m_pReprocChannel != NULL) {
+                                ret = pme->m_pReprocChannel->doReprocess(request->frame);
                                 if (ret == 0) {
                                     pp_job->src_frame = request->frame;
                                 }

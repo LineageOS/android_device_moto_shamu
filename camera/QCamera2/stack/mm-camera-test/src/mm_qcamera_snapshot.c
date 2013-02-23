@@ -102,13 +102,11 @@ int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_fram
     /* fill in main src img encode param */
     job.encode_job.main_dim.src_dim = m_stream->s_config.stream_info->dim;
     job.encode_job.main_dim.dst_dim = m_stream->s_config.stream_info->dim;
-    job.encode_job.main_dim.crop = m_stream->s_config.stream_info->parm_buf.crop;
     job.encode_job.src_index = 0;
 
     job.encode_job.thumb_dim.src_dim = m_stream->s_config.stream_info->dim;
     job.encode_job.thumb_dim.dst_dim.width = DEFAULT_PREVIEW_WIDTH;
     job.encode_job.thumb_dim.dst_dim.height = DEFAULT_PREVIEW_HEIGHT;
-    job.encode_job.thumb_dim.crop = m_stream->s_config.stream_info->parm_buf.crop;
 
     /* fill in sink img param */
     job.encode_job.dst_index = 0;

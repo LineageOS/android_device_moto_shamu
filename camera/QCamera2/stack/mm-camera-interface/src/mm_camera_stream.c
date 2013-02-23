@@ -2257,14 +2257,8 @@ int32_t mm_stream_calc_offset(mm_stream_t *my_obj)
                                             &my_obj->stream_info->buf_planes);
         break;
     case CAM_STREAM_TYPE_OFFLINE_PROC:
-        rc = mm_stream_calc_offset_snapshot(my_obj->stream_info->fmt,
-                                            &my_obj->stream_info->dim,
-                                            &my_obj->padding_info,
-                                            &my_obj->stream_info->buf_planes);
-        rc = mm_stream_calc_offset_snapshot(my_obj->stream_info->offline_proc_buf_fmt,
-                                            &my_obj->stream_info->offline_proc_buf_dim,
-                                            &my_obj->padding_info,
-                                            &my_obj->stream_info->offline_buf_planes);
+        /* no need to calc offset for pp stream */
+        rc = 0;
         break;
     case CAM_STREAM_TYPE_VIDEO:
         rc = mm_stream_calc_offset_video(&my_obj->stream_info->dim,
@@ -2314,6 +2308,7 @@ int32_t mm_stream_sync_info(mm_stream_t *my_obj)
 {
     int32_t rc = 0;
     int32_t value = 0;
+    my_obj->stream_info->stream_svr_id = my_obj->server_stream_id;
     rc = mm_stream_calc_offset(my_obj);
 
     if (rc == 0) {

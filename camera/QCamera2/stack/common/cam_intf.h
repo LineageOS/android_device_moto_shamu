@@ -151,15 +151,31 @@ typedef struct{
     cam_padding_info_t padding_info;      /* padding information from PP */
 } cam_capability_t;
 
+typedef enum {
+    CAM_STREAM_PARAM_TYPE_DO_REPROCESS,
+    CAM_STREAM_PARAM_TYPE_MAX
+} cam_stream_param_type_e;
+
 typedef struct {
-    /*TODO: Put zoom crop (on output buffer) into stream specific metadata*/
-    uint8_t is_crop_valid;         /* flag to indicate if crop field is valid fro get */
-    cam_rect_t crop;               /* crop information */
+    uint8_t buf_index;            /* buf index to the buffer that needs reprocess,
+                                    (assume buffer is already mapped)*/
+    int32_t ret_val;              /* return value from reprocess. Could have different meanings.
+                                     i.e., faceID in the case of face registration. */
+} cam_reprocess_param;
+
+typedef struct {
+    cam_stream_param_type_e type;
+    union {
+        cam_reprocess_param reprocess; /* do reprocess */
+    };
 } cam_stream_parm_buffer_t;
 
 /* stream info */
 typedef struct {
-    /* stream type*/
+    /* stream ID from server */
+    uint32_t stream_svr_id;
+
+    /* stream type */
     cam_stream_type_t stream_type;
 
     /* image format */
@@ -179,19 +195,8 @@ typedef struct {
      * only valid when streaming_mode = CAM_STREAMING_MODE_BURST */
     uint8_t num_of_burst;
 
-    /* this section is for offline reprocess type stream */
-    cam_format_t offline_proc_buf_fmt;    /* input image format for offline process */
-    cam_dimension_t offline_proc_buf_dim; /* input dimension for offline process */
-    cam_stream_buf_plane_info_t offline_buf_planes; /* offline frame buf plane info */
-
-    /* this section is for postprocessing/reprocessing settings */
-    uint32_t feature_mask;
-    cam_denoise_param_t denoise2d;
-    cam_rect_t input_crop; /* only applies to reprocess */
-    cam_rotation_t rotation;
-    uint32_t flip;
-    // Sharpness in parameters can be used for reprocessing.
-    // Revisit whether we need color conversion here.
+    /* this section is valid if offline reprocess type stream */
+    cam_stream_reproc_config_t reprocess_config;
 
     cam_stream_parm_buffer_t parm_buf;    /* stream based parameters */
 } cam_stream_info_t;

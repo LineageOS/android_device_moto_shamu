@@ -51,16 +51,21 @@ public:
                          void *userData);
     // Owner of memory is transferred from the caller to the caller with this call.
     virtual int32_t addStream(QCameraAllocator& allocator,
-                              cam_stream_type_t stream_type,
+                              QCameraHeapMemory *streamInfoBuf,
+                              uint8_t minStreamBufnum,
                               cam_padding_info_t *paddingInfo,
                               stream_cb_routine stream_cb,
                               void *userdata);
     virtual int32_t start(QCameraParameters &param);
     virtual int32_t stop();
     virtual int32_t bufDone(mm_camera_super_buf_t *recvd_frame);
-    virtual int32_t processZoomDone(preview_stream_ops_t *previewWindow);
+    virtual int32_t processZoomDone(preview_stream_ops_t *previewWindow,
+                                    cam_crop_data_t &crop_info);
     QCameraStream *getStreamByHandle(uint32_t streamHandle);
     uint32_t getMyHandle() const {return m_handle;};
+    uint8_t getNumOfStreams() const {return m_numStreams;};
+    QCameraStream *getStreamByIndex(uint8_t index);
+
 protected:
     uint32_t m_camHandle;
     mm_camera_ops_t *m_camOps;
@@ -72,7 +77,7 @@ protected:
     void *mUserData;
 };
 
-/* burst pic channel: i.e. zsl burst mode */
+// burst pic channel: i.e. zsl burst mode
 class QCameraPicChannel : public QCameraChannel
 {
 public:
@@ -84,7 +89,7 @@ public:
     int32_t cancelPicture();
 };
 
-/* video channel class */
+// video channel class
 class QCameraVideoChannel : public QCameraChannel
 {
 public:
@@ -95,7 +100,7 @@ public:
     int32_t releaseFrame(const void *opaque, bool isMetaData);
 };
 
-/* reprocess channel class */
+// reprocess channel class
 class QCameraReprocessChannel : public QCameraChannel
 {
 public:
@@ -103,7 +108,16 @@ public:
                             mm_camera_ops_t *cam_ops);
     QCameraReprocessChannel();
     virtual ~QCameraReprocessChannel();
+    int32_t addReprocStreamsFromSource(QCameraAllocator& allocator,
+                                       cam_pp_feature_config_t &config,
+                                       QCameraChannel *pSrcChannel,
+                                       uint8_t minStreamBufNum,
+                                       cam_padding_info_t *paddingInfo);
+    // online reprocess
     int32_t doReprocess(mm_camera_super_buf_t *frame);
+    // offline reprocess
+    int32_t doReprocess(int buf_fd, uint32_t buf_length, int32_t &ret_val);
+
 };
 
 }; // namespace qcamera

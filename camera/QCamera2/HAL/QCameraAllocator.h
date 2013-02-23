@@ -41,7 +41,9 @@ class QCameraHeapMemory;
 
 class QCameraAllocator {
 public:
-    virtual QCameraMemory *allocateStreamBuf(cam_stream_type_t stream_type, int size) = 0;
+    virtual QCameraMemory *allocateStreamBuf(cam_stream_type_t stream_type,
+                                             int size,
+                                             uint8_t &bufferCnt) = 0;
     virtual QCameraHeapMemory *allocateStreamInfoBuf(cam_stream_type_t stream_type) = 0;
     virtual ~QCameraAllocator() {}
 };

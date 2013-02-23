@@ -46,8 +46,6 @@ static const char ExifUndefinedPrefix[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 #define EXIF_ASCII_PREFIX_SIZE           8   //(sizeof(ExifAsciiPrefix))
 #define FOCAL_LENGTH_DECIMAL_PRECISION   100
 
-#define CAMERA_PICTURE_TYPE_JPEG 0
-
 class QCameraParameters: public CameraParameters
 {
 public:
@@ -381,10 +379,10 @@ public:
     qcamera_thermal_mode getThermalMode() {return m_ThermalMode;};
 
     cam_focus_mode_type getFocusMode() const {return mFocusMode;};
-    bool isJpegPictureFormat() {return (mPictureFormat == CAMERA_PICTURE_TYPE_JPEG);};
     int32_t setNumOfSnapshot();
-
     int32_t adjustPreviewFpsRange(cam_fps_range_t *fpsRange);
+    bool isJpegPictureFormat() {return (mPictureFormat == CAM_FORMAT_JPEG);};
+    cam_denoise_process_type_t getWaveletDenoiseProcessPlate();
 
 private:
     int32_t setPreviewSize(const QCameraParameters& );

@@ -534,6 +534,30 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
             rc = mm_channel_do_stream_action(my_obj, payload);
         }
         break;
+    case MM_CHANNEL_EVT_MAP_STREAM_BUF:
+        {
+            mm_evt_paylod_map_stream_buf_t *payload =
+                (mm_evt_paylod_map_stream_buf_t *)in_val;
+            if (payload != NULL &&
+                payload->buf_type == CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF) {
+                rc = mm_channel_map_stream_buf(my_obj, payload);
+            } else {
+                CDBG_ERROR("%s: cannot map regualr stream buf in active state", __func__);
+            }
+        }
+        break;
+    case MM_CHANNEL_EVT_UNMAP_STREAM_BUF:
+        {
+            mm_evt_paylod_unmap_stream_buf_t *payload =
+                (mm_evt_paylod_unmap_stream_buf_t *)in_val;
+            if (payload != NULL &&
+                payload->buf_type == CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF) {
+                rc = mm_channel_unmap_stream_buf(my_obj, payload);
+            } else {
+                CDBG_ERROR("%s: cannot unmap regualr stream buf in active state", __func__);
+            }
+        }
+        break;
     default:
         CDBG_ERROR("%s: invalid state (%d) for evt (%d), in(%p), out(%p)",
                    __func__, my_obj->state, evt, in_val, out_val);

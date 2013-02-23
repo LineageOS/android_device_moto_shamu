@@ -138,6 +138,88 @@ void QCamera2HardwareInterface::capture_channel_cb_routine(mm_camera_super_buf_t
     // send to postprocessor
     pme->m_postprocessor.processData(frame);
 
+/* START of test register face image for face authentication */
+#ifdef QCOM_TEST_FACE_REGISTER_FACE
+    static uint8_t bRunFaceReg = 1;
+
+    if (bRunFaceReg > 0) {
+        // find snapshot frame
+        QCameraStream *main_stream = NULL;
+        mm_camera_buf_def_t *main_frame = NULL;
+        for (int i = 0; i < recvd_frame->num_bufs; i++) {
+            QCameraStream *pStream =
+                pChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
+            if (pStream != NULL) {
+                if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT)) {
+                    main_stream = pStream;
+                    main_frame = recvd_frame->bufs[i];
+                    break;
+                }
+            }
+        }
+        if (main_stream != NULL && main_frame != NULL) {
+            int32_t faceId = -1;
+            cam_pp_offline_src_config_t config;
+            memset(&config, 0, sizeof(cam_pp_offline_src_config_t));
+            config.num_of_bufs = 1;
+            main_stream->getFormat(config.input_fmt);
+            main_stream->getFrameDimension(config.input_dim);
+            main_stream->getFrameOffset(config.input_buf_planes.plane_info);
+            ALOGD("DEBUG: registerFaceImage E");
+            int32_t rc = pme->registerFaceImage(main_frame->buffer, &config, faceId);
+            ALOGD("DEBUG: registerFaceImage X, ret=%d, faceId=%d", rc, faceId);
+            bRunFaceReg = 0;
+        }
+    }
+
+#endif
+/* END of test register face image for face authentication */
+
+    ALOGD("%s: X", __func__);
+}
+
+/*===========================================================================
+ * FUNCTION   : postproc_channel_cb_routine
+ *
+ * DESCRIPTION: helper function to handle postprocess superbuf callback directly from
+ *              mm-camera-interface
+ *
+ * PARAMETERS :
+ *   @recvd_frame : received super buffer
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : recvd_frame will be released after this call by caller, so if
+ *             async operation needed for recvd_frame, it's our responsibility
+ *             to save a copy for this variable to be used later.
+*==========================================================================*/
+void QCamera2HardwareInterface::postproc_channel_cb_routine(mm_camera_super_buf_t *recvd_frame,
+                                                            void *userdata)
+{
+    ALOGD("%s: E", __func__);
+    QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
+    if (pme == NULL ||
+        pme->mCameraHandle == NULL ||
+        pme->mCameraHandle->camera_handle != recvd_frame->camera_handle){
+        ALOGE("%s: camera obj not valid", __func__);
+        // simply free super frame
+        free(recvd_frame);
+        return;
+    }
+
+    // save a copy for the superbuf
+    mm_camera_super_buf_t* frame =
+               (mm_camera_super_buf_t *)malloc(sizeof(mm_camera_super_buf_t));
+    if (frame == NULL) {
+        ALOGE("%s: Error allocating memory to save received_frame structure.", __func__);
+        return;
+    }
+    *frame = *recvd_frame;
+
+    // send to postprocessor
+    pme->m_postprocessor.processPPData(frame);
+
     ALOGD("%s: X", __func__);
 }
 
@@ -582,9 +664,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
     }
 
     mm_camera_buf_def_t *frame = super_frame->bufs[0];
-    QCameraMemory *metaMemObj = (QCameraMemory *)frame->mem_info;
-    camera_memory_t *meta_mem = metaMemObj->getMemory(frame->buf_idx, false);
-    cam_metadata_info_t *pMetaData = (cam_metadata_info_t *)meta_mem->data;
+    cam_metadata_info_t *pMetaData = (cam_metadata_info_t *)frame->buffer;
 
     if (pMetaData->is_faces_valid) {
         // process face detection result
@@ -614,6 +694,10 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
         } else {
             ALOGE("%s: No memory for qcamera_sm_internal_evt_payload_t", __func__);
         }
+    }
+
+    if (pMetaData->is_crop_valid) {
+        pme->processZoomEvent(pMetaData->crop_data);
     }
 
     stream->bufDone(frame->buf_idx);

@@ -508,6 +508,21 @@ int32_t QCameraStateMachine::procEvtPreviewStoppedState(qcamera_sm_evt_enum_t ev
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_REG_FACE_IMAGE:
+        {
+            int32_t faceID = 0;
+            qcamera_sm_evt_reg_face_payload_t *reg_payload =
+                (qcamera_sm_evt_reg_face_payload_t *)payload;
+            rc = m_parent->registerFaceImage(reg_payload->img_ptr,
+                                             reg_payload->config,
+                                             faceID);
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_HANDLE;
+            result.handle = faceID;
+            m_parent->signalAPIResult(&result);
+        }
+        break;
     case QCAMERA_SM_EVT_EVT_INTERNAL:
     case QCAMERA_SM_EVT_EVT_NOTIFY:
     case QCAMERA_SM_EVT_JPEG_EVT_NOTIFY:
@@ -737,6 +752,21 @@ int32_t QCameraStateMachine::procEvtPreviewReadyState(qcamera_sm_evt_enum_t evt,
             result.status = rc;
             result.request_api = evt;
             result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
+            m_parent->signalAPIResult(&result);
+        }
+        break;
+    case QCAMERA_SM_EVT_REG_FACE_IMAGE:
+        {
+            int32_t faceID = 0;
+            qcamera_sm_evt_reg_face_payload_t *reg_payload =
+                (qcamera_sm_evt_reg_face_payload_t *)payload;
+            rc = m_parent->registerFaceImage(reg_payload->img_ptr,
+                                             reg_payload->config,
+                                             faceID);
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_HANDLE;
+            result.handle = faceID;
             m_parent->signalAPIResult(&result);
         }
         break;
@@ -1020,6 +1050,21 @@ int32_t QCameraStateMachine::procEvtPreviewingState(qcamera_sm_evt_enum_t evt,
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_REG_FACE_IMAGE:
+        {
+            int32_t faceID = 0;
+            qcamera_sm_evt_reg_face_payload_t *reg_payload =
+                (qcamera_sm_evt_reg_face_payload_t *)payload;
+            rc = m_parent->registerFaceImage(reg_payload->img_ptr,
+                                             reg_payload->config,
+                                             faceID);
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_HANDLE;
+            result.handle = faceID;
+            m_parent->signalAPIResult(&result);
+        }
+        break;
     case QCAMERA_SM_EVT_CANCEL_PICTURE:
     case QCAMERA_SM_EVT_STOP_RECORDING:
     case QCAMERA_SM_EVT_RELEASE_RECORIDNG_FRAME:
@@ -1050,9 +1095,6 @@ int32_t QCameraStateMachine::procEvtPreviewingState(qcamera_sm_evt_enum_t evt,
         {
             mm_camera_event_t *cam_evt = (mm_camera_event_t *)payload;
             switch (cam_evt->server_event_type) {
-            case CAM_EVENT_TYPE_ZOOM_DONE:
-                rc = m_parent->processZoomEvent(cam_evt->status);
-                break;
             default:
                 ALOGD("%s: no handling for server evt (%d) at this state",
                       __func__, cam_evt->server_event_type);
@@ -1274,6 +1316,21 @@ int32_t QCameraStateMachine::procEvtPicTakingState(qcamera_sm_evt_enum_t evt,
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_REG_FACE_IMAGE:
+        {
+            int32_t faceID = 0;
+            qcamera_sm_evt_reg_face_payload_t *reg_payload =
+                (qcamera_sm_evt_reg_face_payload_t *)payload;
+            rc = m_parent->registerFaceImage(reg_payload->img_ptr,
+                                             reg_payload->config,
+                                             faceID);
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_HANDLE;
+            result.handle = faceID;
+            m_parent->signalAPIResult(&result);
+        }
+        break;
     case QCAMERA_SM_EVT_TAKE_PICTURE:
     case QCAMERA_SM_EVT_START_RECORDING:
     case QCAMERA_SM_EVT_STOP_RECORDING:
@@ -1307,9 +1364,6 @@ int32_t QCameraStateMachine::procEvtPicTakingState(qcamera_sm_evt_enum_t evt,
         {
             mm_camera_event_t *cam_evt = (mm_camera_event_t *)payload;
             switch (cam_evt->server_event_type) {
-            case CAM_EVENT_TYPE_ZOOM_DONE:
-                rc = m_parent->processZoomEvent(cam_evt->status);
-                break;
             default:
                 ALOGD("%s: no handling for server evt (%d) at this state",
                       __func__, cam_evt->server_event_type);
@@ -1565,6 +1619,21 @@ int32_t QCameraStateMachine::procEvtRecordingState(qcamera_sm_evt_enum_t evt,
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_REG_FACE_IMAGE:
+        {
+            int32_t faceID = 0;
+            qcamera_sm_evt_reg_face_payload_t *reg_payload =
+                (qcamera_sm_evt_reg_face_payload_t *)payload;
+            rc = m_parent->registerFaceImage(reg_payload->img_ptr,
+                                             reg_payload->config,
+                                             faceID);
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_HANDLE;
+            result.handle = faceID;
+            m_parent->signalAPIResult(&result);
+        }
+        break;
     case QCAMERA_SM_EVT_CANCEL_PICTURE:
     case QCAMERA_SM_EVT_START_PREVIEW:
     case QCAMERA_SM_EVT_START_NODISPLAY_PREVIEW:
@@ -1596,9 +1665,6 @@ int32_t QCameraStateMachine::procEvtRecordingState(qcamera_sm_evt_enum_t evt,
         {
             mm_camera_event_t *cam_evt = (mm_camera_event_t *)payload;
             switch (cam_evt->server_event_type) {
-            case CAM_EVENT_TYPE_ZOOM_DONE:
-                rc = m_parent->processZoomEvent(cam_evt->status);
-                break;
             default:
                 ALOGD("%s: no handling for server evt (%d) at this state",
                       __func__, cam_evt->server_event_type);
@@ -1835,6 +1901,21 @@ int32_t QCameraStateMachine::procEvtVideoPicTakingState(qcamera_sm_evt_enum_t ev
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_REG_FACE_IMAGE:
+        {
+            int32_t faceID = 0;
+            qcamera_sm_evt_reg_face_payload_t *reg_payload =
+                (qcamera_sm_evt_reg_face_payload_t *)payload;
+            rc = m_parent->registerFaceImage(reg_payload->img_ptr,
+                                             reg_payload->config,
+                                             faceID);
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_HANDLE;
+            result.handle = faceID;
+            m_parent->signalAPIResult(&result);
+        }
+        break;
     case QCAMERA_SM_EVT_START_RECORDING:
     case QCAMERA_SM_EVT_START_PREVIEW:
     case QCAMERA_SM_EVT_START_NODISPLAY_PREVIEW:
@@ -1867,9 +1948,6 @@ int32_t QCameraStateMachine::procEvtVideoPicTakingState(qcamera_sm_evt_enum_t ev
         {
             mm_camera_event_t *cam_evt = (mm_camera_event_t *)payload;
             switch (cam_evt->server_event_type) {
-            case CAM_EVENT_TYPE_ZOOM_DONE:
-                rc = m_parent->processZoomEvent(cam_evt->status);
-                break;
             default:
                 ALOGD("%s: no handling for server evt (%d) at this state",
                       __func__, cam_evt->server_event_type);
@@ -2133,6 +2211,21 @@ int32_t QCameraStateMachine::procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t 
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_REG_FACE_IMAGE:
+        {
+            int32_t faceID = 0;
+            qcamera_sm_evt_reg_face_payload_t *reg_payload =
+                (qcamera_sm_evt_reg_face_payload_t *)payload;
+            rc = m_parent->registerFaceImage(reg_payload->img_ptr,
+                                             reg_payload->config,
+                                             faceID);
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_HANDLE;
+            result.handle = faceID;
+            m_parent->signalAPIResult(&result);
+        }
+        break;
     case QCAMERA_SM_EVT_STOP_RECORDING:
     case QCAMERA_SM_EVT_START_PREVIEW:
     case QCAMERA_SM_EVT_START_NODISPLAY_PREVIEW:
@@ -2165,9 +2258,6 @@ int32_t QCameraStateMachine::procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t 
         {
             mm_camera_event_t *cam_evt = (mm_camera_event_t *)payload;
             switch (cam_evt->server_event_type) {
-            case CAM_EVENT_TYPE_ZOOM_DONE:
-                rc = m_parent->processZoomEvent(cam_evt->status);
-                break;
             default:
                 ALOGD("%s: no handling for server evt (%d) at this state",
                       __func__, cam_evt->server_event_type);

@@ -136,18 +136,20 @@ int32_t QCameraChannel::init(mm_camera_channel_attr_t *attr,
  * DESCRIPTION: add a stream into channel
  *
  * PARAMETERS :
- *   @allocator    : stream related buffer allocator
- *   @stream_type  : type of stream
- *   @paddingInfo  : padding information
- *   @stream_cb    : stream data notify callback
- *   @userdata     : user data ptr
+ *   @allocator      : stream related buffer allocator
+ *   @streamInfoBuf  : ptr to buf that constains stream info
+ *   @minStreamBufNum: number of stream buffers needed
+ *   @paddingInfo    : padding information
+ *   @stream_cb      : stream data notify callback
+ *   @userdata       : user data ptr
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
 int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
-                                  cam_stream_type_t stream_type,
+                                  QCameraHeapMemory *streamInfoBuf,
+                                  uint8_t minStreamBufNum,
                                   cam_padding_info_t *paddingInfo,
                                   stream_cb_routine stream_cb,
                                   void *userdata)
@@ -168,7 +170,7 @@ int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
         return NO_MEMORY;
     }
 
-    rc = pStream->init(stream_type, stream_cb, userdata);
+    rc = pStream->init(streamInfoBuf, minStreamBufNum, stream_cb, userdata);
     if (rc == 0) {
         mStreams[m_numStreams] = pStream;
         m_numStreams++;
@@ -293,17 +295,19 @@ int32_t QCameraChannel::bufDone(mm_camera_super_buf_t *recvd_frame)
  * PARAMETERS :
  *   @previewWindoe : ptr to preview window ops table, needed to set preview
  *                    crop information
+ *   @crop_info     : crop info as a result of zoom operation
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCameraChannel::processZoomDone(preview_stream_ops_t *previewWindow)
+int32_t QCameraChannel::processZoomDone(preview_stream_ops_t *previewWindow,
+                                        cam_crop_data_t &crop_info)
 {
     int32_t rc = NO_ERROR;
     for (int i = 0; i < m_numStreams; i++) {
         if (mStreams[i] != NULL) {
-            rc = mStreams[i]->processZoomDone(previewWindow);
+            rc = mStreams[i]->processZoomDone(previewWindow, crop_info);
         }
     }
     return rc;
@@ -325,6 +329,24 @@ QCameraStream *QCameraChannel::getStreamByHandle(uint32_t streamHandle)
         if (mStreams[i] != NULL && mStreams[i]->getMyHandle() == streamHandle) {
             return mStreams[i];
         }
+    }
+    return NULL;
+}
+
+/*===========================================================================
+ * FUNCTION   : getStreamByHandle
+ *
+ * DESCRIPTION: return stream object by stream handle
+ *
+ * PARAMETERS :
+ *   @streamHandle : stream handle
+ *
+ * RETURN     : stream object. NULL if not found
+ *==========================================================================*/
+QCameraStream *QCameraChannel::getStreamByIndex(uint8_t index)
+{
+    if (index < m_numStreams) {
+        return mStreams[index];
     }
     return NULL;
 }
@@ -492,6 +514,7 @@ int32_t QCameraVideoChannel::releaseFrame(const void * opaque, bool isMetaData)
  * PARAMETERS :
  *   @cam_handle : camera handle
  *   @cam_ops    : ptr to camera ops table
+ *   @pp_mask    : post-proccess feature mask
  *
  * RETURN     : none
  *==========================================================================*/
@@ -528,6 +551,69 @@ QCameraReprocessChannel::~QCameraReprocessChannel()
 }
 
 /*===========================================================================
+ * FUNCTION   : addReprocStreamsFromSource
+ *
+ * DESCRIPTION: add reprocess streams from input source channel
+ *
+ * PARAMETERS :
+ *   @allocator      : stream related buffer allocator
+ *   @config         : pp feature configuration
+ *   @pSrcChannel    : ptr to input source channel that needs reprocess
+ *   @minStreamBufNum: number of stream buffers needed
+ *   @paddingInfo    : padding information
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& allocator,
+                                                            cam_pp_feature_config_t &config,
+                                                            QCameraChannel *pSrcChannel,
+                                                            uint8_t minStreamBufNum,
+                                                            cam_padding_info_t *paddingInfo)
+{
+    int32_t rc = 0;
+    QCameraStream *pStream = NULL;
+    QCameraHeapMemory *pStreamInfoBuf = NULL;
+    cam_stream_info_t *streamInfo = NULL;
+    for (int i = 0; i < pSrcChannel->getNumOfStreams(); i++) {
+        pStream = pSrcChannel->getStreamByIndex(i);
+        if (pStream != NULL) {
+            pStreamInfoBuf = allocator.allocateStreamInfoBuf(CAM_STREAM_TYPE_OFFLINE_PROC);
+            if (pStreamInfoBuf == NULL) {
+                ALOGE("%s: no mem for stream info buf", __func__);
+                rc = NO_MEMORY;
+                break;
+            }
+
+            streamInfo = (cam_stream_info_t *)pStreamInfoBuf->getPtr(0);
+            memset(streamInfo, 0, sizeof(cam_stream_info_t));
+            streamInfo->stream_type = CAM_STREAM_TYPE_OFFLINE_PROC;
+            // online reprocess, take same config from input stream
+            rc = pStream->getFormat(streamInfo->fmt);
+            rc = pStream->getFrameDimension(streamInfo->dim);
+            rc = pStream->getFrameOffset(streamInfo->buf_planes.plane_info);
+            streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
+
+            streamInfo->reprocess_config.pp_type = CAM_ONLINE_REPROCESS_TYPE;
+            streamInfo->reprocess_config.online.input_stream_id = pStream->getMyServerID();
+            streamInfo->reprocess_config.pp_feature_config = config;
+
+            rc = addStream(allocator,
+                           pStreamInfoBuf, minStreamBufNum,
+                           paddingInfo,
+                           NULL, NULL);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: add reprocess stream failed, ret = %d", __func__, rc);
+                break;
+            }
+        }
+    }
+
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : doReprocess
  *
  * DESCRIPTION: request to do a reprocess on the frame
@@ -547,14 +633,67 @@ int32_t QCameraReprocessChannel::doReprocess(mm_camera_super_buf_t *frame)
         return -1;
     }
 
-    rc = m_camOps->map_stream_buf(m_camHandle,
-                                  m_handle,
-                                  mStreams[0]->getMyHandle(),
-                                  CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF,
-                                  0,
-                                  -1,
-                                  frame->bufs[0]->fd,
-                                  frame->bufs[0]->frame_len);
+    for (int i = 0; i < frame->num_bufs; i++) {
+        QCameraStream *pStream = getStreamByHandle(frame->bufs[i]->stream_id);
+        if (pStream != NULL) {
+            cam_stream_parm_buffer_t param;
+            memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
+            param.type = CAM_STREAM_PARAM_TYPE_DO_REPROCESS;
+            param.reprocess.buf_index = frame->bufs[i]->buf_idx;
+            rc = pStream->setParameter(param);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: stream setParameter for reprocess failed", __func__);
+                break;
+            }
+        }
+    }
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : doReprocess
+ *
+ * DESCRIPTION: request to do a reprocess on the frame
+ *
+ * PARAMETERS :
+ *   @buf_fd     : fd to the input buffer that needs reprocess
+ *   @buf_lenght : length of the input buffer
+ *   @ret_val    : result of reprocess.
+ *                 Example: Could be faceID in case of register face image.
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraReprocessChannel::doReprocess(int buf_fd,
+                                             uint32_t buf_length,
+                                             int32_t &ret_val)
+{
+    int32_t rc = 0;
+    if (m_numStreams < 1) {
+        ALOGE("%s: No reprocess stream is created", __func__);
+        return -1;
+    }
+
+    uint32_t buf_idx = 0;
+    for (int i = 0; i < m_numStreams; i++) {
+        rc = mStreams[i]->mapBuf(CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF,
+                                 buf_idx, -1,
+                                 buf_fd, buf_length);
+
+        if (rc == NO_ERROR) {
+            cam_stream_parm_buffer_t param;
+            memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
+            param.type = CAM_STREAM_PARAM_TYPE_DO_REPROCESS;
+            param.reprocess.buf_index = buf_idx;
+            rc = mStreams[i]->setParameter(param);
+            if (rc == NO_ERROR) {
+                ret_val = param.reprocess.ret_val;
+            }
+            mStreams[i]->unmapBuf(CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF,
+                                  buf_idx, -1);
+        }
+    }
     return rc;
 }
 
