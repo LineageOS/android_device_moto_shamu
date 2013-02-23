@@ -499,8 +499,10 @@ typedef struct {
     cam_denoise_process_type_t process_plates;
 } cam_denoise_param_t;
 
+#define CAM_FACE_PROCESS_MASK_DETECTION    (1<<0)
+#define CAM_FACE_PROCESS_MASK_RECOGNITION  (1<<1)
 typedef struct {
-    int fd_mode;
+    int fd_mode;               /* mask of face process */
     int num_fd;
 } cam_fd_set_parm_t;
 
