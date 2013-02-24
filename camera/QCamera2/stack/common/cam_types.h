@@ -698,6 +698,7 @@ typedef struct {
 #define CAM_QCOM_FEATURE_FLIP           (1<<4)
 #define CAM_QCOM_FEATURE_HDR            (1<<5)
 #define CAM_QCOM_FEATURE_REGISTER_FACE  (1<<6)
+#define CAM_QCOM_FEATURE_SHARPNESS      (1<<7)
 
 // Counter clock wise
 typedef enum {
@@ -732,8 +733,7 @@ typedef struct {
     cam_rect_t input_crop;
     cam_rotation_t rotation;
     uint32_t flip;
-    // Sharpness in parameters can be used for reprocessing.
-    // Revisit whether we need color conversion here.
+    int32_t sharpness;
 } cam_pp_feature_config_t;
 
 typedef struct {

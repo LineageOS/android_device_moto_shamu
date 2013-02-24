@@ -2969,10 +2969,17 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
     // pp feature config
     cam_pp_feature_config_t pp_config;
     memset(&pp_config, 0, sizeof(cam_pp_feature_config_t));
-    if (mParameters.isZSLMode() && mParameters.isWNREnabled()) {
-        pp_config.feature_mask |= CAM_QCOM_FEATURE_DENOISE2D;
-        pp_config.denoise2d.denoise_enable = 1;
-        pp_config.denoise2d.process_plates = mParameters.getWaveletDenoiseProcessPlate();
+    if (mParameters.isZSLMode()) {
+        if (gCamCapability[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
+            pp_config.feature_mask |= CAM_QCOM_FEATURE_SHARPNESS;
+            pp_config.sharpness = mParameters.getInt(QCameraParameters::KEY_QC_SHARPNESS);
+        }
+
+        if (mParameters.isWNREnabled()) {
+            pp_config.feature_mask |= CAM_QCOM_FEATURE_DENOISE2D;
+            pp_config.denoise2d.denoise_enable = 1;
+            pp_config.denoise2d.process_plates = mParameters.getWaveletDenoiseProcessPlate();
+        }
     }
     uint8_t minStreamBufNum = mParameters.getNumOfSnapshots();
     rc = pChannel->addReprocStreamsFromSource(*this,
@@ -3678,7 +3685,9 @@ bool QCamera2HardwareInterface::needReprocess()
     if (!mParameters.isJpegPictureFormat()) {
         // RAW image, no need to reprocess
         return false;
-    } else if (mParameters.isZSLMode() && mParameters.isWNREnabled()) {
+    } else if (mParameters.isZSLMode() &&
+               ((gCamCapability[mCameraId]->min_required_pp_mask > 0) ||
+                mParameters.isWNREnabled())) {
         return true;
     } else {
         return false;
