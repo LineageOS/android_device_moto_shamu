@@ -2350,6 +2350,11 @@ int32_t QCameraParameters::setZslMode(const QCameraParameters& params)
 
                 // ZSL mode changed, need restart preview
                 m_bNeedRestart = true;
+
+                return AddSetParmEntryToBatch(m_pParamBuf,
+                                              CAM_INTF_PARM_ZSL_MODE,
+                                              sizeof(value),
+                                              &value);
             } else {
                 ALOGE("Invalid ZSL mode value: %s", str_val);
                 return BAD_VALUE;
