@@ -82,6 +82,62 @@ typedef struct {
 #define QCAMERA_DUMP_FRM_RAW        1<<4
 #define QCAMERA_DUMP_FRM_JPEG       1<<5
 
+typedef enum {
+    QCAMERA_NOTIFY_CALLBACK,
+    QCAMERA_DATA_CALLBACK,
+    QCAMERA_DATA_TIMESTAMP_CALLBACK,
+    QCAMERA_DATA_SNAPSHOT_CALLBACK
+} qcamera_callback_type_m;
+
+typedef void (*camera_release_callback)(void *user_data, void *cookie);
+
+typedef struct {
+    qcamera_callback_type_m  cb_type;    // event type
+    int32_t                  msg_type;   // msg type
+    int32_t                  ext1;       // extended parameter
+    int32_t                  ext2;       // extended parameter
+    camera_memory_t *        data;       // ptr to data memory struct
+    unsigned int             index;      // index of the buf in the whole buffer
+    int64_t                  timestamp;  // buffer timestamp
+    camera_frame_metadata_t *metadata;   // meta data
+    void                    *user_data;  // any data needs to be released after callback
+    void                    *cookie;     // release callback cookie
+    camera_release_callback  release_cb; // release callback
+} qcamera_callback_argm_t;
+
+class QCameraCbNotifier {
+public:
+    QCameraCbNotifier(QCamera2HardwareInterface *parent) :
+                          mNotifyCb (NULL),
+                          mDataCb (NULL),
+                          mDataCbTimestamp (NULL),
+                          mCallbackCookie (NULL),
+                          mParent (parent),
+                          mDataQ(releaseNotifications, this) {}
+
+    virtual ~QCameraCbNotifier();
+
+    virtual int32_t notifyCallback(qcamera_callback_argm_t &cbArgs);
+    virtual void setCallbacks(camera_notify_callback notifyCb,
+                              camera_data_callback dataCb,
+                              camera_data_timestamp_callback dataCbTimestamp,
+                              void *callbackCookie);
+    virtual int32_t startSnapshots();
+    virtual void stopSnapshots();
+    static void * cbNotifyRoutine(void * data);
+    static void releaseNotifications(void *data, void *user_data);
+    static bool matchSnapshotNotifications(void *data, void *user_data);
+private:
+
+    camera_notify_callback         mNotifyCb;
+    camera_data_callback           mDataCb;
+    camera_data_timestamp_callback mDataCbTimestamp;
+    void                          *mCallbackCookie;
+    QCamera2HardwareInterface     *mParent;
+
+    QCameraQueue     mDataQ;
+    QCameraCmdThread mProcTh;
+};
 class QCamera2HardwareInterface : public QCameraAllocator,
                                     public QCameraThermalCallback
 {
@@ -144,6 +200,7 @@ public:
 
     friend class QCameraStateMachine;
     friend class QCameraPostProcessor;
+    friend class QCameraCbNotifier;
 
 private:
     int setPreviewWindow(struct preview_stream_ops *window);
@@ -295,6 +352,9 @@ private:
                                             QCameraStream *stream,
                                             void *userdata);
 
+    static void releaseCameraMemory(void *data, void *cookie);
+    static void returnStreamBuffer(void *data, void *cookie);
+
 private:
     camera_device_t   mCameraDevice;
     uint8_t           mCameraId;
@@ -315,14 +375,12 @@ private:
     QCameraStateMachine m_stateMachine;   // state machine
     QCameraPostProcessor m_postprocessor; // post processor
     QCameraThermalAdapter &m_thermalAdapter;
+    QCameraCbNotifier m_cbNotifier;
     pthread_mutex_t m_lock;
     pthread_cond_t m_cond;
     qcamera_api_result_t m_apiResult;
 
     QCameraChannel *m_channels[QCAMERA_CH_TYPE_MAX]; // array holding channel ptr
-
-    QCameraQueue m_evtNotifyQ;          // evt notify queue
-    QCameraCmdThread m_evtNotifyTh;     // thread handling evt notify to service layer
 
     bool m_bShutterSoundPlayed;         // if shutter sound had been played
 
@@ -330,10 +388,6 @@ private:
     // and beforeany focus callback/cancel_focus happens. This flag is not an indication
     // of whether lens is moving or not.
     bool m_bAutoFocusRunning;
-
-    camera_frame_metadata_t mRoiData; // meta data for face detection
-    camera_face_t mFaces[MAX_ROI];    // meta data for face detection detail info
-    camera_memory_t *m_pHistBuf;      // memory for histogram info to pass to upper layer
 
     power_module_t *m_pPowerModule;   // power module
 

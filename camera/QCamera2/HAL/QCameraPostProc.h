@@ -126,18 +126,16 @@ private:
                        qcamera_jpeg_data_t *jpeg_job_data,
                        uint8_t &needNewSess);
     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
-    void releaseNotifyData(qcamera_data_argm_t *app_cb);
+    static void releaseNotifyData(void *user_data, void *cookie);
     void releaseJpegJobData(qcamera_jpeg_data_t *job);
     int32_t processRawImageImpl(mm_camera_super_buf_t *recvd_frame);
 
-    static void releaseOutputData(void *data, void *user_data);
     static void releasePPInputData(void *data, void *user_data);
     static void releaseJpegInputData(void *data, void *user_data);
     static void releaseOngoingJpegData(void *data, void *user_data);
     static void releaseOngoingPPData(void *data, void *user_data);
 
     static void *dataProcessRoutine(void *data);
-    static void *dataNotifyRoutine(void *data);
 
 private:
     QCamera2HardwareInterface *m_parent;
@@ -158,8 +156,6 @@ private:
     QCameraQueue m_ongoingJpegQ;        // ongoing jpeg job queue
     QCameraQueue m_inputRawQ;           // input raw job queue
     QCameraCmdThread m_dataProcTh;      // thread for data processing
-    QCameraQueue m_dataNotifyQ;         // data notify queue
-    QCameraCmdThread m_dataNotifyTh;    // thread handling data notify to service layer
 };
 
 }; // namespace qcamera

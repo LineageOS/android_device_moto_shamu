@@ -334,11 +334,17 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
             data = memory->getMemory(idx, false);
             ALOGE("%s: Invalid preview format, buffer size in preview callback may be wrong.", __func__);
         }
-        pme->mDataCb(CAMERA_MSG_PREVIEW_FRAME, data, 0, NULL, pme->mCallbackCookie);
-        if (previewMem) {
-            previewMem->release(previewMem);
+        qcamera_callback_argm_t cbArg;
+        memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+        cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+        cbArg.msg_type = CAMERA_MSG_PREVIEW_FRAME;
+        cbArg.data = data;
+        if ( previewMem ) {
+            cbArg.user_data = previewMem;
+            cbArg.release_cb = releaseCameraMemory;
         }
-        ALOGD("end of cb");
+        cbArg.cookie = pme;
+        pme->m_cbNotifier.notifyCallback(cbArg);
     }
 
     free(super_frame);
@@ -407,14 +413,20 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
         if (pme->needProcessPreviewFrame() &&
             pme->mDataCb != NULL &&
             pme->msgTypeEnabled(CAMERA_MSG_PREVIEW_FRAME) > 0 ) {
-            //Sending preview callback if corresponding Msgs are enabled
-            pme->mDataCb(CAMERA_MSG_PREVIEW_FRAME, preview_mem,
-                         0, NULL, pme->mCallbackCookie);
+            qcamera_callback_argm_t cbArg;
+            memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+            cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+            cbArg.msg_type = CAMERA_MSG_PREVIEW_FRAME;
+            cbArg.data = preview_mem;
+            int user_data = frame->buf_idx;
+            cbArg.user_data = ( void * ) user_data;
+            cbArg.cookie = stream;
+            cbArg.release_cb = returnStreamBuffer;
+            pme->m_cbNotifier.notifyCallback(cbArg);
+        } else {
+            stream->bufDone(frame->buf_idx);
         }
-
-        stream->bufDone(frame->buf_idx);
     }
-
     free(super_frame);
 }
 
@@ -544,11 +556,13 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
                              frame->buf_idx, QCAMERA_DUMP_FRM_VIDEO);
         if ((pme->mDataCbTimestamp != NULL) &&
             pme->msgTypeEnabled(CAMERA_MSG_VIDEO_FRAME) > 0) {
-            pme->mDataCbTimestamp(timeStamp,
-                                  CAMERA_MSG_VIDEO_FRAME,
-                                  video_mem,
-                                  0,
-                                  pme->mCallbackCookie);
+            qcamera_callback_argm_t cbArg;
+            memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+            cbArg.cb_type = QCAMERA_DATA_TIMESTAMP_CALLBACK;
+            cbArg.msg_type = CAMERA_MSG_VIDEO_FRAME;
+            cbArg.data = video_mem;
+            cbArg.timestamp = timeStamp;
+            pme->m_cbNotifier.notifyCallback(cbArg);
         }
     }
     free(super_frame);
@@ -852,6 +866,325 @@ void QCamera2HardwareInterface::debugShowPreviewFPS()
         n_pLastFpsTime = now;
         n_pLastFrameCount = n_pFrameCount;
     }
+}
+
+/*===========================================================================
+ * FUNCTION   : ~QCameraCbNotifier
+ *
+ * DESCRIPTION: Destructor for exiting the callback context.
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
+QCameraCbNotifier::~QCameraCbNotifier()
+{
+    mProcTh.exit();
+}
+
+/*===========================================================================
+ * FUNCTION   : releaseNotifications
+ *
+ * DESCRIPTION: callback for releasing data stored in the callback queue.
+ *
+ * PARAMETERS :
+ *   @data      : data to be released
+ *   @user_data : context data
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void QCameraCbNotifier::releaseNotifications(void *data, void *user_data)
+{
+    qcamera_callback_argm_t *arg = ( qcamera_callback_argm_t * ) data;
+
+    if ( ( NULL != arg ) && ( NULL != user_data ) ) {
+
+        if ( arg->release_cb ) {
+            arg->release_cb(arg->user_data, arg->cookie);
+        }
+
+        delete arg;
+    }
+}
+
+/*===========================================================================
+ * FUNCTION   : matchSnapshotNotifications
+ *
+ * DESCRIPTION: matches snapshot data callbacks
+ *
+ * PARAMETERS :
+ *   @data      : data to match
+ *   @user_data : context data
+ *
+ * RETURN     : bool match
+ *              true - match found
+ *              false- match not found
+ *==========================================================================*/
+bool QCameraCbNotifier::matchSnapshotNotifications(void *data,
+                                                   void */*user_data*/)
+{
+    qcamera_callback_argm_t *arg = ( qcamera_callback_argm_t * ) data;
+    if ( NULL != arg ) {
+        if ( QCAMERA_DATA_SNAPSHOT_CALLBACK == arg->cb_type ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/*===========================================================================
+ * FUNCTION   : cbNotifyRoutine
+ *
+ * DESCRIPTION: callback thread which interfaces with the upper layers
+ *              given input commands.
+ *
+ * PARAMETERS :
+ *   @data    : context data
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void * QCameraCbNotifier::cbNotifyRoutine(void * data)
+{
+    int running = 1;
+    int ret;
+    QCameraCbNotifier *pme = (QCameraCbNotifier *)data;
+    QCameraCmdThread *cmdThread = &pme->mProcTh;
+    uint8_t isSnapshotActive = FALSE;
+    uint32_t numOfSnapshotExpected = 0;
+    uint32_t numOfSnapshotRcvd = 0;
+
+    ALOGV("%s: E", __func__);
+    do {
+        do {
+            ret = cam_sem_wait(&cmdThread->cmd_sem);
+            if (ret != 0 && errno != EINVAL) {
+                ALOGV("%s: cam_sem_wait error (%s)",
+                           __func__, strerror(errno));
+                return NULL;
+            }
+        } while (ret != 0);
+
+        camera_cmd_type_t cmd = cmdThread->getCmd();
+        ALOGV("%s: get cmd %d", __func__, cmd);
+        switch (cmd) {
+        case CAMERA_CMD_TYPE_START_DATA_PROC:
+            {
+                isSnapshotActive = TRUE;
+                numOfSnapshotExpected = pme->mParent->numOfSnapshotsExpected();
+                numOfSnapshotRcvd = 0;
+            }
+            break;
+        case CAMERA_CMD_TYPE_STOP_DATA_PROC:
+            {
+                pme->mDataQ.flushNodes(matchSnapshotNotifications);
+                isSnapshotActive = FALSE;
+
+                numOfSnapshotExpected = 0;
+                numOfSnapshotRcvd = 0;
+            }
+            break;
+        case CAMERA_CMD_TYPE_DO_NEXT_JOB:
+            {
+                qcamera_callback_argm_t *cb =
+                    (qcamera_callback_argm_t *)pme->mDataQ.dequeue();
+                if (NULL != cb) {
+                    ALOGV("%s: cb type %d received",
+                          __func__,
+                          cb->cb_type);
+                    if (pme->mParent->msgTypeEnabled(cb->msg_type)) {
+                        switch (cb->cb_type) {
+                        case QCAMERA_NOTIFY_CALLBACK:
+                            {
+                                if (pme->mNotifyCb) {
+                                    pme->mNotifyCb(cb->msg_type,
+                                                  cb->ext1,
+                                                  cb->ext2,
+                                                  pme->mCallbackCookie);
+                                } else {
+                                    ALOGE("%s : notify callback not set!",
+                                          __func__);
+                                }
+                            }
+                            break;
+                        case QCAMERA_DATA_CALLBACK:
+                            {
+                                if (pme->mDataCb) {
+                                    pme->mDataCb(cb->msg_type,
+                                                 cb->data,
+                                                 cb->index,
+                                                 cb->metadata,
+                                                 pme->mCallbackCookie);
+                                } else {
+                                    ALOGE("%s : data callback not set!",
+                                          __func__);
+                                }
+                            }
+                            break;
+                        case QCAMERA_DATA_TIMESTAMP_CALLBACK:
+                            {
+                                if(pme->mDataCbTimestamp) {
+                                    pme->mDataCbTimestamp(cb->timestamp,
+                                                          cb->msg_type,
+                                                          cb->data,
+                                                          cb->index,
+                                                          pme->mCallbackCookie);
+                                } else {
+                                    ALOGE("%s:data cb with tmp not set!",
+                                          __func__);
+                                }
+                            }
+                            break;
+                        case QCAMERA_DATA_SNAPSHOT_CALLBACK:
+                            {
+                                if (TRUE == isSnapshotActive && pme->mDataCb ) {
+                                    pme->mDataCb(cb->msg_type,
+                                                 cb->data,
+                                                 cb->index,
+                                                 cb->metadata,
+                                                 pme->mCallbackCookie);
+                                    numOfSnapshotRcvd++;
+                                    if (numOfSnapshotExpected > 0 &&
+                                        numOfSnapshotExpected == numOfSnapshotRcvd) {
+                                        // notify HWI that snapshot is done
+                                        pme->mParent->processEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE,
+                                                                 NULL);
+                                    }
+                                }
+                            }
+                        default:
+                            {
+                                ALOGE("%s : invalid cb type %d",
+                                      __func__,
+                                      cb->cb_type);
+                            }
+                            break;
+                        };
+                    } else {
+                        ALOGE("%s : cb message type %d not enabled!",
+                              __func__,
+                              cb->msg_type);
+                    }
+                    if ( cb->release_cb ) {
+                        cb->release_cb(cb->user_data, cb->cookie);
+                    }
+                    delete cb;
+                } else {
+                    ALOGE("%s: invalid cb type passed", __func__);
+                }
+            }
+            break;
+        case CAMERA_CMD_TYPE_EXIT:
+            {
+                pme->mDataQ.flush();
+                running = 0;
+            }
+            break;
+        default:
+            break;
+        }
+    } while (running);
+    ALOGV("%s: X", __func__);
+
+    return NULL;
+}
+
+/*===========================================================================
+ * FUNCTION   : notifyCallback
+ *
+ * DESCRIPTION: Enqueus pending callback notifications for the upper layers.
+ *
+ * PARAMETERS :
+ *   @cbArgs  : callback arguments
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraCbNotifier::notifyCallback(qcamera_callback_argm_t &cbArgs)
+{
+    qcamera_callback_argm_t *cbArg = new qcamera_callback_argm_t();
+    if (NULL == cbArg) {
+        ALOGE("%s: no mem for qcamera_callback_argm_t", __func__);
+        return NO_MEMORY;
+    }
+    memset(cbArg, 0, sizeof(qcamera_callback_argm_t));
+    *cbArg = cbArgs;
+
+    if (mDataQ.enqueue((void *)cbArg)) {
+        mProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
+    } else {
+        ALOGE("%s: Error adding cb data into queue", __func__);
+        delete cbArg;
+        return UNKNOWN_ERROR;
+    }
+
+    return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : setCallbacks
+ *
+ * DESCRIPTION: Initializes the callback functions, which would be used for
+ *              communication with the upper layers and launches the callback
+ *              context in which the callbacks will occur.
+ *
+ * PARAMETERS :
+ *   @notifyCb          : notification callback
+ *   @dataCb            : data callback
+ *   @dataCbTimestamp   : data with timestamp callback
+ *   @callbackCookie    : callback context data
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void QCameraCbNotifier::setCallbacks(camera_notify_callback notifyCb,
+                                     camera_data_callback dataCb,
+                                     camera_data_timestamp_callback dataCbTimestamp,
+                                     void *callbackCookie)
+{
+    if ( ( NULL == mNotifyCb ) &&
+         ( NULL == mDataCb ) &&
+         ( NULL == mDataCbTimestamp ) &&
+         ( NULL == mCallbackCookie ) ) {
+        mNotifyCb = notifyCb;
+        mDataCb = dataCb;
+        mDataCbTimestamp = dataCbTimestamp;
+        mCallbackCookie = callbackCookie;
+        mProcTh.launch(cbNotifyRoutine, this);
+    } else {
+        ALOGE("%s : Camera callback notifier already initialized!",
+              __func__);
+    }
+}
+
+/*===========================================================================
+ * FUNCTION   : startSnapshots
+ *
+ * DESCRIPTION: Enables snapshot mode
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraCbNotifier::startSnapshots()
+{
+    return mProcTh.sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, FALSE, TRUE);
+}
+
+/*===========================================================================
+ * FUNCTION   : stopSnapshots
+ *
+ * DESCRIPTION: Disables snapshot processing mode
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void QCameraCbNotifier::stopSnapshots()
+{
+    mProcTh.sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC, FALSE, TRUE);
 }
 
 }; // namespace qcamera
