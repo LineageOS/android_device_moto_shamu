@@ -2390,6 +2390,11 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
     case CAM_FOCUS_MODE_AUTO:
     case CAM_FOCUS_MODE_MACRO:
         if (m_bAutoFocusRunning) {
+            if (focus_data.focus_state == CAM_AF_SCANNING) {
+                // in the middle of focusing, just ignore it
+                break;
+            }
+
             // update focus distance
             mParameters.updateFocusDistances(&focus_data.focus_dist);
             ret = sendEvtNotify(CAMERA_MSG_FOCUS,

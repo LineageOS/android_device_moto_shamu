@@ -488,6 +488,7 @@ private:
     String8 createFpsString(const cam_fps_range_t *fps, int len);
     String8 createZoomRatioValuesString(int *zoomRatios, int length);
     int lookupAttr(const QCameraMap arr[], int len, const char *name);
+    const char *lookupNameByValue(const QCameraMap arr[], int len, int value);
 
     // ops for batch set/get params with server
     int32_t initBatchUpdate(parm_buffer_t *p_table);

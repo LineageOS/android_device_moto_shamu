@@ -369,15 +369,14 @@ const QCameraParameters::QCameraMap QCameraParameters::PICTURE_TYPES_MAP[] = {
 const QCameraParameters::QCameraMap QCameraParameters::RAW_FORMATS_MAP[] = {
 };
 
-// TODO: enable all after metadata stream is enabled for auto_focus_done
 const QCameraParameters::QCameraMap QCameraParameters::FOCUS_MODES_MAP[] = {
-    //{ FOCUS_MODE_AUTO,               CAM_FOCUS_MODE_AUTO},
-    { FOCUS_MODE_INFINITY,           CAM_FOCUS_MODE_INFINITY }
-    //{ FOCUS_MODE_MACRO,              CAM_FOCUS_MODE_MACRO },
-    //{ FOCUS_MODE_FIXED,              CAM_FOCUS_MODE_FIXED },
-    //{ FOCUS_MODE_EDOF,               CAM_FOCUS_MODE_EDOF },
-    //{ FOCUS_MODE_CONTINUOUS_PICTURE, CAM_FOCUS_MODE_CONTINOUS_PICTURE},
-    //{ FOCUS_MODE_CONTINUOUS_VIDEO,   CAM_FOCUS_MODE_CONTINOUS_VIDEO }
+    { FOCUS_MODE_AUTO,               CAM_FOCUS_MODE_AUTO },
+    { FOCUS_MODE_INFINITY,           CAM_FOCUS_MODE_INFINITY },
+    { FOCUS_MODE_MACRO,              CAM_FOCUS_MODE_MACRO },
+    { FOCUS_MODE_FIXED,              CAM_FOCUS_MODE_FIXED },
+    { FOCUS_MODE_EDOF,               CAM_FOCUS_MODE_EDOF },
+    { FOCUS_MODE_CONTINUOUS_PICTURE, CAM_FOCUS_MODE_CONTINOUS_PICTURE },
+    { FOCUS_MODE_CONTINUOUS_VIDEO,   CAM_FOCUS_MODE_CONTINOUS_VIDEO }
 };
 
 const QCameraParameters::QCameraMap QCameraParameters::EFFECT_MODES_MAP[] = {
@@ -871,6 +870,28 @@ int QCameraParameters::lookupAttr(const QCameraMap arr[], int len, const char *n
         }
     }
     return NAME_NOT_FOUND;
+}
+
+/*===========================================================================
+ * FUNCTION   : lookupNameByValue
+ *
+ * DESCRIPTION: lookup a name by its value
+ *
+ * PARAMETERS :
+ *   @attr    : map contains <name, value>
+ *   @len     : size of the map
+ *   @value   : value to be looked up
+ *
+ * RETURN     : name str or NULL if not found
+ *==========================================================================*/
+const char *QCameraParameters::lookupNameByValue(const QCameraMap arr[], int len, int value)
+{
+    for (int i = 0; i < len; i++) {
+        if (arr[i].val == value) {
+            return arr[i].desc;
+        }
+    }
+    return NULL;
 }
 
 /*===========================================================================
@@ -2687,7 +2708,14 @@ int32_t QCameraParameters::initDefaultParameters()
         set(KEY_SUPPORTED_FOCUS_MODES, focusModeValues);
 
         // Set default focus mode and update corresponding parameter buf
-        setFocusMode(FOCUS_MODE_INFINITY); //TODO: change to FOCUS_MODE_AUTO
+        const char *focusMode = lookupNameByValue(FOCUS_MODES_MAP,
+                                             sizeof(FOCUS_MODES_MAP)/sizeof(QCameraMap),
+                                             m_pCapability->supported_focus_modes[0]);
+        if (focusMode != NULL) {
+            setFocusMode(focusMode);
+        } else {
+            setFocusMode(FOCUS_MODE_FIXED);
+        }
     } else {
         ALOGE("%s: supported focus modes cnt is 0!!!", __func__);
     }
