@@ -493,6 +493,108 @@ int mm_app_tc_capture_burst(mm_camera_app_t *cam_app)
     return rc;
 }
 
+int mm_app_tc_rdi_burst(mm_camera_app_t *cam_app)
+{
+    int rc = MM_CAMERA_OK, rc2 = MM_CAMERA_OK;
+    int i, j;
+    mm_camera_test_obj_t test_obj;
+
+    printf("\n Verifying rdi burst (3) capture...\n");
+    for (i = 0; i < cam_app->num_cameras; i++) {
+        memset(&test_obj, 0, sizeof(mm_camera_test_obj_t));
+        rc = mm_app_open(cam_app, i, &test_obj);
+        if (rc != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:mm_app_open() cam_idx=%d, err=%d\n",
+                       __func__, i, rc);
+            break;
+        }
+
+        for (j = 0; j < MM_QCAMERA_APP_UTEST_INNER_LOOP; j++) {
+            rc = mm_app_start_rdi(&test_obj, 3);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: mm_app_start_preview() cam_idx=%d, err=%d\n",
+                           __func__, i, rc);
+                break;
+            }
+            sleep(1);
+            rc = mm_app_stop_rdi(&test_obj);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: mm_app_stop_preview() cam_idx=%d, err=%d\n",
+                           __func__, i, rc);
+                break;
+            }
+        }
+
+        rc2 = mm_app_close(&test_obj);
+        if (rc2 != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:mm_app_close() cam_idx=%d, err=%d\n",
+                       __func__, i, rc2);
+            if (rc == MM_CAMERA_OK) {
+                rc = rc2;
+            }
+            break;
+        }
+    }
+    if (rc == MM_CAMERA_OK) {
+        printf("\nPassed\n");
+    } else {
+        printf("\nFailed\n");
+    }
+    CDBG("%s:END, rc = %d\n", __func__, rc);
+    return rc;
+}
+
+int mm_app_tc_rdi_cont(mm_camera_app_t *cam_app)
+{
+    int rc = MM_CAMERA_OK, rc2 = MM_CAMERA_OK;
+    int i, j;
+    mm_camera_test_obj_t test_obj;
+
+    printf("\n Verifying rdi continuous capture...\n");
+    for (i = 0; i < cam_app->num_cameras; i++) {
+        memset(&test_obj, 0, sizeof(mm_camera_test_obj_t));
+        rc = mm_app_open(cam_app, i, &test_obj);
+        if (rc != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:mm_app_open() cam_idx=%d, err=%d\n",
+                       __func__, i, rc);
+            break;
+        }
+
+        for (j = 0; j < MM_QCAMERA_APP_UTEST_INNER_LOOP; j++) {
+            rc = mm_app_start_rdi(&test_obj, 0);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: mm_app_start_preview() cam_idx=%d, err=%d\n",
+                           __func__, i, rc);
+                break;
+            }
+            sleep(1);
+            rc = mm_app_stop_rdi(&test_obj);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: mm_app_stop_preview() cam_idx=%d, err=%d\n",
+                           __func__, i, rc);
+                break;
+            }
+        }
+
+        rc2 = mm_app_close(&test_obj);
+        if (rc2 != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:mm_app_close() cam_idx=%d, err=%d\n",
+                       __func__, i, rc2);
+            if (rc == MM_CAMERA_OK) {
+                rc = rc2;
+            }
+            break;
+        }
+    }
+    if (rc == MM_CAMERA_OK) {
+        printf("\nPassed\n");
+    } else {
+        printf("\nFailed\n");
+    }
+    CDBG("%s:END, rc = %d\n", __func__, rc);
+    return rc;
+}
+
 int mm_app_gen_test_cases()
 {
     int tc = 0;
@@ -505,6 +607,8 @@ int mm_app_gen_test_cases()
     //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_start_stop_live_snapshot;
     //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_capture_regular;
     //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_capture_burst;
+    //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_rdi_cont;
+    //if (tc < MM_QCAM_APP_TEST_NUM) mm_app_tc[tc++].f = mm_app_tc_rdi_burst;
 
     return tc;
 }

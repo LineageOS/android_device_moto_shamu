@@ -19,8 +19,8 @@ LOCAL_SRC_FILES:= \
         src/mm_qcamera_unit_test.c \
         src/mm_qcamera_video.c \
         src/mm_qcamera_preview.c \
-        src/mm_qcamera_snapshot.c
-#        src/mm_qcamera_rdi.c \
+        src/mm_qcamera_snapshot.c \
+        src/mm_qcamera_rdi.c
 #        src/mm_qcamera_dual_test.c \
 
 LOCAL_C_INCLUDES:=$(LOCAL_PATH)/inc
