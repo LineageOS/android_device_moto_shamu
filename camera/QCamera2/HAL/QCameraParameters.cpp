@@ -477,6 +477,11 @@ const QCameraParameters::QCameraMap QCameraParameters::ON_OFF_MODES_MAP[] = {
     { VALUE_ON,  1 }
 };
 
+const QCameraParameters::QCameraMap QCameraParameters::TOUCH_AF_AEC_MODES_MAP[] = {
+    { QCameraParameters::TOUCH_AF_AEC_OFF, 0 },
+    { QCameraParameters::TOUCH_AF_AEC_ON, 1 }
+};
+
 const QCameraParameters::QCameraMap QCameraParameters::ENABLE_DISABLE_MODES_MAP[] = {
     { VALUE_ENABLE,  1 },
     { VALUE_DISABLE, 0 }
@@ -2931,8 +2936,11 @@ int32_t QCameraParameters::initDefaultParameters()
     m_bZslMode =false;
 
     //Set Touch AF/AEC
-    set(KEY_QC_SUPPORTED_TOUCH_AF_AEC, onOffValues);
-    set(KEY_QC_TOUCH_AF_AEC, VALUE_OFF);
+    String8 touchValues = createValuesStringFromMap(
+       TOUCH_AF_AEC_MODES_MAP, sizeof(TOUCH_AF_AEC_MODES_MAP) / sizeof(QCameraMap));
+
+    set(KEY_QC_SUPPORTED_TOUCH_AF_AEC, touchValues);
+    set(KEY_QC_TOUCH_AF_AEC, TOUCH_AF_AEC_OFF);
 
     // Set default Auto Exposure lock value
     setAecLock(VALUE_FALSE);

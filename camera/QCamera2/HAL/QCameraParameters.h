@@ -525,6 +525,7 @@ private:
     static const QCameraMap ENABLE_DISABLE_MODES_MAP[];
     static const QCameraMap DENOISE_ON_OFF_MODES_MAP[];
     static const QCameraMap TRUE_FALSE_MODES_MAP[];
+    static const QCameraMap TOUCH_AF_AEC_MODES_MAP[];
 
     cam_capability_t *m_pCapability;
     mm_camera_vtbl_t *m_pCamOpsTbl;
