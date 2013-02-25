@@ -286,7 +286,7 @@ int32_t QCameraChannel::bufDone(mm_camera_super_buf_t *recvd_frame)
              for (int j = 0; j < m_numStreams; j++) {
                  if (mStreams[j] != NULL &&
                      mStreams[j]->getMyHandle() == recvd_frame->bufs[i]->stream_id) {
-                     rc = mStreams[j]->bufDone(recvd_frame->bufs[j]->buf_idx);
+                     rc = mStreams[j]->bufDone(recvd_frame->bufs[i]->buf_idx);
                      break; // break loop j
                  }
              }
