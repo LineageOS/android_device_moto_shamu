@@ -152,6 +152,9 @@ typedef struct{
                                            * such as CAM_QCOM_FEATURE_SUPPORTED_FACE_DETECTION*/
     cam_padding_info_t padding_info;      /* padding information from PP */
     int8_t min_num_pp_bufs;               /* minimum number of buffers needed by postproc module */
+    uint32_t min_required_pp_mask;        /* min required pp feature masks for ZSL.
+                                           * depends on hardware limitation, i.e. for 8974,
+                                           * sharpness is required for all ZSL snapshot frames */
 } cam_capability_t;
 
 typedef enum {
