@@ -54,6 +54,7 @@ QCameraChannel::QCameraChannel(uint32_t cam_handle,
 {
     m_camHandle = cam_handle;
     m_camOps = cam_ops;
+    m_bIsActive = false;
 
     m_handle = 0;
     m_numStreams = 0;
@@ -73,6 +74,7 @@ QCameraChannel::QCameraChannel()
 {
     m_camHandle = 0;
     m_camOps = NULL;
+    m_bIsActive = false;
 
     m_handle = 0;
     m_numStreams = 0;
@@ -90,6 +92,10 @@ QCameraChannel::QCameraChannel()
  *==========================================================================*/
 QCameraChannel::~QCameraChannel()
 {
+    if (m_bIsActive) {
+        stop();
+    }
+
     for (int i = 0; i < m_numStreams; i++) {
         if (mStreams[i] != NULL) {
             delete mStreams[i];
@@ -227,6 +233,8 @@ int32_t QCameraChannel::start(QCameraParameters &param)
                 mStreams[i]->stop();
             }
         }
+    } else {
+        m_bIsActive = true;
     }
 
     return rc;
@@ -254,6 +262,7 @@ int32_t QCameraChannel::stop()
         }
     }
 
+    m_bIsActive = false;
     return rc;
 }
 
@@ -579,6 +588,12 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
     for (int i = 0; i < pSrcChannel->getNumOfStreams(); i++) {
         pStream = pSrcChannel->getStreamByIndex(i);
         if (pStream != NULL) {
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)) {
+                // Skip metadata for reprocess now because PP module cannot handle meta data
+                // May need furthur discussion if Imaginglib need meta data
+                continue;
+            }
+
             pStreamInfoBuf = allocator.allocateStreamInfoBuf(CAM_STREAM_TYPE_OFFLINE_PROC);
             if (pStreamInfoBuf == NULL) {
                 ALOGE("%s: no mem for stream info buf", __func__);
