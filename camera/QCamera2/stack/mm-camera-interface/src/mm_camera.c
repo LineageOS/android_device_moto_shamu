@@ -655,6 +655,52 @@ int32_t mm_camera_prepare_snapshot(mm_camera_obj_t *my_obj)
 }
 
 /*===========================================================================
+ * FUNCTION   : mm_camera_start_zsl_snapshot
+ *
+ * DESCRIPTION: start zsl snapshot
+ *
+ * PARAMETERS :
+ *   @my_obj       : camera object
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_camera_start_zsl_snapshot(mm_camera_obj_t *my_obj)
+{
+    int32_t rc = -1;
+    int32_t value = 0;
+
+    rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd,
+             CAM_PRIV_START_ZSL_SNAPSHOT, &value);
+
+    pthread_mutex_unlock(&my_obj->cam_lock);
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : mm_camera_stop_zsl_snapshot
+ *
+ * DESCRIPTION: stop zsl capture
+ *
+ * PARAMETERS :
+ *   @my_obj       : camera object
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_camera_stop_zsl_snapshot(mm_camera_obj_t *my_obj)
+{
+    int32_t rc = -1;
+    int32_t value;
+    rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd,
+             CAM_PRIV_STOP_ZSL_SNAPSHOT, &value);
+    pthread_mutex_unlock(&my_obj->cam_lock);
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : mm_camera_add_channel
  *
  * DESCRIPTION: add a channel
@@ -1053,7 +1099,8 @@ int32_t mm_camera_cancel_super_buf_request(mm_camera_obj_t *my_obj, uint32_t ch_
  *              0  -- success
  *              -1 -- failure
  *==========================================================================*/
-int32_t mm_camera_flush_super_buf_queue(mm_camera_obj_t *my_obj, uint32_t ch_id)
+int32_t mm_camera_flush_super_buf_queue(mm_camera_obj_t *my_obj, uint32_t ch_id,
+                                                             uint32_t frame_idx)
 {
     int32_t rc = -1;
     mm_channel_t * ch_obj =
@@ -1065,7 +1112,7 @@ int32_t mm_camera_flush_super_buf_queue(mm_camera_obj_t *my_obj, uint32_t ch_id)
 
         rc = mm_channel_fsm_fn(ch_obj,
                                MM_CHANNEL_EVT_FLUSH_SUPER_BUF_QUEUE,
-                               NULL,
+                               (void *)frame_idx,
                                NULL);
     } else {
         pthread_mutex_unlock(&my_obj->cam_lock);

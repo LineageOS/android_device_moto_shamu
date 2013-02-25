@@ -65,7 +65,9 @@ int32_t mm_channel_stop(mm_channel_t *my_obj);
 int32_t mm_channel_request_super_buf(mm_channel_t *my_obj,
                                      uint32_t num_buf_requested);
 int32_t mm_channel_cancel_super_buf_request(mm_channel_t *my_obj);
-int32_t mm_channel_flush_super_buf_queue(mm_channel_t *my_obj);
+int32_t mm_channel_flush_super_buf_queue(mm_channel_t *my_obj,
+                                         uint32_t frame_idx);
+int32_t mm_channel_superbuf_flush(mm_channel_t* my_obj, mm_channel_queue_t * queue);
 int32_t mm_channel_set_stream_parm(mm_channel_t *my_obj,
                                    mm_evt_paylod_set_get_stream_parms_t *payload);
 int32_t mm_channel_get_stream_parm(mm_channel_t *my_obj,
@@ -170,7 +172,7 @@ static void mm_channel_dispatch_super_buf(mm_camera_cmdcb_t *cmd_cb,
  * FUNCTION   : mm_channel_process_stream_buf
  *
  * DESCRIPTION: handle incoming buffer from stream in a bundle. In this function,
- *              matching logic will be performed on imcoming stream frames.
+ *              matching logic will be performed on incoming stream frames.
  *              Will depends on the bundle attribute, either storing matched frames
  *              in the superbuf queue, or sending matched superbuf frames to upper
  *              layer through registered callback.
@@ -202,6 +204,8 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
         ch_obj->pending_cnt = cmd_cb->u.req_buf.num_buf_requested;
         mm_channel_superbuf_skip(ch_obj, &ch_obj->bundle.superbuf_queue);
     } else if (MM_CAMERA_CMD_TYPE_FLUSH_QUEUE  == cmd_cb->cmd_type) {
+        ch_obj->bundle.superbuf_queue.expected_frame_id = cmd_cb->u.frame_idx;
+        mm_channel_superbuf_flush(ch_obj, &ch_obj->bundle.superbuf_queue);
         return;
     }
 
@@ -510,7 +514,8 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
         break;
     case MM_CHANNEL_EVT_FLUSH_SUPER_BUF_QUEUE:
         {
-            rc = mm_channel_flush_super_buf_queue(my_obj);
+            uint32_t frame_idx = (uint32_t)in_val;
+            rc = mm_channel_flush_super_buf_queue(my_obj, frame_idx);
         }
         break;
     case MM_CHANNEL_EVT_SET_STREAM_PARM:
@@ -1118,12 +1123,13 @@ int32_t mm_channel_cancel_super_buf_request(mm_channel_t *my_obj)
  *
  * PARAMETERS :
  *   @my_obj  : channel object
+ *   @frame_idx : frame idx until which to flush all superbufs
  *
  * RETURN     : int32_t type of status
  *              0  -- success
  *              -1 -- failure
  *==========================================================================*/
-int32_t mm_channel_flush_super_buf_queue(mm_channel_t *my_obj)
+int32_t mm_channel_flush_super_buf_queue(mm_channel_t *my_obj, uint32_t frame_idx)
 {
     int32_t rc = 0;
     mm_camera_cmdcb_t* node = NULL;
@@ -1132,6 +1138,7 @@ int32_t mm_channel_flush_super_buf_queue(mm_channel_t *my_obj)
     if (NULL != node) {
         memset(node, 0, sizeof(mm_camera_cmdcb_t));
         node->cmd_type = MM_CAMERA_CMD_TYPE_FLUSH_QUEUE;
+        node->u.frame_idx = frame_idx;
 
         /* enqueue to cmd thread */
         cam_queue_enq(&(my_obj->cmd_thread.cmd_queue), node);
@@ -1399,6 +1406,85 @@ int8_t mm_channel_util_seq_comp_w_rollover(uint32_t v1,
 }
 
 /*===========================================================================
+ * FUNCTION   : mm_channel_handle_metadata
+ *
+ * DESCRIPTION: Handle frame matching logic change due to metadata
+ *
+ * PARAMETERS :
+ *   @ch_obj  : channel object
+ *   @queue   : superbuf queue
+ *   @buf_info: new buffer from stream
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_channel_handle_metadata(
+                        mm_channel_t* ch_obj,
+                        mm_channel_queue_t * queue,
+                        mm_camera_buf_info_t *buf_info)
+{
+    int rc = 0 ;
+    mm_stream_t* stream_obj = NULL;
+    stream_obj = mm_channel_util_get_stream_by_handler(ch_obj,
+                buf_info->stream_id);
+
+    if (NULL == stream_obj) {
+        CDBG_ERROR("%s: Invalid Stream Object for stream_id = %d",
+                   __func__, buf_info->stream_id);
+        rc = -1;
+        goto end;
+    }
+    if (NULL == stream_obj->stream_info) {
+        CDBG_ERROR("%s: NULL stream info for stream_id = %d",
+                    __func__, buf_info->stream_id);
+        rc = -1;
+        goto end;
+    }
+
+    if (CAM_STREAM_TYPE_METADATA == stream_obj->stream_info->stream_type) {
+        const cam_metadata_info_t *metadata;
+        metadata = (const cam_metadata_info_t *)buf_info->buf->buffer;
+
+        if (NULL == metadata) {
+            CDBG_ERROR("%s: NULL metadata buffer for metadata stream",
+                       __func__);
+            rc = -1;
+            goto end;
+        }
+
+        if (metadata->is_prep_snapshot_done_valid &&
+                metadata->is_good_frame_idx_range_valid) {
+            CDBG_ERROR("%s: prep_snapshot_done and good_idx_range shouldn't be valid at the same time", __func__);
+            rc = -1;
+            goto end;
+        }
+
+        if (metadata->is_prep_snapshot_done_valid &&
+            metadata->prep_snapshot_done_state == NEED_FUTURE_FRAME) {
+
+            /* Set expected frame id to a future frame idx, large enough to wait
+             * for good_frame_idx_range, and small enough to still capture an image */
+            const int max_future_frame_offset = 100;
+            queue->expected_frame_id += max_future_frame_offset;
+
+            mm_channel_superbuf_flush(ch_obj, queue);
+        } else if (metadata->is_good_frame_idx_range_valid) {
+            if (metadata->good_frame_idx_range.min_frame_idx >
+                queue->expected_frame_id) {
+                CDBG_HIGH("%s: min_frame_idx %d is greater than expected_frame_id %d",
+                    __func__, metadata->good_frame_idx_range.min_frame_idx,
+                    queue->expected_frame_id);
+            }
+            queue->expected_frame_id =
+                metadata->good_frame_idx_range.min_frame_idx;
+        }
+    }
+end:
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : mm_channel_superbuf_comp_and_enqueue
  *
  * DESCRIPTION: implementation for matching logic for superbuf
@@ -1414,7 +1500,7 @@ int8_t mm_channel_util_seq_comp_w_rollover(uint32_t v1,
  *==========================================================================*/
 int32_t mm_channel_superbuf_comp_and_enqueue(
                         mm_channel_t* ch_obj,
-                        mm_channel_queue_t * queue,
+                        mm_channel_queue_t *queue,
                         mm_camera_buf_info_t *buf_info)
 {
     cam_node_t* node = NULL;
@@ -1431,6 +1517,10 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
     }
     if (buf_s_idx == queue->num_streams) {
         CDBG_ERROR("%s: buf from stream (%d) not bundled", __func__, buf_info->stream_id);
+        return -1;
+    }
+
+    if (mm_channel_handle_metadata(ch_obj, queue, buf_info) < 0) {
         return -1;
     }
 
@@ -1468,8 +1558,8 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
     }
 
     if (pos == head) {
-        CDBG("%s: all nodes in queue are mtached, or no node in queue, create a new node", __func__);
-        /* all nodes in queue are mtached, or no node in queue
+        CDBG("%s: all nodes in queue are matched, or no node in queue, create a new node", __func__);
+        /* all nodes in queue are matched, or no node in queue
          * create a new node */
         mm_channel_queue_node_t *new_buf = NULL;
         cam_node_t* new_node = NULL;
@@ -1484,7 +1574,6 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
             new_buf->super_buf[buf_s_idx] = *buf_info;
 
             /* enqueue */
-            //cam_list_add_tail_node(&node->list, &queue->que.head.list);
             cam_list_add_tail_node(&new_node->list, &queue->que.head.list);
             queue->que.size++;
 
@@ -1533,7 +1622,7 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
                     is_new = 0;
                     break;
                 }else{
-                    //TODO: reveiw again
+                    //TODO: review again
                     break;
                 }
             }

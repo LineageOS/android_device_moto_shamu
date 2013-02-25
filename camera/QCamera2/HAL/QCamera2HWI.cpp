@@ -577,14 +577,28 @@ int QCamera2HardwareInterface::take_picture(struct camera_device *device)
         ALOGE("NULL camera device");
         return BAD_VALUE;
     }
+
     hw->lockAPI();
+
+    /* Prepare snapshot in case LED needs to be flashed */
+    ret = hw->processAPI(QCAMERA_SM_EVT_PREPARE_SNAPSHOT, NULL);
+    if (ret == NO_ERROR) {
+        hw->waitAPIResult(QCAMERA_SM_EVT_PREPARE_SNAPSHOT);
+        ret = hw->m_apiResult.status;
+    }
+
+    /* Regardless what the result value for prepare_snapshot,
+     * go ahead with capture anyway. Just like the way autofocus
+     * is handled in capture case. */
+
+    /* capture */
     ret = hw->processAPI(QCAMERA_SM_EVT_TAKE_PICTURE, NULL);
     if (ret == NO_ERROR) {
         hw->waitAPIResult(QCAMERA_SM_EVT_TAKE_PICTURE);
         ret = hw->m_apiResult.status;
     }
-    hw->unlockAPI();
 
+    hw->unlockAPI();
     return ret;
 }
 
@@ -904,6 +918,7 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       m_cbNotifier(this),
       m_bShutterSoundPlayed(false),
       m_bAutoFocusRunning(false),
+      m_bStartZSLSnapshotCalled(false),
       m_pPowerModule(NULL)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
@@ -1792,9 +1807,6 @@ int QCamera2HardwareInterface::takePicture()
         }
     } else {
         // normal capture case
-        // prepare snapshot, e.g LED
-        prepareHardwareForSnapshot( );
-
         // need to stop preview channel
         stopChannel(QCAMERA_CH_TYPE_PREVIEW);
         delChannel(QCAMERA_CH_TYPE_PREVIEW);
@@ -1860,6 +1872,11 @@ int QCamera2HardwareInterface::cancelPicture()
         QCameraPicChannel *pZSLChannel =
             (QCameraPicChannel *)m_channels[QCAMERA_CH_TYPE_ZSL];
         if (NULL != pZSLChannel) {
+            if (m_bStartZSLSnapshotCalled) {
+                mCameraHandle->ops->stop_zsl_snapshot(
+                        mCameraHandle->camera_handle);
+                m_bStartZSLSnapshotCalled = false;
+            }
             pZSLChannel->cancelPicture();
         }
     } else {
@@ -2365,6 +2382,39 @@ int32_t QCamera2HardwareInterface::processZoomEvent(cam_crop_data_t &crop_info)
         if (m_channels[i] != NULL) {
             ret = m_channels[i]->processZoomDone(mPreviewWindow, crop_info);
         }
+    }
+    return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : processPrepSnapshotDone
+ *
+ * DESCRIPTION: process prep snapshot done event
+ *
+ * PARAMETERS :
+ *   @prep_snapshot_state  : state of prepare snapshot done. In other words,
+ *                           i.e. whether need future frames for capture.
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::processPrepSnapshotDoneEvent(
+                        cam_prep_snapshot_state_t prep_snapshot_state)
+{
+    int32_t ret = NO_ERROR;
+
+    if (m_channels[QCAMERA_CH_TYPE_ZSL] &&
+        prep_snapshot_state == NEED_FUTURE_FRAME) {
+
+        ret = mCameraHandle->ops->start_zsl_snapshot(
+                            mCameraHandle->camera_handle);
+        if (ret < 0) {
+            ALOGE("%s: start_led_zsl_capture failed %d",
+                            __func__, ret);
+            return ret;
+        }
+        m_bStartZSLSnapshotCalled = true;
     }
     return ret;
 }

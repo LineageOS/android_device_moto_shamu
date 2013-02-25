@@ -714,6 +714,25 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
         pme->processZoomEvent(pMetaData->crop_data);
     }
 
+    if (pMetaData->is_prep_snapshot_done_valid) {
+        qcamera_sm_internal_evt_payload_t *payload =
+            (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+        if (NULL != payload) {
+            memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+            payload->evt_type = QCAMERA_INTERNAL_EVT_PREP_SNAPSHOT_DONE;
+            payload->prep_snapshot_state = pMetaData->prep_snapshot_done_state;
+            int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: processEVt failed", __func__);
+                free(payload);
+                payload = NULL;
+
+            }
+        } else {
+            ALOGE("%s: No memory for qcamera_sm_internal_evt_payload_t", __func__);
+        }
+    }
+
     stream->bufDone(frame->buf_idx);
     free(super_frame);
 
