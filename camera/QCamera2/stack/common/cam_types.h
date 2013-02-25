@@ -681,6 +681,7 @@ typedef enum {
     CAM_INTF_PARM_HDR,
     CAM_INTF_PARM_SET_BUNDLE,
     CAM_INTF_PARM_FRAMESKIP,
+    CAM_INTF_PARM_ZSL_MODE,  /* indicating if it's running in ZSL mode */
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 

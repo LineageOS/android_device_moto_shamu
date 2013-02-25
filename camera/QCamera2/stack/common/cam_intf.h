@@ -271,6 +271,7 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_HDR,                      cam_exp_bracketing_t,        1);
     INCLUDE(CAM_INTF_PARM_SET_BUNDLE,               cam_bundle_config_t,         1);
     INCLUDE(CAM_INTF_PARM_FRAMESKIP,                int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_ZSL_MODE,                 int32_t,                     1);
 } parm_type_t;
 
 /****************************DO NOT MODIFY BELOW THIS LINE!!!!*********************/
