@@ -3209,14 +3209,12 @@ int32_t QCamera2HardwareInterface::preparePreview()
                 delChannel(QCAMERA_CH_TYPE_PREVIEW);
                 return rc;
             }
-#if 0 //TODO: hardcoded for now to bring up video recording
             rc = addChannel(QCAMERA_CH_TYPE_SNAPSHOT);
             if (rc != NO_ERROR) {
                 delChannel(QCAMERA_CH_TYPE_METADATA);
                 delChannel(QCAMERA_CH_TYPE_PREVIEW);
                 delChannel(QCAMERA_CH_TYPE_VIDEO);
             }
-#endif
         }
     }
 
