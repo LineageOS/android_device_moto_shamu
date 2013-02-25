@@ -609,6 +609,16 @@ typedef struct {
     cam_stream_crop_info_t crop_info[MAX_NUM_STREAMS];
 } cam_crop_data_t;
 
+typedef enum {
+    DO_NOT_NEED_FUTURE_FRAME,
+    NEED_FUTURE_FRAME,
+} cam_prep_snapshot_state_t;
+
+typedef struct {
+    uint32_t min_frame_idx;
+    uint32_t max_frame_idx;
+} cam_frame_idx_range_t;
+
 typedef  struct {
     uint8_t is_stats_valid;               /* if histgram data is valid */
     cam_hist_stats_t stats_data;          /* histogram data */
@@ -621,6 +631,16 @@ typedef  struct {
 
     uint8_t is_crop_valid;                /* if crop data is valid */
     cam_crop_data_t crop_data;            /* crop data */
+
+    uint8_t is_prep_snapshot_done_valid;  /* if prep snapshot done is valid */
+    cam_prep_snapshot_state_t prep_snapshot_done_state;  /* prepare snapshot done state */
+
+    /* if good frame idx range is valid */
+    uint8_t is_good_frame_idx_range_valid;
+    /* good frame idx range, make sure:
+     * 1. good_frame_idx_range.min_frame_idx > current_frame_idx
+     * 2. good_frame_idx_range.min_frame_idx - current_frame_idx < 100 */
+    cam_frame_idx_range_t good_frame_idx_range;
 } cam_metadata_info_t;
 
 typedef enum {
