@@ -964,8 +964,6 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
         CDBG_ERROR("%s: VIDIOC_DQBUF ioctl call failed (rc=%d)\n",
                    __func__, rc);
     } else {
-        CDBG_ERROR("%s: VIDIOC_DQBUF buf_index %d stream type %d\n",
-             __func__, vb.index, my_obj->stream_info->stream_type);
         int8_t idx = vb.index;
         buf_info->buf = &my_obj->buf[idx];
         buf_info->frame_idx = vb.sequence;
@@ -976,6 +974,8 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
         buf_info->buf->frame_idx = vb.sequence;
         buf_info->buf->ts.tv_sec  = vb.timestamp.tv_sec;
         buf_info->buf->ts.tv_nsec = vb.timestamp.tv_usec * 1000;
+        CDBG("%s: VIDIOC_DQBUF buf_index %d, frame_idx %d, stream type %d\n",
+             __func__, vb.index, buf_info->buf->frame_idx, my_obj->stream_info->stream_type);
     }
 
     CDBG("%s :X rc = %d",__func__,rc);

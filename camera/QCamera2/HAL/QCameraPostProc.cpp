@@ -278,9 +278,9 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
         encode_parm.exif_info.numOfEntries = m_pJpegExifObj->getNumOfEntries();
     }
 
-    cam_frame_len_offset_t offset;
-    memset(&offset, 0, sizeof(cam_frame_len_offset_t));
-    main_stream->getFrameOffset(offset);
+    cam_frame_len_offset_t main_offset;
+    memset(&main_offset, 0, sizeof(cam_frame_len_offset_t));
+    main_stream->getFrameOffset(main_offset);
 
     // src buf config
     QCameraMemory *pStreamMem = main_stream->getStreamBufs();
@@ -298,7 +298,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
             encode_parm.src_main_buf[i].buf_vaddr = (uint8_t *)stream_mem->data;
             encode_parm.src_main_buf[i].fd = pStreamMem->getFd(i);
             encode_parm.src_main_buf[i].format = MM_JPEG_FMT_YUV;
-            encode_parm.src_main_buf[i].offset = offset;
+            encode_parm.src_main_buf[i].offset = main_offset;
         }
     }
 
@@ -312,8 +312,9 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
             ret = BAD_VALUE;
             goto on_error;
         }
-        memset(&offset, 0, sizeof(cam_frame_len_offset_t));
-        thumb_stream->getFrameOffset(offset);
+        cam_frame_len_offset_t thumb_offset;
+        memset(&thumb_offset, 0, sizeof(cam_frame_len_offset_t));
+        thumb_stream->getFrameOffset(thumb_offset);
         for (int i = 0; i < pStreamMem->getCnt(); i++) {
             camera_memory_t *stream_mem = pStreamMem->getMemory(i, false);
             if (stream_mem != NULL) {
@@ -322,7 +323,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
                 encode_parm.src_thumb_buf[i].buf_vaddr = (uint8_t *)stream_mem->data;
                 encode_parm.src_thumb_buf[i].fd = pStreamMem->getFd(i);
                 encode_parm.src_thumb_buf[i].format = MM_JPEG_FMT_YUV;
-                encode_parm.src_thumb_buf[i].offset = offset;
+                encode_parm.src_thumb_buf[i].offset = thumb_offset;
             }
         }
     }
@@ -339,7 +340,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
         ALOGE("%s : No memory for m_pJpegOutputMem", __func__);
         goto on_error;
     }
-    ret = m_pJpegOutputMem->allocate(1, offset.frame_len);
+    ret = m_pJpegOutputMem->allocate(1, main_offset.frame_len);
     if(ret != OK) {
         ret = NO_MEMORY;
         ALOGE("%s : No memory for m_pJpegOutputMem", __func__);
@@ -357,7 +358,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
     encode_parm.dest_buf[0].buf_vaddr = (uint8_t *)jpeg_mem->data;
     encode_parm.dest_buf[0].fd = m_pJpegOutputMem->getFd(0);
     encode_parm.dest_buf[0].format = MM_JPEG_FMT_YUV;
-    encode_parm.dest_buf[0].offset = offset;
+    encode_parm.dest_buf[0].offset = main_offset;
 
     ALOGV("%s : X", __func__);
     return NO_ERROR;
