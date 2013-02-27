@@ -3942,8 +3942,8 @@ int32_t QCameraParameters::setFocusAreas(const char *focusAreasStr)
               (areas[i].width), (areas[i].height));
 
         //transform the coords from (-1000, 1000) to (0, previewWidth or previewHeight)
-        af_roi_value.roi[i].left = (int32_t)((areas[i].top + 1000.0f) * (previewWidth / 2000.0f));
-        af_roi_value.roi[i].top = (int32_t)((areas[i].left + 1000.0f) * (previewHeight / 2000.0f));
+        af_roi_value.roi[i].left = (int32_t)((areas[i].left + 1000.0f) * (previewWidth / 2000.0f));
+        af_roi_value.roi[i].top = (int32_t)((areas[i].top + 1000.0f) * (previewHeight / 2000.0f));
         af_roi_value.roi[i].width = (int32_t)(areas[i].width * previewWidth / 2000.0f);
         af_roi_value.roi[i].height = (int32_t)(areas[i].height * previewHeight / 2000.0f);
     }
