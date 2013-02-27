@@ -1071,6 +1071,7 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                                     }
                                 }
                             }
+                            break;
                         default:
                             {
                                 ALOGE("%s : invalid cb type %d",
