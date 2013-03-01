@@ -280,6 +280,7 @@ public:
 
     static const char KEY_QC_HISTOGRAM[] ;
     static const char KEY_QC_SUPPORTED_HISTOGRAM_MODES[] ;
+    static const char KEY_QC_HDR_NEED_1X[];
 
     // Values for SKIN TONE ENHANCEMENT
     static const char SKIN_TONE_ENHANCEMENT_ENABLE[] ;
@@ -356,6 +357,7 @@ public:
     bool isNoDisplayMode() {return m_bNoDisplayMode;};
     bool isWNREnabled() {return m_bWNROn;};
     uint8_t getNumOfSnapshots();
+    uint8_t getNumOfExtraHDRBufsIfNeeded();
     int getBurstNum();
     bool getRecordingHintValue() {return m_bRecordingHint;}; // return local copy of video hint
     int setRecordingHintValue(int32_t value); // set local copy of video hint and send to server

@@ -96,6 +96,7 @@ const char QCameraParameters::KEY_QC_NO_DISPLAY_MODE[] = "no-display-mode";
 const char QCameraParameters::KEY_QC_RAW_PICUTRE_SIZE[] = "raw-size";
 const char QCameraParameters::KEY_QC_SUPPORTED_SKIN_TONE_ENHANCEMENT_MODES[] = "skinToneEnhancement-values";
 const char QCameraParameters::KEY_QC_SUPPORTED_LIVESNAPSHOT_SIZES[] = "supported-live-snapshot-sizes";
+const char QCameraParameters::KEY_QC_HDR_NEED_1X[] = "hdr-need-1x";
 
 // Values for effect settings.
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
@@ -2086,6 +2087,18 @@ int32_t QCameraParameters::setSceneMode(const QCameraParameters& params)
                 ((prev_str != NULL) && (strcmp(prev_str, SCENE_MODE_HDR) == 0))) {
                 ALOGD("%s: scene mode changed between HDR and non-HDR, need restart", __func__);
                 m_bNeedRestart = true;
+
+                // set if hdr 1x image is needed
+                const char *need_hdr_1x = params.get(KEY_QC_HDR_NEED_1X);
+                int32_t value = 0;
+                if (need_hdr_1x != NULL && strcmp(need_hdr_1x, VALUE_TRUE) == 0) {
+                    value = 1;
+                    updateParamEntry(KEY_QC_HDR_NEED_1X, need_hdr_1x);
+                    AddSetParmEntryToBatch(m_pParamBuf,
+                                           CAM_INTF_PARM_HDR_NEED_1X,
+                                           sizeof(value),
+                                           &value);
+                }
             }
             return setSceneMode(str);
         }
@@ -2287,7 +2300,12 @@ int32_t QCameraParameters::setNumOfSnapshot()
     if (scene_mode != NULL && strcmp(scene_mode, SCENE_MODE_HDR) == 0) {
         /* According to Android SDK, only one snapshot,
          * but OEM might have different requirement */
-        nExpnum = 1;
+        const char *need_hdr_1x = get(KEY_QC_HDR_NEED_1X);
+        if (need_hdr_1x != NULL && strcmp(need_hdr_1x, VALUE_TRUE) == 0) {
+            nExpnum = 2; // HDR needs both 1X and processed img
+        } else {
+            nExpnum = 1; // HDR only needs processed img
+        }
     } else {
         const char *bracket_str = get(KEY_QC_AE_BRACKET_HDR);
         if (bracket_str != NULL && strlen(bracket_str) > 0) {
@@ -4702,6 +4720,26 @@ uint8_t QCameraParameters::getNumOfSnapshots()
         numOfSnapshot = 1; // set to default value
     }
     return (uint8_t)numOfSnapshot;
+}
+
+/*===========================================================================
+ * FUNCTION   : getNumOfExtraHDRBufsIfNeeded
+ *
+ * DESCRIPTION: get number of extra buffers needed by HDR if HDR is enabled
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : number of extra buffer needed by HDR; 0 if not HDR enabled
+ *==========================================================================*/
+uint8_t QCameraParameters::getNumOfExtraHDRBufsIfNeeded()
+{
+    uint8_t numOfBufs = 0;
+    const char *scene_mode = get(KEY_SCENE_MODE);
+    if (scene_mode != NULL && strcmp(scene_mode, SCENE_MODE_HDR) == 0) {
+        // HDR mode
+        numOfBufs = getBurstNum() * m_pCapability->min_num_hdr_bufs;
+    }
+    return numOfBufs;
 }
 
 /*===========================================================================

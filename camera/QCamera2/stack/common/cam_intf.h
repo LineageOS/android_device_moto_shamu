@@ -152,6 +152,7 @@ typedef struct{
     int qcom_supported_feature_mask;      /* mask of qcom specific features supported:
                                            * such as CAM_QCOM_FEATURE_SUPPORTED_FACE_DETECTION*/
     cam_padding_info_t padding_info;      /* padding information from PP */
+    int8_t min_num_hdr_bufs;              /* minimum number of buffers needed for HDR by imaging module */
     int8_t min_num_pp_bufs;               /* minimum number of buffers needed by postproc module */
     uint32_t min_required_pp_mask;        /* min required pp feature masks for ZSL.
                                            * depends on hardware limitation, i.e. for 8974,
@@ -277,6 +278,7 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_SET_BUNDLE,               cam_bundle_config_t,         1);
     INCLUDE(CAM_INTF_PARM_FRAMESKIP,                int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_ZSL_MODE,                 int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_HDR_NEED_1X,              int32_t,                     1);
 } parm_type_t;
 
 /****************************DO NOT MODIFY BELOW THIS LINE!!!!*********************/
