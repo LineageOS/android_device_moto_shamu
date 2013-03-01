@@ -681,8 +681,13 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
     cam_metadata_info_t *pMetaData = (cam_metadata_info_t *)frame->buffer;
 
     if (pMetaData->is_faces_valid) {
-        // process face detection result
-        pme->processFaceDetectionResult(&pMetaData->faces_data);
+        if (pMetaData->faces_data.num_faces_detected > MAX_ROI) {
+            ALOGE("%s: Invalid number of faces %d",
+                __func__, pMetaData->faces_data.num_faces_detected);
+        } else {
+            // process face detection result
+            pme->processFaceDetectionResult(&pMetaData->faces_data);
+        }
     }
 
     if (pMetaData->is_stats_valid) {
@@ -711,7 +716,12 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
     }
 
     if (pMetaData->is_crop_valid) {
-        pme->processZoomEvent(pMetaData->crop_data);
+        if (pMetaData->crop_data.num_of_streams > MAX_NUM_STREAMS) {
+            ALOGE("%s: Invalid num_of_streams %d in crop_data", __func__,
+                pMetaData->crop_data.num_of_streams);
+        } else {
+            pme->processZoomEvent(pMetaData->crop_data);
+        }
     }
 
     if (pMetaData->is_prep_snapshot_done_valid) {
