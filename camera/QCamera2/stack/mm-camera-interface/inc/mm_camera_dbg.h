@@ -62,7 +62,7 @@
 #endif
 
 #ifdef _ANDROID_
-  #define CDBG_HIGH(fmt, args...)  ALOGE(fmt, ##args)
+  #define CDBG_HIGH(fmt, args...)  ALOGD(fmt, ##args)
   #define CDBG_ERROR(fmt, args...)  ALOGE(fmt, ##args)
 #else
   #define CDBG_HIGH(fmt, args...) fprintf(stderr, fmt, ##args)
