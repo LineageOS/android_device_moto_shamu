@@ -40,6 +40,7 @@
 #include "mm_camera_interface.h"
 
 #define ASPECT_TOLERANCE 0.001
+#define FLIP_V_H (FLIP_H | FLIP_V)
 
 namespace qcamera {
 // Parameter keys to communicate between camera application and driver.
@@ -97,6 +98,10 @@ const char QCameraParameters::KEY_QC_RAW_PICUTRE_SIZE[] = "raw-size";
 const char QCameraParameters::KEY_QC_SUPPORTED_SKIN_TONE_ENHANCEMENT_MODES[] = "skinToneEnhancement-values";
 const char QCameraParameters::KEY_QC_SUPPORTED_LIVESNAPSHOT_SIZES[] = "supported-live-snapshot-sizes";
 const char QCameraParameters::KEY_QC_HDR_NEED_1X[] = "hdr-need-1x";
+const char QCameraParameters::KEY_QC_PREVIEW_FLIP[] = "preview-flip";
+const char QCameraParameters::KEY_QC_VIDEO_FLIP[] = "video-flip";
+const char QCameraParameters::KEY_QC_SNAPSHOT_PICTURE_FLIP[] = "snapshot-picture-flip";
+const char QCameraParameters::KEY_QC_SUPPORTED_FLIP_MODES[] = "flip-mode-values";
 
 // Values for effect settings.
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
@@ -266,6 +271,12 @@ const char QCameraParameters::VIDEO_HFR_5X[] = "150";
 // Values for HDR Bracketing settings.
 const char QCameraParameters::AE_BRACKET_OFF[] = "Off";
 const char QCameraParameters::AE_BRACKET[] = "AE-Bracket";
+
+// Values for FLIP settings.
+const char QCameraParameters::FLIP_MODE_OFF[] = "off";
+const char QCameraParameters::FLIP_MODE_V[] = "flip-v";
+const char QCameraParameters::FLIP_MODE_H[] = "flip-h";
+const char QCameraParameters::FLIP_MODE_VH[] = "flip-vh";
 
 static const char* portrait = "portrait";
 static const char* landscape = "landscape";
@@ -499,6 +510,13 @@ const QCameraParameters::QCameraMap QCameraParameters::DENOISE_ON_OFF_MODES_MAP[
 const QCameraParameters::QCameraMap QCameraParameters::TRUE_FALSE_MODES_MAP[] = {
     { VALUE_FALSE, 0},
     { VALUE_TRUE,  1}
+};
+
+const QCameraParameters::QCameraMap QCameraParameters::FLIP_MODES_MAP[] = {
+    {FLIP_MODE_OFF, 0},
+    {FLIP_MODE_V, FLIP_V},
+    {FLIP_MODE_H, FLIP_H},
+    {FLIP_MODE_VH, FLIP_V_H}
 };
 
 #define DEFAULT_CAMERA_AREA "(0, 0, 0, 0, 0)"
@@ -2546,6 +2564,61 @@ int32_t QCameraParameters::setZslAttributes(const QCameraParameters& params)
 }
 
 /*===========================================================================
+ * FUNCTION   : setFlip
+ *
+ * DESCRIPTION: set preview/ video/ picture flip mode from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setFlip(const QCameraParameters& params)
+{
+    if ((m_pCapability->qcom_supported_feature_mask & CAM_QCOM_FEATURE_FLIP) == 0) {
+        ALOGD("%s: flip is not supported.", __func__);
+        return NO_ERROR;
+    }
+
+    //check preview flip setting
+    const char *str = params.get(KEY_QC_PREVIEW_FLIP);
+    if(str != NULL){
+        int32_t value = lookupAttr(FLIP_MODES_MAP,
+                                   sizeof(FLIP_MODES_MAP)/sizeof(QCameraMap),
+                                   str);
+        if(value != NAME_NOT_FOUND){
+            set(KEY_QC_PREVIEW_FLIP, str);
+        }
+    }
+
+    // check video filp setting
+    str = params.get(KEY_QC_VIDEO_FLIP);
+    if(str != NULL){
+        int32_t value = lookupAttr(FLIP_MODES_MAP,
+                                   sizeof(FLIP_MODES_MAP)/sizeof(QCameraMap),
+                                   str);
+        if(value != NAME_NOT_FOUND){
+            set(KEY_QC_VIDEO_FLIP, str);
+        }
+    }
+
+    // check picture filp setting
+    str = params.get(KEY_QC_SNAPSHOT_PICTURE_FLIP);
+    if(str != NULL){
+        int32_t value = lookupAttr(FLIP_MODES_MAP,
+                                   sizeof(FLIP_MODES_MAP)/sizeof(QCameraMap),
+                                   str);
+        if(value != NAME_NOT_FOUND){
+            set(KEY_QC_SNAPSHOT_PICTURE_FLIP, str);
+        }
+    }
+
+    return NO_ERROR;
+}
+
+/*===========================================================================
  * FUNCTION   : updateParameters
  *
  * DESCRIPTION: update parameters from user setting
@@ -2618,6 +2691,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setGpsLocation(params)))                  final_rc = rc;
     if ((rc = setWaveletDenoise(params)))               final_rc = rc;
     if ((rc = setFaceRecognition(params)))              final_rc = rc;
+    if ((rc = setFlip(params)))                         final_rc = rc;
 
 UPDATE_PARAM_DONE:
     needRestart = m_bNeedRestart;
@@ -3045,6 +3119,16 @@ int32_t QCameraParameters::initDefaultParameters()
 
     set(KEY_QC_SUPPORTED_TOUCH_AF_AEC, touchValues);
     set(KEY_QC_TOUCH_AF_AEC, TOUCH_AF_AEC_OFF);
+
+    //set flip mode
+    if ((m_pCapability->qcom_supported_feature_mask & CAM_QCOM_FEATURE_FLIP) > 0) {
+        String8 flipModes = createValuesStringFromMap(
+           FLIP_MODES_MAP, sizeof(FLIP_MODES_MAP) / sizeof(QCameraMap));
+        set(KEY_QC_SUPPORTED_FLIP_MODES, flipModes);
+        set(KEY_QC_PREVIEW_FLIP, FLIP_MODE_OFF);
+        set(KEY_QC_VIDEO_FLIP, FLIP_MODE_OFF);
+        set(KEY_QC_SNAPSHOT_PICTURE_FLIP, FLIP_MODE_OFF);
+    }
 
     // Set default Auto Exposure lock value
     setAecLock(VALUE_FALSE);
@@ -4517,6 +4601,52 @@ int32_t QCameraParameters::getStreamFormat(cam_stream_type_t streamType,
     }
 
     return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : getFlipMode
+ *
+ * DESCRIPTION: get flip mode
+ *
+ * PARAMETERS :
+ *   @cam_intf_parm_type_t : [input] stream type
+ *
+ * RETURN     : int type of flip mode
+ *              0 - no filp
+ *              1 - FLIP_H
+ *              2 - FLIP_V
+ *              3 - FLIP_H | FLIP_V
+ *==========================================================================*/
+int QCameraParameters::getFlipMode(cam_stream_type_t type)
+{
+    const char *str = NULL;
+    int flipMode = 0; // no flip
+
+    switch(type){
+    case CAM_STREAM_TYPE_PREVIEW:
+        str = get(KEY_QC_PREVIEW_FLIP);
+        break;
+    case CAM_STREAM_TYPE_VIDEO:
+        str = get(KEY_QC_VIDEO_FLIP);
+        break;
+    case CAM_STREAM_TYPE_SNAPSHOT:
+        str = get(KEY_QC_SNAPSHOT_PICTURE_FLIP);
+        break;
+    default:
+        ALOGI("%s: No flip mode for stream type %d", __func__, type);
+        break;
+    }
+
+    if(str != NULL){
+        //Need give corresponding filp value based on flip mode strings
+        int value = lookupAttr(FLIP_MODES_MAP,
+                sizeof(FLIP_MODES_MAP)/sizeof(QCameraMap), str);
+        if(value != NAME_NOT_FOUND)
+            flipMode = value;
+        }
+
+    ALOGD("%s: the filp mode of stream type %d is %d .", __func__, type, flipMode);
+    return flipMode;
 }
 
 /*===========================================================================

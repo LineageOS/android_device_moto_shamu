@@ -1397,6 +1397,11 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
         break;
     }
 
+    //set flip mode based on Stream type;
+    int flipMode = mParameters.getFlipMode(stream_type);
+    streamInfo->pp_config.feature_mask |= CAM_QCOM_FEATURE_FLIP;
+    streamInfo->pp_config.flip = flipMode;
+
     return streamInfoBuf;
 }
 

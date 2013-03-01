@@ -148,6 +148,15 @@ public:
     //Write only.
     static const char KEY_QC_MAX_NUM_REQUESTED_FACES[];
 
+    //preview flip
+    static const char KEY_QC_PREVIEW_FLIP[];
+    //video flip
+    static const char KEY_QC_VIDEO_FLIP[];
+    //snapshot picture flip
+    static const char KEY_QC_SNAPSHOT_PICTURE_FLIP[];
+
+    static const char KEY_QC_SUPPORTED_FLIP_MODES[];
+
     //Redeye Reduction
     static const char KEY_QC_REDEYE_REDUCTION[];
     static const char KEY_QC_SUPPORTED_REDEYE_REDUCTION[];
@@ -319,6 +328,12 @@ public:
     static const char VALUE_FALSE[];
     static const char VALUE_TRUE[];
 
+    //Values for flip settings
+    static const char FLIP_MODE_OFF[];
+    static const char FLIP_MODE_V[];
+    static const char FLIP_MODE_H[];
+    static const char FLIP_MODE_VH[];
+
     enum {
         CAMERA_ORIENTATION_UNKNOWN = 0,
         CAMERA_ORIENTATION_PORTRAIT = 1,
@@ -391,6 +406,7 @@ public:
     bool isJpegPictureFormat() {return (mPictureFormat == CAM_FORMAT_JPEG);};
     cam_denoise_process_type_t getWaveletDenoiseProcessPlate();
     int32_t getLiveSnapshotSize(cam_dimension_t &dim) {dim = m_LiveSnapshotSize; return NO_ERROR;};
+    int getFlipMode(cam_stream_type_t streamType);
 
 private:
     int32_t setPreviewSize(const QCameraParameters& );
@@ -440,6 +456,7 @@ private:
     int32_t setZslAttributes(const QCameraParameters& );
     int32_t setCameraMode(const QCameraParameters& );
     int32_t setFaceRecognition(const QCameraParameters& );
+    int32_t setFlip(const QCameraParameters& );
 
     int32_t setAutoExposure(const char *autoExp);
     int32_t setPreviewFpsRange(int minFPS,int maxFPS);
@@ -533,6 +550,7 @@ private:
     static const QCameraMap DENOISE_ON_OFF_MODES_MAP[];
     static const QCameraMap TRUE_FALSE_MODES_MAP[];
     static const QCameraMap TOUCH_AF_AEC_MODES_MAP[];
+    static const QCameraMap FLIP_MODES_MAP[];
 
     cam_capability_t *m_pCapability;
     mm_camera_vtbl_t *m_pCamOpsTbl;

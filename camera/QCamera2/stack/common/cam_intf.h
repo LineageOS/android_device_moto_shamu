@@ -207,6 +207,9 @@ typedef struct {
      * only valid when streaming_mode = CAM_STREAMING_MODE_BURST */
     uint8_t num_of_burst;
 
+    /* stream specific pp config */
+    cam_pp_feature_config_t pp_config;
+
     /* this section is valid if offline reprocess type stream */
     cam_stream_reproc_config_t reprocess_config;
 
