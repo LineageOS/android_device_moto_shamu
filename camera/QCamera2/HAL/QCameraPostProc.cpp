@@ -777,6 +777,7 @@ void QCameraPostProcessor::releaseNotifyData(void *user_data, void *cookie)
             free(app_cb->release_data.frame);
             app_cb->release_data.frame = NULL;
         }
+        free(app_cb);
     }
 }
 
