@@ -60,6 +60,15 @@ static inline void cam_list_add_tail_node(struct cam_list *item,
   prev->next = item;
 }
 
+static inline void cam_list_insert_before_node(struct cam_list *item,
+  struct cam_list *node)
+{
+  item->next = node;
+  item->prev = node->prev;
+  item->prev->next = item;
+  node->prev = item;
+}
+
 static inline void cam_list_del_node(struct cam_list *ptr)
 {
   struct cam_list *prev = ptr->prev;

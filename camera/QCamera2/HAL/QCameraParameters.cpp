@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <gralloc_priv.h>
 #include "QCameraParameters.h"
+#include "mm_camera_interface.h"
 
 #define ASPECT_TOLERANCE 0.001
 
@@ -4547,7 +4548,7 @@ int QCameraParameters::getZSLQueueDepth()
     if (qdepth < 0) {
         qdepth = 2;
     }
-    return qdepth;
+    return qdepth + MM_CAMERA_BUNDLE_HISTORY_SIZE;
 }
 
 /*===========================================================================

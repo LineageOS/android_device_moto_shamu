@@ -40,6 +40,8 @@
 /* num of channels allowed in a camera obj */
 #define MM_CAMERA_CHANNEL_MAX 16
 
+#define MM_CAMERA_BUNDLE_HISTORY_SIZE 2
+
 #define PAD_TO_SIZE(size, padding) ((size + padding - 1) & ~(padding - 1))
 
 /** mm_camera_buf_def_t: structure for stream frame buf
