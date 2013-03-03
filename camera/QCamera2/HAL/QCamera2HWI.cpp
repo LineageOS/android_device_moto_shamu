@@ -2528,7 +2528,6 @@ int32_t QCamera2HardwareInterface::addStreamToChannel(QCameraChannel *pChannel,
     QCameraHeapMemory *pStreamInfo = allocateStreamInfoBuf(streamType);
     if (pStreamInfo == NULL) {
         ALOGE("%s: no mem for stream info buf", __func__);
-        delete pChannel;
         return NO_MEMORY;
     }
     uint8_t minStreamBufNum = getBufNumRequired(streamType);
@@ -2542,7 +2541,6 @@ int32_t QCamera2HardwareInterface::addStreamToChannel(QCameraChannel *pChannel,
               __func__, streamType, rc);
         pStreamInfo->deallocate();
         delete pStreamInfo;
-        delete pChannel;
         return rc;
     }
 
