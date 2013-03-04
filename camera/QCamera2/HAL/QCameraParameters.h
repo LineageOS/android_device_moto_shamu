@@ -64,6 +64,9 @@ public:
     static const char KEY_QC_PREVIEW_FRAME_RATE_FIXED_MODE[];
     static const char KEY_QC_SUPPORTED_SKIN_TONE_ENHANCEMENT_MODES[] ;
 
+    // Supported live snapshot sizes
+    static const char KEY_QC_SUPPORTED_LIVESNAPSHOT_SIZES[];
+
     // Supported Raw formats
     static const char KEY_QC_SUPPORTED_RAW_FORMATS[];
     static const char KEY_QC_RAW_FORMAT[];
@@ -385,11 +388,13 @@ public:
     int32_t adjustPreviewFpsRange(cam_fps_range_t *fpsRange);
     bool isJpegPictureFormat() {return (mPictureFormat == CAM_FORMAT_JPEG);};
     cam_denoise_process_type_t getWaveletDenoiseProcessPlate();
+    int32_t getLiveSnapshotSize(cam_dimension_t &dim) {dim = m_LiveSnapshotSize; return NO_ERROR;};
 
 private:
     int32_t setPreviewSize(const QCameraParameters& );
     int32_t setVideoSize(const QCameraParameters& );
     int32_t setPictureSize(const QCameraParameters& );
+    int32_t setLiveSnapshotSize(const QCameraParameters& );
     int32_t setPreviewFormat(const QCameraParameters& );
     int32_t setPictureFormat(const QCameraParameters& );
     int32_t setOrientation(const QCameraParameters& );
@@ -545,6 +550,7 @@ private:
     bool m_bNoDisplayMode;
     bool m_bWNROn;
     qcamera_thermal_mode m_ThermalMode; // adjust fps vs adjust frameskip
+    cam_dimension_t m_LiveSnapshotSize; // live snapshot size
 
     DefaultKeyedVector<String8,String8> m_tempMap; // map for temororily store parameters to be set
 };

@@ -30,6 +30,7 @@
 #define LOG_TAG "QCameraParameters"
 
 #include <cutils/properties.h>
+#include <math.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>
 #include <string.h>
@@ -94,6 +95,7 @@ const char QCameraParameters::KEY_QC_NUM_SNAPSHOT_PER_SHUTTER[] = "num-snaps-per
 const char QCameraParameters::KEY_QC_NO_DISPLAY_MODE[] = "no-display-mode";
 const char QCameraParameters::KEY_QC_RAW_PICUTRE_SIZE[] = "raw-size";
 const char QCameraParameters::KEY_QC_SUPPORTED_SKIN_TONE_ENHANCEMENT_MODES[] = "skinToneEnhancement-values";
+const char QCameraParameters::KEY_QC_SUPPORTED_LIVESNAPSHOT_SIZES[] = "supported-live-snapshot-sizes";
 
 // Values for effect settings.
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
@@ -548,6 +550,8 @@ QCameraParameters::QCameraParameters()
             ALOGE("%s: Invalid camera thermal mode %s", __func__, value);
         m_ThermalMode = QCAMERA_THERMAL_ADJUST_FPS;
     }
+
+    memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
 }
 
 /*===========================================================================
@@ -580,6 +584,7 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bWNROn(false),
     m_tempMap()
 {
+    memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
 }
 
 /*===========================================================================
@@ -1035,6 +1040,69 @@ int32_t QCameraParameters::setVideoSize(const QCameraParameters& params)
 }
 
 /*===========================================================================
+ * FUNCTION   : setLiveSnapshotSize
+ *
+ * DESCRIPTION: set live snapshot size
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setLiveSnapshotSize(const QCameraParameters& params)
+{
+    char value[32];
+    property_get("persist.camera.opt.livepic", value, "1");
+    bool useOptimal = atoi(value) > 0 ? true : false;
+
+    // use picture size from user setting
+    params.getPictureSize(&m_LiveSnapshotSize.width, &m_LiveSnapshotSize.height);
+
+    if (useOptimal) {
+        bool found = false;
+
+        // first check if picture size is within the list of supported sizes
+        for (int i = 0; i < m_pCapability->livesnapshot_sizes_tbl_cnt; ++i) {
+            if (m_LiveSnapshotSize.width == m_pCapability->livesnapshot_sizes_tbl[i].width &&
+                m_LiveSnapshotSize.height == m_pCapability->livesnapshot_sizes_tbl[i].height) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            // use optimal live snapshot size from supported list,
+            // that has same preview aspect ratio
+            int width = 0, height = 0;
+            params.getPreviewSize(&width, &height);
+
+            double previewAspectRatio = (double)width / height;
+            for (int i = 0; i < m_pCapability->livesnapshot_sizes_tbl_cnt; ++i) {
+                double ratio = (double)m_pCapability->livesnapshot_sizes_tbl[i].width /
+                                m_pCapability->livesnapshot_sizes_tbl[i].height;
+                if (fabs(previewAspectRatio - ratio) <= ASPECT_TOLERANCE) {
+                    m_LiveSnapshotSize = m_pCapability->livesnapshot_sizes_tbl[i];
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                // Cannot find matching aspect ration from supported live snapshot list
+                // fall back to picture size
+                ALOGI("%s: Cannot find matching aspect ratio, fall back to pic size", __func__);
+            }
+        }
+    }
+    ALOGI("%s: live snapshot size %d x %d", __func__,
+          m_LiveSnapshotSize.width, m_LiveSnapshotSize.height);
+
+    return NO_ERROR;
+}
+
+/*===========================================================================
  * FUNCTION   : setPreviewFormat
  *
  * DESCRIPTION: set preview format from user setting
@@ -1138,8 +1206,7 @@ int32_t QCameraParameters::setJpegThumbnailSize(const QCameraParameters& params)
             }
             double ratio =
                 (double)THUMBNAIL_SIZES_MAP[i].width / THUMBNAIL_SIZES_MAP[i].height;
-            if (ratio - picAspectRatio > ASPECT_TOLERANCE ||
-                picAspectRatio - ratio >  ASPECT_TOLERANCE)  {
+            if (fabs(ratio - picAspectRatio) > ASPECT_TOLERANCE)  {
                 continue;
             }
             if (THUMBNAIL_SIZES_MAP[i].width > optimalWidth) {
@@ -2489,6 +2556,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setPreviewSize(params)))                  final_rc = rc;
     if ((rc = setVideoSize(params)))                    final_rc = rc;
     if ((rc = setPictureSize(params)))                  final_rc = rc;
+    if ((rc = setLiveSnapshotSize(params)))             final_rc = rc;
     if ((rc = setPreviewFormat(params)))                final_rc = rc;
     if ((rc = setPictureFormat(params)))                final_rc = rc;
     if ((rc = setJpegThumbnailSize(params)))            final_rc = rc;
@@ -2632,9 +2700,10 @@ int32_t QCameraParameters::initDefaultParameters()
                 m_pCapability->picture_sizes_tbl, m_pCapability->picture_sizes_tbl_cnt);
         set(KEY_SUPPORTED_PICTURE_SIZES, pictureSizeValues.string());
         ALOGD("%s: supported pic sizes: %s", __func__, pictureSizeValues.string());
-        // Set default picture size
-        CameraParameters::setPictureSize(m_pCapability->picture_sizes_tbl[0].width,
-                       m_pCapability->picture_sizes_tbl[0].height);
+        // Set default picture size to the smallest resolution
+        CameraParameters::setPictureSize(
+           m_pCapability->picture_sizes_tbl[m_pCapability->picture_sizes_tbl_cnt-1].width,
+           m_pCapability->picture_sizes_tbl[m_pCapability->picture_sizes_tbl_cnt-1].height);
     } else {
         ALOGE("%s: supported picture sizes cnt is 0!!!", __func__);
     }
@@ -2647,6 +2716,17 @@ int32_t QCameraParameters::initDefaultParameters()
     // Set default thumnail size
     set(KEY_JPEG_THUMBNAIL_WIDTH, THUMBNAIL_SIZES_MAP[0].width);
     set(KEY_JPEG_THUMBNAIL_HEIGHT, THUMBNAIL_SIZES_MAP[0].height);
+
+    // Set supported livesnapshot sizes
+    if (m_pCapability->livesnapshot_sizes_tbl_cnt) {
+        String8 liveSnpashotSizeValues = createSizesString(
+                m_pCapability->livesnapshot_sizes_tbl,
+                m_pCapability->livesnapshot_sizes_tbl_cnt);
+        set(KEY_QC_SUPPORTED_LIVESNAPSHOT_SIZES, liveSnpashotSizeValues.string());
+        ALOGI("%s: supported live snapshot sizes: %s", __func__, liveSnpashotSizeValues.string());
+        m_LiveSnapshotSize =
+            m_pCapability->livesnapshot_sizes_tbl[m_pCapability->livesnapshot_sizes_tbl_cnt-1];
+    }
 
     // Set supported preview formats
     String8 previewFormatValues = createValuesString(
@@ -3757,6 +3837,16 @@ int32_t QCameraParameters::setHighFrameRate(const char *hfrStr)
                                    sizeof(HFR_MODES_MAP)/sizeof(QCameraMap),
                                    hfrStr);
         if (value != NAME_NOT_FOUND) {
+            // if HFR is enabled, change live snapshot size
+            if (value > CAM_HFR_MODE_OFF) {
+                for (int i = 0; i < m_pCapability->hfr_tbl_cnt; i++) {
+                    if (m_pCapability->hfr_tbl[i].mode == value) {
+                        m_LiveSnapshotSize = m_pCapability->hfr_tbl[i].dim;
+                        break;
+                    }
+                }
+            }
+
             // HFR value changed, need to restart preview
             m_bNeedRestart = true;
             // Set HFR value
@@ -4439,7 +4529,12 @@ int32_t QCameraParameters::getStreamDimension(cam_stream_type_t streamType,
         getPreviewSize(&dim.width, &dim.height);
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
-        getPictureSize(&dim.width, &dim.height);
+        if (getRecordingHintValue() == true) {
+            // live snapshot
+            getLiveSnapshotSize(dim);
+        } else {
+            getPictureSize(&dim.width, &dim.height);
+        }
         break;
     case CAM_STREAM_TYPE_VIDEO:
         getVideoSize(&dim.width, &dim.height);
