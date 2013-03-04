@@ -824,7 +824,7 @@ void QCameraVideoMemory::deallocate()
         mMetadata[i]->release(mMetadata[i]);
         mMetadata[i] = NULL;
     }
-    QCameraStreamMemory::dealloc();
+    QCameraStreamMemory::deallocate();
     mBufferCount = 0;
 }
 
