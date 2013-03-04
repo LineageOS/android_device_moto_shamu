@@ -353,10 +353,25 @@ OMX_ERRORTYPE mm_jpeg_session_change_state(mm_jpeg_job_session_t* p_session,
   mm_jpeg_transition_func_t p_exec)
 {
   OMX_ERRORTYPE ret = OMX_ErrorNone;
+  OMX_STATETYPE current_state;
   CDBG("%s:%d] new_state %d p_exec %p", __func__, __LINE__,
     new_state, p_exec);
 
+
   pthread_mutex_lock(&p_session->lock);
+
+  ret = OMX_GetState(p_session->omx_handle, &current_state);
+
+  if (ret) {
+    pthread_mutex_unlock(&p_session->lock);
+    return ret;
+  }
+
+  if (current_state == new_state) {
+    pthread_mutex_unlock(&p_session->lock);
+    return OMX_ErrorNone;
+  }
+
   p_session->state_change_pending = OMX_TRUE;
   ret = OMX_SendCommand(p_session->omx_handle, OMX_CommandStateSet,
     new_state, NULL);
@@ -951,10 +966,25 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
  **/
 OMX_BOOL mm_jpeg_session_abort(mm_jpeg_job_session_t *p_session)
 {
+  OMX_ERRORTYPE ret = OMX_ErrorNone;
+
   CDBG("%s:%d] E", __func__, __LINE__);
   pthread_mutex_lock(&p_session->lock);
   p_session->abort_flag = OMX_TRUE;
   if (OMX_TRUE == p_session->encoding) {
+    p_session->state_change_pending = OMX_TRUE;
+
+    CDBG("%s:%d] **** ABORTING", __func__, __LINE__);
+
+    ret = OMX_SendCommand(p_session->omx_handle, OMX_CommandStateSet,
+    OMX_StateIdle, NULL);
+
+    if (ret != OMX_ErrorNone) {
+      CDBG("%s:%d] OMX_SendCommand returned error %d", __func__, __LINE__, ret);
+      pthread_mutex_unlock(&p_session->lock);
+      return 1;
+    }
+
     CDBG("%s:%d] before wait", __func__, __LINE__);
     pthread_cond_wait(&p_session->cond, &p_session->lock);
     CDBG("%s:%d] after wait", __func__, __LINE__);
