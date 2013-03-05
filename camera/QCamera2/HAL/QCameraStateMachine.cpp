@@ -1344,9 +1344,10 @@ int32_t QCameraStateMachine::procEvtPicTakingState(qcamera_sm_evt_enum_t evt,
         break;
     case QCAMERA_SM_EVT_STOP_PREVIEW:
         {
-            // no ops, since preview is stopped (normal),
-            // or preview msg type is disabled (ZSL)
-            rc = NO_ERROR;
+            // cancel picture first
+            rc = m_parent->cancelPicture();
+            m_state = QCAMERA_SM_STATE_PREVIEW_STOPPED;
+
             result.status = rc;
             result.request_api = evt;
             result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
@@ -2318,11 +2319,17 @@ int32_t QCameraStateMachine::procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t 
         break;
     case QCAMERA_SM_EVT_STOP_PREVIEW:
         {
-            m_parent->stopChannel(QCAMERA_CH_TYPE_PREVIEW);
-            m_parent->delChannel(QCAMERA_CH_TYPE_PREVIEW);
-            m_parent->delChannel(QCAMERA_CH_TYPE_VIDEO);
-            m_state = QCAMERA_SM_STATE_PIC_TAKING;
-            rc = NO_ERROR;
+            if (m_parent->isZSLMode()) {
+                // cancel picture first
+                rc = m_parent->cancelPicture();
+                m_parent->stopChannel(QCAMERA_CH_TYPE_ZSL);
+            } else {
+                rc = m_parent->cancelLiveSnapshot();
+                m_parent->stopChannel(QCAMERA_CH_TYPE_PREVIEW);
+            }
+            // unprepare preview
+            m_parent->unpreparePreview();
+            m_state = QCAMERA_SM_STATE_PREVIEW_STOPPED;
             result.status = rc;
             result.request_api = evt;
             result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
