@@ -64,6 +64,7 @@
 **/
 typedef struct {
     uint32_t stream_id;
+    cam_stream_type_t stream_type;
     int8_t buf_idx;
     struct timespec ts;
     uint32_t frame_idx;

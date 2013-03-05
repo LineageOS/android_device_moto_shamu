@@ -5216,8 +5216,8 @@ int32_t QCameraParameters::getExifLatitude(rat_t *latitude,
  * DESCRIPTION: get exif longitude
  *
  * PARAMETERS :
- *   @latitude : ptr to rational struct to store longitude info
- *   @ladRef   : charater to indicate longitude reference
+ *   @longitude : ptr to rational struct to store longitude info
+ *   @lonRef    : charater to indicate longitude reference
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
@@ -5250,8 +5250,8 @@ int32_t QCameraParameters::getExifLongitude(rat_t *longitude,
  * DESCRIPTION: get exif altitude
  *
  * PARAMETERS :
- *   @latitude : ptr to rational struct to store altitude info
- *   @ladRef   : charater to indicate altitude reference
+ *   @altitude : ptr to rational struct to store altitude info
+ *   @altRef   : charater to indicate altitude reference
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
