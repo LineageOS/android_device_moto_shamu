@@ -531,6 +531,7 @@ QCameraReprocessChannel::QCameraReprocessChannel(uint32_t cam_handle,
                                                  mm_camera_ops_t *cam_ops) :
     QCameraChannel(cam_handle, cam_ops)
 {
+    memset(mSrcStreamHandles, 0, sizeof(mSrcStreamHandles));
 }
 
 /*===========================================================================
@@ -585,6 +586,9 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
     QCameraStream *pStream = NULL;
     QCameraHeapMemory *pStreamInfoBuf = NULL;
     cam_stream_info_t *streamInfo = NULL;
+
+    memset(mSrcStreamHandles, 0, sizeof(mSrcStreamHandles));
+
     for (int i = 0; i < pSrcChannel->getNumOfStreams(); i++) {
         pStream = pSrcChannel->getStreamByIndex(i);
         if (pStream != NULL) {
@@ -614,6 +618,10 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
             streamInfo->reprocess_config.online.input_stream_id = pStream->getMyServerID();
             streamInfo->reprocess_config.pp_feature_config = config;
 
+            // save source stream handler
+            mSrcStreamHandles[m_numStreams] = pStream->getMyHandle();
+
+            // add reprocess stream
             rc = addStream(allocator,
                            pStreamInfoBuf, minStreamBufNum,
                            paddingInfo,
@@ -626,6 +634,30 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
     }
 
     return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : getStreamBySrouceHandle
+ *
+ * DESCRIPTION: find reprocess stream by its source stream handle
+ *
+ * PARAMETERS :
+ *   @srcHandle : source stream handle
+ *
+ * RETURN     : ptr to reprocess stream if found. NULL if not found
+ *==========================================================================*/
+QCameraStream * QCameraReprocessChannel::getStreamBySrouceHandle(uint32_t srcHandle)
+{
+    QCameraStream *pStream = NULL;
+
+    for (int i = 0; i < m_numStreams; i++) {
+        if (mSrcStreamHandles[i] == srcHandle) {
+            pStream = mStreams[i];
+            break;
+        }
+    }
+
+    return pStream;
 }
 
 /*===========================================================================
@@ -649,8 +681,14 @@ int32_t QCameraReprocessChannel::doReprocess(mm_camera_super_buf_t *frame)
     }
 
     for (int i = 0; i < frame->num_bufs; i++) {
-        QCameraStream *pStream = getStreamByHandle(frame->bufs[i]->stream_id);
+        QCameraStream *pStream = getStreamBySrouceHandle(frame->bufs[i]->stream_id);
         if (pStream != NULL) {
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)) {
+                // Skip metadata for reprocess now because PP module cannot handle meta data
+                // May need furthur discussion if Imaginglib need meta data
+                continue;
+            }
+
             cam_stream_parm_buffer_t param;
             memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
             param.type = CAM_STREAM_PARAM_TYPE_DO_REPROCESS;

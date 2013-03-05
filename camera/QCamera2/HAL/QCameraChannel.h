@@ -119,6 +119,10 @@ public:
     // offline reprocess
     int32_t doReprocess(int buf_fd, uint32_t buf_length, int32_t &ret_val);
 
+private:
+    QCameraStream *getStreamBySrouceHandle(uint32_t srcHandle);
+
+    uint32_t mSrcStreamHandles[MAX_STREAM_NUM_IN_BUNDLE];
 };
 
 }; // namespace qcamera
