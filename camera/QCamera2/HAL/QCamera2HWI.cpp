@@ -3439,8 +3439,6 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
             faces[i].mouth[1] =
                 MAP_TO_DRIVER_COORDINATE(fd_data->faces[i].mouth_center.y, display_dim.height, 2000, -1000);
 
-
-#if 0 //Disable for now before these fields are added in camera_face_t in frameworks
             faces[i].smile_degree = fd_data->faces[i].smile_degree;
             faces[i].smile_score = fd_data->faces[i].smile_confidence;
             faces[i].blink_detected = fd_data->faces[i].blink_detected;
@@ -3456,7 +3454,7 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
             faces[i].reye_blink = fd_data->faces[i].right_blink;
             faces[i].left_right_gaze = fd_data->faces[i].left_right_gaze;
             faces[i].top_bottom_gaze = fd_data->faces[i].top_bottom_gaze;
-#endif
+
         }
     }
 
