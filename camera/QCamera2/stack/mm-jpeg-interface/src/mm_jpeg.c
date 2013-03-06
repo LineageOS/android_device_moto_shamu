@@ -65,6 +65,33 @@
   } \
 })
 
+/** DUMP_TO_FILE2:
+ *  @filename: file name
+ *  @p_addr: address of the buffer
+ *  @len: buffer length
+ *
+ *  dump the image to the file if the memory is non-contiguous
+ **/
+#define DUMP_TO_FILE2(filename, p_addr1, len1, paddr2, len2) ({ \
+  int rc = 0; \
+  FILE *fp = fopen(filename, "w+"); \
+  if (fp) { \
+    rc = fwrite(p_addr1, 1, len1, fp); \
+    rc = fwrite(p_addr2, 1, len2, fp); \
+    CDBG_ERROR("%s:%d] written %d %d", __func__, __LINE__, len1, len2); \
+    fclose(fp); \
+  } else { \
+    CDBG_ERROR("%s:%d] open %s failed", __func__, __LINE__, filename); \
+  } \
+})
+
+/** MM_JPEG_CHK_ABORT:
+ *  @p: client pointer
+ *  @ret: return value
+ *  @label: label to jump to
+ *
+ *  check the abort failure
+ **/
 #define MM_JPEG_CHK_ABORT(p, ret, label) ({ \
   if (OMX_TRUE == p->abort_flag) { \
     CDBG_ERROR("%s:%d] jpeg abort", __func__, __LINE__); \

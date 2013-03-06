@@ -325,6 +325,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(
   if (rc != OMX_ErrorNone) {
     /* Remove the handle from the comp structure */
     ALOGE("%s:%d] Error comp deinit failed", __func__, __LINE__);
+    pthread_mutex_unlock(&g_omxcore->core_lock);
     return OMX_ErrorInvalidComponent;
   }
   p_core_comp = &g_omxcore->component[comp_idx];
