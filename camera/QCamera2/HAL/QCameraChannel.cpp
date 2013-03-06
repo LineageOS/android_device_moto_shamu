@@ -529,7 +529,8 @@ int32_t QCameraVideoChannel::releaseFrame(const void * opaque, bool isMetaData)
  *==========================================================================*/
 QCameraReprocessChannel::QCameraReprocessChannel(uint32_t cam_handle,
                                                  mm_camera_ops_t *cam_ops) :
-    QCameraChannel(cam_handle, cam_ops)
+    QCameraChannel(cam_handle, cam_ops),
+    m_pSrcChannel(NULL)
 {
     memset(mSrcStreamHandles, 0, sizeof(mSrcStreamHandles));
 }
@@ -543,7 +544,8 @@ QCameraReprocessChannel::QCameraReprocessChannel(uint32_t cam_handle,
  *
  * RETURN     : none
  *==========================================================================*/
-QCameraReprocessChannel::QCameraReprocessChannel()
+QCameraReprocessChannel::QCameraReprocessChannel() :
+    m_pSrcChannel(NULL)
 {
 }
 
@@ -633,6 +635,9 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
         }
     }
 
+    if (rc == NO_ERROR) {
+        m_pSrcChannel = pSrcChannel;
+    }
     return rc;
 }
 
@@ -679,6 +684,24 @@ int32_t QCameraReprocessChannel::doReprocess(mm_camera_super_buf_t *frame)
         ALOGE("%s: No reprocess stream is created", __func__);
         return -1;
     }
+    if (m_pSrcChannel == NULL) {
+        ALOGE("%s: No source channel for reprocess", __func__);
+        return -1;
+    }
+
+    // find meta data stream and index of meta data frame in the superbuf
+    QCameraStream *pMetaStream = NULL;
+    uint8_t meta_buf_index = 0;
+    for (int i = 0; i < frame->num_bufs; i++) {
+        QCameraStream *pStream = m_pSrcChannel->getStreamByHandle(frame->bufs[i]->stream_id);
+        if (pStream != NULL) {
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)) {
+                meta_buf_index = frame->bufs[i]->buf_idx;
+                pMetaStream = pStream;
+                break;
+            }
+        }
+    }
 
     for (int i = 0; i < frame->num_bufs; i++) {
         QCameraStream *pStream = getStreamBySrouceHandle(frame->bufs[i]->stream_id);
@@ -693,6 +716,13 @@ int32_t QCameraReprocessChannel::doReprocess(mm_camera_super_buf_t *frame)
             memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
             param.type = CAM_STREAM_PARAM_TYPE_DO_REPROCESS;
             param.reprocess.buf_index = frame->bufs[i]->buf_idx;
+            param.reprocess.frame_idx = frame->bufs[i]->frame_idx;
+            if (pMetaStream != NULL) {
+                // we have meta data frame bundled, sent together with reprocess frame
+                param.reprocess.meta_present = 1;
+                param.reprocess.meta_stream_handle = pMetaStream->getMyServerID();
+                param.reprocess.meta_buf_index = meta_buf_index;
+            }
             rc = pStream->setParameter(param);
             if (rc != NO_ERROR) {
                 ALOGE("%s: stream setParameter for reprocess failed", __func__);

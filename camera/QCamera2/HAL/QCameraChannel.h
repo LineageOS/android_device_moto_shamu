@@ -123,6 +123,7 @@ private:
     QCameraStream *getStreamBySrouceHandle(uint32_t srcHandle);
 
     uint32_t mSrcStreamHandles[MAX_STREAM_NUM_IN_BUNDLE];
+    QCameraChannel *m_pSrcChannel; // ptr to source channel for reprocess
 };
 
 }; // namespace qcamera
