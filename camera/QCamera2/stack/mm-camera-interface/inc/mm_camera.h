@@ -425,10 +425,10 @@ extern int32_t mm_camera_map_buf(mm_camera_obj_t *my_obj,
                                  uint32_t size);
 extern int32_t mm_camera_unmap_buf(mm_camera_obj_t *my_obj,
                                    uint8_t buf_type);
-extern int32_t mm_camera_do_auto_focus(mm_camera_obj_t *my_obj,
-                                        cam_autofocus_cycle_t sweep_mode);
-extern cam_autofocus_state_t mm_camera_cancel_auto_focus(mm_camera_obj_t *my_obj);
-extern int32_t mm_camera_prepare_snapshot(mm_camera_obj_t *my_obj);
+extern int32_t mm_camera_do_auto_focus(mm_camera_obj_t *my_obj);
+extern int32_t mm_camera_cancel_auto_focus(mm_camera_obj_t *my_obj);
+extern int32_t mm_camera_prepare_snapshot(mm_camera_obj_t *my_obj,
+                                          int32_t do_af_flag);
 extern int32_t mm_camera_start_zsl_snapshot(mm_camera_obj_t *my_obj);
 extern int32_t mm_camera_stop_zsl_snapshot(mm_camera_obj_t *my_obj);
 extern uint32_t mm_camera_add_channel(mm_camera_obj_t *my_obj,

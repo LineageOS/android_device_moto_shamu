@@ -322,7 +322,7 @@ private:
     int32_t processHistogramStats(cam_hist_stats_t &stats_data);
     int32_t setHistogram(bool histogram_en);
     int32_t setFaceDetection(bool enabled);
-    int32_t prepareHardwareForSnapshot();
+    int32_t prepareHardwareForSnapshot(int32_t afNeeded);
     bool needProcessPreviewFrame() {return m_stateMachine.isPreviewRunning();};
     bool isNoDisplayMode() {return mParameters.isNoDisplayMode();};
     bool isZSLMode() {return mParameters.isZSLMode();};
@@ -407,6 +407,7 @@ private:
     // and beforeany focus callback/cancel_focus happens. This flag is not an indication
     // of whether lens is moving or not.
     bool m_bAutoFocusRunning;
+    cam_autofocus_state_t m_currentFocusState;
 
     // If start_zsl_snapshot is called to notify camera daemon about zsl snapshot
     bool m_bStartZSLSnapshotCalled;

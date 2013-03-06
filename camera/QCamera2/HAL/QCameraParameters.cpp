@@ -548,6 +548,9 @@ QCameraParameters::QCameraParameters()
       m_bNeedRestart(false),
       m_bNoDisplayMode(false),
       m_bWNROn(false),
+      m_bNeedLockCAF(false),
+      m_bCAFLocked(false),
+      m_bAFRunning(false),
       m_tempMap()
 {
     char value[32];
@@ -600,6 +603,9 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bNeedRestart(false),
     m_bNoDisplayMode(false),
     m_bWNROn(false),
+    m_bNeedLockCAF(false),
+    m_bCAFLocked(false),
+    m_bAFRunning(false),
     m_tempMap()
 {
     memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
@@ -3516,6 +3522,12 @@ int32_t QCameraParameters::setFocusMode(const char *focusMode)
         if (value != NAME_NOT_FOUND) {
             ALOGD("%s: Setting focus mode %s", __func__, focusMode);
             mFocusMode = (cam_focus_mode_type)value;
+
+            // reset need lock CAF flag
+            m_bNeedLockCAF = false;
+            m_bCAFLocked = false;
+            m_bAFRunning = false;
+
             updateParamEntry(KEY_FOCUS_MODE, focusMode);
             return AddSetParmEntryToBatch(m_pParamBuf,
                                           CAM_INTF_PARM_FOCUS_MODE,
@@ -5354,7 +5366,7 @@ int32_t QCameraParameters::setHistogram(bool enabled)
         return BAD_TYPE;
     }
 
-    int8_t value = enabled;
+    int32_t value = enabled;
     int32_t rc = NO_ERROR;
     rc = AddSetParmEntryToBatch(m_pParamBuf,
                                 CAM_INTF_PARM_HISTOGRAM,
@@ -5437,6 +5449,46 @@ int32_t QCameraParameters::setFaceDetection(bool enabled)
     ALOGD("%s: FaceProcMask -> %d", __func__, m_nFaceProcMask);
 
     return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : setLockCAF
+ *
+ * DESCRIPTION: Lock CAF
+ *
+ * PARAMETERS :
+ *   @bLock : if CAF needs to be locked
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setLockCAF(bool bLock)
+{
+    if(initBatchUpdate(m_pParamBuf) < 0 ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return BAD_TYPE;
+    }
+    int32_t rc = NO_ERROR;
+    int32_t value = bLock;
+
+    rc = AddSetParmEntryToBatch(m_pParamBuf,
+                                CAM_INTF_PARM_LOCK_CAF,
+                                sizeof(value),
+                                &value);
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to update table", __func__);
+        return rc;
+    }
+
+    rc = commitSetBatch();
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to set lock CAF parm", __func__);
+        return rc;
+    } else {
+        m_bCAFLocked = bLock;
+        return NO_ERROR;
+    }
 }
 
 /*===========================================================================

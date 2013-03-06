@@ -244,7 +244,6 @@ static int32_t mm_camera_intf_get_parms(uint32_t camera_handle,
  *
  * PARAMETERS :
  *   @camera_handle: camera handle
- *   @sweep_mode   : auto focus sweep mode
  *
  * RETURN     : int32_t type of status
  *              0  -- success
@@ -252,8 +251,7 @@ static int32_t mm_camera_intf_get_parms(uint32_t camera_handle,
  * NOTE       : if this call success, we will always assume there will
  *              be an auto_focus event following up.
  *==========================================================================*/
-static int32_t mm_camera_intf_do_auto_focus(uint32_t camera_handle,
-                                            cam_autofocus_cycle_t sweep_mode)
+static int32_t mm_camera_intf_do_auto_focus(uint32_t camera_handle)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;
@@ -264,7 +262,7 @@ static int32_t mm_camera_intf_do_auto_focus(uint32_t camera_handle,
     if(my_obj) {
         pthread_mutex_lock(&my_obj->cam_lock);
         pthread_mutex_unlock(&g_intf_lock);
-        rc = mm_camera_do_auto_focus(my_obj, sweep_mode);
+        rc = mm_camera_do_auto_focus(my_obj);
     } else {
         pthread_mutex_unlock(&g_intf_lock);
     }
@@ -279,41 +277,11 @@ static int32_t mm_camera_intf_do_auto_focus(uint32_t camera_handle,
  * PARAMETERS :
  *   @camera_handle: camera handle
  *
- * RETURN     : current focus state upon end of API call
- *                CAM_AF_FOCUSED
- *                CAM_AF_NOT_FOCUSED
- *==========================================================================*/
-static cam_autofocus_state_t mm_camera_intf_cancel_auto_focus(uint32_t camera_handle)
-{
-    cam_autofocus_state_t state = CAM_AF_NOT_FOCUSED;
-    mm_camera_obj_t * my_obj = NULL;
-
-    pthread_mutex_lock(&g_intf_lock);
-    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
-
-    if(my_obj) {
-        pthread_mutex_lock(&my_obj->cam_lock);
-        pthread_mutex_unlock(&g_intf_lock);
-        state = mm_camera_cancel_auto_focus(my_obj);
-    } else {
-        pthread_mutex_unlock(&g_intf_lock);
-    }
-    return state;
-}
-
-/*===========================================================================
- * FUNCTION   : mm_camera_intf_prepare_snapshot
- *
- * DESCRIPTION: prepare hardware for snapshot
- *
- * PARAMETERS :
- *   @camera_handle: camera handle
- *
  * RETURN     : int32_t type of status
  *              0  -- success
  *              -1 -- failure
  *==========================================================================*/
-static int32_t mm_camera_intf_prepare_snapshot(uint32_t camera_handle)
+static int32_t mm_camera_intf_cancel_auto_focus(uint32_t camera_handle)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;
@@ -324,7 +292,39 @@ static int32_t mm_camera_intf_prepare_snapshot(uint32_t camera_handle)
     if(my_obj) {
         pthread_mutex_lock(&my_obj->cam_lock);
         pthread_mutex_unlock(&g_intf_lock);
-        rc = mm_camera_prepare_snapshot(my_obj);
+        rc = mm_camera_cancel_auto_focus(my_obj);
+    } else {
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : mm_camera_intf_prepare_snapshot
+ *
+ * DESCRIPTION: prepare hardware for snapshot
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @do_af_flag   : flag indicating if AF is needed
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+static int32_t mm_camera_intf_prepare_snapshot(uint32_t camera_handle,
+                                               int32_t do_af_flag)
+{
+    int32_t rc = -1;
+    mm_camera_obj_t * my_obj = NULL;
+
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
+
+    if(my_obj) {
+        pthread_mutex_lock(&my_obj->cam_lock);
+        pthread_mutex_unlock(&g_intf_lock);
+        rc = mm_camera_prepare_snapshot(my_obj, do_af_flag);
     } else {
         pthread_mutex_unlock(&g_intf_lock);
     }
