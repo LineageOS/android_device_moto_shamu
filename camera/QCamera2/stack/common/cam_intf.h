@@ -70,7 +70,8 @@ typedef struct{
     uint8_t fps_ranges_tbl_cnt;                             /* fps ranges table size */
     cam_fps_range_t fps_ranges_tbl[MAX_SIZES_CNT];          /* fps ranges table */
 
-    cam_dimension_t max_video_snapshot_size;                /* max size for video snapshot */
+    uint8_t livesnapshot_sizes_tbl_cnt;                     /* livesnapshot sizes table size */
+    cam_dimension_t livesnapshot_sizes_tbl[MAX_SIZES_CNT];  /* livesnapshot sizes table */
 
     uint8_t hfr_tbl_cnt;                                    /* table size for HFR */
     cam_hfr_info_t hfr_tbl[CAM_HFR_MODE_MAX];               /* HFR table */
