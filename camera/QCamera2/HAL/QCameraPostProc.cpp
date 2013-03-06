@@ -1186,8 +1186,10 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                 }
 
                 // destroy jpeg encoding session
-                pme->mJpegHandle.destroy_session(pme->mJpegSessionId);
-                pme->mJpegSessionId = 0;
+                if ( 0 < pme->mJpegSessionId ) {
+                    pme->mJpegHandle.destroy_session(pme->mJpegSessionId);
+                    pme->mJpegSessionId = 0;
+                }
 
                 // free jpeg out buf and exif obj
                 if (pme->m_pJpegOutputMem != NULL) {
