@@ -1567,7 +1567,8 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
                     if ( super_buf->frame_idx < buf_info->frame_idx ) {
                         last_buf = pos;
                     }
-                } else if ( NULL == insert_before_buf ) {
+                }
+                if ( NULL == insert_before_buf ) {
                     if ( super_buf->frame_idx > buf_info->frame_idx ) {
                         insert_before_buf = pos;
                     }
