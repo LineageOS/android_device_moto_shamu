@@ -566,6 +566,8 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
         mStreamBufs->deallocate();
         delete mStreamBufs;
         mStreamBufs = NULL;
+        free(regFlags);
+        regFlags = NULL;
         return INVALID_OPERATION;
     }
     for (int i = 0; i < mNumBufs; i++) {
@@ -583,6 +585,8 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
         mStreamBufs = NULL;
         free(mBufDefs);
         mBufDefs = NULL;
+        free(regFlags);
+        regFlags = NULL;
         return INVALID_OPERATION;
     }
 

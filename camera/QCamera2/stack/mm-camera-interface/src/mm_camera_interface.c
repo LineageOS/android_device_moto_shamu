@@ -102,7 +102,9 @@ const char *mm_camera_util_get_dev_name(uint32_t cam_handle)
 {
     char *dev_name = NULL;
     uint8_t cam_idx = mm_camera_util_get_index_by_handler(cam_handle);
-    dev_name = g_cam_ctrl.video_dev_name[cam_idx];
+    if(cam_idx < MM_CAMERA_MAX_NUM_SENSORS) {
+        dev_name = g_cam_ctrl.video_dev_name[cam_idx];
+    }
     return dev_name;
 }
 
@@ -122,7 +124,8 @@ mm_camera_obj_t* mm_camera_util_get_camera_by_handler(uint32_t cam_handle)
     mm_camera_obj_t *cam_obj = NULL;
     uint8_t cam_idx = mm_camera_util_get_index_by_handler(cam_handle);
 
-    if ((NULL != g_cam_ctrl.cam_obj[cam_idx]) &&
+    if (cam_idx < MM_CAMERA_MAX_NUM_SENSORS &&
+        (NULL != g_cam_ctrl.cam_obj[cam_idx]) &&
         (cam_handle == g_cam_ctrl.cam_obj[cam_idx]->my_hdl)) {
         cam_obj = g_cam_ctrl.cam_obj[cam_idx];
     }
@@ -1218,7 +1221,7 @@ uint8_t get_num_of_cameras()
         int num_entities;
         snprintf(dev_name, sizeof(dev_name), "/dev/media%d", num_media_devices);
         dev_fd = open(dev_name, O_RDWR | O_NONBLOCK);
-        if (dev_fd < 0) {
+        if (dev_fd <= 0) {
             CDBG("Done discovering media devices\n");
             break;
         }
@@ -1227,12 +1230,14 @@ uint8_t get_num_of_cameras()
         if (rc < 0) {
             CDBG_ERROR("Error: ioctl media_dev failed: %s\n", strerror(errno));
             close(dev_fd);
+            dev_fd = 0;
             num_cameras = 0;
             break;
         }
 
         if(strncmp(mdev_info.model, MSM_CAMERA_NAME, sizeof(mdev_info.model)) != 0) {
             close(dev_fd);
+            dev_fd = 0;
             continue;
         }
 
@@ -1258,9 +1263,8 @@ uint8_t get_num_of_cameras()
             __func__, num_cameras, g_cam_ctrl.video_dev_name[num_cameras]);
 
         num_cameras++;
-        if (dev_fd > 0) {
-            close(dev_fd);
-        }
+        close(dev_fd);
+        dev_fd = 0;
     }
     g_cam_ctrl.num_cam = num_cameras;
 

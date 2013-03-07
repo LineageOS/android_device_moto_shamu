@@ -2063,6 +2063,7 @@ int QCamera2HardwareInterface::registerFaceImage(void *img_ptr,
     rc = imgBuf->allocate(1, config->input_buf_planes.plane_info.frame_len);
     if (rc < 0) {
         ALOGE("%s: Unable to allocate heap memory for image buf", __func__);
+        delete imgBuf;
         return NO_MEMORY;
     }
 
@@ -2093,6 +2094,7 @@ int QCamera2HardwareInterface::registerFaceImage(void *img_ptr,
         ALOGE("%s: Cannot start reprocess channel", __func__);
         imgBuf->deallocate();
         delete imgBuf;
+        delete pChannel;
         return rc;
     }
 

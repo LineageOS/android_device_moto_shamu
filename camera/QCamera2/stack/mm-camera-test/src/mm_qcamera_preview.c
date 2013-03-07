@@ -118,6 +118,11 @@ static void mm_app_zsl_notify_cb(mm_camera_super_buf_t *bufs,
         }
     }
 
+    if (!m_frame || !p_frame) {
+        CDBG_ERROR("%s: cannot find preview/snapshot frame", __func__);
+        return;
+    }
+
     mm_app_dump_frame(p_frame, "zsl_preview", "yuv", p_frame->frame_idx);
     mm_app_dump_frame(m_frame, "zsl_main", "yuv", m_frame->frame_idx);
 

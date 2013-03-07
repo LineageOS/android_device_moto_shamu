@@ -419,10 +419,8 @@ int32_t mm_stream_fsm_inited(mm_stream_t *my_obj,
         } else {
             /* failed setting ext_mode
              * close fd */
-            if(my_obj->fd > 0) {
-                close(my_obj->fd);
-                my_obj->fd = 0;
-            }
+            close(my_obj->fd);
+            my_obj->fd = 0;
             break;
         }
         break;

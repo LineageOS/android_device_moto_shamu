@@ -402,8 +402,10 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
     }
 
     QCameraMemory *previewMemObj = (QCameraMemory *)frame->mem_info;
-    camera_memory_t *preview_mem =
-        previewMemObj->getMemory(frame->buf_idx, false);
+    camera_memory_t *preview_mem = NULL;
+    if (previewMemObj != NULL) {
+        preview_mem = previewMemObj->getMemory(frame->buf_idx, false);
+    }
     if (NULL != previewMemObj && NULL != preview_mem) {
         previewMemObj->cleanCache(frame->buf_idx);
 
@@ -548,8 +550,10 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
     nsecs_t timeStamp = nsecs_t(frame->ts.tv_sec) * 1000000000LL + frame->ts.tv_nsec;
     ALOGE("Send Video frame to services/encoder TimeStamp : %lld", timeStamp);
     QCameraMemory *videoMemObj = (QCameraMemory *)frame->mem_info;
-    camera_memory_t *video_mem =
-        videoMemObj->getMemory(frame->buf_idx, (pme->mStoreMetaDataInFrame > 0)? true : false);
+    camera_memory_t *video_mem = NULL;
+    if (NULL != videoMemObj) {
+        video_mem = videoMemObj->getMemory(frame->buf_idx, (pme->mStoreMetaDataInFrame > 0)? true : false);
+    }
     if (NULL != videoMemObj && NULL != video_mem) {
         videoMemObj->cleanCache(frame->buf_idx);
         pme->dumpFrameToFile(frame->buffer, frame->frame_len,

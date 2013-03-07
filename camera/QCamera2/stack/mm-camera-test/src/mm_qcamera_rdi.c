@@ -263,7 +263,6 @@ int mm_app_start_rdi(mm_camera_test_obj_t *test_obj, uint8_t num_burst)
 {
     int rc = MM_CAMERA_OK;
     mm_camera_channel_t *channel = NULL;
-    mm_camera_stream_t *stream = NULL;
 
     channel = mm_app_add_rdi_channel(test_obj, num_burst);
     if (NULL == channel) {
@@ -274,7 +273,6 @@ int mm_app_start_rdi(mm_camera_test_obj_t *test_obj, uint8_t num_burst)
     rc = mm_app_start_channel(test_obj, channel);
     if (MM_CAMERA_OK != rc) {
         CDBG_ERROR("%s:start rdi failed rc=%d\n", __func__, rc);
-        mm_app_del_stream(test_obj, channel, stream);
         mm_app_del_channel(test_obj, channel);
         return rc;
     }
