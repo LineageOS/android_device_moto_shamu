@@ -52,8 +52,7 @@ void *buffer_allocate(buffer_test_t *p_buffer)
    p_buffer->alloc.len = p_buffer->size;
    p_buffer->alloc.align = 4096;
    p_buffer->alloc.flags = ION_FLAG_CACHED;
-   p_buffer->alloc.heap_mask =
-     (0x1 << ION_CP_MM_HEAP_ID | 0x1 << ION_IOMMU_HEAP_ID);
+   p_buffer->alloc.heap_mask = 0x1 << ION_IOMMU_HEAP_ID;
 
    p_buffer->ion_fd = open("/dev/ion", O_RDONLY);
    if(p_buffer->ion_fd < 0) {

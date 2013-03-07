@@ -428,7 +428,7 @@ void *QCameraHeapMemory::getPtr(int index) const
  *==========================================================================*/
 int QCameraHeapMemory::allocate(int count, int size)
 {
-    int heap_mask = (0x1 << ION_CP_MM_HEAP_ID | 0x1 << ION_IOMMU_HEAP_ID);
+    int heap_mask = 0x1 << ION_IOMMU_HEAP_ID;
     int rc = alloc(count, size, heap_mask);
     if (rc < 0)
         return rc;
@@ -601,7 +601,7 @@ QCameraStreamMemory::~QCameraStreamMemory()
  *==========================================================================*/
 int QCameraStreamMemory::allocate(int count, int size)
 {
-    int heap_mask = (0x1 << ION_CP_MM_HEAP_ID | 0x1 << ION_IOMMU_HEAP_ID);
+    int heap_mask = 0x1 << ION_IOMMU_HEAP_ID;
     int rc = alloc(count, size, heap_mask);
     if (rc < 0)
         return rc;
@@ -1046,7 +1046,7 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
          goto end;
     }
 
-    gralloc_usage = GRALLOC_USAGE_PRIVATE_MM_HEAP | GRALLOC_USAGE_PRIVATE_IOMMU_HEAP;
+    gralloc_usage = GRALLOC_USAGE_PRIVATE_IOMMU_HEAP;
     err = mWindow->set_usage(mWindow, gralloc_usage);
     if(err != 0) {
         /* set_usage error out */
