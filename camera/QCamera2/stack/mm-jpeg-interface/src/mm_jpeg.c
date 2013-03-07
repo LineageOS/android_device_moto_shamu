@@ -970,6 +970,11 @@ OMX_BOOL mm_jpeg_session_abort(mm_jpeg_job_session_t *p_session)
 
   CDBG("%s:%d] E", __func__, __LINE__);
   pthread_mutex_lock(&p_session->lock);
+  if (OMX_TRUE == p_session->abort_flag) {
+    pthread_mutex_unlock(&p_session->lock);
+    CDBG("%s:%d] **** ALREADY ABORTED", __func__, __LINE__);
+    return 0;
+  }
   p_session->abort_flag = OMX_TRUE;
   if (OMX_TRUE == p_session->encoding) {
     p_session->state_change_pending = OMX_TRUE;
