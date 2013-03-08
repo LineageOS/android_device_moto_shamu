@@ -914,6 +914,13 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
 
     // find channel
     QCameraChannel *pChannel = m_parent->getChannelByHandle(recvd_frame->ch_id);
+    // check reprocess channel if not found
+    if (pChannel == NULL) {
+        if (m_pReprocChannel != NULL &&
+            m_pReprocChannel->getMyHandle() == recvd_frame->ch_id) {
+            pChannel = m_pReprocChannel;
+        }
+    }
     if (pChannel == NULL) {
         ALOGE("%s: No corresponding channel (ch_id = %d) exist, return here",
               __func__, recvd_frame->ch_id);

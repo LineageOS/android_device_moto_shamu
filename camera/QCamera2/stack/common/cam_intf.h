@@ -164,10 +164,14 @@ typedef enum {
 } cam_stream_param_type_e;
 
 typedef struct {
-    uint8_t buf_index;            /* buf index to the buffer that needs reprocess,
+    uint8_t buf_index;            /* buf index to the source frame buffer that needs reprocess,
                                     (assume buffer is already mapped)*/
+    uint32_t frame_idx;           /* frame id of source frame to be reprocessed */
     int32_t ret_val;              /* return value from reprocess. Could have different meanings.
                                      i.e., faceID in the case of face registration. */
+    uint8_t meta_present;         /* if there is meta data associated with this reprocess frame */
+    uint32_t meta_stream_handle;  /* meta data stream ID. only valid if meta_present != 0 */
+    uint8_t meta_buf_index;       /* buf index to meta data buffer. only valid if meta_present != 0 */
 } cam_reprocess_param;
 
 typedef struct {
