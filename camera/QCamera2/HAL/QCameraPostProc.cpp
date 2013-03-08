@@ -1092,7 +1092,7 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
 
         // dump frame into file
         m_parent->dumpFrameToFile(frame->buffer, frame->frame_len,
-                                  frame->buf_idx, QCAMERA_DUMP_FRM_RAW);
+                                  frame->frame_idx, QCAMERA_DUMP_FRM_RAW);
 
         // send data callback / notify for RAW_IMAGE
         if (NULL != m_parent->mDataCb &&

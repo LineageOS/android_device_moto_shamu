@@ -283,7 +283,7 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
     int idx = frame->buf_idx;
     memory->cleanCache(idx);
     pme->dumpFrameToFile(frame->buffer, frame->frame_len,
-                         frame->buf_idx, QCAMERA_DUMP_FRM_PREVIEW);
+                         frame->frame_idx, QCAMERA_DUMP_FRM_PREVIEW);
 
     // Display the buffer.
     int dequeuedIdx = memory->displayBuffer(idx);
@@ -408,7 +408,7 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
         previewMemObj->cleanCache(frame->buf_idx);
 
         pme->dumpFrameToFile(frame->buffer, frame->frame_len,
-                             frame->buf_idx, QCAMERA_DUMP_FRM_PREVIEW);
+                             frame->frame_idx, QCAMERA_DUMP_FRM_PREVIEW);
 
         if (pme->needProcessPreviewFrame() &&
             pme->mDataCb != NULL &&
@@ -478,7 +478,7 @@ void QCamera2HardwareInterface::postview_stream_cb_routine(mm_camera_super_buf_t
         memObj->cleanCache(frame->buf_idx);
 
         pme->dumpFrameToFile(frame->buffer, frame->frame_len,
-                             frame->buf_idx, QCAMERA_DUMP_FRM_THUMBNAIL);
+                             frame->frame_idx, QCAMERA_DUMP_FRM_THUMBNAIL);
     }
 
     // Display the buffer.
@@ -553,7 +553,7 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
     if (NULL != videoMemObj && NULL != video_mem) {
         videoMemObj->cleanCache(frame->buf_idx);
         pme->dumpFrameToFile(frame->buffer, frame->frame_len,
-                             frame->buf_idx, QCAMERA_DUMP_FRM_VIDEO);
+                             frame->frame_idx, QCAMERA_DUMP_FRM_VIDEO);
         if ((pme->mDataCbTimestamp != NULL) &&
             pme->msgTypeEnabled(CAMERA_MSG_VIDEO_FRAME) > 0) {
             qcamera_callback_argm_t cbArg;
@@ -808,30 +808,43 @@ void QCamera2HardwareInterface::dumpFrameToFile(const void *data,
                                                 int index,
                                                 int dump_type)
 {
+
     if ((mParameters.getEnabledFileDumpMask() & dump_type) == 0) {
         ALOGV("dumping frame to file not enabled");
         return;
     }
 
+    if(mDumpFrmCnt < 0 || mDumpFrmCnt > 255){
+        mDumpFrmCnt = 0;
+    }
+
     char buf[32];
+    cam_dimension_t dim;
+    memset(&dim, 0, sizeof(dim));
     switch (dump_type) {
     case QCAMERA_DUMP_FRM_PREVIEW:
-        snprintf(buf, sizeof(buf), "/data/%s_%d.%s", "preview", index, "yuv");
+        mParameters.getStreamDimension(CAM_STREAM_TYPE_PREVIEW, dim);
+        snprintf(buf, sizeof(buf), "/data/%dp_%dx%d_%d.yuv", mDumpFrmCnt, dim.width, dim.height, index);
         break;
     case QCAMERA_DUMP_FRM_THUMBNAIL:
-        snprintf(buf, sizeof(buf), "/data/%s_%d.%s", "thumbnail", index, "yuv");
+        mParameters.getStreamDimension(CAM_STREAM_TYPE_POSTVIEW, dim);
+        snprintf(buf, sizeof(buf), "/data/%dt_%dx%d_%d.yuv", mDumpFrmCnt, dim.width, dim.height, index);
         break;
     case QCAMERA_DUMP_FRM_SNAPSHOT:
-        snprintf(buf, sizeof(buf), "/data/%s_%d.%s", "main", index, "yuv");
+        mParameters.getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT, dim);
+        snprintf(buf, sizeof(buf), "/data/%ds_%dx%d_%d.yuv", mDumpFrmCnt, dim.width, dim.height, index);
         break;
     case QCAMERA_DUMP_FRM_VIDEO:
-        snprintf(buf, sizeof(buf), "/data/%s_%d.%s", "video", index, "yuv");
+        mParameters.getStreamDimension(CAM_STREAM_TYPE_VIDEO, dim);
+        snprintf(buf, sizeof(buf), "/data/%dv_%dx%d_%d.yuv", mDumpFrmCnt, dim.width, dim.height, index);
         break;
     case QCAMERA_DUMP_FRM_RAW:
-        snprintf(buf, sizeof(buf), "/data/%s_%d.%s", "raw", index, "raw");
+        mParameters.getStreamDimension(CAM_STREAM_TYPE_RAW, dim);
+        snprintf(buf, sizeof(buf), "/data/%dr_%dx%d_%d.yuv", mDumpFrmCnt, dim.width, dim.height, index);
         break;
     case QCAMERA_DUMP_FRM_JPEG:
-        snprintf(buf, sizeof(buf), "/data/%s_%d.%s", "jpeg", index, "jpg");
+        mParameters.getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT, dim);
+        snprintf(buf, sizeof(buf), "/data/%dj_%dx%d_%d.yuv", mDumpFrmCnt, dim.width, dim.height, index);
         break;
     default:
         ALOGE("%s: Not supported for dumping stream type %d", __func__, dump_type);
@@ -843,6 +856,7 @@ void QCamera2HardwareInterface::dumpFrameToFile(const void *data,
     int written_len = write(file_fd, data, size);
     ALOGD("%s: written number of bytes %d\n", __func__, written_len);
     close(file_fd);
+    mDumpFrmCnt++;
 }
 
 /*===========================================================================
