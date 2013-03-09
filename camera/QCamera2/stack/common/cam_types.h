@@ -682,6 +682,7 @@ typedef enum {
     CAM_INTF_PARM_SET_BUNDLE,
     CAM_INTF_PARM_FRAMESKIP,
     CAM_INTF_PARM_ZSL_MODE,  /* indicating if it's running in ZSL mode */
+    CAM_INTF_PARM_HDR_NEED_1X, /* if HDR needs 1x output */
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 
@@ -735,6 +736,7 @@ typedef struct {
     cam_rotation_t rotation;
     uint32_t flip;
     int32_t sharpness;
+    int32_t hdr_need_1x; /* when CAM_QCOM_FEATURE_HDR enabled, indicate if 1x is needed for output */
 } cam_pp_feature_config_t;
 
 typedef struct {

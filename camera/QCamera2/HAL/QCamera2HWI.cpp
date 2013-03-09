@@ -1225,6 +1225,7 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
     } else {
         zslBuffers += CAMERA_MIN_JPEG_ENCODING_BUFFERS;
     }
+    zslBuffers += mParameters.getNumOfExtraHDRBufsIfNeeded();
 
     // TODO: hardcode for now until mctl add support for min_num_pp_bufs
     gCamCapability[mCameraId]->min_num_pp_bufs = 2;
@@ -1239,13 +1240,17 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
         }
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
-        bufferCnt = minCaptureBuffers + gCamCapability[mCameraId]->min_num_pp_bufs;
+        bufferCnt = minCaptureBuffers +
+                    gCamCapability[mCameraId]->min_num_pp_bufs +
+                    mParameters.getNumOfExtraHDRBufsIfNeeded();
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
         if (mParameters.isZSLMode()) {
             bufferCnt = CAMERA_MIN_STREAMING_BUFFERS + zslBuffers;
         } else {
-            bufferCnt = minCaptureBuffers + gCamCapability[mCameraId]->min_num_pp_bufs;
+            bufferCnt = minCaptureBuffers +
+                        gCamCapability[mCameraId]->min_num_pp_bufs +
+                        mParameters.getNumOfExtraHDRBufsIfNeeded();
         }
         break;
     case CAM_STREAM_TYPE_RAW:
