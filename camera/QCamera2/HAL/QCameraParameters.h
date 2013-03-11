@@ -368,11 +368,13 @@ public:
     int getZSLBurstInterval();
     int getZSLQueueDepth();
     int getZSLBackLookCount();
+    int getMaxUnmatchedFramesInQueue();
     bool isZSLMode() {return m_bZslMode;};
     bool isNoDisplayMode() {return m_bNoDisplayMode;};
     bool isWNREnabled() {return m_bWNROn;};
     uint8_t getNumOfSnapshots();
     uint8_t getNumOfExtraHDRBufsIfNeeded();
+    uint8_t getNumOfHDRBufsIfNeeded();
     int getBurstNum();
     bool getRecordingHintValue() {return m_bRecordingHint;}; // return local copy of video hint
     int setRecordingHintValue(int32_t value); // set local copy of video hint and send to server

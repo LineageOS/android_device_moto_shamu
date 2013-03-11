@@ -213,6 +213,7 @@ private:
     int enableMsgType(int32_t msg_type);
     int disableMsgType(int32_t msg_type);
     int msgTypeEnabled(int32_t msg_type);
+    int msgTypeEnabledWithLock(int32_t msg_type);
     int startPreview();
     int stopPreview();
     int storeMetaDataInBuffers(int enable);

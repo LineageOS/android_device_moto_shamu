@@ -1144,6 +1144,7 @@ int QCamera2HardwareInterface::initCapabilities(int cameraId)
     }
     memcpy(gCamCapability[cameraId], DATA_PTR(capabilityHeap,0),
                                         sizeof(cam_capability_t));
+
     rc = NO_ERROR;
 
 query_failed:
@@ -1220,56 +1221,83 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
 {
     int bufferCnt = 0;
     int minCaptureBuffers = mParameters.getNumOfSnapshots();
-    int zslBuffers = mParameters.getZSLQueueDepth();
-    if (CAMERA_MIN_JPEG_ENCODING_BUFFERS < minCaptureBuffers) {
-        zslBuffers += minCaptureBuffers;
-    } else {
-        zslBuffers += CAMERA_MIN_JPEG_ENCODING_BUFFERS;
-    }
-    zslBuffers += mParameters.getNumOfExtraHDRBufsIfNeeded();
 
-    // TODO: hardcode for now until mctl add support for min_num_pp_bufs
-    gCamCapability[mCameraId]->min_num_pp_bufs = 2;
+    int zslQBuffers = mParameters.getZSLQueueDepth() +
+                      mParameters.getMaxUnmatchedFramesInQueue();
+
+    int minCircularBufNum = CAMERA_MIN_STREAMING_BUFFERS +
+                            CAMERA_MIN_JPEG_ENCODING_BUFFERS +
+                            mParameters.getMaxUnmatchedFramesInQueue() +
+                            mParameters.getNumOfHDRBufsIfNeeded();
 
     // Get buffer count for the particular stream type
     switch (stream_type) {
     case CAM_STREAM_TYPE_PREVIEW:
-        bufferCnt = CAMERA_MIN_STREAMING_BUFFERS +
-                    gCamCapability[mCameraId]->min_num_pp_bufs;
-        if (mParameters.isZSLMode()) {
-            bufferCnt += zslBuffers;
+        {
+            if (mParameters.isZSLMode()) {
+                bufferCnt = zslQBuffers + minCircularBufNum;
+            } else {
+                bufferCnt = CAMERA_MIN_STREAMING_BUFFERS +
+                            mParameters.getMaxUnmatchedFramesInQueue();
+            }
         }
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
-        bufferCnt = minCaptureBuffers +
-                    gCamCapability[mCameraId]->min_num_pp_bufs +
-                    mParameters.getNumOfExtraHDRBufsIfNeeded();
+        {
+            bufferCnt = minCaptureBuffers +
+                        mParameters.getMaxUnmatchedFramesInQueue() +
+                        mParameters.getNumOfExtraHDRBufsIfNeeded() +
+                        CAMERA_MIN_STREAMING_BUFFERS;
+        }
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
-        if (mParameters.isZSLMode()) {
-            bufferCnt = CAMERA_MIN_STREAMING_BUFFERS + zslBuffers;
-        } else {
-            bufferCnt = minCaptureBuffers +
-                        gCamCapability[mCameraId]->min_num_pp_bufs +
-                        mParameters.getNumOfExtraHDRBufsIfNeeded();
+        {
+            if (mParameters.isZSLMode()) {
+                bufferCnt = zslQBuffers + minCircularBufNum;
+            } else {
+                bufferCnt = minCaptureBuffers +
+                            mParameters.getMaxUnmatchedFramesInQueue() +
+                            mParameters.getNumOfExtraHDRBufsIfNeeded() +
+                            CAMERA_MIN_STREAMING_BUFFERS;
+            }
         }
         break;
     case CAM_STREAM_TYPE_RAW:
         if (mParameters.isZSLMode()) {
-            bufferCnt = CAMERA_MIN_STREAMING_BUFFERS + zslBuffers;
+            bufferCnt = zslQBuffers + CAMERA_MIN_STREAMING_BUFFERS;
         } else {
-            bufferCnt = minCaptureBuffers;
+            bufferCnt = minCaptureBuffers +
+                        mParameters.getMaxUnmatchedFramesInQueue() +
+                        mParameters.getNumOfExtraHDRBufsIfNeeded() +
+                        CAMERA_MIN_STREAMING_BUFFERS;
         }
         break;
     case CAM_STREAM_TYPE_VIDEO:
-        bufferCnt = CAMERA_MIN_VIDEO_BUFFERS +
-                    gCamCapability[mCameraId]->min_num_pp_bufs;
+        {
+            bufferCnt = CAMERA_MIN_VIDEO_BUFFERS +
+                        mParameters.getMaxUnmatchedFramesInQueue() +
+                        CAMERA_MIN_STREAMING_BUFFERS;
+        }
         break;
     case CAM_STREAM_TYPE_METADATA:
-        bufferCnt = CAMERA_MIN_STREAMING_BUFFERS + zslBuffers;
+        {
+            bufferCnt = minCaptureBuffers +
+                        mParameters.getMaxUnmatchedFramesInQueue() +
+                        mParameters.getNumOfExtraHDRBufsIfNeeded() +
+                        CAMERA_MIN_STREAMING_BUFFERS;
+            if (bufferCnt < zslQBuffers + minCircularBufNum) {
+                bufferCnt = zslQBuffers + minCircularBufNum;
+            }
+        }
         break;
     case CAM_STREAM_TYPE_OFFLINE_PROC:
-        bufferCnt = minCaptureBuffers;
+        {
+            bufferCnt = minCaptureBuffers +
+                        mParameters.getMaxUnmatchedFramesInQueue();
+            if (bufferCnt < CAMERA_MIN_STREAMING_BUFFERS) {
+                bufferCnt = CAMERA_MIN_STREAMING_BUFFERS;
+            }
+        }
         break;
     case CAM_STREAM_TYPE_DEFAULT:
     case CAM_STREAM_TYPE_MAX:
@@ -1506,6 +1534,26 @@ int QCamera2HardwareInterface::disableMsgType(int32_t msg_type)
 int QCamera2HardwareInterface::msgTypeEnabled(int32_t msg_type)
 {
     return (mMsgEnabled & msg_type);
+}
+
+/*===========================================================================
+ * FUNCTION   : msgTypeEnabledWithLock
+ *
+ * DESCRIPTION: impl to determine if certain msg_type is enabled with lock
+ *
+ * PARAMETERS :
+ *   @msg_type  : msg type mask
+ *
+ * RETURN     : 0 -- not enabled
+ *              none 0 -- enabled
+ *==========================================================================*/
+int QCamera2HardwareInterface::msgTypeEnabledWithLock(int32_t msg_type)
+{
+    int enabled = 0;
+    lockAPI();
+    enabled = mMsgEnabled & msg_type;
+    unlockAPI();
+    return enabled;
 }
 
 /*===========================================================================
@@ -2816,6 +2864,7 @@ int32_t QCamera2HardwareInterface::addZSLChannel()
     attr.look_back = mParameters.getZSLBackLookCount();
     attr.post_frame_skip = mParameters.getZSLBurstInterval();
     attr.water_mark = mParameters.getZSLQueueDepth();
+    attr.max_unmatched_frames = mParameters.getMaxUnmatchedFramesInQueue();
     rc = pChannel->init(&attr,
                         zsl_channel_cb,
                         this);
@@ -2894,6 +2943,8 @@ int32_t QCamera2HardwareInterface::addCaptureChannel()
     mm_camera_channel_attr_t attr;
     memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
     attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
+    attr.max_unmatched_frames = mParameters.getMaxUnmatchedFramesInQueue();
+
     rc = pChannel->init(&attr,
                         capture_channel_cb_routine,
                         this);
@@ -3019,6 +3070,7 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
     mm_camera_channel_attr_t attr;
     memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
     attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
+    attr.max_unmatched_frames = mParameters.getMaxUnmatchedFramesInQueue();
     rc = pChannel->init(&attr,
                         postproc_channel_cb_routine,
                         this);
@@ -3316,7 +3368,7 @@ void QCamera2HardwareInterface::unpreparePreview()
  *==========================================================================*/
 void QCamera2HardwareInterface::playShutter(){
      if (mNotifyCb == NULL ||
-         msgTypeEnabled(CAMERA_MSG_SHUTTER) == 0){
+         msgTypeEnabledWithLock(CAMERA_MSG_SHUTTER) == 0){
          ALOGV("%s: shutter msg not enabled or NULL cb", __func__);
          return;
      }
@@ -3377,7 +3429,7 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
         return NO_ERROR;
     }
 
-    if ((NULL == mDataCb) || (msgTypeEnabled(CAMERA_MSG_PREVIEW_METADATA) == 0)) {
+    if ((NULL == mDataCb) || (msgTypeEnabledWithLock(CAMERA_MSG_PREVIEW_METADATA) == 0)) {
         ALOGD("%s: prevew metadata msgtype not enabled, no ops here", __func__);
         return NO_ERROR;
     }
