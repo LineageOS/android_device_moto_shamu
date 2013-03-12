@@ -29,7 +29,6 @@
 
 #define LOG_TAG "QCameraStream"
 
-#include <utils/Log.h>
 #include <utils/Errors.h>
 #include "QCamera2HWI.h"
 #include "QCameraStream.h"

@@ -31,11 +31,11 @@
 
 #include <cutils/properties.h>
 #include <math.h>
-#include <utils/Log.h>
 #include <utils/Errors.h>
 #include <string.h>
 #include <stdlib.h>
 #include <gralloc_priv.h>
+#include "QCamera2HWI.h"
 #include "QCameraParameters.h"
 #include "mm_camera_interface.h"
 

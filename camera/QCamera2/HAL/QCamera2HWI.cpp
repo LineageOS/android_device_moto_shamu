@@ -32,7 +32,6 @@
 #include <cutils/properties.h>
 #include <hardware/camera.h>
 #include <stdlib.h>
-#include <utils/Log.h>
 #include <utils/Errors.h>
 #include <gralloc_priv.h>
 

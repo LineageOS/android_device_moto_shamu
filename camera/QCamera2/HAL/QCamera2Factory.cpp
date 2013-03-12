@@ -31,7 +31,6 @@
 #define LOG_TAG "QCamera2Factory"
 
 #include <stdlib.h>
-#include <utils/Log.h>
 #include <utils/Errors.h>
 #include <hardware/camera.h>
 

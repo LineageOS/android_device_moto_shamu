@@ -30,7 +30,6 @@
 #define LOG_TAG "QCameraPostProc"
 
 #include <stdlib.h>
-#include <utils/Log.h>
 #include <utils/Errors.h>
 
 #include "QCamera2HWI.h"

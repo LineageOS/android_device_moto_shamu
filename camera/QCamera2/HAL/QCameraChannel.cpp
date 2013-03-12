@@ -29,9 +29,9 @@
 
 #define LOG_TAG "QCameraChannel"
 
-#include <utils/Log.h>
 #include <utils/Errors.h>
 #include "QCameraParameters.h"
+#include "QCamera2HWI.h"
 #include "QCameraChannel.h"
 
 using namespace android;

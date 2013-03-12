@@ -32,10 +32,10 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include <utils/Log.h>
 #include <utils/Errors.h>
 #include <gralloc_priv.h>
 #include <QComOMXMetadata.h>
+#include "QCamera2HWI.h"
 #include "QCameraMem.h"
 
 extern "C" {

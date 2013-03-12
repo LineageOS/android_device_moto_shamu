@@ -18,6 +18,8 @@ LOCAL_SRC_FILES := \
         QCameraThermalAdapter.cpp
 
 LOCAL_CFLAGS = -Wall -Werror
+#Debug logs are enabled
+#LOCAL_CFLAGS += -DDISABLE_DEBUG_LOG
 
 LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/../stack/common \
