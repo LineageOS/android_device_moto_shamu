@@ -919,7 +919,8 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       m_bShutterSoundPlayed(false),
       m_bAutoFocusRunning(false),
       m_bStartZSLSnapshotCalled(false),
-      m_pPowerModule(NULL)
+      m_pPowerModule(NULL),
+      mDumpFrmCnt(0)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = HARDWARE_DEVICE_API_VERSION(1, 0);

@@ -395,6 +395,7 @@ private:
 
     power_module_t *m_pPowerModule;   // power module
 
+    int mDumpFrmCnt; //frame dump count
 };
 
 }; // namespace qcamera
