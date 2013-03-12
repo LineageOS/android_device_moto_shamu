@@ -456,7 +456,9 @@ int32_t QCameraStream::bufDone(int index)
     if (rc < 0)
         return rc;
 
-    mStreamBufs->invalidateCache(index);
+    if ( !isTypeOf(CAM_STREAM_TYPE_METADATA) ) {
+        mStreamBufs->invalidateCache(index);
+    }
     return rc;
 }
 
