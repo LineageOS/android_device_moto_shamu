@@ -1010,8 +1010,9 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
 {
     int err = 0;
     status_t ret = NO_ERROR;
-    int gralloc_usage;
+    int gralloc_usage = 0;
     struct ion_fd_data ion_info_fd;
+    memset(&ion_info_fd, 0, sizeof(ion_info_fd));
 
     ALOGI(" %s : E ", __FUNCTION__);
 
@@ -1090,14 +1091,51 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
         mPrivateHandle[cnt] =
             (struct private_handle_t *)(*mBufferHandle[cnt]);
         mMemInfo[cnt].main_ion_fd = open("/dev/ion", O_RDONLY);
-        if (mMemInfo[cnt].main_ion_fd < 0) {
+        if (mMemInfo[cnt].main_ion_fd <= 0) {
             ALOGE("%s: failed: could not open ion device", __func__);
+            for(int i = 0; i < cnt; i++) {
+                struct ion_handle_data ion_handle;
+                memset(&ion_handle, 0, sizeof(ion_handle));
+                ion_handle.handle = mMemInfo[i].handle;
+                if (ioctl(mMemInfo[i].main_ion_fd, ION_IOC_FREE, &ion_handle) < 0) {
+                    ALOGE("%s: ion free failed", __func__);
+                }
+                close(mMemInfo[i].main_ion_fd);
+                if(mLocalFlag[i] != BUFFER_NOT_OWNED) {
+                    err = mWindow->cancel_buffer(mWindow, mBufferHandle[i]);
+                    ALOGD("%s: cancel_buffer: hdl =%p", __func__, (*mBufferHandle[i]));
+                }
+                mLocalFlag[i] = BUFFER_NOT_OWNED;
+                mBufferHandle[i] = NULL;
+            }
+            memset(&mMemInfo, 0, sizeof(mMemInfo));
+            ret = UNKNOWN_ERROR;
+            goto end;
         } else {
-            memset(&ion_info_fd, 0, sizeof(ion_info_fd));
             ion_info_fd.fd = mPrivateHandle[cnt]->fd;
             if (ioctl(mMemInfo[cnt].main_ion_fd,
                       ION_IOC_IMPORT, &ion_info_fd) < 0) {
                 ALOGE("%s: ION import failed\n", __func__);
+                for(int i = 0; i < cnt; i++) {
+                    struct ion_handle_data ion_handle;
+                    memset(&ion_handle, 0, sizeof(ion_handle));
+                    ion_handle.handle = mMemInfo[i].handle;
+                    if (ioctl(mMemInfo[i].main_ion_fd, ION_IOC_FREE, &ion_handle) < 0) {
+                        ALOGE("ion free failed");
+                    }
+                    close(mMemInfo[i].main_ion_fd);
+
+                    if(mLocalFlag[i] != BUFFER_NOT_OWNED) {
+                        err = mWindow->cancel_buffer(mWindow, mBufferHandle[i]);
+                        ALOGD("%s: cancel_buffer: hdl =%p", __func__, (*mBufferHandle[i]));
+                    }
+                    mLocalFlag[i] = BUFFER_NOT_OWNED;
+                    mBufferHandle[i] = NULL;
+                }
+                close(mMemInfo[cnt].main_ion_fd);
+                memset(&mMemInfo, 0, sizeof(mMemInfo));
+                ret = UNKNOWN_ERROR;
+                goto end;
             }
         }
         mCameraMemory[cnt] =

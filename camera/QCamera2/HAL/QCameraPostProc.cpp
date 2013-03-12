@@ -1084,7 +1084,11 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
 
     mm_camera_buf_def_t *frame = recvd_frame->bufs[0];
     QCameraMemory *rawMemObj = (QCameraMemory *)frame->mem_info;
-    camera_memory_t *raw_mem = rawMemObj->getMemory(frame->buf_idx, false);
+    camera_memory_t *raw_mem = NULL;
+
+    if (rawMemObj != NULL) {
+        raw_mem = rawMemObj->getMemory(frame->buf_idx, false);
+    }
 
     if (NULL != rawMemObj && NULL != raw_mem) {
         // send data callback for COMPRESSED_IMAGE
@@ -1308,6 +1312,10 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                         }
 
                         if (0 != ret) {
+                            // free pp_job
+                            if (pp_job != NULL) {
+                                free(pp_job);
+                            }
                             // free frame
                             if (pp_frame != NULL) {
                                 pme->releaseSuperBuf(pp_frame);

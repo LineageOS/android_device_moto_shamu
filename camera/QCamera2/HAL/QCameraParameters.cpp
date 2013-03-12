@@ -2757,7 +2757,8 @@ int32_t QCameraParameters::initDefaultParameters()
     setFloat(KEY_VERTICAL_VIEW_ANGLE, m_pCapability->ver_view_angle);
 
     // Set supported preview sizes
-    if (m_pCapability->preview_sizes_tbl_cnt > 0) {
+    if (m_pCapability->preview_sizes_tbl_cnt > 0 &&
+        m_pCapability->preview_sizes_tbl_cnt <= MAX_SIZES_CNT) {
         String8 previewSizeValues = createSizesString(
                 m_pCapability->preview_sizes_tbl, m_pCapability->preview_sizes_tbl_cnt);
         set(KEY_SUPPORTED_PREVIEW_SIZES, previewSizeValues.string());
@@ -2766,11 +2767,12 @@ int32_t QCameraParameters::initDefaultParameters()
         CameraParameters::setPreviewSize(m_pCapability->preview_sizes_tbl[0].width,
                                          m_pCapability->preview_sizes_tbl[0].height);
     } else {
-        ALOGE("%s: supported preview sizes cnt is 0!!!", __func__);
+        ALOGE("%s: supported preview sizes cnt is 0 or exceeds max!!!", __func__);
     }
 
     // Set supported video sizes
-    if (m_pCapability->video_sizes_tbl_cnt > 0) {
+    if (m_pCapability->video_sizes_tbl_cnt > 0 &&
+        m_pCapability->video_sizes_tbl_cnt <= MAX_SIZES_CNT) {
         String8 videoSizeValues = createSizesString(
                 m_pCapability->video_sizes_tbl, m_pCapability->video_sizes_tbl_cnt);
         set(KEY_SUPPORTED_VIDEO_SIZES, videoSizeValues.string());
@@ -2783,11 +2785,12 @@ int32_t QCameraParameters::initDefaultParameters()
         String8 vSize = createSizesString(&m_pCapability->video_sizes_tbl[0], 1);
         set(KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO, vSize.string());
     } else {
-        ALOGE("%s: supported video sizes cnt is 0!!!", __func__);
+        ALOGE("%s: supported video sizes cnt is 0 or exceeds max!!!", __func__);
     }
 
     // Set supported picture sizes
-    if (m_pCapability->picture_sizes_tbl_cnt) {
+    if (m_pCapability->picture_sizes_tbl_cnt > 0 &&
+        m_pCapability->picture_sizes_tbl_cnt <= MAX_SIZES_CNT) {
         String8 pictureSizeValues = createSizesString(
                 m_pCapability->picture_sizes_tbl, m_pCapability->picture_sizes_tbl_cnt);
         set(KEY_SUPPORTED_PICTURE_SIZES, pictureSizeValues.string());
@@ -2797,7 +2800,7 @@ int32_t QCameraParameters::initDefaultParameters()
            m_pCapability->picture_sizes_tbl[m_pCapability->picture_sizes_tbl_cnt-1].width,
            m_pCapability->picture_sizes_tbl[m_pCapability->picture_sizes_tbl_cnt-1].height);
     } else {
-        ALOGE("%s: supported picture sizes cnt is 0!!!", __func__);
+        ALOGE("%s: supported picture sizes cnt is 0 or exceeds max!!!", __func__);
     }
 
     // Set supported thumbnail sizes
@@ -2810,7 +2813,8 @@ int32_t QCameraParameters::initDefaultParameters()
     set(KEY_JPEG_THUMBNAIL_HEIGHT, THUMBNAIL_SIZES_MAP[0].height);
 
     // Set supported livesnapshot sizes
-    if (m_pCapability->livesnapshot_sizes_tbl_cnt) {
+    if (m_pCapability->livesnapshot_sizes_tbl_cnt > 0 &&
+        m_pCapability->livesnapshot_sizes_tbl_cnt <= MAX_SIZES_CNT) {
         String8 liveSnpashotSizeValues = createSizesString(
                 m_pCapability->livesnapshot_sizes_tbl,
                 m_pCapability->livesnapshot_sizes_tbl_cnt);
@@ -2859,7 +2863,8 @@ int32_t QCameraParameters::initDefaultParameters()
     set(KEY_JPEG_THUMBNAIL_QUALITY, 85);
 
     // Set FPS ranges
-    if (m_pCapability->fps_ranges_tbl_cnt > 0) {
+    if (m_pCapability->fps_ranges_tbl_cnt > 0 &&
+        m_pCapability->fps_ranges_tbl_cnt <= MAX_SIZES_CNT) {
         int default_fps_index = 0;
         String8 fpsRangeValues = createFpsRangeString(m_pCapability->fps_ranges_tbl,
                                                       m_pCapability->fps_ranges_tbl_cnt,
@@ -2878,7 +2883,7 @@ int32_t QCameraParameters::initDefaultParameters()
         set(KEY_SUPPORTED_PREVIEW_FRAME_RATES, fpsValues.string());
         CameraParameters::setPreviewFrameRate(max_fps);
     } else {
-        ALOGE("%s: supported fps ranges cnt is 0!!!", __func__);
+        ALOGE("%s: supported fps ranges cnt is 0 or exceeds max!!!", __func__);
     }
 
     // Set supported focus modes
@@ -4105,20 +4110,25 @@ int32_t QCameraParameters::setFocusAreas(const char *focusAreasStr)
         return NO_ERROR;
     }
 
-    cam_rect_t *areas = new cam_rect_t[m_pCapability->max_num_focus_areas];
+    cam_rect_t *areas = (cam_rect_t *)malloc(sizeof(cam_rect_t) * m_pCapability->max_num_focus_areas);
+    if (NULL == areas) {
+        ALOGE("%s: No memory for areas", __func__);
+        return NO_MEMORY;
+    }
+    memset(areas, 0, sizeof(cam_rect_t) * m_pCapability->max_num_focus_areas);
     int num_areas_found = 0;
     if (parseCameraAreaString(focusAreasStr,
                               m_pCapability->max_num_focus_areas,
                               areas,
                               num_areas_found) != NO_ERROR) {
         ALOGE("%s: Failed to parse the string: %s", __func__, focusAreasStr);
-        delete areas;
+        free(areas);
         return BAD_VALUE;
     }
 
     if (validateCameraAreas(areas, num_areas_found) == false) {
         ALOGE("%s: invalid areas specified : %s", __func__, focusAreasStr);
-        delete areas;
+        free(areas);
         return BAD_VALUE;
     }
 
@@ -4140,7 +4150,7 @@ int32_t QCameraParameters::setFocusAreas(const char *focusAreasStr)
         af_roi_value.roi[i].width = (int32_t)(areas[i].width * previewWidth / 2000.0f);
         af_roi_value.roi[i].height = (int32_t)(areas[i].height * previewHeight / 2000.0f);
     }
-    delete areas;
+    free(areas);
     return AddSetParmEntryToBatch(m_pParamBuf,
                                   CAM_INTF_PARM_AF_ROI,
                                   sizeof(af_roi_value),
@@ -4295,38 +4305,41 @@ int32_t QCameraParameters::setSelectableZoneAf(const char *selZoneAFStr)
  *==========================================================================*/
 int32_t QCameraParameters::setAEBracket(const char *aecBracketStr)
 {
+    if (aecBracketStr == NULL) {
+        ALOGI("%s: setAEBracket with NULL value", __func__);
+        return NO_ERROR;
+    }
+
     cam_exp_bracketing_t expBracket;
     memset(&expBracket, 0, sizeof(expBracket));
 
-    if (aecBracketStr != NULL) {
-        int value = lookupAttr(BRACKETING_MODES_MAP,
-                               sizeof(BRACKETING_MODES_MAP)/sizeof(QCameraMap),
-                               aecBracketStr);
-        switch (value) {
-        case CAM_EXP_BRACKETING_ON:
-            {
-                ALOGV("%s, EXP_BRACKETING_ON", __func__);
-                const char *str_val = get(KEY_QC_CAPTURE_BURST_EXPOSURE);
-                if ((str_val != NULL) && (strlen(str_val)>0)) {
-                    expBracket.mode = CAM_EXP_BRACKETING_ON;
-                    strlcpy(expBracket.values, str_val, MAX_EXP_BRACKETING_LENGTH);
-                    ALOGI("%s: setting Exposure Bracketing value of %s",
-                          __func__, expBracket.values);
-                }
-                else {
-                    /* Apps not set capture-burst-exposures, error case fall into bracketing off mode */
-                    ALOGI("%s: capture-burst-exposures not set, back to HDR OFF mode", __func__);
-                    expBracket.mode = CAM_EXP_BRACKETING_OFF;
-                }
+    int value = lookupAttr(BRACKETING_MODES_MAP,
+                           sizeof(BRACKETING_MODES_MAP)/sizeof(QCameraMap),
+                           aecBracketStr);
+    switch (value) {
+    case CAM_EXP_BRACKETING_ON:
+        {
+            ALOGV("%s, EXP_BRACKETING_ON", __func__);
+            const char *str_val = get(KEY_QC_CAPTURE_BURST_EXPOSURE);
+            if ((str_val != NULL) && (strlen(str_val)>0)) {
+                expBracket.mode = CAM_EXP_BRACKETING_ON;
+                strlcpy(expBracket.values, str_val, MAX_EXP_BRACKETING_LENGTH);
+                ALOGI("%s: setting Exposure Bracketing value of %s",
+                      __func__, expBracket.values);
             }
-            break;
-        default:
-            {
-                ALOGD("%s, EXP_BRACKETING_OFF", __func__);
+            else {
+                /* Apps not set capture-burst-exposures, error case fall into bracketing off mode */
+                ALOGI("%s: capture-burst-exposures not set, back to HDR OFF mode", __func__);
                 expBracket.mode = CAM_EXP_BRACKETING_OFF;
             }
-            break;
         }
+        break;
+    default:
+        {
+            ALOGD("%s, EXP_BRACKETING_OFF", __func__);
+            expBracket.mode = CAM_EXP_BRACKETING_OFF;
+        }
+        break;
     }
 
     /* save the value*/
@@ -5530,7 +5543,7 @@ int32_t QCameraParameters::parseCameraAreaString(const char *str,
     char area_str[32];
     const char *start, *end, *p;
     start = str; end = NULL;
-    int values[4], index=0;
+    int values[5], index=0;
     num_areas_found = 0;
 
     while(start != NULL) {

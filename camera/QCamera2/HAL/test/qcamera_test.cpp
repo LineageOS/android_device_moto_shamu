@@ -257,40 +257,51 @@ void CameraContext::postDataTimestamp(nsecs_t timestamp,
 void CameraContext::printSupportedParams()
 {
     printf("\n\r\tSupported Cameras: %s",
-           mParams.get("camera-indexes"));
+           mParams.get("camera-indexes")? mParams.get("camera-indexes") : "NULL");
     printf("\n\r\tSupported Picture Sizes: %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_PICTURE_SIZES));
+           mParams.get(CameraParameters::KEY_SUPPORTED_PICTURE_SIZES)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_PICTURE_SIZES) : "NULL");
     printf("\n\r\tSupported Picture Formats: %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_PICTURE_FORMATS));
+           mParams.get(CameraParameters::KEY_SUPPORTED_PICTURE_FORMATS)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_PICTURE_FORMATS) : "NULL");
     printf("\n\r\tSupported Preview Sizes: %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES));
+           mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES) : "NULL");
     printf("\n\r\tSupported Preview Formats: %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FORMATS));
+           mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FORMATS)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FORMATS) : "NULL");
     printf("\n\r\tSupported Preview Frame Rates: %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES));
+           mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES) : "NULL");
     printf("\n\r\tSupported Thumbnail Sizes: %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_JPEG_THUMBNAIL_SIZES));
+           mParams.get(CameraParameters::KEY_SUPPORTED_JPEG_THUMBNAIL_SIZES)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_JPEG_THUMBNAIL_SIZES) : "NULL");
     printf("\n\r\tSupported Whitebalance Modes: %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_WHITE_BALANCE));
+           mParams.get(CameraParameters::KEY_SUPPORTED_WHITE_BALANCE)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_WHITE_BALANCE) : "NULL");
     printf("\n\r\tSupported Effects: %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_EFFECTS));
+           mParams.get(CameraParameters::KEY_SUPPORTED_EFFECTS)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_EFFECTS) : "NULL");
     printf("\n\r\tSupported Scene Modes: %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_SCENE_MODES));
+           mParams.get(CameraParameters::KEY_SUPPORTED_SCENE_MODES)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_SCENE_MODES) : "NULL");
     printf("\n\r\tSupported Focus Modes: %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_FOCUS_MODES));
+           mParams.get(CameraParameters::KEY_SUPPORTED_FOCUS_MODES)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_FOCUS_MODES) : "NULL");
     printf("\n\r\tSupported Antibanding Options: %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_ANTIBANDING));
+           mParams.get(CameraParameters::KEY_SUPPORTED_ANTIBANDING)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_ANTIBANDING) : "NULL");
     printf("\n\r\tSupported Flash Modes: %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_FLASH_MODES));
+           mParams.get(CameraParameters::KEY_SUPPORTED_FLASH_MODES)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_FLASH_MODES) : "NULL");
     printf("\n\r\tSupported Focus Areas: %d",
            mParams.getInt(CameraParameters::KEY_MAX_NUM_FOCUS_AREAS));
     printf("\n\r\tSupported FPS ranges : %s",
-           mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE));
-
-    if ( NULL != mParams.get(CameraParameters::KEY_FOCUS_DISTANCES) ) {
-        printf("\n\r\tFocus Distances: %s \n",
-               mParams.get(CameraParameters::KEY_FOCUS_DISTANCES));
-    }
+           mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE)?
+           mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE) : "NULL");
+    printf("\n\r\tFocus Distances: %s \n",
+           mParams.get(CameraParameters::KEY_FOCUS_DISTANCES)?
+           mParams.get(CameraParameters::KEY_FOCUS_DISTANCES) : "NULL");
 }
 
 /*===========================================================================

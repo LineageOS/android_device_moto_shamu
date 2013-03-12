@@ -144,7 +144,7 @@ int mm_app_start_record_preview(mm_camera_test_obj_t *test_obj)
     }
 
     s_ch = mm_app_add_snapshot_channel(test_obj);
-    if (NULL == v_ch) {
+    if (NULL == s_ch) {
         CDBG_ERROR("%s: add snapshot channel failed", __func__);
         mm_app_del_channel(test_obj, p_ch);
         mm_app_del_channel(test_obj, v_ch);

@@ -274,8 +274,8 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
         }
         CDBG("%s:failed with I/O error retrying after %d milli-seconds",
              __func__, sleep_msec);
-        usleep(sleep_msec*1000);
-    }while(n_try>0);
+        usleep(sleep_msec * 1000);
+    }while (n_try > 0);
 
     if (my_obj->ctrl_fd <= 0) {
         CDBG_ERROR("%s: cannot open control fd of '%s' (%s)\n",
@@ -369,11 +369,11 @@ int32_t mm_camera_close(mm_camera_obj_t *my_obj)
 
     if(my_obj->ctrl_fd > 0) {
         close(my_obj->ctrl_fd);
-        my_obj->ctrl_fd = -1;
+        my_obj->ctrl_fd = 0;
     }
     if(my_obj->ds_fd > 0) {
         mm_camera_socket_close(my_obj->ds_fd);
-        my_obj->ds_fd = -1;
+        my_obj->ds_fd = 0;
     }
 
     pthread_mutex_destroy(&my_obj->cb_lock);
@@ -743,9 +743,9 @@ uint32_t mm_camera_add_channel(mm_camera_obj_t *my_obj,
         ch_obj->state = MM_CHANNEL_STATE_STOPPED;
         ch_obj->cam_obj = my_obj;
         pthread_mutex_init(&ch_obj->ch_lock, NULL);
+        mm_channel_init(ch_obj, attr, channel_cb, userdata);
     }
 
-    mm_channel_init(ch_obj, attr, channel_cb, userdata);
     pthread_mutex_unlock(&my_obj->cam_lock);
 
     return ch_hdl;
