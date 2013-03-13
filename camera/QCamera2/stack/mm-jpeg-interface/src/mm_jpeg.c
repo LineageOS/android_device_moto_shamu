@@ -486,6 +486,11 @@ void mm_jpeg_session_destroy(mm_jpeg_job_session_t* p_session)
     CDBG_ERROR("%s:%d] OMX_FreeHandle failed (%d)", __func__, __LINE__, rc);
   }
   p_session->omx_handle = NULL;
+
+  rc = releaseExifEntry(&p_session->params.exif_info);
+  if (rc) {
+    CDBG_ERROR("%s:%d] Exif release failed (%d)", __func__, __LINE__, rc);
+  }
   pthread_mutex_destroy(&p_session->lock);
   pthread_cond_destroy(&p_session->cond);
   CDBG("%s:%d] X", __func__, __LINE__);
@@ -952,6 +957,19 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
   CDBG("%s:%d] Set rotation to %d at port_idx = %d", __func__, __LINE__,
     (int)p_jobparams->rotation, (int)rotate.nPortIndex);
 
+  /* Set Exif data*/
+  memset(&p_session->exif_info_all,  0,  sizeof(p_session->exif_info_all));
+
+  /*If Exif data has been passed copy it*/
+  if (p_params->exif_info.numOfEntries > 0) {
+    CDBG("%s:%d] Num of exif entries passed from HAL: %d", __func__, __LINE__,
+      p_params->exif_info.numOfEntries);
+    memcpy(&p_session->exif_info_all, &p_params->exif_info.exif_data,
+      sizeof(p_params->exif_info.exif_data));
+  }
+
+  p_params->exif_info.exif_data = p_session->exif_info_all;
+
   if (p_params->exif_info.numOfEntries > 0) {
     /* set exif tags */
     CDBG("%s:%d] Set exif tags count %d", __func__, __LINE__,
@@ -963,7 +981,8 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
       return rc;
     }
 
-    rc = OMX_SetParameter(p_session->omx_handle, exif_idx, &p_params->exif_info);
+    rc = OMX_SetParameter(p_session->omx_handle, exif_idx,
+      &p_params->exif_info);
     if (OMX_ErrorNone != rc) {
       CDBG_ERROR("%s:%d] Error %d", __func__, __LINE__, rc);
       return rc;

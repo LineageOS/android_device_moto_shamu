@@ -649,6 +649,7 @@ typedef  struct {
      * 1. good_frame_idx_range.min_frame_idx > current_frame_idx
      * 2. good_frame_idx_range.min_frame_idx - current_frame_idx < 100 */
     cam_frame_idx_range_t good_frame_idx_range;
+
 } cam_metadata_info_t;
 
 typedef enum {

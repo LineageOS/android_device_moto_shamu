@@ -42,6 +42,7 @@
 #define MM_JPEG_MAX_THREADS 30
 #define MM_JPEG_CIRQ_SIZE 30
 #define MM_JPEG_MAX_SESSION 10
+#define MAX_EXIF_TABLE_ENTRIES 30
 
 typedef struct {
   struct cam_list list;
@@ -101,6 +102,8 @@ typedef struct {
   /* event locks */
   pthread_mutex_t lock;
   pthread_cond_t cond;
+
+  QEXIF_INFO_DATA exif_info_all[MAX_EXIF_TABLE_ENTRIES];  //all exif tags for JPEG encoder
 
   mm_jpeg_cirq_t cb_q;
   int32_t ebd_count;
@@ -186,6 +189,9 @@ extern int32_t mm_jpeg_queue_deinit(mm_jpeg_queue_t* queue);
 extern int32_t mm_jpeg_queue_flush(mm_jpeg_queue_t* queue);
 extern uint32_t mm_jpeg_queue_get_size(mm_jpeg_queue_t* queue);
 extern void* mm_jpeg_queue_peek(mm_jpeg_queue_t* queue);
+extern int32_t addExifEntry(QOMX_EXIF_INFO *p_exif_info, exif_tag_id_t tagid,
+  exif_tag_type_t type, uint32_t count, void *data);
+extern int32_t releaseExifEntry(QOMX_EXIF_INFO *p_exif_info);
 
 #endif /* MM_JPEG_H_ */
 

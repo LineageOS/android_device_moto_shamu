@@ -22,6 +22,7 @@ endif
 
 LOCAL_SRC_FILES := \
     src/mm_jpeg_queue.c \
+    src/mm_jpeg_exif.c \
     src/mm_jpeg.c \
     src/mm_jpeg_interface.c
 
