@@ -131,7 +131,7 @@ typedef struct {
   /* active indices of the buffers for encoding */
   uint32_t src_index;
   uint32_t dst_index;
-
+  uint32_t thumb_index;
   mm_jpeg_dim_t thumb_dim;
 
   /* rotation informaiton */
@@ -142,6 +142,10 @@ typedef struct {
 
   /*session id*/
   uint32_t session_id;
+
+  /*Metadata stream*/
+  cam_metadata_info_t *p_metadata;
+
 } mm_jpeg_encode_job_t;
 
 typedef enum {
