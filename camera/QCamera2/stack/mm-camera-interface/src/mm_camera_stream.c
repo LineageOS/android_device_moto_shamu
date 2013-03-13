@@ -2396,6 +2396,8 @@ int32_t mm_stream_buf_done(mm_stream_t * my_obj,
         my_obj->buf_status[frame->buf_idx].buf_refcnt--;
         if (0 == my_obj->buf_status[frame->buf_idx].buf_refcnt) {
             CDBG("<DEBUG> : Buf done for buffer:%d", frame->buf_idx);
+            my_obj->mem_vtbl.invalidate_buf(frame->buf_idx,
+                                            my_obj->mem_vtbl.user_data);
             rc = mm_stream_qbuf(my_obj, frame);
             if(rc < 0) {
                 CDBG_ERROR("%s: mm_camera_stream_qbuf(idx=%d) err=%d\n",

@@ -96,6 +96,29 @@ int32_t QCameraStream::put_bufs(
 }
 
 /*===========================================================================
+ * FUNCTION   : invalidate_buf
+ *
+ * DESCRIPTION: static function entry to invalidate a specific stream buffer
+ *
+ * PARAMETERS :
+ *   @index      : index of the stream buffer to invalidate
+ *   @user_data  : user data ptr of ops_tbl
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraStream::invalidate_buf(int index, void *user_data)
+{
+    QCameraStream *stream = reinterpret_cast<QCameraStream *>(user_data);
+    if (!stream) {
+        ALOGE("invalid stream pointer");
+        return NO_MEMORY;
+    }
+    return stream->invalidateBuf(index);
+}
+
+/*===========================================================================
  * FUNCTION   : QCameraStream
  *
  * DESCRIPTION: constructor of QCameraStream
@@ -129,6 +152,7 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
     mMemVtbl.user_data = this;
     mMemVtbl.get_bufs = get_bufs;
     mMemVtbl.put_bufs = put_bufs;
+    mMemVtbl.invalidate_buf = invalidate_buf;
     memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
     memcpy(&mPaddingInfo, paddingInfo, sizeof(cam_padding_info_t));
     memset(&mCropInfo, 0, sizeof(cam_rect_t));
@@ -456,9 +480,6 @@ int32_t QCameraStream::bufDone(int index)
     if (rc < 0)
         return rc;
 
-    if ( !isTypeOf(CAM_STREAM_TYPE_METADATA) ) {
-        mStreamBufs->invalidateCache(index);
-    }
     return rc;
 }
 
@@ -626,6 +647,23 @@ int32_t QCameraStream::putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl)
     delete mStreamBufs;
 
     return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : invalidateBuf
+ *
+ * DESCRIPTION: invalidate a specific stream buffer
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer to invalidate
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraStream::invalidateBuf(int index)
+{
+    return mStreamBufs->invalidateCache(index);
 }
 
 /*===========================================================================
