@@ -2035,6 +2035,19 @@ OMX_ERRORTYPE mm_jpeg_event_handler(OMX_HANDLETYPE hComponent,
     p_session->error_flag = OMX_ErrorHardware;
     if (p_session->encoding == OMX_TRUE) {
       CDBG("%s:%d] Error during encoding", __func__, __LINE__);
+
+      /* send jpeg callback */
+      if (NULL != p_session->params.jpeg_cb) {
+        p_session->job_status = JPEG_JOB_STATUS_ERROR;
+        CDBG("%s:%d] send jpeg error callback %d", __func__, __LINE__,
+          p_session->job_status);
+        p_session->params.jpeg_cb(p_session->job_status,
+          p_session->client_hdl,
+          p_session->jobId,
+          NULL,
+          p_session->params.userdata);
+      }
+
       /* remove from ready queue */
       mm_jpeg_job_done(p_session);
     }
