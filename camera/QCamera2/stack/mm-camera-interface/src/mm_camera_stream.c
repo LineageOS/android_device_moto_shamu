@@ -2216,7 +2216,7 @@ int32_t mm_stream_calc_offset_metadata(cam_dimension_t *dim,
     buf_planes->plane_info.mp[0].len =
         PAD_TO_SIZE(dim->width * dim->height, padding->plane_padding);
     buf_planes->plane_info.frame_len =
-        PAD_TO_SIZE(buf_planes->plane_info.mp[0].len, CAM_PAD_TO_4K);
+        buf_planes->plane_info.mp[0].len;
 
     buf_planes->plane_info.mp[0].offset_x =0;
     buf_planes->plane_info.mp[0].offset_y = 0;

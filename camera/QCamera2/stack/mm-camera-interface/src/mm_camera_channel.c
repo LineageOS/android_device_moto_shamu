@@ -1617,12 +1617,12 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
                 }
             }
     } else {
-        if (  ( MM_CAMERA_BUNDLE_HISTORY_SIZE < unmatched_bundles ) &&
+        if (  ( queue->attr.max_unmatched_frames < unmatched_bundles ) &&
               ( NULL == last_buf ) ) {
             /* incoming frame is older than the last bundled one */
             mm_channel_qbuf(ch_obj, buf_info->buf);
         } else {
-            if ( MM_CAMERA_BUNDLE_HISTORY_SIZE < unmatched_bundles ) {
+            if ( queue->attr.max_unmatched_frames < unmatched_bundles ) {
                 /* release the oldest bundled superbuf */
                 node = member_of(last_buf, cam_node_t, list);
                 super_buf = (mm_channel_queue_node_t*)node->data;

@@ -349,6 +349,7 @@ int mm_app_start_capture(mm_camera_test_obj_t *test_obj,
 
     memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
     attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
+    attr.max_unmatched_frames = 3;
     channel = mm_app_add_channel(test_obj,
                                  MM_CHANNEL_TYPE_CAPTURE,
                                  &attr,

@@ -346,6 +346,7 @@ int mm_app_start_preview_zsl(mm_camera_test_obj_t *test_obj)
     attr.look_back = 2;
     attr.post_frame_skip = 0;
     attr.water_mark = 2;
+    attr.max_unmatched_frames = 3;
     channel = mm_app_add_channel(test_obj,
                                  MM_CHANNEL_TYPE_ZSL,
                                  &attr,

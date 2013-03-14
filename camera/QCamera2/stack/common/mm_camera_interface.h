@@ -36,11 +36,9 @@
 #include "cam_queue.h"
 
 #define MM_CAMERA_MAX_NUM_SENSORS MSM_MAX_CAMERA_SENSORS
-#define MM_CAMERA_MAX_NUM_FRAMES 16
+#define MM_CAMERA_MAX_NUM_FRAMES CAM_MAX_NUM_BUFS_PER_STREAM
 /* num of channels allowed in a camera obj */
 #define MM_CAMERA_CHANNEL_MAX 16
-
-#define MM_CAMERA_BUNDLE_HISTORY_SIZE 2
 
 #define PAD_TO_SIZE(size, padding) ((size + padding - 1) & ~(padding - 1))
 
@@ -244,6 +242,8 @@ typedef enum {
 *    @post_frame_skip : after send first frame to HAL, how many
 *                     frames needing to be skipped for next
 *                     delivery. Only valid for burst mode
+*    @max_unmatched_frames : max number of unmatched frames in
+*                     queue
 *    @priority : save matched priority frames only
 **/
 typedef struct {
@@ -251,6 +251,7 @@ typedef struct {
     uint8_t water_mark;
     uint8_t look_back;
     uint8_t post_frame_skip;
+    uint8_t max_unmatched_frames;
     mm_camera_super_buf_priority_t priority;
 } mm_camera_channel_attr_t;
 

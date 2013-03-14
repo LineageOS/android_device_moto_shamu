@@ -37,7 +37,6 @@
 #include <stdlib.h>
 #include <gralloc_priv.h>
 #include "QCameraParameters.h"
-#include "mm_camera_interface.h"
 
 #define ASPECT_TOLERANCE 0.001
 #define FLIP_V_H (FLIP_H | FLIP_V)
@@ -3144,6 +3143,9 @@ int32_t QCameraParameters::initDefaultParameters()
     // Set default Camera mode
     set(KEY_QC_CAMERA_MODE, 0);
 
+    // TODO: hardcode for now until mctl add support for min_num_pp_bufs
+    m_pCapability->min_num_pp_bufs = 3;
+
     int32_t rc = commitParameters();
     if (rc == NO_ERROR) {
         rc = setNumOfSnapshot();
@@ -4804,7 +4806,7 @@ int QCameraParameters::getZSLQueueDepth()
     if (qdepth < 0) {
         qdepth = 2;
     }
-    return qdepth + MM_CAMERA_BUNDLE_HISTORY_SIZE;
+    return qdepth;
 }
 
 /*===========================================================================
@@ -4823,6 +4825,20 @@ int QCameraParameters::getZSLBackLookCount()
         look_back = 2;
     }
     return look_back;
+}
+
+/*===========================================================================
+ * FUNCTION   : getZSLMaxUnmatchedFrames
+ *
+ * DESCRIPTION: get allowed ZSL max unmatched frames number
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : ZSL backlook count value
+ *==========================================================================*/
+int QCameraParameters::getMaxUnmatchedFramesInQueue()
+{
+    return m_pCapability->min_num_pp_bufs;
 }
 
 /*===========================================================================
@@ -4881,6 +4897,33 @@ uint8_t QCameraParameters::getNumOfExtraHDRBufsIfNeeded()
     if (scene_mode != NULL && strcmp(scene_mode, SCENE_MODE_HDR) == 0) {
         // HDR mode
         numOfBufs = getBurstNum() * m_pCapability->min_num_hdr_bufs;
+    }
+    return numOfBufs;
+}
+
+/*===========================================================================
+ * FUNCTION   : getNumOfHDRBufsIfNeeded
+ *
+ * DESCRIPTION: get number of buffers needed by HDR if HDR is enabled
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : number of buffer needed by HDR; 0 if not HDR enabled
+ *==========================================================================*/
+uint8_t QCameraParameters::getNumOfHDRBufsIfNeeded()
+{
+    uint8_t numOfBufs = 0;
+    const char *scene_mode = get(KEY_SCENE_MODE);
+    if (scene_mode != NULL && strcmp(scene_mode, SCENE_MODE_HDR) == 0) {
+        // HDR mode
+        const char *need_hdr_1x = get(KEY_QC_HDR_NEED_1X);
+        if (need_hdr_1x != NULL && strcmp(need_hdr_1x, VALUE_TRUE) == 0) {
+            numOfBufs = 2; // HDR needs both 1X and processed img
+        } else {
+            numOfBufs = 1; // HDR only needs processed img
+        }
+
+        numOfBufs += m_pCapability->min_num_hdr_bufs;
     }
     return numOfBufs;
 }

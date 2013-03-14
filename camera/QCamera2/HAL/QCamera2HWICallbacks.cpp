@@ -299,7 +299,7 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
     }
 
     // Handle preview data callback
-    if (pme->mDataCb != NULL && pme->msgTypeEnabled(CAMERA_MSG_PREVIEW_FRAME) > 0) {
+    if (pme->mDataCb != NULL && pme->msgTypeEnabledWithLock(CAMERA_MSG_PREVIEW_FRAME) > 0) {
         camera_memory_t *previewMem = NULL;
         camera_memory_t *data = NULL;
         int previewBufSize;
@@ -414,7 +414,7 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
 
         if (pme->needProcessPreviewFrame() &&
             pme->mDataCb != NULL &&
-            pme->msgTypeEnabled(CAMERA_MSG_PREVIEW_FRAME) > 0 ) {
+            pme->msgTypeEnabledWithLock(CAMERA_MSG_PREVIEW_FRAME) > 0 ) {
             qcamera_callback_argm_t cbArg;
             memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
             cbArg.cb_type = QCAMERA_DATA_CALLBACK;
@@ -559,7 +559,7 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
         pme->dumpFrameToFile(frame->buffer, frame->frame_len,
                              frame->frame_idx, QCAMERA_DUMP_FRM_VIDEO);
         if ((pme->mDataCbTimestamp != NULL) &&
-            pme->msgTypeEnabled(CAMERA_MSG_VIDEO_FRAME) > 0) {
+            pme->msgTypeEnabledWithLock(CAMERA_MSG_VIDEO_FRAME) > 0) {
             qcamera_callback_argm_t cbArg;
             memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
             cbArg.cb_type = QCAMERA_DATA_TIMESTAMP_CALLBACK;
@@ -1039,7 +1039,8 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                     ALOGV("%s: cb type %d received",
                           __func__,
                           cb->cb_type);
-                    if (pme->mParent->msgTypeEnabled(cb->msg_type)) {
+
+                    if (pme->mParent->msgTypeEnabledWithLock(cb->msg_type)) {
                         switch (cb->cb_type) {
                         case QCAMERA_NOTIFY_CALLBACK:
                             {

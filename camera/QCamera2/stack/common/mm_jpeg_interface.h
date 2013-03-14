@@ -33,7 +33,7 @@
 #include "cam_intf.h"
 
 #define MM_JPEG_MAX_PLANES 3
-#define MM_JPEG_MAX_BUF 10
+#define MM_JPEG_MAX_BUF CAM_MAX_NUM_BUFS_PER_STREAM
 
 typedef enum {
   MM_JPEG_FMT_YUV,

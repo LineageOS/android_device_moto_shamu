@@ -537,7 +537,7 @@ int32_t QCameraPostProcessor::processJpegEvt(qcamera_jpeg_evt_payload_t *evt)
     }
 
     if (m_parent->mDataCb == NULL ||
-        m_parent->msgTypeEnabled(CAMERA_MSG_COMPRESSED_IMAGE) == 0 ) {
+        m_parent->msgTypeEnabledWithLock(CAMERA_MSG_COMPRESSED_IMAGE) == 0 ) {
         ALOGD("%s: No dataCB or CAMERA_MSG_COMPRESSED_IMAGE not enabled",
               __func__);
         rc = NO_ERROR;
@@ -965,7 +965,7 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
     // send upperlayer callback for raw image
     camera_memory_t *mem = memObj->getMemory(main_frame->buf_idx, false);
     if (NULL != m_parent->mDataCb &&
-        m_parent->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE) > 0) {
+        m_parent->msgTypeEnabledWithLock(CAMERA_MSG_RAW_IMAGE) > 0) {
         qcamera_callback_argm_t cbArg;
         memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
         cbArg.cb_type = QCAMERA_DATA_CALLBACK;
@@ -975,7 +975,7 @@ int32_t QCameraPostProcessor::encodeData(mm_camera_super_buf_t *recvd_frame,
         m_parent->m_cbNotifier.notifyCallback(cbArg);
     }
     if (NULL != m_parent->mNotifyCb &&
-        m_parent->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE_NOTIFY) > 0) {
+        m_parent->msgTypeEnabledWithLock(CAMERA_MSG_RAW_IMAGE_NOTIFY) > 0) {
         qcamera_callback_argm_t cbArg;
         memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
         cbArg.cb_type = QCAMERA_NOTIFY_CALLBACK;
@@ -1100,7 +1100,7 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
 
         // send data callback / notify for RAW_IMAGE
         if (NULL != m_parent->mDataCb &&
-            m_parent->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE) > 0) {
+            m_parent->msgTypeEnabledWithLock(CAMERA_MSG_RAW_IMAGE) > 0) {
             qcamera_callback_argm_t cbArg;
             memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
             cbArg.cb_type = QCAMERA_DATA_CALLBACK;
@@ -1110,7 +1110,7 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
             m_parent->m_cbNotifier.notifyCallback(cbArg);
         }
         if (NULL != m_parent->mNotifyCb &&
-            m_parent->msgTypeEnabled(CAMERA_MSG_RAW_IMAGE_NOTIFY) > 0) {
+            m_parent->msgTypeEnabledWithLock(CAMERA_MSG_RAW_IMAGE_NOTIFY) > 0) {
             qcamera_callback_argm_t cbArg;
             memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
             cbArg.cb_type = QCAMERA_NOTIFY_CALLBACK;
@@ -1121,7 +1121,7 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
         }
 
         if ((m_parent->mDataCb != NULL) &&
-            m_parent->msgTypeEnabled(CAMERA_MSG_COMPRESSED_IMAGE) > 0) {
+            m_parent->msgTypeEnabledWithLock(CAMERA_MSG_COMPRESSED_IMAGE) > 0) {
             qcamera_release_data_t release_data;
             memset(&release_data, 0, sizeof(qcamera_release_data_t));
             release_data.frame = recvd_frame;
