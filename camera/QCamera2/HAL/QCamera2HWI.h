@@ -32,6 +32,7 @@
 
 #include <hardware/camera.h>
 #include <hardware/power.h>
+#include <utils/Log.h>
 #include <QCameraParameters.h>
 
 #include "QCameraQueue.h"
@@ -47,6 +48,22 @@ extern "C" {
 #include <mm_camera_interface.h>
 #include <mm_jpeg_interface.h>
 }
+
+#if DISABLE_DEBUG_LOG
+
+inline void __null_log(int, const char *, const char *, ...) {}
+
+#ifdef ALOGD
+#undef ALOGD
+#define ALOGD(...) do { __null_log(0, LOG_TAG,__VA_ARGS__); } while (0)
+#endif
+
+#ifdef ALOGI
+#undef ALOGI
+#define ALOGI(...) do { __null_log(0, LOG_TAG,__VA_ARGS__); } while (0)
+#endif
+
+#endif
 
 namespace qcamera {
 

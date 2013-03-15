@@ -31,9 +31,9 @@
 
 #include <dlfcn.h>
 #include <stdlib.h>
-#include <utils/Log.h>
 #include <utils/Errors.h>
 
+#include "QCamera2HWI.h"
 #include "QCameraThermalAdapter.h"
 
 using namespace android;

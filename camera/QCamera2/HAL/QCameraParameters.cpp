@@ -31,11 +31,11 @@
 
 #include <cutils/properties.h>
 #include <math.h>
-#include <utils/Log.h>
 #include <utils/Errors.h>
 #include <string.h>
 #include <stdlib.h>
 #include <gralloc_priv.h>
+#include "QCamera2HWI.h"
 #include "QCameraParameters.h"
 
 #define ASPECT_TOLERANCE 0.001

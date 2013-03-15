@@ -24,7 +24,6 @@
 #include <cutils/properties.h>
 #include <hardware/camera.h>
 #include <stdlib.h>
-#include <utils/Log.h>
 #include <utils/Errors.h>
 #include "cam_intf.h"
 #include "QCameraMem.h"

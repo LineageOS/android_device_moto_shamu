@@ -30,7 +30,6 @@
 #define LOG_TAG "QCamera2HWI"
 
 #include <fcntl.h>
-#include <utils/Log.h>
 #include <utils/Errors.h>
 #include <utils/Timers.h>
 #include "QCamera2HWI.h"
