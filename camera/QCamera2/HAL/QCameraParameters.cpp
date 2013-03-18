@@ -541,7 +541,6 @@ QCameraParameters::QCameraParameters()
       m_bHistogramEnabled(false),
       m_nFaceProcMask(0),
       m_bDebugFps(false),
-      m_nDumpFrameEnabled(0),
       mFocusMode(CAM_FOCUS_MODE_MAX),
       mPreviewFormat(CAM_FORMAT_YUV_420_NV21),
       mPictureFormat(CAM_FORMAT_JPEG),
@@ -554,8 +553,6 @@ QCameraParameters::QCameraParameters()
     // TODO: may move to parameter instead of sysprop
     property_get("persist.debug.sf.showfps", value, "0");
     m_bDebugFps = atoi(value) > 0 ? true : false;
-    property_get("persist.camera.dumpimg", value, "0");
-    m_nDumpFrameEnabled = atoi(value);
 
     // For thermal mode, it should be set as system property
     // because system property applies to all applications, while
@@ -593,7 +590,6 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bHistogramEnabled(false),
     m_nFaceProcMask(0),
     m_bDebugFps(false),
-    m_nDumpFrameEnabled(0),
     mFocusMode(CAM_FOCUS_MODE_MAX),
     mPreviewFormat(CAM_FORMAT_YUV_420_NV21),
     mPictureFormat(CAM_FORMAT_JPEG),

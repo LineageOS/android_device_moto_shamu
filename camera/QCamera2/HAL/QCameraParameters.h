@@ -398,7 +398,6 @@ public:
     int32_t setFaceDetection(bool enabled);
     int32_t setBundleInfo(cam_bundle_config_t &bundle_info);
     int32_t setFrameSkip(enum msm_vfe_frame_skip_pattern pattern);
-    int getEnabledFileDumpMask() {return m_nDumpFrameEnabled;};
     qcamera_thermal_mode getThermalMode() {return m_ThermalMode;};
 
     cam_focus_mode_type getFocusMode() const {return mFocusMode;};
@@ -563,7 +562,6 @@ private:
     bool m_bHistogramEnabled;       // if histogram is enabled
     int  m_nFaceProcMask;           // face process mask
     bool m_bDebugFps;               // if FPS need to be logged
-    int  m_nDumpFrameEnabled;       // mask for type of dumping enabled
     cam_focus_mode_type mFocusMode;
     cam_format_t mPreviewFormat;
     int32_t mPictureFormat;         // could be CAMERA_PICTURE_TYPE_JPEG or cam_format_t
