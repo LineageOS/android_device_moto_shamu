@@ -495,8 +495,8 @@ private:
     void parseSizesList(const char *sizesStr, Vector<Size> &sizes);
     int32_t parseNDimVector(const char *str, int *num, int N, char delim);
     int32_t parseCameraAreaString(const char *str, int max_num_areas,
-                                  cam_rect_t *pAreas, int& num_areas_found);
-    bool validateCameraAreas(cam_rect_t *areas, int num_areas);
+                                  cam_area_t *pAreas, int& num_areas_found);
+    bool validateCameraAreas(cam_area_t *areas, int num_areas);
     int parseGPSCoordinate(const char *coord_str, rat_t *coord);
     int32_t getRational(rat_t *rat, int num, int denom);
     String8 createSizesString(const cam_dimension_t *sizes, int len);

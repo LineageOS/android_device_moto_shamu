@@ -2908,12 +2908,18 @@ int32_t QCameraParameters::initDefaultParameters()
     }
 
     // Set focus areas
+    if (m_pCapability->max_num_focus_areas > MAX_ROI) {
+        m_pCapability->max_num_focus_areas = MAX_ROI;
+    }
     set(KEY_MAX_NUM_FOCUS_AREAS, m_pCapability->max_num_focus_areas);
     if (m_pCapability->max_num_focus_areas > 0) {
         setFocusAreas(DEFAULT_CAMERA_AREA);
     }
 
     // Set metering areas
+    if (m_pCapability->max_num_metering_areas > MAX_ROI) {
+        m_pCapability->max_num_metering_areas = MAX_ROI;
+    }
     set(KEY_MAX_NUM_METERING_AREAS, m_pCapability->max_num_metering_areas);
     if (m_pCapability->max_num_metering_areas > 0) {
         setMeteringAreas(DEFAULT_CAMERA_AREA);
@@ -4112,12 +4118,12 @@ int32_t QCameraParameters::setFocusAreas(const char *focusAreasStr)
         return NO_ERROR;
     }
 
-    cam_rect_t *areas = (cam_rect_t *)malloc(sizeof(cam_rect_t) * m_pCapability->max_num_focus_areas);
+    cam_area_t *areas = (cam_area_t *)malloc(sizeof(cam_area_t) * m_pCapability->max_num_focus_areas);
     if (NULL == areas) {
         ALOGE("%s: No memory for areas", __func__);
         return NO_MEMORY;
     }
-    memset(areas, 0, sizeof(cam_rect_t) * m_pCapability->max_num_focus_areas);
+    memset(areas, 0, sizeof(cam_area_t) * m_pCapability->max_num_focus_areas);
     int num_areas_found = 0;
     if (parseCameraAreaString(focusAreasStr,
                               m_pCapability->max_num_focus_areas,
@@ -4143,14 +4149,15 @@ int32_t QCameraParameters::setFocusAreas(const char *focusAreasStr)
     af_roi_value.num_roi = num_areas_found;
     for (int i = 0; i < num_areas_found; i++) {
         ALOGD("%s: FocusArea[%d] = (%d, %d, %d, %d)",
-              __func__, i, (areas[i].top), (areas[i].left),
-              (areas[i].width), (areas[i].height));
+              __func__, i, (areas[i].rect.top), (areas[i].rect.left),
+              (areas[i].rect.width), (areas[i].rect.height));
 
         //transform the coords from (-1000, 1000) to (0, previewWidth or previewHeight)
-        af_roi_value.roi[i].left = (int32_t)((areas[i].left + 1000.0f) * (previewWidth / 2000.0f));
-        af_roi_value.roi[i].top = (int32_t)((areas[i].top + 1000.0f) * (previewHeight / 2000.0f));
-        af_roi_value.roi[i].width = (int32_t)(areas[i].width * previewWidth / 2000.0f);
-        af_roi_value.roi[i].height = (int32_t)(areas[i].height * previewHeight / 2000.0f);
+        af_roi_value.roi[i].left = (int32_t)((areas[i].rect.left + 1000.0f) * (previewWidth / 2000.0f));
+        af_roi_value.roi[i].top = (int32_t)((areas[i].rect.top + 1000.0f) * (previewHeight / 2000.0f));
+        af_roi_value.roi[i].width = (int32_t)(areas[i].rect.width * previewWidth / 2000.0f);
+        af_roi_value.roi[i].height = (int32_t)(areas[i].rect.height * previewHeight / 2000.0f);
+        af_roi_value.weight[i] = areas[i].weight;
     }
     free(areas);
     return AddSetParmEntryToBatch(m_pParamBuf,
@@ -4179,20 +4186,25 @@ int32_t QCameraParameters::setMeteringAreas(const char *meteringAreasStr)
         return NO_ERROR;
     }
 
-    cam_rect_t *areas = new cam_rect_t[m_pCapability->max_num_metering_areas];
+    cam_area_t *areas = (cam_area_t *)malloc(sizeof(cam_area_t) * m_pCapability->max_num_metering_areas);
+    if (NULL == areas) {
+        ALOGE("%s: No memory for areas", __func__);
+        return NO_MEMORY;
+    }
+    memset(areas, 0, sizeof(cam_area_t) * m_pCapability->max_num_metering_areas);
     int num_areas_found = 0;
     if (parseCameraAreaString(meteringAreasStr,
                               m_pCapability->max_num_metering_areas,
                               areas,
                               num_areas_found) < 0) {
         ALOGE("%s: Failed to parse the string: %s", __func__, meteringAreasStr);
-        delete areas;
+        free(areas);
         return BAD_VALUE;
     }
 
     if (validateCameraAreas(areas, num_areas_found) == false) {
         ALOGE("%s: invalid areas specified : %s", __func__, meteringAreasStr);
-        delete areas;
+        free(areas);
         return BAD_VALUE;
     }
 
@@ -4209,19 +4221,19 @@ int32_t QCameraParameters::setMeteringAreas(const char *meteringAreasStr)
 
         for (int i = 0; i < num_areas_found; i++) {
             ALOGD("%s: MeteringArea[%d] = (%d, %d, %d, %d)",
-                  __func__, i, (areas[i].top), (areas[i].left),
-                  (areas[i].width), (areas[i].height));
+                  __func__, i, (areas[i].rect.top), (areas[i].rect.left),
+                  (areas[i].rect.width), (areas[i].rect.height));
 
             //transform the coords from (-1000, 1000) to (0, previewWidth or previewHeight)
             aec_roi_value.cam_aec_roi_position.coordinate[i].x =
-                (uint32_t)(((areas[i].left + areas[i].width / 2) + 1000.0f) * previewWidth / 2000.0f) ;
+                (uint32_t)(((areas[i].rect.left + areas[i].rect.width / 2) + 1000.0f) * previewWidth / 2000.0f) ;
             aec_roi_value.cam_aec_roi_position.coordinate[i].y =
-                (uint32_t)(((areas[i].top + areas[i].height / 2) + 1000.0f) * previewHeight / 2000.0f) ;
+                (uint32_t)(((areas[i].rect.top + areas[i].rect.height / 2) + 1000.0f) * previewHeight / 2000.0f) ;
         }
     } else {
         aec_roi_value.aec_roi_enable = CAM_AEC_ROI_OFF;
     }
-    delete areas;
+    free(areas);
     return AddSetParmEntryToBatch(m_pParamBuf,
                                   CAM_INTF_PARM_AEC_ROI,
                                   sizeof(aec_roi_value),
@@ -5580,7 +5592,7 @@ int32_t QCameraParameters::parseNDimVector(const char *str, int *num, int N, cha
  *==========================================================================*/
 int32_t QCameraParameters::parseCameraAreaString(const char *str,
                                                  int max_num_areas,
-                                                 cam_rect_t *pAreas,
+                                                 cam_area_t *pAreas,
                                                  int& num_areas_found)
 {
     char area_str[32];
@@ -5589,6 +5601,7 @@ int32_t QCameraParameters::parseCameraAreaString(const char *str,
     int values[5], index=0;
     num_areas_found = 0;
 
+    memset(values, 0, sizeof(values));
     while(start != NULL) {
        if(*start != '(') {
             ALOGE("%s: error: Ill formatted area string: %s", __func__, str);
@@ -5613,10 +5626,11 @@ int32_t QCameraParameters::parseCameraAreaString(const char *str,
             ALOGE("%s: error: too many areas specified %s", __func__, str);
             return BAD_VALUE;
        }
-       pAreas[index].left = values[0];
-       pAreas[index].top = values[1];
-       pAreas[index].width = values[2] - values[0];
-       pAreas[index].height = values[3] - values[1];
+       pAreas[index].rect.left = values[0];
+       pAreas[index].rect.top = values[1];
+       pAreas[index].rect.width = values[2] - values[0];
+       pAreas[index].rect.height = values[3] - values[1];
+       pAreas[index].weight = values[4];
 
        index++;
        start = strchr(end, '('); // serach for next '('
@@ -5637,26 +5651,46 @@ int32_t QCameraParameters::parseCameraAreaString(const char *str,
  * RETURN     : true --  area is in valid range
  *              false -- not valid
  *==========================================================================*/
-bool QCameraParameters::validateCameraAreas(cam_rect_t *areas, int num_areas)
+bool QCameraParameters::validateCameraAreas(cam_area_t *areas, int num_areas)
 {
+    // special case: default area
+    if (num_areas == 1 &&
+        areas[0].rect.left == 0 &&
+        areas[0].rect.top == 0 &&
+        areas[0].rect.width == 0 &&
+        areas[0].rect.height == 0 &&
+        areas[0].weight == 0) {
+        return true;
+    }
+
     for(int i = 0; i < num_areas; i++) {
         // left should be >= -1000
-        if(areas[i].left < -1000) {
+        if(areas[i].rect.left < -1000) {
             return false;
         }
 
         // top  should be >= -1000
-        if(areas[i].top < -1000) {
+        if(areas[i].rect.top < -1000) {
+            return false;
+        }
+
+        // width or height should be > 0
+        if (areas[i].rect.width <= 0 || areas[i].rect.height <= 0) {
             return false;
         }
 
         // right  should be <= 1000
-        if(areas[i].left + areas[i].width > 1000) {
+        if(areas[i].rect.left + areas[i].rect.width > 1000) {
             return false;
         }
 
         // bottom should be <= 1000
-        if(areas[i].top + areas[i].height > 1000) {
+        if(areas[i].rect.top + areas[i].rect.height > 1000) {
+            return false;
+        }
+
+        // weight should be within (1, 1000)
+        if (areas[i].weight < 1 || areas[i].weight > 1000) {
             return false;
         }
     }

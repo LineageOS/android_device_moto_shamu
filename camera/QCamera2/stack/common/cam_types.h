@@ -432,6 +432,11 @@ typedef struct  {
     int32_t height;
 } cam_rect_t;
 
+typedef struct  {
+    cam_rect_t rect;
+    int32_t weight; /* weight of the area, valid for focusing/metering areas */
+} cam_area_t;
+
 typedef enum {
     CAM_STREAMING_MODE_CONTINUOUS, /* continous streaming */
     CAM_STREAMING_MODE_BURST,      /* burst streaming */
@@ -486,6 +491,7 @@ typedef struct {
     uint32_t frm_id;
     uint8_t num_roi;
     cam_rect_t roi[MAX_ROI];
+    int32_t weight[MAX_ROI];
     uint8_t is_multiwindow;
 } cam_roi_info_t;
 
