@@ -916,7 +916,7 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       m_thermalAdapter(QCameraThermalAdapter::getInstance()),
       m_cbNotifier(this),
       m_bShutterSoundPlayed(false),
-      m_bAutoFocusRunning(false),
+      m_currentFocusState(CAM_AF_NOT_FOCUSED),
       m_bStartZSLSnapshotCalled(false),
       m_pPowerModule(NULL),
       mDumpFrmCnt(0),
@@ -1754,10 +1754,11 @@ int QCamera2HardwareInterface::autoFocus()
     switch (focusMode) {
     case CAM_FOCUS_MODE_AUTO:
     case CAM_FOCUS_MODE_MACRO:
-        rc = mCameraHandle->ops->do_auto_focus(mCameraHandle->camera_handle,
-                                               CAM_AF_DO_ONE_FULL_SWEEP);
-        if (rc == NO_ERROR) {
-            m_bAutoFocusRunning = true;
+        {
+            rc = mCameraHandle->ops->do_auto_focus(mCameraHandle->camera_handle);
+            if (rc == NO_ERROR) {
+                mParameters.setAFRunning(true);
+            }
         }
         break;
     case CAM_FOCUS_MODE_CONTINOUS_VIDEO:
@@ -1766,14 +1767,12 @@ int QCamera2HardwareInterface::autoFocus()
         // The focus position is locked after autoFocus call.
         // in this sense, the effect is the same as cancel_auto_focus
         {
-            cam_autofocus_state_t state =
-                mCameraHandle->ops->cancel_auto_focus(mCameraHandle->camera_handle);
-            m_bAutoFocusRunning = true;
+            rc = mParameters.setLockCAF(true);
 
             // send evt notify that foucs is done
-            rc = sendEvtNotify(CAMERA_MSG_FOCUS,
-                               (state == CAM_AF_FOCUSED)? true : false,
-                               0);
+            sendEvtNotify(CAMERA_MSG_FOCUS,
+                          (m_currentFocusState == CAM_AF_FOCUSED)? true : false,
+                          0);
         }
         break;
     case CAM_FOCUS_MODE_CONTINOUS_PICTURE:
@@ -1784,10 +1783,18 @@ int QCamera2HardwareInterface::autoFocus()
         // can then decide if they want to take a picture immediately or to change
         // the focus mode to auto, and run a full autofocus cycle. The focus position
         // is locked after autoFocus call.
-        rc = mCameraHandle->ops->do_auto_focus(mCameraHandle->camera_handle,
-                                               CAM_AF_COMPLETE_EXISTING_SWEEP);
-        if (rc == NO_ERROR) {
-            m_bAutoFocusRunning = true;
+        if (m_currentFocusState != CAM_AF_SCANNING) {
+            // lock focus
+            rc = mParameters.setLockCAF(true);
+
+            // send evt notify that foucs is done
+            sendEvtNotify(CAMERA_MSG_FOCUS,
+                          (m_currentFocusState == CAM_AF_FOCUSED)? true : false,
+                          0);
+        } else {
+            // set flag that lock CAF is needed once focus state becomes focsued/not focused
+            mParameters.setLockCAFNeeded(true);
+            rc = NO_ERROR;
         }
         break;
     case CAM_FOCUS_MODE_INFINITY:
@@ -1795,7 +1802,6 @@ int QCamera2HardwareInterface::autoFocus()
     case CAM_FOCUS_MODE_EDOF:
     default:
         ALOGE("%s: No ops in focusMode (%d)", __func__, focusMode);
-        m_bAutoFocusRunning = false;
         rc = BAD_VALUE;
         break;
     }
@@ -1821,22 +1827,19 @@ int QCamera2HardwareInterface::cancelAutoFocus()
     switch (focusMode) {
     case CAM_FOCUS_MODE_AUTO:
     case CAM_FOCUS_MODE_MACRO:
-        if (m_bAutoFocusRunning) {
+        if (mParameters.isAFRunning()) {
             rc = mCameraHandle->ops->cancel_auto_focus(mCameraHandle->camera_handle);
             if (rc == NO_ERROR) {
-                m_bAutoFocusRunning = false;
+                mParameters.setAFRunning(false);
             }
         }
         break;
     case CAM_FOCUS_MODE_CONTINOUS_VIDEO:
     case CAM_FOCUS_MODE_CONTINOUS_PICTURE:
-        if (m_bAutoFocusRunning) {
-            // resume CAF
-            rc = mCameraHandle->ops->do_auto_focus(mCameraHandle->camera_handle,
-                                                   CAM_AF_START_CONTINUOUS_SWEEP);
-            if (rc == NO_ERROR) {
-                m_bAutoFocusRunning = false;
-            }
+        if (mParameters.isCAFLocked()) {
+            // resume CAF by unlock CAF
+            rc = mParameters.setLockCAF(false);;
+            mParameters.setLockCAFNeeded(false);
         }
         break;
     case CAM_FOCUS_MODE_INFINITY:
@@ -1844,7 +1847,6 @@ int QCamera2HardwareInterface::cancelAutoFocus()
     case CAM_FOCUS_MODE_EDOF:
     default:
         ALOGI("%s: No ops in focusMode (%d)", __func__, focusMode);
-        m_bAutoFocusRunning = false;
         break;
     }
     return rc;
@@ -2393,11 +2395,13 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
 {
     int32_t ret = NO_ERROR;
 
+    m_currentFocusState = focus_data.focus_state;
+
     cam_focus_mode_type focusMode = mParameters.getFocusMode();
     switch (focusMode) {
     case CAM_FOCUS_MODE_AUTO:
     case CAM_FOCUS_MODE_MACRO:
-        if (m_bAutoFocusRunning) {
+        if (mParameters.isAFRunning()) {
             if (focus_data.focus_state == CAM_AF_SCANNING) {
                 // in the middle of focusing, just ignore it
                 break;
@@ -2408,7 +2412,7 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
             ret = sendEvtNotify(CAMERA_MSG_FOCUS,
                                 (focus_data.focus_state == CAM_AF_FOCUSED)? true : false,
                                 0);
-            m_bAutoFocusRunning = false;
+            mParameters.setAFRunning(false);
         } else {
             ret = UNKNOWN_ERROR;
             ALOGE("%s: autoFocusEvent when no auto_focus running", __func__);
@@ -2420,12 +2424,14 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
             focus_data.focus_state == CAM_AF_NOT_FOCUSED) {
             // update focus distance
             mParameters.updateFocusDistances(&focus_data.focus_dist);
-            if (m_bAutoFocusRunning) {
-                ret = sendEvtNotify(CAMERA_MSG_FOCUS,
-                      (focus_data.focus_state == CAM_AF_FOCUSED)? true : false,
-                      0);
-                m_bAutoFocusRunning = false;
+            if (mParameters.isLockCAFNeeded()) {
+                mParameters.setLockCAFNeeded(false);
+                ret = mParameters.setLockCAF(true);
             }
+
+            ret = sendEvtNotify(CAMERA_MSG_FOCUS,
+                  (focus_data.focus_state == CAM_AF_FOCUSED)? true : false,
+                  0);
         }
         ret = sendEvtNotify(CAMERA_MSG_FOCUS_MOVE,
                 (focus_data.focus_state == CAM_AF_SCANNING)? true : false,
@@ -4112,15 +4118,17 @@ int32_t QCamera2HardwareInterface::setFaceDetection(bool enabled)
  *
  * DESCRIPTION: prepare hardware for snapshot, such as LED
  *
- * PARAMETERS : none
+ * PARAMETERS :
+ *   @afNeeded: flag indicating if Auto Focus needs to be done during preparation
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera2HardwareInterface::prepareHardwareForSnapshot()
+int32_t QCamera2HardwareInterface::prepareHardwareForSnapshot(int32_t afNeeded)
 {
-    return mCameraHandle->ops->prepare_snapshot(mCameraHandle->camera_handle);
+    return mCameraHandle->ops->prepare_snapshot(mCameraHandle->camera_handle,
+                                                afNeeded);
 }
 
 }; // namespace qcamera

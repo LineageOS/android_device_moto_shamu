@@ -501,11 +501,19 @@ int32_t QCameraStateMachine::procEvtPreviewStoppedState(qcamera_sm_evt_enum_t ev
         }
         break;
     case QCAMERA_SM_EVT_CANCEL_PICTURE:
-    case QCAMERA_SM_EVT_STOP_AUTO_FOCUS:
         {
             // no op needed here
             ALOGD("%s: No ops for evt(%d) in state(%d)", __func__, evt, m_state);
             result.status = NO_ERROR;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
+            m_parent->signalAPIResult(&result);
+        }
+        break;
+    case QCAMERA_SM_EVT_STOP_AUTO_FOCUS:
+        {
+            rc = m_parent->cancelAutoFocus();
+            result.status = rc;
             result.request_api = evt;
             result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
             m_parent->signalAPIResult(&result);
@@ -1023,7 +1031,7 @@ int32_t QCameraStateMachine::procEvtPreviewingState(qcamera_sm_evt_enum_t evt,
         break;
     case QCAMERA_SM_EVT_PREPARE_SNAPSHOT:
         {
-            rc = m_parent->prepareHardwareForSnapshot();
+            rc = m_parent->prepareHardwareForSnapshot(FALSE);
             if (rc == NO_ERROR) {
                 // Do not signal API result in this case.
                 // Need to wait for snapshot done in metadta.

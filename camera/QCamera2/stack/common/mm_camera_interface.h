@@ -345,31 +345,32 @@ typedef struct {
 
     /** do_auto_focus: fucntion definition for performing auto focus
      *    @camera_handle : camer handler
-     *    @sweep_mode    : auto focus sweep mode
      *  Return value: 0 -- success
      *                -1 -- failure
      *  Note: if this call success, we will always assume there will
      *        be an auto_focus event following up.
      **/
-    int32_t (*do_auto_focus) (uint32_t camera_handle,
-                              cam_autofocus_cycle_t sweep_mode);
+    int32_t (*do_auto_focus) (uint32_t camera_handle);
 
     /** cancel_auto_focus: fucntion definition for cancelling
      *                     previous auto focus request
      *    @camera_handle : camer handler
-     *  Return value: current focus state upon end of API call
-     *                CAM_AF_FOCUSED
-     *                CAM_AF_NOT_FOCUSED
+    *  Return value: 0 -- success
+    *                -1 -- failure
      **/
-    cam_autofocus_state_t (*cancel_auto_focus) (uint32_t camera_handle);
+    int32_t (*cancel_auto_focus) (uint32_t camera_handle);
 
     /** prepare_snapshot: fucntion definition for preparing hardware
      *                    for snapshot.
      *    @camera_handle : camer handler
+     *    @do_af_flag    : flag indicating if AF needs to be done
+     *                     0 -- no AF needed
+     *                     1 -- AF needed
      *  Return value: 0 -- success
      *                -1 -- failure
      **/
-    int32_t (*prepare_snapshot) (uint32_t camera_handle);
+    int32_t (*prepare_snapshot) (uint32_t camera_handle,
+                                 int32_t do_af_flag);
 
     /** start_zsl_snapshot: function definition for starting
      *                    zsl snapshot.

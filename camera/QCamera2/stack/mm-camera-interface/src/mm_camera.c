@@ -590,7 +590,6 @@ int32_t mm_camera_get_parms(mm_camera_obj_t *my_obj,
  *
  * PARAMETERS :
  *   @camera_handle: camera handle
- *   @sweep_mode   : auto focus sweep mode
  *
  * RETURN     : int32_t type of status
  *              0  -- success
@@ -598,11 +597,10 @@ int32_t mm_camera_get_parms(mm_camera_obj_t *my_obj,
  * NOTE       : if this call success, we will always assume there will
  *              be an auto_focus event following up.
  *==========================================================================*/
-int32_t mm_camera_do_auto_focus(mm_camera_obj_t *my_obj,
-                                cam_autofocus_cycle_t sweep_mode)
+int32_t mm_camera_do_auto_focus(mm_camera_obj_t *my_obj)
 {
     int32_t rc = -1;
-    int32_t value = sweep_mode;
+    int32_t value = 0;
     rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, CAM_PRIV_DO_AUTO_FOCUS, &value);
     pthread_mutex_unlock(&my_obj->cam_lock);
     return rc;
@@ -616,21 +614,17 @@ int32_t mm_camera_do_auto_focus(mm_camera_obj_t *my_obj,
  * PARAMETERS :
  *   @camera_handle: camera handle
  *
- * RETURN     : current focus state upon end of API call
- *                CAM_AF_FOCUSED
- *                CAM_AF_NOT_FOCUSED
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
  *==========================================================================*/
-cam_autofocus_state_t mm_camera_cancel_auto_focus(mm_camera_obj_t *my_obj)
+int32_t mm_camera_cancel_auto_focus(mm_camera_obj_t *my_obj)
 {
     int32_t rc = -1;
     int32_t value = 0;
-    cam_autofocus_state_t state = CAM_AF_NOT_FOCUSED;
     rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, CAM_PRIV_CANCEL_AUTO_FOCUS, &value);
     pthread_mutex_unlock(&my_obj->cam_lock);
-    if (rc == 0) {
-        state = (cam_autofocus_state_t)value;
-    }
-    return state;
+    return rc;
 }
 
 /*===========================================================================
@@ -640,15 +634,17 @@ cam_autofocus_state_t mm_camera_cancel_auto_focus(mm_camera_obj_t *my_obj)
  *
  * PARAMETERS :
  *   @my_obj       : camera object
+ *   @do_af_flag   : flag indicating if AF is needed
  *
  * RETURN     : int32_t type of status
  *              0  -- success
  *              -1 -- failure
  *==========================================================================*/
-int32_t mm_camera_prepare_snapshot(mm_camera_obj_t *my_obj)
+int32_t mm_camera_prepare_snapshot(mm_camera_obj_t *my_obj,
+                                   int32_t do_af_flag)
 {
     int32_t rc = -1;
-    int32_t value = 0;
+    int32_t value = do_af_flag;
     rc = mm_camera_util_s_ctrl(my_obj->ctrl_fd, CAM_PRIV_PREPARE_SNAPSHOT, &value);
     pthread_mutex_unlock(&my_obj->cam_lock);
     return rc;

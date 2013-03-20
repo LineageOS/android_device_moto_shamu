@@ -396,6 +396,7 @@ public:
     bool isFaceDetectionEnabled() {return ((m_nFaceProcMask & CAM_FACE_PROCESS_MASK_DETECTION) != 0);};
     int32_t setHistogram(bool enabled);
     int32_t setFaceDetection(bool enabled);
+    int32_t setLockCAF(bool bLock);
     int32_t setBundleInfo(cam_bundle_config_t &bundle_info);
     int32_t setFrameSkip(enum msm_vfe_frame_skip_pattern pattern);
     qcamera_thermal_mode getThermalMode() {return m_ThermalMode;};
@@ -407,6 +408,12 @@ public:
     cam_denoise_process_type_t getWaveletDenoiseProcessPlate();
     int32_t getLiveSnapshotSize(cam_dimension_t &dim) {dim = m_LiveSnapshotSize; return NO_ERROR;};
     int getFlipMode(cam_stream_type_t streamType);
+
+    void setLockCAFNeeded(bool bNeedflag) {m_bNeedLockCAF = bNeedflag;};
+    bool isLockCAFNeeded() {return m_bNeedLockCAF;};
+    bool isCAFLocked() {return m_bCAFLocked;};
+    void setAFRunning(bool bflag) {m_bAFRunning = bflag;};
+    bool isAFRunning() {return m_bAFRunning;};
 
 private:
     int32_t setPreviewSize(const QCameraParameters& );
@@ -568,6 +575,9 @@ private:
     bool m_bNeedRestart;            // if preview needs restart after parameters updated
     bool m_bNoDisplayMode;
     bool m_bWNROn;
+    bool m_bNeedLockCAF;
+    bool m_bCAFLocked;
+    bool m_bAFRunning;
     qcamera_thermal_mode m_ThermalMode; // adjust fps vs adjust frameskip
     cam_dimension_t m_LiveSnapshotSize; // live snapshot size
 
