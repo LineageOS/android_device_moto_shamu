@@ -47,7 +47,7 @@ public:
     bool enqueueWithPriority(void *data);
     void flush();
     void flushNodes(match_fn match);
-    void* dequeue();
+    void* dequeue(bool bFromHead = true);
     bool isEmpty();
 private:
     typedef struct {

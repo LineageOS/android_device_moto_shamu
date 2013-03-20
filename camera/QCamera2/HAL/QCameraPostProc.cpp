@@ -213,12 +213,6 @@ int32_t QCameraPostProcessor::stop()
     // dataProc Thread need to process "stop" as sync call because abort jpeg job should be a sync call
     m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC, TRUE, TRUE);
 
-    if (m_pReprocChannel != NULL) {
-        m_pReprocChannel->stop();
-        delete m_pReprocChannel;
-        m_pReprocChannel = NULL;
-    }
-
     return NO_ERROR;
 }
 
@@ -1213,6 +1207,13 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                 }
                 needNewSess = TRUE;
 
+                // stop reproc channel if exists
+                if (pme->m_pReprocChannel != NULL) {
+                    pme->m_pReprocChannel->stop();
+                    delete pme->m_pReprocChannel;
+                    pme->m_pReprocChannel = NULL;
+                }
+
                 // flush ongoing postproc Queue
                 pme->m_ongoingPPQ.flush();
 
@@ -1247,7 +1248,13 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                                 (qcamera_jpeg_data_t *)malloc(sizeof(qcamera_jpeg_data_t));
                             if (jpeg_job != NULL) {
                                 memset(jpeg_job, 0, sizeof(qcamera_jpeg_data_t));
+                                // add into ongoing jpeg job Q
+                                pme->m_ongoingJpegQ.enqueue((void *)jpeg_job);
                                 ret = pme->encodeData(super_buf, jpeg_job, needNewSess);
+                                if (NO_ERROR != ret) {
+                                    // dequeue the last one
+                                    pme->m_ongoingJpegQ.dequeue(false);
+                                }
                             } else {
                                 ALOGE("%s: no mem for qcamera_jpeg_data_t", __func__);
                                 ret = NO_MEMORY;
@@ -1263,9 +1270,6 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                                                     0,
                                                     NULL,
                                                     NULL);
-                            } else {
-                                // add into ongoing jpeg job Q
-                                pme->m_ongoingJpegQ.enqueue((void *)jpeg_job);
                             }
                         }
                     }
@@ -1297,9 +1301,13 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                         if (pp_job != NULL) {
                             memset(pp_job, 0, sizeof(qcamera_pp_data_t));
                             if (pme->m_pReprocChannel != NULL) {
+                                // add into ongoing PP job Q
+                                pp_job->src_frame = pp_frame;
+                                pme->m_ongoingPPQ.enqueue((void *)pp_job);
                                 ret = pme->m_pReprocChannel->doReprocess(pp_frame);
-                                if (ret == 0) {
-                                    pp_job->src_frame = pp_frame;
+                                if (NO_ERROR != ret) {
+                                    // remove from ongoing PP job Q
+                                    pme->m_ongoingPPQ.dequeue(false);
                                 }
                             } else {
                                 ALOGE("%s: Reprocess channel is NULL", __func__);
@@ -1326,9 +1334,6 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                                                 0,
                                                 NULL,
                                                 NULL);
-                        } else {
-                            // add into ongoing jpeg job Q
-                            pme->m_ongoingPPQ.enqueue((void *)pp_job);
                         }
                     }
                 } else {

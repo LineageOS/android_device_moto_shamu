@@ -176,11 +176,13 @@ bool QCameraQueue::enqueueWithPriority(void *data)
  *
  * DESCRIPTION: dequeue data from the queue
  *
- * PARAMETERS : None
+ * PARAMETERS :
+ *   @bFromHead : if true, dequeue from the head
+ *                if false, dequeue from the tail
  *
  * RETURN     : data ptr. NULL if not any data in the queue.
  *==========================================================================*/
-void* QCameraQueue::dequeue()
+void* QCameraQueue::dequeue(bool bFromHead)
 {
     camera_q_node* node = NULL;
     void* data = NULL;
@@ -189,7 +191,11 @@ void* QCameraQueue::dequeue()
 
     pthread_mutex_lock(&m_lock);
     head = &m_head.list;
-    pos = head->next;
+    if (bFromHead) {
+        pos = head->next;
+    } else {
+        pos = head->prev;
+    }
     if (pos != head) {
         node = member_of(pos, camera_q_node, list);
         cam_list_del_node(&node->list);
