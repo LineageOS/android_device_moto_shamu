@@ -610,14 +610,13 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
             streamInfo = (cam_stream_info_t *)pStreamInfoBuf->getPtr(0);
             memset(streamInfo, 0, sizeof(cam_stream_info_t));
             streamInfo->stream_type = CAM_STREAM_TYPE_OFFLINE_PROC;
-            // online reprocess, take same config from input stream
             rc = pStream->getFormat(streamInfo->fmt);
             rc = pStream->getFrameDimension(streamInfo->dim);
-            rc = pStream->getFrameOffset(streamInfo->buf_planes.plane_info);
             streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
 
             streamInfo->reprocess_config.pp_type = CAM_ONLINE_REPROCESS_TYPE;
             streamInfo->reprocess_config.online.input_stream_id = pStream->getMyServerID();
+            streamInfo->reprocess_config.online.input_stream_type = pStream->getMyType();
             streamInfo->reprocess_config.pp_feature_config = config;
 
             // save source stream handler

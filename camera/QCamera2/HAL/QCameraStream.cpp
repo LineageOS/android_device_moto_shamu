@@ -685,6 +685,24 @@ bool QCameraStream::isTypeOf(cam_stream_type_t type)
 }
 
 /*===========================================================================
+ * FUNCTION   : getMyType
+ *
+ * DESCRIPTION: return stream type
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : stream type
+ *==========================================================================*/
+cam_stream_type_t QCameraStream::getMyType()
+{
+    if (mStreamInfo != NULL) {
+        return mStreamInfo->stream_type;
+    } else {
+        return CAM_STREAM_TYPE_DEFAULT;
+    }
+}
+
+/*===========================================================================
  * FUNCTION   : getFrameOffset
  *
  * DESCRIPTION: query stream buffer frame offset info

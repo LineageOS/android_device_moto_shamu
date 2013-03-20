@@ -77,6 +77,7 @@ public:
     int32_t getFormat(cam_format_t &fmt);
     QCameraMemory *getStreamBufs() {return mStreamBufs;};
     uint32_t getMyServerID();
+    cam_stream_type_t getMyType();
 
     int32_t mapBuf(uint8_t buf_type, uint32_t buf_idx,
                    int32_t plane_idx, int fd, uint32_t size);

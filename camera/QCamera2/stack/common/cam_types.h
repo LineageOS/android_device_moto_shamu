@@ -750,6 +750,8 @@ typedef struct {
 
 typedef struct {
     uint32_t input_stream_id;
+    /* input source stream type */
+    cam_stream_type_t input_stream_type;
 } cam_pp_online_src_config_t;
 
 typedef struct {

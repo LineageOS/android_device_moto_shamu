@@ -44,6 +44,7 @@ typedef struct {
     uint32_t jobId;                  // job ID
     uint32_t client_hdl;             // handle of jpeg client (obtained when open jpeg)
     mm_camera_super_buf_t *src_frame;// source frame (need to be returned back to kernel after done)
+    mm_camera_super_buf_t *src_reproc_frame; // original source frame for reproc if not NULL
 } qcamera_jpeg_data_t;
 
 typedef struct {
@@ -122,17 +123,15 @@ private:
     int32_t getJpegEncodingConfig(mm_jpeg_encode_params_t& encode_parm,
                                   QCameraStream *main_stream,
                                   QCameraStream *thumb_stream);
-    int32_t encodeData(mm_camera_super_buf_t *recvd_frame,
-                       qcamera_jpeg_data_t *jpeg_job_data,
+    int32_t encodeData(qcamera_jpeg_data_t *jpeg_job_data,
                        uint8_t &needNewSess);
     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
     static void releaseNotifyData(void *user_data, void *cookie);
     void releaseJpegJobData(qcamera_jpeg_data_t *job);
     int32_t processRawImageImpl(mm_camera_super_buf_t *recvd_frame);
 
+    static void releaseJpegData(void *data, void *user_data);
     static void releasePPInputData(void *data, void *user_data);
-    static void releaseJpegInputData(void *data, void *user_data);
-    static void releaseOngoingJpegData(void *data, void *user_data);
     static void releaseOngoingPPData(void *data, void *user_data);
 
     static void *dataProcessRoutine(void *data);

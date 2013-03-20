@@ -88,6 +88,9 @@ int32_t mm_stream_calc_offset_video(cam_dimension_t *dim,
 int32_t mm_stream_calc_offset_metadata(cam_dimension_t *dim,
                                        cam_padding_info_t *padding,
                                        cam_stream_buf_plane_info_t *buf_planes);
+int32_t mm_stream_calc_offset_postproc(cam_stream_info_t *stream_info,
+                                       cam_padding_info_t *padding,
+                                       cam_stream_buf_plane_info_t *buf_planes);
 
 
 /* state machine function declare */
@@ -1410,6 +1413,7 @@ int32_t mm_stream_init_bufs(mm_stream_t * my_obj)
     for (i = 0; i < my_obj->buf_num; i++) {
         my_obj->buf_status[i].initial_reg_flag = reg_flags[i];
         my_obj->buf[i].stream_id = my_obj->my_hdl;
+        my_obj->buf[i].stream_type = my_obj->stream_info->stream_type;
     }
 
     free(reg_flags);
@@ -1453,8 +1457,10 @@ int32_t mm_stream_deinit_bufs(mm_stream_t * my_obj)
 
     free(my_obj->buf);
     my_obj->buf = NULL;
-    free(my_obj->buf_status);
-    my_obj->buf_status = NULL;
+    if (my_obj->buf_status != NULL) {
+        free(my_obj->buf_status);
+        my_obj->buf_status = NULL;
+    }
 
     return rc;
 }
@@ -2226,6 +2232,78 @@ int32_t mm_stream_calc_offset_metadata(cam_dimension_t *dim,
 }
 
 /*===========================================================================
+ * FUNCTION   : mm_stream_calc_offset_postproc
+ *
+ * DESCRIPTION: calculate postprocess frame offset
+ *
+ * PARAMETERS :
+ *   @stream_info: ptr to stream info
+ *   @padding : padding information
+ *   @buf_planes : [out] buffer plane information
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_stream_calc_offset_postproc(cam_stream_info_t *stream_info,
+                                       cam_padding_info_t *padding,
+                                       cam_stream_buf_plane_info_t *buf_planes)
+{
+    int32_t rc = 0;
+    if (stream_info->reprocess_config.pp_type == CAM_OFFLINE_REPROCESS_TYPE) {
+        // take offset from input source
+        *buf_planes = stream_info->reprocess_config.offline.input_buf_planes;
+        return rc;
+    }
+
+    cam_dimension_t dim = stream_info->dim;
+    if (stream_info->reprocess_config.pp_feature_config.feature_mask & CAM_QCOM_FEATURE_ROTATION) {
+        if (stream_info->reprocess_config.pp_feature_config.rotation == ROTATE_90 ||
+            stream_info->reprocess_config.pp_feature_config.rotation == ROTATE_270) {
+            // rotated by 90 or 270, need to switch width and height
+            dim.width = stream_info->dim.height;
+            dim.height = stream_info->dim.width;
+        }
+    }
+
+    switch (stream_info->reprocess_config.online.input_stream_type) {
+    case CAM_STREAM_TYPE_PREVIEW:
+    case CAM_STREAM_TYPE_POSTVIEW:
+        rc = mm_stream_calc_offset_preview(stream_info->fmt,
+                                           &dim,
+                                           buf_planes);
+        break;
+    case CAM_STREAM_TYPE_SNAPSHOT:
+        rc = mm_stream_calc_offset_snapshot(stream_info->fmt,
+                                            &dim,
+                                            padding,
+                                            buf_planes);
+        break;
+    case CAM_STREAM_TYPE_VIDEO:
+        rc = mm_stream_calc_offset_video(&dim,
+                                         buf_planes);
+        break;
+    case CAM_STREAM_TYPE_RAW:
+        rc = mm_stream_calc_offset_raw(stream_info->fmt,
+                                       &dim,
+                                       padding,
+                                       buf_planes);
+        break;
+    case CAM_STREAM_TYPE_METADATA:
+        rc = mm_stream_calc_offset_metadata(&dim,
+                                            padding,
+                                            buf_planes);
+        break;
+    default:
+        CDBG_ERROR("%s: not supported for stream type %d",
+                   __func__, stream_info->reprocess_config.online.input_stream_type);
+        rc = -1;
+        break;
+    }
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : mm_stream_calc_offset
  *
  * DESCRIPTION: calculate frame offset based on format and padding information
@@ -2241,35 +2319,46 @@ int32_t mm_stream_calc_offset(mm_stream_t *my_obj)
 {
     int32_t rc = 0;
 
+    cam_dimension_t dim = my_obj->stream_info->dim;
+    if (my_obj->stream_info->pp_config.feature_mask & CAM_QCOM_FEATURE_ROTATION) {
+        if (my_obj->stream_info->pp_config.rotation == ROTATE_90 ||
+            my_obj->stream_info->pp_config.rotation == ROTATE_270) {
+            // rotated by 90 or 270, need to switch width and height
+            dim.width = my_obj->stream_info->dim.height;
+            dim.height = my_obj->stream_info->dim.width;
+        }
+    }
+
     switch (my_obj->stream_info->stream_type) {
     case CAM_STREAM_TYPE_PREVIEW:
     case CAM_STREAM_TYPE_POSTVIEW:
         rc = mm_stream_calc_offset_preview(my_obj->stream_info->fmt,
-                                           &my_obj->stream_info->dim,
+                                           &dim,
                                            &my_obj->stream_info->buf_planes);
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
         rc = mm_stream_calc_offset_snapshot(my_obj->stream_info->fmt,
-                                            &my_obj->stream_info->dim,
+                                            &dim,
                                             &my_obj->padding_info,
                                             &my_obj->stream_info->buf_planes);
         break;
     case CAM_STREAM_TYPE_OFFLINE_PROC:
-        /* no need to calc offset for pp stream */
-        rc = 0;
+        rc = mm_stream_calc_offset_postproc(my_obj->stream_info,
+                                            &my_obj->padding_info,
+                                            &my_obj->stream_info->buf_planes);
         break;
     case CAM_STREAM_TYPE_VIDEO:
-        rc = mm_stream_calc_offset_video(&my_obj->stream_info->dim,
+        rc = mm_stream_calc_offset_video(&dim,
                                          &my_obj->stream_info->buf_planes);
         break;
     case CAM_STREAM_TYPE_RAW:
         rc = mm_stream_calc_offset_raw(my_obj->stream_info->fmt,
-                                       &my_obj->stream_info->dim,
+                                       &dim,
                                        &my_obj->padding_info,
                                        &my_obj->stream_info->buf_planes);
         break;
     case CAM_STREAM_TYPE_METADATA:
-        rc = mm_stream_calc_offset_metadata(&my_obj->stream_info->dim,
+        rc = mm_stream_calc_offset_metadata(&dim,
                                             &my_obj->padding_info,
                                             &my_obj->stream_info->buf_planes);
         break;

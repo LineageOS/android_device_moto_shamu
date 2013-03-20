@@ -149,7 +149,7 @@ typedef struct{
     cam_control_range_t saturation_ctrl;  /* saturation */
     cam_control_range_t sce_ctrl;         /* skintone enhancement factor */
 
-    int qcom_supported_feature_mask;      /* mask of qcom specific features supported:
+    uint32_t qcom_supported_feature_mask; /* mask of qcom specific features supported:
                                            * such as CAM_QCOM_FEATURE_SUPPORTED_FACE_DETECTION*/
     cam_padding_info_t padding_info;      /* padding information from PP */
     int8_t min_num_hdr_bufs;              /* minimum number of buffers needed for HDR by imaging module */
