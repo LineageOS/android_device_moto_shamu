@@ -93,11 +93,13 @@ typedef struct {
 } qcamera_evt_argm_t;
 
 #define QCAMERA_DUMP_FRM_PREVIEW    1
-#define QCAMERA_DUMP_FRM_VIDEO      1<<1
-#define QCAMERA_DUMP_FRM_SNAPSHOT   1<<2
-#define QCAMERA_DUMP_FRM_THUMBNAIL  1<<3
-#define QCAMERA_DUMP_FRM_RAW        1<<4
-#define QCAMERA_DUMP_FRM_JPEG       1<<5
+#define QCAMERA_DUMP_FRM_VIDEO      (1<<1)
+#define QCAMERA_DUMP_FRM_SNAPSHOT   (1<<2)
+#define QCAMERA_DUMP_FRM_THUMBNAIL  (1<<3)
+#define QCAMERA_DUMP_FRM_RAW        (1<<4)
+#define QCAMERA_DUMP_FRM_JPEG       (1<<5)
+
+#define QCAMERA_DUMP_FRM_MASK_ALL    0x000000ff
 
 typedef enum {
     QCAMERA_NOTIFY_CALLBACK,
@@ -413,7 +415,8 @@ private:
 
     power_module_t *m_pPowerModule;   // power module
 
-    int mDumpFrmCnt; //frame dump count
+    int mDumpFrmCnt;  // frame dump count
+    int mDumpSkipCnt; // frame skip count
 };
 
 }; // namespace qcamera
