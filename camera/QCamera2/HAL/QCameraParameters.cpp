@@ -4142,6 +4142,17 @@ int32_t QCameraParameters::setFocusAreas(const char *focusAreasStr)
 
     updateParamEntry(KEY_FOCUS_AREAS, focusAreasStr);
 
+    //for special area string (0, 0, 0, 0, 0), set the num_areas_found to 0,
+    //so no action is takenby the lower layer
+    if (num_areas_found == 1 &&
+        areas[0].rect.left == 0 &&
+        areas[0].rect.top == 0 &&
+        areas[0].rect.width == 0 &&
+        areas[0].rect.height == 0 &&
+        areas[0].weight == 0) {
+        num_areas_found = 0;
+    }
+
     int previewWidth, previewHeight;
     getPreviewSize(&previewWidth, &previewHeight);
     cam_roi_info_t af_roi_value;
@@ -4210,6 +4221,16 @@ int32_t QCameraParameters::setMeteringAreas(const char *meteringAreasStr)
 
     updateParamEntry(KEY_METERING_AREAS, meteringAreasStr);
 
+    //for special area string (0, 0, 0, 0, 0), set the num_areas_found to 0,
+    //so no action is takenby the lower layer
+    if (num_areas_found == 1 &&
+        areas[0].rect.left == 0 &&
+        areas[0].rect.top == 0 &&
+        areas[0].rect.width == 0 &&
+        areas[0].rect.height == 0 &&
+        areas[0].weight == 0) {
+        num_areas_found = 0;
+    }
     cam_set_aec_roi_t aec_roi_value;
     int previewWidth, previewHeight;
     getPreviewSize(&previewWidth, &previewHeight);
