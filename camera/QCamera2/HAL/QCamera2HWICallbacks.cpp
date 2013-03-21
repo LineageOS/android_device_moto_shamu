@@ -55,7 +55,7 @@ namespace qcamera {
 void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_frame,
                                                void *userdata)
 {
-    ALOGV("%s: E",__func__);
+    ALOGD("[KPI Perf] %s: E",__func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -84,7 +84,7 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
     // send to postprocessor
     pme->m_postprocessor.processData(frame);
 
-    ALOGV("%s: X", __func__);
+    ALOGD("[KPI Perf] %s: X", __func__);
 }
 
 /*===========================================================================
@@ -106,7 +106,7 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
 void QCamera2HardwareInterface::capture_channel_cb_routine(mm_camera_super_buf_t *recvd_frame,
                                                            void *userdata)
 {
-    ALOGD("%s: E", __func__);
+    ALOGD("[KPI Perf] %s: E", __func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -174,7 +174,7 @@ void QCamera2HardwareInterface::capture_channel_cb_routine(mm_camera_super_buf_t
 #endif
 /* END of test register face image for face authentication */
 
-    ALOGD("%s: X", __func__);
+    ALOGD("[KPI Perf] %s: X", __func__);
 }
 
 /*===========================================================================
@@ -196,7 +196,7 @@ void QCamera2HardwareInterface::capture_channel_cb_routine(mm_camera_super_buf_t
 void QCamera2HardwareInterface::postproc_channel_cb_routine(mm_camera_super_buf_t *recvd_frame,
                                                             void *userdata)
 {
-    ALOGD("%s: E", __func__);
+    ALOGD("[KPI Perf] %s: E", __func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -219,7 +219,7 @@ void QCamera2HardwareInterface::postproc_channel_cb_routine(mm_camera_super_buf_
     // send to postprocessor
     pme->m_postprocessor.processPPData(frame);
 
-    ALOGD("%s: X", __func__);
+    ALOGD("[KPI Perf] %s: X", __func__);
 }
 
 /*===========================================================================
@@ -245,7 +245,7 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
                                                           QCameraStream * stream,
                                                           void *userdata)
 {
-    ALOGD("%s : BEGIN", __func__);
+    ALOGD("[KPI Perf] %s : BEGIN", __func__);
     int err = NO_ERROR;
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     QCameraGrallocMemory *memory = (QCameraGrallocMemory *)super_frame->bufs[0]->mem_info;
@@ -347,7 +347,7 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
     }
 
     free(super_frame);
-    ALOGV("%s : END", __func__);
+    ALOGD("[KPI Perf] %s : END", __func__);
     return;
 }
 
@@ -372,7 +372,7 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
                                                           QCameraStream *stream,
                                                           void * userdata)
 {
-    ALOGV("%s",__func__);
+    ALOGD("[KPI Perf] %s E",__func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -429,6 +429,7 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
         }
     }
     free(super_frame);
+    ALOGD("[KPI Perf] %s X",__func__);
 }
 
 /*===========================================================================
@@ -465,7 +466,7 @@ void QCamera2HardwareInterface::postview_stream_cb_routine(mm_camera_super_buf_t
         return;
     }
 
-    ALOGD("%s : BEGIN", __func__);
+    ALOGD("[KPI Perf] %s : BEGIN", __func__);
 
     mm_camera_buf_def_t *frame = super_frame->bufs[0];
     if (NULL == frame) {
@@ -498,7 +499,7 @@ void QCamera2HardwareInterface::postview_stream_cb_routine(mm_camera_super_buf_t
     }
 
     free(super_frame);
-    ALOGD("%s : END", __func__);
+    ALOGD("[KPI Perf] %s : END", __func__);
     return;
 }
 
@@ -524,7 +525,7 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
                                                         QCameraStream */*stream*/,
                                                         void *userdata)
 {
-    ALOGV("%s : BEGIN", __func__);
+    ALOGD("[KPI Perf] %s : BEGIN", __func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -569,7 +570,7 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
         }
     }
     free(super_frame);
-    ALOGV("%s : END", __func__);
+    ALOGD("[KPI Perf] %s : END", __func__);
 }
 
 /*===========================================================================
@@ -594,7 +595,7 @@ void QCamera2HardwareInterface::snapshot_stream_cb_routine(mm_camera_super_buf_t
                                                            QCameraStream * /*stream*/,
                                                            void *userdata)
 {
-    ALOGD("%s: E", __func__);
+    ALOGD("[KPI Perf] %s: E", __func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -607,7 +608,7 @@ void QCamera2HardwareInterface::snapshot_stream_cb_routine(mm_camera_super_buf_t
 
     pme->m_postprocessor.processData(super_frame);
 
-    ALOGD("%s: X", __func__);
+    ALOGD("[KPI Perf] %s: X", __func__);
 }
 
 /*===========================================================================
@@ -633,7 +634,7 @@ void QCamera2HardwareInterface::raw_stream_cb_routine(mm_camera_super_buf_t * su
                                                       QCameraStream * /*stream*/,
                                                       void * userdata)
 {
-    ALOGV("%s : BEGIN", __func__);
+    ALOGD("[KPI Perf] %s : BEGIN", __func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -645,7 +646,7 @@ void QCamera2HardwareInterface::raw_stream_cb_routine(mm_camera_super_buf_t * su
     }
 
     pme->m_postprocessor.processRawData(super_frame);
-    ALOGV("%s : END", __func__);
+    ALOGD("[KPI Perf] %s : END", __func__);
 }
 
 /*===========================================================================
@@ -669,7 +670,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
                                                            QCameraStream * stream,
                                                            void * userdata)
 {
-    ALOGD("%s : BEGIN", __func__);
+    ALOGV("[KPI Perf] %s : BEGIN", __func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -749,7 +750,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
     stream->bufDone(frame->buf_idx);
     free(super_frame);
 
-    ALOGD("%s : END", __func__);
+    ALOGV("[KPI Perf] %s : END", __func__);
 }
 
 /*===========================================================================
@@ -775,7 +776,7 @@ void QCamera2HardwareInterface::reprocess_stream_cb_routine(mm_camera_super_buf_
                                                             QCameraStream * /*stream*/,
                                                             void * userdata)
 {
-    ALOGV("%s: E", __func__);
+    ALOGD("[KPI Perf] %s: E", __func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -788,7 +789,7 @@ void QCamera2HardwareInterface::reprocess_stream_cb_routine(mm_camera_super_buf_
 
     pme->m_postprocessor.processPPData(super_frame);
 
-    ALOGV("%s: X", __func__);
+    ALOGD("[KPI Perf] %s: X", __func__);
 }
 
 /*===========================================================================
@@ -1091,6 +1092,9 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                         switch (cb->cb_type) {
                         case QCAMERA_NOTIFY_CALLBACK:
                             {
+                                if (cb->msg_type == CAMERA_MSG_FOCUS) {
+                                    ALOGD("[KPI Perf] %s : sending focus evt to app", __func__);
+                                }
                                 if (pme->mNotifyCb) {
                                     pme->mNotifyCb(cb->msg_type,
                                                   cb->ext1,
