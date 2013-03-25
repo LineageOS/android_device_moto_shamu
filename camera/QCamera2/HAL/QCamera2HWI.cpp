@@ -1145,10 +1145,6 @@ int QCamera2HardwareInterface::initCapabilities(int cameraId)
     memcpy(gCamCapability[cameraId], DATA_PTR(capabilityHeap,0),
                                         sizeof(cam_capability_t));
 
-    // TODO: hardcoded to disable reprocess for rotation.
-    // need to remove after CPP support reprocess for rotation
-    gCamCapability[cameraId]->qcom_supported_feature_mask &= ~CAM_QCOM_FEATURE_ROTATION;
-
     rc = NO_ERROR;
 
 query_failed:
@@ -3831,6 +3827,10 @@ bool QCamera2HardwareInterface::needDebugFps()
  *==========================================================================*/
 bool QCamera2HardwareInterface::needReprocess()
 {
+    // TODO: hack here to return false to avoid reprocess
+    // Need to be enabled after PP is enabled
+    return false;
+
     if (!mParameters.isJpegPictureFormat()) {
         // RAW image, no need to reprocess
         return false;
@@ -3860,6 +3860,10 @@ bool QCamera2HardwareInterface::needReprocess()
  *==========================================================================*/
 bool QCamera2HardwareInterface::needRotationReprocess()
 {
+    // TODO: hack here to return false to avoid reprocess
+    // Need to be enabled after PP is enabled
+    return false;
+
     if (!mParameters.isJpegPictureFormat()) {
         // RAW image, no need to reprocess
         return false;
@@ -3888,6 +3892,10 @@ bool QCamera2HardwareInterface::needRotationReprocess()
  *==========================================================================*/
 bool QCamera2HardwareInterface::needOnlineRotation()
 {
+    // TODO: hack here to return false to avoid reprocess
+    // Need to be enabled after PP is enabled
+    return false;
+
     if (!mParameters.isJpegPictureFormat()) {
         // RAW image, no need
         return false;
