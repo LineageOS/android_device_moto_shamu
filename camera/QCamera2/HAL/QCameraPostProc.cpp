@@ -584,11 +584,9 @@ int32_t QCameraPostProcessor::processJpegEvt(qcamera_jpeg_evt_payload_t *evt)
 end:
     if (rc != NO_ERROR) {
         // send error msg to upper layer
-        sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
-                       NULL,
-                       0,
-                       NULL,
-                       NULL);
+        sendEvtNotify(CAMERA_MSG_ERROR,
+                      UNKNOWN_ERROR,
+                      0);
 
         if (NULL != jpeg_mem) {
             jpeg_mem->release(jpeg_mem);
@@ -1275,11 +1273,7 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
 
                                 pme->releaseJpegJobData(jpeg_job);
                                 free(jpeg_job);
-                                pme->sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
-                                                    NULL,
-                                                    0,
-                                                    NULL,
-                                                    NULL);
+                                pme->sendEvtNotify(CAMERA_MSG_ERROR, UNKNOWN_ERROR, 0);
                             }
                         }
                     }
@@ -1295,11 +1289,7 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                         if (NO_ERROR != ret) {
                             pme->releaseSuperBuf(super_buf);
                             free(super_buf);
-                            pme->sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
-                                                NULL,
-                                                0,
-                                                NULL,
-                                                NULL);
+                            pme->sendEvtNotify(CAMERA_MSG_ERROR, UNKNOWN_ERROR, 0);
                         }
                     }
 
@@ -1339,11 +1329,7 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                                 free(pp_frame);
                             }
                             // send error notify
-                            pme->sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
-                                                NULL,
-                                                0,
-                                                NULL,
-                                                NULL);
+                            pme->sendEvtNotify(CAMERA_MSG_ERROR, UNKNOWN_ERROR, 0);
                         }
                     }
                 } else {
