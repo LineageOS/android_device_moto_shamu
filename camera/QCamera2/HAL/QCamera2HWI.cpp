@@ -3863,10 +3863,6 @@ bool QCamera2HardwareInterface::needDebugFps()
  *==========================================================================*/
 bool QCamera2HardwareInterface::needReprocess()
 {
-    // TODO: hack here to return false to avoid reprocess
-    // Need to be enabled after PP is enabled
-    return false;
-
     if (!mParameters.isJpegPictureFormat()) {
         // RAW image, no need to reprocess
         return false;
