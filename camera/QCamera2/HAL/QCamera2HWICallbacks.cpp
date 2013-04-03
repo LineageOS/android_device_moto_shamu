@@ -684,6 +684,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
                 __func__, pMetaData->faces_data.num_faces_detected);
         } else {
             // process face detection result
+            ALOGD("[KPI Perf] %s: Number of faces detected %d",__func__,pMetaData->faces_data.num_faces_detected);
             pme->processFaceDetectionResult(&pMetaData->faces_data);
         }
     }

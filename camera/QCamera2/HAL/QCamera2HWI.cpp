@@ -854,14 +854,16 @@ int QCamera2HardwareInterface::dump(struct camera_device *device, int fd)
 int QCamera2HardwareInterface::close_camera_device(hw_device_t *hw_dev)
 {
     int ret = NO_ERROR;
+    ALOGD("[KPI Perf] %s: E",__func__);
     QCamera2HardwareInterface *hw =
         reinterpret_cast<QCamera2HardwareInterface *>(
             reinterpret_cast<camera_device_t *>(hw_dev)->priv);
     if (!hw) {
-        ALOGE("NULL camera device");
+        ALOGE("%s: NULL camera device", __func__);
         return BAD_VALUE;
     }
     delete hw;
+    ALOGD("[KPI Perf] %s: X",__func__);
     return ret;
 }
 
@@ -4187,6 +4189,7 @@ int32_t QCamera2HardwareInterface::setFaceDetection(bool enabled)
  *==========================================================================*/
 int32_t QCamera2HardwareInterface::prepareHardwareForSnapshot(int32_t afNeeded)
 {
+    ALOGD("[KPI Perf] %s: Prepare hardware such as LED",__func__);
     return mCameraHandle->ops->prepare_snapshot(mCameraHandle->camera_handle,
                                                 afNeeded);
 }
