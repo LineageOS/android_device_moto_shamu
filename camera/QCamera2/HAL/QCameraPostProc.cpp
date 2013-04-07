@@ -633,6 +633,13 @@ int32_t QCameraPostProcessor::processPPData(mm_camera_super_buf_t *frame)
         return BAD_VALUE;
     }
 
+    if (m_parent->mParameters.isNV16PictureFormat()) {
+        releaseSuperBuf(job->src_frame);
+        free(job->src_frame);
+        free(job);
+        return processRawData(frame);
+    }
+
     qcamera_jpeg_data_t *jpeg_job =
         (qcamera_jpeg_data_t *)malloc(sizeof(qcamera_jpeg_data_t));
     if (jpeg_job == NULL) {
@@ -1349,13 +1356,14 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                     }
                 } else {
                     // not active, simply return buf and do no op
-                    mm_camera_super_buf_t *super_buf =
-                        (mm_camera_super_buf_t *)pme->m_inputJpegQ.dequeue();
-                    if (NULL != super_buf) {
-                        pme->releaseSuperBuf(super_buf);
-                        free(super_buf);
+                    qcamera_jpeg_data_t *jpeg_data =
+                        (qcamera_jpeg_data_t *)pme->m_inputJpegQ.dequeue();
+                    if (NULL != jpeg_data) {
+                        pme->releaseJpegJobData(jpeg_data);
+                        free(jpeg_data);
                     }
-                    super_buf = (mm_camera_super_buf_t *)pme->m_inputRawQ.dequeue();
+                    mm_camera_super_buf_t *super_buf =
+                        (mm_camera_super_buf_t *)pme->m_inputRawQ.dequeue();
                     if (NULL != super_buf) {
                         pme->releaseSuperBuf(super_buf);
                         free(super_buf);
