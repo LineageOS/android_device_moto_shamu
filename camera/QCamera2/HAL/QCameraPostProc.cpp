@@ -243,7 +243,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
     cam_dimension_t thumbnailSize;
     memset(&thumbnailSize, 0, sizeof(cam_dimension_t));
     m_parent->getThumbnailSize(thumbnailSize);
-    if (thumbnailSize.width == 0 && thumbnailSize.height == 0) {
+    if (thumbnailSize.width == 0 || thumbnailSize.height == 0) {
         // (0,0) means no thumbnail
         m_bThumbnailNeeded = FALSE;
     }
