@@ -946,7 +946,7 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
 
     memset(m_channels, 0, sizeof(m_channels));
 
-#ifdef QCOM_POWER_H_EXTENDED
+#ifdef HAS_MULTIMEDIA_HINTS
     if (hw_get_module(POWER_HARDWARE_MODULE_ID, (const hw_module_t **)&m_pPowerModule)) {
         ALOGE("%s: %s module not found", __func__, POWER_HARDWARE_MODULE_ID);
     }
@@ -1702,7 +1702,7 @@ int QCamera2HardwareInterface::startRecording()
         rc = startChannel(QCAMERA_CH_TYPE_VIDEO);
     }
 
-#ifdef QCOM_POWER_H_EXTENDED
+#ifdef HAS_MULTIMEDIA_HINTS
     if (rc == NO_ERROR) {
         if (m_pPowerModule) {
             if (m_pPowerModule->powerHint) {
@@ -1730,7 +1730,7 @@ int QCamera2HardwareInterface::stopRecording()
 {
     int rc = stopChannel(QCAMERA_CH_TYPE_VIDEO);
     ALOGD("%s: E", __func__);
-#ifdef QCOM_POWER_H_EXTENDED
+#ifdef HAS_MULTIMEDIA_HINTS
     if (m_pPowerModule) {
         if (m_pPowerModule->powerHint) {
             m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE, (void *)"state=0");
