@@ -987,12 +987,9 @@ void QCameraCbNotifier::releaseNotifications(void *data, void *user_data)
     qcamera_callback_argm_t *arg = ( qcamera_callback_argm_t * ) data;
 
     if ( ( NULL != arg ) && ( NULL != user_data ) ) {
-
         if ( arg->release_cb ) {
             arg->release_cb(arg->user_data, arg->cookie);
         }
-
-        delete arg;
     }
 }
 
