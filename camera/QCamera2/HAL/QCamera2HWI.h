@@ -272,6 +272,7 @@ private:
     int commitParameterChanges();
 
     bool needDebugFps();
+    bool isCACEnabled();
     bool needReprocess();
     bool needRotationReprocess();
     bool needOnlineRotation();
