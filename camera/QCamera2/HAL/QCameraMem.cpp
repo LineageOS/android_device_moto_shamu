@@ -293,7 +293,7 @@ int QCameraMemory::allocOneBuffer(QCameraMemInfo &memInfo, int heap_id, int size
     int main_ion_fd = 0;
 
     main_ion_fd = open("/dev/ion", O_RDONLY);
-    if (main_ion_fd <= 0) {
+    if (main_ion_fd < 0) {
         ALOGE("Ion dev open failed: %s\n", strerror(errno));
         goto ION_OPEN_FAILED;
     }
@@ -1091,7 +1091,7 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
         mPrivateHandle[cnt] =
             (struct private_handle_t *)(*mBufferHandle[cnt]);
         mMemInfo[cnt].main_ion_fd = open("/dev/ion", O_RDONLY);
-        if (mMemInfo[cnt].main_ion_fd <= 0) {
+        if (mMemInfo[cnt].main_ion_fd < 0) {
             ALOGE("%s: failed: could not open ion device", __func__);
             for(int i = 0; i < cnt; i++) {
                 struct ion_handle_data ion_handle;
