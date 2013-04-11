@@ -1118,6 +1118,43 @@ int32_t mm_camera_flush_super_buf_queue(mm_camera_obj_t *my_obj, uint32_t ch_id,
 }
 
 /*===========================================================================
+ * FUNCTION   : mm_camera_config_channel_notify
+ *
+ * DESCRIPTION: configures the channel notification mode
+ *
+ * PARAMETERS :
+ *   @my_obj       : camera object
+ *   @ch_id        : channel handle
+ *   @notify_mode  : notification mode
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_camera_config_channel_notify(mm_camera_obj_t *my_obj,
+                                        uint32_t ch_id,
+                                        mm_camera_super_buf_notify_mode_t notify_mode)
+{
+    int32_t rc = -1;
+    mm_channel_t * ch_obj =
+        mm_camera_util_get_channel_by_handler(my_obj, ch_id);
+
+    if (NULL != ch_obj) {
+        pthread_mutex_lock(&ch_obj->ch_lock);
+        pthread_mutex_unlock(&my_obj->cam_lock);
+
+        rc = mm_channel_fsm_fn(ch_obj,
+                               MM_CHANNEL_EVT_CONFIG_NOTIFY_MODE,
+                               (void *)notify_mode,
+                               NULL);
+    } else {
+        pthread_mutex_unlock(&my_obj->cam_lock);
+    }
+
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : mm_camera_set_stream_parms
  *
  * DESCRIPTION: set parameters per stream
