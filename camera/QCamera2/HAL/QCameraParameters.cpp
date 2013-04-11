@@ -816,6 +816,30 @@ String8 QCameraParameters::createHfrSizesString(
 }
 
 /*===========================================================================
+ * FUNCTION   : compareFPSValues
+ *
+ * DESCRIPTION: helper function for fps sorting
+ *
+ * PARAMETERS :
+ *   @p1     : first array element
+ *   @p2     : second array element
+ *
+ * RETURN     : -1 - left element is greater than right
+ *              0  - elements are equals
+ *              1  - left element is less than right
+ *==========================================================================*/
+int QCameraParameters::compareFPSValues(const void *p1, const void *p2)
+{
+    if ( *( (int *) p1) > *( (int *) p2) ) {
+        return -1;
+    } else if (  *( (int *) p1) < *( (int *) p2) ) {
+        return 1;
+    }
+
+    return 0;
+}
+
+/*===========================================================================
  * FUNCTION   : createFpsString
  *
  * DESCRIPTION: create string obj contains array of FPS rates
@@ -830,13 +854,29 @@ String8 QCameraParameters::createFpsString(const cam_fps_range_t *fps, int len)
 {
     String8 str;
     char buffer[32];
+    int duplicate = INT_MAX;
+
+    int *fpsValues = new int[len];
 
     for (int i = 0; i < len; i++ ) {
-        snprintf(buffer, sizeof(buffer), "%d", int(fps[i].max_fps * 1000));
-        str.append(buffer);
-        if (i < len-1)
-            str.append(",");
+        fpsValues[i] = int(fps[i].max_fps);
     }
+
+    qsort(fpsValues, len, sizeof(int), compareFPSValues);
+
+    for (int i = 0; i < len; i++ ) {
+        if ( duplicate != fpsValues[i] ) {
+            snprintf(buffer, sizeof(buffer), "%d", fpsValues[i]);
+            str.append(buffer);
+            if (i < len-1) {
+                str.append(",");
+            }
+            duplicate = fpsValues[i];
+        }
+    }
+
+    delete [] fpsValues;
+
     return str;
 }
 
@@ -2945,7 +2985,7 @@ int32_t QCameraParameters::initDefaultParameters()
         String8 fpsValues = createFpsString(m_pCapability->fps_ranges_tbl,
                                             m_pCapability->fps_ranges_tbl_cnt);
         set(KEY_SUPPORTED_PREVIEW_FRAME_RATES, fpsValues.string());
-        CameraParameters::setPreviewFrameRate(max_fps);
+        CameraParameters::setPreviewFrameRate(int(m_pCapability->fps_ranges_tbl[default_fps_index].max_fps));
     } else {
         ALOGE("%s: supported fps ranges cnt is 0 or exceeds max!!!", __func__);
     }
