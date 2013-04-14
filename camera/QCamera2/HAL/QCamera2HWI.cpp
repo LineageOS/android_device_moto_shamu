@@ -3148,6 +3148,10 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
             pp_config.denoise2d.denoise_enable = 1;
             pp_config.denoise2d.process_plates = mParameters.getWaveletDenoiseProcessPlate();
         }
+
+        if (isCACEnabled()) {
+            pp_config.feature_mask |= CAM_QCOM_FEATURE_CAC;
+        }
     }
     if (needRotationReprocess()) {
         pp_config.feature_mask |= CAM_QCOM_FEATURE_ROTATION;
@@ -3849,6 +3853,25 @@ bool QCamera2HardwareInterface::needDebugFps()
 }
 
 /*===========================================================================
+ * FUNCTION   : isCACEnabled
+ *
+ * DESCRIPTION: if CAC is enabled
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
+bool QCamera2HardwareInterface::isCACEnabled()
+{
+    char prop[PROPERTY_VALUE_MAX];
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.camera.feature.cac", prop, "0");
+    int enableCAC = atoi(prop);
+    return enableCAC == 1;
+}
+
+/*===========================================================================
  * FUNCTION   : needReprocess
  *
  * DESCRIPTION: if reprocess is needed
@@ -3867,7 +3890,7 @@ bool QCamera2HardwareInterface::needReprocess()
 
     if (mParameters.isZSLMode() &&
         ((gCamCapability[mCameraId]->min_required_pp_mask > 0) ||
-         mParameters.isWNREnabled())) {
+         mParameters.isWNREnabled() || isCACEnabled())) {
         // TODO: add for ZSL HDR later
         // pp module has min requirement for zsl reprocess, or WNR in ZSL mode
         ALOGD("%s: need do reprocess for ZSL WNR or min PP reprocess", __func__);
