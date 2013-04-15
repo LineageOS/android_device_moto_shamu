@@ -378,6 +378,8 @@ typedef struct mm_camera_obj {
     pthread_mutex_t evt_lock;
     pthread_cond_t evt_cond;
     mm_camera_event_t evt_rcvd;
+
+    pthread_mutex_t msg_lock; /* lock for sending msg through socket */
 } mm_camera_obj_t;
 
 typedef struct {
