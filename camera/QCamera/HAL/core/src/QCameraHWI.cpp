@@ -1267,6 +1267,10 @@ QCameraHardwareInterface::~QCameraHardwareInterface()
       mStatHeap = NULL;
     }
 
+    if(mMobiCatEnabled) {
+      deInitMobicatBuffers();
+    }
+
     for (int i = 0; i < MM_CAMERA_IMG_MODE_MAX; i++) {
         if (mStreams[i] != NULL) {
             delete mStreams[i];
