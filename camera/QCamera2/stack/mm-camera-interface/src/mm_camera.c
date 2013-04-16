@@ -305,6 +305,7 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
         rc = -1;
         goto on_error;
     }
+    pthread_mutex_init(&my_obj->msg_lock, NULL);
 
     pthread_mutex_init(&my_obj->cb_lock, NULL);
     pthread_mutex_init(&my_obj->evt_lock, NULL);
@@ -375,6 +376,7 @@ int32_t mm_camera_close(mm_camera_obj_t *my_obj)
         mm_camera_socket_close(my_obj->ds_fd);
         my_obj->ds_fd = 0;
     }
+    pthread_mutex_destroy(&my_obj->msg_lock);
 
     pthread_mutex_destroy(&my_obj->cb_lock);
     pthread_mutex_destroy(&my_obj->evt_lock);
@@ -1513,6 +1515,9 @@ int32_t mm_camera_util_sendmsg(mm_camera_obj_t *my_obj,
 {
     int32_t rc = -1;
     int32_t status;
+
+    /* need to lock msg_lock, since sendmsg until reposonse back is deemed as one operation*/
+    pthread_mutex_lock(&my_obj->msg_lock);
     if(mm_camera_socket_sendmsg(my_obj->ds_fd, msg, buf_size, sendfd) > 0) {
         /* wait for event that mapping/unmapping is done */
         mm_camera_util_wait_for_event(my_obj, CAM_EVENT_TYPE_MAP_UNMAP_DONE, &status);
@@ -1520,6 +1525,7 @@ int32_t mm_camera_util_sendmsg(mm_camera_obj_t *my_obj,
             rc = 0;
         }
     }
+    pthread_mutex_unlock(&my_obj->msg_lock);
     return rc;
 }
 
