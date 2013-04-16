@@ -3300,7 +3300,7 @@ int32_t QCameraParameters::init(cam_capability_t *capabilities, mm_camera_vtbl_t
     m_pCamOpsTbl = mmOps;
 
     //Allocate Set Param Buffer
-    m_pParamHeap = new QCameraHeapMemory();
+    m_pParamHeap = new QCameraHeapMemory(QCAMERA_ION_USE_CACHE);
     rc = m_pParamHeap->allocate(1, sizeof(parm_buffer_t));
     if(rc != OK) {
         rc = NO_MEMORY;
