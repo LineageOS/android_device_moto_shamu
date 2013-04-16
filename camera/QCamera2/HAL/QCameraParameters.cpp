@@ -998,10 +998,7 @@ int32_t QCameraParameters::setPreviewSize(const QCameraParameters& params)
             }
 
             // set the new value
-            char val[32];
-            sprintf(val, "%dx%d", width, height);
-            updateParamEntry(KEY_PREVIEW_SIZE, val);
-            ALOGV("%s: %s", __func__, val);
+            CameraParameters::setPreviewSize(width, height);
             return NO_ERROR;
         }
     }
@@ -1040,10 +1037,7 @@ int32_t QCameraParameters::setPictureSize(const QCameraParameters& params)
             }
 
             // set the new value
-            char val[32];
-            sprintf(val, "%dx%d", width, height);
-            updateParamEntry(KEY_PICTURE_SIZE, val);
-            ALOGV("%s: %s", __func__, val);
+            CameraParameters::setPictureSize(width, height);
             return NO_ERROR;
         }
     }
@@ -1090,10 +1084,7 @@ int32_t QCameraParameters::setVideoSize(const QCameraParameters& params)
             }
 
             // set the new value
-            char val[32];
-            sprintf(val, "%dx%d", width, height);
-            updateParamEntry(KEY_VIDEO_SIZE, val);
-            ALOGV("%s: %s", __func__, val);
+            CameraParameters::setVideoSize(width, height);
             return NO_ERROR;
         }
     }
@@ -1219,7 +1210,7 @@ int32_t QCameraParameters::setPreviewFormat(const QCameraParameters& params)
     if (previewFormat != NAME_NOT_FOUND) {
         mPreviewFormat = (cam_format_t)previewFormat;
 
-        updateParamEntry(KEY_PREVIEW_FORMAT, str);
+        CameraParameters::setPreviewFormat(str);
         ALOGV("%s: format %d\n", __func__, mPreviewFormat);
         return NO_ERROR;
     }
@@ -1249,7 +1240,7 @@ int32_t QCameraParameters::setPictureFormat(const QCameraParameters& params)
     if (pictureFormat != NAME_NOT_FOUND) {
         mPictureFormat = pictureFormat;
 
-        updateParamEntry(KEY_PICTURE_FORMAT, str);
+        CameraParameters::setPictureFormat(str);
         ALOGE("%s: format %d\n", __func__, mPictureFormat);
         return NO_ERROR;
     }
@@ -1311,11 +1302,8 @@ int32_t QCameraParameters::setJpegThumbnailSize(const QCameraParameters& params)
         }
     }
 
-    char val[16];
-    sprintf(val, "%d", optimalWidth);
-    updateParamEntry(KEY_JPEG_THUMBNAIL_WIDTH, val);
-    sprintf(val, "%d", optimalHeight);
-    updateParamEntry(KEY_JPEG_THUMBNAIL_HEIGHT, val);
+    set(KEY_JPEG_THUMBNAIL_WIDTH, optimalWidth);
+    set(KEY_JPEG_THUMBNAIL_HEIGHT, optimalHeight);
     return NO_ERROR;
 }
 
@@ -1344,9 +1332,7 @@ int32_t QCameraParameters::setJpegQuality(const QCameraParameters& params)
 
     quality = params.getInt(KEY_JPEG_THUMBNAIL_QUALITY);
     if (quality >= 0 && quality <= 100) {
-        char val[16];
-        sprintf(val, "%d", quality);
-        updateParamEntry(KEY_JPEG_THUMBNAIL_QUALITY, val);
+        set(KEY_JPEG_THUMBNAIL_QUALITY, quality);
     } else {
         ALOGE("%s: Invalid jpeg thumbnail quality=%d", __func__, quality);
         rc = BAD_VALUE;
@@ -1374,7 +1360,7 @@ int32_t QCameraParameters::setOrientation(const QCameraParameters& params)
         if (strcmp(str, portrait) == 0 || strcmp(str, landscape) == 0) {
             // Camera service needs this to decide if the preview frames and raw
             // pictures should be rotated.
-            updateParamEntry(KEY_QC_ORIENTATION, str);
+            set(KEY_QC_ORIENTATION, str);
         } else {
             ALOGE("%s: Invalid orientation value: %s", __func__, str);
             return BAD_VALUE;
@@ -2517,7 +2503,7 @@ int32_t QCameraParameters::setNoDisplayMode(const QCameraParameters& params)
     if(str_val && strlen(str_val) > 0) {
         if (prev_str == NULL || strcmp(str_val, prev_str) != 0) {
             m_bNoDisplayMode = atoi(str_val);
-            updateParamEntry(KEY_QC_NO_DISPLAY_MODE, str_val);
+            set(KEY_QC_NO_DISPLAY_MODE, str_val);
             m_bNeedRestart = true;
         }
     } else {
@@ -2550,7 +2536,7 @@ int32_t QCameraParameters::setZslMode(const QCameraParameters& params)
                                        sizeof(ON_OFF_MODES_MAP)/sizeof(QCameraMap),
                                        str_val);
             if (value != NAME_NOT_FOUND) {
-                updateParamEntry(KEY_QC_ZSL, str_val);
+                set(KEY_QC_ZSL, str_val);
                 m_bZslMode = (value > 0)? true : false;
 
                 // ZSL mode changed, need restart preview
