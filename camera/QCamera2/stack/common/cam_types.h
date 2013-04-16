@@ -801,4 +801,16 @@ typedef struct {
     cam_pp_feature_config_t pp_feature_config;
 } cam_stream_reproc_config_t;
 
+typedef struct {
+    uint8_t crop_enabled;
+    cam_rect_t input_crop;
+} cam_crop_param_t;
+
+typedef struct {
+    cam_denoise_param_t denoise;
+    cam_crop_param_t crop;
+    uint32_t flip;     /* 0 means no flip */
+    int32_t sharpness; /* 0 means no sharpness */
+} cam_per_frame_pp_config_t;
+
 #endif /* __QCAMERA_TYPES_H__ */

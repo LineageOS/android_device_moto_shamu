@@ -2281,8 +2281,10 @@ int32_t mm_stream_calc_offset_postproc(cam_stream_info_t *stream_info,
 {
     int32_t rc = 0;
     if (stream_info->reprocess_config.pp_type == CAM_OFFLINE_REPROCESS_TYPE) {
-        // take offset from input source
-        *buf_planes = stream_info->reprocess_config.offline.input_buf_planes;
+        if (buf_planes->plane_info.frame_len == 0) {
+            // take offset from input source
+            *buf_planes = stream_info->reprocess_config.offline.input_buf_planes;
+        }
         return rc;
     }
 
