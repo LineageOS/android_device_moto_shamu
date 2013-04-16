@@ -941,11 +941,13 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
             pChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
         if (pStream != NULL) {
             if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
-                pStream->isTypeOf(CAM_STREAM_TYPE_OFFLINE_PROC)) {
+                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_SNAPSHOT)) {
                 main_stream = pStream;
                 main_frame = recvd_frame->bufs[i];
             } else if (pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
-                       pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW)) {
+                       pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW) ||
+                       pStream->isOrignalTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
+                       pStream->isOrignalTypeOf(CAM_STREAM_TYPE_POSTVIEW)) {
                 thumb_stream = pStream;
                 thumb_frame = recvd_frame->bufs[i];
             }
@@ -1049,13 +1051,20 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         thumb_stream->getFrameDimension(src_dim);
         jpg_job.encode_job.thumb_dim.src_dim = src_dim;
         m_parent->getThumbnailSize(jpg_job.encode_job.thumb_dim.dst_dim);
+        int rotation = m_parent->getJpegRotation();
+        if (rotation == 90 || rotation ==270) {
+            // swap dimension if rotation is 90 or 270
+            int32_t temp = jpg_job.encode_job.thumb_dim.dst_dim.height;
+            jpg_job.encode_job.thumb_dim.dst_dim.height =
+                jpg_job.encode_job.thumb_dim.dst_dim.width;
+            jpg_job.encode_job.thumb_dim.dst_dim.width = temp;
+        }
         jpg_job.encode_job.thumb_dim.crop = crop;
         jpg_job.encode_job.thumb_index = thumb_frame->buf_idx;
     }
 
     // set rotation only when no online rotation or offline pp rotation is done before
-    if (!m_parent->needRotationReprocess() &&
-        !m_parent->needOnlineRotation()) {
+    if (!m_parent->needRotationReprocess()) {
         jpg_job.encode_job.rotation = m_parent->getJpegRotation();
     }
     ALOGV("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.rotation);

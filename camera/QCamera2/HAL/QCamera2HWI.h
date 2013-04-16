@@ -278,7 +278,6 @@ private:
     bool isCACEnabled();
     bool needReprocess();
     bool needRotationReprocess();
-    bool needOnlineRotation();
     void debugShowVideoFPS();
     void debugShowPreviewFPS();
     void dumpFrameToFile(const void *data, uint32_t size,

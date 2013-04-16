@@ -1473,21 +1473,6 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
         streamInfo->pp_config.flip = flipMode;
     }
 
-    // set Rotation if need online rotation per stream in CPP
-    if (needOnlineRotation()) {
-        streamInfo->pp_config.feature_mask |= CAM_QCOM_FEATURE_ROTATION;
-        int rotation = mParameters.getJpegRotation();
-        if (rotation == 0) {
-            streamInfo->pp_config.rotation = ROTATE_0;
-        } else if (rotation == 90) {
-            streamInfo->pp_config.rotation = ROTATE_90;
-        } else if (rotation == 180) {
-            streamInfo->pp_config.rotation = ROTATE_180;
-        } else if (rotation == 270) {
-            streamInfo->pp_config.rotation = ROTATE_270;
-        }
-    }
-
     return streamInfoBuf;
 }
 
@@ -3150,22 +3135,21 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
     // pp feature config
     cam_pp_feature_config_t pp_config;
     memset(&pp_config, 0, sizeof(cam_pp_feature_config_t));
-    if (mParameters.isZSLMode()) {
-        if (gCamCapability[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
-            pp_config.feature_mask |= CAM_QCOM_FEATURE_SHARPNESS;
-            pp_config.sharpness = mParameters.getInt(QCameraParameters::KEY_QC_SHARPNESS);
-        }
-
-        if (mParameters.isWNREnabled()) {
-            pp_config.feature_mask |= CAM_QCOM_FEATURE_DENOISE2D;
-            pp_config.denoise2d.denoise_enable = 1;
-            pp_config.denoise2d.process_plates = mParameters.getWaveletDenoiseProcessPlate();
-        }
-
-        if (isCACEnabled()) {
-            pp_config.feature_mask |= CAM_QCOM_FEATURE_CAC;
-        }
+    if (gCamCapability[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_SHARPNESS;
+        pp_config.sharpness = mParameters.getInt(QCameraParameters::KEY_QC_SHARPNESS);
     }
+
+    if (mParameters.isWNREnabled()) {
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_DENOISE2D;
+        pp_config.denoise2d.denoise_enable = 1;
+        pp_config.denoise2d.process_plates = mParameters.getWaveletDenoiseProcessPlate();
+    }
+
+    if (isCACEnabled()) {
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_CAC;
+    }
+
     if (needRotationReprocess()) {
         pp_config.feature_mask |= CAM_QCOM_FEATURE_ROTATION;
         int rotation = mParameters.getJpegRotation();
@@ -3901,11 +3885,9 @@ bool QCamera2HardwareInterface::needReprocess()
         return false;
     }
 
-    if (mParameters.isZSLMode() &&
-        ((gCamCapability[mCameraId]->min_required_pp_mask > 0) ||
+    if (((gCamCapability[mCameraId]->min_required_pp_mask > 0) ||
          mParameters.isWNREnabled() || isCACEnabled())) {
         // TODO: add for ZSL HDR later
-        // pp module has min requirement for zsl reprocess, or WNR in ZSL mode
         ALOGD("%s: need do reprocess for ZSL WNR or min PP reprocess", __func__);
         return true;
     }
@@ -3925,52 +3907,15 @@ bool QCamera2HardwareInterface::needReprocess()
  *==========================================================================*/
 bool QCamera2HardwareInterface::needRotationReprocess()
 {
-    // TODO: hack here to return false to avoid reprocess
-    // Need to be enabled after PP is enabled
-    return false;
-
     if (!mParameters.isJpegPictureFormat()) {
         // RAW image, no need to reprocess
         return false;
     }
 
-    if (mParameters.isZSLMode() &&
-        (gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
+    if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
         mParameters.getJpegRotation() > 0) {
         // current rotation is not zero, and pp has the capability to process rotation
         ALOGD("%s: need do reprocess for rotation", __func__);
-        return true;
-    }
-
-    return false;
-}
-
-/*===========================================================================
- * FUNCTION   : needRotationReprocess
- *
- * DESCRIPTION: if online rotation needs to be done by cpp
- *
- * PARAMETERS : none
- *
- * RETURN     : true: needed
- *              false: no need
- *==========================================================================*/
-bool QCamera2HardwareInterface::needOnlineRotation()
-{
-    // TODO: hack here to return false to avoid reprocess
-    // Need to be enabled after PP is enabled
-    return false;
-
-    if (!mParameters.isJpegPictureFormat()) {
-        // RAW image, no need
-        return false;
-    }
-
-    if (!mParameters.isZSLMode() &&
-        (gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
-        mParameters.getJpegRotation() > 0) {
-        // current rotation is not zero, and pp has the capability to process rotation
-        ALOGD("%s: need do online rotation", __func__);
         return true;
     }
 
