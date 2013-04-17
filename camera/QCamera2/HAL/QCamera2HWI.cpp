@@ -3731,25 +3731,34 @@ int QCamera2HardwareInterface::updateThermalLevel(
     switch(level) {
     case QCAMERA_THERMAL_NO_ADJUSTMENT:
         {
-            adjustedRange.min_fps = minFPS/1000.0f;
-            adjustedRange.max_fps = maxFPS/1000.0f;
+            adjustedRange.min_fps = minFPS / 1000.0f;
+            adjustedRange.max_fps = maxFPS / 1000.0f;
             skipPattern = NO_SKIP;
         }
         break;
     case QCAMERA_THERMAL_SLIGHT_ADJUSTMENT:
         {
-            adjustedRange.min_fps = minFPS/1000.0f;
-            adjustedRange.max_fps = (maxFPS / 2 ) / 1000.0f;
-            if ( adjustedRange.max_fps < adjustedRange.min_fps ) {
-                adjustedRange.max_fps = adjustedRange.min_fps;
+            adjustedRange.min_fps = (minFPS / 2) / 1000.0f;
+            adjustedRange.max_fps = (maxFPS / 2) / 1000.0f;
+            if ( adjustedRange.min_fps < 1 ) {
+                adjustedRange.min_fps = 1;
+            }
+            if ( adjustedRange.max_fps < 1 ) {
+                adjustedRange.max_fps = 1;
             }
             skipPattern = EVERY_2FRAME;
         }
         break;
     case QCAMERA_THERMAL_BIG_ADJUSTMENT:
         {
-            adjustedRange.min_fps = minFPS/1000.0f;
-            adjustedRange.max_fps = adjustedRange.min_fps;
+            adjustedRange.min_fps = (minFPS / 4) / 1000.0f;
+            adjustedRange.max_fps = (maxFPS / 4) / 1000.0f;
+            if ( adjustedRange.min_fps < 1 ) {
+                adjustedRange.min_fps = 1;
+            }
+            if ( adjustedRange.max_fps < 1 ) {
+                adjustedRange.max_fps = 1;
+            }
             skipPattern = EVERY_4FRAME;
         }
         break;
