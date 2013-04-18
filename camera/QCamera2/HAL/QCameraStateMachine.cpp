@@ -1050,6 +1050,7 @@ int32_t QCameraStateMachine::procEvtPreviewingState(qcamera_sm_evt_enum_t evt,
         break;
     case QCAMERA_SM_EVT_TAKE_PICTURE:
        {
+           if ( m_parent->mParameters.getRecordingHintValue() == false) {
            rc = m_parent->takePicture();
            if (rc == NO_ERROR) {
                // move state to picture taking state
@@ -1066,6 +1067,16 @@ int32_t QCameraStateMachine::procEvtPreviewingState(qcamera_sm_evt_enum_t evt,
             result.request_api = evt;
             result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
             m_parent->signalAPIResult(&result);
+           } else {
+               rc = m_parent->takeLiveSnapshot();
+               if (rc == NO_ERROR ) {
+                   m_state = QCAMERA_SM_STATE_PREVIEW_PIC_TAKING;
+                   result.status = rc;
+                   result.request_api = evt;
+                   result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
+                   m_parent->signalAPIResult(&result);
+               }
+           }
         }
         break;
     case QCAMERA_SM_EVT_SEND_COMMAND:
