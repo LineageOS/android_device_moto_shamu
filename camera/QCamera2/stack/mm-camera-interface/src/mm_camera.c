@@ -170,22 +170,6 @@ static void mm_camera_event_notify(void* user_data)
                 pthread_cond_signal(&my_obj->evt_cond);
                 pthread_mutex_unlock(&my_obj->evt_lock);
                 break;
-            case CAM_EVENT_TYPE_AUTO_FOCUS_DONE:
-            case CAM_EVENT_TYPE_ZOOM_DONE:
-                {
-                    node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
-                    if (NULL != node) {
-                        memset(node, 0, sizeof(mm_camera_cmdcb_t));
-                        node->cmd_type = MM_CAMERA_CMD_TYPE_EVT_CB;
-                        node->u.evt.server_event_type = msm_evt->command;
-                        if (msm_evt->status == MSM_CAMERA_STATUS_SUCCESS) {
-                            node->u.evt.status = CAM_STATUS_SUCCESS;
-                        } else {
-                            node->u.evt.status = CAM_STATUS_FAILED;
-                        }
-                    }
-                }
-                break;
             default:
                 break;
             }
