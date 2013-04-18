@@ -1024,6 +1024,7 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
   OMX_CONFIG_ROTATIONTYPE rotate;
   mm_jpeg_encode_params_t *p_params = &p_session->params;
   mm_jpeg_encode_job_t *p_jobparams = &p_session->encode_job;
+  QOMX_EXIF_INFO exif_info;
 
   /* set rotation */
   memset(&rotate, 0, sizeof(rotate));
@@ -1039,22 +1040,22 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
     (int)p_jobparams->rotation, (int)rotate.nPortIndex);
 
   /* Set Exif data*/
-  memset(&p_session->exif_info_all,  0,  sizeof(p_session->exif_info_all));
+  memset(&p_session->exif_info_all[0],  0,  sizeof(p_session->exif_info_all));
 
+  exif_info.numOfEntries = p_params->exif_info.numOfEntries;
+  exif_info.exif_data = &p_session->exif_info_all[0];
   /*If Exif data has been passed copy it*/
   if (p_params->exif_info.numOfEntries > 0) {
     CDBG("%s:%d] Num of exif entries passed from HAL: %d", __func__, __LINE__,
       p_params->exif_info.numOfEntries);
-    memcpy(&p_session->exif_info_all, &p_params->exif_info.exif_data,
-      sizeof(p_params->exif_info.exif_data));
+    memcpy(exif_info.exif_data, p_params->exif_info.exif_data,
+      sizeof(QEXIF_INFO_DATA) * p_params->exif_info.numOfEntries);
   }
 
-  p_params->exif_info.exif_data = p_session->exif_info_all;
-
-  if (p_params->exif_info.numOfEntries > 0) {
+  if (exif_info.numOfEntries > 0) {
     /* set exif tags */
     CDBG("%s:%d] Set exif tags count %d", __func__, __LINE__,
-      (int)p_params->exif_info.numOfEntries);
+      (int)exif_info.numOfEntries);
     rc = OMX_GetExtensionIndex(p_session->omx_handle, QOMX_IMAGE_EXT_EXIF_NAME,
       &exif_idx);
     if (OMX_ErrorNone != rc) {
@@ -1063,7 +1064,7 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
     }
 
     rc = OMX_SetParameter(p_session->omx_handle, exif_idx,
-      &p_params->exif_info);
+      &exif_info);
     if (OMX_ErrorNone != rc) {
       CDBG_ERROR("%s:%d] Error %d", __func__, __LINE__, rc);
       return rc;
