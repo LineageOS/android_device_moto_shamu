@@ -92,6 +92,9 @@ static int32_t mm_camera_poll_sig(mm_camera_poll_thread_t *poll_cb,
     len = write(poll_cb->pfds[1], &cmd_evt, sizeof(cmd_evt));
     if(len < 1) {
         CDBG_ERROR("%s: len = %d, errno = %d", __func__, len, errno);
+        /* Avoid waiting for the signal */
+        pthread_mutex_unlock(&poll_cb->mutex);
+        return 0;
     }
     CDBG("%s: begin IN mutex write done, len = %d", __func__, len);
     /* wait till worker task gives positive signal */
