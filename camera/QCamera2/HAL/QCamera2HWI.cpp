@@ -1703,8 +1703,8 @@ int QCamera2HardwareInterface::startRecording()
         stopChannel(QCAMERA_CH_TYPE_PREVIEW);
         delChannel(QCAMERA_CH_TYPE_PREVIEW);
 
-        // Set local recording hint to TRUE
-        mParameters.setRecordingHintValue(true);
+        // Set recording hint to TRUE
+        mParameters.updateRecordingHintValue(TRUE);
         rc = preparePreview();
         if (rc == NO_ERROR) {
             rc = startChannel(QCAMERA_CH_TYPE_PREVIEW);
