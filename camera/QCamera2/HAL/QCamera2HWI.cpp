@@ -1126,7 +1126,7 @@ int QCamera2HardwareInterface::initCapabilities(int cameraId)
     }
 
     /* Allocate memory for capability buffer */
-    capabilityHeap = new QCameraHeapMemory();
+    capabilityHeap = new QCameraHeapMemory(QCAMERA_ION_USE_CACHE);
     rc = capabilityHeap->allocate(1, sizeof(cam_capability_t));
     if(rc != OK) {
         ALOGE("%s: No memory for cappability", __func__);
@@ -1342,16 +1342,18 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(cam_stream_type_t st
 {
     int rc = NO_ERROR;
     QCameraMemory *mem = NULL;
+    bool bCachedMem = QCAMERA_ION_USE_CACHE;
 
     // Allocate stream buffer memory object
     switch (stream_type) {
     case CAM_STREAM_TYPE_PREVIEW:
         {
             if (isNoDisplayMode()) {
-                mem = new QCameraStreamMemory(mGetMemory);
+                mem = new QCameraStreamMemory(mGetMemory, bCachedMem);
             } else {
                 cam_dimension_t dim;
-                QCameraGrallocMemory *grallocMemory = new QCameraGrallocMemory(mGetMemory);
+                QCameraGrallocMemory *grallocMemory =
+                    new QCameraGrallocMemory(mGetMemory);
 
                 mParameters.getStreamDimension(stream_type, dim);
                 if (grallocMemory)
@@ -1364,7 +1366,8 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(cam_stream_type_t st
     case CAM_STREAM_TYPE_POSTVIEW:
         {
             cam_dimension_t dim;
-            QCameraGrallocMemory *grallocMemory = new QCameraGrallocMemory(mGetMemory);
+            QCameraGrallocMemory *grallocMemory =
+                new QCameraGrallocMemory(mGetMemory);
 
             mParameters.getStreamDimension(stream_type, dim);
             if (grallocMemory)
@@ -1377,10 +1380,18 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(cam_stream_type_t st
     case CAM_STREAM_TYPE_RAW:
     case CAM_STREAM_TYPE_METADATA:
     case CAM_STREAM_TYPE_OFFLINE_PROC:
-        mem = new QCameraStreamMemory(mGetMemory);
+        mem = new QCameraStreamMemory(mGetMemory, bCachedMem);
         break;
     case CAM_STREAM_TYPE_VIDEO:
-        mem = new QCameraVideoMemory(mGetMemory);
+        {
+            char value[32];
+            property_get("persist.camera.mem.usecache", value, "1");
+            if (atoi(value) == 0) {
+                bCachedMem = QCAMERA_ION_USE_NOCACHE;
+            }
+            ALOGD("%s: vidoe buf using cached memory = %d", __func__, bCachedMem);
+            mem = new QCameraVideoMemory(mGetMemory, bCachedMem);
+        }
         break;
     case CAM_STREAM_TYPE_DEFAULT:
     case CAM_STREAM_TYPE_MAX:
@@ -1417,7 +1428,7 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
 {
     int rc = NO_ERROR;
 
-    QCameraHeapMemory *streamInfoBuf = new QCameraHeapMemory();
+    QCameraHeapMemory *streamInfoBuf = new QCameraHeapMemory(QCAMERA_ION_USE_CACHE);
     if (!streamInfoBuf) {
         ALOGE("allocateStreamInfoBuf: Unable to allocate streamInfo object");
         return NULL;
@@ -2158,7 +2169,7 @@ int QCamera2HardwareInterface::registerFaceImage(void *img_ptr,
     }
 
     // allocate ion memory for source image
-    QCameraHeapMemory *imgBuf = new QCameraHeapMemory();
+    QCameraHeapMemory *imgBuf = new QCameraHeapMemory(QCAMERA_ION_USE_CACHE);
     if (imgBuf == NULL) {
         ALOGE("%s: Unable to new heap memory obj for image buf", __func__);
         return NO_MEMORY;
