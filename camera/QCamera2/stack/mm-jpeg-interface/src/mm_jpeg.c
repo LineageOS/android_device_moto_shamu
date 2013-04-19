@@ -632,6 +632,9 @@ OMX_ERRORTYPE mm_jpeg_session_config_ports(mm_jpeg_job_session_t* p_session)
   mm_jpeg_encode_params_t *p_params = &p_session->params;
   mm_jpeg_encode_job_t *p_jobparams = &p_session->encode_job;
 
+  mm_jpeg_buf_t *p_src_buf =
+    &p_params->src_main_buf[p_jobparams->src_index];
+
   p_session->inputPort.nPortIndex = 0;
   p_session->outputPort.nPortIndex = 1;
   p_session->inputTmbPort.nPortIndex = 2;
@@ -662,9 +665,9 @@ OMX_ERRORTYPE mm_jpeg_session_config_ports(mm_jpeg_job_session_t* p_session)
   p_session->inputPort.format.image.nFrameHeight =
     p_jobparams->main_dim.src_dim.height;
   p_session->inputPort.format.image.nStride =
-    p_session->inputPort.format.image.nFrameWidth;
+    p_src_buf->offset.mp[0].stride;
   p_session->inputPort.format.image.nSliceHeight =
-    p_session->inputPort.format.image.nFrameHeight;
+    p_src_buf->offset.mp[0].scanline;
   p_session->inputPort.format.image.eColorFormat =
     map_jpeg_format(p_params->color_format);
   p_session->inputPort.nBufferSize =
