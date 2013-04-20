@@ -540,7 +540,9 @@ QCameraParameters::QCameraParameters()
       m_pParamHeap(NULL),
       m_pParamBuf(NULL),
       m_bZslMode(false),
+      m_bZslMode_new(false),
       m_bRecordingHint(false),
+      m_bRecordingHint_new(false),
       m_bHistogramEnabled(false),
       m_nFaceProcMask(0),
       m_bDebugFps(false),
@@ -592,7 +594,9 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_pParamHeap(NULL),
     m_pParamBuf(NULL),
     m_bZslMode(false),
+    m_bZslMode_new(false),
     m_bRecordingHint(false),
+    m_bRecordingHint_new(false),
     m_bHistogramEnabled(false),
     m_nFaceProcMask(0),
     m_bDebugFps(false),
@@ -2537,7 +2541,7 @@ int32_t QCameraParameters::setZslMode(const QCameraParameters& params)
                                        str_val);
             if (value != NAME_NOT_FOUND) {
                 set(KEY_QC_ZSL, str_val);
-                m_bZslMode = (value > 0)? true : false;
+                m_bZslMode_new = (value > 0)? true : false;
 
                 // ZSL mode changed, need restart preview
                 m_bNeedRestart = true;
@@ -3222,6 +3226,7 @@ int32_t QCameraParameters::initDefaultParameters()
     set(KEY_QC_ZSL, VALUE_OFF);
     m_bZslMode = false;
 #endif
+    m_bZslMode_new = m_bZslMode;
 
     //Set video HDR
     if ((m_pCapability->qcom_supported_feature_mask & CAM_QCOM_FEATURE_VIDEO_HDR) > 0) {
@@ -5035,7 +5040,14 @@ int QCameraParameters::getMaxUnmatchedFramesInQueue()
 int QCameraParameters::setRecordingHintValue(int32_t value)
 {
     ALOGD("%s: VideoHint = %d", __func__, value);
-    m_bRecordingHint = (value > 0)? true : false;
+    bool newValue = (value > 0)? true : false;
+
+    if ( m_bRecordingHint != newValue ) {
+        m_bNeedRestart = true;
+        m_bRecordingHint_new = newValue;
+    } else {
+        m_bRecordingHint_new = m_bRecordingHint;
+    }
     return AddSetParmEntryToBatch(m_pParamBuf,
                                   CAM_INTF_PARM_RECORDING_HINT,
                                   sizeof(value),
@@ -5509,6 +5521,41 @@ int32_t QCameraParameters::updateFocusDistances(cam_focus_distances_info_t *focu
     ALOGD("%s: setting KEY_FOCUS_DISTANCES as %s", __FUNCTION__, str.string());
     set(QCameraParameters::KEY_FOCUS_DISTANCES, str.string());
     return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : updateRecordingHintValue
+ *
+ * DESCRIPTION: update recording hint locally and to daemon
+ *
+ * PARAMETERS :
+ *   @value   : video hint value
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::updateRecordingHintValue(int32_t value)
+{
+    int32_t rc = NO_ERROR;
+    if(initBatchUpdate(m_pParamBuf) < 0 ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return BAD_TYPE;
+    }
+
+    rc = setRecordingHintValue(value);
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to update table", __func__);
+        return rc;
+    }
+
+    rc = commitSetBatch();
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to update recording hint", __func__);
+        return rc;
+    }
+
+    return rc;
 }
 
 /*===========================================================================
@@ -6076,6 +6123,11 @@ int32_t QCameraParameters::commitParamChanges()
         set(k, v);
     }
     m_tempMap.clear();
+
+    // update local changes
+    m_bRecordingHint = m_bRecordingHint_new;
+    m_bZslMode = m_bZslMode_new;
+
     return NO_ERROR;
 }
 
