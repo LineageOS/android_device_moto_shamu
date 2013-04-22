@@ -796,10 +796,24 @@ void QCameraPostProcessor::releaseNotifyData(void *user_data, void *cookie)
  *==========================================================================*/
 void QCameraPostProcessor::releaseSuperBuf(mm_camera_super_buf_t *super_buf)
 {
+    QCameraChannel *pChannel = NULL;
+
     if (NULL != super_buf) {
-        QCameraChannel *pChannel = m_parent->getChannelByHandle(super_buf->ch_id);
+        pChannel = m_parent->getChannelByHandle(super_buf->ch_id);
+
+        if ( NULL == pChannel ) {
+            if (m_pReprocChannel != NULL &&
+                m_pReprocChannel->getMyHandle() == super_buf->ch_id) {
+                pChannel = m_pReprocChannel;
+            }
+        }
+
         if (pChannel != NULL) {
             pChannel->bufDone(super_buf);
+        } else {
+            ALOGE(" %s : Channel id %d not found!!",
+                  __func__,
+                  super_buf->ch_id);
         }
     }
 }
