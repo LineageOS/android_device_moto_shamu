@@ -134,7 +134,6 @@ static void mm_camera_dispatch_app_event(mm_camera_cmdcb_t *cmd_cb,
         }
         pthread_mutex_unlock(&my_obj->cb_lock);
     }
-    free(cmd_cb);
 }
 
 /*===========================================================================
