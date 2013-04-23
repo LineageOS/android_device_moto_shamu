@@ -1587,6 +1587,10 @@ int32_t QCameraStateMachine::procEvtPicTakingState(qcamera_sm_evt_enum_t evt,
         {
             rc = m_parent->cancelPicture();
             m_state = QCAMERA_SM_STATE_PREVIEW_STOPPED;
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
+            m_parent->signalEvtResult(&result);
         }
         break;
     case QCAMERA_SM_EVT_THERMAL_NOTIFY:
@@ -2200,6 +2204,10 @@ int32_t QCameraStateMachine::procEvtVideoPicTakingState(qcamera_sm_evt_enum_t ev
         {
             rc = m_parent->cancelLiveSnapshot();
             m_state = QCAMERA_SM_STATE_RECORDING;
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
+            m_parent->signalEvtResult(&result);
         }
         break;
     case QCAMERA_SM_EVT_THERMAL_NOTIFY:
@@ -2531,6 +2539,10 @@ int32_t QCameraStateMachine::procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t 
                 rc = m_parent->cancelLiveSnapshot();
             }
             m_state = QCAMERA_SM_STATE_PREVIEWING;
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
+            m_parent->signalEvtResult(&result);
         }
         break;
     case QCAMERA_SM_EVT_THERMAL_NOTIFY:

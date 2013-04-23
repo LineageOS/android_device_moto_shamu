@@ -1129,18 +1129,18 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                         case QCAMERA_DATA_SNAPSHOT_CALLBACK:
                             {
                                 if (TRUE == isSnapshotActive && pme->mDataCb ) {
+                                    numOfSnapshotRcvd++;
+                                    if (numOfSnapshotExpected > 0 &&
+                                        numOfSnapshotExpected == numOfSnapshotRcvd) {
+                                        // notify HWI that snapshot is done
+                                        pme->mParent->processSyncEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE,
+                                                                     NULL);
+                                    }
                                     pme->mDataCb(cb->msg_type,
                                                  cb->data,
                                                  cb->index,
                                                  cb->metadata,
                                                  pme->mCallbackCookie);
-                                    numOfSnapshotRcvd++;
-                                    if (numOfSnapshotExpected > 0 &&
-                                        numOfSnapshotExpected == numOfSnapshotRcvd) {
-                                        // notify HWI that snapshot is done
-                                        pme->mParent->processEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE,
-                                                                 NULL);
-                                    }
                                 }
                             }
                             break;

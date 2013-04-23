@@ -946,6 +946,10 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
     pthread_cond_init(&m_cond, NULL);
     memset(&m_apiResult, 0, sizeof(qcamera_api_result_t));
 
+    pthread_mutex_init(&m_evtLock, NULL);
+    pthread_cond_init(&m_evtCond, NULL);
+    memset(&m_evtResult, 0, sizeof(qcamera_api_result_t));
+
     memset(m_channels, 0, sizeof(m_channels));
 
 #ifdef HAS_MULTIMEDIA_HINTS
@@ -970,6 +974,8 @@ QCamera2HardwareInterface::~QCamera2HardwareInterface()
     closeCamera();
     pthread_mutex_destroy(&m_lock);
     pthread_cond_destroy(&m_cond);
+    pthread_mutex_destroy(&m_evtLock);
+    pthread_cond_destroy(&m_evtCond);
 }
 
 /*===========================================================================
@@ -2305,6 +2311,37 @@ int QCamera2HardwareInterface::processEvt(qcamera_sm_evt_enum_t evt, void *evt_p
 }
 
 /*===========================================================================
+ * FUNCTION   : processSyncEvt
+ *
+ * DESCRIPTION: process synchronous Evt from backend
+ *
+ * PARAMETERS :
+ *   @evt         : event type to be processed
+ *   @evt_payload : ptr to event payload if any
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCamera2HardwareInterface::processSyncEvt(qcamera_sm_evt_enum_t evt, void *evt_payload)
+{
+    int rc = NO_ERROR;
+
+    pthread_mutex_lock(&m_evtLock);
+    rc =  processEvt(evt, evt_payload);
+    if (rc == NO_ERROR) {
+        memset(&m_evtResult, 0, sizeof(qcamera_api_result_t));
+        while (m_evtResult.request_api != evt) {
+            pthread_cond_wait(&m_evtCond, &m_evtLock);
+        }
+        rc =  m_evtResult.status;
+    }
+    pthread_mutex_unlock(&m_evtLock);
+
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : evtHandle
  *
  * DESCRIPTION: Function registerd to mm-camera-interface to handle backend events
@@ -2633,6 +2670,24 @@ void QCamera2HardwareInterface::signalAPIResult(qcamera_api_result_t *result)
     m_apiResult = *result;
     pthread_cond_signal(&m_cond);
     pthread_mutex_unlock(&m_lock);
+}
+
+/*===========================================================================
+ * FUNCTION   : signalEvtResult
+ *
+ * DESCRIPTION: signal condition variable that certain event was processed
+ *
+ * PARAMETERS :
+ *   @result  : Event result
+ *
+ * RETURN     : none
+ *==========================================================================*/
+void QCamera2HardwareInterface::signalEvtResult(qcamera_api_result_t *result)
+{
+    pthread_mutex_lock(&m_evtLock);
+    m_evtResult = *result;
+    pthread_cond_signal(&m_evtCond);
+    pthread_mutex_unlock(&m_evtLock);
 }
 
 /*===========================================================================
