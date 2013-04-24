@@ -1411,6 +1411,7 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(cam_stream_type_t st
         break;
     case CAM_STREAM_TYPE_DEFAULT:
     case CAM_STREAM_TYPE_MAX:
+    default:
         break;
     }
     if (!mem) {
