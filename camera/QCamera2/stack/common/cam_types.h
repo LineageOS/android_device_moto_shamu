@@ -704,11 +704,11 @@ typedef enum {
     CAM_INTF_PARM_HDR_NEED_1X, /* if HDR needs 1x output */
     CAM_INTF_PARM_LOCK_CAF,
     CAM_INTF_PARM_VIDEO_HDR,
+    CAM_INTF_PARM_ROTATION,
 
     /* stream based parameters */
     CAM_INTF_PARM_DO_REPROCESS,
     CAM_INTF_PARM_SET_BUNDLE,
-
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 
