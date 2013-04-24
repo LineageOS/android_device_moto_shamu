@@ -858,25 +858,6 @@ OMX_ERRORTYPE mm_jpeg_session_config_thumbnail(mm_jpeg_job_session_t* p_session)
   thumbnail_info.crop_info.nLeft = p_thumb_dim->crop.left;
   thumbnail_info.crop_info.nTop = p_thumb_dim->crop.top;
 
-  if ((p_main_dim->src_dim.width < p_thumb_dim->src_dim.width) ||
-    (p_main_dim->src_dim.height < p_thumb_dim->src_dim.height)) {
-    CDBG_ERROR("%s:%d] Improper thumbnail dim %dx%d resetting to %dx%d",
-      __func__, __LINE__,
-      p_thumb_dim->src_dim.width,
-      p_thumb_dim->src_dim.height,
-      p_main_dim->src_dim.width,
-      p_main_dim->src_dim.height);
-    thumbnail_info.input_width = p_main_dim->src_dim.width;
-    thumbnail_info.input_height = p_main_dim->src_dim.height;
-    if ((thumbnail_info.crop_info.nWidth > thumbnail_info.input_width)
-      || (thumbnail_info.crop_info.nHeight > thumbnail_info.input_height)) {
-      thumbnail_info.crop_info.nLeft = 0;
-      thumbnail_info.crop_info.nTop = 0;
-      thumbnail_info.crop_info.nWidth = thumbnail_info.input_width;
-      thumbnail_info.crop_info.nHeight = thumbnail_info.input_height;
-    }
-  }
-
   if ((p_thumb_dim->dst_dim.width > p_thumb_dim->src_dim.width)
     || (p_thumb_dim->dst_dim.height > p_thumb_dim->src_dim.height)) {
     CDBG_ERROR("%s:%d] Incorrect thumbnail dim %dx%d resetting to %dx%d",
