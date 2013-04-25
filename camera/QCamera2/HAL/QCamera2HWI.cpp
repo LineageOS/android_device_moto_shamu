@@ -1052,12 +1052,13 @@ int QCamera2HardwareInterface::openCamera()
         gCamCapability[mCameraId]->padding_info.plane_padding = padding_info.plane_padding;
     }
 
+    mParameters.init(gCamCapability[mCameraId], mCameraHandle);
+
     rc = m_thermalAdapter.init(this);
     if (rc != 0) {
         ALOGE("Init thermal adapter failed");
     }
 
-    mParameters.init(gCamCapability[mCameraId], mCameraHandle);
     mCameraOpened = true;
 
     return NO_ERROR;
