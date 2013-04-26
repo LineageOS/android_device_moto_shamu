@@ -577,6 +577,50 @@ OMX_ERRORTYPE mm_jpeg_session_config_main_buffer_offset(
   return rc;
 }
 
+/** mm_jpeg_encoding_mode:
+ *
+ *  Arguments:
+ *    @p_session: job session
+ *
+ *  Return:
+ *       OMX error values
+ *
+ *  Description:
+ *       Configure the serial or parallel encoding
+ *       mode
+ *
+ **/
+OMX_ERRORTYPE mm_jpeg_encoding_mode(
+  mm_jpeg_job_session_t* p_session)
+{
+  OMX_ERRORTYPE rc = 0;
+  int32_t i = 0;
+  OMX_INDEXTYPE indextype;
+  QOMX_ENCODING_MODE encoding_mode;
+  int32_t totalSize = 0;
+  mm_jpeg_encode_params_t *p_params = &p_session->params;
+  mm_jpeg_encode_job_t *p_jobparams = &p_session->encode_job;
+
+  rc = OMX_GetExtensionIndex(p_session->omx_handle,
+    QOMX_IMAGE_EXT_ENCODING_MODE_NAME, &indextype);
+  if (rc != OMX_ErrorNone) {
+    CDBG_ERROR("%s:%d] Failed", __func__, __LINE__);
+    return rc;
+  }
+
+  CDBG_HIGH("%s:%d] OMX_Serial_Encoding = %d, OMX_Parallel_Encoding = %d ", __func__, __LINE__,
+    (int)OMX_Serial_Encoding,
+    (int)OMX_Parallel_Encoding);
+
+  encoding_mode = OMX_Serial_Encoding;
+  rc = OMX_SetParameter(p_session->omx_handle, indextype, &encoding_mode);
+  if (rc != OMX_ErrorNone) {
+    CDBG_ERROR("%s:%d] Failed", __func__, __LINE__);
+    return rc;
+  }
+  return rc;
+}
+
 /** map_jpeg_format:
  *
  *  Arguments:
@@ -1248,6 +1292,14 @@ static OMX_ERRORTYPE mm_jpeg_session_configure(mm_jpeg_job_session_t *p_session)
   if (OMX_ErrorNone != ret) {
     CDBG_ERROR("%s:%d] config thumbnail img failed", __func__, __LINE__);
     goto error;
+  }
+
+  /* config encoding mode */
+  CDBG("%s:%d] config encoding mode", __func__, __LINE__);
+  ret = mm_jpeg_encoding_mode(p_session);
+  if (OMX_ErrorNone != ret) {
+    CDBG_ERROR("%s: config encoding mode failed", __func__);
+    return ret;
   }
 
   /* common config */
