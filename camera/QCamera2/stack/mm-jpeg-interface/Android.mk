@@ -24,7 +24,8 @@ LOCAL_SRC_FILES := \
     src/mm_jpeg_queue.c \
     src/mm_jpeg_exif.c \
     src/mm_jpeg.c \
-    src/mm_jpeg_interface.c
+    src/mm_jpeg_interface.c \
+    src/mm_jpeg_ionbuf.c
 
 LOCAL_MODULE           := libmmjpeg_interface
 LOCAL_PRELINK_MODULE   := false
