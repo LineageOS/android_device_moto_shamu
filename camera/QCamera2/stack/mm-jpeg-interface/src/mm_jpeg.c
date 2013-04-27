@@ -488,6 +488,7 @@ void mm_jpeg_session_destroy(mm_jpeg_job_session_t* p_session)
 {
   OMX_ERRORTYPE rc = OMX_ErrorNone;
   OMX_STATETYPE state;
+  int i = 0;
 
   CDBG("%s:%d] E", __func__, __LINE__);
   if (NULL == p_session->omx_handle) {
@@ -521,9 +522,15 @@ void mm_jpeg_session_destroy(mm_jpeg_job_session_t* p_session)
   }
   p_session->omx_handle = NULL;
 
-  rc = releaseExifEntry(&p_session->params.exif_info);
-  if (rc) {
-    CDBG_ERROR("%s:%d] Exif release failed (%d)", __func__, __LINE__, rc);
+  CDBG_ERROR("%s:%d] Exif entry count %d %d", __func__, __LINE__,
+    p_session->params.exif_info.numOfEntries,
+    p_session->total_entries);
+  for (i = p_session->params.exif_info.numOfEntries;
+    i < p_session->total_entries; i++) {
+    rc = releaseExifEntry(&p_session->exif_info_all[i]);
+    if (rc) {
+      CDBG_ERROR("%s:%d] Exif release failed (%d)", __func__, __LINE__, rc);
+    }
   }
 
   pthread_mutex_destroy(&p_session->lock);
@@ -1072,6 +1079,9 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
     memcpy(exif_info.exif_data, p_params->exif_info.exif_data,
       sizeof(QEXIF_INFO_DATA) * p_params->exif_info.numOfEntries);
   }
+
+  /* After Parse metadata */
+  p_session->total_entries = exif_info.numOfEntries;
 
   if (exif_info.numOfEntries > 0) {
     /* set exif tags */

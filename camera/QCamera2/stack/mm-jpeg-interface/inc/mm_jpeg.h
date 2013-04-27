@@ -107,6 +107,7 @@ typedef struct {
   pthread_cond_t cond;
 
   QEXIF_INFO_DATA exif_info_all[MAX_EXIF_TABLE_ENTRIES];  //all exif tags for JPEG encoder
+  int total_entries;
 
   mm_jpeg_cirq_t cb_q;
   int32_t ebd_count;
