@@ -79,6 +79,7 @@ public:
     QCameraMemory *getStreamBufs() {return mStreamBufs;};
     uint32_t getMyServerID();
     cam_stream_type_t getMyType();
+    int32_t acquireStreamBufs();
 
     int32_t mapBuf(uint8_t buf_type, uint32_t buf_idx,
                    int32_t plane_idx, int fd, uint32_t size);
@@ -107,6 +108,7 @@ private:
     cam_padding_info_t mPaddingInfo;
     cam_rect_t mCropInfo;
     pthread_mutex_t mCropLock; // lock to protect crop info
+    bool mStreamBufsAcquired;
 
     static int32_t get_bufs(
                      cam_frame_len_offset_t *offset,
