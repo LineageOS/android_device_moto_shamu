@@ -2462,7 +2462,7 @@ int32_t QCamera2HardwareInterface::sendEvtNotify(int32_t msg_type,
 int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &focus_data)
 {
     int32_t ret = NO_ERROR;
-
+    ALOGD("%s: E",__func__);
     m_currentFocusState = focus_data.focus_state;
 
     cam_focus_mode_type focusMode = mParameters.getFocusMode();
@@ -2512,7 +2512,7 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
         ALOGD("%s: no ops for autofocus event in focusmode %d", __func__, focusMode);
         break;
     }
-
+    ALOGD("%s: X",__func__);
     return ret;
 }
 
