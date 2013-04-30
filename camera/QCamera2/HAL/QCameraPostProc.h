@@ -65,6 +65,7 @@ typedef struct {
 typedef struct {
     camera_memory_t *        data;     // ptr to data memory struct
     mm_camera_super_buf_t *  frame;    // ptr to frame
+    QCameraMemory *          streamBufs; //ptr to stream buffers
 } qcamera_release_data_t;
 
 typedef struct {

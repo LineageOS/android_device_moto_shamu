@@ -780,6 +780,11 @@ void QCameraPostProcessor::releaseNotifyData(void *user_data, void *cookie)
             free(app_cb->release_data.frame);
             app_cb->release_data.frame = NULL;
         }
+        if (app_cb && NULL != app_cb->release_data.streamBufs) {
+            app_cb->release_data.streamBufs->deallocate();
+            delete app_cb->release_data.streamBufs;
+            app_cb->release_data.streamBufs = NULL;
+        }
         free(app_cb);
     }
 }
@@ -1152,6 +1157,18 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
         raw_mem = rawMemObj->getMemory(frame->buf_idx, false);
     }
 
+    QCameraChannel *pChannel = m_parent->getChannelByHandle(recvd_frame->ch_id);
+    if ( NULL == pChannel ) {
+        ALOGE("%s: Invalid channel", __func__);
+        return BAD_VALUE;
+    }
+
+    QCameraStream *pStream = pChannel->getStreamByHandle(frame->stream_id);
+    if ( NULL == pStream ) {
+        ALOGE("%s: Invalid stream", __func__);
+        return BAD_VALUE;
+    }
+
     if (NULL != rawMemObj && NULL != raw_mem) {
         // dump frame into file
         m_parent->dumpFrameToFile(frame->buffer, frame->frame_len,
@@ -1183,12 +1200,15 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
             m_parent->msgTypeEnabledWithLock(CAMERA_MSG_COMPRESSED_IMAGE) > 0) {
             qcamera_release_data_t release_data;
             memset(&release_data, 0, sizeof(qcamera_release_data_t));
-            release_data.frame = recvd_frame;
-            sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
-                           raw_mem,
-                           0,
-                           NULL,
-                           &release_data);
+            release_data.streamBufs = rawMemObj;
+            rc = sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
+                                raw_mem,
+                                0,
+                                NULL,
+                                &release_data);
+            if ( NO_ERROR == rc ) {
+                pStream->acquireStreamBufs();
+            }
         }
     } else {
         ALOGE("%s: Cannot get raw mem", __func__);

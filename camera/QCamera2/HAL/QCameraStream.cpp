@@ -169,7 +169,8 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
         mStreamInfoBuf(NULL),
         mStreamBufs(NULL),
         mAllocator(allocator),
-        mBufDefs(NULL)
+        mBufDefs(NULL),
+        mStreamBufsAcquired(false)
 {
     mMemVtbl.user_data = this;
     mMemVtbl.get_bufs = get_bufs;
@@ -666,8 +667,10 @@ int32_t QCameraStream::putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl)
     mBufDefs = NULL; // mBufDefs just keep a ptr to the buffer
                      // mm-camera-interface own the buffer, so no need to free
     memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
-    mStreamBufs->deallocate();
-    delete mStreamBufs;
+    if ( !mStreamBufsAcquired ) {
+        mStreamBufs->deallocate();
+        delete mStreamBufs;
+    }
 
     return rc;
 }
@@ -861,6 +864,24 @@ uint32_t QCameraStream::getMyServerID() {
     } else {
         return 0;
     }
+}
+
+/*===========================================================================
+ * FUNCTION   : acquireStreamBufs
+ *
+ * DESCRIPTION: acquire stream buffers and postpone their release.
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraStream::acquireStreamBufs()
+{
+    mStreamBufsAcquired = true;
+
+    return NO_ERROR;
 }
 
 /*===========================================================================
