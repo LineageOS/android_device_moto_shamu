@@ -41,6 +41,8 @@ typedef enum qcamera_test_cmds_t {
     STOP_PREVIEW_CMD = '2',
     CHANGE_PREVIEW_SIZE_CMD = '4',
     CHANGE_PICTURE_SIZE_CMD = '5',
+    START_RECORD_CMD = '7',
+    STOP_RECORD_CMD = '8',
     DUMP_CAPS_CMD = 'E',
     AUTOFOCUS_CMD = 'f',
     TAKEPICTURE_CMD = 'p',
@@ -56,6 +58,7 @@ public:
         mResizePreview(true),
         mHardwareActive(false),
         mPreviewRunning(false),
+        mRecordRunning(false),
         mCamera(NULL),
         mClient(NULL),
         mSurfaceControl(NULL),
@@ -70,6 +73,8 @@ public:
     status_t autoFocus();
     status_t enablePreviewCallbacks();
     status_t takePicture();
+    status_t startRecording();
+    status_t stopRecording();
 
     status_t nextPreviewSize();
     status_t getCurrentPreviewSize(Size &previewSize);
@@ -108,6 +113,7 @@ private:
     bool mResizePreview;
     bool mHardwareActive;
     bool mPreviewRunning;
+    bool mRecordRunning;
 
     sp<Camera> mCamera;
     sp<SurfaceComposerClient> mClient;
