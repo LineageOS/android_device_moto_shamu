@@ -1242,8 +1242,7 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
     int bufferCnt = 0;
     int minCaptureBuffers = mParameters.getNumOfSnapshots();
 
-    int zslQBuffers = mParameters.getZSLQueueDepth() +
-                      mParameters.getMaxUnmatchedFramesInQueue();
+    int zslQBuffers = mParameters.getZSLQueueDepth();
 
     int minCircularBufNum = CAMERA_MIN_STREAMING_BUFFERS +
                             CAMERA_MIN_JPEG_ENCODING_BUFFERS +
