@@ -61,7 +61,8 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
       m_ongoingPPQ(releaseOngoingPPData, this),
       m_inputJpegQ(releaseJpegData, this),
       m_ongoingJpegQ(releaseJpegData, this),
-      m_inputRawQ(releasePPInputData, this)
+      m_inputRawQ(releasePPInputData, this),
+      mRawBurstCount(0)
 {
     memset(&mJpegHandle, 0, sizeof(mJpegHandle));
 }
@@ -190,7 +191,7 @@ int32_t QCameraPostProcessor::start(QCameraChannel *pSrcChannel)
 
     m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, FALSE, FALSE);
     m_parent->m_cbNotifier.startSnapshots();
-
+    mRawBurstCount = m_parent->numOfSnapshotsExpected();
     return rc;
 }
 
@@ -1198,17 +1199,20 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
 
         if ((m_parent->mDataCb != NULL) &&
             m_parent->msgTypeEnabledWithLock(CAMERA_MSG_COMPRESSED_IMAGE) > 0) {
+            mRawBurstCount--;
             qcamera_release_data_t release_data;
             memset(&release_data, 0, sizeof(qcamera_release_data_t));
-            release_data.streamBufs = rawMemObj;
+            if ( 0 == mRawBurstCount ) {
+                release_data.streamBufs = rawMemObj;
+                pStream->acquireStreamBufs();
+            } else {
+                release_data.frame = recvd_frame;
+            }
             rc = sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
                                 raw_mem,
                                 0,
                                 NULL,
                                 &release_data);
-            if ( NO_ERROR == rc ) {
-                pStream->acquireStreamBufs();
-            }
         }
     } else {
         ALOGE("%s: Cannot get raw mem", __func__);

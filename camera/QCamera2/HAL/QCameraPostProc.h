@@ -156,6 +156,7 @@ private:
     QCameraQueue m_ongoingJpegQ;        // ongoing jpeg job queue
     QCameraQueue m_inputRawQ;           // input raw job queue
     QCameraCmdThread m_dataProcTh;      // thread for data processing
+    uint32_t mRawBurstCount;            // current raw burst count
 };
 
 }; // namespace qcamera
