@@ -1090,6 +1090,9 @@ int QCamera2HardwareInterface::closeCamera()
     // deinit Parameters
     mParameters.deinit();
 
+    // exit notifier
+    m_cbNotifier.exit();
+
     // stop and deinit postprocessor
     m_postprocessor.stop();
     m_postprocessor.deinit();
@@ -3668,9 +3671,13 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
     cbArg.user_data = faceResultBuffer;
     cbArg.cookie = this;
     cbArg.release_cb = releaseCameraMemory;
-    m_cbNotifier.notifyCallback(cbArg);
+    int32_t rc = m_cbNotifier.notifyCallback(cbArg);
+    if (rc != NO_ERROR) {
+        ALOGE("%s: fail sending notification", __func__);
+        faceResultBuffer->release(faceResultBuffer);
+    }
 
-    return NO_ERROR;
+    return rc;
 }
 
 /*===========================================================================
@@ -3764,8 +3771,11 @@ int32_t QCamera2HardwareInterface::processHistogramStats(cam_hist_stats_t &stats
     cbArg.user_data = histBuffer;
     cbArg.cookie = this;
     cbArg.release_cb = releaseCameraMemory;
-    m_cbNotifier.notifyCallback(cbArg);
-
+    int32_t rc = m_cbNotifier.notifyCallback(cbArg);
+    if (rc != NO_ERROR) {
+        ALOGE("%s: fail sending notification", __func__);
+        histBuffer->release(histBuffer);
+    }
     return NO_ERROR;
 }
 
