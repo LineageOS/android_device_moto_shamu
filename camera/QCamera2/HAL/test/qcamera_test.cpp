@@ -501,6 +501,7 @@ status_t CameraContext::closeCamera()
     mCamera.clear();
     mHardwareActive = false;
     mPreviewRunning = false;
+    mRecordRunning = false;
 
     return NO_ERROR;
 }
@@ -540,6 +541,7 @@ status_t CameraContext::startPreview()
             return ret;
         }
 
+        mParams.set("recording-hint", "true");
         mParams.setPreviewSize(previewWidth, previewHeight);
         mParams.setPictureSize(currentPictureSize.width, currentPictureSize.height);
 
@@ -617,6 +619,52 @@ status_t CameraContext::takePicture()
 
     if ( mPreviewRunning ) {
         ret = mCamera->takePicture(CAMERA_MSG_COMPRESSED_IMAGE|CAMERA_MSG_RAW_IMAGE);
+    }
+
+    return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : startRecording
+ *
+ * DESCRIPTION: triggers start recording
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : status_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+status_t CameraContext::startRecording()
+{
+    status_t ret = NO_ERROR;
+
+    if ( mPreviewRunning ) {
+        ret = mCamera->startRecording();
+        mRecordRunning = true;
+    }
+
+    return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : stopRecording
+ *
+ * DESCRIPTION: triggers start recording
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : status_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+status_t CameraContext::stopRecording()
+{
+    status_t ret = NO_ERROR;
+
+    if ( mRecordRunning ) {
+        mCamera->stopRecording();
+        mRecordRunning = false;
     }
 
     return ret;
@@ -818,6 +866,10 @@ void printMenu(sp<CameraContext> currentCamera)
            CHANGE_PREVIEW_SIZE_CMD,
            currentPreviewSize.width,
            currentPreviewSize.height);
+    printf("   %c. Start Recording\n",
+            START_RECORD_CMD);
+    printf("   %c. Stop Recording\n",
+            STOP_RECORD_CMD);
     printf("   %c. Enable preview frames\n",
             ENABLE_PRV_CALLBACKS_CMD);
     printf("   %c. Trigger autofocus \n",
@@ -921,6 +973,18 @@ status_t functionalTest(Vector< sp<CameraContext> > &availableCameras)
     case ENABLE_PRV_CALLBACKS_CMD:
         {
             stat = currentCamera->enablePreviewCallbacks();
+        }
+        break;
+
+    case START_RECORD_CMD:
+        {
+            stat = currentCamera->startRecording();
+        }
+        break;
+
+    case STOP_RECORD_CMD:
+        {
+            stat = currentCamera->stopRecording();
         }
         break;
 
