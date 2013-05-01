@@ -204,6 +204,7 @@ static int encode_init(jpeg_test_input_t *p_input, mm_jpeg_intf_test_t *p_obj)
   p_params->jpeg_cb = mm_jpeg_encode_callback;
   p_params->userdata = p_obj;
   p_params->color_format = MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2;
+  p_params->thumb_color_format = MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2;
 
   /* dest buffer config */
   p_params->dest_buf[0].buf_size = p_obj->output.size;
