@@ -586,6 +586,7 @@ private:
     bool m_bNeedLockCAF;
     bool m_bCAFLocked;
     bool m_bAFRunning;
+    bool m_bInited;
     qcamera_thermal_mode m_ThermalMode; // adjust fps vs adjust frameskip
     cam_dimension_t m_LiveSnapshotSize; // live snapshot size
 

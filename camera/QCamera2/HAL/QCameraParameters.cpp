@@ -555,6 +555,7 @@ QCameraParameters::QCameraParameters()
       m_bNeedLockCAF(false),
       m_bCAFLocked(false),
       m_bAFRunning(false),
+      m_bInited(false),
       m_tempMap()
 {
     char value[32];
@@ -609,6 +610,7 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bNeedLockCAF(false),
     m_bCAFLocked(false),
     m_bAFRunning(false),
+    m_bInited(false),
     m_tempMap()
 {
     memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
@@ -3313,6 +3315,8 @@ int32_t QCameraParameters::init(cam_capability_t *capabilities, mm_camera_vtbl_t
 
     initDefaultParameters();
 
+    m_bInited = true;
+
     goto TRANS_INIT_DONE;
 
 TRANS_INIT_ERROR2:
@@ -3337,6 +3341,10 @@ TRANS_INIT_DONE:
  *==========================================================================*/
 void QCameraParameters::deinit()
 {
+    if (!m_bInited) {
+        return;
+    }
+
     //clear all entries in the map
     String8 emptyStr;
     QCameraParameters::unflatten(emptyStr);

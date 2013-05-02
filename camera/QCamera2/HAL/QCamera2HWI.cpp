@@ -1023,6 +1023,7 @@ int QCamera2HardwareInterface::openCamera()
         ALOGE("Failure: Camera already opened");
         return ALREADY_EXISTS;
     }
+
     mCameraHandle = camera_open(mCameraId);
     if (!mCameraHandle) {
         ALOGE("camera_open failed.");
@@ -1036,6 +1037,8 @@ int QCamera2HardwareInterface::openCamera()
     int32_t rc = m_postprocessor.init(jpegEvtHandle, this);
     if (rc != 0) {
         ALOGE("Init Postprocessor failed");
+        mCameraHandle->ops->close_camera(mCameraHandle->camera_handle);
+        mCameraHandle = NULL;
         return UNKNOWN_ERROR;
     }
 
@@ -1079,6 +1082,10 @@ int QCamera2HardwareInterface::closeCamera()
 {
     int rc = NO_ERROR;
     int i;
+
+    if (!mCameraOpened) {
+        return NO_ERROR;
+    }
 
     // deinit Parameters
     mParameters.deinit();
