@@ -3577,7 +3577,7 @@ int32_t QCameraParameters::setPreviewFpsRange(int minFPS, int maxFPS)
     snprintf(str, sizeof(str), "%d,%d", minFPS, maxFPS);
     ALOGD("%s: Setting preview fps range %s", __func__, str);
     updateParamEntry(KEY_PREVIEW_FPS_RANGE, str);
-    cam_fps_range_t fps_range = {minFPS / 1000.0, maxFPS / 1000.0};
+    cam_fps_range_t fps_range = {minFPS / float (1000.0), maxFPS / float (1000.0)};
     return AddSetParmEntryToBatch(m_pParamBuf,
                                   CAM_INTF_PARM_FPS_RANGE,
                                   sizeof(cam_fps_range_t),
