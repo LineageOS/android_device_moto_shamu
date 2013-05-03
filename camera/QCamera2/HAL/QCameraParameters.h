@@ -176,6 +176,7 @@ public:
     static const char PIXEL_FORMAT_YUV420SP_ADRENO[]; // ADRENO
     static const char PIXEL_FORMAT_YV12[]; // NV12
     static const char PIXEL_FORMAT_NV12[]; //NV12
+    static const char QC_PIXEL_FORMAT_NV12_VENUS[]; //NV12 VENUS
 
     // Values for raw picture format
     static const char QC_PIXEL_FORMAT_YUV_RAW_8BIT_YUYV[];
