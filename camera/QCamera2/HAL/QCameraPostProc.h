@@ -150,6 +150,8 @@ private:
     int8_t                     m_bThumbnailNeeded;
     QCameraReprocessChannel *  m_pReprocChannel;
 
+    int8_t                     m_bInited; // if postproc is inited
+
     QCameraQueue m_inputPPQ;            // input queue for postproc
     QCameraQueue m_ongoingPPQ;          // ongoing postproc queue
     QCameraQueue m_inputJpegQ;          // input jpeg job queue
