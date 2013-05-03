@@ -54,6 +54,7 @@ public:
 
     virtual int allocate(int count, int size) = 0;
     virtual void deallocate() = 0;
+    virtual int allocateMore(int count, int size) = 0;
     virtual int cacheOps(int index, unsigned int cmd) = 0;
     virtual int getRegFlags(uint8_t *regFlags) const = 0;
     virtual camera_memory_t *getMemory(int index, bool metadata) const = 0;
@@ -93,6 +94,7 @@ public:
     virtual ~QCameraHeapMemory();
 
     virtual int allocate(int count, int size);
+    virtual int allocateMore(int count, int size);
     virtual void deallocate();
     virtual int cacheOps(int index, unsigned int cmd);
     virtual int getRegFlags(uint8_t *regFlags) const;
@@ -112,6 +114,7 @@ public:
     virtual ~QCameraStreamMemory();
 
     virtual int allocate(int count, int size);
+    virtual int allocateMore(int count, int size);
     virtual void deallocate();
     virtual int cacheOps(int index, unsigned int cmd);
     virtual int getRegFlags(uint8_t *regFlags) const;
@@ -132,6 +135,7 @@ public:
     virtual ~QCameraVideoMemory();
 
     virtual int allocate(int count, int size);
+    virtual int allocateMore(int count, int size);
     virtual void deallocate();
     virtual camera_memory_t *getMemory(int index, bool metadata) const;
     virtual int getMatchBufIndex(const void *opaque, bool metadata) const;
@@ -153,6 +157,7 @@ public:
     virtual ~QCameraGrallocMemory();
 
     virtual int allocate(int count, int size);
+    virtual int allocateMore(int count, int size);
     virtual void deallocate();
     virtual int cacheOps(int index, unsigned int cmd);
     virtual int getRegFlags(uint8_t *regFlags) const;

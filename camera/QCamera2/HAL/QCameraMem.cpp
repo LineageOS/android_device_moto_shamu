@@ -62,12 +62,7 @@ QCameraMemory::QCameraMemory(bool cached)
     :m_bCached(cached)
 {
     mBufferCount = 0;
-    for (int i = 0; i < MM_CAMERA_MAX_NUM_FRAMES; i++) {
-        mMemInfo[i].fd = 0;
-        mMemInfo[i].main_ion_fd = 0;
-        mMemInfo[i].handle = NULL;
-        mMemInfo[i].size = 0;
-    }
+    memset(mMemInfo, 0, sizeof(mMemInfo));
 }
 
 /*===========================================================================
@@ -242,20 +237,24 @@ void QCameraMemory::getBufDef(const cam_frame_len_offset_t &offset,
 int QCameraMemory::alloc(int count, int size, int heap_id)
 {
     int rc = OK;
-    if (count > MM_CAMERA_MAX_NUM_FRAMES) {
-        ALOGE("Buffer count %d out of bound. Max is %d", count, MM_CAMERA_MAX_NUM_FRAMES);
-        return BAD_INDEX;
-    }
-    if (mBufferCount) {
-        ALOGE("Allocating a already allocated heap memory");
-        return INVALID_OPERATION;
+
+    if (mBufferCount < 0) {
+        mBufferCount = 0;
     }
 
-    for (int i = 0; i < count; i ++) {
+    int new_bufCnt = mBufferCount + count;
+
+    if (new_bufCnt > MM_CAMERA_MAX_NUM_FRAMES) {
+        ALOGE("%s: Buffer count %d out of bound. Max is %d",
+              __func__, new_bufCnt, MM_CAMERA_MAX_NUM_FRAMES);
+        return BAD_INDEX;
+    }
+
+    for (int i = mBufferCount; i < new_bufCnt; i ++) {
         rc = allocOneBuffer(mMemInfo[i], heap_id, size);
         if (rc < 0) {
-            ALOGE("AllocateIonMemory failed");
-            for (int j = i-1; j >= 0; j--)
+            ALOGE("%s: AllocateIonMemory failed", __func__);
+            for (int j = i-1; j >= mBufferCount; j--)
                 deallocOneBuffer(mMemInfo[j]);
             break;
         }
@@ -452,15 +451,57 @@ int QCameraHeapMemory::allocate(int count, int size)
                     mMemInfo[i].fd, 0);
         if (vaddr == MAP_FAILED) {
             for (int j = i-1; j >= 0; j --) {
-                munmap(mPtr[i], mMemInfo[i].size);
-                rc = NO_MEMORY;
-                break;
+                munmap(mPtr[j], mMemInfo[j].size);
+                mPtr[j] = NULL;
+                deallocOneBuffer(mMemInfo[j]);
             }
+            return NO_MEMORY;
         } else
             mPtr[i] = vaddr;
     }
     if (rc == 0)
         mBufferCount = count;
+    return OK;
+}
+
+/*===========================================================================
+ * FUNCTION   : allocateMore
+ *
+ * DESCRIPTION: allocate more requested number of buffers of certain size
+ *
+ * PARAMETERS :
+ *   @count   : number of buffers to be allocated
+ *   @size    : lenght of the buffer to be allocated
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCameraHeapMemory::allocateMore(int count, int size)
+{
+    int heap_mask = 0x1 << ION_IOMMU_HEAP_ID;
+    int rc = alloc(count, size, heap_mask);
+    if (rc < 0)
+        return rc;
+
+    for (int i = mBufferCount; i < count + mBufferCount; i ++) {
+        void *vaddr = mmap(NULL,
+                    mMemInfo[i].size,
+                    PROT_READ | PROT_WRITE,
+                    MAP_SHARED,
+                    mMemInfo[i].fd, 0);
+        if (vaddr == MAP_FAILED) {
+            for (int j = i-1; j >= mBufferCount; j --) {
+                munmap(mPtr[j], mMemInfo[j].size);
+                mPtr[j] = NULL;
+                deallocOneBuffer(mMemInfo[j]);
+            }
+            return NO_MEMORY;
+        } else {
+            mPtr[i] = vaddr;
+        }
+    }
+    mBufferCount += count;
     return OK;
 }
 
@@ -624,6 +665,33 @@ int QCameraStreamMemory::allocate(int count, int size)
         mCameraMemory[i] = mGetMemory(mMemInfo[i].fd, mMemInfo[i].size, 1, this);
     }
     mBufferCount = count;
+    return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : allocateMore
+ *
+ * DESCRIPTION: allocate more requested number of buffers of certain size
+ *
+ * PARAMETERS :
+ *   @count   : number of buffers to be allocated
+ *   @size    : lenght of the buffer to be allocated
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCameraStreamMemory::allocateMore(int count, int size)
+{
+    int heap_mask = 0x1 << ION_IOMMU_HEAP_ID;
+    int rc = alloc(count, size, heap_mask);
+    if (rc < 0)
+        return rc;
+
+    for (int i = mBufferCount; i < mBufferCount + count; i++) {
+        mCameraMemory[i] = mGetMemory(mMemInfo[i].fd, mMemInfo[i].size, 1, this);
+    }
+    mBufferCount += count;
     return NO_ERROR;
 }
 
@@ -807,7 +875,7 @@ int QCameraVideoMemory::allocate(int count, int size)
                 sizeof(struct encoder_media_buffer_type), 1, this);
         if (!mMetadata[i]) {
             ALOGE("allocation of video metadata failed.");
-            for (int j = 0; j < i-1; j ++)
+            for (int j = 0; j <= i-1; j ++)
                 mMetadata[j]->release(mMetadata[j]);
             QCameraStreamMemory::deallocate();
             return NO_MEMORY;
@@ -822,6 +890,51 @@ int QCameraVideoMemory::allocate(int count, int size)
         nh->data[2] = mMemInfo[i].size;
     }
     mBufferCount = count;
+    return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : allocateMore
+ *
+ * DESCRIPTION: allocate more requested number of buffers of certain size
+ *
+ * PARAMETERS :
+ *   @count   : number of buffers to be allocated
+ *   @size    : lenght of the buffer to be allocated
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCameraVideoMemory::allocateMore(int count, int size)
+{
+    int rc = QCameraStreamMemory::allocateMore(count, size);
+    if (rc < 0)
+        return rc;
+
+    for (int i = mBufferCount; i < count + mBufferCount; i ++) {
+        mMetadata[i] = mGetMemory(-1,
+                sizeof(struct encoder_media_buffer_type), 1, this);
+        if (!mMetadata[i]) {
+            ALOGE("allocation of video metadata failed.");
+            for (int j = mBufferCount; j <= i-1; j ++) {
+                mMetadata[j]->release(mMetadata[j]);
+                mCameraMemory[j]->release(mCameraMemory[j]);
+                mCameraMemory[j] = NULL;
+                deallocOneBuffer(mMemInfo[j]);;
+            }
+            return NO_MEMORY;
+        }
+        struct encoder_media_buffer_type * packet =
+            (struct encoder_media_buffer_type *)mMetadata[i]->data;
+        packet->meta_handle = native_handle_create(1, 2); //1 fd, 1 offset and 1 size
+        packet->buffer_type = kMetadataBufferTypeCameraSource;
+        native_handle_t * nh = const_cast<native_handle_t *>(packet->meta_handle);
+        nh->data[0] = mMemInfo[i].fd;
+        nh->data[1] = 0;
+        nh->data[2] = mMemInfo[i].size;
+    }
+    mBufferCount += count;
     return NO_ERROR;
 }
 
@@ -1180,6 +1293,25 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
 end:
     ALOGI(" %s : X ",__func__);
     return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : allocateMore
+ *
+ * DESCRIPTION: allocate more requested number of buffers of certain size
+ *
+ * PARAMETERS :
+ *   @count   : number of buffers to be allocated
+ *   @size    : lenght of the buffer to be allocated
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCameraGrallocMemory::allocateMore(int /*count*/, int /*size*/)
+{
+    ALOGE("%s: Not implenmented yet", __func__);
+    return UNKNOWN_ERROR;
 }
 
 /*===========================================================================

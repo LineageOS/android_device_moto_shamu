@@ -33,6 +33,8 @@
 #include "QCamera2HWI.h"
 #include "QCameraStream.h"
 
+#define CAMERA_MIN_ALLOCATED_BUFFERS     3
+
 namespace qcamera {
 
 /*===========================================================================
@@ -165,6 +167,7 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
         mCamOps(camOps),
         mStreamInfo(NULL),
         mNumBufs(0),
+        mNumBufsNeedAlloc(0),
         mDataCB(NULL),
         mUserData(NULL),
         mDataQ(releaseFrameData, this),
@@ -173,7 +176,9 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
         mAllocator(allocator),
         mBufDefs(NULL),
         mStreamBufsAcquired(false),
-        m_bActive(false)
+        m_bActive(false),
+        mDynBufAlloc(false),
+        mBufAllocPid(0)
 {
     mMemVtbl.user_data = this;
     mMemVtbl.get_bufs = get_bufs;
@@ -183,6 +188,7 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
     memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
     memcpy(&mPaddingInfo, paddingInfo, sizeof(cam_padding_info_t));
     memset(&mCropInfo, 0, sizeof(cam_rect_t));
+    memset(&m_MemOpsTbl, 0, sizeof(mm_camera_map_unmap_ops_tbl_t));
     pthread_mutex_init(&mCropLock, NULL);
 }
 
@@ -226,6 +232,7 @@ QCameraStream::~QCameraStream()
  *   @streamInfoBuf: ptr to buf that contains stream info
  *   @stream_cb    : stream data notify callback. Can be NULL if not needed
  *   @userdata     : user data ptr
+ *   @bDynallocBuf : flag to indicate if buffer allocation can be in 2 steps
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
@@ -234,7 +241,8 @@ QCameraStream::~QCameraStream()
 int32_t QCameraStream::init(QCameraHeapMemory *streamInfoBuf,
                             uint8_t minNumBuffers,
                             stream_cb_routine stream_cb,
-                            void *userdata)
+                            void *userdata,
+                            bool bDynallocBuf)
 {
     int32_t rc = OK;
     mm_camera_stream_config_t stream_config;
@@ -274,6 +282,7 @@ int32_t QCameraStream::init(QCameraHeapMemory *streamInfoBuf,
 
     mDataCB = stream_cb;
     mUserData = userdata;
+    mDynBufAlloc = bDynallocBuf;
     return 0;
 
 err2:
@@ -581,16 +590,30 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
 
     mFrameLenOffset = *offset;
 
+    uint8_t numBufAlloc = mNumBufs;
+    mNumBufsNeedAlloc = 0;
+    if (mDynBufAlloc) {
+        numBufAlloc = CAMERA_MIN_ALLOCATED_BUFFERS;
+        if (numBufAlloc > mNumBufs) {
+            mDynBufAlloc = false;
+            numBufAlloc = mNumBufs;
+        } else {
+            mNumBufsNeedAlloc = mNumBufs - numBufAlloc;
+        }
+    }
+
     //Allocate and map stream info buffer
     mStreamBufs = mAllocator.allocateStreamBuf(mStreamInfo->stream_type,
                                                mFrameLenOffset.frame_len,
-                                               mNumBufs);
+                                               numBufAlloc);
+    mNumBufs = numBufAlloc + mNumBufsNeedAlloc;
+
     if (!mStreamBufs) {
         ALOGE("%s: Failed to allocate stream buffers", __func__);
         return NO_MEMORY;
     }
 
-    for (int i = 0; i < mNumBufs; i++) {
+    for (int i = 0; i < numBufAlloc; i++) {
         rc = ops_tbl->map_ops(i, -1, mStreamBufs->getFd(i),
                 mStreamBufs->getSize(i), ops_tbl->userdata);
         if (rc < 0) {
@@ -609,7 +632,7 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
     regFlags = (uint8_t *)malloc(sizeof(uint8_t) * mNumBufs);
     if (!regFlags) {
         ALOGE("%s: Out of memory", __func__);
-        for (int i = 0; i < mNumBufs; i++) {
+        for (int i = 0; i < numBufAlloc; i++) {
             ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
         }
         mStreamBufs->deallocate();
@@ -617,11 +640,12 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
         mStreamBufs = NULL;
         return NO_MEMORY;
     }
+    memset(regFlags, 0, sizeof(uint8_t) * mNumBufs);
 
     mBufDefs = (mm_camera_buf_def_t *)malloc(mNumBufs * sizeof(mm_camera_buf_def_t));
     if (mBufDefs == NULL) {
         ALOGE("%s: getRegFlags failed %d", __func__, rc);
-        for (int i = 0; i < mNumBufs; i++) {
+        for (int i = 0; i < numBufAlloc; i++) {
             ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
         }
         mStreamBufs->deallocate();
@@ -631,14 +655,15 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
         regFlags = NULL;
         return INVALID_OPERATION;
     }
-    for (int i = 0; i < mNumBufs; i++) {
+    memset(mBufDefs, 0, mNumBufs * sizeof(mm_camera_buf_def_t));
+    for (int i = 0; i < numBufAlloc; i++) {
         mStreamBufs->getBufDef(mFrameLenOffset, mBufDefs[i], i);
     }
 
     rc = mStreamBufs->getRegFlags(regFlags);
     if (rc < 0) {
         ALOGE("%s: getRegFlags failed %d", __func__, rc);
-        for (int i = 0; i < mNumBufs; i++) {
+        for (int i = 0; i < numBufAlloc; i++) {
             ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
         }
         mStreamBufs->deallocate();
@@ -654,7 +679,65 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
     *num_bufs = mNumBufs;
     *initial_reg_flag = regFlags;
     *bufs = mBufDefs;
+
+    if (mNumBufsNeedAlloc > 0) {
+        ALOGD("%s: Still need to allocate %d buffers",
+              __func__, mNumBufsNeedAlloc);
+        // remember memops table
+        m_MemOpsTbl = *ops_tbl;
+        // start another thread to allocate the rest of buffers
+        pthread_create(&mBufAllocPid,
+                       NULL,
+                       BufAllocRoutine,
+                       this);
+    }
+
     return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : BufAllocRoutine
+ *
+ * DESCRIPTION: function to allocate additional stream buffers
+ *
+ * PARAMETERS :
+ *   @data    : user data ptr
+ *
+ * RETURN     : none
+ *==========================================================================*/
+void *QCameraStream::BufAllocRoutine(void *data)
+{
+    QCameraStream *pme = (QCameraStream *)data;
+    int32_t rc = NO_ERROR;
+
+    ALOGD("%s: E", __func__);
+    if (pme->mNumBufsNeedAlloc > 0) {
+        uint8_t numBufAlloc = pme->mNumBufs - pme->mNumBufsNeedAlloc;
+        rc = pme->mAllocator.allocateMoreStreamBuf(pme->mStreamBufs,
+                                                   pme->mFrameLenOffset.frame_len,
+                                                   pme->mNumBufsNeedAlloc);
+        if (rc == NO_ERROR){
+            for (int i = numBufAlloc; i < pme->mNumBufs; i++) {
+                rc = pme->m_MemOpsTbl.map_ops(i, -1,
+                                              pme->mStreamBufs->getFd(i),
+                                              pme->mStreamBufs->getSize(i),
+                                              pme->m_MemOpsTbl.userdata);
+                if (rc == 0) {
+                    pme->mStreamBufs->getBufDef(pme->mFrameLenOffset,
+                                                pme->mBufDefs[i], i);
+                    pme->mCamOps->qbuf(pme->mCamHandle,
+                                       pme->mChannelHandle,
+                                       &pme->mBufDefs[i]);
+                } else {
+                    ALOGE("%s: map_stream_buf %d failed: %d", __func__, rc, i);
+                }
+            }
+
+            pme->mNumBufsNeedAlloc = 0;
+        }
+    }
+    ALOGD("%s: X", __func__);
+    return NULL;
 }
 
 /*===========================================================================
@@ -672,6 +755,14 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
 int32_t QCameraStream::putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl)
 {
     int rc = NO_ERROR;
+
+    if (mBufAllocPid != 0) {
+        ALOGD("%s: wait for buf allocation thread dead", __func__);
+        pthread_join(mBufAllocPid, NULL);
+        mBufAllocPid = 0;
+        ALOGD("%s: return from buf allocation thread", __func__);
+    }
+
     for (int i = 0; i < mNumBufs; i++) {
         rc = ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
         if (rc < 0) {

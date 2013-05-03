@@ -58,7 +58,8 @@ public:
     virtual int32_t init(QCameraHeapMemory *streamInfoBuf,
                          uint8_t minStreamBufNum,
                          stream_cb_routine stream_cb,
-                         void *userdata);
+                         void *userdata,
+                         bool bDynallocBuf);
     virtual int32_t processZoomDone(preview_stream_ops_t *previewWindow,
                                     cam_crop_data_t &crop_info);
     virtual int32_t bufDone(int index);
@@ -69,6 +70,7 @@ public:
 
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame, void *userdata);
     static void *dataProcRoutine(void *data);
+    static void *BufAllocRoutine(void *data);
     uint32_t getMyHandle() const {return mHandle;}
     bool isTypeOf(cam_stream_type_t type);
     bool isOrignalTypeOf(cam_stream_type_t type);
@@ -96,6 +98,7 @@ private:
     cam_stream_info_t *mStreamInfo; // ptr to stream info buf
     mm_camera_stream_mem_vtbl_t mMemVtbl;
     uint8_t mNumBufs;
+    uint8_t mNumBufsNeedAlloc;
     stream_cb_routine mDataCB;
     void *mUserData;
 
@@ -112,6 +115,9 @@ private:
     pthread_mutex_t mCropLock; // lock to protect crop info
     bool mStreamBufsAcquired;
     bool m_bActive; // if stream mProcTh is active
+    bool mDynBufAlloc; // allow buf allocation in 2 steps
+    pthread_t mBufAllocPid;
+    mm_camera_map_unmap_ops_tbl_t m_MemOpsTbl;
 
     static int32_t get_bufs(
                      cam_frame_len_offset_t *offset,

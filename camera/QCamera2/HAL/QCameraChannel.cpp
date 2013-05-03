@@ -55,6 +55,7 @@ QCameraChannel::QCameraChannel(uint32_t cam_handle,
     m_camHandle = cam_handle;
     m_camOps = cam_ops;
     m_bIsActive = false;
+    m_bAllowDynBufAlloc = false;
 
     m_handle = 0;
     m_numStreams = 0;
@@ -148,6 +149,7 @@ int32_t QCameraChannel::init(mm_camera_channel_attr_t *attr,
  *   @paddingInfo    : padding information
  *   @stream_cb      : stream data notify callback
  *   @userdata       : user data ptr
+ *   @bDynAllocBuf   : flag indicating if allow allocate buffers in 2 steps
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
@@ -158,7 +160,8 @@ int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
                                   uint8_t minStreamBufNum,
                                   cam_padding_info_t *paddingInfo,
                                   stream_cb_routine stream_cb,
-                                  void *userdata)
+                                  void *userdata,
+                                  bool bDynAllocBuf)
 {
     int32_t rc = NO_ERROR;
     if (m_numStreams >= MAX_STREAM_NUM_IN_BUNDLE) {
@@ -176,7 +179,8 @@ int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
         return NO_MEMORY;
     }
 
-    rc = pStream->init(streamInfoBuf, minStreamBufNum, stream_cb, userdata);
+    rc = pStream->init(streamInfoBuf, minStreamBufNum,
+                       stream_cb, userdata, bDynAllocBuf);
     if (rc == 0) {
         mStreams[m_numStreams] = pStream;
         m_numStreams++;
@@ -481,6 +485,7 @@ QCameraPicChannel::QCameraPicChannel(uint32_t cam_handle,
                                      mm_camera_ops_t *cam_ops) :
     QCameraChannel(cam_handle, cam_ops)
 {
+    m_bAllowDynBufAlloc = true;
 }
 
 /*===========================================================================
@@ -494,6 +499,7 @@ QCameraPicChannel::QCameraPicChannel(uint32_t cam_handle,
  *==========================================================================*/
 QCameraPicChannel::QCameraPicChannel()
 {
+    m_bAllowDynBufAlloc = true;
 }
 
 /*===========================================================================
@@ -760,7 +766,7 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
             rc = addStream(allocator,
                            pStreamInfoBuf, minStreamBufNum,
                            paddingInfo,
-                           NULL, NULL);
+                           NULL, NULL, false);
             if (rc != NO_ERROR) {
                 ALOGE("%s: add reprocess stream failed, ret = %d", __func__, rc);
                 break;
