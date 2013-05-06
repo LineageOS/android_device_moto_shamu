@@ -118,6 +118,7 @@ public:
     static const char KEY_QC_SUPPORTED_AE_BRACKET_MODES[];
     static const char KEY_QC_CAPTURE_BURST_EXPOSURE[];
     static const char KEY_QC_NUM_SNAPSHOT_PER_SHUTTER[];
+    static const char KEY_QC_SNAPSHOT_BURST_NUM[];
     static const char KEY_QC_NO_DISPLAY_MODE[];
     static const char KEY_QC_RAW_PICUTRE_SIZE[];
 
@@ -469,6 +470,7 @@ private:
     int32_t setCameraMode(const QCameraParameters& );
     int32_t setFaceRecognition(const QCameraParameters& );
     int32_t setFlip(const QCameraParameters& );
+    int32_t setBurstNum(const QCameraParameters& params);
 
     int32_t setAutoExposure(const char *autoExp);
     int32_t setPreviewFpsRange(int minFPS,int maxFPS);
@@ -588,6 +590,7 @@ private:
     bool m_bCAFLocked;
     bool m_bAFRunning;
     bool m_bInited;
+    int m_nBurstNum;
     qcamera_thermal_mode m_ThermalMode; // adjust fps vs adjust frameskip
     cam_dimension_t m_LiveSnapshotSize; // live snapshot size
 
