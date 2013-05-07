@@ -560,6 +560,8 @@ QCameraParameters::QCameraParameters()
       m_bAFRunning(false),
       m_bInited(false),
       m_nBurstNum(1),
+      m_bUpdateEffects(false),
+      m_bSceneTransitionAuto(false),
       m_tempMap()
 {
     char value[32];
@@ -1490,7 +1492,9 @@ int32_t QCameraParameters::setEffect(const QCameraParameters& params)
     const char *prev_str = get(KEY_EFFECT);
     if (str != NULL) {
         if (prev_str == NULL ||
-            strcmp(str, prev_str) != 0) {
+            strcmp(str, prev_str) != 0 ||
+            m_bUpdateEffects == true ) {
+            m_bUpdateEffects = false;
             return setEffect(str);
         }
     }
@@ -2199,6 +2203,11 @@ int32_t QCameraParameters::setSceneMode(const QCameraParameters& params)
     if (str != NULL) {
         if (prev_str == NULL ||
             strcmp(str, prev_str) != 0) {
+
+            if(strcmp(str, SCENE_MODE_AUTO) == 0) {
+                m_bSceneTransitionAuto = true;
+            }
+
             if ((strcmp(str, SCENE_MODE_HDR) == 0) ||
                 ((prev_str != NULL) && (strcmp(prev_str, SCENE_MODE_HDR) == 0))) {
                 ALOGD("%s: scene mode changed between HDR and non-HDR, need restart", __func__);
@@ -6179,6 +6188,14 @@ int32_t QCameraParameters::commitParamChanges()
     // update local changes
     m_bRecordingHint = m_bRecordingHint_new;
     m_bZslMode = m_bZslMode_new;
+
+    /* After applying scene mode auto,
+      Camera effects need to be reapplied */
+    if ( m_bSceneTransitionAuto ) {
+        m_bUpdateEffects = true;
+        m_bSceneTransitionAuto = false;
+    }
+
 
     return NO_ERROR;
 }

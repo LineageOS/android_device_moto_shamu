@@ -591,6 +591,8 @@ private:
     bool m_bAFRunning;
     bool m_bInited;
     int m_nBurstNum;
+    bool m_bUpdateEffects;          // Cause reapplying of effects
+    bool m_bSceneTransitionAuto;    // Indicate that scene has changed to Auto
     qcamera_thermal_mode m_ThermalMode; // adjust fps vs adjust frameskip
     cam_dimension_t m_LiveSnapshotSize; // live snapshot size
 
