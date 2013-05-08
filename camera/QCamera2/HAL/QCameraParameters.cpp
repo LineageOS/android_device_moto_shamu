@@ -124,6 +124,7 @@ const char QCameraParameters::SCENE_MODE_HDR[] = "hdr";
 const char QCameraParameters::PIXEL_FORMAT_YUV420SP_ADRENO[] = "yuv420sp-adreno";
 const char QCameraParameters::PIXEL_FORMAT_YV12[] = "yuv420p";
 const char QCameraParameters::PIXEL_FORMAT_NV12[] = "nv12";
+const char QCameraParameters::QC_PIXEL_FORMAT_NV12_VENUS[] = "nv12-venus";
 
 // Values for raw image formats
 const char QCameraParameters::QC_PIXEL_FORMAT_YUV_RAW_8BIT_YUYV[] = "yuv-raw8-yuyv";
@@ -307,7 +308,8 @@ const QCameraParameters::QCameraMap QCameraParameters::PREVIEW_FORMATS_MAP[] = {
     {PIXEL_FORMAT_YUV420P,         CAM_FORMAT_YUV_420_YV12},
     {PIXEL_FORMAT_YUV420SP_ADRENO, CAM_FORMAT_YUV_420_NV21_ADRENO},
     {PIXEL_FORMAT_YV12,            CAM_FORMAT_YUV_420_YV12},
-    {PIXEL_FORMAT_NV12,            CAM_FORMAT_YUV_420_NV12}
+    {PIXEL_FORMAT_NV12,            CAM_FORMAT_YUV_420_NV12},
+    {QC_PIXEL_FORMAT_NV12_VENUS,   CAM_FORMAT_YUV_420_NV12_VENUS}
 };
 
 const QCameraParameters::QCameraMap QCameraParameters::PICTURE_TYPES_MAP[] = {
@@ -4942,6 +4944,9 @@ int QCameraParameters::getPreviewHalPixelFormat() const
         break;
     case CAM_FORMAT_YUV_420_YV12:
         halPixelFormat = HAL_PIXEL_FORMAT_YV12;
+        break;
+    case CAM_FORMAT_YUV_420_NV12_VENUS:
+        halPixelFormat = HAL_PIXEL_FORMAT_YCbCr_420_SP_VENUS;
         break;
     case CAM_FORMAT_YUV_422_NV16:
     case CAM_FORMAT_YUV_422_NV61:
