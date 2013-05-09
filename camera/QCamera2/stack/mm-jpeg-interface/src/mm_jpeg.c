@@ -487,6 +487,7 @@ OMX_ERRORTYPE mm_jpeg_session_create(mm_jpeg_job_session_t* p_session)
 void mm_jpeg_session_destroy(mm_jpeg_job_session_t* p_session)
 {
   OMX_ERRORTYPE rc = OMX_ErrorNone;
+  OMX_STATETYPE state;
 
   CDBG("%s:%d] E", __func__, __LINE__);
   if (NULL == p_session->omx_handle) {
@@ -494,15 +495,24 @@ void mm_jpeg_session_destroy(mm_jpeg_job_session_t* p_session)
     return;
   }
 
-  rc = mm_jpeg_session_change_state(p_session, OMX_StateIdle, NULL);
-  if (rc) {
-    CDBG_ERROR("%s:%d] Error", __func__, __LINE__);
+  rc = OMX_GetState(p_session->omx_handle, &state);
+
+  //Check state before state transition
+  if ((state == OMX_StateExecuting) || (state == OMX_StatePause)) {
+    rc = mm_jpeg_session_change_state(p_session, OMX_StateIdle, NULL);
+    if (rc) {
+      CDBG_ERROR("%s:%d] Error", __func__, __LINE__);
+    }
   }
 
-  rc = mm_jpeg_session_change_state(p_session, OMX_StateLoaded,
-    mm_jpeg_session_free_buffers);
-  if (rc) {
-    CDBG_ERROR("%s:%d] Error", __func__, __LINE__);
+  rc = OMX_GetState(p_session->omx_handle, &state);
+
+  if (state == OMX_StateIdle) {
+    rc = mm_jpeg_session_change_state(p_session, OMX_StateLoaded,
+      mm_jpeg_session_free_buffers);
+    if (rc) {
+      CDBG_ERROR("%s:%d] Error", __func__, __LINE__);
+    }
   }
 
   rc = OMX_FreeHandle(p_session->omx_handle);
