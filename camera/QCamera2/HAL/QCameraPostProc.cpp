@@ -266,6 +266,9 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
     main_stream->getFormat(img_fmt);
     encode_parm.color_format = getColorfmtFromImgFmt(img_fmt);
 
+    cam_format_t img_fmt_thumb = CAM_FORMAT_YUV_420_NV12;
+    encode_parm.thumb_color_format = getColorfmtFromImgFmt(img_fmt_thumb);
+
     // get jpeg quality
     encode_parm.quality = m_parent->getJpegQuality();
     if (encode_parm.quality <= 0) {
