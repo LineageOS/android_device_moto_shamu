@@ -132,6 +132,7 @@ int createEncodingSession(mm_camera_test_obj_t *test_obj,
     encode_param.encode_thumbnail = 1;
     encode_param.quality = 85;
     encode_param.color_format = MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2;
+    encode_param.thumb_color_format = MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2;
 
     /* fill in main src img encode param */
     encode_param.num_src_bufs = 1;

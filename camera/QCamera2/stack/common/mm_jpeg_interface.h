@@ -115,8 +115,11 @@ typedef struct {
   /* this will be used only for bitstream */
   mm_jpeg_buf_t dest_buf[MM_JPEG_MAX_BUF];
 
-  /* color format */
+  /* mainimage color format */
   mm_jpeg_color_format color_format;
+
+  /* thumbnail color format */
+  mm_jpeg_color_format thumb_color_format;
 
   /* jpeg quality: range 0~100 */
   uint32_t quality;
