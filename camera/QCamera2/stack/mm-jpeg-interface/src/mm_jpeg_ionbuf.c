@@ -42,7 +42,7 @@
  *      allocates ION buffer
  *
  **/
-void *buffer_allocate(buffer_test_t *p_buffer)
+void *buffer_allocate(buffer_t *p_buffer, int cached)
 {
   void *l_buffer = NULL;
 
@@ -51,7 +51,7 @@ void *buffer_allocate(buffer_test_t *p_buffer)
 
    p_buffer->alloc.len = p_buffer->size;
    p_buffer->alloc.align = 4096;
-   p_buffer->alloc.flags = ION_FLAG_CACHED;
+   p_buffer->alloc.flags = (cached) ? ION_FLAG_CACHED : 0;
    p_buffer->alloc.heap_mask = 0x1 << ION_IOMMU_HEAP_ID;
 
    p_buffer->ion_fd = open("/dev/ion", O_RDONLY);
@@ -111,7 +111,7 @@ ION_ALLOC_FAILED:
  *      deallocates ION buffer
  *
  **/
-int buffer_deallocate(buffer_test_t *p_buffer)
+int buffer_deallocate(buffer_t *p_buffer)
 {
   int lrc = 0;
   int lsize = (p_buffer->size + 4095) & (~4095);

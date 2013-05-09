@@ -47,7 +47,7 @@ typedef struct  {
   long size;
   int ion_fd;
   uint8_t *addr;
-} buffer_test_t;
+} buffer_t;
 
 /** buffer_allocate:
  *
@@ -61,7 +61,7 @@ typedef struct  {
  *      allocates ION buffer
  *
  **/
-void* buffer_allocate(buffer_test_t *p_buffer);
+void* buffer_allocate(buffer_t *p_buffer, int cached);
 
 /** buffer_deallocate:
  *
@@ -75,7 +75,7 @@ void* buffer_allocate(buffer_test_t *p_buffer);
  *      deallocates ION buffer
  *
  **/
-int buffer_deallocate(buffer_test_t *p_buffer);
+int buffer_deallocate(buffer_t *p_buffer);
 
 #endif
 

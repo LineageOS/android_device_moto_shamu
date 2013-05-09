@@ -38,11 +38,13 @@
 #include "OMX_Core.h"
 #include "OMX_Component.h"
 #include "QOMX_JpegExtensions.h"
+#include "mm_jpeg_ionbuf.h"
 
 #define MM_JPEG_MAX_THREADS 30
 #define MM_JPEG_CIRQ_SIZE 30
 #define MM_JPEG_MAX_SESSION 10
 #define MAX_EXIF_TABLE_ENTRIES 50
+#define MAX_JPEG_SIZE 18000000
 
 typedef struct {
   struct cam_list list;
@@ -120,6 +122,9 @@ typedef struct {
   int job_hist;
 
   OMX_BOOL encoding;
+
+  buffer_t work_buffer;
+
 } mm_jpeg_job_session_t;
 
 typedef struct {
@@ -158,6 +163,7 @@ typedef struct mm_jpeg_obj_t {
   pthread_mutex_t job_lock;                       /* job lock */
   mm_jpeg_job_cmd_thread_t job_mgr;               /* job mgr thread including todo_q*/
   mm_jpeg_queue_t ongoing_job_q;                  /* queue for ongoing jobs */
+  buffer_t ionBuffer;
 } mm_jpeg_obj;
 
 extern int32_t mm_jpeg_init(mm_jpeg_obj *my_obj);

@@ -69,8 +69,8 @@ typedef struct {
   char *out_filename;
   pthread_mutex_t lock;
   pthread_cond_t cond;
-  buffer_test_t input;
-  buffer_test_t output;
+  buffer_t input;
+  buffer_t output;
   int use_ion;
   uint32_t handle;
   mm_jpeg_ops_t ops;
@@ -103,12 +103,12 @@ static void mm_jpeg_encode_callback(jpeg_job_status_t status,
   }
 }
 
-int mm_jpeg_test_alloc(buffer_test_t *p_buffer, int use_pmem)
+int mm_jpeg_test_alloc(buffer_t *p_buffer, int use_pmem)
 {
   int ret = 0;
   /*Allocate buffers*/
   if (use_pmem) {
-    p_buffer->addr = (uint8_t *)buffer_allocate(p_buffer);
+    p_buffer->addr = (uint8_t *)buffer_allocate(p_buffer, 0);
     if (NULL == p_buffer->addr) {
       CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
       return -1;
@@ -124,7 +124,7 @@ int mm_jpeg_test_alloc(buffer_test_t *p_buffer, int use_pmem)
   return ret;
 }
 
-void mm_jpeg_test_free(buffer_test_t *p_buffer)
+void mm_jpeg_test_free(buffer_t *p_buffer)
 {
   if (p_buffer->addr == NULL)
     return;
@@ -134,7 +134,7 @@ void mm_jpeg_test_free(buffer_test_t *p_buffer)
   else
     free(p_buffer->addr);
 
-  memset(p_buffer, 0x0, sizeof(buffer_test_t));
+  memset(p_buffer, 0x0, sizeof(buffer_t));
 }
 
 int mm_jpeg_test_read(mm_jpeg_intf_test_t *p_obj)

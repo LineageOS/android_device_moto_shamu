@@ -31,8 +31,7 @@ endif
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 
-LOCAL_SRC_FILES := mm_jpeg_ionbuf.c
-LOCAL_SRC_FILES += mm_jpeg_test.c 
+LOCAL_SRC_FILES := mm_jpeg_test.c
 
 LOCAL_MODULE           := mm-jpeg-interface-test
 LOCAL_PRELINK_MODULE   := false

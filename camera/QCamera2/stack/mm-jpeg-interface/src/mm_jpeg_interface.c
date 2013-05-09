@@ -156,7 +156,7 @@ static int32_t mm_jpeg_intf_create_session(uint32_t client_hdl,
     return rc;
   }
 
-  rc = mm_jpeg_create_session(g_jpeg_obj, client_hdl, p_params, p_session_id);
+ rc = mm_jpeg_create_session(g_jpeg_obj, client_hdl, p_params, p_session_id);
   pthread_mutex_unlock(&g_intf_lock);
   return rc;
 }
