@@ -1273,6 +1273,9 @@ int32_t QCameraStateMachine::procEvtPrepareSnapshotState(qcamera_sm_evt_enum_t e
             qcamera_sm_internal_evt_payload_t *internal_evt =
                 (qcamera_sm_internal_evt_payload_t *)payload;
             switch (internal_evt->evt_type) {
+            case QCAMERA_INTERNAL_EVT_FOCUS_UPDATE:
+                rc = m_parent->processAutoFocusEvent(internal_evt->focus_data);
+                break;
             case QCAMERA_INTERNAL_EVT_PREP_SNAPSHOT_DONE:
                 ALOGI("%s: Received QCAMERA_INTERNAL_EVT_PREP_SNAPSHOT_DONE event",
                     __func__);

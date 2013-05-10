@@ -598,9 +598,7 @@ int32_t mm_stream_fsm_buffed(mm_stream_t * my_obj,
     case MM_STREAM_EVT_PUT_BUF:
         rc = mm_stream_deinit_bufs(my_obj);
         /* change state to configed */
-        if(0 == rc) {
-            my_obj->state = MM_STREAM_STATE_CFG;
-        }
+        my_obj->state = MM_STREAM_STATE_CFG;
         break;
     case MM_STREAM_EVT_REG_BUF:
         rc = mm_stream_reg_buf(my_obj);
