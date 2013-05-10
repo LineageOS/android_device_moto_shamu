@@ -2461,9 +2461,15 @@ int32_t QCameraStateMachine::procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t 
         break;
     case QCAMERA_SM_EVT_START_RECORDING:
         {
-            rc = m_parent->stopRecording();
-            if (rc == NO_ERROR) {
-                m_state = QCAMERA_SM_STATE_VIDEO_PIC_TAKING;
+            if (m_parent->isZSLMode()) {
+                ALOGE("%s: cannot handle evt(%d) in state(%d) in ZSL mode",
+                      __func__, evt, m_state);
+                rc = INVALID_OPERATION;
+            } else {
+                rc = m_parent->startRecording();
+                if (rc == NO_ERROR) {
+                    m_state = QCAMERA_SM_STATE_VIDEO_PIC_TAKING;
+                }
             }
             result.status = rc;
             result.request_api = evt;
