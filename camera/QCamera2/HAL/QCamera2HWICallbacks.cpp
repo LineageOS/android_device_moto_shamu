@@ -342,7 +342,13 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
             cbArg.release_cb = releaseCameraMemory;
         }
         cbArg.cookie = pme;
-        pme->m_cbNotifier.notifyCallback(cbArg);
+        int32_t rc = pme->m_cbNotifier.notifyCallback(cbArg);
+        if (rc != NO_ERROR) {
+            ALOGE("%s: fail sending notification", __func__);
+            if (previewMem) {
+                previewMem->release(previewMem);
+            }
+        }
     }
 
     free(super_frame);
@@ -420,7 +426,11 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
             cbArg.user_data = ( void * ) user_data;
             cbArg.cookie = stream;
             cbArg.release_cb = returnStreamBuffer;
-            pme->m_cbNotifier.notifyCallback(cbArg);
+            int32_t rc = pme->m_cbNotifier.notifyCallback(cbArg);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: fail sending data notify", __func__);
+                stream->bufDone(frame->buf_idx);
+            }
         } else {
             stream->bufDone(frame->buf_idx);
         }
@@ -517,7 +527,7 @@ void QCamera2HardwareInterface::postview_stream_cb_routine(mm_camera_super_buf_t
  *             (release_recording_frame) to return the frame back
  *==========================================================================*/
 void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *super_frame,
-                                                        QCameraStream */*stream*/,
+                                                        QCameraStream *stream,
                                                         void *userdata)
 {
     ALOGD("[KPI Perf] %s : BEGIN", __func__);
@@ -560,7 +570,11 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
             cbArg.msg_type = CAMERA_MSG_VIDEO_FRAME;
             cbArg.data = video_mem;
             cbArg.timestamp = timeStamp;
-            pme->m_cbNotifier.notifyCallback(cbArg);
+            int32_t rc = pme->m_cbNotifier.notifyCallback(cbArg);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: fail sending data notify", __func__);
+                stream->bufDone(frame->buf_idx);
+            }
         }
     }
     free(super_frame);
@@ -969,6 +983,20 @@ void QCamera2HardwareInterface::debugShowPreviewFPS()
  *==========================================================================*/
 QCameraCbNotifier::~QCameraCbNotifier()
 {
+}
+
+/*===========================================================================
+ * FUNCTION   : exit
+ *
+ * DESCRIPTION: exit notify thread.
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void QCameraCbNotifier::exit()
+{
+    mActive = false;
     mProcTh.exit();
 }
 
@@ -1168,8 +1196,8 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
             break;
         case CAMERA_CMD_TYPE_EXIT:
             {
-                pme->mDataQ.flush();
                 running = 0;
+                pme->mDataQ.flush();
             }
             break;
         default:
@@ -1195,6 +1223,11 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
  *==========================================================================*/
 int32_t QCameraCbNotifier::notifyCallback(qcamera_callback_argm_t &cbArgs)
 {
+    if (!mActive) {
+        ALOGE("%s: notify thread is not active", __func__);
+        return UNKNOWN_ERROR;
+    }
+
     qcamera_callback_argm_t *cbArg = new qcamera_callback_argm_t();
     if (NULL == cbArg) {
         ALOGE("%s: no mem for qcamera_callback_argm_t", __func__);
@@ -1204,14 +1237,12 @@ int32_t QCameraCbNotifier::notifyCallback(qcamera_callback_argm_t &cbArgs)
     *cbArg = cbArgs;
 
     if (mDataQ.enqueue((void *)cbArg)) {
-        mProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
+        return mProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
     } else {
         ALOGE("%s: Error adding cb data into queue", __func__);
         delete cbArg;
         return UNKNOWN_ERROR;
     }
-
-    return NO_ERROR;
 }
 
 /*===========================================================================
@@ -1242,6 +1273,7 @@ void QCameraCbNotifier::setCallbacks(camera_notify_callback notifyCb,
         mDataCb = dataCb;
         mDataCbTimestamp = dataCbTimestamp;
         mCallbackCookie = callbackCookie;
+        mActive = true;
         mProcTh.launch(cbNotifyRoutine, this);
     } else {
         ALOGE("%s : Camera callback notifier already initialized!",

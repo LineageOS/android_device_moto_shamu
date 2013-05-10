@@ -454,7 +454,7 @@ int32_t QCameraPostProcessor::sendDataNotify(int32_t msg_type,
     int rc = m_parent->m_cbNotifier.notifyCallback(cbArg);
     if ( NO_ERROR != rc ) {
         ALOGE("%s: Error enqueuing jpeg data into notify queue", __func__);
-        free(data_cb);
+        releaseNotifyData(data_cb, this);
         return UNKNOWN_ERROR;
     }
 
