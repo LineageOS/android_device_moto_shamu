@@ -103,6 +103,7 @@ const char QCameraParameters::KEY_QC_SNAPSHOT_PICTURE_FLIP[] = "snapshot-picture
 const char QCameraParameters::KEY_QC_SUPPORTED_FLIP_MODES[] = "flip-mode-values";
 const char QCameraParameters::KEY_QC_VIDEO_HDR[] = "video-hdr";
 const char QCameraParameters::KEY_QC_SUPPORTED_VIDEO_HDR_MODES[] = "video-hdr-values";
+const char QCameraParameters::KEY_QC_SNAPSHOT_BURST_NUM[] = "snapshot-burst-num";
 
 // Values for effect settings.
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
@@ -558,6 +559,7 @@ QCameraParameters::QCameraParameters()
       m_bCAFLocked(false),
       m_bAFRunning(false),
       m_bInited(false),
+      m_nBurstNum(1),
       m_tempMap()
 {
     char value[32];
@@ -613,6 +615,7 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bCAFLocked(false),
     m_bAFRunning(false),
     m_bInited(false),
+    m_nBurstNum(1),
     m_tempMap()
 {
     memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
@@ -2714,6 +2717,39 @@ int32_t QCameraParameters::setFlip(const QCameraParameters& params)
 }
 
 /*===========================================================================
+ * FUNCTION   : setBurstNum
+ *
+ * DESCRIPTION: set burst number of snapshot
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setBurstNum(const QCameraParameters& params)
+{
+    int nBurstNum = params.getInt(KEY_QC_SNAPSHOT_BURST_NUM);
+    if (nBurstNum <= 0) {
+        // if burst number is not set in parameters,
+        // read from sys prop
+        char prop[PROPERTY_VALUE_MAX];
+        memset(prop, 0, sizeof(prop));
+        property_get("persist.camera.snapshot.number", prop, "0");
+        nBurstNum = atoi(prop);
+        if (nBurstNum <= 0) {
+            nBurstNum = 1;
+        }
+    } else {
+        set(KEY_QC_SNAPSHOT_BURST_NUM, nBurstNum);
+    }
+    m_nBurstNum = nBurstNum;
+    return NO_ERROR;
+}
+
+
+/*===========================================================================
  * FUNCTION   : updateParameters
  *
  * DESCRIPTION: update parameters from user setting
@@ -2787,6 +2823,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setFaceRecognition(params)))              final_rc = rc;
     if ((rc = setFlip(params)))                         final_rc = rc;
     if ((rc = setVideoHDR(params)))                     final_rc = rc;
+    if ((rc = setBurstNum(params)))                     final_rc = rc;
 
     // update live snapshot size after all other parameters are set
     if ((rc = setLiveSnapshotSize(params)))             final_rc = rc;
@@ -5147,17 +5184,7 @@ uint8_t QCameraParameters::getNumOfHDRBufsIfNeeded()
  *==========================================================================*/
 int QCameraParameters::getBurstNum()
 {
-    char prop[PROPERTY_VALUE_MAX];
-    memset(prop, 0, sizeof(prop));
-    property_get("persist.camera.snapshot.number", prop, "0");
-    int nBurstNum = atoi(prop);
-    if (nBurstNum > 0) {
-        ALOGD("%s: Reading burst number = %d from properties",
-              __func__, nBurstNum);
-    } else {
-        nBurstNum = 1;
-    }
-    return nBurstNum;
+    return m_nBurstNum;
 }
 
 /*===========================================================================
