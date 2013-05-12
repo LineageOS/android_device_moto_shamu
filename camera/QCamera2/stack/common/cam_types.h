@@ -1111,6 +1111,7 @@ typedef struct {
     cam_denoise_param_t denoise;
     cam_crop_param_t crop;
     uint32_t flip;     /* 0 means no flip */
+    uint32_t uv_upsample; /* 0 means no chroma upsampling */
     int32_t sharpness; /* 0 means no sharpness */
 } cam_per_frame_pp_config_t;
 
