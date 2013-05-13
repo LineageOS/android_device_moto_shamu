@@ -1833,6 +1833,20 @@ int32_t QCameraStateMachine::procEvtRecordingState(qcamera_sm_evt_enum_t evt,
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_STOP_PREVIEW:
+        {
+            rc = m_parent->stopRecording();
+            m_state = QCAMERA_SM_STATE_PREVIEWING;
+
+            rc = m_parent->stopPreview();
+            m_state = QCAMERA_SM_STATE_PREVIEW_STOPPED;
+
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
+            m_parent->signalAPIResult(&result);
+        }
+        break;
     case QCAMERA_SM_EVT_RELEASE_RECORIDNG_FRAME:
         {
             rc = m_parent->releaseRecordingFrame((const void *)payload);
@@ -1869,7 +1883,6 @@ int32_t QCameraStateMachine::procEvtRecordingState(qcamera_sm_evt_enum_t evt,
     case QCAMERA_SM_EVT_CANCEL_PICTURE:
     case QCAMERA_SM_EVT_START_PREVIEW:
     case QCAMERA_SM_EVT_START_NODISPLAY_PREVIEW:
-    case QCAMERA_SM_EVT_STOP_PREVIEW:
     case QCAMERA_SM_EVT_RELEASE:
         {
             ALOGE("%s: cannot handle evt(%d) in state(%d)", __func__, evt, m_state);
@@ -2155,10 +2168,26 @@ int32_t QCameraStateMachine::procEvtVideoPicTakingState(qcamera_sm_evt_enum_t ev
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_STOP_PREVIEW:
+        {
+            rc = m_parent->cancelLiveSnapshot();
+            m_state = QCAMERA_SM_STATE_RECORDING;
+
+            rc = m_parent->stopRecording();
+            m_state = QCAMERA_SM_STATE_PREVIEWING;
+
+            rc = m_parent->stopPreview();
+            m_state = QCAMERA_SM_STATE_PREVIEW_STOPPED;
+
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
+            m_parent->signalAPIResult(&result);
+        }
+        break;
     case QCAMERA_SM_EVT_START_RECORDING:
     case QCAMERA_SM_EVT_START_PREVIEW:
     case QCAMERA_SM_EVT_START_NODISPLAY_PREVIEW:
-    case QCAMERA_SM_EVT_STOP_PREVIEW:
     case QCAMERA_SM_EVT_TAKE_PICTURE:
     case QCAMERA_SM_EVT_RELEASE:
         {
