@@ -4881,6 +4881,7 @@ int QCameraParameters::getFlipMode(cam_stream_type_t type)
         str = get(KEY_QC_VIDEO_FLIP);
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
+    case CAM_STREAM_TYPE_POSTVIEW:
         str = get(KEY_QC_SNAPSHOT_PICTURE_FLIP);
         break;
     default:
