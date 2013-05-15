@@ -274,6 +274,9 @@ typedef struct{
     /* picture sizes need scale*/
     uint8_t scale_picture_sizes_cnt;
     cam_dimension_t scale_picture_sizes[MAX_SCALE_SIZES_CNT];
+    uint8_t supported_overrides_cnt; // == supported_scene_modes_cnt
+    cam_scene_mode_overrides_t scene_mode_overrides[CAM_SCENE_MODE_MAX];
+
 } cam_capability_t;
 
 typedef enum {

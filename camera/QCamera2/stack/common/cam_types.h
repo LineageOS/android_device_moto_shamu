@@ -418,10 +418,14 @@ typedef enum {
 typedef enum {
     CAM_AE_MODE_OFF,
     CAM_AE_MODE_ON,
+    CAM_AE_MODE_ON_AUTO_FLASH,
+    CAM_AE_MODE_ON_ALWAYS_FLASH,
+    CAM_AE_MODE_ON_AUTO_FLASH_REDEYE,
     CAM_AE_MODE_MAX
 } cam_ae_mode_type;
 
 typedef enum {
+    CAM_FOCUS_MODE_OFF,
     CAM_FOCUS_ALGO_AUTO,
     CAM_FOCUS_ALGO_SPOT,
     CAM_FOCUS_ALGO_CENTER_WEIGHTED,
@@ -1207,6 +1211,12 @@ typedef enum {
     CAM_FLASH_CTRL_SINGLE,
     CAM_FLASH_CTRL_TORCH
 } cam_flash_ctrl_t;
+
+typedef struct {
+    uint8_t ae_mode;
+    uint8_t awb_mode;
+    uint8_t af_mode;
+} cam_scene_mode_overrides_t;
 
 typedef struct {
     uint8_t ae_mode;
