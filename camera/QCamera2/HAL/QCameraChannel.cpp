@@ -608,6 +608,7 @@ QCameraReprocessChannel::~QCameraReprocessChannel()
  *   @pSrcChannel    : ptr to input source channel that needs reprocess
  *   @minStreamBufNum: number of stream buffers needed
  *   @paddingInfo    : padding information
+ *   @param          : reference to parameters
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
@@ -617,7 +618,8 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                                                             cam_pp_feature_config_t &config,
                                                             QCameraChannel *pSrcChannel,
                                                             uint8_t minStreamBufNum,
-                                                            cam_padding_info_t *paddingInfo)
+                                                            cam_padding_info_t *paddingInfo,
+                                                            QCameraParameters &param)
 {
     int32_t rc = 0;
     QCameraStream *pStream = NULL;
@@ -666,6 +668,17 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                     int32_t temp = streamInfo->dim.height;
                     streamInfo->dim.height = streamInfo->dim.width;
                     streamInfo->dim.width = temp;
+                }
+            }
+
+            if (param.isZSLMode() &&
+                (streamInfo->reprocess_config.online.input_stream_type == CAM_STREAM_TYPE_SNAPSHOT)) {
+                // ZSL mode snapshot need reprocess to do the flip
+                int flipMode =
+                    param.getFlipMode(streamInfo->reprocess_config.online.input_stream_type);
+                if (flipMode > 0) {
+                    streamInfo->reprocess_config.pp_feature_config.feature_mask |= CAM_QCOM_FEATURE_FLIP;
+                    streamInfo->reprocess_config.pp_feature_config.flip = flipMode;
                 }
             }
 

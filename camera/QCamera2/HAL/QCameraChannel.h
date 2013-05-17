@@ -114,7 +114,8 @@ public:
                                        cam_pp_feature_config_t &config,
                                        QCameraChannel *pSrcChannel,
                                        uint8_t minStreamBufNum,
-                                       cam_padding_info_t *paddingInfo);
+                                       cam_padding_info_t *paddingInfo,
+                                       QCameraParameters &param);
     // online reprocess
     int32_t doReprocess(mm_camera_super_buf_t *frame);
     // offline reprocess
