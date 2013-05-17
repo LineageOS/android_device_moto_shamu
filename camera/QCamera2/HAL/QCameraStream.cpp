@@ -166,11 +166,14 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
         mStreamInfo(NULL),
         mNumBufs(0),
         mDataCB(NULL),
+        mUserData(NULL),
+        mDataQ(releaseFrameData, this),
         mStreamInfoBuf(NULL),
         mStreamBufs(NULL),
         mAllocator(allocator),
         mBufDefs(NULL),
-        mStreamBufsAcquired(false)
+        mStreamBufsAcquired(false),
+        m_bActive(false)
 {
     mMemVtbl.user_data = this;
     mMemVtbl.get_bufs = get_bufs;
@@ -302,6 +305,9 @@ int32_t QCameraStream::start()
 {
     int32_t rc = 0;
     rc = mProcTh.launch(dataProcRoutine, this);
+    if (rc == NO_ERROR) {
+        m_bActive = true;
+    }
     return rc;
 }
 
@@ -319,6 +325,7 @@ int32_t QCameraStream::start()
 int32_t QCameraStream::stop()
 {
     int32_t rc = 0;
+    m_bActive = false;
     rc = mProcTh.exit();
     return rc;
 }
@@ -379,8 +386,15 @@ int32_t QCameraStream::processZoomDone(preview_stream_ops_t *previewWindow,
 int32_t QCameraStream::processDataNotify(mm_camera_super_buf_t *frame)
 {
     ALOGI("%s:\n", __func__);
-    mDataQ.enqueue((void *)frame);
-    return mProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
+    if (m_bActive) {
+        mDataQ.enqueue((void *)frame);
+        return mProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
+    } else {
+        ALOGD("%s: Stream thread is not active, no ops here", __func__);
+        bufDone(frame->bufs[0]->buf_idx);
+        free(frame);
+        return NO_ERROR;
+    }
 }
 
 /*===========================================================================
@@ -959,6 +973,26 @@ int32_t QCameraStream::setParameter(cam_stream_parm_buffer_t &param)
         param = mStreamInfo->parm_buf;
     }
     return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : releaseFrameData
+ *
+ * DESCRIPTION: callback function to release frame data node
+ *
+ * PARAMETERS :
+ *   @data      : ptr to post process input data
+ *   @user_data : user data ptr (QCameraReprocessor)
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void QCameraStream::releaseFrameData(void *data, void *user_data)
+{
+    QCameraStream *pme = (QCameraStream *)user_data;
+    mm_camera_super_buf_t *frame = (mm_camera_super_buf_t *)data;
+    if (NULL != pme) {
+        pme->bufDone(frame->bufs[0]->buf_idx);
+    }
 }
 
 }; // namespace qcamera
