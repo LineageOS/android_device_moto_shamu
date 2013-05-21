@@ -488,17 +488,8 @@ void QCamera2HardwareInterface::postview_stream_cb_routine(mm_camera_super_buf_t
                              frame->frame_idx, QCAMERA_DUMP_FRM_THUMBNAIL);
     }
 
-    // Display the buffer.
-    int dequeuedIdx = memory->displayBuffer(frame->buf_idx);
-    if (dequeuedIdx < 0 || dequeuedIdx >= memory->getCnt()) {
-        ALOGD("%s: Invalid dequeued buffer index %d",
-              __func__, dequeuedIdx);
-        free(super_frame);
-        return;
-    }
-
-    // Return dequeued buffer back to driver
-    err = stream->bufDone(dequeuedIdx);
+    // Return buffer back to driver
+    err = stream->bufDone(frame->buf_idx);
     if ( err < 0) {
         ALOGE("stream bufDone failed %d", err);
     }
