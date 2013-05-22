@@ -47,6 +47,11 @@
 #define JOB_HIST_MAX 10000
 #define ENCODING_MODE_PARALLEL 0
 
+/** ARRAY_SIZE:
+ *
+ *  Returns the array size
+ **/
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 /** DUMP_TO_FILE:
  *  @filename: file name
@@ -523,8 +528,8 @@ void mm_jpeg_session_destroy(mm_jpeg_job_session_t* p_session)
   p_session->omx_handle = NULL;
 
   CDBG_ERROR("%s:%d] Exif entry count %d %d", __func__, __LINE__,
-    p_session->params.exif_info.numOfEntries,
-    p_session->total_entries);
+    (int)p_session->params.exif_info.numOfEntries,
+    (int)p_session->total_entries);
   for (i = p_session->params.exif_info.numOfEntries;
     i < p_session->total_entries; i++) {
     rc = releaseExifEntry(&p_session->exif_info_all[i]);
@@ -628,11 +633,11 @@ OMX_ERRORTYPE mm_jpeg_encoding_mode(
     return rc;
   }
 
- if(ENCODING_MODE_PARALLEL){
-   encoding_mode = OMX_Parallel_Encoding;
- } else {
-  encoding_mode = OMX_Serial_Encoding;
- }
+  if (ENCODING_MODE_PARALLEL) {
+    encoding_mode = OMX_Parallel_Encoding;
+  } else {
+    encoding_mode = OMX_Serial_Encoding;
+  }
   CDBG_HIGH("%s:%d] encoding mode = %d ", __func__, __LINE__,
     (int)encoding_mode);
   rc = OMX_SetParameter(p_session->omx_handle, indextype, &encoding_mode);
@@ -1031,6 +1036,10 @@ OMX_ERRORTYPE mm_jpeg_session_config_main(mm_jpeg_job_session_t *p_session)
     CDBG_ERROR("%s: config buffer offset failed", __func__);
     return rc;
   }
+
+  /* set the encoding mode */
+  mm_jpeg_encoding_mode(p_session);
+
   return rc;
 }
 
@@ -1298,30 +1307,30 @@ static OMX_ERRORTYPE mm_jpeg_configure_job_params(mm_jpeg_job_session_t *p_sessi
   }
 
   if (ENCODING_MODE_PARALLEL) {
-  //Pass the ION buffer to be used as o/p for HW
-  memset(&work_buffer, 0x0, sizeof(QOMX_WORK_BUFFER));
-  ret = OMX_GetExtensionIndex(p_session->omx_handle,
-    QOMX_IMAGE_EXT_WORK_BUFFER_NAME,
-    &work_buffer_index);
-  if (ret) {
-    CDBG_ERROR("%s:%d] Error getting work buffer index %d",
-      __func__, __LINE__, ret);
-    return ret;
-  }
-  work_buffer.fd = p_session->work_buffer.ion_fd;
-  work_buffer.vaddr = p_session->work_buffer.addr;
+    //Pass the ION buffer to be used as o/p for HW
+    memset(&work_buffer, 0x0, sizeof(QOMX_WORK_BUFFER));
+    ret = OMX_GetExtensionIndex(p_session->omx_handle,
+      QOMX_IMAGE_EXT_WORK_BUFFER_NAME,
+      &work_buffer_index);
+    if (ret) {
+      CDBG_ERROR("%s:%d] Error getting work buffer index %d",
+        __func__, __LINE__, ret);
+      return ret;
+    }
+    work_buffer.fd = p_session->work_buffer.p_pmem_fd;
+    work_buffer.vaddr = p_session->work_buffer.addr;
+    CDBG_ERROR("%s:%d] Work buffer %d %x", __func__, __LINE__,
+      work_buffer.fd, work_buffer.vaddr);
 
-  ret = OMX_SetConfig(p_session->omx_handle, work_buffer_index,
-    &work_buffer);
-  if (ret) {
-    CDBG_ERROR("%s:%d] Error", __func__, __LINE__);
-    return ret;
-  }
-
+    ret = OMX_SetConfig(p_session->omx_handle, work_buffer_index,
+      &work_buffer);
+    if (ret) {
+      CDBG_ERROR("%s:%d] Error", __func__, __LINE__);
+      return ret;
+    }
   }
 
   return ret;
-
 }
 
 /** mm_jpeg_session_configure:
@@ -1449,7 +1458,9 @@ static OMX_ERRORTYPE mm_jpeg_session_encode(mm_jpeg_job_session_t *p_session)
   MM_JPEG_CHK_ABORT(p_session, ret, error);
 
 #ifdef MM_JPEG_DUMP_INPUT
-  DUMP_TO_FILE("/data/mm_jpeg_int.yuv",
+  char filename[256];
+  snprintf(filename, 255, "/data/jpeg/mm_jpeg_int%d.yuv", p_session->ebd_count);
+  DUMP_TO_FILE(filename,
     p_session->p_in_omx_buf[p_jobparams->src_index]->pBuffer,
     (int)p_session->p_in_omx_buf[p_jobparams->src_index]->nAllocLen);
 #endif
@@ -1462,6 +1473,13 @@ static OMX_ERRORTYPE mm_jpeg_session_encode(mm_jpeg_job_session_t *p_session)
   }
 
   if (p_session->params.encode_thumbnail) {
+#ifdef MM_JPEG_DUMP_INPUT
+  char thumb_filename[256];
+  snprintf(thumb_filename, 255, "/data/jpeg/mm_jpeg_int_t%d.yuv", p_session->ebd_count);
+  DUMP_TO_FILE(filename,
+    p_session->p_in_omx_thumb_buf[p_jobparams->thumb_index]->pBuffer,
+    (int)p_session->p_in_omx_thumb_buf[p_jobparams->thumb_index]->nAllocLen);
+#endif
     ret = OMX_EmptyThisBuffer(p_session->omx_handle,
         p_session->p_in_omx_thumb_buf[p_jobparams->thumb_index]);
     if (ret) {
@@ -1717,7 +1735,7 @@ int32_t mm_jpeg_init(mm_jpeg_obj *my_obj)
     return -1;
   }
 
-  //Allocate Ion buffer of max jpeg size
+  // Allocate Ion buffer of max jpeg size
   if (ENCODING_MODE_PARALLEL) {
     my_obj->ionBuffer.size = MAX_JPEG_SIZE;
     my_obj->ionBuffer.addr = (uint8_t *)buffer_allocate(&my_obj->ionBuffer, 0);
@@ -2058,12 +2076,14 @@ int32_t mm_jpeg_destroy_session(mm_jpeg_obj *my_obj,
   uint8_t clnt_idx = 0;
   mm_jpeg_job_q_node_t *node = NULL;
   OMX_BOOL ret = OMX_FALSE;
-  uint32_t session_id = p_session->sessionId;
+  uint32_t session_id = 0;
 
   if (NULL == p_session) {
     CDBG_ERROR("%s:%d] invalid session", __func__, __LINE__);
     return rc;
   }
+
+  session_id = p_session->sessionId;
 
   pthread_mutex_lock(&my_obj->job_lock);
 
@@ -2116,12 +2136,13 @@ int32_t mm_jpeg_destroy_session_unlocked(mm_jpeg_obj *my_obj,
   uint8_t clnt_idx = 0;
   mm_jpeg_job_q_node_t *node = NULL;
   OMX_BOOL ret = OMX_FALSE;
-  uint32_t session_id = p_session->sessionId;
-
+  uint32_t session_id = 0;
   if (NULL == p_session) {
     CDBG_ERROR("%s:%d] invalid session", __func__, __LINE__);
     return rc;
   }
+
+  session_id = p_session->sessionId;
 
   /* abort job if in todo queue */
   CDBG("%s:%d] abort todo jobs", __func__, __LINE__);

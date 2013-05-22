@@ -44,7 +44,7 @@
 #define MM_JPEG_CIRQ_SIZE 30
 #define MM_JPEG_MAX_SESSION 10
 #define MAX_EXIF_TABLE_ENTRIES 50
-#define MAX_JPEG_SIZE 18000000
+#define MAX_JPEG_SIZE 20000000
 
 typedef struct {
   struct cam_list list;

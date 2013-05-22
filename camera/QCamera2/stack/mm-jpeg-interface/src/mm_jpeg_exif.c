@@ -266,3 +266,23 @@ int32_t releaseExifEntry(QOMX_EXIF_INFO *p_exif_info)
 
   return 0;
 }
+/** processMetaData:
+ *
+ *  Arguments:
+ *   @p_meta : ptr to metadata
+ *   @exif_info: Exif info struct
+ *
+ *  Return     : int32_t type of status
+ *               NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ *  Description:
+ *       process awb debug info
+ *
+ *  Notes: this needs to be filled for the metadata
+ **/
+int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info)
+{
+  int rc = 0;
+  return rc;
+}
