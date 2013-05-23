@@ -5086,7 +5086,7 @@ int QCameraParameters::getZSLBackLookCount()
  *==========================================================================*/
 int QCameraParameters::getMaxUnmatchedFramesInQueue()
 {
-    return m_pCapability->min_num_pp_bufs;
+    return m_pCapability->min_num_pp_bufs + (m_nBurstNum / 10);
 }
 
 /*===========================================================================
