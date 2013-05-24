@@ -3089,7 +3089,7 @@ int32_t QCamera2HardwareInterface::addCaptureChannel()
     }
 
     rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_POSTVIEW,
-                            postview_stream_cb_routine, this);
+                            NULL, this);
 
     if (rc != NO_ERROR) {
         ALOGE("%s: add postview stream failed, ret = %d", __func__, rc);
