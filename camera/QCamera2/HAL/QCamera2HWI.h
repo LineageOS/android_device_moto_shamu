@@ -425,9 +425,6 @@ private:
     bool m_bAutoFocusRunning;
     cam_autofocus_state_t m_currentFocusState;
 
-    // If start_zsl_snapshot is called to notify camera daemon about zsl snapshot
-    bool m_bStartZSLSnapshotCalled;
-
     power_module_t *m_pPowerModule;   // power module
 
     int mDumpFrmCnt;  // frame dump count

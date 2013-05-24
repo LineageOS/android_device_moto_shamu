@@ -339,6 +339,10 @@ typedef struct mm_channel {
 
     /* reference to parent cam_obj */
     struct mm_camera_obj* cam_obj;
+
+    /* control for zsl led */
+    uint8_t startZSlSnapshotCalled;
+    uint8_t needLEDFlash;
 } mm_channel_t;
 
 /* struct to store information about pp cookie*/
