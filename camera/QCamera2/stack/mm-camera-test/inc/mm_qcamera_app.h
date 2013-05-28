@@ -77,6 +77,8 @@
 #define BACKLIGHT_CONTROL         "/sys/class/leds/lcd-backlight/brightness"
 #define BACKLIGHT_LEVEL           "205"
 
+#define ENABLE_REPROCESSING       1
+
 #define INVALID_KEY_PRESS 0
 #define BASE_OFFSET  ('Z' - 'A' + 1)
 #define BASE_OFFSET_NUM  ('Z' - 'A' + 2)
@@ -142,6 +144,7 @@ typedef enum {
     MM_CHANNEL_TYPE_SNAPSHOT, /* snapshot main only */
     MM_CHANNEL_TYPE_VIDEO,    /* video only */
     MM_CHANNEL_TYPE_RDI,      /* rdi only */
+    MM_CHANNEL_TYPE_REPROCESS,/* offline reprocess */
     MM_CHANNEL_TYPE_MAX
 } mm_camera_channel_type_t;
 
@@ -173,6 +176,21 @@ typedef struct {
     uint8_t num_streams;
     mm_camera_stream_t streams[MAX_STREAM_NUM_IN_BUNDLE];
 } mm_camera_channel_t;
+
+typedef void (*release_data_fn)(void* data, void *user_data);
+
+typedef struct {
+    struct cam_list list;
+    void* data;
+} camera_q_node;
+
+typedef struct {
+    camera_q_node m_head;
+    int m_size;
+    pthread_mutex_t m_lock;
+    release_data_fn m_dataFn;
+    void * m_userData;
+} mm_camera_queue_t;
 
 typedef struct {
     uint16_t user_input_display_width;
@@ -207,6 +225,16 @@ typedef struct {
     prev_callback user_preview_cb;
     parm_buffer_t *params_buffer;
     USER_INPUT_DISPLAY_T preview_resolution;
+
+    //Reprocess params&stream
+    int8_t enable_reproc;
+    int32_t reproc_sharpness;
+    int8_t enable_WNR;
+    cam_denoise_process_type_t wnr_plates;
+    int8_t enable_CAC;
+    mm_camera_queue_t pp_frames;
+    mm_camera_stream_t *reproc_stream;
+    //
 } mm_camera_test_obj_t;
 
 typedef struct {
@@ -428,6 +456,27 @@ extern int createEncodingSession(mm_camera_test_obj_t *test_obj,
 extern int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_frame,
                mm_camera_stream_t *m_stream);
 extern int mm_app_take_picture(mm_camera_test_obj_t *test_obj, uint8_t);
+
+extern mm_camera_channel_t * mm_app_add_reprocess_channel(mm_camera_test_obj_t *test_obj,
+                                                   mm_camera_stream_t *source_stream);
+extern int mm_app_start_reprocess(mm_camera_test_obj_t *test_obj);
+extern int mm_app_stop_reprocess(mm_camera_test_obj_t *test_obj);
+extern int mm_app_do_reprocess(mm_camera_test_obj_t *test_obj,
+        mm_camera_buf_def_t *frame,
+        uint8_t meta_idx,
+        mm_camera_super_buf_t *super_buf,
+        mm_camera_stream_t *src_meta);
+extern void mm_app_release_ppinput(void *data, void *user_data);
+
+extern int mm_camera_queue_init(mm_camera_queue_t *queue,
+                         release_data_fn data_rel_fn,
+                         void *user_data);
+extern int mm_qcamera_queue_release(mm_camera_queue_t *queue);
+extern int mm_qcamera_queue_isempty(mm_camera_queue_t *queue);
+extern int mm_qcamera_queue_enqueue(mm_camera_queue_t *queue, void *data);
+extern void* mm_qcamera_queue_dequeue(mm_camera_queue_t *queue,
+                                      int bFromHead);
+extern void mm_qcamera_queue_flush(mm_camera_queue_t *queue);
 
 #endif /* __MM_QCAMERA_APP_H__ */
 

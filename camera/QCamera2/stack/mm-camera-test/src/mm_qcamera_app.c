@@ -2104,6 +2104,7 @@ int mm_camera_lib_start_stream(mm_camera_lib_handle *handle)
             goto EXIT;
         }
     } else {
+        handle->test_obj.enable_reproc = ENABLE_REPROCESSING;
         rc = mm_app_start_preview(&handle->test_obj);
         if (rc != MM_CAMERA_OK) {
             CDBG_ERROR("%s: mm_app_start_preview() err=%d\n",
