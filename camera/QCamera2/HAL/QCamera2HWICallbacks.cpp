@@ -690,13 +690,43 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
         } else {
             // process face detection result
             ALOGD("[KPI Perf] %s: Number of faces detected %d",__func__,pMetaData->faces_data.num_faces_detected);
-            pme->processFaceDetectionResult(&pMetaData->faces_data);
+            qcamera_sm_internal_evt_payload_t *payload =
+                (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+            if (NULL != payload) {
+                memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+                payload->evt_type = QCAMERA_INTERNAL_EVT_FACE_DETECT_RESULT;
+                payload->faces_data = pMetaData->faces_data;
+                int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: processEvt face detection failed", __func__);
+                    free(payload);
+                    payload = NULL;
+
+                }
+            } else {
+                ALOGE("%s: No memory for face detect qcamera_sm_internal_evt_payload_t", __func__);
+            }
         }
     }
 
     if (pMetaData->is_stats_valid) {
         // process histogram statistics info
-        pme->processHistogramStats(pMetaData->stats_data);
+        qcamera_sm_internal_evt_payload_t *payload =
+            (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+        if (NULL != payload) {
+            memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+            payload->evt_type = QCAMERA_INTERNAL_EVT_HISTOGRAM_STATS;
+            payload->stats_data = pMetaData->stats_data;
+            int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: processEvt histogram failed", __func__);
+                free(payload);
+                payload = NULL;
+
+            }
+        } else {
+            ALOGE("%s: No memory for histogram qcamera_sm_internal_evt_payload_t", __func__);
+        }
     }
 
     if (pMetaData->is_focus_valid) {
@@ -709,13 +739,13 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
             payload->focus_data = pMetaData->focus_data;
             int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
             if (rc != NO_ERROR) {
-                ALOGE("%s: processEVt failed", __func__);
+                ALOGE("%s: processEvt focus failed", __func__);
                 free(payload);
                 payload = NULL;
 
             }
         } else {
-            ALOGE("%s: No memory for qcamera_sm_internal_evt_payload_t", __func__);
+            ALOGE("%s: No memory for focus qcamera_sm_internal_evt_payload_t", __func__);
         }
     }
 
@@ -724,7 +754,22 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
             ALOGE("%s: Invalid num_of_streams %d in crop_data", __func__,
                 pMetaData->crop_data.num_of_streams);
         } else {
-            pme->processZoomEvent(pMetaData->crop_data);
+            qcamera_sm_internal_evt_payload_t *payload =
+                (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+            if (NULL != payload) {
+                memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+                payload->evt_type = QCAMERA_INTERNAL_EVT_CROP_INFO;
+                payload->crop_data = pMetaData->crop_data;
+                int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: processEvt crop info failed", __func__);
+                    free(payload);
+                    payload = NULL;
+
+                }
+            } else {
+                ALOGE("%s: No memory for crop info qcamera_sm_internal_evt_payload_t", __func__);
+            }
         }
     }
 
@@ -737,13 +782,13 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
             payload->prep_snapshot_state = pMetaData->prep_snapshot_done_state;
             int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
             if (rc != NO_ERROR) {
-                ALOGE("%s: processEVt failed", __func__);
+                ALOGE("%s: processEvt prep_snapshot failed", __func__);
                 free(payload);
                 payload = NULL;
 
             }
         } else {
-            ALOGE("%s: No memory for qcamera_sm_internal_evt_payload_t", __func__);
+            ALOGE("%s: No memory for prep_snapshot qcamera_sm_internal_evt_payload_t", __func__);
         }
     }
 
@@ -846,42 +891,54 @@ void QCamera2HardwareInterface::dumpFrameToFile(const void *data,
                     switch (dump_type) {
                     case QCAMERA_DUMP_FRM_PREVIEW:
                         {
+                            pthread_mutex_lock(&m_parm_lock);
                             mParameters.getStreamDimension(CAM_STREAM_TYPE_PREVIEW, dim);
+                            pthread_mutex_unlock(&m_parm_lock);
                             snprintf(buf, sizeof(buf), "/data/%dp_%dx%d_%d.yuv",
                                      mDumpFrmCnt, dim.width, dim.height, index);
                         }
                         break;
                     case QCAMERA_DUMP_FRM_THUMBNAIL:
                         {
-                        mParameters.getStreamDimension(CAM_STREAM_TYPE_POSTVIEW, dim);
-                        snprintf(buf, sizeof(buf), "/data/%dt_%dx%d_%d.yuv",
-                                 mDumpFrmCnt, dim.width, dim.height, index);
+                            pthread_mutex_lock(&m_parm_lock);
+                            mParameters.getStreamDimension(CAM_STREAM_TYPE_POSTVIEW, dim);
+                            pthread_mutex_unlock(&m_parm_lock);
+                            snprintf(buf, sizeof(buf), "/data/%dt_%dx%d_%d.yuv",
+                                     mDumpFrmCnt, dim.width, dim.height, index);
                         }
                         break;
                     case QCAMERA_DUMP_FRM_SNAPSHOT:
                         {
+                            pthread_mutex_lock(&m_parm_lock);
                             mParameters.getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT, dim);
+                            pthread_mutex_unlock(&m_parm_lock);
                             snprintf(buf, sizeof(buf), "/data/%ds_%dx%d_%d.yuv",
                                      mDumpFrmCnt, dim.width, dim.height, index);
                         }
                     break;
                     case QCAMERA_DUMP_FRM_VIDEO:
                         {
+                            pthread_mutex_lock(&m_parm_lock);
                             mParameters.getStreamDimension(CAM_STREAM_TYPE_VIDEO, dim);
+                            pthread_mutex_unlock(&m_parm_lock);
                             snprintf(buf, sizeof(buf), "/data/%dv_%dx%d_%d.yuv",
                                      mDumpFrmCnt, dim.width, dim.height, index);
                         }
                         break;
                     case QCAMERA_DUMP_FRM_RAW:
                         {
+                            pthread_mutex_lock(&m_parm_lock);
                             mParameters.getStreamDimension(CAM_STREAM_TYPE_RAW, dim);
+                            pthread_mutex_unlock(&m_parm_lock);
                             snprintf(buf, sizeof(buf), "/data/%dr_%dx%d_%d.yuv",
                                      mDumpFrmCnt, dim.width, dim.height, index);
                         }
                         break;
                     case QCAMERA_DUMP_FRM_JPEG:
                         {
+                            pthread_mutex_lock(&m_parm_lock);
                             mParameters.getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT, dim);
+                            pthread_mutex_unlock(&m_parm_lock);
                             snprintf(buf, sizeof(buf), "/data/%dj_%dx%d_%d.yuv",
                                      mDumpFrmCnt, dim.width, dim.height, index);
                         }
