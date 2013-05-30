@@ -3774,6 +3774,49 @@ int32_t QCamera2HardwareInterface::processHistogramStats(cam_hist_stats_t &stats
 }
 
 /*===========================================================================
+ * FUNCTION   : processHDRData
+ *
+ * DESCRIPTION: process incoming hdr algo data
+ *
+ * PARAMETERS :
+ *   @confidence : hdr algo confidence level
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::processHDRData(cam_asd_hdr_scene_data_t hdr_scene)
+{
+    int rc = NO_ERROR;
+
+    if ( msgTypeEnabled(CAMERA_MSG_META_DATA) ) {
+        camera_memory_t *hdrBuffer = mGetMemory(-1,
+                                                 sizeof(cam_asd_hdr_scene_data_t),
+                                                 1,
+                                                 mCallbackCookie);
+        if ( NULL == hdrBuffer ) {
+            ALOGE("%s: Not enough memory for auto hdr data",
+                  __func__);
+            return NO_MEMORY;
+        }
+
+        memcpy(hdrBuffer->data, &hdr_scene, sizeof(cam_asd_hdr_scene_data_t));
+        qcamera_callback_argm_t cbArg;
+        memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+        cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+        cbArg.msg_type = CAMERA_MSG_META_DATA;
+        cbArg.data = hdrBuffer;
+        cbArg.user_data = hdrBuffer;
+        cbArg.cookie = this;
+        cbArg.release_cb = releaseCameraMemory;
+        m_cbNotifier.notifyCallback(cbArg);
+
+    }
+
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : updateThermalLevel
  *
  * DESCRIPTION: update thermal level depending on thermal events
