@@ -132,6 +132,9 @@ typedef struct {
 typedef enum {
     QCAMERA_INTERNAL_EVT_FOCUS_UPDATE,       // focus updating result
     QCAMERA_INTERNAL_EVT_PREP_SNAPSHOT_DONE, // prepare snapshot done
+    QCAMERA_INTERNAL_EVT_FACE_DETECT_RESULT, // face detection result
+    QCAMERA_INTERNAL_EVT_HISTOGRAM_STATS,    // histogram
+    QCAMERA_INTERNAL_EVT_CROP_INFO,          // crop info
     QCAMERA_INTERNAL_EVT_MAX
 } qcamera_internal_evt_type_t;
 
@@ -140,6 +143,9 @@ typedef struct {
     union {
         cam_auto_focus_data_t focus_data;
         cam_prep_snapshot_state_t prep_snapshot_state;
+        cam_face_detection_data_t faces_data;
+        cam_hist_stats_t stats_data;
+        cam_crop_data_t crop_data;
     };
 } qcamera_sm_internal_evt_payload_t;
 

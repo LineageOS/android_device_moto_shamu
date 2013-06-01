@@ -415,6 +415,8 @@ private:
     pthread_cond_t m_evtCond;
     qcamera_api_result_t m_evtResult;
 
+    pthread_mutex_t m_parm_lock;
+
     QCameraChannel *m_channels[QCAMERA_CH_TYPE_MAX]; // array holding channel ptr
 
     bool m_bShutterSoundPlayed;         // if shutter sound had been played
