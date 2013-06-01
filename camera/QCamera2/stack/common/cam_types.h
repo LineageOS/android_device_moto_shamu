@@ -284,6 +284,8 @@ typedef struct{
     int32_t offset_y;
     int32_t stride;
     int32_t scanline;
+    int32_t width;    /* width without padding */
+    int32_t height;   /* height without padding */
 } cam_mp_len_offset_t;
 
 typedef struct {

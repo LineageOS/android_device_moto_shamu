@@ -285,8 +285,10 @@ private:
     bool needRotationReprocess();
     void debugShowVideoFPS();
     void debugShowPreviewFPS();
-    void dumpFrameToFile(const void *data, uint32_t size,
-                         int index, int dump_type);
+    void dumpJpegToFile(const void *data, uint32_t size, int index);
+    void dumpFrameToFile(QCameraStream *stream,
+                         mm_camera_buf_def_t *frame,
+                         int dump_type);
     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
     void playShutter();
     void getThumbnailSize(cam_dimension_t &dim);
