@@ -100,7 +100,7 @@
  *  check the abort failure
  **/
 #define MM_JPEG_CHK_ABORT(p, ret, label) ({ \
-  if (OMX_TRUE == p->abort_flag) { \
+  if (MM_JPEG_ABORT_INIT == p->abort_state) { \
     CDBG_ERROR("%s:%d] jpeg abort", __func__, __LINE__); \
     ret = OMX_ErrorNone; \
     goto label; \
@@ -455,7 +455,7 @@ OMX_ERRORTYPE mm_jpeg_session_create(mm_jpeg_job_session_t* p_session)
   pthread_cond_init(&p_session->cond, NULL);
   cirq_reset(&p_session->cb_q);
   p_session->state_change_pending = OMX_FALSE;
-  p_session->abort_flag = OMX_FALSE;
+  p_session->abort_state = MM_JPEG_ABORT_NONE;
   p_session->error_flag = OMX_ErrorNone;
   p_session->ebd_count = 0;
   p_session->fbd_count = 0;
@@ -1134,30 +1134,34 @@ OMX_BOOL mm_jpeg_session_abort(mm_jpeg_job_session_t *p_session)
 
   CDBG("%s:%d] E", __func__, __LINE__);
   pthread_mutex_lock(&p_session->lock);
-  if (OMX_TRUE == p_session->abort_flag) {
+  if (MM_JPEG_ABORT_NONE != p_session->abort_state) {
     pthread_mutex_unlock(&p_session->lock);
     CDBG("%s:%d] **** ALREADY ABORTED", __func__, __LINE__);
     return 0;
   }
-  p_session->abort_flag = OMX_TRUE;
+  p_session->abort_state = MM_JPEG_ABORT_INIT;
   if (OMX_TRUE == p_session->encoding) {
     p_session->state_change_pending = OMX_TRUE;
 
     CDBG("%s:%d] **** ABORTING", __func__, __LINE__);
+    pthread_mutex_unlock(&p_session->lock);
 
     ret = OMX_SendCommand(p_session->omx_handle, OMX_CommandStateSet,
     OMX_StateIdle, NULL);
 
     if (ret != OMX_ErrorNone) {
       CDBG("%s:%d] OMX_SendCommand returned error %d", __func__, __LINE__, ret);
-      pthread_mutex_unlock(&p_session->lock);
       return 1;
     }
 
-    CDBG("%s:%d] before wait", __func__, __LINE__);
-    pthread_cond_wait(&p_session->cond, &p_session->lock);
+    pthread_mutex_lock(&p_session->lock);
+    if (MM_JPEG_ABORT_INIT == p_session->abort_state) {
+      CDBG("%s:%d] before wait", __func__, __LINE__);
+      pthread_cond_wait(&p_session->cond, &p_session->lock);
+    }
     CDBG("%s:%d] after wait", __func__, __LINE__);
   }
+  p_session->abort_state = MM_JPEG_ABORT_DONE;
   pthread_mutex_unlock(&p_session->lock);
   CDBG("%s:%d] X", __func__, __LINE__);
   return 0;
@@ -1433,7 +1437,7 @@ static OMX_ERRORTYPE mm_jpeg_session_encode(mm_jpeg_job_session_t *p_session)
   mm_jpeg_obj *my_obj = (mm_jpeg_obj *)p_session->jpeg_obj;
 
   pthread_mutex_lock(&p_session->lock);
-  p_session->abort_flag = OMX_FALSE;
+  p_session->abort_state = MM_JPEG_ABORT_NONE;
   p_session->encoding = OMX_FALSE;
   pthread_mutex_unlock(&p_session->lock);
 
@@ -2268,12 +2272,13 @@ OMX_ERRORTYPE mm_jpeg_fbd(OMX_HANDLETYPE hComponent,
 
   CDBG("%s:%d] count %d ", __func__, __LINE__, p_session->fbd_count);
 
-  if (OMX_TRUE == p_session->abort_flag) {
-    pthread_cond_signal(&p_session->cond);
+  pthread_mutex_lock(&p_session->lock);
+
+  if (MM_JPEG_ABORT_NONE != p_session->abort_state) {
+    pthread_mutex_unlock(&p_session->lock);
     return ret;
   }
 
-  pthread_mutex_lock(&p_session->lock);
   p_session->fbd_count++;
   if (NULL != p_session->params.jpeg_cb) {
     p_session->job_status = JPEG_JOB_STATUS_DONE;
@@ -2306,12 +2311,13 @@ OMX_ERRORTYPE mm_jpeg_event_handler(OMX_HANDLETYPE hComponent,
 {
   mm_jpeg_job_session_t *p_session = (mm_jpeg_job_session_t *) pAppData;
 
-  CDBG("%s:%d] %d %d %d", __func__, __LINE__, eEvent, (int)nData1,
-    (int)nData2);
+  CDBG("%s:%d] %d %d %d state %d", __func__, __LINE__, eEvent, (int)nData1,
+    (int)nData2, p_session->abort_state);
 
   pthread_mutex_lock(&p_session->lock);
 
-  if (OMX_TRUE == p_session->abort_flag) {
+  if (MM_JPEG_ABORT_INIT == p_session->abort_state) {
+    p_session->abort_state = MM_JPEG_ABORT_DONE;
     pthread_cond_signal(&p_session->cond);
     pthread_mutex_unlock(&p_session->lock);
     return OMX_ErrorNone;

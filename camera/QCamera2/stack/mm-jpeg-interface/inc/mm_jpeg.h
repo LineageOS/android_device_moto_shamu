@@ -46,6 +46,19 @@
 #define MAX_EXIF_TABLE_ENTRIES 50
 #define MAX_JPEG_SIZE 20000000
 
+/** mm_jpeg_abort_state_t:
+ *  @MM_JPEG_ABORT_NONE: Abort is not issued
+ *  @MM_JPEG_ABORT_INIT: Abort is issued from the client
+ *  @MM_JPEG_ABORT_DONE: Abort is completed
+ *
+ *  State representing the abort state
+ **/
+typedef enum {
+  MM_JPEG_ABORT_NONE,
+  MM_JPEG_ABORT_INIT,
+  MM_JPEG_ABORT_DONE,
+} mm_jpeg_abort_state_t;
+
 typedef struct {
   struct cam_list list;
   void* data;
@@ -87,7 +100,7 @@ typedef struct {
 
   int state_change_pending;      /* flag to indicate if state change is pending */
   OMX_ERRORTYPE error_flag;      /* variable to indicate error during encoding */
-  OMX_BOOL abort_flag;      /* variable to indicate abort during encoding */
+  mm_jpeg_abort_state_t abort_state; /* variable to indicate abort during encoding */
 
   /* OMX related */
   OMX_HANDLETYPE omx_handle;                      /* handle to omx engine */
