@@ -434,7 +434,7 @@ const QCameraParameters::QCameraMap QCameraParameters::SCENE_MODES_MAP[] = {
     { SCENE_MODE_BACKLIGHT,      CAM_SCENE_MODE_BACKLIGHT },
     { SCENE_MODE_FLOWERS,        CAM_SCENE_MODE_FLOWERS },
     { SCENE_MODE_AR,             CAM_SCENE_MODE_AR },
-    { SCENE_MODE_HDR,            CAM_SCENE_MODE_OFF },
+    { SCENE_MODE_HDR,            CAM_SCENE_MODE_HDR },
 };
 
 const QCameraParameters::QCameraMap QCameraParameters::FLASH_MODES_MAP[] = {
@@ -566,6 +566,7 @@ QCameraParameters::QCameraParameters()
       m_bVideoFlipChanged(false),
       m_bSnapshotFlipChanged(false),
       m_bFixedFrameRateSet(false),
+      m_bHDREnabled(false),
       m_tempMap()
 {
     char value[32];
@@ -626,6 +627,7 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bVideoFlipChanged(false),
     m_bSnapshotFlipChanged(false),
     m_bFixedFrameRateSet(false),
+    m_bHDREnabled(false),
     m_tempMap()
 {
     memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
@@ -2202,11 +2204,17 @@ int32_t QCameraParameters::setSceneMode(const QCameraParameters& params)
                 m_bSceneTransitionAuto = true;
             }
 
+            if (strcmp(str, SCENE_MODE_HDR) == 0) {
+                m_bHDREnabled = true;
+            } else {
+                m_bHDREnabled = false;
+            }
+
             if ((strcmp(str, SCENE_MODE_HDR) == 0) ||
                 ((prev_str != NULL) && (strcmp(prev_str, SCENE_MODE_HDR) == 0))) {
                 ALOGD("%s: scene mode changed between HDR and non-HDR, need restart", __func__);
-                m_bNeedRestart = true;
 
+                m_bNeedRestart = true;
                 // set if hdr 1x image is needed
                 const char *need_hdr_1x = params.get(KEY_QC_HDR_NEED_1X);
                 int32_t value = 0;
@@ -3264,6 +3272,7 @@ int32_t QCameraParameters::initDefaultParameters()
     //Set Scene Detection
     set(KEY_QC_SUPPORTED_SCENE_DETECT, onOffValues);
     setSceneDetect(VALUE_OFF);
+    m_bHDREnabled = false;
 
     //Set Face Detection
     set(KEY_QC_SUPPORTED_FACE_DETECTION, onOffValues);
@@ -4587,12 +4596,70 @@ int32_t QCameraParameters::setAEBracket(const char *aecBracketStr)
         break;
     }
 
+    // Cache client AE bracketing configuration
+    memcpy(&m_AEBracketingClient, &expBracket, sizeof(cam_exp_bracketing_t));
+
     /* save the value*/
     updateParamEntry(KEY_QC_AE_BRACKET_HDR, aecBracketStr);
     return AddSetParmEntryToBatch(m_pParamBuf,
                                   CAM_INTF_PARM_HDR,
                                   sizeof(expBracket),
                                   &expBracket);
+}
+
+/*===========================================================================
+ * FUNCTION   : enableHDRAEBracket
+ *
+ * DESCRIPTION: enables AE bracketing for HDR
+ *
+ * PARAMETERS :
+ *   @hdrBracket : HDR bracketing configuration
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setHDRAEBracket(cam_exp_bracketing_t hdrBracket)
+{
+
+    int32_t rc = NO_ERROR;
+    if(initBatchUpdate(m_pParamBuf) < 0 ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return BAD_TYPE;
+    }
+
+    rc = AddSetParmEntryToBatch(m_pParamBuf,
+            CAM_INTF_PARM_HDR,
+            sizeof(hdrBracket),
+            &hdrBracket);
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to update table", __func__);
+        return rc;
+    }
+
+    rc = commitSetBatch();
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to configure HDR bracketing", __func__);
+        return rc;
+    }
+
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : restoreAEBracket
+ *
+ * DESCRIPTION: restores client AE bracketing configuration after HDR is done
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::restoreAEBracket()
+{
+    return setHDRAEBracket(m_AEBracketingClient);
 }
 
 /*===========================================================================

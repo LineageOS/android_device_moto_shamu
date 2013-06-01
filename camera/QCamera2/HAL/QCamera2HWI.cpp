@@ -1298,6 +1298,10 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
                 if (bufferCnt > zslQBuffers + minCircularBufNum) {
                     bufferCnt = zslQBuffers + minCircularBufNum;
                 }
+
+                if(mParameters.isHDREnabled()) {
+                    bufferCnt = bufferCnt + gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
+                }
             }
         }
         break;
@@ -1486,19 +1490,28 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
             streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
         } else {
             streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
-            streamInfo->num_of_burst = mParameters.getNumOfSnapshots();
+            if ( mParameters.isHDREnabled() ) {
+                streamInfo->num_of_burst = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
+            } else {
+                streamInfo->num_of_burst = mParameters.getNumOfSnapshots();
+            }
         }
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
         streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
-        streamInfo->num_of_burst = mParameters.getNumOfSnapshots();
+        if ( mParameters.isHDREnabled() ) {
+            streamInfo->num_of_burst = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
+        } else {
+            streamInfo->num_of_burst = mParameters.getNumOfSnapshots();
+        }
         break;
     default:
         break;
     }
 
-    if (!isZSLMode() ||
-        (isZSLMode() && (stream_type != CAM_STREAM_TYPE_SNAPSHOT))) {
+    if ((!isZSLMode() ||
+        (isZSLMode() && (stream_type != CAM_STREAM_TYPE_SNAPSHOT))) &&
+        !mParameters.isHDREnabled()) {
         //set flip mode based on Stream type;
         int flipMode = mParameters.getFlipMode(stream_type);
         if (flipMode > 0) {
@@ -1961,6 +1974,41 @@ int QCamera2HardwareInterface::takePicture()
         stopChannel(QCAMERA_CH_TYPE_PREVIEW);
         delChannel(QCAMERA_CH_TYPE_PREVIEW);
 
+        if ( mParameters.isHDREnabled() ) {
+            // 'values' should be in "idx1,idx2,idx3,..." format
+            uint8_t hdrFrameCount = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
+            ALOGE("%s : HDR values %d, %d frame count: %d",
+                  __func__,
+                  (int8_t) gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.values[0],
+                  (int8_t) gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.values[1],
+                  hdrFrameCount);
+
+            // Enable AE Bracketing for HDR
+            cam_exp_bracketing_t aeBracket;
+            memset(&aeBracket, 0, sizeof(cam_exp_bracketing_t));
+            aeBracket.mode = gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.mode;
+            String8 tmp;
+            for ( unsigned int i = 0; i < hdrFrameCount ; i++ ) {
+                tmp.appendFormat("%d", (int8_t) gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.values[i]);
+                tmp.append(",");
+            }
+            if( !tmp.isEmpty() &&
+                ( MAX_EXP_BRACKETING_LENGTH > tmp.length() ) ) {
+                //Trim last comma
+                memset(aeBracket.values, '\0', MAX_EXP_BRACKETING_LENGTH);
+                memcpy(aeBracket.values, tmp.string(), tmp.length() - 1);
+            }
+
+            ALOGE("%s : HDR config values %s",
+                  __func__,
+                  aeBracket.values);
+            rc = mParameters.setHDRAEBracket(aeBracket);
+            if ( NO_ERROR != rc ) {
+                ALOGE("%s: cannot configure HDR bracketing", __func__);
+                return rc;
+            }
+        }
+
         // start snapshot
         if (mParameters.isJpegPictureFormat() ||
             mParameters.isNV16PictureFormat() ) {
@@ -2026,6 +2074,11 @@ int QCamera2HardwareInterface::cancelPicture()
             pZSLChannel->cancelPicture();
         }
     } else {
+
+        if ( mParameters.isHDREnabled() ) {
+            mParameters.restoreAEBracket();
+        }
+
         // normal capture case
         if (mParameters.isJpegPictureFormat() ||
             mParameters.isNV16PictureFormat() ) {
@@ -3215,6 +3268,8 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
         return NULL;
     }
 
+    ALOGD("%s: Before pproc config check, ret = %x", __func__, gCamCapability[mCameraId]->min_required_pp_mask);
+
     // pp feature config
     cam_pp_feature_config_t pp_config;
     memset(&pp_config, 0, sizeof(cam_pp_feature_config_t));
@@ -3248,6 +3303,19 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
     }
 
     uint8_t minStreamBufNum = getBufNumRequired(CAM_STREAM_TYPE_OFFLINE_PROC);
+
+    if (mParameters.isHDREnabled()){
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_HDR;
+        pp_config.hdr_param.hdr_enable = 1;
+        pp_config.hdr_param.hdr_mode = CAM_HDR_MODE_MULTIFRAME;
+        minStreamBufNum = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
+    } else {
+        pp_config.feature_mask &= ~CAM_QCOM_FEATURE_HDR;
+        pp_config.hdr_param.hdr_enable = 0;
+    }
+
+    ALOGD("%s: After pproc config check, ret = %x", __func__, pp_config.feature_mask);
+
     rc = pChannel->addReprocStreamsFromSource(*this,
                                               pp_config,
                                               pInputChannel,

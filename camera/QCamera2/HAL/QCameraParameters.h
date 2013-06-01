@@ -404,6 +404,8 @@ public:
     int32_t setFrameSkip(enum msm_vfe_frame_skip_pattern pattern);
     qcamera_thermal_mode getThermalMode() {return m_ThermalMode;};
     int32_t updateRecordingHintValue(int32_t value);
+    int32_t setHDRAEBracket(cam_exp_bracketing_t hdrBracket);
+    int32_t restoreAEBracket();
 
     cam_focus_mode_type getFocusMode() const {return mFocusMode;};
     int32_t setNumOfSnapshot();
@@ -419,6 +421,7 @@ public:
     bool isCAFLocked() {return m_bCAFLocked;};
     void setAFRunning(bool bflag) {m_bAFRunning = bflag;};
     bool isAFRunning() {return m_bAFRunning;};
+    bool isHDREnabled() {return m_bHDREnabled;};
 
     bool isPreviewFlipChanged() { return m_bPreviewFlipChanged; };
     bool isVideoFlipChanged() { return m_bVideoFlipChanged; };
@@ -594,6 +597,7 @@ private:
     bool m_bAFRunning;
     bool m_bInited;
     int m_nBurstNum;
+    cam_exp_bracketing_t m_AEBracketingClient;
     bool m_bUpdateEffects;          // Cause reapplying of effects
     bool m_bSceneTransitionAuto;    // Indicate that scene has changed to Auto
     bool m_bPreviewFlipChanged;        // if flip setting for preview changed
@@ -602,6 +606,7 @@ private:
     bool m_bFixedFrameRateSet;      // Indicates that a fixed frame rate is set
     qcamera_thermal_mode m_ThermalMode; // adjust fps vs adjust frameskip
     cam_dimension_t m_LiveSnapshotSize; // live snapshot size
+    bool m_bHDREnabled;             // if HDR is enabled
 
     DefaultKeyedVector<String8,String8> m_tempMap; // map for temororily store parameters to be set
 };
