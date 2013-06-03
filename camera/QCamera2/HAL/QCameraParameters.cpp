@@ -562,6 +562,9 @@ QCameraParameters::QCameraParameters()
       m_nBurstNum(1),
       m_bUpdateEffects(false),
       m_bSceneTransitionAuto(false),
+      m_bPreviewFlipChanged(false),
+      m_bVideoFlipChanged(false),
+      m_bSnapshotFlipChanged(false),
       m_tempMap()
 {
     char value[32];
@@ -618,6 +621,9 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bAFRunning(false),
     m_bInited(false),
     m_nBurstNum(1),
+    m_bPreviewFlipChanged(false),
+    m_bVideoFlipChanged(false),
+    m_bSnapshotFlipChanged(false),
     m_tempMap()
 {
     memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
@@ -2691,34 +2697,46 @@ int32_t QCameraParameters::setFlip(const QCameraParameters& params)
 
     //check preview flip setting
     const char *str = params.get(KEY_QC_PREVIEW_FLIP);
+    const char *prev_val = get(KEY_QC_PREVIEW_FLIP);
     if(str != NULL){
-        int32_t value = lookupAttr(FLIP_MODES_MAP,
-                                   sizeof(FLIP_MODES_MAP)/sizeof(QCameraMap),
-                                   str);
-        if(value != NAME_NOT_FOUND){
-            set(KEY_QC_PREVIEW_FLIP, str);
+        if (prev_val == NULL || strcmp(str, prev_val) != 0) {
+            int32_t value = lookupAttr(FLIP_MODES_MAP,
+                                       sizeof(FLIP_MODES_MAP)/sizeof(QCameraMap),
+                                       str);
+            if(value != NAME_NOT_FOUND){
+                set(KEY_QC_PREVIEW_FLIP, str);
+                m_bPreviewFlipChanged = true;
+            }
         }
     }
 
     // check video filp setting
     str = params.get(KEY_QC_VIDEO_FLIP);
+    prev_val = get(KEY_QC_VIDEO_FLIP);
     if(str != NULL){
-        int32_t value = lookupAttr(FLIP_MODES_MAP,
-                                   sizeof(FLIP_MODES_MAP)/sizeof(QCameraMap),
-                                   str);
-        if(value != NAME_NOT_FOUND){
-            set(KEY_QC_VIDEO_FLIP, str);
+        if (prev_val == NULL || strcmp(str, prev_val) != 0) {
+            int32_t value = lookupAttr(FLIP_MODES_MAP,
+                                       sizeof(FLIP_MODES_MAP)/sizeof(QCameraMap),
+                                       str);
+            if(value != NAME_NOT_FOUND){
+                set(KEY_QC_VIDEO_FLIP, str);
+                m_bVideoFlipChanged = true;
+            }
         }
     }
 
     // check picture filp setting
     str = params.get(KEY_QC_SNAPSHOT_PICTURE_FLIP);
+    prev_val = get(KEY_QC_SNAPSHOT_PICTURE_FLIP);
     if(str != NULL){
-        int32_t value = lookupAttr(FLIP_MODES_MAP,
-                                   sizeof(FLIP_MODES_MAP)/sizeof(QCameraMap),
-                                   str);
-        if(value != NAME_NOT_FOUND){
-            set(KEY_QC_SNAPSHOT_PICTURE_FLIP, str);
+        if (prev_val == NULL || strcmp(str, prev_val) != 0) {
+            int32_t value = lookupAttr(FLIP_MODES_MAP,
+                                       sizeof(FLIP_MODES_MAP)/sizeof(QCameraMap),
+                                       str);
+            if(value != NAME_NOT_FOUND){
+                set(KEY_QC_SNAPSHOT_PICTURE_FLIP, str);
+                m_bSnapshotFlipChanged = true;
+            }
         }
     }
 

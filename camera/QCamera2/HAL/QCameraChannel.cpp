@@ -396,6 +396,77 @@ QCameraStream *QCameraChannel::getStreamByIndex(uint8_t index)
 }
 
 /*===========================================================================
+ * FUNCTION   : UpdateStreamBasedParameters
+ *
+ * DESCRIPTION: update any stream based settings from parameters
+ *
+ * PARAMETERS :
+ *   @param   : reference to parameters object
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraChannel::UpdateStreamBasedParameters(QCameraParameters &param)
+{
+    int32_t rc = NO_ERROR;
+    if (param.isPreviewFlipChanged()) {
+        // try to find preview stream
+        for (int i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
+            if (mStreams[i] != NULL &&
+                (mStreams[i]->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
+                (mStreams[i]->isOrignalTypeOf(CAM_STREAM_TYPE_PREVIEW))) ) {
+                cam_stream_parm_buffer_t param_buf;
+                memset(&param_buf, 0, sizeof(cam_stream_parm_buffer_t));
+                param_buf.type = CAM_STREAM_PARAM_TYPE_SET_FLIP;
+                param_buf.flipInfo.flip_mask = param.getFlipMode(CAM_STREAM_TYPE_PREVIEW);
+                rc = mStreams[i]->setParameter(param_buf);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: set preview stream flip failed", __func__);
+                }
+            }
+        }
+    }
+    if (param.isVideoFlipChanged()) {
+        // try to find video stream
+        for (int i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
+            if (mStreams[i] != NULL &&
+                (mStreams[i]->isTypeOf(CAM_STREAM_TYPE_VIDEO) ||
+                (mStreams[i]->isOrignalTypeOf(CAM_STREAM_TYPE_VIDEO))) ) {
+                cam_stream_parm_buffer_t param_buf;
+                memset(&param_buf, 0, sizeof(cam_stream_parm_buffer_t));
+                param_buf.type = CAM_STREAM_PARAM_TYPE_SET_FLIP;
+                param_buf.flipInfo.flip_mask = param.getFlipMode(CAM_STREAM_TYPE_VIDEO);
+                rc = mStreams[i]->setParameter(param_buf);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: set video stream flip failed", __func__);
+                }
+            }
+        }
+    }
+    if (param.isSnapshotFlipChanged()) {
+        // try to find snapshot/postview stream
+        for (int i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
+            if (mStreams[i] != NULL &&
+                (mStreams[i]->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
+                 mStreams[i]->isOrignalTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
+                 mStreams[i]->isTypeOf(CAM_STREAM_TYPE_POSTVIEW) ||
+                 mStreams[i]->isOrignalTypeOf(CAM_STREAM_TYPE_POSTVIEW) ) ) {
+                cam_stream_parm_buffer_t param_buf;
+                memset(&param_buf, 0, sizeof(cam_stream_parm_buffer_t));
+                param_buf.type = CAM_STREAM_PARAM_TYPE_SET_FLIP;
+                param_buf.flipInfo.flip_mask = param.getFlipMode(CAM_STREAM_TYPE_SNAPSHOT);
+                rc = mStreams[i]->setParameter(param_buf);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: set snapshot stream flip failed", __func__);
+                }
+            }
+        }
+    }
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : QCameraPicChannel
  *
  * DESCRIPTION: constructor of QCameraPicChannel

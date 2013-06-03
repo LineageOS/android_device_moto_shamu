@@ -66,6 +66,7 @@ public:
     uint8_t getNumOfStreams() const {return m_numStreams;};
     QCameraStream *getStreamByIndex(uint8_t index);
     QCameraStream *getStreamByServerID(uint32_t serverID);
+    int32_t UpdateStreamBasedParameters(QCameraParameters &param);
 
 protected:
     uint32_t m_camHandle;
