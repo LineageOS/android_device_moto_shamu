@@ -192,76 +192,84 @@ int32_t addExifEntry(QOMX_EXIF_INFO *p_exif_info, exif_tag_id_t tagid,
     return rc;
 }
 
-
-int32_t releaseExifEntry(QOMX_EXIF_INFO *p_exif_info)
+/** releaseExifEntry
+ *
+ *  Arguments:
+ *   @p_exif_data : Exif info struct
+ *
+ *  Retrun     : int32_t type of status
+ *               0  -- success
+ *              none-zero failure code
+ *
+ *  Description:
+ *       Function to release an entry from exif data
+ *
+ **/
+int32_t releaseExifEntry(QEXIF_INFO_DATA *p_exif_data)
 {
-  uint32_t i = 0;
-  for (i = 0; i < p_exif_info->numOfEntries; i++) {
-  switch (p_exif_info->exif_data[i].tag_entry.type) {
+ switch (p_exif_data->tag_entry.type) {
   case EXIF_BYTE: {
-    if (p_exif_info->exif_data[i].tag_entry.count > 1 &&
-      p_exif_info->exif_data[i].tag_entry.data._bytes != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._bytes);
-      p_exif_info->exif_data[i].tag_entry.data._bytes = NULL;
+    if (p_exif_data->tag_entry.count > 1 &&
+      p_exif_data->tag_entry.data._bytes != NULL) {
+      free(p_exif_data->tag_entry.data._bytes);
+      p_exif_data->tag_entry.data._bytes = NULL;
     }
   }
   break;
   case EXIF_ASCII: {
-    if (p_exif_info->exif_data[i].tag_entry.data._ascii != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._ascii);
-      p_exif_info->exif_data[i].tag_entry.data._ascii = NULL;
+    if (p_exif_data->tag_entry.data._ascii != NULL) {
+      free(p_exif_data->tag_entry.data._ascii);
+      p_exif_data->tag_entry.data._ascii = NULL;
     }
   }
   break;
   case EXIF_SHORT: {
-    if (p_exif_info->exif_data[i].tag_entry.count > 1 &&
-      p_exif_info->exif_data[i].tag_entry.data._shorts != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._shorts);
-      p_exif_info->exif_data[i].tag_entry.data._shorts = NULL;
+    if (p_exif_data->tag_entry.count > 1 &&
+      p_exif_data->tag_entry.data._shorts != NULL) {
+      free(p_exif_data->tag_entry.data._shorts);
+      p_exif_data->tag_entry.data._shorts = NULL;
     }
   }
   break;
   case EXIF_LONG: {
-    if (p_exif_info->exif_data[i].tag_entry.count > 1 &&
-      p_exif_info->exif_data[i].tag_entry.data._longs != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._longs);
-      p_exif_info->exif_data[i].tag_entry.data._longs = NULL;
+    if (p_exif_data->tag_entry.count > 1 &&
+      p_exif_data->tag_entry.data._longs != NULL) {
+      free(p_exif_data->tag_entry.data._longs);
+      p_exif_data->tag_entry.data._longs = NULL;
     }
   }
   break;
   case EXIF_RATIONAL: {
-    if (p_exif_info->exif_data[i].tag_entry.count > 1 &&
-      p_exif_info->exif_data[i].tag_entry.data._rats != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._rats);
-      p_exif_info->exif_data[i].tag_entry.data._rats = NULL;
+    if (p_exif_data->tag_entry.count > 1 &&
+      p_exif_data->tag_entry.data._rats != NULL) {
+      free(p_exif_data->tag_entry.data._rats);
+      p_exif_data->tag_entry.data._rats = NULL;
     }
   }
   break;
   case EXIF_UNDEFINED: {
-    if (p_exif_info->exif_data[i].tag_entry.data._undefined != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._undefined);
-      p_exif_info->exif_data[i].tag_entry.data._undefined = NULL;
+    if (p_exif_data->tag_entry.data._undefined != NULL) {
+      free(p_exif_data->tag_entry.data._undefined);
+      p_exif_data->tag_entry.data._undefined = NULL;
     }
   }
   break;
   case EXIF_SLONG: {
-    if (p_exif_info->exif_data[i].tag_entry.count > 1 &&
-      p_exif_info->exif_data[i].tag_entry.data._slongs != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._slongs);
-      p_exif_info->exif_data[i].tag_entry.data._slongs = NULL;
+    if (p_exif_data->tag_entry.count > 1 &&
+      p_exif_data->tag_entry.data._slongs != NULL) {
+      free(p_exif_data->tag_entry.data._slongs);
+      p_exif_data->tag_entry.data._slongs = NULL;
     }
   }
   break;
   case EXIF_SRATIONAL: {
-    if (p_exif_info->exif_data[i].tag_entry.count > 1 &&
-      p_exif_info->exif_data[i].tag_entry.data._srats != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._srats);
-      p_exif_info->exif_data[i].tag_entry.data._srats = NULL;
+    if (p_exif_data->tag_entry.count > 1 &&
+      p_exif_data->tag_entry.data._srats != NULL) {
+      free(p_exif_data->tag_entry.data._srats);
+      p_exif_data->tag_entry.data._srats = NULL;
     }
   }
   break;
-  }
-
   } /*end of switch*/
 
   return 0;

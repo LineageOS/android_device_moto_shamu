@@ -124,10 +124,6 @@ typedef struct {
   /* jpeg quality: range 0~100 */
   uint32_t quality;
 
-  /* buf to exif entries, caller needs to
-   * take care of the memory manage with insider ptr */
-  QOMX_EXIF_INFO exif_info;
-
   jpeg_encode_callback_t jpeg_cb;
   void* userdata;
 
@@ -151,6 +147,10 @@ typedef struct {
 
   /*Metadata stream*/
   cam_metadata_info_t *p_metadata;
+
+  /* buf to exif entries, caller needs to
+   * take care of the memory manage with insider ptr */
+  QOMX_EXIF_INFO exif_info;
 
 } mm_jpeg_encode_job_t;
 

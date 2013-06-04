@@ -224,7 +224,6 @@ static int encode_init(jpeg_test_input_t *p_input, mm_jpeg_intf_test_t *p_obj)
   p_params->num_src_bufs = 1;
 
   p_params->encode_thumbnail = 1;
-  p_params->exif_info.numOfEntries = 0;
   p_params->quality = 80;
 
   p_job_params->dst_index = 0;
@@ -250,6 +249,8 @@ static int encode_init(jpeg_test_input_t *p_input, mm_jpeg_intf_test_t *p_obj)
   p_job_params->thumb_dim.crop.left = 0;
   p_job_params->thumb_dim.crop.width = p_obj->width;
   p_job_params->thumb_dim.crop.height = p_obj->height;
+
+  p_job_params->exif_info.numOfEntries = 0;
   return 0;
 }
 
