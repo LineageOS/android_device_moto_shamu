@@ -929,7 +929,7 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       m_thermalAdapter(QCameraThermalAdapter::getInstance()),
       m_cbNotifier(this),
       m_bShutterSoundPlayed(false),
-      m_currentFocusState(CAM_AF_NOT_FOCUSED),
+      m_currentFocusState(CAM_AF_SCANNING),
       m_pPowerModule(NULL),
       mDumpFrmCnt(0),
       mDumpSkipCnt(0)
