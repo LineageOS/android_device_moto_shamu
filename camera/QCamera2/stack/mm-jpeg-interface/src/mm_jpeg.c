@@ -1900,20 +1900,20 @@ int32_t mm_jpeg_create_session(mm_jpeg_obj *my_obj,
   if ((p_params->num_src_bufs > MM_JPEG_MAX_BUF)
     || (p_params->num_dst_bufs > MM_JPEG_MAX_BUF)) {
     CDBG_ERROR("%s:%d] invalid num buffers", __func__, __LINE__);
-    return rc;
+    return -1;
   }
 
   /* check if valid client */
   clnt_idx = mm_jpeg_util_get_index_by_handler(client_hdl);
   if (clnt_idx >= MAX_JPEG_CLIENT_NUM) {
     CDBG_ERROR("%s: invalid client with handler (%d)", __func__, client_hdl);
-    return rc;
+    return -1;
   }
 
   session_idx = mm_jpeg_get_new_session_idx(my_obj, clnt_idx, &p_session);
   if (session_idx < 0) {
     CDBG_ERROR("%s:%d] invalid session id (%d)", __func__, __LINE__, session_idx);
-    return rc;
+    return -1;
   }
 
   p_session->work_buffer = my_obj->ionBuffer;
@@ -1922,7 +1922,7 @@ int32_t mm_jpeg_create_session(mm_jpeg_obj *my_obj,
   if (OMX_ErrorNone != ret) {
     p_session->active = OMX_FALSE;
     CDBG_ERROR("%s:%d] jpeg session create failed", __func__, __LINE__);
-    return rc;
+    return ret;
   }
 
   *p_session_id = (JOB_ID_MAGICVAL << 24) | (session_idx << 8) | clnt_idx;
