@@ -219,8 +219,9 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
         free(mJpegSettings);
         mJpegSettings = NULL;
     }
-    if (mCameraOpened)
-        closeCamera();
+
+    deinitParameters();
+    closeCamera();
 
     for (size_t i = 0; i < CAMERA3_TEMPLATE_COUNT; i++)
         if (mDefaultMetadata[i])
@@ -2925,6 +2926,7 @@ int QCamera3HardwareInterface::getJpegSettings
     } else {
         mJpegSettings->gps_processing_method[0] = '\0';
     }
+
 
     if (jpeg_settings.exists(ANDROID_SENSOR_SENSITIVITY)) {
         mJpegSettings->sensor_sensitivity =
