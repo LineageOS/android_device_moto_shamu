@@ -40,6 +40,7 @@ static omx_core_t *g_omxcore;
 static const comp_info_t g_comp_info[] =
 {
   { "OMX.qcom.image.jpeg.encoder", "libqomx_jpegenc.so" },
+  { "OMX.qcom.image.jpeg.decoder", "libqomx_jpegdec.so" }
 };
 
 static int get_idx_from_handle(OMX_IN OMX_HANDLETYPE *ahComp, int *acompIndex,
