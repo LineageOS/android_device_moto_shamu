@@ -565,6 +565,7 @@ QCameraParameters::QCameraParameters()
       m_bPreviewFlipChanged(false),
       m_bVideoFlipChanged(false),
       m_bSnapshotFlipChanged(false),
+      m_bFixedFrameRateSet(false),
       m_tempMap()
 {
     char value[32];
@@ -624,6 +625,7 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bPreviewFlipChanged(false),
     m_bVideoFlipChanged(false),
     m_bSnapshotFlipChanged(false),
+    m_bFixedFrameRateSet(false),
     m_tempMap()
 {
     memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
@@ -1438,16 +1440,22 @@ int32_t QCameraParameters::setPreviewFpsRange(const QCameraParameters& params)
     ALOGV("%s: Requested FpsRange Values:(%d, %d)", __func__, minFps, maxFps);
 
     if(minFps == prevMinFps && maxFps == prevMaxFps) {
-        ALOGV("%s: No change in FpsRange", __func__);
-        rc = NO_ERROR;
-        goto end;
+        if ( m_bFixedFrameRateSet ) {
+            minFps = params.getPreviewFrameRate() * 1000;
+            maxFps = params.getPreviewFrameRate() * 1000;
+            m_bFixedFrameRateSet = false;
+        } else {
+            ALOGV("%s: No change in FpsRange", __func__);
+            rc = NO_ERROR;
+            goto end;
+        }
     }
     for(int i = 0; i < m_pCapability->fps_ranges_tbl_cnt; i++) {
         // if the value is in the supported list
         if(minFps >= m_pCapability->fps_ranges_tbl[i].min_fps * 1000 &&
            maxFps <= m_pCapability->fps_ranges_tbl[i].max_fps * 1000) {
             found = true;
-            ALOGV("%s: FPS i=%d : minFps = %d, maxFps = %d ", __func__, i, minFps, maxFps);
+            ALOGE("%s: FPS i=%d : minFps = %d, maxFps = %d ", __func__, i, minFps, maxFps);
             setPreviewFpsRange(minFps, maxFps);
             break;
         }
@@ -1474,9 +1482,17 @@ end:
  *==========================================================================*/
 int32_t QCameraParameters::setPreviewFrameRate(const QCameraParameters& params)
 {
-    uint16_t fps = (uint16_t)params.getPreviewFrameRate();
-    ALOGV("%s: requested preview frame rate is %d", __func__, fps);
-    CameraParameters::setPreviewFrameRate(fps);
+    const char *str = params.get(KEY_PREVIEW_FRAME_RATE);
+    const char *prev_str = get(KEY_PREVIEW_FRAME_RATE);
+
+    if ( str ) {
+        if ( prev_str &&
+             strcmp(str, prev_str)) {
+            ALOGV("%s: Requested Fixed Frame Rate %s", __func__, str);
+            updateParamEntry(KEY_PREVIEW_FRAME_RATE, str);
+            m_bFixedFrameRateSet = true;
+        }
+    }
     return NO_ERROR;
 }
 
@@ -2817,8 +2833,8 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setCameraMode(params)))                   final_rc = rc;
     if ((rc = setRecordingHint(params)))                final_rc = rc;
 
-    if ((rc = setPreviewFpsRange(params)))              final_rc = rc;
     if ((rc = setPreviewFrameRate(params)))             final_rc = rc;
+    if ((rc = setPreviewFpsRange(params)))              final_rc = rc;
     if ((rc = setAutoExposure(params)))                 final_rc = rc;
     if ((rc = setEffect(params)))                       final_rc = rc;
     if ((rc = setBrightness(params)))                   final_rc = rc;
@@ -3593,7 +3609,7 @@ int32_t QCameraParameters::setPreviewFpsRange(int minFPS, int maxFPS)
 {
     char str[32];
     snprintf(str, sizeof(str), "%d,%d", minFPS, maxFPS);
-    ALOGD("%s: Setting preview fps range %s", __func__, str);
+    ALOGE("%s: Setting preview fps range %s", __func__, str);
     updateParamEntry(KEY_PREVIEW_FPS_RANGE, str);
     cam_fps_range_t fps_range = {minFPS / 1000.0, maxFPS / 1000.0};
     return AddSetParmEntryToBatch(m_pParamBuf,

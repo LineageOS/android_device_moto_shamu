@@ -600,6 +600,7 @@ private:
     bool m_bPreviewFlipChanged;        // if flip setting for preview changed
     bool m_bVideoFlipChanged;          // if flip setting for video changed
     bool m_bSnapshotFlipChanged;       // if flip setting for snapshot changed
+    bool m_bFixedFrameRateSet;      // Indicates that a fixed frame rate is set
     qcamera_thermal_mode m_ThermalMode; // adjust fps vs adjust frameskip
     cam_dimension_t m_LiveSnapshotSize; // live snapshot size
 
