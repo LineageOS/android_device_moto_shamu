@@ -1941,7 +1941,7 @@ int32_t mm_jpeg_create_session(mm_jpeg_obj *my_obj,
   mm_jpeg_read_meta_keyfile(p_session, META_KEYFILE);
 #endif
 
-  return rc;
+  return ret;
 }
 
 /** mm_jpegenc_destroy_job

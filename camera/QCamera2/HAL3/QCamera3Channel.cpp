@@ -1506,17 +1506,6 @@ QCamera3Exif *QCamera3PicChannel::getExifData()
                    1,
                    (void *)&(isoSpeed));
 
-    char gpsProcessingMethod[EXIF_ASCII_PREFIX_SIZE + GPS_PROCESSING_METHOD_SIZE];
-    count = 0;
-    rc = getExifGpsProcessingMethod(gpsProcessingMethod, count, mJpegSettings->gps_processing_method);
-    if(rc == NO_ERROR) {
-        exif->addEntry(EXIFTAGID_GPS_PROCESSINGMETHOD,
-                       EXIF_ASCII,
-                       count,
-                       (void *)gpsProcessingMethod);
-    } else {
-        ALOGE("%s: getExifGpsProcessingMethod failed", __func__);
-    }
 
 
     if (strlen(mJpegSettings->gps_processing_method) > 0) {
