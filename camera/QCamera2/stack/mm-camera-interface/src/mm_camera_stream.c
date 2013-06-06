@@ -973,6 +973,21 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
         buf_info->buf->frame_idx = vb.sequence;
         buf_info->buf->ts.tv_sec  = vb.timestamp.tv_sec;
         buf_info->buf->ts.tv_nsec = vb.timestamp.tv_usec * 1000;
+ #if 0
+        /* If YUV format, check chroma size to see if extra subsampling
+                is applied */
+        if (my_obj->stream_info->fmt >= CAM_FORMAT_YUV_420_NV12 &&
+            my_obj->stream_info->fmt <= CAM_FORMAT_YUV_422_NV61 &&
+            my_obj->stream_info->buf_planes.plane_info.mp[1].len / 4 ==
+            planes[1].bytesused)
+          buf_info->buf->is_uv_subsampled = 1;
+        else
+          buf_info->buf->is_uv_subsampled = 0;
+#else
+        buf_info->buf->is_uv_subsampled =
+          (vb.reserved == V4L2_PIX_FMT_NV14 || vb.reserved == V4L2_PIX_FMT_NV41);
+#endif
+
         CDBG_HIGH("%s: VIDIOC_DQBUF buf_index %d, frame_idx %d, stream type %d\n",
              __func__, vb.index, buf_info->buf->frame_idx, my_obj->stream_info->stream_type);
         if ( NULL != my_obj->mem_vtbl.clean_invalidate_buf ) {

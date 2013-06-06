@@ -779,6 +779,7 @@ int32_t QCameraReprocessChannel::doReprocess(mm_camera_super_buf_t *frame)
             param.type = CAM_STREAM_PARAM_TYPE_DO_REPROCESS;
             param.reprocess.buf_index = frame->bufs[i]->buf_idx;
             param.reprocess.frame_idx = frame->bufs[i]->frame_idx;
+            param.reprocess.frame_pp_config.uv_upsample = frame->bufs[i]->is_uv_subsampled;
             if (pMetaStream != NULL) {
                 // we have meta data frame bundled, sent together with reprocess frame
                 param.reprocess.meta_present = 1;
