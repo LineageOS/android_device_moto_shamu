@@ -1089,6 +1089,9 @@ int QCamera2HardwareInterface::closeCamera()
         return NO_ERROR;
     }
 
+    // set open flag to false
+    mCameraOpened = false;
+
     // deinit Parameters
     mParameters.deinit();
 
@@ -1112,7 +1115,6 @@ int QCamera2HardwareInterface::closeCamera()
 
     rc = mCameraHandle->ops->close_camera(mCameraHandle->camera_handle);
     mCameraHandle = NULL;
-    mCameraOpened = false;
 
     return rc;
 }
@@ -2421,6 +2423,11 @@ void QCamera2HardwareInterface::jpegEvtHandle(jpeg_job_status_t status,
 int QCamera2HardwareInterface::thermalEvtHandle(
         qcamera_thermal_level_enum_t level, void *userdata, void *data)
 {
+    if (!mCameraOpened) {
+        ALOGI("%s: Camera is not opened, no need to handle thermal evt", __func__);
+        return NO_ERROR;
+    }
+
     // Make sure thermal events are logged
     ALOGI("%s: level = %d, userdata = %p, data = %p",
         __func__, level, userdata, data);
