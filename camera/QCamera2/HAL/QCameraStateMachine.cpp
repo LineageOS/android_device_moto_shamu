@@ -1704,11 +1704,13 @@ int32_t QCameraStateMachine::procEvtRecordingState(qcamera_sm_evt_enum_t evt,
     memset(&result, 0, sizeof(qcamera_api_result_t));
 
     switch (evt) {
+    case QCAMERA_SM_EVT_START_PREVIEW:
     case QCAMERA_SM_EVT_SET_PREVIEW_WINDOW:
         {
-            // Error setting preview window during previewing
-            ALOGE("Cannot set preview window when preview is running");
-            rc = INVALID_OPERATION;
+            // WA: CTS test VideoSnapshot will try to
+            //     start preview during video recording.
+            ALOGE("CTS video restart op");
+            rc = NO_ERROR;
             result.status = rc;
             result.request_api = evt;
             result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
@@ -1948,7 +1950,6 @@ int32_t QCameraStateMachine::procEvtRecordingState(qcamera_sm_evt_enum_t evt,
         }
         break;
     case QCAMERA_SM_EVT_CANCEL_PICTURE:
-    case QCAMERA_SM_EVT_START_PREVIEW:
     case QCAMERA_SM_EVT_START_NODISPLAY_PREVIEW:
     case QCAMERA_SM_EVT_RELEASE:
         {
