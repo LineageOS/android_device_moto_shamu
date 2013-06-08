@@ -30,6 +30,7 @@
 #include "mm_jpeg_dbg.h"
 #include "mm_jpeg.h"
 #include <errno.h>
+#include <math.h>
 
 
 #define LOWER(a)               ((a) & 0xFFFF)
@@ -289,8 +290,57 @@ int32_t releaseExifEntry(QEXIF_INFO_DATA *p_exif_data)
  *
  *  Notes: this needs to be filled for the metadata
  **/
-int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info)
+int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info,
+  mm_jpeg_3a_params_t *p_cam3a_params)
 {
   int rc = 0;
+  srat_t val_srat;
+  rat_t val_rat;
+  double shutter_speed_value;
+
+  if (!p_meta) {
+    return 0;
+  }
+  cam_ae_params_t *p_ae_params = p_meta->is_ae_params_valid ?
+    &p_meta->ae_params : &p_cam3a_params->ae_params;
+
+  if (NULL != p_ae_params) {
+    ALOGD("%s:%d] exp_time %f, iso_value %d", __func__, __LINE__,
+      p_ae_params->exp_time, p_ae_params->iso_value);
+
+    val_rat.num = (uint32_t)p_ae_params->exp_time * 10;
+    val_rat.denom = 10000;
+
+    rc = addExifEntry(exif_info, EXIFTAGID_EXPOSURE_TIME, EXIF_RATIONAL,
+      sizeof(val_rat), &val_rat);
+    if (rc) {
+      ALOGE("%s:%d]: Error adding Exif Entry Exposure time",
+        __func__, __LINE__);
+    }
+
+    if (p_ae_params->exp_time > 0) {
+      shutter_speed_value = log10(1/p_ae_params->exp_time)/log10(2);
+      val_srat.num = shutter_speed_value * 1000;
+      val_srat.denom = 1000;
+    } else {
+      val_srat.num = 0;
+      val_srat.denom = 0;
+    }
+    rc = addExifEntry(exif_info, EXIFTAGID_SHUTTER_SPEED, EXIF_SRATIONAL,
+      sizeof(val_srat), &val_srat);
+    if (rc) {
+      ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+    }
+
+    short val_short;
+    val_short = p_ae_params->iso_value;
+    rc = addExifEntry(exif_info, EXIFTAGID_ISO_SPEED_RATING, EXIF_SHORT,
+      sizeof(val_short), &val_short);
+    if (rc) {
+      ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+    }
+  }
+
   return rc;
+
 }

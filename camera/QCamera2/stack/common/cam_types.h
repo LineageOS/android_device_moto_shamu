@@ -689,6 +689,11 @@ typedef struct {
     uint32_t max_frame_idx;
 } cam_frame_idx_range_t;
 
+typedef struct {
+    float exp_time;
+    int iso_value;
+} cam_ae_params_t;
+
 typedef  struct {
     uint8_t is_stats_valid;               /* if histgram data is valid */
     cam_hist_stats_t stats_data;          /* histogram data */
@@ -717,6 +722,9 @@ typedef  struct {
 
     char private_metadata[MAX_METADATA_PAYLOAD_SIZE];
 
+    /* AE parameters */
+    uint8_t is_ae_params_valid;
+    cam_ae_params_t ae_params;
 } cam_metadata_info_t;
 
 typedef enum {

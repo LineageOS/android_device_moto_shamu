@@ -790,6 +790,10 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
             ALOGE("%s: processHDRData failed", __func__);
         }
     }
+     /* Update 3a info */
+    if(pMetaData->is_ae_params_valid) {
+        pme->m3AExifParams.ae_params = pMetaData->ae_params;
+    }
 
     stream->bufDone(frame->buf_idx);
     free(super_frame);
