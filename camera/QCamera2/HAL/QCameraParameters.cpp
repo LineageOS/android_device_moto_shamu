@@ -1029,9 +1029,26 @@ int32_t QCameraParameters::setPictureSize(const QCameraParameters& params)
     ALOGV("Requested picture size %d x %d", width, height);
 
     // Validate the picture size
-    for (size_t i = 0; i < m_pCapability->picture_sizes_tbl_cnt; ++i) {
-        if (width ==  m_pCapability->picture_sizes_tbl[i].width
-           && height ==  m_pCapability->picture_sizes_tbl[i].height) {
+    if(!m_reprocScaleParam.isScaleEnabled()){
+        for (size_t i = 0; i < m_pCapability->picture_sizes_tbl_cnt; ++i) {
+            if (width ==  m_pCapability->picture_sizes_tbl[i].width
+               && height ==  m_pCapability->picture_sizes_tbl[i].height) {
+                // check if need to restart preview in case of picture size change
+                int old_width, old_height;
+                CameraParameters::getPictureSize(&old_width, &old_height);
+                if ((m_bZslMode || m_bRecordingHint) &&
+                    (width != old_width || height != old_height)) {
+                    m_bNeedRestart = true;
+                }
+
+                // set the new value
+                CameraParameters::setPictureSize(width, height);
+                return NO_ERROR;
+            }
+        }
+    }else{
+        //should use scaled picture size table to validate
+        if(m_reprocScaleParam.setValidatePicSize(width, height) == NO_ERROR){
             // check if need to restart preview in case of picture size change
             int old_width, old_height;
             CameraParameters::getPictureSize(&old_width, &old_height);
@@ -1041,7 +1058,10 @@ int32_t QCameraParameters::setPictureSize(const QCameraParameters& params)
             }
 
             // set the new value
-            CameraParameters::setPictureSize(width, height);
+            char val[32];
+            sprintf(val, "%dx%d", width, height);
+            updateParamEntry(KEY_PICTURE_SIZE, val);
+            ALOGV("%s: %s", __func__, val);
             return NO_ERROR;
         }
     }
@@ -2973,6 +2993,28 @@ int32_t QCameraParameters::initDefaultParameters()
            m_pCapability->picture_sizes_tbl[m_pCapability->picture_sizes_tbl_cnt-1].height);
     } else {
         ALOGE("%s: supported picture sizes cnt is 0 or exceeds max!!!", __func__);
+    }
+
+    // Need check if scale should be enabled
+    if (m_pCapability->scale_picture_sizes_cnt > 0 &&
+        m_pCapability->scale_picture_sizes_cnt <= MAX_SCALE_SIZES_CNT){
+        //get scale size, enable scaling. And re-set picture size table with scale sizes
+        m_reprocScaleParam.setScaleEnable(true);
+        int rc_s = m_reprocScaleParam.setScaleSizeTbl(
+            m_pCapability->scale_picture_sizes_cnt, m_pCapability->scale_picture_sizes,
+            m_pCapability->picture_sizes_tbl_cnt, m_pCapability->picture_sizes_tbl);
+        if(rc_s == NO_ERROR){
+            cam_dimension_t *totalSizeTbl = m_reprocScaleParam.getTotalSizeTbl();
+            uint8_t totalSizeCnt = m_reprocScaleParam.getTotalSizeTblCnt();
+            String8 pictureSizeValues = createSizesString(totalSizeTbl, totalSizeCnt);
+            set(KEY_SUPPORTED_PICTURE_SIZES, pictureSizeValues.string());
+            ALOGE("%s: scaled supported pic sizes: %s", __func__, pictureSizeValues.string());
+        }else{
+            m_reprocScaleParam.setScaleEnable(false);
+            ALOGE("%s: reset scaled picture size table failed.", __func__);
+        }
+    }else{
+        m_reprocScaleParam.setScaleEnable(false);
     }
 
     // Set supported thumbnail sizes
