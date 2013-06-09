@@ -137,6 +137,8 @@ private:
 
     static void *dataProcessRoutine(void *data);
 
+    int32_t setYUVFrameInfo(mm_camera_super_buf_t *recvd_frame);
+
 private:
     QCamera2HardwareInterface *m_parent;
     jpeg_encode_callback_t     mJpegCB;
