@@ -1281,6 +1281,9 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
                         mParameters.getMaxUnmatchedFramesInQueue() +
                         mParameters.getNumOfExtraHDRBufsIfNeeded() +
                         CAMERA_MIN_STREAMING_BUFFERS;
+            if (bufferCnt > zslQBuffers + minCircularBufNum) {
+                bufferCnt = zslQBuffers + minCircularBufNum;
+            }
         }
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
@@ -1292,6 +1295,9 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
                             mParameters.getMaxUnmatchedFramesInQueue() +
                             mParameters.getNumOfExtraHDRBufsIfNeeded() +
                             CAMERA_MIN_STREAMING_BUFFERS;
+                if (bufferCnt > zslQBuffers + minCircularBufNum) {
+                    bufferCnt = zslQBuffers + minCircularBufNum;
+                }
             }
         }
         break;
@@ -1303,6 +1309,9 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
                         mParameters.getMaxUnmatchedFramesInQueue() +
                         mParameters.getNumOfExtraHDRBufsIfNeeded() +
                         CAMERA_MIN_STREAMING_BUFFERS;
+            if (bufferCnt > zslQBuffers + minCircularBufNum) {
+                bufferCnt = zslQBuffers + minCircularBufNum;
+            }
         }
         break;
     case CAM_STREAM_TYPE_VIDEO:
@@ -1327,6 +1336,9 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
         {
             bufferCnt = minCaptureBuffers +
                         mParameters.getMaxUnmatchedFramesInQueue();
+            if (bufferCnt > zslQBuffers + minCircularBufNum) {
+                bufferCnt = zslQBuffers + minCircularBufNum;
+            }
             if (bufferCnt < CAMERA_MIN_STREAMING_BUFFERS) {
                 bufferCnt = CAMERA_MIN_STREAMING_BUFFERS;
             }
@@ -3229,7 +3241,7 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
         }
     }
 
-    uint8_t minStreamBufNum = mParameters.getNumOfSnapshots();
+    uint8_t minStreamBufNum = getBufNumRequired(CAM_STREAM_TYPE_OFFLINE_PROC);
     rc = pChannel->addReprocStreamsFromSource(*this,
                                               pp_config,
                                               pInputChannel,
