@@ -487,12 +487,18 @@ int32_t QCameraPostProcessor::processData(mm_camera_super_buf_t *frame)
     }
 
     if (m_parent->needReprocess()) {
+        //play shutter sound
+        m_parent->playShutter();
+
         ALOGD("%s: need reprocess", __func__);
         // enqueu to post proc input queue
         m_inputPPQ.enqueue((void *)frame);
     } else if (m_parent->mParameters.isNV16PictureFormat()) {
         processRawData(frame);
     } else {
+        //play shutter sound
+        m_parent->playShutter();
+
         ALOGD("%s: no need offline reprocess, sending to jpeg encoding", __func__);
         qcamera_jpeg_data_t *jpeg_job =
             (qcamera_jpeg_data_t *)malloc(sizeof(qcamera_jpeg_data_t));
@@ -1365,9 +1371,6 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                             (qcamera_jpeg_data_t *)pme->m_inputJpegQ.dequeue();
 
                         if (NULL != jpeg_job) {
-                            //play shutter sound
-                            pme->m_parent->playShutter();
-
                             // add into ongoing jpeg job Q
                             pme->m_ongoingJpegQ.enqueue((void *)jpeg_job);
                             ret = pme->encodeData(jpeg_job, needNewSess);
