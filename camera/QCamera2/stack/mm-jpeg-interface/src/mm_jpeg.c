@@ -461,6 +461,7 @@ OMX_ERRORTYPE mm_jpeg_session_create(mm_jpeg_job_session_t* p_session)
   p_session->fbd_count = 0;
   p_session->encode_pid = -1;
   p_session->config = OMX_FALSE;
+  p_session->exif_count_local = 0;
 
   p_session->omx_callbacks.EmptyBufferDone = mm_jpeg_ebd;
   p_session->omx_callbacks.FillBufferDone = mm_jpeg_fbd;
@@ -493,7 +494,6 @@ void mm_jpeg_session_destroy(mm_jpeg_job_session_t* p_session)
 {
   OMX_ERRORTYPE rc = OMX_ErrorNone;
   OMX_STATETYPE state;
-  int i = 0;
 
   CDBG("%s:%d] E", __func__, __LINE__);
   if (NULL == p_session->omx_handle) {
@@ -526,17 +526,6 @@ void mm_jpeg_session_destroy(mm_jpeg_job_session_t* p_session)
     CDBG_ERROR("%s:%d] OMX_FreeHandle failed (%d)", __func__, __LINE__, rc);
   }
   p_session->omx_handle = NULL;
-
-  CDBG_ERROR("%s:%d] Exif entry count %d %d", __func__, __LINE__,
-    (int)p_session->params.exif_info.numOfEntries,
-    (int)p_session->total_entries);
-  for (i = p_session->params.exif_info.numOfEntries;
-    i < p_session->total_entries; i++) {
-    rc = releaseExifEntry(&p_session->exif_info_all[i]);
-    if (rc) {
-      CDBG_ERROR("%s:%d] Exif release failed (%d)", __func__, __LINE__, rc);
-    }
-  }
 
   pthread_mutex_destroy(&p_session->lock);
   pthread_cond_destroy(&p_session->cond);
@@ -1079,37 +1068,42 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
     (int)p_jobparams->rotation, (int)rotate.nPortIndex);
 
   /* Set Exif data*/
-  memset(&p_session->exif_info_all[0],  0,  sizeof(p_session->exif_info_all));
-
-  exif_info.numOfEntries = p_params->exif_info.numOfEntries;
-  exif_info.exif_data = &p_session->exif_info_all[0];
-  /*If Exif data has been passed copy it*/
-  if (p_params->exif_info.numOfEntries > 0) {
-    CDBG("%s:%d] Num of exif entries passed from HAL: %d", __func__, __LINE__,
-      (int)p_params->exif_info.numOfEntries);
-    memcpy(exif_info.exif_data, p_params->exif_info.exif_data,
-      sizeof(QEXIF_INFO_DATA) * p_params->exif_info.numOfEntries);
+  memset(&p_session->exif_info_local[0], 0, sizeof(p_session->exif_info_local));
+  rc = OMX_GetExtensionIndex(p_session->omx_handle, QOMX_IMAGE_EXT_EXIF_NAME,
+    &exif_idx);
+  if (OMX_ErrorNone != rc) {
+    CDBG_ERROR("%s:%d] Error %d", __func__, __LINE__, rc);
+    return rc;
   }
-
-  /* After Parse metadata */
-  p_session->total_entries = exif_info.numOfEntries;
-
-  if (exif_info.numOfEntries > 0) {
-    /* set exif tags */
-    CDBG("%s:%d] Set exif tags count %d", __func__, __LINE__,
-      (int)exif_info.numOfEntries);
-    rc = OMX_GetExtensionIndex(p_session->omx_handle, QOMX_IMAGE_EXT_EXIF_NAME,
-      &exif_idx);
+  CDBG("%s:%d] Num of exif entries passed from HAL: %d", __func__, __LINE__,
+      (int)p_jobparams->exif_info.numOfEntries);
+  if (p_jobparams->exif_info.numOfEntries > 0) {
+     rc = OMX_SetConfig(p_session->omx_handle, exif_idx,
+      &p_jobparams->exif_info);
     if (OMX_ErrorNone != rc) {
       CDBG_ERROR("%s:%d] Error %d", __func__, __LINE__, rc);
       return rc;
     }
+  }
+  /*parse aditional exif data from the metadata*/
+  if (NULL != p_jobparams->p_metadata) {
+    exif_info.numOfEntries = 0;
+    exif_info.exif_data = &p_session->exif_info_local[0];
+    process_meta_data(p_jobparams->p_metadata, &exif_info);
+    /* After Parse metadata */
+    p_session->exif_count_local = exif_info.numOfEntries;
 
-    rc = OMX_SetConfig(p_session->omx_handle, exif_idx,
-      &exif_info);
-    if (OMX_ErrorNone != rc) {
-      CDBG_ERROR("%s:%d] Error %d", __func__, __LINE__, rc);
-      return rc;
+    if (exif_info.numOfEntries > 0) {
+      /* set exif tags */
+      CDBG("%s:%d] exif tags from metadata count %d", __func__, __LINE__,
+        (int)exif_info.numOfEntries);
+
+      rc = OMX_SetConfig(p_session->omx_handle, exif_idx,
+        &exif_info);
+      if (OMX_ErrorNone != rc) {
+        CDBG_ERROR("%s:%d] Error %d", __func__, __LINE__, rc);
+        return rc;
+      }
     }
   }
 
@@ -1131,6 +1125,7 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
 OMX_BOOL mm_jpeg_session_abort(mm_jpeg_job_session_t *p_session)
 {
   OMX_ERRORTYPE ret = OMX_ErrorNone;
+  int rc = 0;
 
   CDBG("%s:%d] E", __func__, __LINE__);
   pthread_mutex_lock(&p_session->lock);
@@ -1152,6 +1147,10 @@ OMX_BOOL mm_jpeg_session_abort(mm_jpeg_job_session_t *p_session)
     if (ret != OMX_ErrorNone) {
       CDBG("%s:%d] OMX_SendCommand returned error %d", __func__, __LINE__, ret);
       return 1;
+    }
+    rc = mm_jpeg_destroy_job(p_session);
+    if (rc != 0) {
+      CDBG("%s:%d] Destroy job returned error %d", __func__, __LINE__, rc);
     }
 
     pthread_mutex_lock(&p_session->lock);
@@ -1268,7 +1267,8 @@ inline mm_jpeg_job_session_t *mm_jpeg_get_session(mm_jpeg_obj *my_obj, uint32_t 
  *       Configure the job specific params
  *
  **/
-static OMX_ERRORTYPE mm_jpeg_configure_job_params(mm_jpeg_job_session_t *p_session)
+static OMX_ERRORTYPE mm_jpeg_configure_job_params(
+  mm_jpeg_job_session_t *p_session)
 {
   OMX_ERRORTYPE ret = OMX_ErrorNone;
   OMX_IMAGE_PARAM_QFACTORTYPE q_factor;
@@ -1322,7 +1322,7 @@ static OMX_ERRORTYPE mm_jpeg_configure_job_params(mm_jpeg_job_session_t *p_sessi
   }
   work_buffer.fd = p_session->work_buffer.p_pmem_fd;
   work_buffer.vaddr = p_session->work_buffer.addr;
-  CDBG_ERROR("%s:%d] Work buffer %d %x", __func__, __LINE__,
+  CDBG_ERROR("%s:%d] Work buffer %d %p", __func__, __LINE__,
     work_buffer.fd, work_buffer.vaddr);
 
   ret = OMX_SetConfig(p_session->omx_handle, work_buffer_index,
@@ -1402,6 +1402,9 @@ static inline void mm_jpeg_job_done(mm_jpeg_job_session_t *p_session)
   mm_jpeg_obj *my_obj = (mm_jpeg_obj *)p_session->jpeg_obj;
   mm_jpeg_job_q_node_t *node = NULL;
 
+  /*Destroy job related params*/
+  mm_jpeg_destroy_job(p_session);
+
   /*remove the job*/
   node = mm_jpeg_queue_remove_job_by_job_id(&my_obj->ongoing_job_q,
     p_session->jobId);
@@ -1477,7 +1480,8 @@ static OMX_ERRORTYPE mm_jpeg_session_encode(mm_jpeg_job_session_t *p_session)
   if (p_session->params.encode_thumbnail) {
 #ifdef MM_JPEG_DUMP_INPUT
   char thumb_filename[256];
-  snprintf(thumb_filename, 255, "/data/jpeg/mm_jpeg_int_t%d.yuv", p_session->ebd_count);
+  snprintf(thumb_filename, 255, "/data/jpeg/mm_jpeg_int_t%d.yuv",
+    p_session->ebd_count);
   DUMP_TO_FILE(filename,
     p_session->p_in_omx_thumb_buf[p_jobparams->thumb_index]->pBuffer,
     (int)p_session->p_in_omx_thumb_buf[p_jobparams->thumb_index]->nAllocLen);
@@ -2050,6 +2054,37 @@ int32_t mm_jpeg_create_session(mm_jpeg_obj *my_obj,
   p_session->sessionId = *p_session_id;
   p_session->jpeg_obj = (void*)my_obj; /* save a ptr to jpeg_obj */
   CDBG("%s:%d] session id %x", __func__, __LINE__, *p_session_id);
+
+  return rc;
+}
+
+/** mm_jpeg_destroy_job
+ *
+ *  Arguments:
+ *    @p_session: Session obj
+ *
+ *  Return:
+ *       0 for success else failure
+ *
+ *  Description:
+ *       Destroy the job based paramenters
+ *
+ **/
+int32_t mm_jpeg_destroy_job(mm_jpeg_job_session_t *p_session)
+{
+  mm_jpeg_encode_job_t *p_jobparams = &p_session->encode_job;
+  int i = 0, rc = 0;
+
+  CDBG_ERROR("%s:%d] Exif entry count %d %d", __func__, __LINE__,
+    (int)p_jobparams->exif_info.numOfEntries,
+    (int)p_session->exif_count_local);
+  for (i = 0; i < p_session->exif_count_local; i++) {
+    rc = releaseExifEntry(&p_session->exif_info_local[i]);
+    if (rc) {
+      CDBG_ERROR("%s:%d] Exif release failed (%d)", __func__, __LINE__, rc);
+    }
+  }
+  p_session->exif_count_local = 0;
 
   return rc;
 }

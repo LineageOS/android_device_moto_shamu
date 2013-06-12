@@ -271,18 +271,6 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
     if (encode_parm.quality <= 0) {
         encode_parm.quality = 85;
     }
-
-    // get exif data
-    if (m_pJpegExifObj != NULL) {
-        delete m_pJpegExifObj;
-        m_pJpegExifObj = NULL;
-    }
-    m_pJpegExifObj = m_parent->getExifData();
-    if (m_pJpegExifObj != NULL) {
-        encode_parm.exif_info.exif_data = m_pJpegExifObj->getEntries();
-        encode_parm.exif_info.numOfEntries = m_pJpegExifObj->getNumOfEntries();
-    }
-
     cam_frame_len_offset_t main_offset;
     memset(&main_offset, 0, sizeof(cam_frame_len_offset_t));
     main_stream->getFrameOffset(main_offset);
@@ -378,10 +366,6 @@ on_error:
         m_pJpegOutputMem->deallocate();
         delete m_pJpegOutputMem;
         m_pJpegOutputMem = NULL;
-    }
-    if (m_pJpegExifObj != NULL) {
-        delete m_pJpegExifObj;
-        m_pJpegExifObj = NULL;
     }
     ALOGV("%s : X with error %d", __func__, ret);
     return ret;
@@ -1086,6 +1070,19 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     jpg_job.encode_job.main_dim.src_dim = src_dim;
     jpg_job.encode_job.main_dim.dst_dim = src_dim;
     jpg_job.encode_job.main_dim.crop = crop;
+
+
+    // get exif data
+    if (m_pJpegExifObj != NULL) {
+        delete m_pJpegExifObj;
+        m_pJpegExifObj = NULL;
+    }
+    m_pJpegExifObj = m_parent->getExifData();
+    if (m_pJpegExifObj != NULL) {
+        jpg_job.encode_job.exif_info.exif_data = m_pJpegExifObj->getEntries();
+        jpg_job.encode_job.exif_info.numOfEntries =
+          m_pJpegExifObj->getNumOfEntries();
+    }
 
     // thumbnail dim
     if (m_bThumbnailNeeded == TRUE) {
