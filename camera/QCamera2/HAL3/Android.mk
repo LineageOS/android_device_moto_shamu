@@ -29,11 +29,22 @@ LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/../../mm-image-codec/qomx_core \
         $(LOCAL_PATH)/../util
 
+LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
+
+LOCAL_STATIC_LIBRARIES := libqcamera2_util
+ifneq ($(filter msm8974 msm8x74,$(TARGET_BOARD_PLATFORM)),)
+LOCAL_C_INCLUDES += \
+        hardware/qcom/display/libgralloc
+else
+LOCAL_C_INCLUDES += \
+        hardware/qcom/display/libgralloc
+endif
+
 LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface libui libcamera_metadata
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
-LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
+LOCAL_MODULE := camera3.$(TARGET_BOARD_PLATFORM)
 #LOCAL_MODULE := camera3.$(TARGET_DEVICE)
 LOCAL_MODULE_TAGS := optional
 

@@ -1082,6 +1082,7 @@ typedef enum {
     /* Tone map mode */
     CAM_INTF_META_TONEMAP_MODE,
     CAM_INTF_META_FLASH_MODE,
+    CAM_INTF_META_ASD_HDR_SCENE_DATA,
     CAM_INTF_META_PRIVATE_DATA,
     CAM_INTF_PARM_STATS_DEBUG_MASK,
 
@@ -1206,12 +1207,6 @@ typedef enum {
     CAM_FLASH_CTRL_SINGLE,
     CAM_FLASH_CTRL_TORCH
 } cam_flash_ctrl_t;
-
-typedef struct {
-    uint8_t ae_mode;
-    uint8_t awb_mode;
-    uint8_t af_mode;
-} cam_scene_mode_overrides_t;
 
 typedef struct {
     uint8_t ae_mode;

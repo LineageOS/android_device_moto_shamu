@@ -100,8 +100,15 @@ int32_t QCamera3PostProcessor::init(jpeg_encode_callback_t jpeg_cb, void *user_d
 {
     mJpegCB = jpeg_cb;
     mJpegUserData = user_data;
+    mm_dimension max_size;
+    QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)m_parent->mUserData;
+    //set max pic size
+    memset(&max_size, 0, sizeof(mm_dimension));
+    max_size.w =  hal_obj->m_max_pic_width;
+    max_size.h =  hal_obj->m_max_pic_height;
 
-    mJpegClientHandle = jpeg_open(&mJpegHandle);
+
+    mJpegClientHandle = jpeg_open(&mJpegHandle,max_size);
     if(!mJpegClientHandle) {
         ALOGE("%s : jpeg_open did not work", __func__);
         return UNKNOWN_ERROR;

@@ -88,6 +88,7 @@ public:
 
     static void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                 QCamera3Stream *stream, void *userdata);
+    void* mUserData;
 protected:
 
    virtual int32_t init(mm_camera_channel_attr_t *attr,
@@ -102,7 +103,6 @@ protected:
     uint8_t m_numStreams;
     QCamera3Stream *mStreams[MAX_STREAM_NUM_IN_BUNDLE];
     mm_camera_buf_notify_t mDataCB;
-    void *mUserData;
 
     QCamera3HeapMemory *mStreamInfoBuf;
     channel_cb_routine mChannelCB;

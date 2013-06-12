@@ -156,7 +156,8 @@ public:
     int getJpegRotation();
     int calcMaxJpegSize();
     QCamera3Exif *getExifData();
-
+    int32_t m_max_pic_width;
+    int32_t m_max_pic_height;
 private:
     camera3_device_t   mCameraDevice;
     uint8_t            mCameraId;

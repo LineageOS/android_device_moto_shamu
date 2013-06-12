@@ -265,18 +265,14 @@ typedef struct{
     /* Maximum value possible for a sharpness map region */
     int32_t max_sharpness_map_value;
 
-    cam_scene_mode_overrides_t scene_mode_overrides[CAM_SCENE_MODE_MAX];
-
     /*Autoexposure modes for camera 3 api*/
     uint8_t supported_ae_modes_cnt;
     cam_ae_mode_type supported_ae_modes[CAM_AE_MODE_MAX];
 
     /* picture sizes need scale*/
     cam_scene_mode_overrides_t scene_mode_overrides[CAM_SCENE_MODE_MAX];
-
-    /*Autoexposure modes for camera 3 api*/
-    uint8_t supported_ae_modes_cnt;
-    cam_ae_mode_type supported_ae_modes[CAM_AE_MODE_MAX];
+    uint8_t scale_picture_sizes_cnt;
+    cam_dimension_t scale_picture_sizes[MAX_SCALE_SIZES_CNT];
 
 } cam_capability_t;
 

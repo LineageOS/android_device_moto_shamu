@@ -128,7 +128,7 @@ typedef struct {
 
   /* jpeg quality: range 0~100 */
   uint32_t quality;
-
+  QOMX_EXIF_INFO exif_info;
   jpeg_encode_callback_t jpeg_cb;
   void* userdata;
 
