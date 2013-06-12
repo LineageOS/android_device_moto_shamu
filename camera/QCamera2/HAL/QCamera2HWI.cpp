@@ -3910,7 +3910,15 @@ int QCamera2HardwareInterface::updateParameters(const char *parms, bool &needRes
     String8 str = String8(parms);
     QCameraParameters param(str);
     rc =  mParameters.updateParameters(param, needRestart);
+
+    // update stream based parameter settings
+    for (int i = 0; i < QCAMERA_CH_TYPE_MAX; i++) {
+        if (m_channels[i] != NULL) {
+            m_channels[i]->UpdateStreamBasedParameters(mParameters);
+        }
+    }
     pthread_mutex_unlock(&m_parm_lock);
+
     return rc;
 }
 

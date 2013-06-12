@@ -767,6 +767,7 @@ typedef enum {
     /* stream based parameters */
     CAM_INTF_PARM_DO_REPROCESS,
     CAM_INTF_PARM_SET_BUNDLE,
+    CAM_INTF_PARM_STREAM_FLIP,
 
     /* specific to HAL3 */
     /* Whether the metadata maps to a valid frame number */
