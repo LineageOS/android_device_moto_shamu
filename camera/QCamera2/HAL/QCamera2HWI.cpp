@@ -1866,7 +1866,7 @@ int QCamera2HardwareInterface::autoFocus()
     case CAM_FOCUS_MODE_EDOF:
     default:
         ALOGE("%s: No ops in focusMode (%d)", __func__, focusMode);
-        rc = BAD_VALUE;
+        rc = sendEvtNotify(CAMERA_MSG_FOCUS, true, 0);
         break;
     }
     return rc;
