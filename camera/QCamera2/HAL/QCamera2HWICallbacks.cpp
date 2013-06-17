@@ -112,8 +112,6 @@ void QCamera2HardwareInterface::capture_channel_cb_routine(mm_camera_super_buf_t
         pme->mCameraHandle == NULL ||
         pme->mCameraHandle->camera_handle != recvd_frame->camera_handle){
         ALOGE("%s: camera obj not valid", __func__);
-        // simply free super frame
-        free(recvd_frame);
         return;
     }
 
@@ -202,8 +200,6 @@ void QCamera2HardwareInterface::postproc_channel_cb_routine(mm_camera_super_buf_
         pme->mCameraHandle == NULL ||
         pme->mCameraHandle->camera_handle != recvd_frame->camera_handle){
         ALOGE("%s: camera obj not valid", __func__);
-        // simply free super frame
-        free(recvd_frame);
         return;
     }
 
