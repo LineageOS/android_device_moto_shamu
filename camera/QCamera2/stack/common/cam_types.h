@@ -771,8 +771,9 @@ typedef struct {
    uint32_t meta_frame_id;
 } cam_meta_valid_t;
 
-typedef  struct {
-    float aperture_value;
+typedef struct {
+    cam_flash_mode_t flash_mode;
+    float            aperture_value;
 } cam_sensor_params_t;
 
 typedef struct {
