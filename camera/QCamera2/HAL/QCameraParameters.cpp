@@ -2933,7 +2933,7 @@ int32_t QCameraParameters::initDefaultParameters()
     setFloat(KEY_FOCAL_LENGTH, m_pCapability->focal_length);
     setFloat(KEY_HORIZONTAL_VIEW_ANGLE, m_pCapability->hor_view_angle);
     setFloat(KEY_VERTICAL_VIEW_ANGLE, m_pCapability->ver_view_angle);
-
+    set(QCameraParameters::KEY_FOCUS_DISTANCES, "Infinity,Infinity,Infinity");
     // Set supported preview sizes
     if (m_pCapability->preview_sizes_tbl_cnt > 0 &&
         m_pCapability->preview_sizes_tbl_cnt <= MAX_SIZES_CNT) {
@@ -3720,6 +3720,7 @@ int32_t QCameraParameters::setBrightness(int brightness)
  *==========================================================================*/
 int32_t QCameraParameters::setFocusMode(const char *focusMode)
 {
+    int32_t rc;
     if (focusMode != NULL) {
         int32_t value = lookupAttr(FOCUS_MODES_MAP,
                                    sizeof(FOCUS_MODES_MAP)/sizeof(QCameraMap),
@@ -3734,10 +3735,14 @@ int32_t QCameraParameters::setFocusMode(const char *focusMode)
             m_bAFRunning = false;
 
             updateParamEntry(KEY_FOCUS_MODE, focusMode);
-            return AddSetParmEntryToBatch(m_pParamBuf,
+            rc = AddSetParmEntryToBatch(m_pParamBuf,
                                           CAM_INTF_PARM_FOCUS_MODE,
                                           sizeof(value),
                                           &value);
+            if (strcmp(focusMode,"infinity")==0){
+                set(QCameraParameters::KEY_FOCUS_DISTANCES, "Infinity,Infinity,Infinity");
+            }
+            return rc;
         }
     }
     ALOGE("Invalid focus mode value: %s", (focusMode == NULL) ? "NULL" : focusMode);
