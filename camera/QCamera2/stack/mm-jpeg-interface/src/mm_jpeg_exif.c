@@ -312,7 +312,7 @@ int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info,
     val_rat.denom = 10000;
 
     rc = addExifEntry(exif_info, EXIFTAGID_EXPOSURE_TIME, EXIF_RATIONAL,
-      sizeof(val_rat), &val_rat);
+      (sizeof(val_rat)/(8)), &val_rat);
     if (rc) {
       ALOGE("%s:%d]: Error adding Exif Entry Exposure time",
         __func__, __LINE__);
@@ -327,7 +327,7 @@ int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info,
       val_srat.denom = 0;
     }
     rc = addExifEntry(exif_info, EXIFTAGID_SHUTTER_SPEED, EXIF_SRATIONAL,
-      sizeof(val_srat), &val_srat);
+      (sizeof(val_srat)/(8)), &val_srat);
     if (rc) {
       ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
     }
@@ -335,7 +335,7 @@ int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info,
     short val_short;
     val_short = p_ae_params->iso_value;
     rc = addExifEntry(exif_info, EXIFTAGID_ISO_SPEED_RATING, EXIF_SHORT,
-      sizeof(val_short), &val_short);
+      sizeof(val_short)/2, &val_short);
     if (rc) {
       ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
     }
