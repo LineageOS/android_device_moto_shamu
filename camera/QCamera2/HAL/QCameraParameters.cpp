@@ -3589,6 +3589,15 @@ int32_t QCameraParameters::adjustPreviewFpsRange(cam_fps_range_t *fpsRange)
 int32_t QCameraParameters::setPreviewFpsRange(int minFPS, int maxFPS)
 {
     char str[32];
+    char value[32];
+    int fixedFpsValue;
+    /*This property get value should be the fps that user needs*/
+    property_get("persist.debug.set.fixedfps", value, "0");
+    fixedFpsValue = atoi(value);
+    if(fixedFpsValue != 0) {
+      minFPS = (int)fixedFpsValue*1000;
+      maxFPS = (int)fixedFpsValue*1000;
+    }
     snprintf(str, sizeof(str), "%d,%d", minFPS, maxFPS);
     ALOGE("%s: Setting preview fps range %s", __func__, str);
     updateParamEntry(KEY_PREVIEW_FPS_RANGE, str);
