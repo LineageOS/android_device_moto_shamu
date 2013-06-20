@@ -837,68 +837,40 @@ String8 QCameraParameters::createHfrSizesString(
 }
 
 /*===========================================================================
- * FUNCTION   : compareFPSValues
- *
- * DESCRIPTION: helper function for fps sorting
- *
- * PARAMETERS :
- *   @p1     : first array element
- *   @p2     : second array element
- *
- * RETURN     : -1 - left element is greater than right
- *              0  - elements are equals
- *              1  - left element is less than right
- *==========================================================================*/
-int QCameraParameters::compareFPSValues(const void *p1, const void *p2)
-{
-    if ( *( (int *) p1) > *( (int *) p2) ) {
-        return -1;
-    } else if (  *( (int *) p1) < *( (int *) p2) ) {
-        return 1;
-    }
-
-    return 0;
-}
-
-/*===========================================================================
  * FUNCTION   : createFpsString
  *
  * DESCRIPTION: create string obj contains array of FPS rates
  *
  * PARAMETERS :
- *   @fps     : array of fps ranges
- *   @len     : size of the array
+ *   @fps     : default fps range
  *
  * RETURN     : string obj
  *==========================================================================*/
-String8 QCameraParameters::createFpsString(const cam_fps_range_t *fps, int len)
+String8 QCameraParameters::createFpsString(cam_fps_range_t &fps)
 {
-    String8 str;
     char buffer[32];
-    int duplicate = INT_MAX;
+    String8 fpsValues;
 
-    int *fpsValues = new int[len];
+    int min_fps = int(fps.min_fps);
+    int max_fps = int(fps.max_fps);
 
-    for (int i = 0; i < len; i++ ) {
-        fpsValues[i] = int(fps[i].max_fps);
+    if (min_fps < fps.min_fps){
+        min_fps++;
+    }
+    if (max_fps > fps.max_fps) {
+        max_fps--;
+    }
+    if (min_fps <= max_fps) {
+        snprintf(buffer, sizeof(buffer), "%d", min_fps);
+        fpsValues.append(buffer);
     }
 
-    qsort(fpsValues, len, sizeof(int), compareFPSValues);
-
-    for (int i = 0; i < len; i++ ) {
-        if ( duplicate != fpsValues[i] ) {
-            snprintf(buffer, sizeof(buffer), "%d", fpsValues[i]);
-            str.append(buffer);
-            if (i < len-1) {
-                str.append(",");
-            }
-            duplicate = fpsValues[i];
-        }
+    for (int i = min_fps+1; i <= max_fps; i++) {
+        snprintf(buffer, sizeof(buffer), ",%d", i);
+        fpsValues.append(buffer);
     }
 
-    delete [] fpsValues;
-
-    return str;
+    return fpsValues;
 }
 
 /*===========================================================================
@@ -3056,9 +3028,9 @@ int32_t QCameraParameters::initDefaultParameters()
         setPreviewFpsRange(min_fps, max_fps);
 
         // Set legacy preview fps
-        String8 fpsValues = createFpsString(m_pCapability->fps_ranges_tbl,
-                                            m_pCapability->fps_ranges_tbl_cnt);
+        String8 fpsValues = createFpsString(m_pCapability->fps_ranges_tbl[default_fps_index]);
         set(KEY_SUPPORTED_PREVIEW_FRAME_RATES, fpsValues.string());
+        ALOGD("%s: supported fps rates: %s", __func__, fpsValues.string());
         CameraParameters::setPreviewFrameRate(int(m_pCapability->fps_ranges_tbl[default_fps_index].max_fps));
     } else {
         ALOGE("%s: supported fps ranges cnt is 0 or exceeds max!!!", __func__);
