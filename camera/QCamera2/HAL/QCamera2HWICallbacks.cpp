@@ -784,6 +784,13 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
         }
     }
 
+    if (pMetaData->is_hdr_scene_data_valid) {
+        int32_t rc = pme->processHDRData(pMetaData->hdr_scene_data);
+        if (rc != NO_ERROR) {
+            ALOGE("%s: processHDRData failed", __func__);
+        }
+    }
+
     stream->bufDone(frame->buf_idx);
     free(super_frame);
 

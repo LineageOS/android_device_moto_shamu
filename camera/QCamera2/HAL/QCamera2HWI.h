@@ -333,6 +333,7 @@ private:
     QCameraChannel *getChannelByHandle(uint32_t channelHandle);
     mm_camera_buf_def_t *getSnapshotFrame(mm_camera_super_buf_t *recvd_frame);
     int32_t processFaceDetectionResult(cam_face_detection_data_t *fd_data);
+    int32_t processHDRData(cam_asd_hdr_scene_data_t hdr_scene);
     int32_t processHistogramStats(cam_hist_stats_t &stats_data);
     int32_t setHistogram(bool histogram_en);
     int32_t setFaceDetection(bool enabled);

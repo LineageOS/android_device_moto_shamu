@@ -665,6 +665,11 @@ typedef struct {
 } cam_auto_focus_data_t;
 
 typedef struct {
+  uint32_t is_hdr_scene;
+  float    hdr_confidence;
+} cam_asd_hdr_scene_data_t;
+
+typedef struct {
     uint32_t stream_id;
     cam_rect_t crop;
 } cam_stream_crop_info_t;
@@ -706,6 +711,9 @@ typedef  struct {
      * 1. good_frame_idx_range.min_frame_idx > current_frame_idx
      * 2. good_frame_idx_range.min_frame_idx - current_frame_idx < 100 */
     cam_frame_idx_range_t good_frame_idx_range;
+
+    uint32_t is_hdr_scene_data_valid;
+    cam_asd_hdr_scene_data_t hdr_scene_data;
 
     char private_metadata[MAX_METADATA_PAYLOAD_SIZE];
 
@@ -902,6 +910,7 @@ typedef enum {
     /* Tone map mode */
     CAM_INTF_META_TONEMAP_MODE,
     CAM_INTF_META_FLASH_MODE,
+    CAM_INTF_META_ASD_HDR_SCENE_DATA,
     CAM_INTF_META_PRIVATE_DATA,
 
     CAM_INTF_PARM_MAX
