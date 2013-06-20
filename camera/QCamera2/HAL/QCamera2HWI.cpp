@@ -1672,11 +1672,8 @@ int QCamera2HardwareInterface::stopPreview()
 {
     ALOGD("%s: E", __func__);
     // stop preview stream
-    if (mParameters.isZSLMode() && mParameters.getRecordingHintValue() !=true) {
-        stopChannel(QCAMERA_CH_TYPE_ZSL);
-    } else {
-        stopChannel(QCAMERA_CH_TYPE_PREVIEW);
-    }
+    stopChannel(QCAMERA_CH_TYPE_ZSL);
+    stopChannel(QCAMERA_CH_TYPE_PREVIEW);
 
     // delete all channels from preparePreview
     unpreparePreview();
@@ -1719,8 +1716,7 @@ int QCamera2HardwareInterface::startRecording()
     ALOGD("%s: E", __func__);
     if (mParameters.getRecordingHintValue() == false) {
         ALOGE("%s: start recording when hint is false, stop preview first", __func__);
-        stopChannel(QCAMERA_CH_TYPE_PREVIEW);
-        delChannel(QCAMERA_CH_TYPE_PREVIEW);
+        stopPreview();
 
         // Set recording hint to TRUE
         mParameters.updateRecordingHintValue(TRUE);
@@ -3496,15 +3492,10 @@ int32_t QCamera2HardwareInterface::preparePreview()
  *==========================================================================*/
 void QCamera2HardwareInterface::unpreparePreview()
 {
-    if (mParameters.isZSLMode() && mParameters.getRecordingHintValue() !=true) {
-        delChannel(QCAMERA_CH_TYPE_ZSL);
-    } else {
-        delChannel(QCAMERA_CH_TYPE_PREVIEW);
-        if(mParameters.getRecordingHintValue() == true) {
-            delChannel(QCAMERA_CH_TYPE_VIDEO);
-            delChannel(QCAMERA_CH_TYPE_SNAPSHOT);
-        }
-    }
+    delChannel(QCAMERA_CH_TYPE_ZSL);
+    delChannel(QCAMERA_CH_TYPE_PREVIEW);
+    delChannel(QCAMERA_CH_TYPE_VIDEO);
+    delChannel(QCAMERA_CH_TYPE_SNAPSHOT);
 }
 
 /*===========================================================================
