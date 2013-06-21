@@ -42,8 +42,8 @@ typedef enum {
 
 typedef struct {
   cam_ae_params_t ae_params;
-  int flash_mode;
-} mm_jpeg_3a_params_t;
+  cam_sensor_params_t sensor_params;
+} mm_jpeg_exif_params_t;
 
 typedef struct {
   uint32_t sequence;          /* for jpeg bit streams, assembling is based on sequence. sequence starts from 0 */
@@ -158,7 +158,7 @@ typedef struct {
   QOMX_EXIF_INFO exif_info;
 
   /* 3a parameters */
-  mm_jpeg_3a_params_t cam3a_params;
+  mm_jpeg_exif_params_t cam_exif_params;
 
 } mm_jpeg_encode_job_t;
 

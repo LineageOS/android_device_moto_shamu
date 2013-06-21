@@ -434,7 +434,7 @@ private:
 
     int mDumpFrmCnt;  // frame dump count
     int mDumpSkipCnt; // frame skip count
-    mm_jpeg_3a_params_t m3AExifParams;
+    mm_jpeg_exif_params_t mExifParams;
 };
 
 }; // namespace qcamera
