@@ -22,6 +22,10 @@ LOCAL_CFLAGS = -Wall -Werror
 #Debug logs are enabled
 #LOCAL_CFLAGS += -DDISABLE_DEBUG_LOG
 
+ifneq ($(call is-platform-sdk-version-at-least,18),true)
+LOCAL_CFLAGS += -DUSE_JB_MR1
+endif
+
 LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/../stack/common \
         frameworks/native/include/media/openmax \
