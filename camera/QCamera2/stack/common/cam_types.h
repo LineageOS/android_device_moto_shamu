@@ -593,6 +593,11 @@ typedef struct {
     int num_fd;
 } cam_fd_set_parm_t;
 
+typedef enum {
+    QCAMERA_FD_PREVIEW,
+    QCAMERA_FD_SNAPSHOT
+}qcamera_face_detect_type_t;
+
 typedef struct {
     int8_t face_id;            /* unique id for face tracking within view unless view changes */
     int8_t score;              /* score of confidence (0, -100) */
@@ -618,6 +623,7 @@ typedef struct {
     uint32_t frame_id;                         /* frame index of which faces are detected */
     uint8_t num_faces_detected;                /* number of faces detected */
     cam_face_detection_info_t faces[MAX_ROI];  /* detailed information of faces detected */
+    qcamera_face_detect_type_t fd_type;        /* face detect for preview or snapshot frame*/
 } cam_face_detection_data_t;
 
 #define CAM_HISTOGRAM_STATS_SIZE 256

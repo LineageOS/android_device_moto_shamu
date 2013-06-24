@@ -3813,8 +3813,12 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
         return NO_ERROR;
     }
 
-    if ((NULL == mDataCb) || (msgTypeEnabled(CAMERA_MSG_PREVIEW_METADATA) == 0)) {
-        ALOGD("%s: prevew metadata msgtype not enabled, no ops here", __func__);
+    qcamera_face_detect_type_t fd_type = fd_data->fd_type;
+    if ((NULL == mDataCb) ||
+        (fd_type == QCAMERA_FD_PREVIEW && !msgTypeEnabled(CAMERA_MSG_PREVIEW_METADATA)) ||
+        (fd_type == QCAMERA_FD_SNAPSHOT && !msgTypeEnabled(CAMERA_MSG_META_DATA))
+        ) {
+        ALOGD("%s: metadata msgtype not enabled, no ops here", __func__);
         return NO_ERROR;
     }
 
@@ -3827,8 +3831,28 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
     }
 
     // process face detection result
-    size_t faceResultSize = sizeof(camera_frame_metadata_t);
-    faceResultSize += sizeof(camera_face_t) * MAX_ROI;
+    // need separate face detection in preview or snapshot type
+    size_t faceResultSize = 0;
+    size_t data_len = 0;
+    if(fd_type == QCAMERA_FD_PREVIEW){
+        //fd for preview frames
+        faceResultSize = sizeof(camera_frame_metadata_t);
+        faceResultSize += sizeof(camera_face_t) * MAX_ROI;
+    }else if(fd_type == QCAMERA_FD_SNAPSHOT){
+        // fd for snapshot frames
+        //check if face is detected in this frame
+        if(fd_data->num_faces_detected > 0){
+            data_len = sizeof(camera_frame_metadata_t) +
+                         sizeof(camera_face_t) * fd_data->num_faces_detected;
+        }else{
+            //no face
+            data_len = 0;
+        }
+        faceResultSize = 1 *sizeof(int)    //meta data type
+                       + 1 *sizeof(int)    // meta data len
+                       + data_len;         //data
+    }
+
     camera_memory_t *faceResultBuffer = mGetMemory(-1,
                                                    faceResultSize,
                                                    1,
@@ -3839,8 +3863,38 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
         return NO_MEMORY;
     }
 
-    unsigned char *faceData = ( unsigned char * ) faceResultBuffer->data;
-    memset(faceData, 0, faceResultSize);
+    unsigned char *pFaceResult = ( unsigned char * ) faceResultBuffer->data;
+    memset(pFaceResult, 0, faceResultSize);
+    unsigned char *faceData = NULL;
+    if(fd_type == QCAMERA_FD_PREVIEW){
+        faceData = pFaceResult;
+    }else if(fd_type == QCAMERA_FD_SNAPSHOT){
+        //need fill meta type and meta data len first
+        int *data_header = (int* )pFaceResult;
+        data_header[0] = CAMERA_META_DATA_FD;
+        data_header[1] = data_len;
+
+        if(data_len <= 0){
+            //if face is not valid or do not have face, return
+            qcamera_callback_argm_t cbArg;
+            memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+            cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+            cbArg.msg_type = CAMERA_MSG_META_DATA;
+            cbArg.data = faceResultBuffer;
+            cbArg.user_data = faceResultBuffer;
+            cbArg.cookie = this;
+            cbArg.release_cb = releaseCameraMemory;
+            int32_t rc = m_cbNotifier.notifyCallback(cbArg);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: fail sending notification", __func__);
+                faceResultBuffer->release(faceResultBuffer);
+            }
+            return rc;
+        }
+
+        faceData = pFaceResult + 2 *sizeof(int); //skip two int length
+    }
+
     camera_frame_metadata_t *roiData = (camera_frame_metadata_t * ) faceData;
     camera_face_t *faces = (camera_face_t *) ( faceData + sizeof(camera_frame_metadata_t) );
 
@@ -3910,7 +3964,11 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
     qcamera_callback_argm_t cbArg;
     memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
     cbArg.cb_type = QCAMERA_DATA_CALLBACK;
-    cbArg.msg_type = CAMERA_MSG_PREVIEW_METADATA;
+    if(fd_type == QCAMERA_FD_PREVIEW){
+        cbArg.msg_type = CAMERA_MSG_PREVIEW_METADATA;
+    }else if(fd_type == QCAMERA_FD_SNAPSHOT){
+        cbArg.msg_type = CAMERA_MSG_META_DATA;
+    }
     cbArg.data = faceResultBuffer;
     cbArg.metadata = roiData;
     cbArg.user_data = faceResultBuffer;
@@ -4615,6 +4673,33 @@ int32_t QCamera2HardwareInterface::prepareHardwareForSnapshot(int32_t afNeeded)
     ALOGD("[KPI Perf] %s: Prepare hardware such as LED",__func__);
     return mCameraHandle->ops->prepare_snapshot(mCameraHandle->camera_handle,
                                                 afNeeded);
+}
+
+/*===========================================================================
+ * FUNCTION   : needFDMetadata
+ *
+ * DESCRIPTION: check whether we need process Face Detection metadata in this chanel
+ *
+ * PARAMETERS :
+ *   @channel_type: channel type
+ *
+  * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
+bool QCamera2HardwareInterface::needFDMetadata(qcamera_ch_type_enum_t channel_type)
+{
+    //Note: Currently we only process ZSL channel
+    bool value = false;
+    if(channel_type == QCAMERA_CH_TYPE_ZSL){
+        //check if FD requirement is enabled
+        if(mParameters.isSnapshotFDNeeded() &&
+           mParameters.isFaceDetectionEnabled()){
+            value = true;
+            ALOGD("%s: Face Detection metadata is required in ZSL mode.", __func__);
+        }
+    }
+
+    return value;
 }
 
 }; // namespace qcamera

@@ -164,6 +164,9 @@ public:
 
     static const char KEY_QC_SUPPORTED_FLIP_MODES[];
 
+    //Face Detection, Facial processing requirement
+    static const char KEY_QC_SNAPSHOT_FD_DATA[];
+
     //Redeye Reduction
     static const char KEY_QC_REDEYE_REDUCTION[];
     static const char KEY_QC_SUPPORTED_REDEYE_REDUCTION[];
@@ -425,6 +428,7 @@ public:
     cam_denoise_process_type_t getWaveletDenoiseProcessPlate();
     int32_t getLiveSnapshotSize(cam_dimension_t &dim) {dim = m_LiveSnapshotSize; return NO_ERROR;};
     int getFlipMode(cam_stream_type_t streamType);
+    bool isSnapshotFDNeeded();
 
     void setLockCAFNeeded(bool bNeedflag) {m_bNeedLockCAF = bNeedflag;};
     bool isLockCAFNeeded() {return m_bNeedLockCAF;};
@@ -492,6 +496,7 @@ private:
     int32_t setFaceRecognition(const QCameraParameters& );
     int32_t setFlip(const QCameraParameters& );
     int32_t setBurstNum(const QCameraParameters& params);
+    int32_t setSnapshotFDReq(const QCameraParameters& );
 
     int32_t setAutoExposure(const char *autoExp);
     int32_t setPreviewFpsRange(int minFPS,int maxFPS);

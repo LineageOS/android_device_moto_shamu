@@ -117,6 +117,48 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
         }
     }
     //
+    // whether need FD Metadata along with Snapshot frame in ZSL mode
+    if(pme->needFDMetadata(QCAMERA_CH_TYPE_ZSL)){
+        //Need Face Detection result for snapshot frames
+        //Get the Meta Data frames
+        mm_camera_buf_def_t *pMetaFrame = NULL;
+        for(int i = 0; i < frame->num_bufs; i++){
+            QCameraStream *pStream = pChannel->getStreamByHandle(frame->bufs[i]->stream_id);
+            if(pStream != NULL){
+                if(pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)){
+                    pMetaFrame = frame->bufs[i]; //find the metadata
+                    break;
+                }
+            }
+        }
+
+        if(pMetaFrame != NULL){
+            cam_metadata_info_t *pMetaData = (cam_metadata_info_t *)pMetaFrame->buffer;
+            pMetaData->faces_data.fd_type = QCAMERA_FD_SNAPSHOT; //HARD CODE here before MCT can support
+            if(!pMetaData->is_faces_valid){
+                pMetaData->faces_data.num_faces_detected = 0;
+            }else if(pMetaData->faces_data.num_faces_detected > MAX_ROI){
+                ALOGE("%s: Invalid number of faces %d",
+                    __func__, pMetaData->faces_data.num_faces_detected);
+            }
+
+            qcamera_sm_internal_evt_payload_t *payload =
+                (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+            if (NULL != payload) {
+                memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+                payload->evt_type = QCAMERA_INTERNAL_EVT_FACE_DETECT_RESULT;
+                payload->faces_data = pMetaData->faces_data;
+                int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: processEvt prep_snapshot failed", __func__);
+                    free(payload);
+                    payload = NULL;
+                }
+            } else {
+                ALOGE("%s: No memory for prep_snapshot qcamera_sm_internal_evt_payload_t", __func__);
+            }
+        }
+    }
 
     // send to postprocessor
     pme->m_postprocessor.processData(frame);
@@ -834,6 +876,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
             // process face detection result
             if (pMetaData->faces_data.num_faces_detected)
                 ALOGE("[KPI Perf] %s: PROFILE_NUMBER_OF_FACES_DETECTED %d",__func__,pMetaData->faces_data.num_faces_detected);
+            pMetaData->faces_data.fd_type = QCAMERA_FD_PREVIEW; //HARD CODE here before MCT can support
             qcamera_sm_internal_evt_payload_t *payload =
                 (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
             if (NULL != payload) {

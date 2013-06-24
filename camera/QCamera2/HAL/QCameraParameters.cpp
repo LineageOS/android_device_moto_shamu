@@ -104,6 +104,7 @@ const char QCameraParameters::KEY_QC_SUPPORTED_FLIP_MODES[] = "flip-mode-values"
 const char QCameraParameters::KEY_QC_VIDEO_HDR[] = "video-hdr";
 const char QCameraParameters::KEY_QC_SUPPORTED_VIDEO_HDR_MODES[] = "video-hdr-values";
 const char QCameraParameters::KEY_QC_SNAPSHOT_BURST_NUM[] = "snapshot-burst-num";
+const char QCameraParameters::KEY_QC_SNAPSHOT_FD_DATA[] = "snapshot-fd-data-enable";
 
 // Values for effect settings.
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
@@ -2783,6 +2784,32 @@ int32_t QCameraParameters::setBurstNum(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setSnapshotFDReq
+ *
+ * DESCRIPTION: set requirement of Face Detection Metadata in Snapshot mode.
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setSnapshotFDReq(const QCameraParameters& params)
+{
+    char prop[32];
+    const char *str = params.get(KEY_QC_SNAPSHOT_FD_DATA);
+
+    if(str != NULL){
+        set(KEY_QC_SNAPSHOT_FD_DATA, str);
+    }else{
+        memset(prop, 0, sizeof(prop));
+        property_get("persist.camera.snapshot.fd", prop, "0");
+        set(KEY_QC_SNAPSHOT_FD_DATA, prop);
+    }
+    return NO_ERROR;
+}
 
 /*===========================================================================
  * FUNCTION   : updateParameters
@@ -2859,6 +2886,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setFlip(params)))                         final_rc = rc;
     if ((rc = setVideoHDR(params)))                     final_rc = rc;
     if ((rc = setBurstNum(params)))                     final_rc = rc;
+    if ((rc = setSnapshotFDReq(params)))                final_rc = rc;
 
     // update live snapshot size after all other parameters are set
     if ((rc = setLiveSnapshotSize(params)))             final_rc = rc;
@@ -5026,6 +5054,22 @@ int QCameraParameters::getFlipMode(cam_stream_type_t type)
 
     ALOGD("%s: the filp mode of stream type %d is %d .", __func__, type, flipMode);
     return flipMode;
+}
+
+/*===========================================================================
+ * FUNCTION   : isSnapshotFDNeeded
+ *
+ * DESCRIPTION: check whether Face Detection Metadata is needed
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : bool type of status
+ *              0 - need
+ *              1 - not need
+ *==========================================================================*/
+bool QCameraParameters::isSnapshotFDNeeded()
+{
+    return getInt(KEY_QC_SNAPSHOT_FD_DATA);
 }
 
 /*===========================================================================
