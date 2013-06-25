@@ -309,6 +309,7 @@ private:
     int32_t processZoomEvent(cam_crop_data_t &crop_info);
     int32_t processPrepSnapshotDoneEvent(cam_prep_snapshot_state_t prep_snapshot_state);
     int32_t processJpegNotify(qcamera_jpeg_evt_payload_t *jpeg_job);
+    int32_t processHDRData(cam_asd_hdr_scene_data_t hdr_scene);
 
     int32_t sendEvtNotify(int32_t msg_type, int32_t ext1, int32_t ext2);
     int32_t sendDataNotify(int32_t msg_type,
@@ -342,7 +343,6 @@ private:
     QCameraChannel *getChannelByHandle(uint32_t channelHandle);
     mm_camera_buf_def_t *getSnapshotFrame(mm_camera_super_buf_t *recvd_frame);
     int32_t processFaceDetectionResult(cam_face_detection_data_t *fd_data);
-    int32_t processHDRData(cam_asd_hdr_scene_data_t hdr_scene);
     int32_t processHistogramStats(cam_hist_stats_t &stats_data);
     int32_t setHistogram(bool histogram_en);
     int32_t setFaceDetection(bool enabled);
@@ -454,6 +454,7 @@ private:
     int mDumpSkipCnt; // frame skip count
     mm_jpeg_exif_params_t mExifParams;
     qcamera_thermal_level_enum_t mThermalLevel;
+    bool mHDRSceneEnabled;
 };
 
 }; // namespace qcamera
