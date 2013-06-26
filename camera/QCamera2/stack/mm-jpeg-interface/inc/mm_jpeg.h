@@ -215,7 +215,7 @@ extern int32_t addExifEntry(QOMX_EXIF_INFO *p_exif_info, exif_tag_id_t tagid,
   exif_tag_type_t type, uint32_t count, void *data);
 extern int32_t releaseExifEntry(QEXIF_INFO_DATA *p_exif_data);
 extern int process_meta_data(cam_metadata_info_t *p_meta,
-  QOMX_EXIF_INFO *exif_info);
+  QOMX_EXIF_INFO *exif_info, mm_jpeg_3a_params_t *p_cam3a_params);
 
 #endif /* MM_JPEG_H_ */
 

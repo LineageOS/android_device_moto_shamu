@@ -1089,7 +1089,7 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
   if (NULL != p_jobparams->p_metadata) {
     exif_info.numOfEntries = 0;
     exif_info.exif_data = &p_session->exif_info_local[0];
-    process_meta_data(p_jobparams->p_metadata, &exif_info);
+  process_meta_data(p_jobparams->p_metadata, &exif_info, &p_jobparams->cam3a_params);
     /* After Parse metadata */
     p_session->exif_count_local = exif_info.numOfEntries;
 
