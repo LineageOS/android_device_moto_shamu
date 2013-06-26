@@ -689,6 +689,10 @@ typedef struct {
     uint32_t max_frame_idx;
 } cam_frame_idx_range_t;
 
+typedef  struct {
+    float aperture_value;
+} cam_sensor_params_t;
+
 typedef struct {
     float exp_time;
     int iso_value;
@@ -725,6 +729,10 @@ typedef  struct {
     /* AE parameters */
     uint8_t is_ae_params_valid;
     cam_ae_params_t ae_params;
+
+    /* sensor parameters */
+    uint8_t is_sensor_params_valid;
+    cam_sensor_params_t sensor_params;
 } cam_metadata_info_t;
 
 typedef enum {
