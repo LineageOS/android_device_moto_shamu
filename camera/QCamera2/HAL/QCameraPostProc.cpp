@@ -1145,7 +1145,7 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         jpg_job.encode_job.p_metadata = (cam_metadata_info_t *)meta_frame->buffer;
     }
 
-    jpg_job.encode_job.cam3a_params = m_parent->m3AExifParams;
+    jpg_job.encode_job.cam_exif_params = m_parent->mExifParams;
 
     ALOGD("[KPI Perf] %s : call jpeg start_job", __func__);
     ret = mJpegHandle.start_job(&jpg_job, &jobId);
