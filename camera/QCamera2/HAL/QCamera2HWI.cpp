@@ -1497,6 +1497,9 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
             streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
             if ( mParameters.isHDREnabled() ) {
                 streamInfo->num_of_burst = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
+                if (mParameters.isHDR1xFrameEnabled()) {
+                    streamInfo->num_of_burst++;
+                }
             } else {
                 streamInfo->num_of_burst = mParameters.getNumOfSnapshots();
             }
@@ -1506,6 +1509,9 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
         streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
         if ( mParameters.isHDREnabled() ) {
             streamInfo->num_of_burst = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
+            if (mParameters.isHDR1xFrameEnabled()) {
+                streamInfo->num_of_burst++;
+            }
         } else {
             streamInfo->num_of_burst = mParameters.getNumOfSnapshots();
         }
@@ -1995,6 +2001,10 @@ int QCamera2HardwareInterface::takePicture()
             String8 tmp;
             for ( unsigned int i = 0; i < hdrFrameCount ; i++ ) {
                 tmp.appendFormat("%d", (int8_t) gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.values[i]);
+                tmp.append(",");
+            }
+            if (mParameters.isHDR1xFrameEnabled()) {
+                tmp.appendFormat("%d", 0);
                 tmp.append(",");
             }
             if( !tmp.isEmpty() &&
@@ -3314,8 +3324,12 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
     if (mParameters.isHDREnabled()){
         pp_config.feature_mask |= CAM_QCOM_FEATURE_HDR;
         pp_config.hdr_param.hdr_enable = 1;
+        pp_config.hdr_param.hdr_need_1x = mParameters.isHDR1xFrameEnabled();
         pp_config.hdr_param.hdr_mode = CAM_HDR_MODE_MULTIFRAME;
         minStreamBufNum = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames + 1;
+        if (mParameters.isHDR1xFrameEnabled()) {
+            minStreamBufNum++;
+        }
     } else {
         pp_config.feature_mask &= ~CAM_QCOM_FEATURE_HDR;
         pp_config.hdr_param.hdr_enable = 0;
@@ -4190,6 +4204,12 @@ bool QCamera2HardwareInterface::needReprocess()
         // RAW image, no need to reprocess
         pthread_mutex_unlock(&m_parm_lock);
         return false;
+    }
+
+    if (mParameters.isHDREnabled()) {
+        ALOGD("%s: need do reprocess for HDR", __func__);
+        pthread_mutex_unlock(&m_parm_lock);
+        return true;
     }
 
     if (isZSLMode()) {
