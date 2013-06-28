@@ -81,6 +81,19 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
     }
     *frame = *recvd_frame;
 
+    // DUMP RAW if available
+    for ( int i= 0 ; i < recvd_frame->num_bufs ; i++ ) {
+        if ( recvd_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_RAW ) {
+            mm_camera_buf_def_t * raw_frame = recvd_frame->bufs[i];
+            QCameraStream *pStream = pChannel->getStreamByHandle(raw_frame->stream_id);
+            if ( NULL != pStream ) {
+                pme->dumpFrameToFile(pStream, raw_frame, QCAMERA_DUMP_FRM_RAW);
+            }
+            break;
+        }
+    }
+    //
+
     // send to postprocessor
     pme->m_postprocessor.processData(frame);
 

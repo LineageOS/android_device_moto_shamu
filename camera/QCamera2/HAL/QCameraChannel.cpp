@@ -702,9 +702,10 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
     for (int i = 0; i < pSrcChannel->getNumOfStreams(); i++) {
         pStream = pSrcChannel->getStreamByIndex(i);
         if (pStream != NULL) {
-            if (pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)) {
-                // Skip metadata for reprocess now because PP module cannot handle meta data
-                // May need furthur discussion if Imaginglib need meta data
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_METADATA) ||
+                pStream->isTypeOf(CAM_STREAM_TYPE_RAW)) {
+                // Skip metadata&raw for reprocess now because PP module cannot handle
+                // meta data&raw. May need furthur discussion if Imaginglib need meta data
                 continue;
             }
 
