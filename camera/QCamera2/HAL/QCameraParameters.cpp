@@ -574,6 +574,7 @@ QCameraParameters::QCameraParameters()
       m_bHDREnabled(false),
       m_AdjustFPS(NULL),
       m_bHDR1xFrameEnabled(true),
+      m_HDRSceneEnabled(false),
       m_tempMap()
 {
     char value[32];
@@ -638,6 +639,7 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bHDREnabled(false),
     m_AdjustFPS(NULL),
     m_bHDR1xFrameEnabled(true),
+    m_HDRSceneEnabled(false),
     m_tempMap()
 {
     memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
@@ -6482,7 +6484,6 @@ int32_t QCameraParameters::commitParamChanges()
     return NO_ERROR;
 }
 
-
 /*===========================================================================
  * FUNCTION   : QCameraReprocScaleParam
  *
@@ -6915,6 +6916,21 @@ cam_dimension_t *QCameraReprocScaleParam::getTotalSizeTbl()
         return NULL;
 
     return mTotalSizeTbl;
+}
+
+/*===========================================================================
+ * FUNCTION   : isHDREnabled
+ *
+ * DESCRIPTION: if HDR is enabled
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
+bool QCameraParameters::isHDREnabled()
+{
+    return (m_bHDREnabled || m_HDRSceneEnabled);
 }
 
 

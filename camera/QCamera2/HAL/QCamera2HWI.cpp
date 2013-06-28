@@ -43,6 +43,8 @@
 #define CAMERA_MIN_JPEG_ENCODING_BUFFERS 2
 #define CAMERA_MIN_VIDEO_BUFFERS         9
 
+#define HDR_CONFIDENCE_THRESHOLD 0.4
+
 namespace qcamera {
 
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
@@ -938,7 +940,7 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       mDumpFrmCnt(0),
       mDumpSkipCnt(0),
       mThermalLevel(QCAMERA_THERMAL_NO_ADJUSTMENT),
-      mHDRSceneEnabled(false)
+      m_HDRSceneEnabled(false)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = HARDWARE_DEVICE_API_VERSION(1, 0);
@@ -2722,15 +2724,17 @@ int32_t QCamera2HardwareInterface::processHDRData(cam_asd_hdr_scene_data_t hdr_s
 {
     int rc = NO_ERROR;
 
-    if (hdr_scene.is_hdr_scene) {
-        mHDRSceneEnabled = true;
+    if (hdr_scene.is_hdr_scene && (hdr_scene.hdr_confidence > HDR_CONFIDENCE_THRESHOLD)) {
+        m_HDRSceneEnabled = true;
     } else {
-        mHDRSceneEnabled = false;
+        m_HDRSceneEnabled = false;
     }
+    mParameters.setHDRSceneEnable(m_HDRSceneEnabled);
 
-    ALOGD("%s : hdr_scene_data: processHDRData: %d",
+    ALOGE("%s : hdr_scene_data: processHDRData: %d %f",
           __func__,
-          hdr_scene.is_hdr_scene);
+          hdr_scene.is_hdr_scene,
+          hdr_scene.hdr_confidence);
 
   return rc;
 }
