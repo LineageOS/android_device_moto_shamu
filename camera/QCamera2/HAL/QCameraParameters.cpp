@@ -281,6 +281,8 @@ const char QCameraParameters::FLIP_MODE_V[] = "flip-v";
 const char QCameraParameters::FLIP_MODE_H[] = "flip-h";
 const char QCameraParameters::FLIP_MODE_VH[] = "flip-vh";
 
+const char QCameraParameters::KEY_SELECTED_AUTO_SCENE[] = "selected-auto-scene";
+
 static const char* portrait = "portrait";
 static const char* landscape = "landscape";
 
@@ -5921,6 +5923,38 @@ int32_t QCameraParameters::setFrameSkip(enum msm_vfe_frame_skip_pattern pattern)
     }
 
     return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : getASDStateString
+ *
+ * DESCRIPTION: get ASD result in string format
+ *
+ * PARAMETERS :
+ *   @scene : selected scene mode
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+ const char *QCameraParameters::getASDStateString(cam_auto_scene_t scene)
+{
+    switch (scene) {
+      case S_NORMAL :
+        return "Normal";
+      case S_SCENERY:
+        return "Scenery";
+      case S_PORTRAIT:
+        return "Portrait";
+      case S_PORTRAIT_BACKLIGHT:
+        return "Portrait-Backlight";
+      case S_SCENERY_BACKLIGHT:
+        return "Scenery-Backlight";
+      case S_BACKLIGHT:
+        return "Backlight";
+      default:
+        return "<Unknown!>";
+      }
 }
 
 /*===========================================================================

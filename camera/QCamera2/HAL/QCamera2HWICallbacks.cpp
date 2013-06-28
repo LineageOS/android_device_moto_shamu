@@ -317,6 +317,7 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
     pme->dumpFrameToFile(stream, frame, QCAMERA_DUMP_FRM_PREVIEW);
 
     // Display the buffer.
+    ALOGV("%p displayBuffer %d E", pme, idx);
     int dequeuedIdx = memory->displayBuffer(idx);
     if (dequeuedIdx < 0 || dequeuedIdx >= memory->getCnt()) {
         ALOGD("%s: Invalid dequeued buffer index %d from display",
@@ -942,6 +943,25 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
     /*Update Sensor info*/
     if (pMetaData->is_sensor_params_valid) {
         pme->mExifParams.sensor_params = pMetaData->sensor_params;
+    }
+
+    if (pMetaData->is_asd_decision_valid) {
+        qcamera_sm_internal_evt_payload_t *payload =
+            (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+        if (NULL != payload) {
+            memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+            payload->evt_type = QCAMERA_INTERNAL_EVT_ASD_UPDATE;
+            payload->asd_data = pMetaData->scene;
+            int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: processEvt prep_snapshot failed", __func__);
+                free(payload);
+                payload = NULL;
+
+            }
+        } else {
+            ALOGE("%s: No memory for prep_snapshot qcamera_sm_internal_evt_payload_t", __func__);
+        }
     }
 
     stream->bufDone(frame->buf_idx);

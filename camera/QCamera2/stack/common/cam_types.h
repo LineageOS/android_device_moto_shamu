@@ -695,6 +695,16 @@ typedef struct {
     uint32_t max_frame_idx;
 } cam_frame_idx_range_t;
 
+typedef enum {
+  S_NORMAL = 0,
+  S_SCENERY,
+  S_PORTRAIT,
+  S_PORTRAIT_BACKLIGHT,
+  S_SCENERY_BACKLIGHT,
+  S_BACKLIGHT,
+  S_MAX,
+} cam_auto_scene_t;
+
 typedef  struct {
     float aperture_value;
 } cam_sensor_params_t;
@@ -729,6 +739,8 @@ typedef  struct {
 
     uint32_t is_hdr_scene_data_valid;
     cam_asd_hdr_scene_data_t hdr_scene_data;
+    uint8_t is_asd_decision_valid;
+    cam_auto_scene_t scene; //scene type as decided by ASD
 
     char private_metadata[MAX_METADATA_PAYLOAD_SIZE];
 
