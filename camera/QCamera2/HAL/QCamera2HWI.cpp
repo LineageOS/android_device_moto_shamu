@@ -3218,15 +3218,17 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
     // pp feature config
     cam_pp_feature_config_t pp_config;
     memset(&pp_config, 0, sizeof(cam_pp_feature_config_t));
-    if (gCamCapability[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
-        pp_config.feature_mask |= CAM_QCOM_FEATURE_SHARPNESS;
-        pp_config.sharpness = mParameters.getInt(QCameraParameters::KEY_QC_SHARPNESS);
-    }
+    if (mParameters.isZSLMode()) {
+        if (gCamCapability[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
+            pp_config.feature_mask |= CAM_QCOM_FEATURE_SHARPNESS;
+            pp_config.sharpness = mParameters.getInt(QCameraParameters::KEY_QC_SHARPNESS);
+        }
 
-    if (mParameters.isWNREnabled()) {
-        pp_config.feature_mask |= CAM_QCOM_FEATURE_DENOISE2D;
-        pp_config.denoise2d.denoise_enable = 1;
-        pp_config.denoise2d.process_plates = mParameters.getWaveletDenoiseProcessPlate();
+        if (mParameters.isWNREnabled()) {
+            pp_config.feature_mask |= CAM_QCOM_FEATURE_DENOISE2D;
+            pp_config.denoise2d.denoise_enable = 1;
+            pp_config.denoise2d.process_plates = mParameters.getWaveletDenoiseProcessPlate();
+        }
     }
 
     if (isCACEnabled()) {
@@ -4049,15 +4051,15 @@ bool QCamera2HardwareInterface::needReprocess()
         return false;
     }
 
-    if (((gCamCapability[mCameraId]->min_required_pp_mask > 0) ||
-         mParameters.isWNREnabled() || isCACEnabled())) {
-        // TODO: add for ZSL HDR later
-        ALOGD("%s: need do reprocess for ZSL WNR or min PP reprocess", __func__);
-        pthread_mutex_unlock(&m_parm_lock);
-        return true;
-    }
-
     if (isZSLMode()) {
+        if (((gCamCapability[mCameraId]->min_required_pp_mask > 0) ||
+             mParameters.isWNREnabled() || isCACEnabled())) {
+            // TODO: add for ZSL HDR later
+            ALOGD("%s: need do reprocess for ZSL WNR or min PP reprocess", __func__);
+            pthread_mutex_unlock(&m_parm_lock);
+            return true;
+        }
+
         int snapshot_flipMode =
             mParameters.getFlipMode(CAM_STREAM_TYPE_SNAPSHOT);
         if (snapshot_flipMode > 0) {
@@ -4065,16 +4067,15 @@ bool QCamera2HardwareInterface::needReprocess()
             pthread_mutex_unlock(&m_parm_lock);
             return true;
         }
-    }
 
-    if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
-        mParameters.getJpegRotation() > 0) {
-        // current rotation is not zero, and pp has the capability to process rotation
-        ALOGD("%s: need do reprocess for rotation", __func__);
-        pthread_mutex_unlock(&m_parm_lock);
-        return true;
+        if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
+            mParameters.getJpegRotation() > 0) {
+            // current rotation is not zero, and pp has the capability to process rotation
+            ALOGD("%s: need do reprocess for rotation", __func__);
+            pthread_mutex_unlock(&m_parm_lock);
+            return true;
+        }
     }
-
     pthread_mutex_unlock(&m_parm_lock);
     return false;
 }
@@ -4098,12 +4099,14 @@ bool QCamera2HardwareInterface::needRotationReprocess()
         return false;
     }
 
-    if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
-        mParameters.getJpegRotation() > 0) {
-        // current rotation is not zero, and pp has the capability to process rotation
-        ALOGD("%s: need do reprocess for rotation", __func__);
-        pthread_mutex_unlock(&m_parm_lock);
-        return true;
+    if (isZSLMode()) {
+        if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
+            mParameters.getJpegRotation() > 0) {
+            // current rotation is not zero, and pp has the capability to process rotation
+            ALOGD("%s: need do reprocess for rotation", __func__);
+            pthread_mutex_unlock(&m_parm_lock);
+            return true;
+        }
     }
 
     pthread_mutex_unlock(&m_parm_lock);
