@@ -56,6 +56,8 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
                                                void *userdata)
 {
     ALOGD("[KPI Perf] %s: E",__func__);
+    char value[PROPERTY_VALUE_MAX];
+    bool dump_raw = false;
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -82,14 +84,18 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
     *frame = *recvd_frame;
 
     // DUMP RAW if available
-    for ( int i= 0 ; i < recvd_frame->num_bufs ; i++ ) {
-        if ( recvd_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_RAW ) {
-            mm_camera_buf_def_t * raw_frame = recvd_frame->bufs[i];
-            QCameraStream *pStream = pChannel->getStreamByHandle(raw_frame->stream_id);
-            if ( NULL != pStream ) {
-                pme->dumpFrameToFile(pStream, raw_frame, QCAMERA_DUMP_FRM_RAW);
+    property_get("persist.camera.zsl_raw", value, "0");
+    dump_raw = atoi(value) > 0 ? true : false;
+    if ( dump_raw ) {
+        for ( int i= 0 ; i < recvd_frame->num_bufs ; i++ ) {
+            if ( recvd_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_RAW ) {
+                mm_camera_buf_def_t * raw_frame = recvd_frame->bufs[i];
+                QCameraStream *pStream = pChannel->getStreamByHandle(raw_frame->stream_id);
+                if ( NULL != pStream ) {
+                    pme->dumpFrameToFile(pStream, raw_frame, QCAMERA_DUMP_FRM_RAW);
+                }
+                break;
             }
-            break;
         }
     }
     //
@@ -650,6 +656,112 @@ void QCamera2HardwareInterface::raw_stream_cb_routine(mm_camera_super_buf_t * su
     }
 
     pme->m_postprocessor.processRawData(super_frame);
+    ALOGD("[KPI Perf] %s : END", __func__);
+}
+
+/*===========================================================================
+ * FUNCTION   : preview_raw_stream_cb_routine
+ *
+ * DESCRIPTION: helper function to handle raw frame during standard preview
+ *
+ * PARAMETERS :
+ *   @super_frame : received super buffer
+ *   @stream      : stream object
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : caller passes the ownership of super_frame, it's our
+ *             responsibility to free super_frame once it's done.
+ *==========================================================================*/
+void QCamera2HardwareInterface::preview_raw_stream_cb_routine(mm_camera_super_buf_t * super_frame,
+                                                              QCameraStream * stream,
+                                                              void * userdata)
+{
+    ALOGD("[KPI Perf] %s : BEGIN", __func__);
+    int i = -1;
+    char value[PROPERTY_VALUE_MAX];
+    bool dump_raw = false;
+
+    QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
+    if (pme == NULL ||
+        pme->mCameraHandle == NULL ||
+        pme->mCameraHandle->camera_handle != super_frame->camera_handle){
+        ALOGE("%s: camera obj not valid", __func__);
+        // simply free super frame
+        free(super_frame);
+        return;
+    }
+
+    property_get("persist.camera.preview_raw", value, "0");
+    dump_raw = atoi(value) > 0 ? true : false;
+
+    for ( i= 0 ; i < super_frame->num_bufs ; i++ ) {
+        if ( super_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_RAW ) {
+            mm_camera_buf_def_t * raw_frame = super_frame->bufs[i];
+            if ( NULL != stream && (dump_raw) ) {
+                pme->dumpFrameToFile(stream, raw_frame, QCAMERA_DUMP_FRM_RAW);
+            }
+            stream->bufDone(super_frame->bufs[i]->buf_idx);
+            break;
+        }
+    }
+
+    free(super_frame);
+
+    ALOGD("[KPI Perf] %s : END", __func__);
+}
+
+/*===========================================================================
+ * FUNCTION   : snapshot_raw_stream_cb_routine
+ *
+ * DESCRIPTION: helper function to handle raw frame during standard capture
+ *
+ * PARAMETERS :
+ *   @super_frame : received super buffer
+ *   @stream      : stream object
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : caller passes the ownership of super_frame, it's our
+ *             responsibility to free super_frame once it's done.
+ *==========================================================================*/
+void QCamera2HardwareInterface::snapshot_raw_stream_cb_routine(mm_camera_super_buf_t * super_frame,
+                                                               QCameraStream * stream,
+                                                               void * userdata)
+{
+    ALOGD("[KPI Perf] %s : BEGIN", __func__);
+    int i = -1;
+    char value[PROPERTY_VALUE_MAX];
+    bool dump_raw = false;
+
+    QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
+    if (pme == NULL ||
+        pme->mCameraHandle == NULL ||
+        pme->mCameraHandle->camera_handle != super_frame->camera_handle){
+        ALOGE("%s: camera obj not valid", __func__);
+        // simply free super frame
+        free(super_frame);
+        return;
+    }
+
+    property_get("persist.camera.snapshot_raw", value, "0");
+    dump_raw = atoi(value) > 0 ? true : false;
+
+    for ( i= 0 ; i < super_frame->num_bufs ; i++ ) {
+        if ( super_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_RAW ) {
+            mm_camera_buf_def_t * raw_frame = super_frame->bufs[i];
+            if ( NULL != stream && (dump_raw) ) {
+                pme->dumpFrameToFile(stream, raw_frame, QCAMERA_DUMP_FRM_RAW);
+            }
+            stream->bufDone(super_frame->bufs[i]->buf_idx);
+            break;
+        }
+    }
+
+    free(super_frame);
+
     ALOGD("[KPI Perf] %s : END", __func__);
 }
 
