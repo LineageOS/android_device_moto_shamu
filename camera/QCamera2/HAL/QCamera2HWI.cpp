@@ -3308,7 +3308,7 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
         pp_config.feature_mask |= CAM_QCOM_FEATURE_HDR;
         pp_config.hdr_param.hdr_enable = 1;
         pp_config.hdr_param.hdr_mode = CAM_HDR_MODE_MULTIFRAME;
-        minStreamBufNum = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
+        minStreamBufNum = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames + 1;
     } else {
         pp_config.feature_mask &= ~CAM_QCOM_FEATURE_HDR;
         pp_config.hdr_param.hdr_enable = 0;
