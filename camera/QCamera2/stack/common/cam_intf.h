@@ -70,9 +70,6 @@ typedef struct{
     uint8_t zoom_ratio_tbl_cnt;                             /* table size for zoom ratios */
     int zoom_ratio_tbl[MAX_ZOOMS_CNT];                      /* zoom ratios table */
 
-    int qcom_supported_feature_mask;      /* mask of qcom specific features supported:
-                                           * such as CAM_QCOM_FEATURE_SUPPORTED_FACE_DETECTION*/
-
     /* supported effect modes */
     uint8_t supported_effects_cnt;
     cam_effect_mode_type supported_effects[CAM_EFFECT_MODE_MAX];
@@ -168,6 +165,11 @@ typedef struct{
     cam_control_range_t saturation_ctrl;  /* saturation */
     cam_control_range_t sce_ctrl;         /* skintone enhancement factor */
 
+    /* QCOM HDR specific control. Indicates number of frames and exposure needs for the frames */
+    cam_hdr_bracketing_info_t hdr_bracketing_setting;
+
+    uint32_t qcom_supported_feature_mask; /* mask of qcom specific features supported:
+                                           * such as CAM_QCOM_FEATURE_SUPPORTED_FACE_DETECTION*/
     cam_padding_info_t padding_info;      /* padding information from PP */
     int8_t min_num_hdr_bufs;              /* minimum number of buffers needed for HDR by imaging module */
     int8_t min_num_pp_bufs;               /* minimum number of buffers needed by postproc module */
@@ -410,7 +412,7 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_HISTOGRAM,                int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_ASD_ENABLE,               int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_RECORDING_HINT,           int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_HDR,                      cam_exp_bracketing_t,        1);
+    INCLUDE(CAM_INTF_PARM_HDR,                      cam_hdr_param_t,             1);
     INCLUDE(CAM_INTF_PARM_FRAMESKIP,                int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_ZSL_MODE,                 int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_HDR_NEED_1X,              int32_t,                     1);

@@ -429,6 +429,7 @@ typedef enum {
     CAM_SCENE_MODE_AR,
     CAM_SCENE_MODE_FACE_PRIORITY,
     CAM_SCENE_MODE_BARCODE,
+    CAM_SCENE_MODE_HDR,
     CAM_SCENE_MODE_MAX
 } cam_scene_mode_type;
 
@@ -514,6 +515,11 @@ typedef struct {
     cam_bracket_mode mode;
     char values[MAX_EXP_BRACKETING_LENGTH];  /* user defined values */
 } cam_exp_bracketing_t;
+
+typedef struct {
+  unsigned int num_frames;
+  cam_exp_bracketing_t exp_val;
+} cam_hdr_bracketing_info_t;
 
 typedef enum {
     CAM_AEC_ROI_OFF,
@@ -1075,6 +1081,17 @@ typedef enum {
     CAM_OFFLINE_REPROCESS_TYPE,   /* offline reprocess, frames from external source */
 } cam_reprocess_type_enum_t;
 
+typedef enum {
+    CAM_HDR_MODE_SINGLEFRAME,    /* Single frame HDR mode which does only tone mapping */
+    CAM_HDR_MODE_MULTIFRAME,     /* Multi frame HDR mode which needs two frames with 0.5x and 2x exposure respectively */
+} cam_hdr_mode_enum_t;
+
+typedef struct {
+    uint32_t hdr_enable;
+    uint32_t hdr_need_1x; /* when CAM_QCOM_FEATURE_HDR enabled, indicate if 1x is needed for output */
+    cam_hdr_mode_enum_t hdr_mode;
+} cam_hdr_param_t;
+
 typedef struct {
     /* reprocess feature mask */
     uint32_t feature_mask;
@@ -1085,7 +1102,7 @@ typedef struct {
     cam_rotation_t rotation;
     uint32_t flip;
     int32_t sharpness;
-    int32_t hdr_need_1x; /* when CAM_QCOM_FEATURE_HDR enabled, indicate if 1x is needed for output */
+    cam_hdr_param_t hdr_param;
 } cam_pp_feature_config_t;
 
 typedef struct {
