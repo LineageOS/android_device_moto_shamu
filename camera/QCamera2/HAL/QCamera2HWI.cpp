@@ -2877,7 +2877,8 @@ int32_t QCamera2HardwareInterface::addPreviewChannel()
 
     property_get("persist.camera.raw_yuv", value, "0");
     raw_yuv = atoi(value) > 0 ? true : false;
-    if ( raw_yuv ) {
+    if ( raw_yuv &&
+         ( mParameters.getRecordingHintValue() == false ) ) {
         rc = addStreamToChannel(pChannel,
                                 CAM_STREAM_TYPE_RAW,
                                 preview_raw_stream_cb_routine,
