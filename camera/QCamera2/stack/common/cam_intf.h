@@ -270,7 +270,6 @@ typedef struct{
     /*Autoexposure modes for camera 3 api*/
     uint8_t supported_ae_modes_cnt;
     cam_ae_mode_type supported_ae_modes[CAM_AE_MODE_MAX];
-
 } cam_capability_t;
 
 typedef enum {
@@ -418,7 +417,11 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_HDR_NEED_1X,              int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_LOCK_CAF,                 int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_VIDEO_HDR,                int32_t,                     1);
-
+    INCLUDE(CAM_INTF_PARM_GET_CHROMATIX,            tune_chromatix_t,            1);
+    INCLUDE(CAM_INTF_PARM_SET_RELOAD_CHROMATIX,     tune_chromatix_t,            1);
+    INCLUDE(CAM_INTF_PARM_GET_AFTUNE,               tune_autofocus_t,            1);
+    INCLUDE(CAM_INTF_PARM_SET_RELOAD_AFTUNE,        tune_autofocus_t,            1);
+    INCLUDE(CAM_INTF_PARM_SET_AUTOFOCUSTUNING,      tune_actuator_t,             1);
     /* HAL3 sepcific */
     INCLUDE(CAM_INTF_META_FRAME_NUMBER,             uint32_t,                    1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_MODE,       uint8_t,                     1);
