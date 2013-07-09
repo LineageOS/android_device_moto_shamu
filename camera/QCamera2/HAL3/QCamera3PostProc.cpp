@@ -553,7 +553,6 @@ void QCamera3PostProcessor::releaseJpegJobData(qcamera_jpeg_data_t *job)
         }
 
         if (NULL != job->src_frame) {
-            releaseSuperBuf(job->src_frame);
             free(job->src_frame);
             job->src_frame = NULL;
         }
