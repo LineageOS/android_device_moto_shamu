@@ -4251,7 +4251,8 @@ bool QCamera2HardwareInterface::isCACEnabled()
 bool QCamera2HardwareInterface::needReprocess()
 {
     pthread_mutex_lock(&m_parm_lock);
-    if (!mParameters.isJpegPictureFormat()) {
+    if (!mParameters.isJpegPictureFormat() &&
+        !mParameters.isNV21PictureFormat()) {
         // RAW image, no need to reprocess
         pthread_mutex_unlock(&m_parm_lock);
         return false;
@@ -4305,7 +4306,8 @@ bool QCamera2HardwareInterface::needReprocess()
 bool QCamera2HardwareInterface::needRotationReprocess()
 {
     pthread_mutex_lock(&m_parm_lock);
-    if (!mParameters.isJpegPictureFormat()) {
+    if (!mParameters.isJpegPictureFormat() &&
+        !mParameters.isNV21PictureFormat()) {
         // RAW image, no need to reprocess
         pthread_mutex_unlock(&m_parm_lock);
         return false;
