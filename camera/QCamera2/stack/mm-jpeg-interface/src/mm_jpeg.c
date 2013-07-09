@@ -2013,8 +2013,8 @@ OMX_ERRORTYPE mm_jpeg_fbd(OMX_HANDLETYPE hComponent,
   uint32_t i = 0;
   int rc = 0;
   mm_jpeg_output_t output_buf;
-
   CDBG("%s:%d] count %d ", __func__, __LINE__, p_session->fbd_count);
+  ALOGE("[KPI Perf] : PROFILE_JPEG_FBD");
 
   pthread_mutex_lock(&p_session->lock);
 

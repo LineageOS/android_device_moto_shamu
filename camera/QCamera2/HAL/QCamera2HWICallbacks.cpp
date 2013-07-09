@@ -106,7 +106,7 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
 void QCamera2HardwareInterface::capture_channel_cb_routine(mm_camera_super_buf_t *recvd_frame,
                                                            void *userdata)
 {
-    ALOGD("[KPI Perf] %s: E", __func__);
+    ALOGE("[KPI Perf] %s: E PROFILE_YUV_CB_TO_HAL", __func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -277,6 +277,11 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
 
     int idx = frame->buf_idx;
     pme->dumpFrameToFile(stream, frame, QCAMERA_DUMP_FRM_PREVIEW);
+
+    if(pme->m_bPreviewStarted) {
+       ALOGE("[KPI Perf] %s : PROFILE_FIRST_PREVIEW_FRAME", __func__);
+       pme->m_bPreviewStarted = false ;
+    }
 
     // Display the buffer.
     int dequeuedIdx = memory->displayBuffer(idx);
@@ -529,13 +534,15 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
     if (pme->needDebugFps()) {
         pme->debugShowVideoFPS();
     }
-
+    if(pme->m_bRecordStarted) {
+       ALOGE("[KPI Perf] %s : PROFILE_FIRST_RECORD_FRAME", __func__);
+       pme->m_bRecordStarted = false ;
+    }
     ALOGE("%s: Stream(%d), Timestamp: %ld %ld",
           __func__,
           frame->stream_id,
           frame->ts.tv_sec,
           frame->ts.tv_nsec);
-
     nsecs_t timeStamp = nsecs_t(frame->ts.tv_sec) * 1000000000LL + frame->ts.tv_nsec;
     ALOGE("Send Video frame to services/encoder TimeStamp : %lld", timeStamp);
     QCameraMemory *videoMemObj = (QCameraMemory *)frame->mem_info;
@@ -681,7 +688,8 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
                 __func__, pMetaData->faces_data.num_faces_detected);
         } else {
             // process face detection result
-            ALOGD("[KPI Perf] %s: Number of faces detected %d",__func__,pMetaData->faces_data.num_faces_detected);
+            if (pMetaData->faces_data.num_faces_detected)
+                ALOGE("[KPI Perf] %s: PROFILE_NUMBER_OF_FACES_DETECTED %d",__func__,pMetaData->faces_data.num_faces_detected);
             qcamera_sm_internal_evt_payload_t *payload =
                 (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
             if (NULL != payload) {
@@ -1080,7 +1088,7 @@ void QCamera2HardwareInterface::debugShowPreviewFPS()
     nsecs_t diff = now - n_pLastFpsTime;
     if (diff > ms2ns(250)) {
         n_pFps =  ((n_pFrameCount - n_pLastFrameCount) * float(s2ns(1))) / diff;
-        ALOGE("Preview Frames Per Second: %.4f", n_pFps);
+        ALOGE("[KPI Perf] %s: PROFILE_PREVIEW_FRAMES_PER_SECOND : %.4f", __func__, n_pFps);
         n_pLastFpsTime = now;
         n_pLastFrameCount = n_pFrameCount;
     }
@@ -1227,7 +1235,7 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                         case QCAMERA_NOTIFY_CALLBACK:
                             {
                                 if (cb->msg_type == CAMERA_MSG_FOCUS) {
-                                    ALOGD("[KPI Perf] %s : sending focus evt to app", __func__);
+                                    ALOGD("[KPI Perf] %s : PROFILE_SENDING_FOCUS_EVT_TO APP", __func__);
                                 }
                                 if (pme->mNotifyCb) {
                                     pme->mNotifyCb(cb->msg_type,
