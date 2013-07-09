@@ -987,6 +987,7 @@ OMX_ERRORTYPE mm_jpegdec_event_handler(OMX_HANDLETYPE hComponent,
     p_session->event_pending = OMX_FALSE;
     pthread_cond_signal(&p_session->cond);
   }  else if (eEvent == OMX_EventPortSettingsChanged) {
+    p_session->event_pending = OMX_FALSE;
     pthread_cond_signal(&p_session->cond);
   }
 
