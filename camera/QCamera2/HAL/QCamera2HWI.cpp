@@ -932,7 +932,8 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       m_currentFocusState(CAM_AF_SCANNING),
       m_pPowerModule(NULL),
       mDumpFrmCnt(0),
-      mDumpSkipCnt(0)
+      mDumpSkipCnt(0),
+      mThermalLevel(QCAMERA_THERMAL_NO_ADJUSTMENT)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = HARDWARE_DEVICE_API_VERSION(1, 0);
@@ -1057,7 +1058,7 @@ int QCamera2HardwareInterface::openCamera()
         gCamCapability[mCameraId]->padding_info.plane_padding = padding_info.plane_padding;
     }
 
-    mParameters.init(gCamCapability[mCameraId], mCameraHandle);
+    mParameters.init(gCamCapability[mCameraId], mCameraHandle, this);
 
     rc = m_thermalAdapter.init(this);
     if (rc != 0) {
@@ -3907,28 +3908,29 @@ int32_t QCamera2HardwareInterface::processHDRData(cam_asd_hdr_scene_data_t hdr_s
 }
 
 /*===========================================================================
- * FUNCTION   : updateThermalLevel
+ * FUNCTION   : calcThermalLevel
  *
- * DESCRIPTION: update thermal level depending on thermal events
+ * DESCRIPTION: Calculates the target fps range depending on
+ *              the thermal level.
  *
  * PARAMETERS :
- *   @level   : thermal level
+ *   @level    : received thermal level
+ *   @minFPS   : minimum configured fps range
+ *   @maxFPS   : maximum configured fps range
+ *   @adjustedRange : target fps range
+ *   @skipPattern : target skip pattern
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int QCamera2HardwareInterface::updateThermalLevel(
-            qcamera_thermal_level_enum_t level)
+int QCamera2HardwareInterface::calcThermalLevel(
+            qcamera_thermal_level_enum_t level,
+            const int minFPS,
+            const int maxFPS,
+            cam_fps_range_t &adjustedRange,
+            enum msm_vfe_frame_skip_pattern &skipPattern)
 {
-    int ret = NO_ERROR;
-    cam_fps_range_t adjustedRange;
-    int minFPS, maxFPS;
-    qcamera_thermal_mode thermalMode = mParameters.getThermalMode();
-    enum msm_vfe_frame_skip_pattern skipPattern;
-
-    mParameters.getPreviewFpsRange(&minFPS, &maxFPS);
-
     switch(level) {
     case QCAMERA_THERMAL_NO_ADJUSTMENT:
         {
@@ -3992,6 +3994,64 @@ int QCamera2HardwareInterface::updateThermalLevel(
           adjustedRange.min_fps,
           adjustedRange.max_fps,
           skipPattern);
+
+    return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : recalcFPSRange
+ *
+ * DESCRIPTION: adjust the configured fps range regarding
+ *              the last thermal level.
+ *
+ * PARAMETERS :
+ *   @minFPS   : minimum configured fps range
+ *   @maxFPS   : maximum configured fps range
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCamera2HardwareInterface::recalcFPSRange(int &minFPS, int &maxFPS)
+{
+    cam_fps_range_t adjustedRange;
+    enum msm_vfe_frame_skip_pattern skipPattern;
+    calcThermalLevel(mThermalLevel,
+                     minFPS,
+                     maxFPS,
+                     adjustedRange,
+                     skipPattern);
+    minFPS = adjustedRange.min_fps;
+    maxFPS = adjustedRange.max_fps;
+
+    return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : updateThermalLevel
+ *
+ * DESCRIPTION: update thermal level depending on thermal events
+ *
+ * PARAMETERS :
+ *   @level   : thermal level
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCamera2HardwareInterface::updateThermalLevel(
+            qcamera_thermal_level_enum_t level)
+{
+    int ret = NO_ERROR;
+    cam_fps_range_t adjustedRange;
+    int minFPS, maxFPS;
+    qcamera_thermal_mode thermalMode = mParameters.getThermalMode();
+    enum msm_vfe_frame_skip_pattern skipPattern;
+
+    mParameters.getPreviewFpsRange(&minFPS, &maxFPS);
+
+    calcThermalLevel(level, minFPS, maxFPS, adjustedRange, skipPattern);
+    mThermalLevel = level;
 
     if (thermalMode == QCAMERA_THERMAL_ADJUST_FPS)
         ret = mParameters.adjustPreviewFpsRange(&adjustedRange);
