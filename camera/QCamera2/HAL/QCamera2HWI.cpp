@@ -1090,11 +1090,15 @@ int QCamera2HardwareInterface::closeCamera()
         return NO_ERROR;
     }
 
+    pthread_mutex_lock(&m_parm_lock);
+
     // set open flag to false
     mCameraOpened = false;
 
     // deinit Parameters
     mParameters.deinit();
+
+    pthread_mutex_unlock(&m_parm_lock);
 
     // exit notifier
     m_cbNotifier.exit();
@@ -4045,11 +4049,18 @@ int QCamera2HardwareInterface::updateThermalLevel(
     int ret = NO_ERROR;
     cam_fps_range_t adjustedRange;
     int minFPS, maxFPS;
-    qcamera_thermal_mode thermalMode = mParameters.getThermalMode();
     enum msm_vfe_frame_skip_pattern skipPattern;
 
-    mParameters.getPreviewFpsRange(&minFPS, &maxFPS);
+    pthread_mutex_lock(&m_parm_lock);
 
+    if (!mCameraOpened) {
+        ALOGI("%s: Camera is not opened, no need to update camera parameters", __func__);
+        pthread_mutex_unlock(&m_parm_lock);
+        return NO_ERROR;
+    }
+
+    mParameters.getPreviewFpsRange(&minFPS, &maxFPS);
+    qcamera_thermal_mode thermalMode = mParameters.getThermalMode();
     calcThermalLevel(level, minFPS, maxFPS, adjustedRange, skipPattern);
     mThermalLevel = level;
 
@@ -4059,6 +4070,8 @@ int QCamera2HardwareInterface::updateThermalLevel(
         ret = mParameters.setFrameSkip(skipPattern);
     else
         ALOGE("%s: Incorrect thermal mode %d", __func__, thermalMode);
+
+    pthread_mutex_unlock(&m_parm_lock);
 
     return ret;
 
