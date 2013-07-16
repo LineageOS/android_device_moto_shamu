@@ -188,10 +188,12 @@ typedef struct {
 *  Ion buffer to be used for the H/W encoder
 *  @fd - FD of the buffer allocated
 *  @vaddr - Buffer address
+*  @length - Buffer length
 **/
 typedef struct {
   int fd;
   uint8_t *vaddr;
+  uint32_t length;
 } QOMX_WORK_BUFFER;
 
 /** QOMX_IMG_COLOR_FORMATTYPE
