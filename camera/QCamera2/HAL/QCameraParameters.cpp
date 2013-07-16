@@ -4962,8 +4962,10 @@ int32_t QCameraParameters::getStreamFormat(cam_stream_type_t streamType,
         if (mPictureFormat >= CAM_FORMAT_YUV_RAW_8BIT_YUYV) {
             format = (cam_format_t)mPictureFormat;
         } else {
-            ALOGE("%s: invalid raw picture format: %d", __func__, mPictureFormat);
-            ret = BAD_VALUE;
+            format = CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GBRG;
+            ALOGE("%s: Raw stream format %d bundled with snapshot",
+                   __func__,
+                   format);
         }
         break;
     case CAM_STREAM_TYPE_METADATA:
