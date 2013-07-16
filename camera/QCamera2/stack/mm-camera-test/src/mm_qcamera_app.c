@@ -886,6 +886,271 @@ ERROR:
     return rc;
 }
 
+int setAecEnable(mm_camera_test_obj_t *test_obj, int value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+    printf("%s: Setting AEC Enable value %d \n", __func__, value);
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_AEC_ENABLE,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: AEC Enable parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+ERROR:
+    return rc;
+}
+
+int setAwbEnable(mm_camera_test_obj_t *test_obj, int value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    printf("%s: Setting AWB Enable value %d \n", __func__, value);
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_AWB_ENABLE,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: AWB Enable parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+ERROR:
+    return rc;
+}
+
+int setAfEnable(mm_camera_test_obj_t *test_obj, int value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    printf("%s: Setting AF Enable value %d \n", __func__, value);
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_AF_ENABLE,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: AF Enable parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+ERROR:
+    return rc;
+}
+
+int setAecForceLinecount(mm_camera_test_obj_t *test_obj, cam_aec_lc_params_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_AEC_FORCE_LC,
+                                sizeof(cam_aec_lc_params_t),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: AEC_EZ_FORCE_LINECOUNT parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+ERROR:
+    return rc;
+}
+
+int setAecForceGain(mm_camera_test_obj_t *test_obj, cam_aec_gain_params_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_AEC_FORCE_GAIN,
+                                sizeof(cam_aec_gain_params_t),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: AEC_EZ_FORCE_GAIN parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+ERROR:
+    return rc;
+}
+
+int setAecForceExp(mm_camera_test_obj_t *test_obj, cam_aec_exp_params_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_AEC_FORCE_EXP,
+                                sizeof(cam_aec_exp_params_t),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: AEC_EZ_FORCE_EXP parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+ERROR:
+    return rc;
+}
+
+int setAecForceSnapLinecount(mm_camera_test_obj_t *test_obj, cam_aec_snap_lc_params_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_AEC_FORCE_SNAP_LC,
+                                sizeof(cam_aec_snap_lc_params_t),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: AEC_EZ_FORCE_SNAPSHOT_LINECOUNT parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+ERROR:
+    return rc;
+}
+
+int setAecForceSnapGain(mm_camera_test_obj_t *test_obj, cam_aec_snap_gain_params_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_AEC_FORCE_SNAP_GAIN,
+                                sizeof(cam_aec_snap_gain_params_t),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: AEC_EZ_FORCE_SNAPSHOT_GAIN parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+ERROR:
+    return rc;
+}
+
+int setAecForceSnapExp(mm_camera_test_obj_t *test_obj, cam_aec_snap_exp_params_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_AEC_FORCE_SNAP_EXP,
+                                sizeof(cam_aec_snap_exp_params_t),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: AEC_EZ_FORCE_SNAPSHOT_EXP parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+ERROR:
+    return rc;
+}
+
+
+
 int setAwbLock(mm_camera_test_obj_t *test_obj, int value)
 {
     int rc = MM_CAMERA_OK;
@@ -1699,6 +1964,120 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                 CDBG_ERROR("%s: AE unlocking failed\n", __func__);
                 goto EXIT;
             }
+            break;
+
+        case MM_CAMERA_LIB_AEC_ENABLE:
+            rc = setAecEnable(&handle->test_obj, 1);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: Enable AEC failed\n", __func__);
+                goto EXIT;
+            }
+
+            printf("AEC enabled\n");
+            break;
+
+        case MM_CAMERA_LIB_AEC_DISABLE:
+            rc = setAecEnable(&handle->test_obj, 0);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: Disable AEC failed\n", __func__);
+                goto EXIT;
+            }
+
+            printf("AEC disabled\n");
+            break;
+
+        case MM_CAMERA_LIB_AWB_ENABLE:
+            rc = setAwbEnable(&handle->test_obj, 1);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: Enable AWB failed\n", __func__);
+                goto EXIT;
+            }
+
+            printf("AWB enabled\n");
+            break;
+
+        case MM_CAMERA_LIB_AWB_DISABLE:
+            rc = setAwbEnable(&handle->test_obj, 0);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: Disable AWB failed\n", __func__);
+                goto EXIT;
+            }
+
+            printf("AWB disabled\n");
+            break;
+
+        case MM_CAMERA_LIB_AF_ENABLE:
+            rc = setAfEnable(&handle->test_obj, 1);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: Enable AF failed\n", __func__);
+                goto EXIT;
+            }
+
+            printf("AF enabled\n");
+            break;
+
+        case MM_CAMERA_LIB_AF_DISABLE:
+            rc = setAfEnable(&handle->test_obj, 0);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: Disable AF failed\n", __func__);
+                goto EXIT;
+            }
+
+            printf("AF disabled\n");
+            break;
+
+        case MM_CAMERA_LIB_AEC_FORCE_LC:
+            rc = setAecForceLinecount(&handle->test_obj, (cam_aec_lc_params_t *)in_data);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: AEC Force LineCount failed\n", __func__);
+                goto EXIT;
+            }
+
+            break;
+
+        case MM_CAMERA_LIB_AEC_FORCE_GAIN:
+            rc = setAecForceGain(&handle->test_obj, (cam_aec_gain_params_t *)in_data);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: AEC Force Gain failed\n", __func__);
+                goto EXIT;
+            }
+
+            break;
+
+        case MM_CAMERA_LIB_AEC_FORCE_EXP:
+            rc = setAecForceExp(&handle->test_obj, (cam_aec_exp_params_t *)in_data);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: AEC Force Exp failed\n", __func__);
+                goto EXIT;
+            }
+
+            break;
+
+        case MM_CAMERA_LIB_AEC_FORCE_SNAP_LC:
+            rc = setAecForceSnapLinecount(&handle->test_obj, (cam_aec_snap_lc_params_t *)in_data);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: AEC Force SnapShot LineCount failed\n", __func__);
+                goto EXIT;
+            }
+
+            break;
+
+        case MM_CAMERA_LIB_AEC_FORCE_SNAP_GAIN:
+            rc = setAecForceSnapGain(&handle->test_obj, (cam_aec_snap_gain_params_t *)in_data);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: AEC Force SnapShot Gain failed\n", __func__);
+                goto EXIT;
+            }
+
+            break;
+
+        case MM_CAMERA_LIB_AEC_FORCE_SNAP_EXP:
+            rc = setAecForceSnapExp(&handle->test_obj, (cam_aec_snap_exp_params_t *)in_data);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: AEC Force SnapShot Exp failed\n", __func__);
+                goto EXIT;
+            }
+
             break;
 
        case MM_CAMERA_LIB_GET_CHROMATIX: {
