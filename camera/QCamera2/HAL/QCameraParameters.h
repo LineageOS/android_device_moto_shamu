@@ -429,6 +429,7 @@ public:
     void setAFRunning(bool bflag) {m_bAFRunning = bflag;};
     bool isAFRunning() {return m_bAFRunning;};
     bool isHDREnabled() {return m_bHDREnabled;};
+    bool isHDR1xFrameEnabled() {return m_bHDR1xFrameEnabled;}
 
     bool isPreviewFlipChanged() { return m_bPreviewFlipChanged; };
     bool isVideoFlipChanged() { return m_bVideoFlipChanged; };
@@ -615,6 +616,7 @@ private:
     cam_dimension_t m_LiveSnapshotSize; // live snapshot size
     bool m_bHDREnabled;             // if HDR is enabled
     QCameraAdjustFPS *m_AdjustFPS;
+    bool m_bHDR1xFrameEnabled;          // if frame with exposure compensation 0 during HDR is enabled
 
     DefaultKeyedVector<String8,String8> m_tempMap; // map for temororily store parameters to be set
 };
