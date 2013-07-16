@@ -388,6 +388,12 @@ private:
     static void raw_stream_cb_routine(mm_camera_super_buf_t *frame,
                                       QCameraStream *stream,
                                       void *userdata);
+    static void preview_raw_stream_cb_routine(mm_camera_super_buf_t * super_frame,
+                                              QCameraStream * stream,
+                                              void * userdata);
+    static void snapshot_raw_stream_cb_routine(mm_camera_super_buf_t * super_frame,
+                                               QCameraStream * stream,
+                                               void * userdata);
     static void metadata_stream_cb_routine(mm_camera_super_buf_t *frame,
                                            QCameraStream *stream,
                                            void *userdata);

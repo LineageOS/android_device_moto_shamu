@@ -2829,6 +2829,8 @@ int32_t QCamera2HardwareInterface::addPreviewChannel()
 {
     int32_t rc = NO_ERROR;
     QCameraChannel *pChannel = NULL;
+    char value[PROPERTY_VALUE_MAX];
+    bool raw_yuv = false;
 
     if (m_channels[QCAMERA_CH_TYPE_PREVIEW] != NULL) {
         // if we had preview channel before, delete it first
@@ -2871,6 +2873,20 @@ int32_t QCamera2HardwareInterface::addPreviewChannel()
         ALOGE("%s: add preview stream failed, ret = %d", __func__, rc);
         delete pChannel;
         return rc;
+    }
+
+    property_get("persist.camera.raw_yuv", value, "0");
+    raw_yuv = atoi(value) > 0 ? true : false;
+    if ( raw_yuv ) {
+        rc = addStreamToChannel(pChannel,
+                                CAM_STREAM_TYPE_RAW,
+                                preview_raw_stream_cb_routine,
+                                this);
+        if (rc != NO_ERROR) {
+            ALOGE("%s: add raw stream failed, ret = %d", __func__, rc);
+            delete pChannel;
+            return rc;
+        }
     }
 
     m_channels[QCAMERA_CH_TYPE_PREVIEW] = pChannel;
@@ -3115,8 +3131,10 @@ int32_t QCamera2HardwareInterface::addZSLChannel()
     property_get("persist.camera.raw_yuv", value, "0");
     raw_yuv = atoi(value) > 0 ? true : false;
     if ( raw_yuv ) {
-        rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_RAW,
-                                NULL, this);
+        rc = addStreamToChannel(pChannel,
+                                CAM_STREAM_TYPE_RAW,
+                                NULL,
+                                this);
         if (rc != NO_ERROR) {
             ALOGE("%s: add raw stream failed, ret = %d", __func__, rc);
             delete pChannel;
@@ -3146,6 +3164,8 @@ int32_t QCamera2HardwareInterface::addCaptureChannel()
 {
     int32_t rc = NO_ERROR;
     QCameraChannel *pChannel = NULL;
+    char value[PROPERTY_VALUE_MAX];
+    bool raw_yuv = false;
 
     if (m_channels[QCAMERA_CH_TYPE_CAPTURE] != NULL) {
         delete m_channels[QCAMERA_CH_TYPE_CAPTURE];
@@ -3199,6 +3219,20 @@ int32_t QCamera2HardwareInterface::addCaptureChannel()
         ALOGE("%s: add snapshot stream failed, ret = %d", __func__, rc);
         delete pChannel;
         return rc;
+    }
+
+    property_get("persist.camera.raw_yuv", value, "0");
+    raw_yuv = atoi(value) > 0 ? true : false;
+    if ( raw_yuv ) {
+        rc = addStreamToChannel(pChannel,
+                                CAM_STREAM_TYPE_RAW,
+                                snapshot_raw_stream_cb_routine,
+                                this);
+        if (rc != NO_ERROR) {
+            ALOGE("%s: add raw stream failed, ret = %d", __func__, rc);
+            delete pChannel;
+            return rc;
+        }
     }
 
     m_channels[QCAMERA_CH_TYPE_CAPTURE] = pChannel;
