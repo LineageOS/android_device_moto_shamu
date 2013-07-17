@@ -576,6 +576,7 @@ QCameraParameters::QCameraParameters()
       m_bHDR1xFrameEnabled(true),
       m_HDRSceneEnabled(false),
       m_bHDRThumbnailProcessNeeded(true),
+      m_bHDR1xExtraBufferNeeded(true),
       m_tempMap()
 {
     char value[32];
@@ -642,6 +643,7 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bHDR1xFrameEnabled(true),
     m_HDRSceneEnabled(false),
     m_bHDRThumbnailProcessNeeded(true),
+    m_bHDR1xExtraBufferNeeded(true),
     m_tempMap()
 {
     memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
@@ -2313,8 +2315,7 @@ int32_t QCameraParameters::setSelectableZoneAf(const QCameraParameters& params)
  *==========================================================================*/
 int32_t QCameraParameters::setAEBracket(const QCameraParameters& params)
 {
-    const char *scene_mode = params.get(KEY_SCENE_MODE);
-    if (scene_mode != NULL && strcmp(scene_mode, SCENE_MODE_HDR) == 0) {
+    if (isHDREnabled()) {
         ALOGE("%s: scene mode is HDR, overwrite AE bracket setting to off", __func__);
         return setAEBracket(AE_BRACKET_OFF);
     }
@@ -2464,45 +2465,35 @@ int32_t QCameraParameters::setNumOfSnapshot()
     int nBurstNum = getBurstNum();
     uint8_t nExpnum = 0;
 
-    if (isHDREnabled()) {
-        /* According to Android SDK, only one snapshot,
-         * but OEM might have different requirement */
-        if (m_bHDR1xFrameEnabled) {
-            nExpnum = 2; // HDR needs both 1X and processed img
-        } else {
-            nExpnum = 1; // HDR only needs processed img
-        }
-    } else {
-        const char *bracket_str = get(KEY_QC_AE_BRACKET_HDR);
-        if (bracket_str != NULL && strlen(bracket_str) > 0) {
-            int value = lookupAttr(BRACKETING_MODES_MAP,
-                                   sizeof(BRACKETING_MODES_MAP)/sizeof(QCameraMap),
-                                   bracket_str);
-            switch (value) {
-            case CAM_EXP_BRACKETING_ON:
-                {
-                    nExpnum = 0;
-                    const char *str_val = get(KEY_QC_CAPTURE_BURST_EXPOSURE);
-                    if ((str_val != NULL) && (strlen(str_val) > 0)) {
-                        char prop[PROPERTY_VALUE_MAX];
-                        memset(prop, 0, sizeof(prop));
-                        strcpy(prop, str_val);
-                        char *saveptr = NULL;
-                        char *token = strtok_r(prop, ",", &saveptr);
-                        while (token != NULL) {
-                            token = strtok_r(NULL, ",", &saveptr);
-                            nExpnum++;
-                        }
-                    }
-                    if (nExpnum == 0) {
-                        nExpnum = 1;
+    const char *bracket_str = get(KEY_QC_AE_BRACKET_HDR);
+    if (bracket_str != NULL && strlen(bracket_str) > 0) {
+        int value = lookupAttr(BRACKETING_MODES_MAP,
+                               sizeof(BRACKETING_MODES_MAP)/sizeof(QCameraMap),
+                               bracket_str);
+        switch (value) {
+        case CAM_EXP_BRACKETING_ON:
+            {
+                nExpnum = 0;
+                const char *str_val = get(KEY_QC_CAPTURE_BURST_EXPOSURE);
+                if ((str_val != NULL) && (strlen(str_val) > 0)) {
+                    char prop[PROPERTY_VALUE_MAX];
+                    memset(prop, 0, sizeof(prop));
+                    strcpy(prop, str_val);
+                    char *saveptr = NULL;
+                    char *token = strtok_r(prop, ",", &saveptr);
+                    while (token != NULL) {
+                        token = strtok_r(NULL, ",", &saveptr);
+                        nExpnum++;
                     }
                 }
-                break;
-            default:
-                nExpnum = 1;
-                break;
+                if (nExpnum == 0) {
+                    nExpnum = 1;
+                }
             }
+            break;
+        default:
+            nExpnum = 1 + getNumOfExtraHDROutBufsIfNeeded();
+            break;
         }
     }
 
@@ -3364,6 +3355,13 @@ int32_t QCameraParameters::initDefaultParameters()
     m_bHDR1xFrameEnabled = true;
 
     m_bHDRThumbnailProcessNeeded = true;
+    m_bHDR1xExtraBufferNeeded = true;
+    for (uint32_t i=0; i<m_pCapability->hdr_bracketing_setting.num_frames; i++) {
+        if (0 == m_pCapability->hdr_bracketing_setting.exp_val.values[i]) {
+            m_bHDR1xExtraBufferNeeded = false;
+            break;
+        }
+    }
 
     //Set Face Detection
     set(KEY_QC_SUPPORTED_FACE_DETECTION, onOffValues);
@@ -3415,9 +3413,6 @@ int32_t QCameraParameters::initDefaultParameters()
 
     // Set default Camera mode
     set(KEY_QC_CAMERA_MODE, 0);
-
-    // TODO: hardcode for now until mctl add support for min_num_pp_bufs
-    m_pCapability->min_num_pp_bufs = 3;
 
     int32_t rc = commitParameters();
     if (rc == NO_ERROR) {
@@ -5351,50 +5346,47 @@ uint8_t QCameraParameters::getNumOfSnapshots()
 }
 
 /*===========================================================================
- * FUNCTION   : getNumOfExtraHDRBufsIfNeeded
+ * FUNCTION   : getNumOfExtraHDRInBufsIfNeeded
  *
- * DESCRIPTION: get number of extra buffers needed by HDR if HDR is enabled
- *
- * PARAMETERS : none
- *
- * RETURN     : number of extra buffer needed by HDR; 0 if not HDR enabled
- *==========================================================================*/
-uint8_t QCameraParameters::getNumOfExtraHDRBufsIfNeeded()
-{
-    uint8_t numOfBufs = 0;
-    const char *scene_mode = get(KEY_SCENE_MODE);
-    if (scene_mode != NULL && strcmp(scene_mode, SCENE_MODE_HDR) == 0) {
-        // HDR mode
-        numOfBufs = getBurstNum() * m_pCapability->min_num_hdr_bufs;
-    }
-    return numOfBufs;
-}
-
-/*===========================================================================
- * FUNCTION   : getNumOfHDRBufsIfNeeded
- *
- * DESCRIPTION: get number of buffers needed by HDR if HDR is enabled
+ * DESCRIPTION: get number of extra input buffers needed by HDR
  *
  * PARAMETERS : none
  *
- * RETURN     : number of buffer needed by HDR; 0 if not HDR enabled
+ * RETURN     : number of extra buffers needed by HDR; 0 if not HDR enabled
  *==========================================================================*/
-uint8_t QCameraParameters::getNumOfHDRBufsIfNeeded()
+uint8_t QCameraParameters::getNumOfExtraHDRInBufsIfNeeded()
 {
     uint8_t numOfBufs = 0;
 
     if (isHDREnabled()) {
-        // HDR mode
-        if (m_bHDR1xFrameEnabled) {
-            numOfBufs = 2; // HDR needs both 1X and processed img
-        } else {
-            numOfBufs = 1; // HDR only needs processed img
+        numOfBufs += m_pCapability->hdr_bracketing_setting.num_frames;
+        if (isHDR1xFrameEnabled() && isHDR1xExtraBufferNeeded()) {
+            numOfBufs++;
         }
-
-        numOfBufs += m_pCapability->min_num_hdr_bufs;
-
+        numOfBufs--; // Only additional buffers need to be returned
     }
-    return numOfBufs;
+
+    return numOfBufs * getBurstNum();
+}
+
+/*===========================================================================
+ * FUNCTION   : getNumOfExtraHDROutBufsIfNeeded
+ *
+ * DESCRIPTION: get number of extra output buffers needed by HDR
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : number of extra buffers needed by HDR; 0 if not HDR enabled
+ *==========================================================================*/
+uint8_t QCameraParameters::getNumOfExtraHDROutBufsIfNeeded()
+{
+    uint8_t numOfBufs = 0;
+
+    if (isHDREnabled() && isHDR1xFrameEnabled()) {
+        numOfBufs++;
+    }
+
+    return numOfBufs * getBurstNum();
 }
 
 /*===========================================================================

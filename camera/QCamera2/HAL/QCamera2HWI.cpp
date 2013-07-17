@@ -1272,7 +1272,7 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
     int minCircularBufNum = CAMERA_MIN_STREAMING_BUFFERS +
                             CAMERA_MIN_JPEG_ENCODING_BUFFERS +
                             mParameters.getMaxUnmatchedFramesInQueue() +
-                            mParameters.getNumOfHDRBufsIfNeeded();
+                            mParameters.getNumOfExtraHDRInBufsIfNeeded();
 
     // Get buffer count for the particular stream type
     switch (stream_type) {
@@ -1289,9 +1289,10 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
     case CAM_STREAM_TYPE_POSTVIEW:
         {
             bufferCnt = minCaptureBuffers +
-                        mParameters.getMaxUnmatchedFramesInQueue() +
-                        mParameters.getNumOfExtraHDRBufsIfNeeded() +
-                        CAMERA_MIN_STREAMING_BUFFERS;
+                        mParameters.getNumOfExtraHDRInBufsIfNeeded() -
+                        mParameters.getNumOfExtraHDROutBufsIfNeeded() +
+                        mParameters.getMaxUnmatchedFramesInQueue();
+
             if (bufferCnt > zslQBuffers + minCircularBufNum) {
                 bufferCnt = zslQBuffers + minCircularBufNum;
             }
@@ -1303,27 +1304,23 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
                 bufferCnt = zslQBuffers + minCircularBufNum;
             } else {
                 bufferCnt = minCaptureBuffers +
-                            mParameters.getMaxUnmatchedFramesInQueue() +
-                            mParameters.getNumOfExtraHDRBufsIfNeeded() +
-                            CAMERA_MIN_STREAMING_BUFFERS;
+                            mParameters.getNumOfExtraHDRInBufsIfNeeded() -
+                            mParameters.getNumOfExtraHDROutBufsIfNeeded() +
+                            mParameters.getMaxUnmatchedFramesInQueue();
+
                 if (bufferCnt > zslQBuffers + minCircularBufNum) {
                     bufferCnt = zslQBuffers + minCircularBufNum;
-                }
-
-                if(mParameters.isHDREnabled()) {
-                    bufferCnt = bufferCnt + gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
                 }
             }
         }
         break;
     case CAM_STREAM_TYPE_RAW:
         if (mParameters.isZSLMode()) {
-            bufferCnt = zslQBuffers + CAMERA_MIN_STREAMING_BUFFERS;
+            bufferCnt = zslQBuffers + minCircularBufNum;
         } else {
             bufferCnt = minCaptureBuffers +
-                        mParameters.getMaxUnmatchedFramesInQueue() +
-                        mParameters.getNumOfExtraHDRBufsIfNeeded() +
-                        CAMERA_MIN_STREAMING_BUFFERS;
+                        mParameters.getMaxUnmatchedFramesInQueue();
+
             if (bufferCnt > zslQBuffers + minCircularBufNum) {
                 bufferCnt = zslQBuffers + minCircularBufNum;
             }
@@ -1336,24 +1333,29 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
         break;
     case CAM_STREAM_TYPE_METADATA:
         {
-            bufferCnt = minCaptureBuffers +
-                        mParameters.getMaxUnmatchedFramesInQueue() +
-                        mParameters.getNumOfExtraHDRBufsIfNeeded() +
-                        CAMERA_MIN_STREAMING_BUFFERS;
-            if (bufferCnt < zslQBuffers + minCircularBufNum) {
+            if (mParameters.isZSLMode()) {
                 bufferCnt = zslQBuffers + minCircularBufNum;
+            } else {
+                bufferCnt = minCaptureBuffers +
+                            mParameters.getNumOfExtraHDRInBufsIfNeeded() -
+                            mParameters.getNumOfExtraHDROutBufsIfNeeded() +
+                            mParameters.getMaxUnmatchedFramesInQueue() +
+                            CAMERA_MIN_STREAMING_BUFFERS;
+
+                if (bufferCnt > zslQBuffers + minCircularBufNum) {
+                    bufferCnt = zslQBuffers + minCircularBufNum;
+                }
             }
         }
         break;
     case CAM_STREAM_TYPE_OFFLINE_PROC:
         {
             bufferCnt = minCaptureBuffers +
+                        mParameters.getNumOfExtraHDROutBufsIfNeeded() +
                         mParameters.getMaxUnmatchedFramesInQueue();
+
             if (bufferCnt > zslQBuffers + minCircularBufNum) {
                 bufferCnt = zslQBuffers + minCircularBufNum;
-            }
-            if (bufferCnt < CAMERA_MIN_STREAMING_BUFFERS) {
-                bufferCnt = CAMERA_MIN_STREAMING_BUFFERS;
             }
         }
         break;
@@ -1530,26 +1532,16 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
             streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
         } else {
             streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
-            if ( mParameters.isHDREnabled() ) {
-                streamInfo->num_of_burst = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
-                if (mParameters.isHDR1xFrameEnabled()) {
-                    streamInfo->num_of_burst++;
-                }
-            } else {
-                streamInfo->num_of_burst = mParameters.getNumOfSnapshots();
-            }
+            streamInfo->num_of_burst = mParameters.getNumOfSnapshots()
+                + mParameters.getNumOfExtraHDRInBufsIfNeeded()
+                - mParameters.getNumOfExtraHDROutBufsIfNeeded();
         }
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
         streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
-        if ( mParameters.isHDREnabled() ) {
-            streamInfo->num_of_burst = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
-            if (mParameters.isHDR1xFrameEnabled()) {
-                streamInfo->num_of_burst++;
-            }
-        } else {
-            streamInfo->num_of_burst = mParameters.getNumOfSnapshots();
-        }
+        streamInfo->num_of_burst = mParameters.getNumOfSnapshots()
+            + mParameters.getNumOfExtraHDRInBufsIfNeeded()
+            - mParameters.getNumOfExtraHDROutBufsIfNeeded();
         break;
     default:
         break;
@@ -2032,16 +2024,20 @@ int QCamera2HardwareInterface::takePicture()
             // Enable AE Bracketing for HDR
             cam_exp_bracketing_t aeBracket;
             memset(&aeBracket, 0, sizeof(cam_exp_bracketing_t));
-            aeBracket.mode = gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.mode;
+            aeBracket.mode =
+                gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.mode;
             String8 tmp;
             for ( unsigned int i = 0; i < hdrFrameCount ; i++ ) {
-                tmp.appendFormat("%d", (int8_t) gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.values[i]);
+                tmp.appendFormat("%d",
+                    (int8_t) gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.values[i]);
                 tmp.append(",");
             }
-            if (mParameters.isHDR1xFrameEnabled()) {
-                tmp.appendFormat("%d", 0);
-                tmp.append(",");
+            if (mParameters.isHDR1xFrameEnabled()
+                && mParameters.isHDR1xExtraBufferNeeded()) {
+                    tmp.appendFormat("%d", 0);
+                    tmp.append(",");
             }
+
             if( !tmp.isEmpty() &&
                 ( MAX_EXP_BRACKETING_LENGTH > tmp.length() ) ) {
                 //Trim last comma
@@ -3533,10 +3529,6 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
         pp_config.hdr_param.hdr_enable = 1;
         pp_config.hdr_param.hdr_need_1x = mParameters.isHDR1xFrameEnabled();
         pp_config.hdr_param.hdr_mode = CAM_HDR_MODE_MULTIFRAME;
-        minStreamBufNum = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames + 1;
-        if (mParameters.isHDR1xFrameEnabled()) {
-            minStreamBufNum++;
-        }
     } else {
         pp_config.feature_mask &= ~CAM_QCOM_FEATURE_HDR;
         pp_config.hdr_param.hdr_enable = 0;
