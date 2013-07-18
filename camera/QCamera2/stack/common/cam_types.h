@@ -819,6 +819,7 @@ typedef enum {
     CAM_INTF_PARM_LOCK_CAF,
     CAM_INTF_PARM_VIDEO_HDR,
     CAM_INTF_PARM_ROTATION,
+    CAM_INTF_PARM_SCALE,
     CAM_INTF_META_CROP_DATA,
     CAM_INTF_META_PREP_SNAPSHOT_DONE,
     CAM_INTF_META_GOOD_FRAME_IDX_RANGE,
@@ -1090,6 +1091,7 @@ typedef struct {
 #define CAM_QCOM_FEATURE_SHARPNESS      (1<<7)
 #define CAM_QCOM_FEATURE_VIDEO_HDR      (1<<8)
 #define CAM_QCOM_FEATURE_CAC            (1<<9)
+#define CAM_QCOM_FEATURE_SCALE          (1<<10)
 
 // Counter clock wise
 typedef enum {
@@ -1127,6 +1129,11 @@ typedef struct {
 } cam_hdr_param_t;
 
 typedef struct {
+    int32_t output_width;
+    int32_t output_height;
+} cam_scale_param_t;
+
+typedef struct {
     /* reprocess feature mask */
     uint32_t feature_mask;
 
@@ -1137,6 +1144,7 @@ typedef struct {
     uint32_t flip;
     int32_t sharpness;
     cam_hdr_param_t hdr_param;
+    cam_scale_param_t scale_param;
 } cam_pp_feature_config_t;
 
 typedef struct {

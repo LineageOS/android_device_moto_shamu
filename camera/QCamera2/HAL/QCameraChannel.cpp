@@ -754,6 +754,24 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                 }
             }
 
+            if(streamInfo->reprocess_config.pp_feature_config.feature_mask & CAM_QCOM_FEATURE_SCALE){
+                //we only Scale Snapshot frame
+                if(pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT)){
+                    //also check whether rotation is needed
+                    if((streamInfo->reprocess_config.pp_feature_config.feature_mask & CAM_QCOM_FEATURE_ROTATION) &&
+                       (streamInfo->reprocess_config.pp_feature_config.rotation == ROTATE_90 ||
+                        streamInfo->reprocess_config.pp_feature_config.rotation == ROTATE_270)){
+                        //need swap
+                        streamInfo->dim.width = streamInfo->reprocess_config.pp_feature_config.scale_param.output_height;
+                        streamInfo->dim.height = streamInfo->reprocess_config.pp_feature_config.scale_param.output_width;
+                    }else{
+                        streamInfo->dim.width = streamInfo->reprocess_config.pp_feature_config.scale_param.output_width;
+                        streamInfo->dim.height = streamInfo->reprocess_config.pp_feature_config.scale_param.output_height;
+                    }
+                }
+                ALOGD("%s: stream width=%d, height=%d.", __func__, streamInfo->dim.width, streamInfo->dim.height);
+            }
+
             // save source stream handler
             mSrcStreamHandles[m_numStreams] = pStream->getMyHandle();
 
