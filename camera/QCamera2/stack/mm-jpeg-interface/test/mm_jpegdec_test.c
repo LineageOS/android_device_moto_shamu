@@ -30,6 +30,15 @@
 #include "mm_jpeg_interface.h"
 #include "mm_jpeg_ionbuf.h"
 #include <sys/time.h>
+#include <stdlib.h>
+
+#define MIN(a,b)  (((a) < (b)) ? (a) : (b))
+#define MAX(a,b)  (((a) > (b)) ? (a) : (b))
+#define CLAMP(x, min, max) MIN(MAX((x), (min)), (max))
+
+#define TIME_IN_US(r) ((uint64_t)r.tv_sec * 1000000LL + r.tv_usec)
+struct timeval dtime[2];
+
 
 /** DUMP_TO_FILE:
  *  @filename: file name
@@ -56,10 +65,12 @@ typedef struct {
   int width;
   int height;
   char *out_filename;
+  int format;
 } jpeg_test_input_t;
 
 static jpeg_test_input_t jpeg_input[] = {
-  {"/data/test.jpg", 5248, 3936, "/data/test.yuv"}
+  {"/data/test.jpg", 5248, 3936, "/data/test.yuv",
+      MM_JPEG_COLOR_FORMAT_YCBCRLP_H2V2}
 };
 
 typedef struct {
@@ -80,6 +91,25 @@ typedef struct {
   uint32_t session_id;
 } mm_jpegdec_intf_test_t;
 
+typedef struct {
+  char *format_str;
+  int eColorFormat;
+} mm_jpegdec_col_fmt_t;
+
+#define ARR_SZ(a) (sizeof(a)/sizeof(a[0]))
+
+static const mm_jpegdec_col_fmt_t col_formats[] =
+{
+  { "YCRCBLP_H2V2",      (int)MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2 },
+  { "YCBCRLP_H2V2",      (int)MM_JPEG_COLOR_FORMAT_YCBCRLP_H2V2 },
+  { "YCRCBLP_H2V1",      (int)MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V1 },
+  { "YCBCRLP_H2V1",      (int)MM_JPEG_COLOR_FORMAT_YCBCRLP_H2V1 },
+  { "YCRCBLP_H1V2",      (int)MM_JPEG_COLOR_FORMAT_YCRCBLP_H1V2 },
+  { "YCBCRLP_H1V2",      (int)MM_JPEG_COLOR_FORMAT_YCBCRLP_H1V2 },
+  { "YCRCBLP_H1V1",      (int)MM_JPEG_COLOR_FORMAT_YCRCBLP_H1V1 },
+  { "YCBCRLP_H1V1",      (int)MM_JPEG_COLOR_FORMAT_YCBCRLP_H1V1 }
+};
+
 static void mm_jpegdec_decode_callback(jpeg_job_status_t status,
   uint32_t client_hdl,
   uint32_t jobId,
@@ -91,6 +121,10 @@ static void mm_jpegdec_decode_callback(jpeg_job_status_t status,
   if (status == JPEG_JOB_STATUS_ERROR) {
     CDBG_ERROR("%s:%d] Decode error", __func__, __LINE__);
   } else {
+    gettimeofday(&dtime[1], NULL);
+    CDBG_ERROR("%s:%d] Decode time %llu ms",
+     __func__, __LINE__, ((TIME_IN_US(dtime[1]) - TIME_IN_US(dtime[0]))/1000));
+
     CDBG_ERROR("%s:%d] Decode success file%s addr %p len %d",
       __func__, __LINE__, p_obj->out_filename,
       p_output->buf_vaddr, p_output->buf_filled_len);
@@ -200,7 +234,7 @@ static int decode_init(jpeg_test_input_t *p_input, mm_jpegdec_intf_test_t *p_obj
   /* set encode parameters */
   p_params->jpeg_cb = mm_jpegdec_decode_callback;
   p_params->userdata = p_obj;
-  p_params->color_format = MM_JPEG_COLOR_FORMAT_YCBCRLP_H2V2;
+  p_params->color_format = p_input->format;
 
   /* dest buffer config */
   p_params->dest_buf[0].buf_size = p_obj->output.size;
@@ -246,6 +280,73 @@ static int decode_init(jpeg_test_input_t *p_input, mm_jpegdec_intf_test_t *p_obj
   return 0;
 }
 
+void omx_test_dec_print_usage()
+{
+  fprintf(stderr, "Usage: program_name [options]\n");
+  fprintf(stderr, "Mandatory options:\n");
+  fprintf(stderr, "  -I FILE\t\tPath to the input file.\n");
+  fprintf(stderr, "  -O FILE\t\tPath for the output file.\n");
+  fprintf(stderr, "  -W WIDTH\t\tOutput image width\n");
+  fprintf(stderr, "  -H HEIGHT\t\tOutput image height\n");
+  fprintf(stderr, "Optional:\n");
+  fprintf(stderr, "  -F FORMAT\t\tDefault image format:\n");
+  fprintf(stderr, "\t\t\t\t%s (0), %s (1), %s (2) %s (3)\n"
+    "%s (4), %s (5), %s (6) %s (7)\n",
+    col_formats[0].format_str, col_formats[1].format_str,
+    col_formats[2].format_str, col_formats[3].format_str,
+    col_formats[4].format_str, col_formats[5].format_str,
+    col_formats[6].format_str, col_formats[7].format_str
+    );
+
+  fprintf(stderr, "\n");
+}
+
+static int mm_jpegdec_test_get_input(int argc, char *argv[],
+    jpeg_test_input_t *p_test)
+{
+  int c;
+
+  while ((c = getopt(argc, argv, "I:O:W:H:F:")) != -1) {
+    switch (c) {
+    case 'O':
+      p_test->out_filename = optarg;
+      fprintf(stderr, "%-25s%s\n", "Output image path",
+        p_test->out_filename);
+      break;
+    case 'I':
+      p_test->filename = optarg;
+      fprintf(stderr, "%-25s%s\n", "Input image path", p_test->filename);
+      break;
+    case 'W':
+      p_test->width = atoi(optarg);
+      fprintf(stderr, "%-25s%d\n", "Default width", p_test->width);
+      break;
+    case 'H':
+      p_test->height = atoi(optarg);
+      fprintf(stderr, "%-25s%d\n", "Default height", p_test->height);
+      break;
+    case 'F': {
+      int format = 0;
+      format = atoi(optarg);
+      int num_formats = ARR_SZ(col_formats);
+      CLAMP(format, 0, num_formats);
+      p_test->format = col_formats[format].eColorFormat;
+      fprintf(stderr, "%-25s%s\n", "Default image format",
+        col_formats[format].format_str);
+      break;
+    }
+    default:;
+    }
+  }
+  if (!p_test->filename || !p_test->filename || !p_test->width ||
+      !p_test->height) {
+    fprintf(stderr, "Missing required arguments.\n");
+    omx_test_dec_print_usage();
+    return -1;
+  }
+  return 0;
+}
+
 static int decode_test(jpeg_test_input_t *p_input)
 {
   int rc = 0;
@@ -274,6 +375,13 @@ static int decode_test(jpeg_test_input_t *p_input)
 
   for (i = 0; i < g_count; i++) {
     jpeg_obj.job.job_type = JPEG_JOB_TYPE_DECODE;
+
+    CDBG_ERROR("%s:%d] Starting decode job",__func__, __LINE__);
+    gettimeofday(&dtime[0], NULL);
+
+    fprintf(stderr, "Starting decode of %s into %s outw %d outh %d\n\n",
+        p_input->filename, p_input->out_filename,
+        p_input->width, p_input->height);
     rc = jpeg_obj.ops.start_job(&jpeg_obj.job, &jpeg_obj.job_id[i]);
     if (rc) {
       CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
@@ -288,6 +396,10 @@ static int decode_test(jpeg_test_input_t *p_input)
   pthread_mutex_lock(&jpeg_obj.lock);
   pthread_cond_wait(&jpeg_obj.cond, &jpeg_obj.lock);
   pthread_mutex_unlock(&jpeg_obj.lock);
+
+  fprintf(stderr, "Decode time %llu ms\n",
+      ((TIME_IN_US(dtime[1]) - TIME_IN_US(dtime[0]))/1000));
+
 
   jpeg_obj.ops.destroy_session(jpeg_obj.job.decode_job.session_id);
 
@@ -315,8 +427,17 @@ end:
  **/
 int main(int argc, char* argv[])
 {
+  jpeg_test_input_t dec_test_input;
+  int ret;
 
-  return decode_test(&jpeg_input[0]);
+  memset(&dec_test_input, 0, sizeof(dec_test_input));
+  ret = mm_jpegdec_test_get_input(argc, argv, &dec_test_input);
+
+  if (ret) {
+    return -1;
+  }
+
+  return decode_test(&dec_test_input);
 }
 
 
