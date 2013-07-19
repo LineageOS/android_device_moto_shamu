@@ -203,6 +203,7 @@ private:
     jpeg_settings_t* mJpegSettings;
     metadata_response_t mMetadataResponse;
     List<stream_info_t*> mStreamInfo;
+    bool mIsZslMode;
 
     power_module_t *m_pPowerModule;   // power module
 
