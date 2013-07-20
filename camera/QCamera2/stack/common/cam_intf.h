@@ -354,6 +354,8 @@ typedef struct {
     cam_stream_reproc_config_t reprocess_config;
 
     cam_stream_parm_buffer_t parm_buf;    /* stream based parameters */
+
+    uint8_t useAVTimer; /*flag to indicate use of AVTimer for TimeStamps*/
 } cam_stream_info_t;
 
 /*****************************************************************************
@@ -429,6 +431,7 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_HDR_NEED_1X,              int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_LOCK_CAF,                 int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_VIDEO_HDR,                int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_VT,                       int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_GET_CHROMATIX,            tune_chromatix_t,            1);
     INCLUDE(CAM_INTF_PARM_SET_RELOAD_CHROMATIX,     tune_chromatix_t,            1);
     INCLUDE(CAM_INTF_PARM_GET_AFTUNE,               tune_autofocus_t,            1);

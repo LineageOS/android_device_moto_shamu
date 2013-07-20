@@ -976,7 +976,10 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
         buf_info->buf->buf_idx = idx;
         buf_info->buf->frame_idx = vb.sequence;
         buf_info->buf->ts.tv_sec  = vb.timestamp.tv_sec;
-        buf_info->buf->ts.tv_nsec = vb.timestamp.tv_usec * 1000;
+        if (my_obj->stream_info->useAVTimer)
+            buf_info->buf->ts.tv_nsec = vb.timestamp.tv_usec;
+        else
+            buf_info->buf->ts.tv_nsec = vb.timestamp.tv_usec * 1000;
  #if 0
         /* If YUV format, check chroma size to see if extra subsampling
                 is applied */

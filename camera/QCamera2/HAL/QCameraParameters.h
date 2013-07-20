@@ -356,6 +356,7 @@ public:
     static const char KEY_QC_SUPPORTED_HISTOGRAM_MODES[] ;
     static const char KEY_QC_HDR_NEED_1X[];
     static const char KEY_QC_VIDEO_HDR[];
+    static const char KEY_QC_VT_ENABLE[];
     static const char KEY_QC_SUPPORTED_VIDEO_HDR_MODES[];
 
     // Values for SKIN TONE ENHANCEMENT
@@ -482,6 +483,7 @@ public:
     bool isAutoHDREnabled();
     int32_t restoreAEBracket();
     int32_t updateRAW(cam_dimension_t max_dim);
+    bool isAVTimerEnabled();
 
     cam_focus_mode_type getFocusMode() const {return mFocusMode;};
     int32_t setNumOfSnapshot();
@@ -537,6 +539,7 @@ private:
     int32_t setSkinToneEnhancement(const QCameraParameters& );
     int32_t setSceneDetect(const QCameraParameters& );
     int32_t setVideoHDR(const QCameraParameters& );
+    int32_t setVtEnable(const QCameraParameters& );
     int32_t setZoom(const QCameraParameters& );
     int32_t setISOValue(const QCameraParameters& );
     int32_t setRotation(const QCameraParameters& );
@@ -583,6 +586,7 @@ private:
     int32_t setSkinToneEnhancement(int sceFactor);
     int32_t setSceneDetect(const char *scendDetect);
     int32_t setVideoHDR(const char *videoHDR);
+    int32_t setVtEnable(const char *vtEnable);
     int32_t setZoom(int zoom_level);
     int32_t setISOValue(const char *isoValue);
     int32_t setFlash(const char *flashStr);
@@ -701,6 +705,7 @@ private:
     cam_dimension_t m_LiveSnapshotSize; // live snapshot size
     cam_dimension_t m_rawSize; // live snapshot size
     bool m_bHDREnabled;             // if HDR is enabled
+    bool m_bAVTimerEnabled;    //if AVTimer is enabled
     QCameraAdjustFPS *m_AdjustFPS;
     bool m_bHDR1xFrameEnabled;          // if frame with exposure compensation 0 during HDR is enabled
     bool m_HDRSceneEnabled; // Auto HDR indication
