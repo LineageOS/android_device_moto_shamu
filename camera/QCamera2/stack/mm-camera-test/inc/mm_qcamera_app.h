@@ -37,6 +37,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <linux/fb.h>
+#include <linux/msm_mdp.h>
+#include <semaphore.h>
 
 #include "mm_camera_interface.h"
 #include "mm_jpeg_interface.h"
@@ -52,17 +55,33 @@
 #define RDI_BUF_NUM 8
 
 #define DEFAULT_PREVIEW_FORMAT    CAM_FORMAT_YUV_420_NV21
-#define DEFAULT_PREVIEW_WIDTH     800
+#define DEFAULT_PREVIEW_WIDTH     640
 #define DEFAULT_PREVIEW_HEIGHT    480
 #define DEFAULT_PREVIEW_PADDING   CAM_PAD_TO_WORD
 #define DEFAULT_VIDEO_FORMAT      CAM_FORMAT_YUV_420_NV12
 #define DEFAULT_VIDEO_WIDTH       800
 #define DEFAULT_VIDEO_HEIGHT      480
+#define DEFAULT_RAW_WIDTH         4000
+#define DEFAULT_RAW_HEIGHT        3000
 #define DEFAULT_VIDEO_PADDING     CAM_PAD_TO_2K
 #define DEFAULT_SNAPSHOT_FORMAT   CAM_FORMAT_YUV_420_NV21
-#define DEFAULT_SNAPSHOT_WIDTH    1280
-#define DEFAULT_SNAPSHOT_HEIGHT   960
+#define DEFAULT_RAW_FORMAT        CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GBRG
+
+#define DEFAULT_SNAPSHOT_WIDTH    1024
+#define DEFAULT_SNAPSHOT_HEIGHT   768
 #define DEFAULT_SNAPSHOT_PADDING  CAM_PAD_TO_WORD
+
+#define MARKER_HEIGHT             10 // lines
+#define DEFAULT_OV_FORMAT         MDP_RGB_888
+#define DEFAULT_OV_FORMAT_BPP     3
+#define DEFAULT_CAMERA_FORMAT_BPP 3/2
+#define MAX_SLICES                0xF
+#define SLICE_BASE                0x11
+#define FB_PATH                   "/dev/graphics/fb0"
+
+#define INVALID_KEY_PRESS 0
+#define BASE_OFFSET  ('Z' - 'A' + 1)
+#define BASE_OFFSET_NUM  ('Z' - 'A' + 2)
 
 #ifndef TRUE
 #define TRUE 1
@@ -114,6 +133,7 @@ typedef struct {
     mm_camera_stream_config_t s_config;
     cam_frame_len_offset_t offset;
     uint8_t num_of_bufs;
+    uint32_t multipleOf;
     mm_camera_app_buf_t s_bufs[MM_CAMERA_MAX_NUM_FRAMES];
     mm_camera_app_buf_t s_info_buf;
 } mm_camera_stream_t;
@@ -137,6 +157,22 @@ typedef struct {
     mm_camera_super_buf_t* current_job_frames;
     uint32_t current_job_id;
     mm_camera_app_buf_t jpeg_buf;
+
+    int fb_fd;
+    void *fb_base;
+    struct fb_var_screeninfo vinfo;
+    struct mdp_overlay data_overlay;
+    struct mdp_overlay marker_overlay;
+    mm_camera_app_buf_t marker_buffer;
+    uint32_t slice_size;
+    uint32_t slice_count;
+    uint32_t buffer_width, buffer_height;
+    uint32_t buffer_size;
+    cam_format_t buffer_format;
+    uint32_t frame_size;
+    uint32_t frame_count;
+    int encodeJpeg;
+
 } mm_camera_test_obj_t;
 
 typedef struct {
@@ -152,6 +188,33 @@ typedef struct {
     uint8_t num_cameras;
     hal_interface_lib_t hal_lib;
 } mm_camera_app_t;
+
+typedef enum {
+    MM_CAMERA_LIB_NO_ACTION = 0,
+    MM_CAMERA_LIB_RAW_CAPTURE,
+    MM_CAMERA_LIB_JPEG_CAPTURE,
+    MM_CAMERA_LIB_SET_FOCUS_MODE,
+    MM_CAMERA_LIB_DO_AF,
+    MM_CAMERA_LIB_CANCEL_AF,
+    MM_CAMERA_LIB_LOCK_AE,
+    MM_CAMERA_LIB_UNLOCK_AE,
+    MM_CAMERA_LIB_LOCK_AWB,
+    MM_CAMERA_LIB_UNLOCK_AWB,
+} mm_camera_lib_commands;
+
+typedef struct {
+    int32_t stream_width, stream_height;
+    cam_focus_mode_type af_mode;
+} mm_camera_lib_params;
+
+typedef struct {
+    mm_camera_app_t app_ctx;
+    mm_camera_test_obj_t test_obj;
+    mm_camera_lib_params current_params;
+    int stream_running;
+} mm_camera_lib_ctx;
+
+typedef mm_camera_lib_ctx mm_camera_lib_handle;
 
 typedef int (*mm_app_test_t) (mm_camera_app_t *cam_apps);
 typedef struct {
@@ -176,7 +239,8 @@ extern void mm_camera_app_done();
 extern int mm_app_alloc_bufs(mm_camera_app_buf_t* app_bufs,
                              cam_frame_len_offset_t *frame_offset_info,
                              uint8_t num_bufs,
-                             uint8_t is_streambuf);
+                             uint8_t is_streambuf,
+                             size_t multipleOf);
 extern int mm_app_release_bufs(uint8_t num_bufs,
                                mm_camera_app_buf_t* app_bufs);
 extern int mm_app_stream_initbuf(cam_frame_len_offset_t *frame_offset_info,
@@ -226,6 +290,12 @@ extern int mm_app_start_preview_zsl(mm_camera_test_obj_t *test_obj);
 extern int mm_app_stop_preview_zsl(mm_camera_test_obj_t *test_obj);
 extern mm_camera_channel_t * mm_app_add_preview_channel(
                                 mm_camera_test_obj_t *test_obj);
+extern mm_camera_stream_t * mm_app_add_raw_stream(mm_camera_test_obj_t *test_obj,
+                                                mm_camera_channel_t *channel,
+                                                mm_camera_buf_notify_t stream_cb,
+                                                void *userdata,
+                                                uint8_t num_bufs,
+                                                uint8_t num_burst);
 extern int mm_app_stop_and_del_channel(mm_camera_test_obj_t *test_obj,
                                        mm_camera_channel_t *channel);
 extern mm_camera_channel_t * mm_app_add_snapshot_channel(
@@ -246,8 +316,34 @@ extern int mm_app_stop_live_snapshot(mm_camera_test_obj_t *test_obj);
 extern int mm_app_start_capture(mm_camera_test_obj_t *test_obj,
                                 uint8_t num_snapshots);
 extern int mm_app_stop_capture(mm_camera_test_obj_t *test_obj);
+extern int mm_app_start_capture_raw(mm_camera_test_obj_t *test_obj, uint8_t num_snapshots);
+extern int mm_app_stop_capture_raw(mm_camera_test_obj_t *test_obj);
 extern int mm_app_start_rdi(mm_camera_test_obj_t *test_obj, uint8_t num_burst);
 extern int mm_app_stop_rdi(mm_camera_test_obj_t *test_obj);
+extern int mm_app_initialize_fb(mm_camera_test_obj_t *test_obj);
+extern int mm_app_close_fb(mm_camera_test_obj_t *test_obj);
+extern int mm_app_fb_write(mm_camera_test_obj_t *test_obj, char *buffer);
+extern int mm_app_overlay_display(mm_camera_test_obj_t *test_obj, int bufferFd);
+extern int mm_app_allocate_ion_memory(mm_camera_app_buf_t *buf, int ion_type);
+extern int mm_app_deallocate_ion_memory(mm_camera_app_buf_t *buf);
+
+/* JIG camera lib interface */
+
+int mm_camera_lib_open(mm_camera_lib_handle *handle, int cam_id);
+int mm_camera_lib_get_caps(mm_camera_lib_handle *handle,
+                           cam_capability_t *caps);
+int mm_camera_lib_start_stream(mm_camera_lib_handle *handle);
+int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
+                               mm_camera_lib_commands cmd,
+                               void *data);
+int mm_camera_lib_stop_stream(mm_camera_lib_handle *handle);
+int mm_camera_lib_close(mm_camera_lib_handle *handle);
+
+extern int createEncodingSession(mm_camera_test_obj_t *test_obj,
+                          mm_camera_stream_t *m_stream,
+                          mm_camera_buf_def_t *m_frame);
+extern int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_frame,
+               mm_camera_stream_t *m_stream);
 
 #endif /* __MM_QCAMERA_APP_H__ */
 

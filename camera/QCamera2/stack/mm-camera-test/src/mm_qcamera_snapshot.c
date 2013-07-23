@@ -64,7 +64,11 @@ static void jpeg_encode_cb(jpeg_job_status_t status,
                                                 pme->current_job_frames->bufs[i])) {
             CDBG_ERROR("%s: Failed in Qbuf\n", __func__);
         }
+        mm_app_cache_ops((mm_camera_app_meminfo_t *) pme->current_job_frames->bufs[i]->mem_info,
+                         ION_IOC_INV_CACHES);
     }
+
+    free(pme->jpeg_buf.buf.buffer);
     free(pme->current_job_frames);
     pme->current_job_frames = NULL;
 
@@ -129,7 +133,7 @@ int createEncodingSession(mm_camera_test_obj_t *test_obj,
     memset(&encode_param, 0, sizeof(mm_jpeg_encode_params_t));
     encode_param.jpeg_cb = jpeg_encode_cb;
     encode_param.userdata = (void*)test_obj;
-    encode_param.encode_thumbnail = 1;
+    encode_param.encode_thumbnail = 0;
     encode_param.quality = 85;
     encode_param.color_format = MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2;
     encode_param.thumb_color_format = MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2;
@@ -154,6 +158,78 @@ int createEncodingSession(mm_camera_test_obj_t *test_obj,
     return test_obj->jpeg_ops.create_session(test_obj->jpeg_hdl,
                                              &encode_param,
                                              &test_obj->current_jpeg_sess_id);
+}
+
+static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
+                                          void *user_data)
+{
+
+    int rc;
+    int i = 0;
+    mm_camera_test_obj_t *pme = (mm_camera_test_obj_t *)user_data;
+    mm_camera_channel_t *channel = NULL;
+    mm_camera_stream_t *m_stream = NULL;
+    mm_camera_buf_def_t *m_frame = NULL;
+
+    CDBG("%s: BEGIN\n", __func__);
+
+    /* find channel */
+    for (i = 0; i < MM_CHANNEL_TYPE_MAX; i++) {
+        if (pme->channels[i].ch_id == bufs->ch_id) {
+            channel = &pme->channels[i];
+            break;
+        }
+    }
+    if (NULL == channel) {
+        CDBG_ERROR("%s: Wrong channel id (%d)", __func__, bufs->ch_id);
+        rc = -1;
+        goto EXIT;
+    }
+
+    /* find snapshot stream */
+    for (i = 0; i < channel->num_streams; i++) {
+        if (channel->streams[i].s_config.stream_info->stream_type == CAM_STREAM_TYPE_RAW) {
+            m_stream = &channel->streams[i];
+            break;
+        }
+    }
+    if (NULL == m_stream) {
+        CDBG_ERROR("%s: cannot find snapshot stream", __func__);
+        rc = -1;
+        goto EXIT;
+    }
+
+    /* find snapshot frame */
+    for (i = 0; i < bufs->num_bufs; i++) {
+        if (bufs->bufs[i]->stream_id == m_stream->s_id) {
+            m_frame = bufs->bufs[i];
+            break;
+        }
+    }
+    if (NULL == m_frame) {
+        CDBG_ERROR("%s: main frame is NULL", __func__);
+        rc = -1;
+        goto EXIT;
+    }
+
+    if ( 0 < pme->fb_fd ) {
+        mm_app_overlay_display(pme, m_frame->fd);
+    } else {
+        mm_app_dump_frame(m_frame, "main", "raw", m_frame->frame_idx);
+    }
+
+EXIT:
+    for (i=0; i<bufs->num_bufs; i++) {
+        if (MM_CAMERA_OK != pme->cam->ops->qbuf(bufs->camera_handle,
+                                                bufs->ch_id,
+                                                bufs->bufs[i])) {
+            CDBG_ERROR("%s: Failed in Qbuf\n", __func__);
+        }
+    }
+
+    mm_camera_app_done();
+
+    CDBG("%s: END\n", __func__);
 }
 
 static void mm_app_snapshot_notify_cb(mm_camera_super_buf_t *bufs,
@@ -340,6 +416,72 @@ mm_camera_stream_t * mm_app_add_postview_stream(mm_camera_test_obj_t *test_obj,
     }
 
     return stream;
+}
+
+int mm_app_start_capture_raw(mm_camera_test_obj_t *test_obj, uint8_t num_snapshots)
+{
+    int32_t rc = MM_CAMERA_OK;
+    mm_camera_channel_t *channel = NULL;
+    mm_camera_stream_t *s_main = NULL;
+    mm_camera_channel_attr_t attr;
+
+    memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
+    attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
+    attr.max_unmatched_frames = 3;
+    channel = mm_app_add_channel(test_obj,
+                                 MM_CHANNEL_TYPE_CAPTURE,
+                                 &attr,
+                                 mm_app_snapshot_notify_cb_raw,
+                                 test_obj);
+    if (NULL == channel) {
+        CDBG_ERROR("%s: add channel failed", __func__);
+        return -MM_CAMERA_E_GENERAL;
+    }
+
+    test_obj->buffer_format = DEFAULT_RAW_FORMAT;
+    s_main = mm_app_add_raw_stream(test_obj,
+                                   channel,
+                                   mm_app_snapshot_notify_cb_raw,
+                                   test_obj,
+                                   num_snapshots,
+                                   num_snapshots);
+    if (NULL == s_main) {
+        CDBG_ERROR("%s: add main snapshot stream failed\n", __func__);
+        mm_app_del_channel(test_obj, channel);
+        return rc;
+    }
+
+    rc = mm_app_start_channel(test_obj, channel);
+    if (MM_CAMERA_OK != rc) {
+        CDBG_ERROR("%s:start zsl failed rc=%d\n", __func__, rc);
+        mm_app_del_stream(test_obj, channel, s_main);
+        mm_app_del_channel(test_obj, channel);
+        return rc;
+    }
+
+    return rc;
+}
+
+int mm_app_stop_capture_raw(mm_camera_test_obj_t *test_obj)
+{
+    int rc = MM_CAMERA_OK;
+    mm_camera_channel_t *ch = NULL;
+    int i;
+
+    ch = mm_app_get_channel_by_type(test_obj, MM_CHANNEL_TYPE_CAPTURE);
+
+    rc = mm_app_stop_channel(test_obj, ch);
+    if (MM_CAMERA_OK != rc) {
+        CDBG_ERROR("%s:stop recording failed rc=%d\n", __func__, rc);
+    }
+
+    for ( i = 0 ; i < ch->num_streams ; i++ ) {
+        mm_app_del_stream(test_obj, ch, &ch->streams[i]);
+    }
+
+    mm_app_del_channel(test_obj, ch);
+
+    return rc;
 }
 
 int mm_app_start_capture(mm_camera_test_obj_t *test_obj,
