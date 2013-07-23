@@ -1273,6 +1273,13 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
                             CAMERA_MIN_JPEG_ENCODING_BUFFERS +
                             mParameters.getMaxUnmatchedFramesInQueue() +
                             mParameters.getNumOfExtraHDRInBufsIfNeeded();
+    int minUndequeCount = 0;
+    if (!isNoDisplayMode() && mPreviewWindow != NULL) {
+        if (mPreviewWindow->get_min_undequeued_buffer_count(mPreviewWindow,&minUndequeCount)
+            != 0) {
+            ALOGE("get_min_undequeued_buffer_count  failed");
+        }
+    }
 
     // Get buffer count for the particular stream type
     switch (stream_type) {
@@ -1284,6 +1291,7 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
                 bufferCnt = CAMERA_MIN_STREAMING_BUFFERS +
                             mParameters.getMaxUnmatchedFramesInQueue();
             }
+            bufferCnt += minUndequeCount;
         }
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
@@ -1296,6 +1304,7 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
             if (bufferCnt > zslQBuffers + minCircularBufNum) {
                 bufferCnt = zslQBuffers + minCircularBufNum;
             }
+            bufferCnt += minUndequeCount;
         }
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
