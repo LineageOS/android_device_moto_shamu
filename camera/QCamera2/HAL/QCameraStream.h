@@ -76,6 +76,7 @@ public:
     bool isOrignalTypeOf(cam_stream_type_t type);
     int32_t getFrameOffset(cam_frame_len_offset_t &offset);
     int32_t getCropInfo(cam_rect_t &crop);
+    int32_t setCropInfo(cam_rect_t crop);
     int32_t getFrameDimension(cam_dimension_t &dim);
     int32_t getFormat(cam_format_t &fmt);
     QCameraMemory *getStreamBufs() {return mStreamBufs;};
@@ -87,6 +88,7 @@ public:
                    int32_t plane_idx, int fd, uint32_t size);
     int32_t unmapBuf(uint8_t buf_type, uint32_t buf_idx, int32_t plane_idx);
     int32_t setParameter(cam_stream_parm_buffer_t &param);
+    int32_t getParameter(cam_stream_parm_buffer_t &param);
 
     static void releaseFrameData(void *data, void *user_data);
 

@@ -1082,11 +1082,23 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     memset(&src_dim, 0, sizeof(cam_dimension_t));
     main_stream->getFrameDimension(src_dim);
 
+    cam_dimension_t dst_dim;
+
+    if (crop.height) {
+        dst_dim.height = crop.height;
+    } else {
+        dst_dim.height = src_dim.height;
+    }
+    if (crop.width) {
+        dst_dim.width = crop.width;
+    } else {
+        dst_dim.width = src_dim.width;
+    }
+
     // main dim
     jpg_job.encode_job.main_dim.src_dim = src_dim;
-    jpg_job.encode_job.main_dim.dst_dim = src_dim;
+    jpg_job.encode_job.main_dim.dst_dim = dst_dim;
     jpg_job.encode_job.main_dim.crop = crop;
-
 
     // get exif data
     if (m_pJpegExifObj != NULL) {
