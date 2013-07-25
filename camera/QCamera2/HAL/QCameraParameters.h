@@ -497,6 +497,8 @@ public:
     void setHDRSceneEnable(bool bflag) {m_HDRSceneEnabled = bflag;};
 
     const char *getASDStateString(cam_auto_scene_t scene);
+    bool isHDRThumbnailProcessNeeded() { return m_bHDRThumbnailProcessNeeded; };
+
 private:
     int32_t setPreviewSize(const QCameraParameters& );
     int32_t setVideoSize(const QCameraParameters& );
@@ -681,6 +683,7 @@ private:
     QCameraAdjustFPS *m_AdjustFPS;
     bool m_bHDR1xFrameEnabled;          // if frame with exposure compensation 0 during HDR is enabled
     bool m_HDRSceneEnabled; // Auto HDR indication
+    bool m_bHDRThumbnailProcessNeeded;        // if thumbnail need to be processed for HDR
 
     DefaultKeyedVector<String8,String8> m_tempMap; // map for temororily store parameters to be set
 };
