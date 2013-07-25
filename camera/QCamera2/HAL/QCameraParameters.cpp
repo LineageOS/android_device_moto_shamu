@@ -315,6 +315,7 @@ const QCameraParameters::QCameraMap QCameraParameters::PREVIEW_FORMATS_MAP[] = {
 
 const QCameraParameters::QCameraMap QCameraParameters::PICTURE_TYPES_MAP[] = {
     {PIXEL_FORMAT_JPEG,                          CAM_FORMAT_JPEG},
+    {PIXEL_FORMAT_YUV420SP,                      CAM_FORMAT_YUV_420_NV21},
     {PIXEL_FORMAT_YUV422SP,                      CAM_FORMAT_YUV_422_NV16},
     {QC_PIXEL_FORMAT_YUV_RAW_8BIT_YUYV,          CAM_FORMAT_YUV_RAW_8BIT_YUYV},
     {QC_PIXEL_FORMAT_YUV_RAW_8BIT_YVYU,          CAM_FORMAT_YUV_RAW_8BIT_YVYU},
@@ -6088,6 +6089,48 @@ bool QCameraParameters::validateCameraAreas(cam_area_t *areas, int num_areas)
         }
     }
     return true;
+}
+
+/*===========================================================================
+ * FUNCTION   : isYUVFrameInfoNeeded
+ *
+ * DESCRIPTION: In AE-Bracket mode, we need set yuv buffer information for up-layer
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
+bool QCameraParameters::isYUVFrameInfoNeeded()
+{
+    //In AE-Bracket mode, we need set raw buffer information for up-layer
+    if(!isNV21PictureFormat() && !isNV16PictureFormat()){
+        return false;
+    }
+    const char *aecBracketStr =  get(KEY_QC_AE_BRACKET_HDR);
+
+    int value = lookupAttr(BRACKETING_MODES_MAP,
+                   sizeof(BRACKETING_MODES_MAP)/sizeof(QCameraMap),
+                           aecBracketStr);
+    ALOGD("%s: aecBracketStr=%s, value=%d.", __func__, aecBracketStr, value);
+    return (value == CAM_EXP_BRACKETING_ON);
+}
+
+/*===========================================================================
+ * FUNCTION   : getFrameFmtString
+ *
+ * DESCRIPTION: get string name of frame format
+ *
+ * PARAMETERS :
+ *   @frame   : frame format
+ *
+ * RETURN     : string name of frame format
+ *==========================================================================*/
+const char *QCameraParameters::getFrameFmtString(cam_format_t fmt)
+{
+    return lookupNameByValue(PICTURE_TYPES_MAP,
+                             sizeof(PICTURE_TYPES_MAP)/sizeof(QCameraMap),
+                             fmt);
 }
 
 /*===========================================================================
