@@ -35,6 +35,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #define BUFF_SIZE 255
 
 static omx_core_t *g_omxcore;
+static pthread_mutex_t g_omxcore_lock = PTHREAD_MUTEX_INITIALIZER;
+static int g_omxcore_cnt = 0;
 
 //Map the library name with the component name
 static const comp_info_t g_comp_info[] =
@@ -58,20 +60,25 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Init()
   int i = 0;
   int comp_cnt = sizeof(g_comp_info)/sizeof(g_comp_info[0]);
 
+  pthread_mutex_lock(&g_omxcore_lock);
+
   /* check if core is created */
-  if (g_omxcore)
+  if (g_omxcore) {
+    g_omxcore_cnt++;
+    pthread_mutex_unlock(&g_omxcore_lock);
     return rc;
+  }
 
   if (comp_cnt > OMX_COMP_MAX_NUM) {
     ALOGE("%s:%d] cannot exceed max number of components",
       __func__, __LINE__);
+    pthread_mutex_unlock(&g_omxcore_lock);
     return OMX_ErrorUndefined;
   }
   /* create new global object */
   g_omxcore = malloc(sizeof(omx_core_t));
   if (g_omxcore) {
     memset(g_omxcore, 0x0, sizeof(omx_core_t));
-    pthread_mutex_init(&g_omxcore->core_lock, NULL);
 
     /* populate the library name and component name */
     for (i = 0; i < comp_cnt; i++) {
@@ -79,9 +86,11 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Init()
       g_omxcore->component[i].lib_name = g_comp_info[i].lib_name;
     }
     g_omxcore->comp_cnt = comp_cnt;
+    g_omxcore_cnt++;
   } else {
     rc = OMX_ErrorInsufficientResources;
   }
+  pthread_mutex_unlock(&g_omxcore_lock);
   ALOGE("%s:%d] Complete %d", __func__, __LINE__, comp_cnt);
   return rc;
 }
@@ -94,12 +103,20 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Init()
 ==============================================================================*/
 OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Deinit()
 {
-  if (g_omxcore) {
-    pthread_mutex_destroy(&g_omxcore->core_lock);
-    free(g_omxcore);
-    g_omxcore = NULL;
+  pthread_mutex_lock(&g_omxcore_lock);
+
+  if (g_omxcore_cnt == 1) {
+    if (g_omxcore) {
+      free(g_omxcore);
+      g_omxcore = NULL;
+    }
   }
+  if (g_omxcore_cnt) {
+    g_omxcore_cnt--;
+  }
+
   ALOGE("%s:%d] Complete", __func__, __LINE__);
+  pthread_mutex_unlock(&g_omxcore_lock);
   return OMX_ErrorNone;
 }
 
@@ -166,19 +183,21 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(
   omx_core_component_t *p_core_comp = NULL;
   OMX_BOOL close_handle = OMX_FALSE;
 
-  comp_idx = get_comp_from_list(componentName);
-  if (comp_idx < 0) {
-    ALOGE("%s:%d] Cannot find the component", __func__, __LINE__);
-    return OMX_ErrorInvalidComponent;
-  }
-
   if (NULL == handle) {
     ALOGE("%s:%d] Error invalid input ", __func__, __LINE__);
     return OMX_ErrorBadParameter;
   }
+
+  pthread_mutex_lock(&g_omxcore_lock);
+
+  comp_idx = get_comp_from_list(componentName);
+  if (comp_idx < 0) {
+    ALOGE("%s:%d] Cannot find the component", __func__, __LINE__);
+    pthread_mutex_unlock(&g_omxcore_lock);
+    return OMX_ErrorInvalidComponent;
+  }
   p_core_comp = &g_omxcore->component[comp_idx];
 
-  pthread_mutex_lock(&g_omxcore->core_lock);
   *handle = NULL;
 
   //If component already present get the instance index
@@ -237,7 +256,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(
     comp_idx, g_omxcore);
 
   p_comp->SetCallbacks(p_comp, callBacks, appData);
-  pthread_mutex_unlock(&g_omxcore->core_lock);
+  pthread_mutex_unlock(&g_omxcore_lock);
   ALOGE("%s:%d] Success", __func__, __LINE__);
   return OMX_ErrorNone;
 
@@ -247,7 +266,7 @@ error:
     dlclose(p_core_comp->lib_handle);
     p_core_comp->lib_handle = NULL;
   }
-  pthread_mutex_unlock(&g_omxcore->core_lock);
+  pthread_mutex_unlock(&g_omxcore_lock);
   ALOGE("%s:%d] Error %d", __func__, __LINE__, rc);
   return rc;
 }
@@ -314,19 +333,22 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(
     return OMX_ErrorBadParameter;
   }
 
+  pthread_mutex_lock(&g_omxcore_lock);
+
   p_comp = (OMX_COMPONENTTYPE *)hComp;
   if (FALSE == get_idx_from_handle(hComp, &comp_idx, &inst_idx)) {
     ALOGE("%s:%d] Error invalid component", __func__, __LINE__);
+    pthread_mutex_unlock(&g_omxcore_lock);
     return OMX_ErrorInvalidComponent;
   }
 
-  pthread_mutex_lock(&g_omxcore->core_lock);
+
   //Deinit the component;
   rc = p_comp->ComponentDeInit(hComp);
   if (rc != OMX_ErrorNone) {
     /* Remove the handle from the comp structure */
     ALOGE("%s:%d] Error comp deinit failed", __func__, __LINE__);
-    pthread_mutex_unlock(&g_omxcore->core_lock);
+    pthread_mutex_unlock(&g_omxcore_lock);
     return OMX_ErrorInvalidComponent;
   }
   p_core_comp = &g_omxcore->component[comp_idx];
@@ -340,7 +362,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(
   } else {
     ALOGE("%s:%d] Error Component is still Active", __func__, __LINE__);
   }
-  pthread_mutex_unlock(&g_omxcore->core_lock);
+  pthread_mutex_unlock(&g_omxcore_lock);
   ALOGE("%s:%d] Success", __func__, __LINE__);
   return rc;
 }
