@@ -89,7 +89,7 @@ static void mm_app_preview_notify_cb(mm_camera_super_buf_t *bufs,
     mm_camera_buf_def_t *frame = bufs->bufs[0];
     mm_camera_test_obj_t *pme = (mm_camera_test_obj_t *)user_data;
 
-    CDBG("%s: BEGIN - length=%d, frame idx = %d\n",
+    CDBG_ERROR("%s: BEGIN - length=%d, frame idx = %d\n",
          __func__, frame->frame_len, frame->frame_idx);
 
     /* find channel */
@@ -242,10 +242,10 @@ static void mm_app_zsl_notify_cb(mm_camera_super_buf_t *bufs,
 
     if ( 0 < pme->fb_fd ) {
         mm_app_overlay_display(pme, p_frame->fd);
-    } else {
+    }/* else {
         mm_app_dump_frame(p_frame, "zsl_preview", "yuv", p_frame->frame_idx);
         mm_app_dump_frame(m_frame, "zsl_main", "yuv", m_frame->frame_idx);
-    }
+    }*/
 
     if ( pme->encodeJpeg ) {
         pme->jpeg_buf.buf.buffer = (uint8_t *)malloc(m_frame->frame_len);
@@ -374,13 +374,15 @@ mm_camera_stream_t * mm_app_add_preview_stream(mm_camera_test_obj_t *test_obj,
     stream->s_config.stream_info->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
     stream->s_config.stream_info->fmt = DEFAULT_PREVIEW_FORMAT;
 
-    if ( test_obj->buffer_width == 0 || test_obj->buffer_height == 0 ) {
-      stream->s_config.stream_info->dim.width = DEFAULT_PREVIEW_WIDTH;
-      stream->s_config.stream_info->dim.height = DEFAULT_PREVIEW_HEIGHT;
+    if ((test_obj->preview_resolution.user_input_display_width == 0) ||
+           ( test_obj->preview_resolution.user_input_display_height == 0)) {
+        stream->s_config.stream_info->dim.width = DEFAULT_PREVIEW_WIDTH;
+        stream->s_config.stream_info->dim.height = DEFAULT_PREVIEW_HEIGHT;
     } else {
-        stream->s_config.stream_info->dim.width = test_obj->buffer_width;
-        stream->s_config.stream_info->dim.height = test_obj->buffer_height;
+        stream->s_config.stream_info->dim.width = test_obj->preview_resolution.user_input_display_width;
+        stream->s_config.stream_info->dim.height = test_obj->preview_resolution.user_input_display_height;
     }
+
     stream->s_config.padding_info = cam_cap->padding_info;
 
     rc = mm_app_config_stream(test_obj, channel, stream, &stream->s_config);
@@ -786,8 +788,6 @@ int mm_app_initialize_fb(mm_camera_test_obj_t *test_obj)
     }
 
     munmap(fb_base, test_obj->slice_size);
-    //
-
     test_obj->data_overlay.id = MSMFB_NEW_REQUEST;
     rc = ioctl(test_obj->fb_fd, MSMFB_OVERLAY_SET, &test_obj->data_overlay);
     if (rc < 0) {

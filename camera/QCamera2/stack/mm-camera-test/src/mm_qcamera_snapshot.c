@@ -53,7 +53,7 @@ static void jpeg_encode_cb(jpeg_job_status_t status,
     /* dump jpeg img */
     CDBG_ERROR("%s: job %d, status=%d", __func__, jobId, status);
     if (status == JPEG_JOB_STATUS_DONE && p_buf != NULL) {
-        mm_app_dump_jpeg_frame(p_buf->buf_vaddr, p_buf->buf_filled_len, "jpeg_dump", "jpg", jobId);
+        mm_app_dump_jpeg_frame(p_buf->buf_vaddr, p_buf->buf_filled_len, "jpeg", "jpg", jobId);
     }
 
     /* buf done current encoding frames */
@@ -518,13 +518,12 @@ int mm_app_start_capture(mm_camera_test_obj_t *test_obj,
         CDBG_ERROR("%s: add channel failed", __func__);
         return -MM_CAMERA_E_GENERAL;
     }
-
     s_metadata = mm_app_add_metadata_stream(test_obj,
                                             channel,
                                             NULL,
                                             NULL,
                                             CAPTURE_BUF_NUM);
-    if (NULL == s_metadata) {
+     if (NULL == s_metadata) {
         CDBG_ERROR("%s: add metadata stream failed\n", __func__);
         mm_app_del_channel(test_obj, channel);
         return -MM_CAMERA_E_GENERAL;
@@ -566,5 +565,45 @@ int mm_app_stop_capture(mm_camera_test_obj_t *test_obj)
         CDBG_ERROR("%s:stop capture channel failed rc=%d\n", __func__, rc);
     }
 
+    return rc;
+}
+
+int mm_app_take_picture(mm_camera_test_obj_t *test_obj, uint8_t is_burst_mode)
+{
+    CDBG_HIGH("\nEnter %s!!\n",__func__);
+    int rc = MM_CAMERA_OK;
+    int num_snapshot = 1;
+    int num_rcvd_snapshot = 0;
+
+    if (is_burst_mode)
+       num_snapshot = 6;
+
+    //stop preview before starting capture.
+    rc = mm_app_stop_preview(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: stop preview failed before capture!!, err=%d\n",__func__, rc);
+        return rc;
+    }
+
+    rc = mm_app_start_capture(test_obj, num_snapshot);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: mm_app_start_capture(), err=%d\n", __func__,rc);
+        return rc;
+    }
+    while (num_rcvd_snapshot < num_snapshot) {
+        CDBG_HIGH("\nWaiting mm_camera_app_wait !!\n");
+        mm_camera_app_wait();
+        num_rcvd_snapshot++;
+    }
+    rc = mm_app_stop_capture(test_obj);
+    if (rc != MM_CAMERA_OK) {
+       CDBG_ERROR("%s: mm_app_stop_capture(), err=%d\n",__func__, rc);
+       return rc;
+    }
+    //start preview after capture.
+    rc = mm_app_start_preview(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: start preview failed after capture!!, err=%d\n",__func__,rc);
+    }
     return rc;
 }
