@@ -200,6 +200,11 @@ typedef enum {
     MM_CAMERA_LIB_UNLOCK_AE,
     MM_CAMERA_LIB_LOCK_AWB,
     MM_CAMERA_LIB_UNLOCK_AWB,
+    MM_CAMERA_LIB_GET_CHROMATIX,
+    MM_CAMERA_LIB_SET_RELOAD_CHROMATIX,
+    MM_CAMERA_LIB_GET_AFTUNE,
+    MM_CAMERA_LIB_SET_RELOAD_AFTUNE,
+    MM_CAMERA_LIB_SET_AUTOFOCUS_TUNING,
 } mm_camera_lib_commands;
 
 typedef struct {
@@ -335,7 +340,7 @@ int mm_camera_lib_get_caps(mm_camera_lib_handle *handle,
 int mm_camera_lib_start_stream(mm_camera_lib_handle *handle);
 int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                                mm_camera_lib_commands cmd,
-                               void *data);
+                               void *data, void *out_data);
 int mm_camera_lib_stop_stream(mm_camera_lib_handle *handle);
 int mm_camera_lib_close(mm_camera_lib_handle *handle);
 

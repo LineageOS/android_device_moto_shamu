@@ -558,7 +558,6 @@ int mm_app_open(mm_camera_app_t *cam_app,
         rc = -MM_CAMERA_E_GENERAL;
         goto error_after_getparm_buf_map;
     }
-
     memset(&test_obj->jpeg_ops, 0, sizeof(mm_jpeg_ops_t));
     test_obj->jpeg_hdl = cam_app->hal_lib.jpeg_open(&test_obj->jpeg_ops);
     if (test_obj->jpeg_hdl == 0) {
@@ -846,6 +845,17 @@ int commitSetBatch(mm_camera_test_obj_t *test_obj)
     return rc;
 }
 
+
+int commitGetBatch(mm_camera_test_obj_t *test_obj)
+{
+    int rc = MM_CAMERA_OK;
+    parm_buffer_t *p_table = ( parm_buffer_t * ) test_obj->parm_buf.mem_info.data;
+    if (p_table->first_flagged_entry < CAM_INTF_PARM_MAX) {
+        rc = test_obj->cam->ops->get_parms(test_obj->cam->camera_handle, p_table);
+    }
+    return rc;
+}
+
 int setAecLock(mm_camera_test_obj_t *test_obj, int value)
 {
     int rc = MM_CAMERA_OK;
@@ -893,6 +903,165 @@ int setAwbLock(mm_camera_test_obj_t *test_obj, int value)
                                 &value);
     if (rc != MM_CAMERA_OK) {
         CDBG_ERROR("%s: AWB Lock parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+ERROR:
+    return rc;
+}
+
+int getChromatix(mm_camera_test_obj_t *test_obj, tune_chromatix_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_GET_CHROMATIX,
+                                sizeof(tune_chromatix_t),
+                                value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: getChromatixPointer not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitGetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = ReadSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_GET_CHROMATIX,
+                                sizeof(tune_chromatix_t),
+                                value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: getChromatixPointer not able to read\n", __func__);
+        goto ERROR;
+    }
+ERROR:
+    return rc;
+}
+
+int setReloadChromatix(mm_camera_test_obj_t *test_obj, tune_chromatix_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_SET_RELOAD_CHROMATIX,
+                                sizeof(tune_chromatix_t),
+                                value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: getChromatixPointer not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+ERROR:
+    return rc;
+}
+
+int getAutofocusParams(mm_camera_test_obj_t *test_obj, tune_autofocus_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_GET_AFTUNE,
+                                sizeof(tune_autofocus_t),
+                                value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: getChromatixPointer not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitGetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = ReadSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_GET_AFTUNE,
+                                sizeof(tune_autofocus_t),
+                                value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: getAutofocusParams not able to read\n", __func__);
+        goto ERROR;
+    }
+ERROR:
+    return rc;
+}
+
+int setReloadAutofocusParams(mm_camera_test_obj_t *test_obj, tune_autofocus_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_SET_RELOAD_AFTUNE,
+                                sizeof(tune_autofocus_t),
+                                value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: setReloadAutofocusParams not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+ERROR:
+    return rc;
+}
+
+int setAutoFocusTuning(mm_camera_test_obj_t *test_obj, tune_actuator_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_SET_AUTOFOCUSTUNING,
+                                sizeof(tune_actuator_t),
+                                value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: AutoFocus Tuning not added to batch\n", __func__);
         goto ERROR;
     }
 
@@ -1124,7 +1293,7 @@ EXIT:
 
 int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                                mm_camera_lib_commands cmd,
-                               void *in_data)
+                               void *in_data, void *out_data)
 {
     int width, height;
     int rc = MM_CAMERA_OK;
@@ -1271,7 +1440,61 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
             printf("AE lock disabled\n");
             break;
 
-        case MM_CAMERA_LIB_NO_ACTION:
+       case MM_CAMERA_LIB_GET_CHROMATIX: {
+           rc = getChromatix(&handle->test_obj,
+                (tune_chromatix_t *)out_data);
+           if (rc != MM_CAMERA_OK) {
+             CDBG_ERROR("%s: getChromatix failed\n", __func__);
+             goto EXIT;
+           }
+           break;
+
+       }
+
+       case MM_CAMERA_LIB_SET_RELOAD_CHROMATIX: {
+           rc = setReloadChromatix(&handle->test_obj,
+             (tune_chromatix_t *)in_data);
+           if (rc != MM_CAMERA_OK) {
+             CDBG_ERROR("%s: setReloadChromatix failed\n", __func__);
+             goto EXIT;
+           }
+           break;
+
+       }
+
+       case MM_CAMERA_LIB_GET_AFTUNE: {
+           rc = getAutofocusParams(&handle->test_obj,
+                (tune_autofocus_t *)out_data);
+           if (rc != MM_CAMERA_OK) {
+             CDBG_ERROR("%s: getAutofocusParams failed\n", __func__);
+             goto EXIT;
+           }
+           break;
+
+       }
+
+       case MM_CAMERA_LIB_SET_RELOAD_AFTUNE: {
+           rc = setReloadAutofocusParams(&handle->test_obj,
+             (tune_autofocus_t *)in_data);
+           if (rc != MM_CAMERA_OK) {
+             CDBG_ERROR("%s: setReloadAutofocusParams failed\n", __func__);
+             goto EXIT;
+           }
+           break;
+
+       }
+
+       case MM_CAMERA_LIB_SET_AUTOFOCUS_TUNING: {
+           rc = setAutoFocusTuning(&handle->test_obj, in_data);
+           if (rc != MM_CAMERA_OK) {
+             CDBG_ERROR("%s: Set AF tuning failed\n", __func__);
+             goto EXIT;
+           }
+           break;
+
+       }
+
+      case MM_CAMERA_LIB_NO_ACTION:
         default:
             break;
     };
