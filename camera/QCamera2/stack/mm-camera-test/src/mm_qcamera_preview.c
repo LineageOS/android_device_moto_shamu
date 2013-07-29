@@ -129,7 +129,11 @@ static void mm_app_preview_notify_cb(mm_camera_super_buf_t *bufs,
       mm_app_dump_frame(frame, file_name, "yuv", frame->frame_idx);
     }
 #endif
-
+    if (pme->user_preview_cb) {
+        printf("%s call back %d\n", __func__, __LINE__);
+        CDBG_ERROR("[DBG] %s, user defined own preview cb. calling it...", __func__);
+        pme->user_preview_cb(frame);
+    }
     if (MM_CAMERA_OK != pme->cam->ops->qbuf(bufs->camera_handle,
                                             bufs->ch_id,
                                             frame)) {

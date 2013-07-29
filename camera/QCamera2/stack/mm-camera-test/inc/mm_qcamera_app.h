@@ -92,6 +92,38 @@
 #endif
 
 typedef enum {
+    TUNE_CMD_INIT,
+    TUNE_CMD_GET_LIST,
+    TUNE_CMD_GET_PARAMS,
+    TUNE_CMD_SET_PARAMS,
+    TUNE_CMD_MISC,
+    TUNE_CMD_DEINIT,
+} mm_camera_tune_cmd_t;
+
+typedef enum {
+    TUNE_PREVCMD_INIT,
+    TUNE_PREVCMD_SETDIM,
+    TUNE_PREVCMD_GETINFO,
+    TUNE_PREVCMD_GETCHUNKSIZE,
+    TUNE_PREVCMD_GETFRAME,
+    TUNE_PREVCMD_UNSUPPORTED,
+    TUNE_PREVCMD_DEINIT,
+} mm_camera_tune_prevcmd_t;
+
+typedef void (*prev_callback) (mm_camera_buf_def_t *preview_frame);
+
+typedef struct {
+	int (*command_process) (void *recv, mm_camera_tune_cmd_t cmd, void *param);
+    int (*prevcommand_process) (void *recv, mm_camera_tune_prevcmd_t cmd, void *param);
+    void (*prevframe_callback) (mm_camera_buf_def_t *preview_frame);
+}mm_camera_tune_func_t;
+
+typedef struct {
+    mm_camera_tune_func_t *func_tbl;
+    void *lib_handle;
+}mm_camera_tuning_lib_params_t;
+
+typedef enum {
     MM_CAMERA_OK,
     MM_CAMERA_E_GENERAL,
     MM_CAMERA_E_NO_MEMORY,
@@ -169,6 +201,7 @@ typedef struct {
     uint32_t frame_count;
     int encodeJpeg;
     int zsl_enabled;
+    prev_callback user_preview_cb;
 } mm_camera_test_obj_t;
 
 typedef struct {
@@ -203,7 +236,9 @@ typedef enum {
     MM_CAMERA_LIB_SET_AUTOFOCUS_TUNING,
     MM_CAMERA_LIB_ZSL_ENABLE,
     MM_CAMERA_LIB_EV,
-    MM_CAMERA_LIB_ANTIBANDING
+    MM_CAMERA_LIB_ANTIBANDING,
+    MM_CAMERA_LIB_SET_VFE_COMMAND,
+    MM_CAMERA_LIB_SET_POSTPROC_COMMAND,
 } mm_camera_lib_commands;
 
 typedef struct {
@@ -216,6 +251,7 @@ typedef struct {
     mm_camera_test_obj_t test_obj;
     mm_camera_lib_params current_params;
     int stream_running;
+    mm_camera_tuning_lib_params_t tuning_params;
 } mm_camera_lib_ctx;
 
 typedef mm_camera_lib_ctx mm_camera_lib_handle;
@@ -347,6 +383,10 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                                void *data, void *out_data);
 int mm_camera_lib_stop_stream(mm_camera_lib_handle *handle);
 int mm_camera_lib_close(mm_camera_lib_handle *handle);
+int32_t mm_camera_load_tuninglibrary
+    (mm_camera_tuning_lib_params_t *tuning_param);
+int mm_camera_lib_set_preview_usercb(
+  mm_camera_lib_handle *handle, prev_callback cb);
 
 extern int createEncodingSession(mm_camera_test_obj_t *test_obj,
                           mm_camera_stream_t *m_stream,
