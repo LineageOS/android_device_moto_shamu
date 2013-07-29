@@ -268,7 +268,8 @@ void QCamera2HardwareInterface::capture_channel_cb_routine(mm_camera_super_buf_t
             QCameraStream *pStream =
                 pChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
             if (pStream != NULL) {
-                if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT)) {
+                if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
+                    pStream->isTypeOf(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT)) {
                     main_stream = pStream;
                     main_frame = recvd_frame->bufs[i];
                     break;
@@ -1505,8 +1506,12 @@ void QCamera2HardwareInterface::dumpFrameToFile(QCameraStream *stream,
                         break;
                     case QCAMERA_DUMP_FRM_SNAPSHOT:
                         {
-                            snprintf(buf, sizeof(buf), "%ds_%dx%d_%d.yuv",
-                                     mDumpFrmCnt, dim.width, dim.height, frame->frame_idx);
+                            if (mParameters.isZSLMode())
+                                mParameters.getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT, dim);
+                            else
+                                mParameters.getStreamDimension(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT, dim);
+                            snprintf(buf, sizeof(buf), "/data/%ds_%dx%d_%d.yuv",
+                                     mDumpFrmCnt, dim.width, dim.height, index);
                         }
                         break;
                     case QCAMERA_DUMP_FRM_VIDEO:
@@ -1517,9 +1522,19 @@ void QCamera2HardwareInterface::dumpFrameToFile(QCameraStream *stream,
                         break;
                     case QCAMERA_DUMP_FRM_RAW:
                         {
-                            snprintf(buf, sizeof(buf), "%dr_%dx%d_%d.raw",
-                                     mDumpFrmCnt, offset.mp[0].stride,
-                                     offset.mp[0].scanline, frame->frame_idx);
+                            mParameters.getStreamDimension(CAM_STREAM_TYPE_RAW, dim);
+                            snprintf(buf, sizeof(buf), "/data/%dr_%dx%d_%d.yuv",
+                                     mDumpFrmCnt, dim.width, dim.height, index);
+                        }
+                        break;
+                    case QCAMERA_DUMP_FRM_JPEG:
+                        {
+                            if (mParameters.isZSLMode())
+                                mParameters.getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT, dim);
+                            else
+                                mParameters.getStreamDimension(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT, dim);
+                            snprintf(buf, sizeof(buf), "/data/%dj_%dx%d_%d.yuv",
+                                     mDumpFrmCnt, dim.width, dim.height, index);
                         }
                         break;
                     default:

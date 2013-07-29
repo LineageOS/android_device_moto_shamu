@@ -1091,7 +1091,9 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
             pChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
         if (pStream != NULL) {
             if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
-                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_SNAPSHOT)) {
+                pStream->isTypeOf(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT) ||
+                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
+                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT)) {
                 main_stream = pStream;
                 main_frame = recvd_frame->bufs[i];
             } else if (pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
@@ -1331,32 +1333,12 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
     QCameraChannel *pChannel = m_parent->getChannelByHandle(recvd_frame->ch_id);
     QCameraStream *pStream = NULL;
     mm_camera_buf_def_t *frame = NULL;
-    // check reprocess channel if not found
-    if (pChannel == NULL) {
-        if (m_pReprocChannel != NULL &&
-            m_pReprocChannel->getMyHandle() == recvd_frame->ch_id) {
-            pChannel = m_pReprocChannel;
-        }
-    }
-    if (pChannel == NULL) {
-        ALOGE("%s: No corresponding channel (ch_id = %d) exist, return here",
-              __func__, recvd_frame->ch_id);
-        return BAD_VALUE;
-    }
-
-    // find snapshot frame
-    for (int i = 0; i < recvd_frame->num_bufs; i++) {
-        QCameraStream *pCurStream =
-            pChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
-        if (pCurStream != NULL) {
-            if (pCurStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
-                pCurStream->isTypeOf(CAM_STREAM_TYPE_RAW) ||
-                pCurStream->isOrignalTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
-                pCurStream->isOrignalTypeOf(CAM_STREAM_TYPE_RAW)) {
-                pStream = pCurStream;
-                frame = recvd_frame->bufs[i];
-                break;
-            }
+    for ( int i= 0 ; i < recvd_frame->num_bufs ; i++ ) {
+        if ( recvd_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_SNAPSHOT ||
+            recvd_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT ||
+             recvd_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_RAW ) {
+            frame = recvd_frame->bufs[i];
+            break;
         }
     }
 

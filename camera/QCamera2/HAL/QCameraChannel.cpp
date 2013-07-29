@@ -766,7 +766,9 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
             streamInfo->reprocess_config.pp_feature_config = config;
 
             if (!(pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
-                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_SNAPSHOT))) {
+                pStream->isTypeOf(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT) ||
+                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
+                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT))) {
                 streamInfo->reprocess_config.pp_feature_config.feature_mask &= ~CAM_QCOM_FEATURE_CAC;
                 //Don't do WNR for thumbnail
                 streamInfo->reprocess_config.pp_feature_config.feature_mask &= ~CAM_QCOM_FEATURE_DENOISE2D;
