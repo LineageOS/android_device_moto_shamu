@@ -218,6 +218,8 @@ public:
 
     //Auto HDR enable
     static const char KEY_QC_AUTO_HDR_ENABLE[];
+    // video rotation
+    static const char KEY_QC_VIDEO_ROTATION[];
 
     //Redeye Reduction
     static const char KEY_QC_REDEYE_REDUCTION[];
@@ -430,6 +432,9 @@ public:
     int32_t updateParameters(QCameraParameters&, bool &needRestart);
     int32_t commitParameters();
     int getPreviewHalPixelFormat() const;
+    int32_t getStreamRotation(cam_stream_type_t streamType,
+                               cam_pp_feature_config_t &featureConfig,
+                               cam_dimension_t &dim);
     int32_t getStreamFormat(cam_stream_type_t streamType,
                              cam_format_t &format);
     int32_t getStreamDimension(cam_stream_type_t streamType,
@@ -534,6 +539,7 @@ private:
     int32_t setZoom(const QCameraParameters& );
     int32_t setISOValue(const QCameraParameters& );
     int32_t setRotation(const QCameraParameters& );
+    int32_t setVideoRotation(const QCameraParameters& );
     int32_t setFlash(const QCameraParameters& );
     int32_t setAecLock(const QCameraParameters& );
     int32_t setAwbLock(const QCameraParameters& );
