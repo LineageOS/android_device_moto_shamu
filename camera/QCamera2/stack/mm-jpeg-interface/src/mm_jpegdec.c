@@ -533,6 +533,12 @@ static OMX_ERRORTYPE mm_jpegdec_session_decode(mm_jpeg_job_session_t *p_session)
   p_session->outputPort.nBufferSize =
      p_params->dest_buf[p_jobparams->dst_index].buf_size;
    p_session->outputPort.nBufferCountActual = p_params->num_dst_bufs;
+
+   p_session->outputPort.format.image.nSliceHeight =
+       p_params->dest_buf[p_jobparams->dst_index].offset.mp[0].scanline;
+   p_session->outputPort.format.image.nStride =
+       p_params->dest_buf[p_jobparams->dst_index].offset.mp[0].stride;
+
    ret = OMX_SetParameter(p_session->omx_handle, OMX_IndexParamPortDefinition,
      &p_session->outputPort);
    if (ret) {

@@ -59,7 +59,7 @@ typedef struct {
 } jpeg_test_input_t;
 
 static jpeg_test_input_t jpeg_input[] = {
-  {"/data/test.jpg", 4100, 3100, "/data/test.yuv"}
+  {"/data/test.jpg", 5248, 3936, "/data/test.yuv"}
 };
 
 typedef struct {
@@ -150,10 +150,18 @@ int mm_jpegdec_test_read(mm_jpegdec_intf_test_t *p_obj)
   fseek(fp, 0, SEEK_END);
   file_size = ftell(fp);
   fseek(fp, 0, SEEK_SET);
-  CDBG_ERROR("%s:%d] input file size is %d buf_size %ld",
-    __func__, __LINE__, file_size, p_obj->input.size);
+
+  CDBG_ERROR("%s:%d] input file size is %d",
+    __func__, __LINE__, file_size);
 
   p_obj->input.size = file_size;
+
+  /* allocate buffers */
+  rc = mm_jpegdec_test_alloc(&p_obj->input, p_obj->use_ion);
+  if (rc) {
+    CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
+    return -1;
+  }
 
   fread(p_obj->input.addr, 1, p_obj->input.size, fp);
   fclose(fp);
@@ -163,7 +171,7 @@ int mm_jpegdec_test_read(mm_jpegdec_intf_test_t *p_obj)
 static int decode_init(jpeg_test_input_t *p_input, mm_jpegdec_intf_test_t *p_obj)
 {
   int rc = -1;
-  int size = p_input->width * p_input->height;
+  int size = CEILING16(p_input->width) * CEILING16(p_input->height);
   mm_jpeg_decode_params_t *p_params = &p_obj->params;
   mm_jpeg_decode_job_t *p_job_params = &p_obj->job.decode_job;
 
@@ -175,14 +183,6 @@ static int decode_init(jpeg_test_input_t *p_input, mm_jpegdec_intf_test_t *p_obj
 
   pthread_mutex_init(&p_obj->lock, NULL);
   pthread_cond_init(&p_obj->cond, NULL);
-
-  /* allocate buffers */
-  p_obj->input.size = size * 3/2;
-  rc = mm_jpegdec_test_alloc(&p_obj->input, p_obj->use_ion);
-  if (rc) {
-    CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
-    return -1;
-  }
 
   p_obj->output.size = size * 3/2;
   rc = mm_jpegdec_test_alloc(&p_obj->output, p_obj->use_ion);
@@ -209,6 +209,10 @@ static int decode_init(jpeg_test_input_t *p_input, mm_jpegdec_intf_test_t *p_obj
   p_params->dest_buf[0].format = MM_JPEG_FMT_YUV;
   p_params->dest_buf[0].offset.mp[0].len = size;
   p_params->dest_buf[0].offset.mp[1].len = size >> 1;
+  p_params->dest_buf[0].offset.mp[0].stride = CEILING16(p_input->width);
+  p_params->dest_buf[0].offset.mp[0].scanline = CEILING16(p_input->height);
+  p_params->dest_buf[0].offset.mp[1].stride = CEILING16(p_input->width);
+  p_params->dest_buf[0].offset.mp[1].scanline = CEILING16(p_input->height);
   p_params->dest_buf[0].index = 0;
   p_params->num_dst_bufs = 1;
 
@@ -311,6 +315,7 @@ end:
  **/
 int main(int argc, char* argv[])
 {
+
   return decode_test(&jpeg_input[0]);
 }
 
