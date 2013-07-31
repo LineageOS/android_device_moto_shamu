@@ -968,7 +968,6 @@ OMX_ERRORTYPE mm_jpegdec_event_handler(OMX_HANDLETYPE hComponent,
   }
 
   if (eEvent == OMX_EventError) {
-    p_session->error_flag = OMX_ErrorHardware;
     if (p_session->encoding == OMX_TRUE) {
       CDBG("%s:%d] Error during encoding", __func__, __LINE__);
 
