@@ -438,6 +438,9 @@ private:
     QCameraChannel *m_channels[QCAMERA_CH_TYPE_MAX]; // array holding channel ptr
 
     bool m_bShutterSoundPlayed;         // if shutter sound had been played
+    bool m_bPreviewStarted;             //flag indicates first preview frame callback is received
+    bool m_bRecordStarted;             //flag indicates Recording is started for first time
+
 
     // if auto focus is running, in other words, when auto_focus is called from service,
     // and beforeany focus callback/cancel_focus happens. This flag is not an indication

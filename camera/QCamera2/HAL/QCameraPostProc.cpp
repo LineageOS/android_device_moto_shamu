@@ -603,6 +603,7 @@ int32_t QCameraPostProcessor::processJpegEvt(qcamera_jpeg_evt_payload_t *evt)
     qcamera_release_data_t release_data;
     memset(&release_data, 0, sizeof(qcamera_release_data_t));
     release_data.data = jpeg_mem;
+    ALOGE("[KPI Perf] %s: PROFILE_JPEG_CB ",__func__);
     rc = sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
                         jpeg_mem,
                         0,
@@ -1156,7 +1157,7 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
 
     jpg_job.encode_job.cam_exif_params = m_parent->mExifParams;
 
-    ALOGD("[KPI Perf] %s : call jpeg start_job", __func__);
+    ALOGE("[KPI Perf] %s : PROFILE_JPEG_JOB_START", __func__);
     ret = mJpegHandle.start_job(&jpg_job, &jobId);
     if (ret == NO_ERROR) {
         // remember job info
