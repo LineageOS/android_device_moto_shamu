@@ -53,6 +53,7 @@
 #define ISP_PIX_BUF_NUM 9
 #define STATS_BUF_NUM 4
 #define RDI_BUF_NUM 8
+#define CAPTURE_BUF_NUM 5
 
 #define DEFAULT_PREVIEW_FORMAT    CAM_FORMAT_YUV_420_NV21
 #define DEFAULT_PREVIEW_WIDTH     640
@@ -71,13 +72,12 @@
 #define DEFAULT_SNAPSHOT_HEIGHT   768
 #define DEFAULT_SNAPSHOT_PADDING  CAM_PAD_TO_WORD
 
-#define MARKER_HEIGHT             10 // lines
-#define DEFAULT_OV_FORMAT         MDP_RGB_888
-#define DEFAULT_OV_FORMAT_BPP     3
+#define DEFAULT_OV_FORMAT         MDP_Y_CRCB_H2V2
+#define DEFAULT_OV_FORMAT_BPP     3/2
 #define DEFAULT_CAMERA_FORMAT_BPP 3/2
-#define MAX_SLICES                0xF
-#define SLICE_BASE                0x11
 #define FB_PATH                   "/dev/graphics/fb0"
+#define BACKLIGHT_CONTROL         "/sys/class/leds/lcd-backlight/brightness"
+#define BACKLIGHT_LEVEL           "205"
 
 #define INVALID_KEY_PRESS 0
 #define BASE_OFFSET  ('Z' - 'A' + 1)
@@ -159,20 +159,16 @@ typedef struct {
     mm_camera_app_buf_t jpeg_buf;
 
     int fb_fd;
-    void *fb_base;
     struct fb_var_screeninfo vinfo;
     struct mdp_overlay data_overlay;
-    struct mdp_overlay marker_overlay;
-    mm_camera_app_buf_t marker_buffer;
     uint32_t slice_size;
-    uint32_t slice_count;
     uint32_t buffer_width, buffer_height;
     uint32_t buffer_size;
     cam_format_t buffer_format;
     uint32_t frame_size;
     uint32_t frame_count;
     int encodeJpeg;
-
+    int zsl_enabled;
 } mm_camera_test_obj_t;
 
 typedef struct {
@@ -205,6 +201,9 @@ typedef enum {
     MM_CAMERA_LIB_GET_AFTUNE,
     MM_CAMERA_LIB_SET_RELOAD_AFTUNE,
     MM_CAMERA_LIB_SET_AUTOFOCUS_TUNING,
+    MM_CAMERA_LIB_ZSL_ENABLE,
+    MM_CAMERA_LIB_EV,
+    MM_CAMERA_LIB_ANTIBANDING
 } mm_camera_lib_commands;
 
 typedef struct {
@@ -312,6 +311,11 @@ extern mm_camera_stream_t * mm_app_add_snapshot_stream(
                                                 void *userdata,
                                                 uint8_t num_bufs,
                                                 uint8_t num_burst);
+extern mm_camera_stream_t * mm_app_add_metadata_stream(mm_camera_test_obj_t *test_obj,
+                                               mm_camera_channel_t *channel,
+                                               mm_camera_buf_notify_t stream_cb,
+                                               void *userdata,
+                                               uint8_t num_bufs);
 extern int mm_app_start_record_preview(mm_camera_test_obj_t *test_obj);
 extern int mm_app_stop_record_preview(mm_camera_test_obj_t *test_obj);
 extern int mm_app_start_record(mm_camera_test_obj_t *test_obj);
