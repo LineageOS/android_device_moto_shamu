@@ -935,6 +935,11 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
         }
     }
 
+    ALOGD("%s: hdr_scene_data: %d %d %f\n",
+          __func__,
+          pMetaData->is_hdr_scene_data_valid,
+          pMetaData->hdr_scene_data.is_hdr_scene,
+          pMetaData->hdr_scene_data.hdr_confidence);
     if (pMetaData->is_hdr_scene_data_valid) {
         int32_t rc = pme->processHDRData(pMetaData->hdr_scene_data);
         if (rc != NO_ERROR) {

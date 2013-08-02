@@ -937,7 +937,8 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       m_pPowerModule(NULL),
       mDumpFrmCnt(0),
       mDumpSkipCnt(0),
-      mThermalLevel(QCAMERA_THERMAL_NO_ADJUSTMENT)
+      mThermalLevel(QCAMERA_THERMAL_NO_ADJUSTMENT),
+      mHDRSceneEnabled(false)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = HARDWARE_DEVICE_API_VERSION(1, 0);
@@ -2649,6 +2650,35 @@ int32_t QCamera2HardwareInterface::processZoomEvent(cam_crop_data_t &crop_info)
 }
 
 /*===========================================================================
+ * FUNCTION   : processHDRData
+ *
+ * DESCRIPTION: process HDR scene events
+ *
+ * PARAMETERS :
+ *   @hdr_scene : HDR scene event data
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::processHDRData(cam_asd_hdr_scene_data_t hdr_scene)
+{
+    int rc = NO_ERROR;
+
+    if (hdr_scene.is_hdr_scene) {
+        mHDRSceneEnabled = true;
+    } else {
+        mHDRSceneEnabled = false;
+    }
+
+    ALOGD("%s : hdr_scene_data: processHDRData: %d",
+          __func__,
+          hdr_scene.is_hdr_scene);
+
+  return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : processPrepSnapshotDone
  *
  * DESCRIPTION: process prep snapshot done event
@@ -3934,49 +3964,6 @@ int32_t QCamera2HardwareInterface::processHistogramStats(cam_hist_stats_t &stats
         histBuffer->release(histBuffer);
     }
     return NO_ERROR;
-}
-
-/*===========================================================================
- * FUNCTION   : processHDRData
- *
- * DESCRIPTION: process incoming hdr algo data
- *
- * PARAMETERS :
- *   @confidence : hdr algo confidence level
- *
- * RETURN     : int32_t type of status
- *              NO_ERROR  -- success
- *              none-zero failure code
- *==========================================================================*/
-int32_t QCamera2HardwareInterface::processHDRData(cam_asd_hdr_scene_data_t hdr_scene)
-{
-    int rc = NO_ERROR;
-
-    if ( msgTypeEnabled(CAMERA_MSG_META_DATA) ) {
-        camera_memory_t *hdrBuffer = mGetMemory(-1,
-                                                 sizeof(cam_asd_hdr_scene_data_t),
-                                                 1,
-                                                 mCallbackCookie);
-        if ( NULL == hdrBuffer ) {
-            ALOGE("%s: Not enough memory for auto hdr data",
-                  __func__);
-            return NO_MEMORY;
-        }
-
-        memcpy(hdrBuffer->data, &hdr_scene, sizeof(cam_asd_hdr_scene_data_t));
-        qcamera_callback_argm_t cbArg;
-        memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
-        cbArg.cb_type = QCAMERA_DATA_CALLBACK;
-        cbArg.msg_type = CAMERA_MSG_META_DATA;
-        cbArg.data = hdrBuffer;
-        cbArg.user_data = hdrBuffer;
-        cbArg.cookie = this;
-        cbArg.release_cb = releaseCameraMemory;
-        m_cbNotifier.notifyCallback(cbArg);
-
-    }
-
-    return rc;
 }
 
 /*===========================================================================
