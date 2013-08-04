@@ -236,7 +236,7 @@ static void mm_app_snapshot_notify_cb(mm_camera_super_buf_t *bufs,
                                       void *user_data)
 {
 
-    int rc;
+    int rc = 0;
     int i = 0;
     mm_camera_test_obj_t *pme = (mm_camera_test_obj_t *)user_data;
     mm_camera_channel_t *channel = NULL;
@@ -311,15 +311,28 @@ static void mm_app_snapshot_notify_cb(mm_camera_super_buf_t *bufs,
     mm_app_cache_ops((mm_camera_app_meminfo_t *)m_frame->mem_info,
                      ION_IOC_CLEAN_INV_CACHES);
 
+    pme->jpeg_buf.buf.buffer = (uint8_t *)malloc(m_frame->frame_len);
+    if ( NULL == pme->jpeg_buf.buf.buffer ) {
+        CDBG_ERROR("%s: error allocating jpeg output buffer", __func__);
+        goto error;
+    }
+
+    pme->jpeg_buf.buf.frame_len = m_frame->frame_len;
     /* create a new jpeg encoding session */
     rc = createEncodingSession(pme, m_stream, m_frame);
     if (0 != rc) {
         CDBG_ERROR("%s: error creating jpeg session", __func__);
+        free(pme->jpeg_buf.buf.buffer);
         goto error;
     }
 
     /* start jpeg encoding job */
     rc = encodeData(pme, bufs, m_stream);
+    if (0 != rc) {
+        CDBG_ERROR("%s: error creating jpeg session", __func__);
+        free(pme->jpeg_buf.buf.buffer);
+        goto error;
+    }
 
 error:
     /* buf done rcvd frames in error case */
@@ -490,7 +503,7 @@ int mm_app_start_capture(mm_camera_test_obj_t *test_obj,
     int32_t rc = MM_CAMERA_OK;
     mm_camera_channel_t *channel = NULL;
     mm_camera_stream_t *s_main = NULL;
-    mm_camera_stream_t *s_postview = NULL;
+    mm_camera_stream_t *s_metadata = NULL;
     mm_camera_channel_attr_t attr;
 
     memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
@@ -506,27 +519,25 @@ int mm_app_start_capture(mm_camera_test_obj_t *test_obj,
         return -MM_CAMERA_E_GENERAL;
     }
 
-    s_postview = mm_app_add_postview_stream(test_obj,
+    s_metadata = mm_app_add_metadata_stream(test_obj,
                                             channel,
                                             NULL,
                                             NULL,
-                                            num_snapshots,
-                                            num_snapshots);
-    if (NULL == s_postview) {
-        CDBG_ERROR("%s: add preview stream failed\n", __func__);
+                                            CAPTURE_BUF_NUM);
+    if (NULL == s_metadata) {
+        CDBG_ERROR("%s: add metadata stream failed\n", __func__);
         mm_app_del_channel(test_obj, channel);
-        return rc;
+        return -MM_CAMERA_E_GENERAL;
     }
 
     s_main = mm_app_add_snapshot_stream(test_obj,
                                         channel,
                                         NULL,
                                         NULL,
-                                        num_snapshots,
+                                        CAPTURE_BUF_NUM,
                                         num_snapshots);
     if (NULL == s_main) {
         CDBG_ERROR("%s: add main snapshot stream failed\n", __func__);
-        mm_app_del_stream(test_obj, channel, s_postview);
         mm_app_del_channel(test_obj, channel);
         return rc;
     }
@@ -534,8 +545,8 @@ int mm_app_start_capture(mm_camera_test_obj_t *test_obj,
     rc = mm_app_start_channel(test_obj, channel);
     if (MM_CAMERA_OK != rc) {
         CDBG_ERROR("%s:start zsl failed rc=%d\n", __func__, rc);
-        mm_app_del_stream(test_obj, channel, s_postview);
         mm_app_del_stream(test_obj, channel, s_main);
+        mm_app_del_stream(test_obj, channel, s_metadata);
         mm_app_del_channel(test_obj, channel);
         return rc;
     }
@@ -550,9 +561,9 @@ int mm_app_stop_capture(mm_camera_test_obj_t *test_obj)
 
     ch = mm_app_get_channel_by_type(test_obj, MM_CHANNEL_TYPE_CAPTURE);
 
-    rc = mm_app_stop_channel(test_obj, ch);
+    rc = mm_app_stop_and_del_channel(test_obj, ch);
     if (MM_CAMERA_OK != rc) {
-        CDBG_ERROR("%s:stop recording failed rc=%d\n", __func__, rc);
+        CDBG_ERROR("%s:stop capture channel failed rc=%d\n", __func__, rc);
     }
 
     return rc;

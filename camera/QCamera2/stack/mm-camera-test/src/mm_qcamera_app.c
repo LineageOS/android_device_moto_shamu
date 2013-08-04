@@ -1106,6 +1106,82 @@ ERROR:
     return rc;
 }
 
+int setEVCompensation(mm_camera_test_obj_t *test_obj, int ev)
+{
+    int rc = MM_CAMERA_OK;
+
+    cam_capability_t *camera_cap = NULL;
+
+    camera_cap = (cam_capability_t *) test_obj->cap_buf.mem_info.data;
+    if ( (ev >= camera_cap->exposure_compensation_min) &&
+         (ev <= camera_cap->exposure_compensation_max) ) {
+
+        rc = initBatchUpdate(test_obj);
+        if (rc != MM_CAMERA_OK) {
+            CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+            goto ERROR;
+        }
+
+        uint32_t value = ev;
+
+        rc = AddSetParmEntryToBatch(test_obj,
+                                    CAM_INTF_PARM_EXPOSURE_COMPENSATION,
+                                    sizeof(value),
+                                    &value);
+        if (rc != MM_CAMERA_OK) {
+            CDBG_ERROR("%s: EV compensation parameter not added to batch\n", __func__);
+            goto ERROR;
+        }
+
+        rc = commitSetBatch(test_obj);
+        if (rc != MM_CAMERA_OK) {
+            CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+            goto ERROR;
+        }
+
+        CDBG_ERROR("%s: EV compensation set to: %d", __func__, value);
+    } else {
+        CDBG_ERROR("%s: Invalid EV compensation", __func__);
+        return -EINVAL;
+    }
+
+ERROR:
+    return rc;
+}
+
+int setAntibanding(mm_camera_test_obj_t *test_obj, cam_antibanding_mode_type antibanding)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    uint32_t value = antibanding;
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_ANTIBANDING,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Antibanding parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: Antibanding set to: %d", __func__, value);
+
+ERROR:
+    return rc;
+}
+
 /** tuneserver_capture
  *    @lib_handle: the camera handle object
  *
@@ -1115,16 +1191,53 @@ ERROR:
  **/
 int tuneserver_capture(mm_camera_lib_handle *lib_handle)
 {
-  int rc = 0;
+    int rc = 0;
 
-  printf("Take jpeg snapshot\n");
+    printf("Take jpeg snapshot\n");
 
-  if ( lib_handle->stream_running ) {
-      lib_handle->test_obj.encodeJpeg = 1;
-      mm_camera_app_wait();
-  }
+    if ( lib_handle->stream_running ) {
 
-  return rc;
+        if ( lib_handle->test_obj.zsl_enabled) {
+            lib_handle->test_obj.encodeJpeg = 1;
+            mm_camera_app_wait();
+        } else {
+            // For standard 2D capture streaming has to be disabled first
+            rc = mm_camera_lib_stop_stream(lib_handle);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: mm_camera_lib_stop_stream() err=%d\n",
+                         __func__, rc);
+                goto EXIT;
+            }
+
+            rc = mm_app_start_capture(&lib_handle->test_obj, 1);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: mm_app_start_capture() err=%d\n",
+                         __func__, rc);
+                goto EXIT;
+            }
+
+            mm_camera_app_wait();
+
+            rc = mm_app_stop_capture(&lib_handle->test_obj);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: mm_app_stop_capture() err=%d\n",
+                         __func__, rc);
+                goto EXIT;
+            }
+
+            // Restart streaming after capture is done
+            rc = mm_camera_lib_start_stream(lib_handle);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: mm_camera_lib_start_stream() err=%d\n",
+                         __func__, rc);
+                goto EXIT;
+            }
+        }
+    }
+
+EXIT:
+
+    return rc;
 }
 
 int main(int argc, char **argv)
@@ -1201,6 +1314,7 @@ int mm_camera_lib_open(mm_camera_lib_handle *handle, int cam_id)
     handle->test_obj.buffer_format = DEFAULT_SNAPSHOT_FORMAT;
     handle->current_params.stream_width = DEFAULT_SNAPSHOT_WIDTH;
     handle->current_params.stream_height = DEFAULT_SNAPSHOT_HEIGHT;
+    handle->current_params.af_mode = CAM_FOCUS_MODE_AUTO; // Default to auto focus mode
     rc = mm_app_open(&handle->app_ctx, cam_id, &handle->test_obj);
     if (rc != MM_CAMERA_OK) {
         CDBG_ERROR("%s:mm_app_open() cam_idx=%d, err=%d\n",
@@ -1230,11 +1344,27 @@ int mm_camera_lib_start_stream(mm_camera_lib_handle *handle)
         goto EXIT;
     }
 
-    rc = mm_app_start_preview_zsl(&handle->test_obj);
+    if ( handle->test_obj.zsl_enabled ) {
+        rc = mm_app_start_preview_zsl(&handle->test_obj);
+        if (rc != MM_CAMERA_OK) {
+            CDBG_ERROR("%s: mm_app_start_preview_zsl() err=%d\n",
+                       __func__, rc);
+            goto EXIT;
+        }
+    } else {
+        rc = mm_app_start_preview(&handle->test_obj);
+        if (rc != MM_CAMERA_OK) {
+            CDBG_ERROR("%s: mm_app_start_preview() err=%d\n",
+                       __func__, rc);
+            goto EXIT;
+        }
+    }
+
+    // Configure focus mode after stream starts
+    rc = setFocusMode(&handle->test_obj, handle->current_params.af_mode);
     if (rc != MM_CAMERA_OK) {
-        CDBG_ERROR("%s: mm_app_start_preview_zsl() err=%d\n",
-                   __func__, rc);
-        goto EXIT;
+      CDBG_ERROR("%s:autofocus error\n", __func__);
+      goto EXIT;
     }
 
     handle->stream_running = 1;
@@ -1253,11 +1383,20 @@ int mm_camera_lib_stop_stream(mm_camera_lib_handle *handle)
         goto EXIT;
     }
 
-    rc = mm_app_stop_preview_zsl(&handle->test_obj);
-    if (rc != MM_CAMERA_OK) {
-        CDBG_ERROR("%s: mm_app_stop_preview_zsl() err=%d\n",
-                   __func__, rc);
-        goto EXIT;
+    if ( handle->test_obj.zsl_enabled ) {
+        rc = mm_app_stop_preview_zsl(&handle->test_obj);
+        if (rc != MM_CAMERA_OK) {
+            CDBG_ERROR("%s: mm_app_stop_preview_zsl() err=%d\n",
+                       __func__, rc);
+            goto EXIT;
+        }
+    } else {
+        rc = mm_app_stop_preview(&handle->test_obj);
+        if (rc != MM_CAMERA_OK) {
+            CDBG_ERROR("%s: mm_app_stop_preview() err=%d\n",
+                       __func__, rc);
+            goto EXIT;
+        }
     }
 
     handle->stream_running = 0;
@@ -1311,10 +1450,52 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
     }
 
     switch(cmd) {
+        case MM_CAMERA_LIB_ANTIBANDING:
+            if ( NULL != in_data ) {
+                int antibanding = *(( int * )in_data);
+                rc = setAntibanding(&handle->test_obj, antibanding);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setAntibanding() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
+        case MM_CAMERA_LIB_EV:
+            if ( NULL != in_data ) {
+                int ev = *(( int * )in_data);
+                rc = setEVCompensation(&handle->test_obj, ev);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setEVCompensation() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
+        case MM_CAMERA_LIB_ZSL_ENABLE:
+            if ( NULL != in_data) {
+                int enable_zsl = *(( int * )in_data);
+                if ( enable_zsl != handle->test_obj.zsl_enabled ) {
+                    rc = mm_camera_lib_stop_stream(handle);
+                    if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: mm_camera_lib_stop_stream() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                    }
+                    handle->test_obj.zsl_enabled = enable_zsl;
+                    rc = mm_camera_lib_start_stream(handle);
+                    if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: mm_camera_lib_start_stream() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                    }
+                }
+            }
+            break;
         case MM_CAMERA_LIB_RAW_CAPTURE:
-            rc = mm_app_stop_preview_zsl(&handle->test_obj);
+            rc = mm_camera_lib_stop_stream(handle);
             if (rc != MM_CAMERA_OK) {
-                CDBG_ERROR("%s: mm_app_stop_preview_zsl() err=%d\n",
+                CDBG_ERROR("%s: mm_camera_lib_stop_stream() err=%d\n",
                            __func__, rc);
                 goto EXIT;
             }
@@ -1359,9 +1540,9 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                 goto EXIT;
             }
 
-            rc = mm_app_start_preview_zsl(&handle->test_obj);
+            rc = mm_camera_lib_start_stream(handle);
             if (rc != MM_CAMERA_OK) {
-                CDBG_ERROR("%s: mm_app_start_preview_zsl() err=%d\n",
+                CDBG_ERROR("%s: mm_camera_lib_start_stream() err=%d\n",
                            __func__, rc);
                 goto EXIT;
             }
@@ -1374,6 +1555,7 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
         }
         case MM_CAMERA_LIB_SET_FOCUS_MODE: {
             cam_focus_mode_type mode = *((cam_focus_mode_type *)in_data);
+            handle->current_params.af_mode = mode;
             rc = setFocusMode(&handle->test_obj, mode);
             if (rc != MM_CAMERA_OK) {
               CDBG_ERROR("%s:autofocus error\n", __func__);

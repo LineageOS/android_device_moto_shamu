@@ -119,6 +119,9 @@ static void mm_app_preview_notify_cb(mm_camera_super_buf_t *bufs,
         return;
     }
 
+    if ( 0 < pme->fb_fd ) {
+        mm_app_overlay_display(pme, frame->fd);
+    }
 #ifdef DUMP_PRV_IN_FILE
     {
       char file_name[64];
@@ -683,6 +686,9 @@ int mm_app_stop_preview_zsl(mm_camera_test_obj_t *test_obj)
 int mm_app_initialize_fb(mm_camera_test_obj_t *test_obj)
 {
     int rc = MM_CAMERA_OK;
+    int brightness_fd;
+    const char brightness_level[] = BACKLIGHT_LEVEL;
+    void *fb_base = NULL;
 
     assert( ( NULL != test_obj ) && ( 0 == test_obj->fb_fd ) );
 
@@ -728,79 +734,55 @@ int mm_app_initialize_fb(mm_camera_test_obj_t *test_obj)
         goto FAIL;
     }
 
-    test_obj->frame_count = test_obj->vinfo.yres_virtual / test_obj->vinfo.yres;
+    brightness_fd = open(BACKLIGHT_CONTROL, O_RDWR);
+    if ( brightness_fd >= 0 ) {
+        write(brightness_fd, brightness_level, strlen(brightness_level));
+        close(brightness_fd);
+    }
+
     test_obj->slice_size = test_obj->vinfo.xres * ( test_obj->vinfo.yres - 1 ) * DEFAULT_OV_FORMAT_BPP;
-    test_obj->frame_size = test_obj->slice_size + test_obj->vinfo.xres * DEFAULT_OV_FORMAT_BPP;
-
-    if ( test_obj->buffer_format == CAM_FORMAT_YUV_420_NV21 ) {
-        test_obj->buffer_size = test_obj->buffer_width * test_obj->buffer_height * DEFAULT_CAMERA_FORMAT_BPP;
-    } else if ( test_obj->buffer_format == CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GBRG ) {
-        test_obj->buffer_size = (test_obj->buffer_width + 11)/12 * 12;
-        test_obj->buffer_size = test_obj->buffer_size * test_obj->buffer_height * 8 / 6;
-    } else {
-        CDBG_ERROR(" %s : Unsupported buffer format %d\n",
-                   __func__,
-                   test_obj->buffer_format);
-        rc = MM_CAMERA_E_GENERAL;
-        goto FAIL;
-    }
-
-    test_obj->slice_count = test_obj->buffer_size / test_obj->slice_size;
-    if ( MAX_SLICES < test_obj->slice_count ) {
-        CDBG_ERROR("%s: Too many slices %d\n",
-                   __func__,
-                   test_obj->slice_count);
-        rc = MM_CAMERA_E_GENERAL;
-        goto FAIL;
-    }
-
     memset(&test_obj->data_overlay, 0, sizeof(struct mdp_overlay));
-    if ( 0 == test_obj->slice_count ) {
-        size_t dst_height = test_obj->buffer_size / (test_obj->vinfo.xres * DEFAULT_OV_FORMAT_BPP);
-        test_obj->data_overlay.src.width  = test_obj->vinfo.xres;
-        test_obj->data_overlay.src.height = dst_height;
-        test_obj->data_overlay.src_rect.w = test_obj->vinfo.xres;
-        test_obj->data_overlay.src_rect.h = dst_height;
-        test_obj->data_overlay.dst_rect.w = test_obj->vinfo.xres;
-        test_obj->data_overlay.dst_rect.h = dst_height;
-    } else {
-        test_obj->data_overlay.src.width  = test_obj->vinfo.xres;
-        test_obj->data_overlay.src.height = test_obj->vinfo.yres - 1;
-        test_obj->data_overlay.src_rect.w = test_obj->vinfo.xres;
-        test_obj->data_overlay.src_rect.h = test_obj->vinfo.yres - 1;
-        test_obj->data_overlay.dst_rect.w = test_obj->vinfo.xres;
-        test_obj->data_overlay.dst_rect.h = test_obj->vinfo.yres - 1;
-    }
+    test_obj->data_overlay.src.width  = test_obj->buffer_width;
+    test_obj->data_overlay.src.height = test_obj->buffer_height;
+    test_obj->data_overlay.src_rect.w = test_obj->buffer_width;
+    test_obj->data_overlay.src_rect.h = test_obj->buffer_height;
+    test_obj->data_overlay.dst_rect.w = test_obj->buffer_width;
+    test_obj->data_overlay.dst_rect.h = test_obj->buffer_height;
     test_obj->data_overlay.src.format = DEFAULT_OV_FORMAT;
     test_obj->data_overlay.src_rect.x = 0;
     test_obj->data_overlay.src_rect.y = 0;
     test_obj->data_overlay.dst_rect.x = 0;
     test_obj->data_overlay.dst_rect.y = 0;
-    test_obj->data_overlay.z_order = 1;
+    test_obj->data_overlay.z_order = 2;
+    test_obj->data_overlay.alpha = 0x80;
+    test_obj->data_overlay.transp_mask = 0xffe0;
+    test_obj->data_overlay.flags = MDP_FLIP_LR | MDP_FLIP_UD;
 
-    test_obj->fb_base = mmap(0,
-                             test_obj->frame_size * test_obj->frame_count,
-                             PROT_WRITE,
-                             MAP_SHARED,
-                             test_obj->fb_fd,
-                             0);
-    if ( MAP_FAILED  == test_obj->fb_base ) {
-        CDBG_ERROR("%s: ( Error while memory mapping frame buffer %s",
-                   __func__,
-                   strerror(errno));
+    // Map and clear FB portion
+    fb_base = mmap(0,
+                   test_obj->slice_size,
+                   PROT_WRITE,
+                   MAP_SHARED,
+                   test_obj->fb_fd,
+                   0);
+    if ( MAP_FAILED  == fb_base ) {
+            CDBG_ERROR("%s: ( Error while memory mapping frame buffer %s",
+                       __func__,
+                       strerror(errno));
+            rc = -errno;
+            goto FAIL;
+    }
+
+    memset(fb_base, 0, test_obj->slice_size);
+
+    if (ioctl(test_obj->fb_fd, FBIOPAN_DISPLAY, &test_obj->vinfo) < 0) {
+        CDBG_ERROR("%s : FBIOPAN_DISPLAY failed!", __func__);
         rc = -errno;
         goto FAIL;
     }
 
-    CDBG("%s: FB initialized fd: %d fd_base: %p, frame_count: %d, slice_size: %d, frame_size: %d slice_count: %d, buffer_size: %d\n",
-               __func__,
-               test_obj->fb_fd,
-               test_obj->fb_base,
-               test_obj->frame_count,
-               test_obj->slice_size,
-               test_obj->frame_size,
-               test_obj->slice_count,
-               test_obj->buffer_size);
+    munmap(fb_base, test_obj->slice_size);
+    //
 
     test_obj->data_overlay.id = MSMFB_NEW_REQUEST;
     rc = ioctl(test_obj->fb_fd, MSMFB_OVERLAY_SET, &test_obj->data_overlay);
@@ -810,38 +792,7 @@ int mm_app_initialize_fb(mm_camera_test_obj_t *test_obj)
                    test_obj->data_overlay.id);
         return MM_CAMERA_E_GENERAL;
     }
-    CDBG("%s: Overlay set with overlay id: %d", __func__, test_obj->data_overlay.id);
-
-    memset(&test_obj->marker_overlay, 0, sizeof(struct mdp_overlay));
-    test_obj->marker_overlay.src.width  = test_obj->vinfo.xres;
-    test_obj->marker_overlay.src.height = MARKER_HEIGHT;
-    test_obj->marker_overlay.src.format = DEFAULT_OV_FORMAT;
-    test_obj->marker_overlay.src_rect.x = 0;
-    test_obj->marker_overlay.src_rect.y = 0;
-    test_obj->marker_overlay.src_rect.w = test_obj->vinfo.xres;
-    test_obj->marker_overlay.src_rect.h = MARKER_HEIGHT;
-    test_obj->marker_overlay.dst_rect.x = 0;
-    test_obj->marker_overlay.dst_rect.y = test_obj->vinfo.yres - MARKER_HEIGHT;
-    test_obj->marker_overlay.dst_rect.w = test_obj->vinfo.xres;
-    test_obj->marker_overlay.dst_rect.h = MARKER_HEIGHT;
-    test_obj->marker_overlay.z_order = 0;
-
-    test_obj->marker_overlay.id = MSMFB_NEW_REQUEST;
-    rc = ioctl(test_obj->fb_fd, MSMFB_OVERLAY_SET, &test_obj->marker_overlay);
-    if (rc < 0) {
-        CDBG_ERROR("%s : MSMFB_OVERLAY_SET failed! err=%d\n",
-                   __func__,
-                   test_obj->marker_overlay.id);
-        return MM_CAMERA_E_GENERAL;
-    }
-    CDBG("%s: Marker overlay set with overlay id: %d", __func__, test_obj->marker_overlay.id);
-
-    test_obj->marker_buffer.mem_info.size = test_obj->vinfo.xres*MARKER_HEIGHT*DEFAULT_OV_FORMAT_BPP;
-    rc = mm_app_allocate_ion_memory(&test_obj->marker_buffer, 0x1 << CAMERA_ION_HEAP_ID);
-    if ( MM_CAMERA_OK != rc ) {
-        CDBG_ERROR("%s : Marker buffer allocation failed %d", __func__, rc);
-        goto FAIL;
-    }
+    CDBG_ERROR("%s: Overlay set with overlay id: %d", __func__, test_obj->data_overlay.id);
 
     return rc;
 
@@ -864,20 +815,12 @@ int mm_app_close_fb(mm_camera_test_obj_t *test_obj)
         CDBG_ERROR("\nERROR! MSMFB_OVERLAY_UNSET failed! (Line %d)\n", __LINE__);
     }
 
-    if (ioctl(test_obj->fb_fd, MSMFB_OVERLAY_UNSET, &test_obj->marker_overlay.id)) {
-        CDBG_ERROR("\nERROR! MSMFB_OVERLAY_UNSET failed! (Line %d)\n", __LINE__);
-    }
-
     if (ioctl(test_obj->fb_fd, FBIOPAN_DISPLAY, &test_obj->vinfo) < 0) {
         CDBG_ERROR("ERROR: FBIOPAN_DISPLAY failed! line=%d\n", __LINE__);
     }
 
-    munmap(test_obj->fb_base, test_obj->frame_size * test_obj->frame_count);
-    test_obj->fb_base = NULL;
     close(test_obj->fb_fd);
     test_obj->fb_fd = 0;
-
-    mm_app_deallocate_ion_memory(&test_obj->marker_buffer);
 
     return rc;
 }
@@ -893,87 +836,21 @@ int mm_app_overlay_display(mm_camera_test_obj_t *test_obj, int bufferFd)
 {
     int rc = MM_CAMERA_OK;
     struct msmfb_overlay_data ovdata;
-    size_t current_slice = 0;
-    uint8_t slice = SLICE_BASE;
-    static uint8_t counter = 0;
-    uint16_t marker_value = 0;
 
-    do {
 
-        ovdata.id = test_obj->data_overlay.id;
-        ovdata.data.flags = 0;
-        ovdata.data.offset = test_obj->slice_size*current_slice;
-        ovdata.data.memory_id = bufferFd;
+    memset(&ovdata, 0, sizeof(struct msmfb_overlay_data));
+    ovdata.id = test_obj->data_overlay.id;
+    ovdata.data.memory_id = bufferFd;
 
-        current_slice++;
-        slice = SLICE_BASE * current_slice;
-        marker_value = ( counter << 8 ) | slice;
-        memset16(test_obj->marker_buffer.mem_info.data,
-                 marker_value,
-                 test_obj->marker_buffer.mem_info.size/2);
+    if (ioctl(test_obj->fb_fd, MSMFB_OVERLAY_PLAY, &ovdata)) {
+        CDBG_ERROR("%s : MSMFB_OVERLAY_PLAY failed!", __func__);
+        return MM_CAMERA_E_GENERAL;
+    }
 
-        if (ioctl(test_obj->fb_fd, MSMFB_OVERLAY_PLAY, &ovdata)) {
-            CDBG_ERROR("%s : MSMFB_OVERLAY_PLAY failed!", __func__);
-            return MM_CAMERA_E_GENERAL;
-        }
-
-        ovdata.id = test_obj->marker_overlay.id;
-        ovdata.data.flags = 0;
-        ovdata.data.offset = 0;
-        ovdata.data.memory_id = test_obj->marker_buffer.mem_info.fd;
-
-        if (ioctl(test_obj->fb_fd, MSMFB_OVERLAY_PLAY, &ovdata)) {
-            CDBG_ERROR("%s : MSMFB_OVERLAY_PLAY failed!", __func__);
-            return MM_CAMERA_E_GENERAL;
-        }
-
-        if (ioctl(test_obj->fb_fd, FBIOPAN_DISPLAY, &test_obj->vinfo) < 0) {
-            CDBG_ERROR("%s : FBIOPAN_DISPLAY failed!", __func__);
-            return MM_CAMERA_E_GENERAL;
-        }
-
-        CDBG("Bufffer %d slice %d, offset %d queued in overlay with marker 0x%x",
-                   bufferFd,
-                   (current_slice- 1),
-                   test_obj->slice_size*current_slice,
-                   marker_value);
-
-    } while ( current_slice <= test_obj->slice_count );
-    counter++;
-
-    return rc;
-}
-
-int mm_app_fb_write(mm_camera_test_obj_t *test_obj, char *buffer)
-{
-    size_t current_slice = 0;
-    uint8_t slice = SLICE_BASE;
-    int rc = MM_CAMERA_OK;
-    static uint8_t counter = 0;
-    int current_frame = 0;
-    char *dst = NULL, *src = NULL;
-
-    assert( ( NULL != test_obj ) &&
-            ( 0 < test_obj->fb_fd ) &&
-            ( NULL != test_obj->fb_base) &&
-            ( NULL != buffer ) );
-
-    do {
-        current_slice++;
-        slice *= current_slice;
-
-        test_obj->vinfo.yoffset = test_obj->vinfo.yres * current_frame;
-        dst = ( char * ) test_obj->fb_base + test_obj->frame_size * current_frame;
-        src =  buffer + test_obj->slice_size * current_frame;
-        memcpy(dst, src, test_obj->slice_size);
-        *((uint8_t *)test_obj->fb_base + test_obj->frame_size * current_frame - 2) = counter;
-        *((uint8_t *)test_obj->fb_base + test_obj->frame_size * current_frame - 1) = slice;
-        ioctl(test_obj->fb_fd, FBIOPAN_DISPLAY, &test_obj->vinfo);
-
-        counter++;
-        current_frame++;
-        current_frame %= test_obj->frame_count;
-    } while ( current_slice < test_obj->slice_count );
+    if (ioctl(test_obj->fb_fd, FBIOPAN_DISPLAY, &test_obj->vinfo) < 0) {
+        CDBG_ERROR("%s : FBIOPAN_DISPLAY failed!", __func__);
+        return MM_CAMERA_E_GENERAL;
+    }
 
     return rc;
 }
