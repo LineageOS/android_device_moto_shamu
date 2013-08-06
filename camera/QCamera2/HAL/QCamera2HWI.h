@@ -308,6 +308,7 @@ private:
     int32_t processAutoFocusEvent(cam_auto_focus_data_t &focus_data);
     int32_t processZoomEvent(cam_crop_data_t &crop_info);
     int32_t processPrepSnapshotDoneEvent(cam_prep_snapshot_state_t prep_snapshot_state);
+    int32_t processASDUpdate(cam_auto_scene_t scene);
     int32_t processJpegNotify(qcamera_jpeg_evt_payload_t *jpeg_job);
     int32_t processHDRData(cam_asd_hdr_scene_data_t hdr_scene);
 

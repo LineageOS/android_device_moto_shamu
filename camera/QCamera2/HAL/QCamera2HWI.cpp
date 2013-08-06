@@ -2704,6 +2704,64 @@ int32_t QCamera2HardwareInterface::processPrepSnapshotDoneEvent(
 }
 
 /*===========================================================================
+ * FUNCTION   : processASDUpdate
+ *
+ * DESCRIPTION: process ASD update event
+ *
+ * PARAMETERS :
+ *   @scene: selected scene mode
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::processASDUpdate(cam_auto_scene_t scene)
+{
+    //set ASD parameter
+    mParameters.set(QCameraParameters::KEY_SELECTED_AUTO_SCENE, mParameters.getASDStateString(scene));
+
+    size_t data_len = sizeof(cam_auto_scene_t);
+    size_t buffer_len = 1 *sizeof(int)       //meta type
+                      + 1 *sizeof(int)       //data len
+                      + data_len;            //data
+    camera_memory_t *asdBuffer = mGetMemory(-1,
+                                             buffer_len,
+                                             1,
+                                             mCallbackCookie);
+    if ( NULL == asdBuffer ) {
+        ALOGE("%s: Not enough memory for histogram data", __func__);
+        return NO_MEMORY;
+    }
+
+    int *pASDData = (int *)asdBuffer->data;
+    if (pASDData == NULL) {
+        ALOGE("%s: memory data ptr is NULL", __func__);
+        return UNKNOWN_ERROR;
+    }
+
+    pASDData[0] = CAMERA_META_DATA_ASD;
+    pASDData[1] = data_len;
+    pASDData[2] = scene;
+
+    qcamera_callback_argm_t cbArg;
+    memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+    cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+    cbArg.msg_type = CAMERA_MSG_META_DATA;
+    cbArg.data = asdBuffer;
+    cbArg.user_data = asdBuffer;
+    cbArg.cookie = this;
+    cbArg.release_cb = releaseCameraMemory;
+    int32_t rc = m_cbNotifier.notifyCallback(cbArg);
+    if (rc != NO_ERROR) {
+        ALOGE("%s: fail sending notification", __func__);
+        asdBuffer->release(asdBuffer);
+    }
+    return NO_ERROR;
+
+}
+
+
+/*===========================================================================
  * FUNCTION   : processJpegNotify
  *
  * DESCRIPTION: process jpeg event

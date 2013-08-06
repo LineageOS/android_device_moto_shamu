@@ -344,6 +344,8 @@ public:
     static const char FLIP_MODE_H[];
     static const char FLIP_MODE_VH[];
 
+    static const char KEY_SELECTED_AUTO_SCENE[];
+
     enum {
         CAMERA_ORIENTATION_UNKNOWN = 0,
         CAMERA_ORIENTATION_PORTRAIT = 1,
@@ -438,6 +440,7 @@ public:
     bool isVideoFlipChanged() { return m_bVideoFlipChanged; };
     bool isSnapshotFlipChanged() { return m_bSnapshotFlipChanged; };
 
+    const char *getASDStateString(cam_auto_scene_t scene);
 private:
     int32_t setPreviewSize(const QCameraParameters& );
     int32_t setVideoSize(const QCameraParameters& );
