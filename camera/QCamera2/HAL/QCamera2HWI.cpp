@@ -4254,6 +4254,14 @@ bool QCamera2HardwareInterface::needReprocess()
         return true;
     }
 
+    if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
+            (mParameters.getJpegRotation() > 0) &&  (mParameters.getRecordingHintValue() == false)) {
+            // current rotation is not zero, and pp has the capability to process rotation
+            ALOGD("%s: need to do reprocess for rotation=%d", __func__, mParameters.getJpegRotation());
+            pthread_mutex_unlock(&m_parm_lock);
+            return true;
+    }
+
     if (isZSLMode()) {
         if (((gCamCapability[mCameraId]->min_required_pp_mask > 0) ||
              mParameters.isWNREnabled() || isCACEnabled())) {
@@ -4267,14 +4275,6 @@ bool QCamera2HardwareInterface::needReprocess()
             mParameters.getFlipMode(CAM_STREAM_TYPE_SNAPSHOT);
         if (snapshot_flipMode > 0) {
             ALOGD("%s: Need do flip for snapshot in ZSL mode", __func__);
-            pthread_mutex_unlock(&m_parm_lock);
-            return true;
-        }
-
-        if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
-            mParameters.getJpegRotation() > 0) {
-            // current rotation is not zero, and pp has the capability to process rotation
-            ALOGD("%s: need do reprocess for rotation", __func__);
             pthread_mutex_unlock(&m_parm_lock);
             return true;
         }
@@ -4303,15 +4303,13 @@ bool QCamera2HardwareInterface::needRotationReprocess()
         return false;
     }
 
-    if (isZSLMode()) {
         if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
-            mParameters.getJpegRotation() > 0) {
+            (mParameters.getJpegRotation() > 0) && (mParameters.getRecordingHintValue() == false)) {
             // current rotation is not zero, and pp has the capability to process rotation
-            ALOGD("%s: need do reprocess for rotation", __func__);
+            ALOGD("%s: need to do reprocess for rotation=%d", __func__, mParameters.getJpegRotation());
             pthread_mutex_unlock(&m_parm_lock);
             return true;
         }
-    }
 
     pthread_mutex_unlock(&m_parm_lock);
     return false;
