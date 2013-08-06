@@ -1595,6 +1595,337 @@ ERROR:
     return rc;
 }
 
+int setWhiteBalance(mm_camera_test_obj_t *test_obj, cam_wb_mode_type mode)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    uint32_t value = mode;
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_WHITE_BALANCE,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: White balance parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: White balance set to: %d", __func__, value);
+
+ERROR:
+    return rc;
+}
+
+int setExposureMetering(mm_camera_test_obj_t *test_obj, cam_auto_exposure_mode_type mode)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    uint32_t value = mode;
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_EXPOSURE,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Exposure metering parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: Exposure metering set to: %d", __func__, value);
+
+ERROR:
+    return rc;
+}
+
+int setBrightness(mm_camera_test_obj_t *test_obj, int brightness)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    int32_t value = brightness;
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_BRIGHTNESS,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Brightness parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: Brightness set to: %d", __func__, value);
+
+ERROR:
+    return rc;
+}
+
+int setContrast(mm_camera_test_obj_t *test_obj, int contrast)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    int32_t value = contrast;
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_CONTRAST,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Contrast parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: Contrast set to: %d", __func__, value);
+
+ERROR:
+    return rc;
+}
+
+int setSaturation(mm_camera_test_obj_t *test_obj, int saturation)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    int32_t value = saturation;
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_SATURATION,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Saturation parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: Saturation set to: %d", __func__, value);
+
+ERROR:
+    return rc;
+}
+
+int setSharpness(mm_camera_test_obj_t *test_obj, int sharpness)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    int32_t value = sharpness;
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_SHARPNESS,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Sharpness parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: Sharpness set to: %d", __func__, value);
+
+ERROR:
+    return rc;
+}
+
+int setISO(mm_camera_test_obj_t *test_obj, cam_iso_mode_type iso)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    int32_t value = iso;
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_ISO,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: ISO parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: ISO set to: %d", __func__, value);
+
+ERROR:
+    return rc;
+}
+
+int setZoom(mm_camera_test_obj_t *test_obj, int zoom)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    int32_t value = zoom;
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_ZOOM,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Zoom parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: Zoom set to: %d", __func__, value);
+
+ERROR:
+    return rc;
+}
+
+
+int setScene(mm_camera_test_obj_t *test_obj, cam_scene_mode_type scene)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    int32_t value = scene;
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_BESTSHOT_MODE,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Scene parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: Scene set to: %d", __func__, value);
+
+ERROR:
+    return rc;
+}
+
+int setFlash(mm_camera_test_obj_t *test_obj, cam_flash_mode_t flash)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    int32_t value = flash;
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_LED_MODE,
+                                sizeof(value),
+                                &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Flash parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: Flash set to: %d", __func__, value);
+
+ERROR:
+    return rc;
+}
+
 /** tuneserver_capture
  *    @lib_handle: the camera handle object
  *
@@ -1871,6 +2202,116 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
     }
 
     switch(cmd) {
+        case MM_CAMERA_LIB_FLASH:
+            if ( NULL != in_data ) {
+                cam_flash_mode_t flash = *(( int * )in_data);
+                rc = setFlash(&handle->test_obj, flash);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setFlash() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
+        case MM_CAMERA_LIB_BESTSHOT:
+            if ( NULL != in_data ) {
+                cam_scene_mode_type scene = *(( int * )in_data);
+                rc = setScene(&handle->test_obj, scene);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setScene() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
+        case MM_CAMERA_LIB_ZOOM:
+            if ( NULL != in_data ) {
+                int zoom = *(( int * )in_data);
+                rc = setZoom(&handle->test_obj, zoom);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setZoom() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
+        case MM_CAMERA_LIB_ISO:
+            if ( NULL != in_data ) {
+                cam_iso_mode_type iso = *(( int * )in_data);
+                rc = setISO(&handle->test_obj, iso);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setISO() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
+        case MM_CAMERA_LIB_SHARPNESS:
+            if ( NULL != in_data ) {
+                int sharpness = *(( int * )in_data);
+                rc = setSharpness(&handle->test_obj, sharpness);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setSharpness() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
+        case MM_CAMERA_LIB_SATURATION:
+            if ( NULL != in_data ) {
+                int saturation = *(( int * )in_data);
+                rc = setSaturation(&handle->test_obj, saturation);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setSaturation() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
+        case MM_CAMERA_LIB_CONTRAST:
+            if ( NULL != in_data ) {
+                int contrast = *(( int * )in_data);
+                rc = setContrast(&handle->test_obj, contrast);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setContrast() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
+        case MM_CAMERA_LIB_BRIGHTNESS:
+            if ( NULL != in_data ) {
+                int brightness = *(( int * )in_data);
+                rc = setBrightness(&handle->test_obj, brightness);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setBrightness() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
+        case MM_CAMERA_LIB_EXPOSURE_METERING:
+            if ( NULL != in_data ) {
+                cam_auto_exposure_mode_type exp = *(( int * )in_data);
+                rc = setExposureMetering(&handle->test_obj, exp);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setExposureMetering() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
+        case MM_CAMERA_LIB_WB:
+            if ( NULL != in_data ) {
+                cam_wb_mode_type wb = *(( int * )in_data);
+                rc = setWhiteBalance(&handle->test_obj, wb);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setWhiteBalance() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
         case MM_CAMERA_LIB_ANTIBANDING:
             if ( NULL != in_data ) {
                 int antibanding = *(( int * )in_data);
