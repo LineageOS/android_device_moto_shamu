@@ -3445,6 +3445,8 @@ void QCameraParameters::deinit()
     m_AdjustFPS = NULL;
 
     m_tempMap.clear();
+
+    m_bInited = false;
 }
 
 /*===========================================================================
