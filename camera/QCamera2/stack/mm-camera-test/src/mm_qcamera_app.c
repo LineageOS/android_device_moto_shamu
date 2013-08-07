@@ -2666,6 +2666,21 @@ EXIT:
 
     return rc;
 }
+int mm_camera_lib_number_of_cameras(mm_camera_lib_handle *handle)
+{
+    int rc = 0;
+
+    if ( NULL == handle ) {
+        CDBG_ERROR(" %s : Invalid handle", __func__);
+        goto EXIT;
+    }
+
+    rc = handle->app_ctx.num_cameras;
+
+EXIT:
+
+    return rc;
+}
 
 int mm_camera_lib_close(mm_camera_lib_handle *handle)
 {

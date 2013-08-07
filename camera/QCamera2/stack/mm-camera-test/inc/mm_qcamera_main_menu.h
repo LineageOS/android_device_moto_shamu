@@ -69,7 +69,6 @@ typedef enum
   BEST_SHOT,
   LIVE_SHOT,
   FLASH_MODES,
-  SWITCH_CAMERA,
   TOGGLE_ZSL,
   EXIT
 } Camera_main_menu_t;
@@ -173,7 +172,6 @@ typedef enum
   RESOLUTION_MAX         = MP5,
 } Camera_Resolution;
 
-
 typedef enum {
     WHITE_BALANCE_STATE,
     WHITE_BALANCE_TEMPERATURE,
@@ -264,6 +262,7 @@ typedef enum
   MENU_ID_SHARPNESSCHANGE,
   MENU_ID_BESTSHOT,
   MENU_ID_FLASHMODE,
+  MENU_ID_SENSORS,
   MENU_ID_INVALID,
 } menu_id_change_t;
 
@@ -319,6 +318,11 @@ typedef struct{
     Camera_main_menu_t main_menu;
     char * menu_name;
 } CAMERA_MAIN_MENU_TBL_T;
+
+typedef struct{
+    char * menu_name;
+    int present;
+} CAMERA_SENSOR_MENU_TLB_T;
 
 typedef struct{
     Camera_Resolution cs_id;
