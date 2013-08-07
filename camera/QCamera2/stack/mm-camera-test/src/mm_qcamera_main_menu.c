@@ -83,6 +83,7 @@ const CAMERA_MAIN_MENU_TBL_T camera_main_menu_tbl[] = {
   {LIVE_SHOT,                  "Take a live snapshot"},
   {FLASH_MODES,                "Set Flash modes"},
   {TOGGLE_ZSL,                 "Toggle ZSL On/Off"},
+  {TAKE_RAW_SNAPSHOT,          "Take RAW snapshot"},
   {EXIT,                       "Exit"}
 };
 
@@ -395,6 +396,11 @@ int next_menu(menu_id_change_t current_menu_id, char keypress, camera_action_t *
           * action_id_ptr = ACTION_TOGGLE_ZSL;
           CDBG("Toggle ZSL\n");
           break;
+        case TAKE_RAW_SNAPSHOT:
+            * action_id_ptr = ACTION_TAKE_RAW_SNAPSHOT;
+            next_menu_id = MENU_ID_MAIN;
+            CDBG("Capture RAW\n");
+            break;
         case EXIT:
           * action_id_ptr = ACTION_EXIT;
           CDBG("Exit \n");
@@ -1632,7 +1638,6 @@ static int submain()
         current_menu_id = MENU_ID_SENSORS;
     }
 
-
     do {
         print_current_menu (current_menu_id);
         fgets(tc_buf, 3, stdin);
@@ -1752,6 +1757,61 @@ static int submain()
                 decrease_sharpness(&lib_handle);
                 break;
 
+            case ACTION_SET_BESTSHOT_MODE:
+                CDBG("Selection for bestshot\n");
+                set_bestshot_mode(&lib_handle, action_param);
+                break;
+
+            case ACTION_SET_FLASH_MODE:
+                printf("\n Selection for flashmode\n");
+                set_flash_mode(&lib_handle, action_param);
+                break;
+
+            case ACTION_SWITCH_CAMERA:
+                rc = mm_camera_lib_close(&lib_handle);
+                if (rc != MM_CAMERA_OK) {
+                    CDBG_ERROR("%s:mm_camera_lib_close() err=%d\n", __func__, rc);
+                    goto ERROR;
+                }
+
+                rc = mm_camera_lib_open(&lib_handle, action_param);
+                if (rc != MM_CAMERA_OK) {
+                    CDBG_ERROR("%s:mm_camera_lib_open() err=%d\n", __func__, rc);
+                    goto ERROR;
+                }
+
+                break;
+
+            case ACTION_TOGGLE_ZSL:
+                printf("ZSL Toggle !!!\n");
+                isZSL = !isZSL;
+                if ( isZSL ) {
+                    printf("ZSL on !!!\n");
+                } else {
+                    printf("ZSL off !!!\n");
+                }
+                rc = mm_camera_lib_send_command(&lib_handle,
+                                                MM_CAMERA_LIB_ZSL_ENABLE,
+                                                &isZSL,
+                                                NULL);
+                if (rc != MM_CAMERA_OK) {
+                    CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
+                    goto ERROR;
+                }
+                break;
+
+            case ACTION_TAKE_RAW_SNAPSHOT:
+                CDBG_HIGH("\n Take RAW snapshot\n");
+                rc = mm_camera_lib_send_command(&lib_handle,
+                                                MM_CAMERA_LIB_RAW_CAPTURE,
+                                                NULL,
+                                                NULL);
+                if (rc != MM_CAMERA_OK) {
+                    CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
+                    goto ERROR;
+                }
+                break;
+
             case ACTION_TAKE_JPEG_SNAPSHOT:
                 CDBG_HIGH("\n Take JPEG snapshot\n");
                 rc = mm_camera_lib_send_command(&lib_handle,
@@ -1786,10 +1846,6 @@ static int submain()
         }
 #endif
         break;
-      case ACTION_SET_BESTSHOT_MODE:
-        CDBG("Selection for bestshot\n");
-        set_bestshot_mode(&lib_handle, action_param);
-        break;
       case ACTION_TAKE_LIVE_SNAPSHOT:
         printf("Selection for live shot\n");
 #if 0
@@ -1799,52 +1855,17 @@ static int submain()
            printf("\n !!! Use live snapshot option while recording only !!!\n");
 #endif
         break;
-      case ACTION_SET_FLASH_MODE:
-        printf("\n Selection for flashmode\n");
-        set_flash_mode(&lib_handle, action_param);
-        break;
 
-        case ACTION_SWITCH_CAMERA:
-            rc = mm_camera_lib_close(&lib_handle);
-            if (rc != MM_CAMERA_OK) {
-                CDBG_ERROR("%s:mm_camera_lib_close() err=%d\n", __func__, rc);
-                goto ERROR;
-            }
-
-            rc = mm_camera_lib_open(&lib_handle, action_param);
-            if (rc != MM_CAMERA_OK) {
-                CDBG_ERROR("%s:mm_camera_lib_open() err=%d\n", __func__, rc);
-                goto ERROR;
-            }
-
+        case ACTION_EXIT:
+            printf("Exiting....\n");
             break;
-       case ACTION_TOGGLE_ZSL:
-        printf("ZSL Toggle !!!\n");
-        isZSL = !isZSL;
-        if ( isZSL ) {
-          printf("ZSL on !!!\n");
-        } else {
-          printf("ZSL off !!!\n");
-        }
-        rc = mm_camera_lib_send_command(&lib_handle,
-                                        MM_CAMERA_LIB_ZSL_ENABLE,
-                                        &isZSL,
-                                        NULL);
-        if (rc != MM_CAMERA_OK) {
-            CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
-            goto ERROR;
-        }
-        break;
-      case ACTION_EXIT:
-        printf("Exiting....\n");
-        break;
-      case ACTION_NO_ACTION:
-        printf("Go back to main menu");
-        break;
+        case ACTION_NO_ACTION:
+            printf("Go back to main menu");
+            break;
 
-      default:
-        printf("\n\n!!!!!WRONG INPUT: %d!!!!\n", action_id);
-        break;
+        default:
+            printf("\n\n!!!!!WRONG INPUT: %d!!!!\n", action_id);
+            break;
     }
 
     usleep(1000 * 1000);
