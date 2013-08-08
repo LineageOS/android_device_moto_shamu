@@ -69,6 +69,7 @@ typedef enum
   FLASH_MODES,
   TOGGLE_ZSL,
   TAKE_RAW_SNAPSHOT,
+  SWITCH_SNAP_RESOLUTION,
   EXIT
 } Camera_main_menu_t;
 
@@ -102,6 +103,7 @@ typedef enum
   ACTION_SWITCH_CAMERA,
   ACTION_TOGGLE_ZSL,
   ACTION_TAKE_RAW_SNAPSHOT,
+  ACTION_SWITCH_RESOLUTION,
   ACTION_EXIT
 } camera_action_t;
 
@@ -136,6 +138,10 @@ typedef enum
 #define MP3_HEIGHT     1536
 #define MP5_WIDTH      2592
 #define MP5_HEIGHT     1944
+#define MP8_WIDTH      3264
+#define MP8_HEIGHT     2448
+#define MP12_WIDTH     4000
+#define MP12_HEIGHT    3000
 
 #define SVGA_WIDTH      800
 #define SVGA_HEIGHT     600
@@ -149,6 +155,21 @@ typedef enum
 #define WXGA_HEIGHT     768
 #define HD1080_WIDTH   1920
 #define HD1080_HEIGHT  1080
+
+
+#define ONEMP_WIDTH    1280
+#define SXGA_WIDTH     1280
+#define UXGA_WIDTH     1600
+#define QXGA_WIDTH     2048
+#define FIVEMP_WIDTH   2560
+
+
+#define ONEMP_HEIGHT    960
+#define SXGA_HEIGHT     1024
+#define UXGA_HEIGHT     1200
+#define QXGA_HEIGHT     1536
+#define FIVEMP_HEIGHT   1920
+
 
 typedef enum
 {
@@ -167,8 +188,18 @@ typedef enum
   MP2,
   MP3,
   MP5,
-  RESOLUTION_MAX         = MP5,
+  MP8,
+  MP12,
+  RESOLUTION_MAX         = MP12,
 } Camera_Resolution;
+
+typedef struct{
+    uint16_t width;
+    uint16_t  height;
+    char * name;
+    char * str_name;
+    int supported;
+} DIMENSION_TBL_T;
 
 typedef enum {
     WHITE_BALANCE_STATE,
@@ -260,6 +291,7 @@ typedef enum
   MENU_ID_BESTSHOT,
   MENU_ID_FLASHMODE,
   MENU_ID_SENSORS,
+  MENU_ID_SWITCH_RES,
   MENU_ID_INVALID,
 } menu_id_change_t;
 
