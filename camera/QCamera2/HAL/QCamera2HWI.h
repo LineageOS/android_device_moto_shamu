@@ -218,6 +218,10 @@ public:
     virtual QCameraMemory *allocateStreamBuf(cam_stream_type_t stream_type,
                                              int size,
                                              uint8_t &bufferCnt);
+    virtual int32_t allocateMoreStreamBuf(QCameraMemory *mem_obj,
+                                          int size,
+                                          uint8_t &bufferCnt);
+
     virtual QCameraHeapMemory *allocateStreamInfoBuf(cam_stream_type_t stream_type);
 
     // Implementation of QCameraThermalCallback

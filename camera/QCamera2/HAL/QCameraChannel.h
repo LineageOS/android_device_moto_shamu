@@ -55,7 +55,8 @@ public:
                               uint8_t minStreamBufnum,
                               cam_padding_info_t *paddingInfo,
                               stream_cb_routine stream_cb,
-                              void *userdata);
+                              void *userdata,
+                              bool bDynAllocBuf);
     virtual int32_t start();
     virtual int32_t stop();
     virtual int32_t bufDone(mm_camera_super_buf_t *recvd_frame);
@@ -72,6 +73,7 @@ protected:
     uint32_t m_camHandle;
     mm_camera_ops_t *m_camOps;
     bool m_bIsActive;
+    bool m_bAllowDynBufAlloc; // if buf allocation can be in two steps
 
     uint32_t m_handle;
     uint8_t m_numStreams;

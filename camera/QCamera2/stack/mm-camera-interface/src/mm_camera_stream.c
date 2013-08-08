@@ -813,7 +813,7 @@ int32_t mm_stream_config(mm_stream_t *my_obj,
     CDBG("%s: E, my_handle = 0x%x, fd = %d, state = %d",
          __func__, my_obj->my_hdl, my_obj->fd, my_obj->state);
     my_obj->stream_info = config->stream_info;
-    my_obj->buf_num = 0;
+    my_obj->buf_num = config->stream_info->num_bufs;
     my_obj->mem_vtbl = config->mem_vtbl;
     my_obj->padding_info = config->padding_info;
     /* cd through intf always palced at idx 0 of buf_cb */
@@ -1201,6 +1201,9 @@ int32_t mm_stream_request_buf(mm_stream_t * my_obj)
     CDBG("%s: E, my_handle = 0x%x, fd = %d, state = %d",
          __func__, my_obj->my_hdl, my_obj->fd, my_obj->state);
 
+    CDBG_ERROR("%s: buf_num = %d, stream type = %d",
+         __func__, buf_num, my_obj->stream_info->stream_type);
+
     if(buf_num > MM_CAMERA_MAX_NUM_FRAMES) {
         CDBG_ERROR("%s: buf num %d > max limit %d\n",
                    __func__, buf_num, MM_CAMERA_MAX_NUM_FRAMES);
@@ -1216,6 +1219,7 @@ int32_t mm_stream_request_buf(mm_stream_t * my_obj)
       CDBG_ERROR("%s: fd=%d, ioctl VIDIOC_REQBUFS failed: rc=%d\n",
            __func__, my_obj->fd, rc);
     }
+
     CDBG("%s :X rc = %d",__func__,rc);
     return rc;
 }
@@ -1445,6 +1449,9 @@ int32_t mm_stream_init_bufs(mm_stream_t * my_obj)
 
     free(reg_flags);
     reg_flags = NULL;
+
+    /* update in stream info about number of stream buffers */
+    my_obj->stream_info->num_bufs = my_obj->buf_num;
 
     return rc;
 }
