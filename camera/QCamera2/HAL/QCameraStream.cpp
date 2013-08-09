@@ -913,6 +913,26 @@ int32_t QCameraStream::getCropInfo(cam_rect_t &crop)
 }
 
 /*===========================================================================
+ * FUNCTION   : setCropInfo
+ *
+ * DESCRIPTION: set crop info of the stream
+ *
+ * PARAMETERS :
+ *   @crop    : struct to store new crop info
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraStream::setCropInfo(cam_rect_t crop)
+{
+    pthread_mutex_lock(&mCropLock);
+    mCropInfo = crop;
+    pthread_mutex_unlock(&mCropLock);
+    return NO_ERROR;
+}
+
+/*===========================================================================
  * FUNCTION   : getFrameDimension
  *
  * DESCRIPTION: query stream frame dimension info
@@ -1057,6 +1077,32 @@ int32_t QCameraStream::setParameter(cam_stream_parm_buffer_t &param)
     int32_t rc = NO_ERROR;
     mStreamInfo->parm_buf = param;
     rc = mCamOps->set_stream_parms(mCamHandle,
+                                   mChannelHandle,
+                                   mHandle,
+                                   &mStreamInfo->parm_buf);
+    if (rc == NO_ERROR) {
+        param = mStreamInfo->parm_buf;
+    }
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : getParameter
+ *
+ * DESCRIPTION: get stream based parameters
+ *
+ * PARAMETERS :
+ *   @param   : ptr to parameters to be red
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraStream::getParameter(cam_stream_parm_buffer_t &param)
+{
+    int32_t rc = NO_ERROR;
+    mStreamInfo->parm_buf = param;
+    rc = mCamOps->get_stream_parms(mCamHandle,
                                    mChannelHandle,
                                    mHandle,
                                    &mStreamInfo->parm_buf);
