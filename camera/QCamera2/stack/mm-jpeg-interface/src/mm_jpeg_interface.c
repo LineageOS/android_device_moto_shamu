@@ -285,7 +285,7 @@ static int32_t mm_jpeg_intf_close(uint32_t client_hdl)
  *       Open a jpeg client
  *
  **/
-uint32_t jpeg_open(mm_jpeg_ops_t *ops)
+uint32_t jpeg_open(mm_jpeg_ops_t *ops, mm_dimension picture_size)
 {
   int32_t rc = 0;
   uint32_t clnt_hdl = 0;
@@ -303,6 +303,11 @@ uint32_t jpeg_open(mm_jpeg_ops_t *ops)
 
     /* initialize jpeg obj */
     memset(jpeg_obj, 0, sizeof(mm_jpeg_obj));
+
+    /* used for work buf calculation */
+    jpeg_obj->max_pic_w = picture_size.w;
+    jpeg_obj->max_pic_h = picture_size.h;
+
     rc = mm_jpeg_init(jpeg_obj);
     if(0 != rc) {
       CDBG_ERROR("%s:%d] mm_jpeg_init err = %d", __func__, __LINE__, rc);

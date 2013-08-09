@@ -117,8 +117,14 @@ int32_t QCameraPostProcessor::init(jpeg_encode_callback_t jpeg_cb, void *user_da
 {
     mJpegCB = jpeg_cb;
     mJpegUserData = user_data;
+    mm_dimension max_size;
 
-    mJpegClientHandle = jpeg_open(&mJpegHandle);
+    //set max pic size
+    memset(&max_size, 0, sizeof(mm_dimension));
+    max_size.w = m_parent->m_max_pic_width;
+    max_size.h = m_parent->m_max_pic_height;
+
+    mJpegClientHandle = jpeg_open(&mJpegHandle, max_size);
     if(!mJpegClientHandle) {
         ALOGE("%s : jpeg_open did not work", __func__);
         return UNKNOWN_ERROR;
