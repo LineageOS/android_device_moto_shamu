@@ -410,6 +410,7 @@ private:
 
     static void releaseCameraMemory(void *data, void *cookie);
     static void returnStreamBuffer(void *data, void *cookie);
+    static int32_t getEffectValue(const char *effect);
 
 private:
     camera_device_t   mCameraDevice;

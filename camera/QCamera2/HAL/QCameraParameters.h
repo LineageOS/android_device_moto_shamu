@@ -409,6 +409,7 @@ public:
 
     friend class QCameraReprocScaleParam;
     QCameraReprocScaleParam m_reprocScaleParam;
+    static const QCameraMap EFFECT_MODES_MAP[];
 
     void getSupportedHfrSizes(Vector<Size> &sizes);
     void setPreviewFrameRateMode(const char *mode);
@@ -633,7 +634,6 @@ private:
     static const QCameraMap PICTURE_TYPES_MAP[];
     static const QCameraMap RAW_FORMATS_MAP[];
     static const QCameraMap FOCUS_MODES_MAP[];
-    static const QCameraMap EFFECT_MODES_MAP[];
     static const QCameraMap SCENE_MODES_MAP[];
     static const QCameraMap FLASH_MODES_MAP[];
     static const QCameraMap FOCUS_ALGO_MAP[];

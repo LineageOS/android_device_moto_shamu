@@ -1219,6 +1219,7 @@ typedef struct {
 #define CAM_QCOM_FEATURE_VIDEO_HDR      (1<<8)
 #define CAM_QCOM_FEATURE_CAC            (1<<9)
 #define CAM_QCOM_FEATURE_SCALE          (1<<10)
+#define CAM_QCOM_FEATURE_EFFECT         (1<<11)
 
 // Counter clock wise
 typedef enum {
@@ -1270,6 +1271,7 @@ typedef struct {
     cam_rotation_t rotation;
     uint32_t flip;
     int32_t sharpness;
+    int32_t effect;
     cam_hdr_param_t hdr_param;
     cam_scale_param_t scale_param;
 } cam_pp_feature_config_t;
