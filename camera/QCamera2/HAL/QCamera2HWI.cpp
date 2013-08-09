@@ -1351,8 +1351,7 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
     case CAM_STREAM_TYPE_OFFLINE_PROC:
         {
             bufferCnt = minCaptureBuffers +
-                        mParameters.getNumOfExtraHDROutBufsIfNeeded() +
-                        mParameters.getMaxUnmatchedFramesInQueue();
+                        mParameters.getNumOfExtraHDROutBufsIfNeeded();
 
             if (bufferCnt > zslQBuffers + minCircularBufNum) {
                 bufferCnt = zslQBuffers + minCircularBufNum;
@@ -3523,6 +3522,10 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
     }
 
     uint8_t minStreamBufNum = getBufNumRequired(CAM_STREAM_TYPE_OFFLINE_PROC);
+
+    if (pp_config.feature_mask) {
+        minStreamBufNum += mParameters.getMaxUnmatchedFramesInQueue();
+    }
 
     if (mParameters.isHDREnabled()){
         pp_config.feature_mask |= CAM_QCOM_FEATURE_HDR;
