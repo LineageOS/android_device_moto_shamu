@@ -49,6 +49,7 @@
 #define MAX_ROI 5
 #define MAX_STREAM_NUM_IN_BUNDLE 4
 #define MAX_NUM_STREAMS          8
+#define MAX_SCALE_SIZES_CNT 8
 
 typedef enum {
     CAM_HAL_V1 = 1,

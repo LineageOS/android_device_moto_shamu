@@ -541,6 +541,7 @@ const QCameraParameters::QCameraMap QCameraParameters::FLIP_MODES_MAP[] = {
  *==========================================================================*/
 QCameraParameters::QCameraParameters()
     : CameraParameters(),
+      m_reprocScaleParam(this),
       m_pCapability(NULL),
       m_pCamOpsTbl(NULL),
       m_pParamHeap(NULL),
@@ -606,6 +607,7 @@ QCameraParameters::QCameraParameters()
  *==========================================================================*/
 QCameraParameters::QCameraParameters(const String8 &params)
     : CameraParameters(params),
+    m_reprocScaleParam(this),
     m_pCapability(NULL),
     m_pCamOpsTbl(NULL),
     m_pParamHeap(NULL),
@@ -6393,5 +6395,441 @@ int32_t QCameraParameters::commitParamChanges()
 
     return NO_ERROR;
 }
+
+
+/*===========================================================================
+ * FUNCTION   : QCameraReprocScaleParam
+ *
+ * DESCRIPTION: constructor of QCameraReprocScaleParam
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
+QCameraReprocScaleParam::QCameraReprocScaleParam(QCameraParameters *parent)
+  : mParent(parent),
+    mScaleEnabled(false),
+    mIsUnderScaling(false),
+    mScaleDirection(0),
+    mNeedScaleCnt(0),
+    mSensorSizeTblCnt(0),
+    mSensorSizeTbl(NULL),
+    mTotalSizeTblCnt(0)
+{
+    mPicSizeFromAPK.width = 0;
+    mPicSizeFromAPK.height = 0;
+    mPicSizeSetted.width = 0;
+    mPicSizeSetted.height = 0;
+    memset(mNeedScaledSizeTbl, 0, sizeof(mNeedScaledSizeTbl));
+    memset(mTotalSizeTbl, 0, sizeof(mTotalSizeTbl));
+}
+
+/*===========================================================================
+ * FUNCTION   : ~~QCameraReprocScaleParam
+ *
+ * DESCRIPTION: destructor of QCameraReprocScaleParam
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
+QCameraReprocScaleParam::~QCameraReprocScaleParam()
+{
+    //do nothing now.
+}
+
+/*===========================================================================
+ * FUNCTION   : setScaledSizeTbl
+ *
+ * DESCRIPTION: re-set picture size table with dimensions that need scaling if Reproc Scale is enabled
+ *
+ * PARAMETERS :
+ *   @scale_cnt   : count of picture sizes that want scale
+ *   @scale_tbl    : picture size table that want scale
+ *   @org_cnt     : sensor supported picture size count
+ *   @org_tbl      : sensor supported picture size table
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraReprocScaleParam::setScaleSizeTbl(uint8_t scale_cnt, cam_dimension_t *scale_tbl, uint8_t org_cnt, cam_dimension_t *org_tbl)
+{
+    int32_t rc = NO_ERROR;
+    int i;
+    mNeedScaleCnt = 0;
+
+    if(!mScaleEnabled || scale_cnt <=0 || scale_tbl == NULL || org_cnt <=0 || org_tbl == NULL){
+        return BAD_VALUE;    // Do not need scale, so also need not reset picture size table
+    }
+
+    mSensorSizeTblCnt = org_cnt;
+    mSensorSizeTbl = org_tbl;
+    mNeedScaleCnt = checkScaleSizeTable(scale_cnt, scale_tbl, org_cnt, org_tbl);
+    if(mNeedScaleCnt <= 0){
+        ALOGE("%s: do not have picture sizes need scaling.", __func__);
+        return BAD_VALUE;
+    }
+
+    if(mNeedScaleCnt + org_cnt > MAX_SIZES_CNT){
+        ALOGE("%s: picture size list exceed the max count.", __func__);
+        return BAD_VALUE;
+    }
+
+    //get the total picture size table
+    mTotalSizeTblCnt = mNeedScaleCnt + org_cnt;
+    for(i = 0; i < mNeedScaleCnt; i++){
+        mTotalSizeTbl[i].width = mNeedScaledSizeTbl[i].width;
+        mTotalSizeTbl[i].height = mNeedScaledSizeTbl[i].height;
+        ALOGD("%s: scale picture size: i =%d, width=%d, height=%d.", __func__,
+            i, mTotalSizeTbl[i].width, mTotalSizeTbl[i].height);
+    }
+    for(; i < mTotalSizeTblCnt; i++){
+        mTotalSizeTbl[i].width = org_tbl[i-mNeedScaleCnt].width;
+        mTotalSizeTbl[i].height = org_tbl[i-mNeedScaleCnt].height;
+        ALOGD("%s: sensor supportted picture size: i =%d, width=%d, height=%d.", __func__,
+            i, mTotalSizeTbl[i].width, mTotalSizeTbl[i].height);
+    }
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : getScaledSizeTblCnt
+ *
+ * DESCRIPTION: get picture size cnt that need scale
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : uint8_t type of picture size count
+ *==========================================================================*/
+uint8_t QCameraReprocScaleParam::getScaleSizeTblCnt()
+{
+    return mNeedScaleCnt;
+}
+
+/*===========================================================================
+ * FUNCTION   : getScaledSizeTbl
+ *
+ * DESCRIPTION: get picture size table that need scale
+ *
+ * PARAMETERS :  none
+ *
+ * RETURN     : cam_dimension_t list of picture size table
+ *==========================================================================*/
+cam_dimension_t *QCameraReprocScaleParam::getScaledSizeTbl()
+{
+    if(!mScaleEnabled)
+        return NULL;
+
+    return mNeedScaledSizeTbl;
+}
+
+/*===========================================================================
+ * FUNCTION   : setScaleEnable
+ *
+ * DESCRIPTION: enable or disable Reproc Scale
+ *
+ * PARAMETERS :
+ *   @enabled : enable: 1; disable 0
+ *
+ * RETURN     : none
+ *==========================================================================*/
+void QCameraReprocScaleParam::setScaleEnable(bool enabled)
+{
+    mScaleEnabled = enabled;
+}
+
+/*===========================================================================
+ * FUNCTION   : isScaleEnabled
+ *
+ * DESCRIPTION: check if Reproc Scale is enabled
+ *
+ * PARAMETERS :  none
+ *
+ * RETURN     : bool type of status
+ *==========================================================================*/
+bool QCameraReprocScaleParam::isScaleEnabled()
+{
+    return mScaleEnabled;
+}
+
+/*===========================================================================
+ * FUNCTION   : isScalePicSize
+ *
+ * DESCRIPTION: check if current picture size is from Scale Table
+ *
+ * PARAMETERS :
+ *   @width     : current picture width
+ *   @height    : current picture height
+ *
+ * RETURN     : bool type of status
+ *==========================================================================*/
+bool QCameraReprocScaleParam::isScalePicSize(int width, int height)
+{
+    //Check if the picture size is in scale table
+    if(mNeedScaleCnt <= 0)
+        return FALSE;
+
+    for(int i = 0; i < mNeedScaleCnt; i++){
+        if(mNeedScaledSizeTbl[i].width == width
+            && mNeedScaledSizeTbl[i].height == height){
+            //found match
+            return TRUE;
+        }
+    }
+
+    ALOGE("%s: Not in scale picture size table.", __func__);
+    return FALSE;
+}
+
+/*===========================================================================
+ * FUNCTION   : isValidatePicSize
+ *
+ * DESCRIPTION: check if current picture size is validate
+ *
+ * PARAMETERS :
+ *   @width     : current picture width
+ *   @height    : current picture height
+ *
+ * RETURN     : bool type of status
+ *==========================================================================*/
+bool QCameraReprocScaleParam::isValidatePicSize(int width, int height)
+{
+    int i = 0;
+
+    for(i = 0; i < mSensorSizeTblCnt; i++){
+        if(mSensorSizeTbl[i].width == width
+            && mSensorSizeTbl[i].height== height){
+            return TRUE;
+        }
+    }
+
+    for(i = 0; i < mNeedScaleCnt; i++){
+        if(mNeedScaledSizeTbl[i].width == width
+            && mNeedScaledSizeTbl[i].height== height){
+            return TRUE;
+        }
+    }
+
+    ALOGE("%s: Invalidate input picture size.", __func__);
+    return FALSE;
+}
+
+/*===========================================================================
+ * FUNCTION   : setSensorSupportedPicSize
+ *
+ * DESCRIPTION: set sensor supported picture size.
+ *    For Snapshot stream size configuration, we need use sensor supported size.
+ *    We will use CPP to do Scaling based on output Snapshot stream.
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraReprocScaleParam::setSensorSupportedPicSize()
+{
+    //will find a suitable picture size (here we leave a prossibility to add other scale requirement)
+    //Currently we only focus on upscaling, and checkScaleSizeTable() has guaranteed the dimension ratio.
+
+    if(!mIsUnderScaling || mSensorSizeTblCnt <= 0)
+        return BAD_VALUE;
+
+    //We just get the max sensor supported size here.
+    mPicSizeSetted.width = mSensorSizeTbl[0].width;
+    mPicSizeSetted.height = mSensorSizeTbl[0].height;
+
+    return NO_ERROR;
+}
+
+
+/*===========================================================================
+ * FUNCTION   : setValidatePicSize
+ *
+ * DESCRIPTION: set sensor supported size and change scale status.
+ *
+ * PARAMETERS :
+ *   @width    : input picture width
+ *   @height   : input picture height
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraReprocScaleParam::setValidatePicSize(int &width,int &height)
+{
+    if(!mScaleEnabled)
+        return BAD_VALUE;
+
+    mIsUnderScaling = FALSE; //default: not under scale
+
+    if(isScalePicSize(width, height)){
+        // input picture size need scaling operation. Record size from APK and setted
+        mIsUnderScaling = TRUE;
+        mPicSizeFromAPK.width = width;
+        mPicSizeFromAPK.height = height;
+
+        if(setSensorSupportedPicSize() != NO_ERROR)
+            return BAD_VALUE;
+
+        //re-set picture size to sensor supported size
+        width = mPicSizeSetted.width;
+        height = mPicSizeSetted.height;
+        ALOGD("%s: mPicSizeFromAPK- with=%d, height=%d, mPicSizeSetted- with =%d, height=%d.",
+            __func__, mPicSizeFromAPK.width, mPicSizeFromAPK.height, mPicSizeSetted.width, mPicSizeSetted.height);
+    }else{
+        mIsUnderScaling = FALSE;
+        //no scale is needed for input picture size
+        if(!isValidatePicSize(width, height)){
+            ALOGE("%s: invalidate input picture size.", __func__);
+            return BAD_VALUE;
+        }
+        mPicSizeSetted.width = width;
+        mPicSizeSetted.height = height;
+    }
+
+    ALOGD("%s: X. mIsUnderScaling=%d, width=%d, height=%d.", __func__, mIsUnderScaling, width, height);
+    return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : getPicSizeFromAPK
+ *
+ * DESCRIPTION: get picture size that get from APK
+ *
+ * PARAMETERS :
+ *   @width     : input width
+ *   @height    : input height
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraReprocScaleParam::getPicSizeFromAPK(int &width, int &height)
+{
+    if(!mIsUnderScaling)
+        return BAD_VALUE;
+
+    width = mPicSizeFromAPK.width;
+    height = mPicSizeFromAPK.height;
+    return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : getPicSizeSetted
+ *
+ * DESCRIPTION: get picture size that setted into mm-camera
+ *
+ * PARAMETERS :
+ *   @width     : input width
+ *   @height    : input height
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraReprocScaleParam::getPicSizeSetted(int &width, int &height)
+{
+    width = mPicSizeSetted.width;
+    height = mPicSizeSetted.height;
+    return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : isUnderScaling
+ *
+ * DESCRIPTION: check if we are in Reproc Scaling requirment
+ *
+ * PARAMETERS :  none
+ *
+ * RETURN     : bool type of status
+ *==========================================================================*/
+bool QCameraReprocScaleParam::isUnderScaling()
+{
+    return mIsUnderScaling;
+}
+
+/*===========================================================================
+ * FUNCTION   : checkScaleSizeTable
+ *
+ * DESCRIPTION: check PICTURE_SIZE_NEED_SCALE to choose
+ *
+ * PARAMETERS :
+ *   @scale_cnt   : count of picture sizes that want scale
+ *   @scale_tbl    : picture size table that want scale
+ *   @org_cnt     : sensor supported picture size count
+ *   @org_tbl      : sensor supported picture size table
+ *
+ * RETURN     : bool type of status
+ *==========================================================================*/
+uint8_t QCameraReprocScaleParam::checkScaleSizeTable(uint8_t scale_cnt, cam_dimension_t *scale_tbl, uint8_t org_cnt, cam_dimension_t *org_tbl)
+{
+    uint8_t stbl_cnt = 0;
+    uint8_t temp_cnt = 0;
+    int i = 0;
+    if(scale_cnt <=0 || scale_tbl == NULL || org_tbl == NULL || org_cnt <= 0)
+        return stbl_cnt;
+
+    //get validate scale size table. Currently we only support:
+    // 1. upscale. The scale size must larger than max sensor supported size
+    // 2. Scale dimension ratio must be same as the max sensor supported size.
+    temp_cnt = scale_cnt;
+    for(i = scale_cnt-1; i >= 0; i--){
+        if(scale_tbl[i].width > org_tbl[0].width ||
+            (scale_tbl[i].width == org_tbl[0].width &&
+             scale_tbl[i].height > org_tbl[0].height)){
+            //get the smallest scale size
+            break;
+        }
+        temp_cnt--;
+    }
+
+    //check dimension ratio
+    double supported_ratio = (double)org_tbl[0].width/ (double)org_tbl[0].height;
+    for(i = 0; i < temp_cnt; i++){
+        double cur_ratio = (double)scale_tbl[i].width/ (double)scale_tbl[i].height;
+        if(fabs(supported_ratio - cur_ratio) > ASPECT_TOLERANCE){
+            continue;
+        }
+        mNeedScaledSizeTbl[stbl_cnt].width = scale_tbl[i].width;
+        mNeedScaledSizeTbl[stbl_cnt].height= scale_tbl[i].height;
+        stbl_cnt++;
+    }
+
+    return stbl_cnt;
+}
+
+/*===========================================================================
+ * FUNCTION   : getTotalSizeTblCnt
+ *
+ * DESCRIPTION: get total picture size count after adding dimensions that need scaling
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : uint8_t type of picture size count
+ *==========================================================================*/
+uint8_t QCameraReprocScaleParam::getTotalSizeTblCnt()
+{
+    return mTotalSizeTblCnt;
+}
+
+/*===========================================================================
+ * FUNCTION   : getTotalSizeTbl
+ *
+ * DESCRIPTION: get picture size table after adding dimensions that need scaling
+ *
+ * PARAMETERS :  none
+ *
+ * RETURN     : cam_dimension_t list of picture size table
+ *==========================================================================*/
+cam_dimension_t *QCameraReprocScaleParam::getTotalSizeTbl()
+{
+    if(!mScaleEnabled)
+        return NULL;
+
+    return mTotalSizeTbl;
+}
+
 
 }; // namespace qcamera
