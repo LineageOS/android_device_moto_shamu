@@ -296,6 +296,7 @@ private:
     bool isCACEnabled();
     bool needReprocess();
     bool needRotationReprocess();
+    bool needScaleReprocess();
     void debugShowVideoFPS();
     void debugShowPreviewFPS();
     void dumpJpegToFile(const void *data, uint32_t size, int index);

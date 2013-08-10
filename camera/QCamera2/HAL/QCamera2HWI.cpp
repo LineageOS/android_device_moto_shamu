@@ -3538,6 +3538,12 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
         pp_config.hdr_param.hdr_enable = 0;
     }
 
+    if(needScaleReprocess()){
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_SCALE;
+        mParameters.m_reprocScaleParam.getPicSizeFromAPK(
+              pp_config.scale_param.output_width, pp_config.scale_param.output_height);
+    }
+
     ALOGD("%s: After pproc config check, ret = %x", __func__, pp_config.feature_mask);
 
     rc = pChannel->addReprocStreamsFromSource(*this,
@@ -4398,6 +4404,16 @@ bool QCamera2HardwareInterface::needReprocess()
             return true;
         }
     }
+
+    if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_SCALE) > 0 &&
+        mParameters.m_reprocScaleParam.isScaleEnabled() &&
+        mParameters.m_reprocScaleParam.isUnderScaling()) {
+        // Reproc Scale is enaled and also need Scaling to current Snapshot
+        ALOGD("%s: need do reprocess for scale", __func__);
+        pthread_mutex_unlock(&m_parm_lock);
+        return true;
+    }
+
     pthread_mutex_unlock(&m_parm_lock);
     return false;
 }
@@ -4435,6 +4451,39 @@ bool QCamera2HardwareInterface::needRotationReprocess()
     pthread_mutex_unlock(&m_parm_lock);
     return false;
 }
+
+/*===========================================================================
+ * FUNCTION   : needScaleReprocess
+ *
+ * DESCRIPTION: if scale needs to be done by reprocess in pp
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
+bool QCamera2HardwareInterface::needScaleReprocess()
+{
+    pthread_mutex_lock(&m_parm_lock);
+    if (!mParameters.isJpegPictureFormat()) {
+        // RAW image, no need to reprocess
+        pthread_mutex_unlock(&m_parm_lock);
+        return false;
+    }
+
+    if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_SCALE) > 0 &&
+        mParameters.m_reprocScaleParam.isScaleEnabled() &&
+        mParameters.m_reprocScaleParam.isUnderScaling()) {
+        // Reproc Scale is enaled and also need Scaling to current Snapshot
+        ALOGD("%s: need do reprocess for scale", __func__);
+        pthread_mutex_unlock(&m_parm_lock);
+        return true;
+    }
+
+    pthread_mutex_unlock(&m_parm_lock);
+    return false;
+}
+
 
 /*===========================================================================
  * FUNCTION   : getThumbnailSize
