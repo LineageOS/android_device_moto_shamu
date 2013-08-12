@@ -63,7 +63,6 @@
 const CAMERA_MAIN_MENU_TBL_T camera_main_menu_tbl[] = {
   {START_PREVIEW,               "Start preview"},
   {STOP_PREVIEW,               "Stop preview/video"},
-  {PREVIEW_VIDEO_RESOLUTION,   "Preview/Video Resolution"},
   {SET_WHITE_BALANCE,          "Set white balance mode"},
   {SET_EXP_METERING,           "Set exposure metering mode"},
   {GET_CTRL_VALUE,             "Get control value menu"},
@@ -76,7 +75,6 @@ const CAMERA_MAIN_MENU_TBL_T camera_main_menu_tbl[] = {
   {SET_ZOOM,                   "Set Digital Zoom."},
   {SET_SHARPNESS,              "Set Sharpness."},
   {TAKE_JPEG_SNAPSHOT,         "Take a snapshot"},
-  {TAKE_BURST_SNAPSHOT,        "Take burst snapshot"},
   {START_RECORDING,            "Start RECORDING"},
   {STOP_RECORDING,             "Stop RECORDING"},
   {BEST_SHOT,                  "Set best-shot mode"},
@@ -92,17 +90,6 @@ CAMERA_SENSOR_MENU_TLB_T sensor_tbl[] = {
         {"Secondary Camera",    0},
         {"Camera Sensor 3",     0},
         {"Camera Sensor 4",     0}
-};
-
-const PREVIEW_DIMENSION_TBL_T preview_video_dimension_tbl[] = {
-   {  QCIF,       QCIF_WIDTH,       QCIF_HEIGHT,        "QCIF",       "Preview/Video Resolution: QCIF <176x144>"},
-   {  QVGA,       QVGA_WIDTH,       QVGA_HEIGHT,        "QVGA",       "Preview/Video Resolution: QVGA <320x240>"},
-   {  VGA,        VGA_WIDTH,        VGA_HEIGHT,         "VGA",        "Preview/Video Resolution: VGA <640x480>"},
-   {  WVGA,       WVGA_WIDTH,       WVGA_HEIGHT,        "WVGA",       "Preview/Video Resolution: WVGA <800x480>"},
-   {  WVGA_PLUS,  WVGA_PLUS_WIDTH,  WVGA_PLUS_HEIGHT,   "WVGA_PLUS",  "Preview/Video Resolution: WVGA_PLUS <960x720>"},
-   {  HD720,      HD720_WIDTH,      HD720_HEIGHT,       "HD720",      "Preview/Video Resolution: HD720 <1280x720>"},
-   {  HD720_PLUS, HD720_PLUS_WIDTH, HD720_PLUS_HEIGHT,  "HD720_PLUS", "Preview/Video Resolution: HD720_PLUS <1440x1080>"},
-   {  HD1080,     HD1080_WIDTH,     HD1080_HEIGHT,      "HD1080",     "Preview/Video Resolution: HD1080 <1920x1080>"},
 };
 
 const CAMERA_BRIGHTNESS_TBL_T brightness_change_tbl[] = {
@@ -302,11 +289,6 @@ int next_menu(menu_id_change_t current_menu_id, char keypress, camera_action_t *
           CDBG("STOP_PREVIEW\n");
           break;
 
-        case PREVIEW_VIDEO_RESOLUTION:
-          next_menu_id = MENU_ID_PREVIEWVIDEORESOLUTIONCHANGE;
-          CDBG("next_menu_id = MENU_ID_PREVIEWVIDEORESOLUTIONCHANGE = %d\n", next_menu_id);
-          break;
-
         case SET_WHITE_BALANCE:
           next_menu_id = MENU_ID_WHITEBALANCECHANGE;
           CDBG("next_menu_id = MENU_ID_WHITEBALANCECHANGE = %d\n", next_menu_id);
@@ -379,11 +361,6 @@ int next_menu(menu_id_change_t current_menu_id, char keypress, camera_action_t *
           printf("\n Taking JPEG snapshot\n");
           break;
 
-       case TAKE_BURST_SNAPSHOT:
-          * action_id_ptr = ACTION_TAKE_BURST_SNAPSHOT;
-          printf("\n Taking Burst snapshot\n");
-          break;
-
         case START_RECORDING:
           * action_id_ptr = ACTION_START_RECORDING;
           CDBG("Start recording\n");
@@ -417,18 +394,6 @@ int next_menu(menu_id_change_t current_menu_id, char keypress, camera_action_t *
         *action_id_ptr = ACTION_SWITCH_CAMERA;
         *action_param = output_to_event;
         break;
-
-    case MENU_ID_PREVIEWVIDEORESOLUTIONCHANGE:
-      printf("MENU_ID_PREVIEWVIDEORESOLUTIONCHANGE\n");
-      * action_id_ptr = ACTION_PREVIEW_VIDEO_RESOLUTION;
-      if (output_to_event > RESOLUTION_PREVIEW_VIDEO_MAX ) {
-          next_menu_id = current_menu_id;
-      }
-      else {
-        next_menu_id = MENU_ID_MAIN;
-        * action_param = output_to_event;
-      }
-      break;
 
     case MENU_ID_WHITEBALANCECHANGE:
       printf("MENU_ID_WHITEBALANCECHANGE\n");
@@ -645,26 +610,6 @@ static void print_menu_preview_video(void) {
   return;
 }
 
-static void camera_preview_video_resolution_change_tbl(void) {
-    unsigned int i;
-
-    printf("\n");
-    printf("==========================================================\n");
-    printf("      Camera is in preview/video resolution mode       \n");
-    printf("==========================================================\n\n");
-
-    char previewVideomenuNum = 'A';
-    for (i = 0; i < sizeof(preview_video_dimension_tbl) /
-      sizeof(preview_video_dimension_tbl[0]); i++) {
-        printf("%c.  %s\n", previewVideomenuNum,
-          preview_video_dimension_tbl[i].str_name);
-        previewVideomenuNum++;
-    }
-
-    printf("\nPlease enter your choice for Preview/Video Resolution: ");
-    return;
-}
-
 static void camera_preview_video_wb_change_tbl(void) {
   unsigned int i;
   printf("\n");
@@ -806,22 +751,6 @@ static void camera_saturation_change_tbl(void) {
 
     printf("\nPlease enter your choice for Saturation Change: ");
     return;
-}
-
-char * set_preview_video_dimension_tbl(Camera_Resolution cs_id, uint16_t * width, uint16_t * height)
-{
-  unsigned int i;
-  char * ptr = NULL;
-  for (i = 0; i < sizeof(preview_video_dimension_tbl) /
-    sizeof(preview_video_dimension_tbl[0]); i++) {
-      if (cs_id == preview_video_dimension_tbl[i].cs_id) {
-        *width = preview_video_dimension_tbl[i].width;
-        *height = preview_video_dimension_tbl[i].height;
-        ptr = preview_video_dimension_tbl[i].name;
-        break;
-      }
-  }
-  return ptr;
 }
 
 static void camera_preview_video_iso_change_tbl(void) {
@@ -1098,18 +1027,6 @@ int take_jpeg_snapshot(mm_camera_test_obj_t *test_obj, int is_burst_mode)
   return rc;
 }
 
-/*
-static void system_dimension_set(mm_camera_test_obj_t *test_obj)
-{
-  if (preview_video_resolution_flag == 0) {
-    test_obj->preview_resolution.user_input_display_width = DEFAULT_PREVIEW_WIDTH;
-    test_obj->preview_resolution.user_input_display_height = DEFAULT_PREVIEW_HEIGHT;
-  } else {
-    test_obj->preview_resolution.user_input_display_width = input_display.user_input_display_width;
-    test_obj->preview_resolution.user_input_display_height = input_display.user_input_display_height;
-  }
-}
-*/
 /*===========================================================================
  * FUNCTION    - main -
  *
@@ -1148,37 +1065,6 @@ int main()
 
   printf("Exiting application\n");
   return 0;
-}
-
-/*===========================================================================
- * FUNCTION     - preview_resolution -
- *
- * DESCRIPTION:
- * ===========================================================================*/
-int preview_video_resolution (mm_camera_test_obj_t *test_obj, int preview_video_action_param) {
-  char * resolution_name;
-  CDBG_HIGH("\n Selecting the action for preview/video resolution = %d \n", preview_video_action_param);
-  resolution_name = set_preview_video_dimension_tbl(preview_video_action_param,
-                      & input_display.user_input_display_width,
-                      & input_display.user_input_display_height);
-
-  CDBG_HIGH("\n Selected preview/video resolution is %s\n", resolution_name);
-
-  if (resolution_name == NULL) {
-    CDBG("main:%d set_preview_dimension failed!\n", __LINE__);
-    goto ERROR;
-  }
-
-  CDBG_HIGH("\n Selected Preview Resolution: display_width = %d, display_height = %d\n",
-    input_display.user_input_display_width, input_display.user_input_display_height);
-
-  preview_video_resolution_flag = 1;
-  //stopping preview before resolution change.
-  mm_app_stop_preview(test_obj);
-  return 0;
-
-ERROR:
-  return -1;
 }
 
 /*===========================================================================
@@ -1562,8 +1448,6 @@ int set_bestshot_mode(mm_camera_lib_handle *lib_handle, int action_param) {
 int print_current_menu (menu_id_change_t current_menu_id) {
   if (current_menu_id == MENU_ID_MAIN) {
     print_menu_preview_video ();
-  } else if (current_menu_id == MENU_ID_PREVIEWVIDEORESOLUTIONCHANGE) {
-    camera_preview_video_resolution_change_tbl ();
   } else if (current_menu_id == MENU_ID_WHITEBALANCECHANGE) {
     camera_preview_video_wb_change_tbl();
   } else if (current_menu_id == MENU_ID_EXPMETERINGCHANGE) {
@@ -1672,10 +1556,6 @@ static int submain()
                 }
                 previewing = 0;
                 break;
-
-            case ACTION_PREVIEW_VIDEO_RESOLUTION:
-            //TODO:
-            break;
 
             case ACTION_SET_WHITE_BALANCE:
                 CDBG("Selection for the White Balance changes\n");
@@ -1822,10 +1702,6 @@ static int submain()
                     CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
                     goto ERROR;
                 }
-                break;
-
-            case ACTION_TAKE_BURST_SNAPSHOT:
-                //TODO:
                 break;
 
       case ACTION_START_RECORDING:
