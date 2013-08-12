@@ -201,7 +201,7 @@ const FLASH_MODE_TBL_T flashmodes_tbl[] = {
 /*===========================================================================
  * Forward declarations
  *===========================================================================*/
-static void system_dimension_set(mm_camera_test_obj_t *test_obj);
+//static void system_dimension_set(mm_camera_test_obj_t *test_obj);
 /*===========================================================================
  * Static global variables
  *===========================================================================*/
@@ -890,14 +890,17 @@ static void camera_set_flashmode_tbl(void)
  *
  * DESCRIPTION:
  * ===========================================================================*/
-int increase_contrast (mm_camera_test_obj_t *test_obj) {
+int increase_contrast (mm_camera_lib_handle *lib_handle) {
         contrast += CAMERA_CONTRAST_STEP;
         if (contrast > CAMERA_MAX_CONTRAST) {
                 contrast = CAMERA_MAX_CONTRAST;
                 printf("Reached max CONTRAST. \n");
         }
         printf("Increase Contrast to %d\n", contrast);
-        return mm_app_set_params(test_obj, CAM_INTF_PARM_CONTRAST, contrast);
+        return mm_camera_lib_send_command(lib_handle,
+                                          MM_CAMERA_LIB_CONTRAST,
+                                          &brightness,
+                                          NULL);
 }
 
 /*===========================================================================
@@ -905,14 +908,17 @@ int increase_contrast (mm_camera_test_obj_t *test_obj) {
  *
  * DESCRIPTION:
  * ===========================================================================*/
-int decrease_contrast (mm_camera_test_obj_t *test_obj) {
+int decrease_contrast (mm_camera_lib_handle *lib_handle) {
         contrast -= CAMERA_CONTRAST_STEP;
         if (contrast < CAMERA_MIN_CONTRAST) {
                 contrast = CAMERA_MIN_CONTRAST;
                 printf("Reached min CONTRAST. \n");
         }
         printf("Decrease Contrast to %d\n", contrast);
-        return mm_app_set_params(test_obj, CAM_INTF_PARM_CONTRAST, contrast);
+        return mm_camera_lib_send_command(lib_handle,
+                                          MM_CAMERA_LIB_CONTRAST,
+                                          &brightness,
+                                          NULL);
 }
 
 /*===========================================================================
@@ -920,14 +926,17 @@ int decrease_contrast (mm_camera_test_obj_t *test_obj) {
  *
  * DESCRIPTION:
  * ===========================================================================*/
-int decrease_brightness (mm_camera_test_obj_t *test_obj) {
+int decrease_brightness (mm_camera_lib_handle *lib_handle) {
         brightness -= CAMERA_BRIGHTNESS_STEP;
         if (brightness < CAMERA_MIN_BRIGHTNESS) {
                 brightness = CAMERA_MIN_BRIGHTNESS;
                 printf("Reached min BRIGHTNESS. \n");
         }
         printf("Decrease Brightness to %d\n", brightness);
-        return mm_app_set_params(test_obj, CAM_INTF_PARM_BRIGHTNESS, brightness);
+        return mm_camera_lib_send_command(lib_handle,
+                                          MM_CAMERA_LIB_BRIGHTNESS,
+                                          &brightness,
+                                          NULL);
 }
 
 /*===========================================================================
@@ -935,14 +944,17 @@ int decrease_brightness (mm_camera_test_obj_t *test_obj) {
  *
  * DESCRIPTION:
  * ===========================================================================*/
-int increase_brightness (mm_camera_test_obj_t *test_obj) {
+int increase_brightness (mm_camera_lib_handle *lib_handle) {
         brightness += CAMERA_BRIGHTNESS_STEP;
         if (brightness > CAMERA_MAX_BRIGHTNESS) {
                 brightness = CAMERA_MAX_BRIGHTNESS;
                 printf("Reached max BRIGHTNESS. \n");
         }
         printf("Increase Brightness to %d\n", brightness);
-        return mm_app_set_params(test_obj, CAM_INTF_PARM_BRIGHTNESS, brightness);
+        return mm_camera_lib_send_command(lib_handle,
+                                          MM_CAMERA_LIB_BRIGHTNESS,
+                                          &brightness,
+                                          NULL);
 }
 
 /*===========================================================================
@@ -1049,6 +1061,7 @@ int take_jpeg_snapshot(mm_camera_test_obj_t *test_obj, int is_burst_mode)
   return rc;
 }
 
+/*
 static void system_dimension_set(mm_camera_test_obj_t *test_obj)
 {
   if (preview_video_resolution_flag == 0) {
@@ -1059,6 +1072,7 @@ static void system_dimension_set(mm_camera_test_obj_t *test_obj)
     test_obj->preview_resolution.user_input_display_height = input_display.user_input_display_height;
   }
 }
+*/
 /*===========================================================================
  * FUNCTION    - main -
  *
@@ -1067,12 +1081,13 @@ static void system_dimension_set(mm_camera_test_obj_t *test_obj)
 int main()
 {
     int keep_on_going = 1;
-    // int rc = 0;
+    char tc_buf[3];
     int mode = 0;
 
     printf("Please Select Execution Mode:\n");
     printf("0: Menu Based 1: Regression\n");
-    mode = getchar() - '0';
+    fgets(tc_buf, 3, stdin);
+    mode = tc_buf[0] - '0';
     if(mode == 0) {
       printf("\nStarting Menu based!!\n");
     } else if(mode == 1) {
@@ -1090,16 +1105,8 @@ int main()
        exit(-1);
     }
 
-    mm_camera_app_t cam_app;
-    memset(&cam_app, 0, sizeof(mm_camera_app_t));
-    if((mm_app_load_hal(&cam_app) != MM_CAMERA_OK)) {
-        CDBG_ERROR("%s:mm_app_init err\n", __func__);
-        return -1;
-    }
-    printf("\nHAL Loaded successfully!!\n");
-
     do {
-       keep_on_going = submain(&cam_app);
+       keep_on_going = submain();
     } while ( keep_on_going );
 
   printf("Exiting application\n");
@@ -1142,7 +1149,7 @@ ERROR:
  *
  * DESCRIPTION:
  * ===========================================================================*/
-int set_whitebalance (mm_camera_test_obj_t *test_obj, int wb_action_param) {
+int set_whitebalance (mm_camera_lib_handle *lib_handle, int wb_action_param) {
         cam_wb_mode_type type = 0;
         switch (wb_action_param) {
                 case WB_AUTO:
@@ -1180,7 +1187,10 @@ int set_whitebalance (mm_camera_test_obj_t *test_obj, int wb_action_param) {
                 default:
                         break;
         }
-        return mm_app_set_params(test_obj, CAM_INTF_PARM_WHITE_BALANCE, type);
+        return mm_camera_lib_send_command(lib_handle,
+                                          MM_CAMERA_LIB_WB,
+                                          &type,
+                                          NULL);
 }
 
 
@@ -1189,7 +1199,7 @@ int set_whitebalance (mm_camera_test_obj_t *test_obj, int wb_action_param) {
  *
  * DESCRIPTION:
  * ===========================================================================*/
-int set_exp_metering (mm_camera_test_obj_t *test_obj, int exp_metering_action_param) {
+int set_exp_metering (mm_camera_lib_handle *lib_handle, int exp_metering_action_param) {
         cam_auto_exposure_mode_type type = 0;
         switch (exp_metering_action_param) {
 		case AUTO_EXP_FRAME_AVG:
@@ -1223,7 +1233,10 @@ int set_exp_metering (mm_camera_test_obj_t *test_obj, int exp_metering_action_pa
                 default:
                         break;
         }
-        return mm_app_set_params(test_obj, CAM_INTF_PARM_AEC_ALGO_TYPE, type);
+        return mm_camera_lib_send_command(lib_handle,
+                                          MM_CAMERA_LIB_EXPOSURE_METERING,
+                                          &type,
+                                          NULL);
 }
 
 int get_ctrl_value (int ctrl_value_mode_param){
@@ -1284,7 +1297,7 @@ int toggle_afr () {
   return 0;
 }
 
-int set_zoom (mm_camera_test_obj_t *test_obj, int zoom_action_param) {
+int set_zoom (mm_camera_lib_handle *lib_handle, int zoom_action_param) {
 
     if (zoom_action_param == ZOOM_IN) {
         zoom_level += ZOOM_STEP;
@@ -1298,7 +1311,10 @@ int set_zoom (mm_camera_test_obj_t *test_obj, int zoom_action_param) {
         CDBG("%s: Invalid zoom_action_param value\n", __func__);
         return -EINVAL;
     }
-    return mm_app_set_params(test_obj, CAM_INTF_PARM_ZOOM, zoom_level);
+    return mm_camera_lib_send_command(lib_handle,
+                                      MM_CAMERA_LIB_ZOOM,
+                                      &zoom_level,
+                                      NULL);
 }
 
 /*===========================================================================
@@ -1306,7 +1322,7 @@ int set_zoom (mm_camera_test_obj_t *test_obj, int zoom_action_param) {
  *
  * DESCRIPTION:
  * ===========================================================================*/
-int set_iso (mm_camera_test_obj_t *test_obj, int iso_action_param) {
+int set_iso (mm_camera_lib_handle *lib_handle, int iso_action_param) {
     cam_iso_mode_type type = 0;
     switch (iso_action_param) {
         case ISO_AUTO:
@@ -1340,7 +1356,10 @@ int set_iso (mm_camera_test_obj_t *test_obj, int iso_action_param) {
         default:
             break;
     }
-    return mm_app_set_params(test_obj, CAM_INTF_PARM_BESTSHOT_MODE, type);
+    return mm_camera_lib_send_command(lib_handle,
+                                      MM_CAMERA_LIB_ISO,
+                                      &type,
+                                      NULL);
 }
 
 /*===========================================================================
@@ -1348,14 +1367,17 @@ int set_iso (mm_camera_test_obj_t *test_obj, int iso_action_param) {
  *
  * DESCRIPTION:
  * ===========================================================================*/
-int increase_sharpness (mm_camera_test_obj_t *test_obj) {
+int increase_sharpness (mm_camera_lib_handle *lib_handle) {
     sharpness += CAMERA_SHARPNESS_STEP;
     if (sharpness > CAMERA_MAX_SHARPNESS) {
         sharpness = CAMERA_MAX_SHARPNESS;
         printf("Reached max SHARPNESS. \n");
     }
     printf("Increase Sharpness to %d\n", sharpness);
-    return mm_app_set_params(test_obj, CAM_INTF_PARM_SHARPNESS, sharpness);
+    return mm_camera_lib_send_command(lib_handle,
+                                      MM_CAMERA_LIB_SHARPNESS,
+                                      &sharpness,
+                                      NULL);
 }
 
 /*===========================================================================
@@ -1363,17 +1385,20 @@ int increase_sharpness (mm_camera_test_obj_t *test_obj) {
  *
  * DESCRIPTION:
  * ===========================================================================*/
-int decrease_sharpness (mm_camera_test_obj_t *test_obj) {
+int decrease_sharpness (mm_camera_lib_handle *lib_handle) {
     sharpness -= CAMERA_SHARPNESS_STEP;
     if (sharpness < CAMERA_MIN_SHARPNESS) {
         sharpness = CAMERA_MIN_SHARPNESS;
         printf("Reached min SHARPNESS. \n");
     }
     printf("Decrease Sharpness to %d\n", sharpness);
-    return mm_app_set_params(test_obj, CAM_INTF_PARM_SHARPNESS, sharpness);
+    return mm_camera_lib_send_command(lib_handle,
+                                      MM_CAMERA_LIB_SHARPNESS,
+                                      &sharpness,
+                                      NULL);
 }
 
-int set_flash_mode (mm_camera_test_obj_t *test_obj, int action_param) {
+int set_flash_mode (mm_camera_lib_handle *lib_handle, int action_param) {
     cam_flash_mode_t type = 0;
     switch (action_param) {
         case FLASH_MODE_OFF:
@@ -1395,10 +1420,13 @@ int set_flash_mode (mm_camera_test_obj_t *test_obj, int action_param) {
         default:
             break;
     }
-    return mm_app_set_params(test_obj, CAM_INTF_PARM_LED_MODE, type);
+    return mm_camera_lib_send_command(lib_handle,
+                                      MM_CAMERA_LIB_BESTSHOT,
+                                      &type,
+                                      NULL);
 }
 
-int set_bestshot_mode(mm_camera_test_obj_t *test_obj, int action_param) {
+int set_bestshot_mode(mm_camera_lib_handle *lib_handle, int action_param) {
     cam_scene_mode_type type = 0;
     switch (action_param) {
        case BESTSHOT_AUTO:
@@ -1484,7 +1512,10 @@ int set_bestshot_mode(mm_camera_test_obj_t *test_obj, int action_param) {
         default:
             break;
         }
-        return mm_app_set_params(test_obj, CAM_INTF_PARM_BESTSHOT_MODE, type);
+        return mm_camera_lib_send_command(lib_handle,
+                                          MM_CAMERA_LIB_BESTSHOT,
+                                          &type,
+                                          NULL);
 }
 /*===========================================================================
  * FUNCTION     - print_current_menu -
@@ -1532,42 +1563,25 @@ int print_current_menu (menu_id_change_t current_menu_id) {
  *
  * DESCRIPTION:
  * ===========================================================================*/
-static int submain(mm_camera_app_t *hal_obj)
+static int submain()
 {
-  int rc = 0;
-  int back_mainflag = 0;
-  char tc_buf[3];
-  menu_id_change_t current_menu_id = MENU_ID_MAIN, next_menu_id;
-  camera_action_t action_id;
-  int action_param;
-  uint8_t num_cams = 0;
-  uint8_t current_cam = 0;
-  uint8_t previewing = 0;
-  uint8_t isZSL = 0;
+    int rc = 0;
+    char tc_buf[3];
+    menu_id_change_t current_menu_id = MENU_ID_MAIN, next_menu_id;
+    camera_action_t action_id;
+    int action_param;
+    uint8_t previewing = 0;
+    uint8_t isZSL = 0;
+    mm_camera_lib_handle lib_handle;
 
-  mm_camera_test_obj_t test_obj;
-  memset(&test_obj, 0, sizeof(mm_camera_test_obj_t));
+    mm_camera_test_obj_t test_obj;
+    memset(&test_obj, 0, sizeof(mm_camera_test_obj_t));
 
-
-  num_cams = hal_obj->hal_lib.get_num_of_cameras();
-  if ( !num_cams ) {
-    CDBG_ERROR("%s: No Cameras Available \n", __func__);
-    return -1;
-  }
-
-  printf("\n Opening Camera!!\n");
-  rc = mm_app_open(hal_obj, current_cam, &test_obj);
-  if (rc != MM_CAMERA_OK) {
-     CDBG_ERROR("%s:mm_app_open() err=%d\n", __func__, rc);
-     return -1;
-  }
-
-  //set preview resolution.
-  //TODO: Add other dimension related stuff here.
-  system_dimension_set(&test_obj);
-
-  //Default Auto exposure.
-  mm_app_set_params(&test_obj, CAM_INTF_PARM_AEC_ALGO_TYPE, CAM_AEC_MODE_FRAME_AVERAGE);
+    rc = mm_camera_lib_open(&lib_handle, 0);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s:mm_camera_lib_open() err=%d\n", __func__, rc);
+        return -1;
+    }
 
   do {
     print_current_menu (current_menu_id);
@@ -1583,122 +1597,125 @@ static int submain(mm_camera_app_t *hal_obj)
     }
 
     switch(action_id) {
-      case ACTION_START_PREVIEW:
-        CDBG("ACTION_START_PREVIEW \n");
-        if ( isZSL ) {
-          mm_app_start_preview_zsl(&test_obj);
-        } else {
-          mm_app_start_preview(&test_obj);
-        }
-        previewing = 1;
+        case ACTION_START_PREVIEW:
+            CDBG_ERROR("ACTION_START_PREVIEW \n");
+            rc = mm_camera_lib_start_stream(&lib_handle);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s:mm_camera_lib_start_stream() err=%d\n", __func__, rc);
+                goto ERROR;
+            }
+
+            previewing = 1;
+            break;
+
+        case ACTION_STOP_PREVIEW:
+            CDBG("ACTION_STOP_PREVIEW \n");
+            rc = mm_camera_lib_stop_stream(&lib_handle);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s:mm_camera_lib_stop_stream() err=%d\n", __func__, rc);
+                goto ERROR;
+            }
+            previewing = 0;
+            break;
+
+        case ACTION_PREVIEW_VIDEO_RESOLUTION:
+        //TODO:
         break;
 
-      case ACTION_STOP_PREVIEW:
-        CDBG("ACTION_STOP_PREVIEW \n");
-        mm_app_stop_preview(&test_obj);
-        previewing = 0;
-        break;
+        case ACTION_SET_WHITE_BALANCE:
+            CDBG("Selection for the White Balance changes\n");
+            set_whitebalance(&lib_handle, action_param);
+            break;
 
-      case ACTION_PREVIEW_VIDEO_RESOLUTION:
-        back_mainflag = 1;
-     //   CDBG ("stopP: camfd = %d", camfd);
-     //   if (stop_video() != 0) {
-     //     goto ERROR;
-     //   }
-        CDBG("Selection for the preview/video resolution change\n");
-        preview_video_resolution (&test_obj, action_param);
-        break;
+        case ACTION_SET_EXP_METERING:
+            CDBG("Selection for the Exposure Metering changes\n");
+            set_exp_metering(&lib_handle, action_param);
+            break;
 
-      case ACTION_SET_WHITE_BALANCE:
-        CDBG("Selection for the White Balance changes\n");
-        set_whitebalance(&test_obj, action_param);
-        break;
+        case ACTION_GET_CTRL_VALUE:
+            CDBG("Selection for getting control value\n");
+            get_ctrl_value(action_param);
+            break;
 
-      case ACTION_SET_EXP_METERING:
-        CDBG("Selection for the Exposure Metering changes\n");
-        set_exp_metering(&test_obj, action_param);
-        break;
+        case ACTION_BRIGHTNESS_INCREASE:
+            printf("Increase brightness\n");
+            increase_brightness(&lib_handle);
+            break;
 
-      case ACTION_GET_CTRL_VALUE:
-        CDBG("Selection for getting control value\n");
-        get_ctrl_value(action_param);
-        break;
+        case ACTION_BRIGHTNESS_DECREASE:
+            printf("Decrease brightness\n");
+            decrease_brightness(&lib_handle);
+            break;
 
-      case ACTION_BRIGHTNESS_INCREASE:
-        printf("Increase brightness\n");
-        increase_brightness(&test_obj);
-        break;
+        case ACTION_CONTRAST_INCREASE:
+            CDBG("Selection for the contrast increase\n");
+            increase_contrast (&lib_handle);
+            break;
 
-      case ACTION_BRIGHTNESS_DECREASE:
-        printf("Decrease brightness\n");
-        decrease_brightness(&test_obj);
-        break;
+        case ACTION_CONTRAST_DECREASE:
+            CDBG("Selection for the contrast decrease\n");
+            decrease_contrast (&lib_handle);
+            break;
 
-      case ACTION_CONTRAST_INCREASE:
-        CDBG("Selection for the contrast increase\n");
-        increase_contrast (&test_obj);
-        break;
+        case ACTION_EV_INCREASE:
+            CDBG("Selection for the EV increase\n");
+            increase_EV ();
+            break;
 
-      case ACTION_CONTRAST_DECREASE:
-        CDBG("Selection for the contrast decrease\n");
-        decrease_contrast (&test_obj);
-        break;
+        case ACTION_EV_DECREASE:
+            CDBG("Selection for the EV decrease\n");
+            decrease_EV ();
+            break;
 
-      case ACTION_EV_INCREASE:
-        CDBG("Selection for the EV increase\n");
-        increase_EV ();
-        break;
+        case ACTION_SATURATION_INCREASE:
+            CDBG("Selection for the EV increase\n");
+            increase_saturation ();
+            break;
 
-      case ACTION_EV_DECREASE:
-        CDBG("Selection for the EV decrease\n");
-        decrease_EV ();
-        break;
+        case ACTION_SATURATION_DECREASE:
+            CDBG("Selection for the EV decrease\n");
+            decrease_saturation ();
+            break;
 
-      case ACTION_SATURATION_INCREASE:
-        CDBG("Selection for the EV increase\n");
-        increase_saturation ();
-        break;
+        case ACTION_TOGGLE_AFR:
+            CDBG("Select for auto frame rate toggling\n");
+            toggle_afr();
+            break;
 
-      case ACTION_SATURATION_DECREASE:
-        CDBG("Selection for the EV decrease\n");
-        decrease_saturation ();
-        break;
+        case ACTION_SET_ISO:
+            CDBG("Select for ISO changes\n");
+            set_iso(&lib_handle, action_param);
+            break;
 
-      case ACTION_TOGGLE_AFR:
-        CDBG("Select for auto frame rate toggling\n");
-        toggle_afr();
-        break;
+        case ACTION_SET_ZOOM:
+            CDBG("Selection for the zoom direction changes\n");
+            set_zoom(&lib_handle, action_param);
+            break;
 
-      case ACTION_SET_ISO:
-        CDBG("Select for ISO changes\n");
-        set_iso(&test_obj, action_param);
-        break;
+        case ACTION_SHARPNESS_INCREASE:
+            CDBG("Selection for sharpness increase\n");
+            increase_sharpness(&lib_handle);
+            break;
 
-      case ACTION_SET_ZOOM:
-        CDBG("Selection for the zoom direction changes\n");
-        set_zoom(&test_obj ,action_param);
-        break;
+        case ACTION_SHARPNESS_DECREASE:
+            CDBG("Selection for sharpness decrease\n");
+            decrease_sharpness(&lib_handle);
+            break;
 
-      case ACTION_SHARPNESS_INCREASE:
-        CDBG("Selection for sharpness increase\n");
-        increase_sharpness(&test_obj);
-        break;
+        case ACTION_TAKE_JPEG_SNAPSHOT:
+            CDBG_HIGH("\n Take JPEG snapshot\n");
+            rc = mm_camera_lib_send_command(&lib_handle,
+                                            MM_CAMERA_LIB_JPEG_CAPTURE,
+                                            NULL,
+                                            NULL);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
+                goto ERROR;
+            }
+            break;
 
-      case ACTION_SHARPNESS_DECREASE:
-        CDBG("Selection for sharpness decrease\n");
-        decrease_sharpness(&test_obj);
-        break;
-
-      case ACTION_TAKE_JPEG_SNAPSHOT:
-        CDBG_HIGH("\n Take JPEG snapshot\n");
-        if (take_jpeg_snapshot(&test_obj, 0) < 0)
-          goto ERROR;
-        break;
-
-      case ACTION_TAKE_BURST_SNAPSHOT:
-        CDBG_HIGH("\n Take Burst snapshot\n");
-        if (take_jpeg_snapshot(&test_obj, 1) < 0)
-          goto ERROR;
+        case ACTION_TAKE_BURST_SNAPSHOT:
+        //TODO:
         break;
 
       case ACTION_START_RECORDING:
@@ -1721,7 +1738,7 @@ static int submain(mm_camera_app_t *hal_obj)
         break;
       case ACTION_SET_BESTSHOT_MODE:
         CDBG("Selection for bestshot\n");
-        set_bestshot_mode(&test_obj, action_param);
+        set_bestshot_mode(&lib_handle, action_param);
         break;
       case ACTION_TAKE_LIVE_SNAPSHOT:
         printf("Selection for live shot\n");
@@ -1734,27 +1751,11 @@ static int submain(mm_camera_app_t *hal_obj)
         break;
       case ACTION_SET_FLASH_MODE:
         printf("\n Selection for flashmode\n");
-        set_flash_mode(&test_obj, action_param);
+        set_flash_mode(&lib_handle, action_param);
         break;
 
       case ACTION_SWITCH_CAMERA:
-        if ( previewing ){
-          printf("\n stop preview\n");
-          mm_app_stop_preview(&test_obj);
-        }
-        printf("\n close camera\n");
-        mm_app_close(&test_obj);
-        current_cam++;
-        if ( current_cam >= num_cams ) {
-          current_cam = 0;
-        }
-        printf("\n Switch to Camera %d \n", current_cam);
-        printf("\n open camera\n");
-        rc = mm_app_open(hal_obj, current_cam, &test_obj);
-        if (rc != MM_CAMERA_OK) {
-           CDBG_ERROR("%s:mm_app_open() err=%d\n", __func__, rc);
-           return -1;
-        }
+          //TODO:
         break;
        case ACTION_TOGGLE_ZSL:
         printf("ZSL Toggle !!!\n");
@@ -1763,6 +1764,14 @@ static int submain(mm_camera_app_t *hal_obj)
           printf("ZSL on !!!\n");
         } else {
           printf("ZSL off !!!\n");
+        }
+        rc = mm_camera_lib_send_command(&lib_handle,
+                                        MM_CAMERA_LIB_ZSL_ENABLE,
+                                        &isZSL,
+                                        NULL);
+        if (rc != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
+            goto ERROR;
         }
         break;
       case ACTION_EXIT:
@@ -1783,10 +1792,13 @@ static int submain(mm_camera_app_t *hal_obj)
   } while (action_id != ACTION_EXIT);
   action_id = ACTION_NO_ACTION;
 
-  return 0;
+    mm_camera_lib_close(&lib_handle);
+    return 0;
 
 ERROR:
-  back_mainflag = 0;
-  return back_mainflag;
+
+    mm_camera_lib_close(&lib_handle);
+
+    return rc;
 }
 

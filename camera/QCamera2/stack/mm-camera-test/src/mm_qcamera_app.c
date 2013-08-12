@@ -2074,12 +2074,12 @@ int mm_camera_lib_open(mm_camera_lib_handle *handle, int cam_id)
         goto EXIT;
     }
 
-   /* rc = mm_app_initialize_fb(&handle->test_obj);
+    rc = mm_app_initialize_fb(&handle->test_obj);
     if (rc != MM_CAMERA_OK) {
         CDBG_ERROR("%s: mm_app_initialize_fb() cam_idx=%d, err=%d\n",
                    __func__, cam_id, rc);
         goto EXIT;
-    }*/
+    }
 
 EXIT:
 
