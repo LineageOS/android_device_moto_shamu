@@ -97,10 +97,11 @@ int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_fram
     job.job_type = JPEG_JOB_TYPE_ENCODE;
     job.encode_job.session_id = test_obj->current_jpeg_sess_id;
 
+    // TODO: Rotation should be set according to
+    //       sensor&device orientation
     job.encode_job.rotation = 0;
     if (cam_cap->position == CAM_POSITION_BACK) {
-        /* back camera, rotate 90 */
-        job.encode_job.rotation = 90;
+        job.encode_job.rotation = 270;
     }
 
     /* fill in main src img encode param */

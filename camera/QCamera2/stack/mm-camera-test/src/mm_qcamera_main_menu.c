@@ -426,27 +426,25 @@ int next_menu(menu_id_change_t current_menu_id, char keypress, camera_action_t *
 
     case MENU_ID_WHITEBALANCECHANGE:
       printf("MENU_ID_WHITEBALANCECHANGE\n");
-      * action_id_ptr = ACTION_SET_WHITE_BALANCE;
-      if (output_to_event > 0 &&
-        output_to_event <= sizeof(white_balance_tbl)/sizeof(white_balance_tbl[0])) {
-          next_menu_id = MENU_ID_MAIN;
-          * action_param = output_to_event;
-      }
-      else {
+      if (output_to_event >= WB_MAX) {
         next_menu_id = current_menu_id;
+        * action_id_ptr = ACTION_NO_ACTION;
+      } else {
+        next_menu_id = MENU_ID_MAIN;
+        * action_id_ptr = ACTION_SET_WHITE_BALANCE;
+        * action_param = output_to_event;
       }
       break;
 
     case MENU_ID_EXPMETERINGCHANGE:
       printf("MENU_ID_EXPMETERINGCHANGE\n");
-      * action_id_ptr = ACTION_SET_EXP_METERING;
-      if (output_to_event > 0 &&
-        output_to_event <= sizeof(exp_metering_tbl)/sizeof(exp_metering_tbl[0])) {
-          next_menu_id = MENU_ID_MAIN;
-          * action_param = output_to_event;
-      }
-      else {
+      if (output_to_event >= AUTO_EXP_MAX) {
         next_menu_id = current_menu_id;
+        * action_id_ptr = ACTION_NO_ACTION;
+      } else {
+        next_menu_id = MENU_ID_MAIN;
+        * action_id_ptr = ACTION_SET_EXP_METERING;
+        * action_param = output_to_event;
       }
       break;
 
@@ -537,13 +535,13 @@ int next_menu(menu_id_change_t current_menu_id, char keypress, camera_action_t *
 
     case MENU_ID_ISOCHANGE:
       printf("MENU_ID_ISOCHANGE\n");
-      * action_id_ptr = ACTION_SET_ISO;
-      if (output_to_event > 0 &&
-        output_to_event <= sizeof(iso_tbl)/sizeof(iso_tbl[0])) {
-          next_menu_id = MENU_ID_MAIN;
-          * action_param = output_to_event;
-      } else {
+      if (output_to_event >= ISO_MAX) {
         next_menu_id = current_menu_id;
+        * action_id_ptr = ACTION_NO_ACTION;
+      } else {
+        next_menu_id = MENU_ID_MAIN;
+        * action_id_ptr = ACTION_SET_ISO;
+        * action_param = output_to_event;
       }
       break;
 
@@ -1536,16 +1534,16 @@ int filter_resolutions(mm_camera_lib_handle *lib_handle,
 {
     size_t i, j;
     cam_capability_t camera_cap;
-    int rc = MM_CAMERA_OK;
+    int rc = 0;
 
     if ( ( NULL == lib_handle ) || ( NULL == tbl ) ) {
-        return MM_CAMERA_E_INVALID_INPUT;
+        return -1;
     }
 
     rc = mm_camera_lib_get_caps(lib_handle, &camera_cap);
     if ( MM_CAMERA_OK != rc ) {
         CDBG_ERROR("%s:mm_camera_lib_get_caps() err=%d\n", __func__, rc);
-        return rc;
+        return -1;
     }
 
     for( i = 0 ; i < tbl_size ; i++ ) {
@@ -1553,6 +1551,7 @@ int filter_resolutions(mm_camera_lib_handle *lib_handle,
             if ( ( tbl[i].width == camera_cap.picture_sizes_tbl[j].width ) &&
                  ( tbl[i].height == camera_cap.picture_sizes_tbl[j].height ) ) {
                 tbl[i].supported = 1;
+                rc = i;
                 break;
             }
         }
@@ -1577,6 +1576,7 @@ static int submain()
     mm_camera_lib_handle lib_handle;
     int num_cameras;
     int available_sensors = sizeof(sensor_tbl) / sizeof(sensor_tbl[0]);
+    int available_snap_sizes = sizeof(dimension_tbl)/sizeof(dimension_tbl[0]);
     int i,c;
     mm_camera_lib_snapshot_params snap_dim;
     snap_dim.width = DEFAULT_SNAPSHOT_WIDTH;
@@ -1603,13 +1603,15 @@ static int submain()
         }
         current_menu_id = MENU_ID_SENSORS;
     } else {
-        rc = filter_resolutions(&lib_handle,
+        i = filter_resolutions(&lib_handle,
                                 dimension_tbl,
-                                sizeof(dimension_tbl)/sizeof(dimension_tbl[0]));
-        if ( MM_CAMERA_OK != rc ) {
-            CDBG_ERROR("%s:filter_resolutions() err=%d\n", __func__, rc);
+                                available_snap_sizes);
+        if ( ( i < 0 ) || ( i >= available_snap_sizes ) ) {
+            CDBG_ERROR("%s:filter_resolutions()\n", __func__);
             goto ERROR;
         }
+        snap_dim.width = dimension_tbl[i].width;
+        snap_dim.height = dimension_tbl[i].height;
     }
 
     do {
@@ -1750,13 +1752,15 @@ static int submain()
                     goto ERROR;
                 }
 
-                rc = filter_resolutions(&lib_handle,
+                i = filter_resolutions(&lib_handle,
                                         dimension_tbl,
                                         sizeof(dimension_tbl)/sizeof(dimension_tbl[0]));
-                if ( MM_CAMERA_OK != rc ) {
-                    CDBG_ERROR("%s:filter_resolutions() err=%d\n", __func__, rc);
+                if ( ( i < 0 ) || ( i >=  available_snap_sizes ) ) {
+                    CDBG_ERROR("%s:filter_resolutions()\n", __func__);
                     goto ERROR;
                 }
+                snap_dim.width = dimension_tbl[i].width;
+                snap_dim.height = dimension_tbl[i].height;
 
                 break;
 

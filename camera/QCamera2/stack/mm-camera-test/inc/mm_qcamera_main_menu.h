@@ -218,7 +218,8 @@ typedef enum {
     AUTO_EXP_SMART_METERING,
     AUTO_EXP_USER_METERING,
     AUTO_EXP_SPOT_METERING_ADV,
-    AUTO_EXP_CENTER_WEIGHTED_ADV
+    AUTO_EXP_CENTER_WEIGHTED_ADV,
+    AUTO_EXP_MAX
 } Exp_Metering_modes;
 
 typedef enum {
@@ -228,7 +229,8 @@ typedef enum {
   ISO_200,
   ISO_400,
   ISO_800,
-  ISO_1600
+  ISO_1600,
+  ISO_MAX
 } ISO_modes;
 
 typedef enum {
@@ -272,6 +274,7 @@ typedef enum {
   WB_CLOUDY_DAYLIGHT,
   WB_TWILIGHT,
   WB_SHADE,
+  WB_MAX
 } White_Balance_modes;
 
 typedef enum
