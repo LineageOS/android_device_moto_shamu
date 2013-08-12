@@ -70,6 +70,7 @@ typedef enum
   LIVE_SHOT,
   FLASH_MODES,
   TOGGLE_ZSL,
+  TAKE_RAW_SNAPSHOT,
   EXIT
 } Camera_main_menu_t;
 
@@ -104,6 +105,7 @@ typedef enum
   ACTION_SET_FLASH_MODE,
   ACTION_SWITCH_CAMERA,
   ACTION_TOGGLE_ZSL,
+  ACTION_TAKE_RAW_SNAPSHOT,
   ACTION_EXIT
 } camera_action_t;
 

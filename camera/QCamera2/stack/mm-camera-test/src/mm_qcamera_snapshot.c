@@ -212,11 +212,7 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
         goto EXIT;
     }
 
-    if ( 0 < pme->fb_fd ) {
-        mm_app_overlay_display(pme, m_frame->fd);
-    } else {
-        mm_app_dump_frame(m_frame, "main", "raw", m_frame->frame_idx);
-    }
+    mm_app_dump_frame(m_frame, "main", "raw", m_frame->frame_idx);
 
 EXIT:
     for (i=0; i<bufs->num_bufs; i++) {
@@ -439,7 +435,7 @@ int mm_app_start_capture_raw(mm_camera_test_obj_t *test_obj, uint8_t num_snapsho
     mm_camera_channel_attr_t attr;
 
     memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
-    attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
+    attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_BURST;
     attr.max_unmatched_frames = 3;
     channel = mm_app_add_channel(test_obj,
                                  MM_CHANNEL_TYPE_CAPTURE,

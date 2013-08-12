@@ -66,8 +66,8 @@ int mm_camera_app_wait()
     pthread_mutex_lock(&app_mutex);
     if(FALSE == thread_status){
         pthread_cond_wait(&app_cond_v, &app_mutex);
-        thread_status = FALSE;
     }
+    thread_status = FALSE;
     pthread_mutex_unlock(&app_mutex);
     return rc;
 }
@@ -2188,6 +2188,7 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
 {
     int width, height;
     int rc = MM_CAMERA_OK;
+    cam_capability_t *camera_cap = NULL;
 
     if ( NULL == handle ) {
         CDBG_ERROR(" %s : Invalid handle", __func__);
@@ -2200,6 +2201,8 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
         rc = MM_CAMERA_E_INVALID_OPERATION;
         goto EXIT;
     }
+
+    camera_cap = (cam_capability_t *) handle->test_obj.cap_buf.mem_info.data;
 
     switch(cmd) {
         case MM_CAMERA_LIB_FLASH:
@@ -2355,26 +2358,23 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
             }
             break;
         case MM_CAMERA_LIB_RAW_CAPTURE:
+
             rc = mm_camera_lib_stop_stream(handle);
             if (rc != MM_CAMERA_OK) {
                 CDBG_ERROR("%s: mm_camera_lib_stop_stream() err=%d\n",
                            __func__, rc);
                 goto EXIT;
             }
-            mm_app_close_fb(&handle->test_obj);
 
             width = handle->test_obj.buffer_width;
             height = handle->test_obj.buffer_height;
-            handle->test_obj.buffer_width = DEFAULT_RAW_WIDTH;
-            handle->test_obj.buffer_height = DEFAULT_RAW_HEIGHT;
+            handle->test_obj.buffer_width = camera_cap->raw_dim.width;
+            handle->test_obj.buffer_height = camera_cap->raw_dim.height;
             handle->test_obj.buffer_format = DEFAULT_RAW_FORMAT;
-            rc = mm_app_initialize_fb(&handle->test_obj);
-            if (rc != MM_CAMERA_OK) {
-                CDBG_ERROR("%s: mm_app_initialize_fb() err=%d\n",
-                           __func__, rc);
-                goto EXIT;
-            }
-
+            CDBG_ERROR("%s: MM_CAMERA_LIB_RAW_CAPTURE %dx%d\n",
+                       __func__,
+                       camera_cap->raw_dim.width,
+                       camera_cap->raw_dim.height);
             rc = mm_app_start_capture_raw(&handle->test_obj, 1);
             if (rc != MM_CAMERA_OK) {
                 CDBG_ERROR("%s: mm_app_start_capture() err=%d\n",
@@ -2390,24 +2390,17 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                            __func__, rc);
                 goto EXIT;
             }
-            mm_app_close_fb(&handle->test_obj);
 
             handle->test_obj.buffer_width = width;
             handle->test_obj.buffer_height = height;
             handle->test_obj.buffer_format = DEFAULT_SNAPSHOT_FORMAT;
-            rc = mm_app_initialize_fb(&handle->test_obj);
-            if (rc != MM_CAMERA_OK) {
-                CDBG_ERROR("%s: mm_app_initialize_fb() err=%d\n",
-                           __func__, rc);
-                goto EXIT;
-            }
-
             rc = mm_camera_lib_start_stream(handle);
             if (rc != MM_CAMERA_OK) {
                 CDBG_ERROR("%s: mm_camera_lib_start_stream() err=%d\n",
                            __func__, rc);
                 goto EXIT;
             }
+
             break;
 
         case MM_CAMERA_LIB_JPEG_CAPTURE:
