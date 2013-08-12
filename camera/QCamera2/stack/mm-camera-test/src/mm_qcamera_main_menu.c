@@ -82,6 +82,7 @@ const CAMERA_MAIN_MENU_TBL_T camera_main_menu_tbl[] = {
   {FLASH_MODES,                "Set Flash modes"},
   {TOGGLE_ZSL,                 "Toggle ZSL On/Off"},
   {TAKE_RAW_SNAPSHOT,          "Take RAW snapshot"},
+  {SWITCH_SNAP_RESOLUTION,     "Select Jpeg resolution"},
   {EXIT,                       "Exit"}
 };
 
@@ -193,6 +194,14 @@ const FLASH_MODE_TBL_T flashmodes_tbl[] = {
   {   FLASH_MODE_TORCH, "Flash Mode Torch"},
 };
 
+DIMENSION_TBL_T dimension_tbl[] = {
+{VGA_WIDTH,      VGA_HEIGHT,      "VGA",   "Size: VGA <640x480>"   , 0},
+{MP1_WIDTH,      MP1_HEIGHT,      "1MP",   "Size: 1MP <1280x960>"  , 0},
+{MP5_WIDTH,      MP5_HEIGHT,      "5MP",   "Size: 5MP <2592x1944>",  0},
+{MP8_WIDTH,      MP8_HEIGHT,      "8MP",   "Size: 8MP <3264x2448>",  0},
+{MP12_WIDTH,     MP12_HEIGHT,     "12MP",  "Size: 12MP <4000x3000>", 0},
+};
+
 /*===========================================================================
  * Forward declarations
  *===========================================================================*/
@@ -262,8 +271,8 @@ int keypress_to_event(char keypress)
     (keypress >= 'a' && keypress <= 'z')) {
     out_buf = tolower(keypress);
     out_buf = out_buf - 'a';
-  } else if (keypress >= '1' && keypress <= '9') {
-    out_buf = keypress;
+  } else if (keypress >= '0' && keypress <= '9') {
+    out_buf = keypress - '0';
   }
   return out_buf;
 }
@@ -356,6 +365,11 @@ int next_menu(menu_id_change_t current_menu_id, char keypress, camera_action_t *
           CDBG("next_menu_id = MENU_ID_SHARPNESSCHANGE = %d\n", next_menu_id);
           break;
 
+        case SWITCH_SNAP_RESOLUTION:
+          next_menu_id = MENU_ID_SWITCH_RES;
+          CDBG("next_menu_id = MENU_ID_SWITCH_RES = %d\n", next_menu_id);
+          break;
+
         case TAKE_JPEG_SNAPSHOT:
           * action_id_ptr = ACTION_TAKE_JPEG_SNAPSHOT;
           printf("\n Taking JPEG snapshot\n");
@@ -388,6 +402,21 @@ int next_menu(menu_id_change_t current_menu_id, char keypress, camera_action_t *
           break;
       }
       break;
+
+    case MENU_ID_SWITCH_RES:
+        printf("MENU_ID_SWITCH_RES\n");
+        *action_id_ptr = ACTION_SWITCH_RESOLUTION;
+        *action_param = output_to_event;
+        int available_sizes = sizeof(dimension_tbl)/sizeof(dimension_tbl[0]);
+        if ( ( *action_param >= 0 ) &&
+             ( *action_param < available_sizes ) &&
+             ( dimension_tbl[*action_param].supported )) {
+            next_menu_id = MENU_ID_MAIN;
+        }
+        else {
+          next_menu_id = current_menu_id;
+        }
+        break;
 
     case MENU_ID_SENSORS:
         next_menu_id = MENU_ID_MAIN;
@@ -697,6 +726,26 @@ static void camera_EV_change_tbl(void) {
 
   printf("\nPlease enter your choice for EV changes: ");
   return;
+}
+
+static void camera_resolution_change_tbl(void) {
+    unsigned int i;
+
+    printf("\n");
+    printf("==========================================================\n");
+    printf("      Camera is in snapshot resolution mode               \n");
+    printf("==========================================================\n\n");
+
+    for (i = 0; i < sizeof(dimension_tbl) /
+      sizeof(dimension_tbl[0]); i++) {
+        if ( dimension_tbl[i].supported ) {
+            printf("%d.  %s\n", i,
+                    dimension_tbl[i].str_name);
+        }
+    }
+
+    printf("\nPlease enter your choice for Resolution: ");
+    return;
 }
 
 static void camera_preview_video_zoom_change_tbl(void) {
@@ -1034,9 +1083,9 @@ int take_jpeg_snapshot(mm_camera_test_obj_t *test_obj, int is_burst_mode)
  *==========================================================================*/
 int main()
 {
-    int keep_on_going = 1;
     char tc_buf[3];
     int mode = 0;
+    int rc = 0;
 
     printf("Please Select Execution Mode:\n");
     printf("0: Menu Based 1: Regression\n");
@@ -1059,12 +1108,12 @@ int main()
        exit(-1);
     }
 
-    do {
-       keep_on_going = submain();
-    } while ( keep_on_going );
 
-  printf("Exiting application\n");
-  return 0;
+    rc = submain();
+
+    printf("Exiting application\n");
+
+    return rc;
 }
 
 /*===========================================================================
@@ -1474,13 +1523,43 @@ int print_current_menu (menu_id_change_t current_menu_id) {
     camera_set_flashmode_tbl();
   } else if (current_menu_id == MENU_ID_SENSORS ) {
     camera_sensors_tbl();
+  } else if (current_menu_id == MENU_ID_SWITCH_RES ) {
+    camera_resolution_change_tbl();
   }
 
   return 0;
 }
 
+int filter_resolutions(mm_camera_lib_handle *lib_handle,
+                       DIMENSION_TBL_T *tbl,
+                       size_t tbl_size)
+{
+    size_t i, j;
+    cam_capability_t camera_cap;
+    int rc = MM_CAMERA_OK;
 
+    if ( ( NULL == lib_handle ) || ( NULL == tbl ) ) {
+        return MM_CAMERA_E_INVALID_INPUT;
+    }
 
+    rc = mm_camera_lib_get_caps(lib_handle, &camera_cap);
+    if ( MM_CAMERA_OK != rc ) {
+        CDBG_ERROR("%s:mm_camera_lib_get_caps() err=%d\n", __func__, rc);
+        return rc;
+    }
+
+    for( i = 0 ; i < tbl_size ; i++ ) {
+        for( j = 0; j < camera_cap.picture_sizes_tbl_cnt; j++ ) {
+            if ( ( tbl[i].width == camera_cap.picture_sizes_tbl[j].width ) &&
+                 ( tbl[i].height == camera_cap.picture_sizes_tbl[j].height ) ) {
+                tbl[i].supported = 1;
+                break;
+            }
+        }
+    }
+
+    return rc;
+}
 /*===========================================================================
  * FUNCTION     - submain -
  *
@@ -1499,6 +1578,9 @@ static int submain()
     int num_cameras;
     int available_sensors = sizeof(sensor_tbl) / sizeof(sensor_tbl[0]);
     int i,c;
+    mm_camera_lib_snapshot_params snap_dim;
+    snap_dim.width = DEFAULT_SNAPSHOT_WIDTH;
+    snap_dim.height = DEFAULT_SNAPSHOT_HEIGHT;
 
     mm_camera_test_obj_t test_obj;
     memset(&test_obj, 0, sizeof(mm_camera_test_obj_t));
@@ -1520,6 +1602,14 @@ static int submain()
             sensor_tbl[i].present = 1;
         }
         current_menu_id = MENU_ID_SENSORS;
+    } else {
+        rc = filter_resolutions(&lib_handle,
+                                dimension_tbl,
+                                sizeof(dimension_tbl)/sizeof(dimension_tbl[0]));
+        if ( MM_CAMERA_OK != rc ) {
+            CDBG_ERROR("%s:filter_resolutions() err=%d\n", __func__, rc);
+            goto ERROR;
+        }
     }
 
     do {
@@ -1660,6 +1750,14 @@ static int submain()
                     goto ERROR;
                 }
 
+                rc = filter_resolutions(&lib_handle,
+                                        dimension_tbl,
+                                        sizeof(dimension_tbl)/sizeof(dimension_tbl[0]));
+                if ( MM_CAMERA_OK != rc ) {
+                    CDBG_ERROR("%s:filter_resolutions() err=%d\n", __func__, rc);
+                    goto ERROR;
+                }
+
                 break;
 
             case ACTION_TOGGLE_ZSL:
@@ -1696,12 +1794,19 @@ static int submain()
                 CDBG_HIGH("\n Take JPEG snapshot\n");
                 rc = mm_camera_lib_send_command(&lib_handle,
                                                 MM_CAMERA_LIB_JPEG_CAPTURE,
-                                                NULL,
+                                                &snap_dim,
                                                 NULL);
                 if (rc != MM_CAMERA_OK) {
                     CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
                     goto ERROR;
                 }
+                break;
+            case ACTION_SWITCH_RESOLUTION:
+                printf("\n Switch snapshot resolution to %dx%d\n",
+                       dimension_tbl[action_param].width,
+                       dimension_tbl[action_param].height);
+                snap_dim.width = dimension_tbl[action_param].width;
+                snap_dim.height = dimension_tbl[action_param].height;
                 break;
 
       case ACTION_START_RECORDING:

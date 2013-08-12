@@ -1928,12 +1928,14 @@ ERROR:
 
 /** tuneserver_capture
  *    @lib_handle: the camera handle object
+ *    @dim: snapshot dimensions
  *
  *  makes JPEG capture
  *
  *  Return: >=0 on success, -1 on failure.
  **/
-int tuneserver_capture(mm_camera_lib_handle *lib_handle)
+int tuneserver_capture(mm_camera_lib_handle *lib_handle,
+                       mm_camera_lib_snapshot_params *dim)
 {
     int rc = 0;
 
@@ -1942,7 +1944,32 @@ int tuneserver_capture(mm_camera_lib_handle *lib_handle)
     if ( lib_handle->stream_running ) {
 
         if ( lib_handle->test_obj.zsl_enabled) {
+            if ( NULL != dim) {
+                if ( ( lib_handle->test_obj.buffer_width != dim->width) ||
+                     ( lib_handle->test_obj.buffer_height = dim->height ) ) {
+
+                    lib_handle->test_obj.buffer_width = dim->width;
+                    lib_handle->test_obj.buffer_height = dim->height;
+
+                    rc = mm_camera_lib_stop_stream(lib_handle);
+                    if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: mm_camera_lib_stop_stream() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                    }
+
+                    rc = mm_camera_lib_start_stream(lib_handle);
+                    if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: mm_camera_lib_start_stream() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                    }
+                }
+
+            }
+
             lib_handle->test_obj.encodeJpeg = 1;
+
             mm_camera_app_wait();
         } else {
             // For standard 2D capture streaming has to be disabled first
@@ -1953,6 +1980,10 @@ int tuneserver_capture(mm_camera_lib_handle *lib_handle)
                 goto EXIT;
             }
 
+            if ( NULL != dim ) {
+                lib_handle->test_obj.buffer_width = dim->width;
+                lib_handle->test_obj.buffer_height = dim->height;
+            }
             rc = mm_app_start_capture(&lib_handle->test_obj, 1);
             if (rc != MM_CAMERA_OK) {
                 CDBG_ERROR("%s: mm_app_start_capture() err=%d\n",
@@ -2190,6 +2221,7 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
     int width, height;
     int rc = MM_CAMERA_OK;
     cam_capability_t *camera_cap = NULL;
+    mm_camera_lib_snapshot_params *dim = NULL;
 
     if ( NULL == handle ) {
         CDBG_ERROR(" %s : Invalid handle", __func__);
@@ -2405,10 +2437,18 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
             break;
 
         case MM_CAMERA_LIB_JPEG_CAPTURE:
-        {
-             tuneserver_capture(handle);
-             break;
-        }
+            if ( NULL != in_data ) {
+                dim = ( mm_camera_lib_snapshot_params * ) in_data;
+            }
+
+            rc = tuneserver_capture(handle, dim);
+            if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s:capture error %d\n", __func__, rc);
+                goto EXIT;
+            }
+
+            break;
+
         case MM_CAMERA_LIB_SET_FOCUS_MODE: {
             cam_focus_mode_type mode = *((cam_focus_mode_type *)in_data);
             handle->current_params.af_mode = mode;

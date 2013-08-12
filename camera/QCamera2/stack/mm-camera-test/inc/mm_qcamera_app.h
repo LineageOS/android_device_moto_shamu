@@ -251,6 +251,11 @@ typedef struct {
     hal_interface_lib_t hal_lib;
 } mm_camera_app_t;
 
+typedef struct {
+    uint32_t width;
+    uint32_t height;
+} mm_camera_lib_snapshot_params;
+
 typedef enum {
     MM_CAMERA_LIB_NO_ACTION = 0,
     MM_CAMERA_LIB_RAW_CAPTURE,
