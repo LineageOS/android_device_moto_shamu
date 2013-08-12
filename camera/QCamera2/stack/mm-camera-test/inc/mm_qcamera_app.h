@@ -413,11 +413,13 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                                mm_camera_lib_commands cmd,
                                void *data, void *out_data);
 int mm_camera_lib_stop_stream(mm_camera_lib_handle *handle);
+int mm_camera_lib_number_of_cameras(mm_camera_lib_handle *handle);
 int mm_camera_lib_close(mm_camera_lib_handle *handle);
 int32_t mm_camera_load_tuninglibrary
     (mm_camera_tuning_lib_params_t *tuning_param);
 int mm_camera_lib_set_preview_usercb(
   mm_camera_lib_handle *handle, prev_callback cb);
+//
 
 int mm_app_start_regression_test(int run_tc);
 int mm_app_load_hal(mm_camera_app_t *my_cam_app);
