@@ -1075,6 +1075,64 @@ ERROR:
     return rc;
 }
 
+int setVfeCommand(mm_camera_test_obj_t *test_obj, tune_cmd_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_SET_VFE_COMMAND,
+                                sizeof(tune_cmd_t),
+                                value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: VFE Command not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+ERROR:
+    return rc;
+}
+
+int setPPCommand(mm_camera_test_obj_t *test_obj, tune_cmd_t *value)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_SET_PP_COMMAND,
+                                sizeof(tune_cmd_t),
+                                value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: PP Command not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+ERROR:
+    return rc;
+}
+
 int setFocusMode(mm_camera_test_obj_t *test_obj, cam_focus_mode_type mode)
 {
     int rc = MM_CAMERA_OK;
@@ -1292,6 +1350,35 @@ int main(int argc, char **argv)
     return 0;
 }
 
+int32_t mm_camera_load_tuninglibrary(mm_camera_tuning_lib_params_t *tuning_param)
+{
+  void *(*tuning_open_lib)(void) = NULL;
+
+  tuning_param->lib_handle = dlopen("libmmcamera_tuning.so", RTLD_NOW);
+  if (!tuning_param->lib_handle) {
+    CDBG_ERROR("%s Failed opening libmmcamera_tuning.so\n", __func__);
+    return -EINVAL;
+  }
+
+  *(void **)&tuning_open_lib  = dlsym(tuning_param->lib_handle,
+    "open_tuning_lib");
+  if (!tuning_open_lib) {
+    CDBG_ERROR("%s Failed symbol libmmcamera_tuning.so\n", __func__);
+    return -EINVAL;
+  }
+
+  tuning_param->func_tbl = (mm_camera_tune_func_t *)tuning_open_lib();
+  if (!tuning_param->func_tbl) {
+    CDBG_ERROR("%s Failed opening library func table ptr\n", __func__);
+    return -EINVAL;
+  }
+
+  CDBG_ERROR("tuning_param->func_tbl =%p",tuning_param->func_tbl);
+
+  CDBG("exit");
+  return 0;
+}
+
 int mm_camera_lib_open(mm_camera_lib_handle *handle, int cam_id)
 {
     int rc = MM_CAMERA_OK;
@@ -1322,12 +1409,12 @@ int mm_camera_lib_open(mm_camera_lib_handle *handle, int cam_id)
         goto EXIT;
     }
 
-    rc = mm_app_initialize_fb(&handle->test_obj);
+   /* rc = mm_app_initialize_fb(&handle->test_obj);
     if (rc != MM_CAMERA_OK) {
         CDBG_ERROR("%s: mm_app_initialize_fb() cam_idx=%d, err=%d\n",
                    __func__, cam_id, rc);
         goto EXIT;
-    }
+    }*/
 
 EXIT:
 
@@ -1588,8 +1675,6 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                 CDBG_ERROR("%s: AWB locking failed\n", __func__);
                 goto EXIT;
             }
-
-            printf("AWB lock active\n");
             break;
 
         case MM_CAMERA_LIB_UNLOCK_AWB:
@@ -1598,8 +1683,6 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                 CDBG_ERROR("%s: AE unlocking failed\n", __func__);
                 goto EXIT;
             }
-
-            printf("AWB lock disabled\n");
             break;
 
         case MM_CAMERA_LIB_LOCK_AE:
@@ -1608,8 +1691,6 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                 CDBG_ERROR("%s: AE locking failed\n", __func__);
                 goto EXIT;
             }
-
-            printf("AE lock active\n");
             break;
 
         case MM_CAMERA_LIB_UNLOCK_AE:
@@ -1618,8 +1699,6 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                 CDBG_ERROR("%s: AE unlocking failed\n", __func__);
                 goto EXIT;
             }
-
-            printf("AE lock disabled\n");
             break;
 
        case MM_CAMERA_LIB_GET_CHROMATIX: {
@@ -1630,7 +1709,6 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
              goto EXIT;
            }
            break;
-
        }
 
        case MM_CAMERA_LIB_SET_RELOAD_CHROMATIX: {
@@ -1641,7 +1719,6 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
              goto EXIT;
            }
            break;
-
        }
 
        case MM_CAMERA_LIB_GET_AFTUNE: {
@@ -1652,7 +1729,6 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
              goto EXIT;
            }
            break;
-
        }
 
        case MM_CAMERA_LIB_SET_RELOAD_AFTUNE: {
@@ -1663,7 +1739,6 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
              goto EXIT;
            }
            break;
-
        }
 
        case MM_CAMERA_LIB_SET_AUTOFOCUS_TUNING: {
@@ -1673,7 +1748,24 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
              goto EXIT;
            }
            break;
+       }
 
+       case MM_CAMERA_LIB_SET_VFE_COMMAND: {
+           rc = setVfeCommand(&handle->test_obj, in_data);
+           if (rc != MM_CAMERA_OK) {
+             CDBG_ERROR("%s: Set vfe command failed\n", __func__);
+             goto EXIT;
+           }
+           break;
+       }
+
+       case MM_CAMERA_LIB_SET_POSTPROC_COMMAND: {
+           rc = setPPCommand(&handle->test_obj, in_data);
+           if (rc != MM_CAMERA_OK) {
+             CDBG_ERROR("%s: Set pp command failed\n", __func__);
+             goto EXIT;
+           }
+           break;
        }
 
       case MM_CAMERA_LIB_NO_ACTION:
@@ -1712,4 +1804,16 @@ int mm_camera_lib_close(mm_camera_lib_handle *handle)
 
 EXIT:
     return rc;
+}
+
+int mm_camera_lib_set_preview_usercb(
+   mm_camera_lib_handle *handle, prev_callback cb)
+{
+    if (handle->test_obj.user_preview_cb != NULL) {
+        CDBG_ERROR("%s, already set user preview callbacks...", __func__);
+        return -1;
+    }
+    handle->test_obj.user_preview_cb = *cb;
+    printf("%s  %d pointer =%p\n", __func__, __LINE__, handle->test_obj.user_preview_cb);
+    return 0;
 }

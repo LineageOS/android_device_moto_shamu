@@ -431,6 +431,8 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_GET_AFTUNE,               tune_autofocus_t,            1);
     INCLUDE(CAM_INTF_PARM_SET_RELOAD_AFTUNE,        tune_autofocus_t,            1);
     INCLUDE(CAM_INTF_PARM_SET_AUTOFOCUSTUNING,      tune_actuator_t,             1);
+    INCLUDE(CAM_INTF_PARM_SET_VFE_COMMAND,          tune_cmd_t,                  1);
+    INCLUDE(CAM_INTF_PARM_SET_PP_COMMAND,           tune_cmd_t,                  1);
     /* HAL3 sepcific */
     INCLUDE(CAM_INTF_META_FRAME_NUMBER,             uint32_t,                    1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_MODE,       uint8_t,                     1);

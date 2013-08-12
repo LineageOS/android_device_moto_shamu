@@ -538,6 +538,12 @@ typedef struct {
     uint8_t ttype;
 } tune_actuator_t;
 
+typedef struct {
+    uint8_t module;
+    uint8_t type;
+    int32_t value;
+} tune_cmd_t;
+
 typedef enum {
     CAM_AEC_ROI_OFF,
     CAM_AEC_ROI_ON
@@ -828,6 +834,8 @@ typedef enum {
     CAM_INTF_PARM_SET_AUTOFOCUSTUNING,
     CAM_INTF_PARM_GET_AFTUNE,
     CAM_INTF_PARM_SET_RELOAD_AFTUNE,
+    CAM_INTF_PARM_SET_VFE_COMMAND,
+    CAM_INTF_PARM_SET_PP_COMMAND,
 
     /* stream based parameters */
     CAM_INTF_PARM_DO_REPROCESS,
