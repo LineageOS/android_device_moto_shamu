@@ -737,6 +737,58 @@ typedef struct {
     int iso_value;
 } cam_ae_params_t;
 
+typedef struct {
+    float     exp_time;
+    uint32_t  luma;
+    int32_t   exp_index;
+    float     lux_index;
+    float     real_gain;
+} cam_ae_eztuing_params_t;
+
+typedef struct {
+    float    r_gain;
+    float    g_gain;
+    float    b_gain;
+    uint32_t color_temp;
+    int      decision;
+    int      samp_decision[64];
+} cam_awb_eztuing_params_t;
+
+typedef struct {
+    int peak_location_index;
+} cam_af_eztuing_params_t;
+
+typedef struct {
+    int      forced;
+    uint32_t force_linecount_value;
+} cam_aec_lc_params_t;
+
+typedef struct {
+    int   forced;
+    float force_gain_value;
+} cam_aec_gain_params_t;
+
+typedef struct {
+    int   forced;
+    float force_exp_value;
+} cam_aec_exp_params_t;
+
+typedef struct {
+    int      forced;
+    uint32_t force_snap_linecount_value;
+} cam_aec_snap_lc_params_t;
+
+typedef struct {
+    int   forced;
+    float force_snap_gain_value;
+} cam_aec_snap_gain_params_t;
+
+typedef struct {
+    int   forced;
+    float force_snap_exp_value;
+} cam_aec_snap_exp_params_t;
+
+
 typedef  struct {
     uint8_t is_stats_valid;               /* if histgram data is valid */
     cam_hist_stats_t stats_data;          /* histogram data */
@@ -771,6 +823,41 @@ typedef  struct {
     uint8_t is_ae_params_valid;
     cam_ae_params_t ae_params;
 
+    /* AE eztuning parameters */
+    uint8_t is_ae_eztuing_params_valid;
+    cam_ae_eztuing_params_t ae_eztuing_params;
+
+    /* AWB eztuing parameters*/
+    uint8_t is_awb_eztuing_params_valid;
+    cam_awb_eztuing_params_t awb_eztuing_params;
+
+    /* AF eztuing parameters*/
+    uint8_t is_af_eztuing_params_valid;
+    cam_af_eztuing_params_t af_eztuing_params;
+
+    /* AEC force linecount eztuning parameters */
+    uint8_t is_aec_force_linecount_eztuing_params_valid;
+    cam_aec_lc_params_t aec_force_linecount_eztuing_params;
+
+    /* AEC force gain eztuing parameters*/
+    uint8_t is_aec_force_gain_eztuing_params_valid;
+    cam_aec_gain_params_t aec_force_gain_eztuing_params;
+
+    /* AEC force exp eztuing parameters*/
+    uint8_t is_aec_force_exp_eztuing_params_valid;
+    cam_aec_exp_params_t aec_force_exp_eztuing_params;
+
+    /* AEC force snap linecount eztuning parameters */
+    uint8_t is_aec_force_snap_linecount_eztuing_params_valid;
+    cam_aec_snap_lc_params_t aec_force_snap_linecount_eztuing_params;
+
+    /* AEC force snap gain eztuing parameters*/
+    uint8_t is_aec_force_snap_gain_eztuing_params_valid;
+    cam_aec_snap_gain_params_t aec_force_snap_gain_eztuing_params;
+
+    /* AEC force snap exp eztuing parameters*/
+    uint8_t is_aec_snap_force_exp_eztuing_params_valid;
+    cam_aec_snap_exp_params_t aec_force_snap_exp_eztuing_params;
     /* sensor parameters */
     uint8_t is_sensor_params_valid;
     cam_sensor_params_t sensor_params;
@@ -842,6 +929,16 @@ typedef enum {
     CAM_INTF_PARM_SET_BUNDLE,
     CAM_INTF_PARM_STREAM_FLIP,
     CAM_INTF_PARM_GET_OUTPUT_CROP,
+
+    CAM_INTF_PARM_AEC_ENABLE,
+    CAM_INTF_PARM_AWB_ENABLE,
+    CAM_INTF_PARM_AF_ENABLE,
+    CAM_INTF_PARM_AEC_FORCE_LC,
+    CAM_INTF_PARM_AEC_FORCE_GAIN,
+    CAM_INTF_PARM_AEC_FORCE_EXP,
+    CAM_INTF_PARM_AEC_FORCE_SNAP_LC,
+    CAM_INTF_PARM_AEC_FORCE_SNAP_GAIN,
+    CAM_INTF_PARM_AEC_FORCE_SNAP_EXP,
 
     /* specific to HAL3 */
     /* Whether the metadata maps to a valid frame number */

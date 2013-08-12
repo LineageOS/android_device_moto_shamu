@@ -387,9 +387,12 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_ANTIBANDING,              int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_EXPOSURE_COMPENSATION,    int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_AEC_LOCK,                 int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_AEC_ENABLE,               int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_FPS_RANGE,                cam_fps_range_t,             1);
     INCLUDE(CAM_INTF_PARM_FOCUS_MODE,               uint8_t,                     1);
     INCLUDE(CAM_INTF_PARM_AWB_LOCK,                 int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_AWB_ENABLE,               int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_AF_ENABLE,                int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_WHITE_BALANCE,            int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_EFFECT,                   int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_BESTSHOT_MODE,            int32_t,                     1);
@@ -433,6 +436,13 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_SET_AUTOFOCUSTUNING,      tune_actuator_t,             1);
     INCLUDE(CAM_INTF_PARM_SET_VFE_COMMAND,          tune_cmd_t,                  1);
     INCLUDE(CAM_INTF_PARM_SET_PP_COMMAND,           tune_cmd_t,                  1);
+    INCLUDE(CAM_INTF_PARM_AEC_FORCE_LC,             cam_aec_lc_params_t,         1);
+    INCLUDE(CAM_INTF_PARM_AEC_FORCE_GAIN,           cam_aec_gain_params_t,       1);
+    INCLUDE(CAM_INTF_PARM_AEC_FORCE_EXP,            cam_aec_exp_params_t,        1);
+    INCLUDE(CAM_INTF_PARM_AEC_FORCE_SNAP_LC,        cam_aec_snap_lc_params_t,    1);
+    INCLUDE(CAM_INTF_PARM_AEC_FORCE_SNAP_GAIN,      cam_aec_snap_gain_params_t,  1);
+    INCLUDE(CAM_INTF_PARM_AEC_FORCE_SNAP_EXP,       cam_aec_snap_exp_params_t,   1);
+
     /* HAL3 sepcific */
     INCLUDE(CAM_INTF_META_FRAME_NUMBER,             uint32_t,                    1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_MODE,       uint8_t,                     1);
