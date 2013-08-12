@@ -265,7 +265,7 @@ void mm_app_dump_frame(mm_camera_buf_def_t *frame,
 
 void mm_app_dump_jpeg_frame(const void * data, uint32_t size, char* name, char* ext, int index)
 {
-    char buf[32];
+    char buf[64];
     int file_fd;
     if ( data != NULL) {
         snprintf(buf, sizeof(buf), "/data/test/%s_%d.%s", name, index, ext);
@@ -542,6 +542,8 @@ int mm_app_open(mm_camera_app_t *cam_app,
         CDBG_ERROR("%s:map getparm_buf error\n", __func__);
         goto error_after_getparm_buf_alloc;
     }
+    test_obj->params_buffer = (parm_buffer_t*) test_obj->parm_buf.mem_info.data;
+    CDBG_HIGH("\n%s params_buffer=%p\n",__func__,test_obj->params_buffer);
 
     rc = test_obj->cam->ops->register_event_notify(test_obj->cam->camera_handle,
                                                    notify_evt_cb,
@@ -581,6 +583,94 @@ error_after_cap_buf_alloc:
 error_after_cam_open:
     test_obj->cam->ops->close_camera(test_obj->cam->camera_handle);
     test_obj->cam = NULL;
+    return rc;
+}
+
+int add_parm_entry_tobatch(parm_buffer_t *p_table,
+                           cam_intf_parm_type_t paramType,
+                           uint32_t paramLength,
+                           void *paramValue)
+{
+    int rc = MM_CAMERA_OK;
+    int position = paramType;
+    int current, next;
+
+    current = GET_FIRST_PARAM_ID(p_table);
+    if (position == current){
+        //DO NOTHING
+    } else if (position < current){
+        SET_NEXT_PARAM_ID(position, p_table, current);
+        SET_FIRST_PARAM_ID(p_table, position);
+    } else {
+        /* Search for the position in the linked list where we need to slot in*/
+        while (position > GET_NEXT_PARAM_ID(current, p_table))
+            current = GET_NEXT_PARAM_ID(current, p_table);
+
+        /*If node already exists no need to alter linking*/
+        if (position != GET_NEXT_PARAM_ID(current, p_table)) {
+            next = GET_NEXT_PARAM_ID(current, p_table);
+            SET_NEXT_PARAM_ID(current, p_table, position);
+            SET_NEXT_PARAM_ID(position, p_table, next);
+        }
+    }
+    if (paramLength > sizeof(parm_type_t)) {
+        CDBG_ERROR("%s:Size of input larger than max entry size",__func__);
+        return -1;
+    }
+    memcpy(POINTER_OF(paramType,p_table), paramValue, paramLength);
+    return rc;
+}
+
+int init_batch_update(parm_buffer_t *p_table)
+{
+    int rc = MM_CAMERA_OK;
+    CDBG_HIGH("\nEnter %s\n",__func__);
+    int32_t hal_version = CAM_HAL_V1;
+
+    memset(p_table, 0, sizeof(parm_buffer_t));
+    p_table->first_flagged_entry = CAM_INTF_PARM_MAX;
+    rc = add_parm_entry_tobatch(p_table, CAM_INTF_PARM_HAL_VERSION,sizeof(hal_version), &hal_version);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: add_parm_entry_tobatch failed !!", __func__);
+    }
+    return rc;
+}
+
+int commit_set_batch(mm_camera_test_obj_t *test_obj)
+{
+    int rc = MM_CAMERA_OK;
+    if (test_obj->params_buffer->first_flagged_entry < CAM_INTF_PARM_MAX) {
+        CDBG_HIGH("\n set_param p_buffer =%p\n",test_obj->params_buffer);
+        rc = test_obj->cam->ops->set_parms(test_obj->cam->camera_handle, test_obj->params_buffer);
+    }
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: cam->ops->set_parms failed !!", __func__);
+    }
+    return rc;
+}
+
+
+int mm_app_set_params(mm_camera_test_obj_t *test_obj,
+                      cam_intf_parm_type_t param_type,
+                      int32_t value)
+{
+    CDBG_HIGH("\nEnter mm_app_set_params!! param_type =%d & value =%d\n",param_type, value);
+    int rc = MM_CAMERA_OK;
+    rc = init_batch_update(test_obj->params_buffer);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: init_batch_update failed !!", __func__);
+        return rc;
+    }
+    rc = add_parm_entry_tobatch(test_obj->params_buffer, param_type, sizeof(value), &value);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: add_parm_entry_tobatch failed !!", __func__);
+        return rc;
+    }
+    rc = commit_set_batch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: commit_set_batch failed !!", __func__);
+        return rc;
+    }
     return rc;
 }
 
@@ -1563,37 +1653,18 @@ EXIT:
     return rc;
 }
 
-int main(int argc, char **argv)
+int mm_app_start_regression_test(int run_tc)
 {
-    int c;
-    int rc;
-    int run_tc = 0;
-    int run_dual_tc = 0;
+    int rc = MM_CAMERA_OK;
     mm_camera_app_t my_cam_app;
 
     CDBG("\nCamera Test Application\n");
-
-    while ((c = getopt(argc, argv, "tdh")) != -1) {
-        switch (c) {
-           case 't':
-               run_tc = 1;
-               break;
-           case 'd':
-               run_dual_tc = 1;
-               break;
-           case 'h':
-           default:
-               printf("usage: %s [-t] [-d] \n", argv[0]);
-               printf("-t:   Unit test        \n");
-               printf("-d:   Dual camera test \n");
-               return 0;
-        }
-    }
-
     memset(&my_cam_app, 0, sizeof(mm_camera_app_t));
-    if((mm_app_load_hal(&my_cam_app) != MM_CAMERA_OK)) {
-        CDBG_ERROR("%s:mm_app_init err\n", __func__);
-        return -1;
+
+    rc = mm_app_load_hal(&my_cam_app);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: mm_app_load_hal failed !!", __func__);
+        return rc;
     }
 
     if(run_tc) {
@@ -1610,9 +1681,7 @@ int main(int argc, char **argv)
         exit(rc);
     }
 #endif
-    /* Clean up and exit. */
-    CDBG("Exiting test app\n");
-    return 0;
+    return rc;
 }
 
 int32_t mm_camera_load_tuninglibrary(mm_camera_tuning_lib_params_t *tuning_param)

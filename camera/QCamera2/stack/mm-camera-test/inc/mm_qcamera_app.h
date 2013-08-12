@@ -177,6 +177,11 @@ typedef struct {
 } mm_camera_channel_t;
 
 typedef struct {
+    uint16_t user_input_display_width;
+    uint16_t user_input_display_height;
+} USER_INPUT_DISPLAY_T;
+
+typedef struct {
     mm_camera_vtbl_t *cam;
     uint8_t num_channels;
     mm_camera_channel_t channels[MM_CHANNEL_TYPE_MAX];
@@ -202,6 +207,8 @@ typedef struct {
     int encodeJpeg;
     int zsl_enabled;
     prev_callback user_preview_cb;
+    parm_buffer_t *params_buffer;
+    USER_INPUT_DISPLAY_T preview_resolution;
 } mm_camera_test_obj_t;
 
 typedef struct {
@@ -383,7 +390,9 @@ extern int mm_app_fb_write(mm_camera_test_obj_t *test_obj, char *buffer);
 extern int mm_app_overlay_display(mm_camera_test_obj_t *test_obj, int bufferFd);
 extern int mm_app_allocate_ion_memory(mm_camera_app_buf_t *buf, int ion_type);
 extern int mm_app_deallocate_ion_memory(mm_camera_app_buf_t *buf);
-
+int mm_app_set_params(mm_camera_test_obj_t *test_obj,
+                      cam_intf_parm_type_t param_type,
+                      int32_t value);
 /* JIG camera lib interface */
 
 int mm_camera_lib_open(mm_camera_lib_handle *handle, int cam_id);
@@ -400,11 +409,15 @@ int32_t mm_camera_load_tuninglibrary
 int mm_camera_lib_set_preview_usercb(
   mm_camera_lib_handle *handle, prev_callback cb);
 
+int mm_app_start_regression_test(int run_tc);
+int mm_app_load_hal(mm_camera_app_t *my_cam_app);
+
 extern int createEncodingSession(mm_camera_test_obj_t *test_obj,
                           mm_camera_stream_t *m_stream,
                           mm_camera_buf_def_t *m_frame);
 extern int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_frame,
                mm_camera_stream_t *m_stream);
+extern int mm_app_take_picture(mm_camera_test_obj_t *test_obj, uint8_t);
 
 #endif /* __MM_QCAMERA_APP_H__ */
 
