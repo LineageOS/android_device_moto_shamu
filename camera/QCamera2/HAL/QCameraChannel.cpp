@@ -696,7 +696,8 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                                                             QCameraChannel *pSrcChannel,
                                                             uint8_t minStreamBufNum,
                                                             cam_padding_info_t *paddingInfo,
-                                                            QCameraParameters &param)
+                                                            QCameraParameters &param,
+                                                            bool contStream)
 {
     int32_t rc = 0;
     QCameraStream *pStream = NULL;
@@ -737,8 +738,13 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
             streamInfo->stream_type = CAM_STREAM_TYPE_OFFLINE_PROC;
             rc = pStream->getFormat(streamInfo->fmt);
             rc = pStream->getFrameDimension(streamInfo->dim);
-            streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
-            streamInfo->num_of_burst = minStreamBufNum;
+            if ( contStream ) {
+                streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
+                streamInfo->num_of_burst = 0;
+            } else {
+                streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
+                streamInfo->num_of_burst = minStreamBufNum;
+            }
 
             streamInfo->reprocess_config.pp_type = CAM_ONLINE_REPROCESS_TYPE;
             streamInfo->reprocess_config.online.input_stream_id = pStream->getMyServerID();

@@ -952,14 +952,14 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       mDumpFrmCnt(0),
       mDumpSkipCnt(0),
       mThermalLevel(QCAMERA_THERMAL_NO_ADJUSTMENT),
-      m_HDRSceneEnabled(false)
+      m_HDRSceneEnabled(false),
+      mLongshotEnabled(false)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = HARDWARE_DEVICE_API_VERSION(1, 0);
     mCameraDevice.common.close = close_camera_device;
     mCameraDevice.ops = &mCameraOps;
     mCameraDevice.priv = this;
-
 
     pthread_mutex_init(&m_lock, NULL);
     pthread_cond_init(&m_cond, NULL);
@@ -2117,6 +2117,37 @@ int QCamera2HardwareInterface::takePicture()
 }
 
 /*===========================================================================
+ * FUNCTION   : longShot
+ *
+ * DESCRIPTION: Queue one more ZSL frame
+ *              in the longshot pipe.
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::longShot()
+{
+    int32_t rc = NO_ERROR;
+    uint8_t numSnapshots = mParameters.getNumOfSnapshots();
+
+    QCameraPicChannel *pZSLChannel =
+            (QCameraPicChannel *)m_channels[QCAMERA_CH_TYPE_ZSL];
+    if (NULL != pZSLChannel) {
+        rc = pZSLChannel->takePicture(numSnapshots);
+    } else {
+        ALOGE(" %s : ZSL channel not initialized!", __func__);
+        rc = NO_INIT;
+        goto end;
+    }
+
+end:
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : cancelPicture
  *
  * DESCRIPTION: cancel picture impl
@@ -2295,6 +2326,22 @@ int QCamera2HardwareInterface::sendCommand(int32_t command, int32_t /*arg1*/, in
     int rc = NO_ERROR;
 
     switch (command) {
+    case CAMERA_CMD_LONGSHOT_ON:
+        // Longshot can only be enabled when image capture
+        // is not active.
+        if ( !m_stateMachine.isCaptureRunning() ) {
+            mLongshotEnabled = true;
+        } else {
+            rc = NO_INIT;
+        }
+        break;
+    case CAMERA_CMD_LONGSHOT_OFF:
+        if ( mLongshotEnabled && m_stateMachine.isCaptureRunning() ) {
+            cancelPicture();
+            processEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE, NULL);
+        }
+        mLongshotEnabled = false;
+        break;
     case CAMERA_CMD_HISTOGRAM_ON:
     case CAMERA_CMD_HISTOGRAM_OFF:
         rc = setHistogram(command == CAMERA_CMD_HISTOGRAM_ON? true : false);
@@ -3570,12 +3617,16 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
 
     ALOGD("%s: After pproc config check, ret = %x", __func__, pp_config.feature_mask);
 
+    if ( mLongshotEnabled ) {
+        minStreamBufNum = getBufNumRequired(CAM_STREAM_TYPE_PREVIEW);
+    }
     rc = pChannel->addReprocStreamsFromSource(*this,
                                               pp_config,
                                               pInputChannel,
                                               minStreamBufNum,
                                               &gCamCapability[mCameraId]->padding_info,
-                                              mParameters);
+                                              mParameters,
+                                              mLongshotEnabled);
     if (rc != NO_ERROR) {
         delete pChannel;
         return NULL;
@@ -3853,14 +3904,8 @@ void QCamera2HardwareInterface::playShutter(){
      cbArg.cb_type = QCAMERA_NOTIFY_CALLBACK;
      cbArg.msg_type = CAMERA_MSG_SHUTTER;
      cbArg.ext1 = 0;
-
-     if(!m_bShutterSoundPlayed){
-         cbArg.ext2 = true;
-         m_cbNotifier.notifyCallback(cbArg);
-     }
      cbArg.ext2 = false;
      m_cbNotifier.notifyCallback(cbArg);
-     m_bShutterSoundPlayed = false;
 }
 
 /*===========================================================================

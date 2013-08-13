@@ -266,6 +266,7 @@ private:
     int registerFaceImage(void *img_ptr,
                           cam_pp_offline_src_config_t *config,
                           int32_t &faceID);
+    int32_t longShot();
 
     int openCamera();
     int closeCamera();
@@ -357,6 +358,7 @@ private:
     bool isNoDisplayMode() {return mParameters.isNoDisplayMode();};
     bool isZSLMode() {return mParameters.isZSLMode();};
     uint8_t numOfSnapshotsExpected() {return mParameters.getNumOfSnapshots();};
+    bool isLongshotEnabled() { return mLongshotEnabled; };
     uint8_t getBufNumRequired(cam_stream_type_t stream_type);
     bool needFDMetadata(qcamera_ch_type_enum_t channel_type);
 
@@ -463,6 +465,7 @@ private:
     mm_jpeg_exif_params_t mExifParams;
     qcamera_thermal_level_enum_t mThermalLevel;
     bool m_HDRSceneEnabled;
+    bool mLongshotEnabled;
 };
 
 }; // namespace qcamera

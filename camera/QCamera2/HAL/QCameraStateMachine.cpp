@@ -2555,6 +2555,10 @@ int32_t QCameraStateMachine::procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t 
             rc = m_parent->sendCommand(cmd_payload->cmd,
                                        cmd_payload->arg1,
                                        cmd_payload->arg2);
+            if ( CAMERA_CMD_LONGSHOT_OFF == cmd_payload->cmd ) {
+                // move state to previewing state
+                m_state = QCAMERA_SM_STATE_PREVIEWING;
+            }
             result.status = rc;
             result.request_api = evt;
             result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
@@ -2636,11 +2640,25 @@ int32_t QCameraStateMachine::procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t 
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_TAKE_PICTURE:
+        {
+            if ( m_parent->isLongshotEnabled() ) {
+               rc = m_parent->longShot();
+            } else {
+                ALOGE("%s: cannot handle evt(%d) in state(%d)", __func__, evt, m_state);
+                rc = INVALID_OPERATION;
+            }
+
+            result.status = rc;
+            result.request_api = evt;
+            result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
+            m_parent->signalAPIResult(&result);
+        }
+        break;
+    case QCAMERA_SM_EVT_PREPARE_SNAPSHOT:
     case QCAMERA_SM_EVT_STOP_RECORDING:
     case QCAMERA_SM_EVT_START_PREVIEW:
     case QCAMERA_SM_EVT_START_NODISPLAY_PREVIEW:
-    case QCAMERA_SM_EVT_PREPARE_SNAPSHOT:
-    case QCAMERA_SM_EVT_TAKE_PICTURE:
     case QCAMERA_SM_EVT_SET_PREVIEW_WINDOW:
     case QCAMERA_SM_EVT_RELEASE:
         {
@@ -2750,6 +2768,28 @@ bool QCameraStateMachine::isPreviewRunning()
     case QCAMERA_SM_STATE_VIDEO_PIC_TAKING:
     case QCAMERA_SM_STATE_PREVIEW_PIC_TAKING:
     case QCAMERA_SM_STATE_PREPARE_SNAPSHOT:
+        return true;
+    default:
+        return false;
+    }
+}
+
+/*===========================================================================
+ * FUNCTION   : isCaptureRunning
+ *
+ * DESCRIPTION: check if image capture is in process.
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : true -- capture running
+ *              false -- capture stopped
+ *==========================================================================*/
+bool QCameraStateMachine::isCaptureRunning()
+{
+    switch (m_state) {
+    case QCAMERA_SM_STATE_PIC_TAKING:
+    case QCAMERA_SM_STATE_VIDEO_PIC_TAKING:
+    case QCAMERA_SM_STATE_PREVIEW_PIC_TAKING:
         return true;
     default:
         return false;
