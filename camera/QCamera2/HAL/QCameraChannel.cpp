@@ -716,14 +716,22 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                 continue;
             }
 
-            if (param.isHDREnabled() && !param.isHDRThumbnailProcessNeeded() &&
-                (pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
-                pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW) ||
-                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
-                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_POSTVIEW))) {
-
-                  // Skip thumbnail stream reprocessing
-                  continue;
+            if(pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
+               pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW) ||
+               pStream->isOrignalTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
+               pStream->isOrignalTypeOf(CAM_STREAM_TYPE_POSTVIEW)) {
+                  if (param.isHDREnabled() && !param.isHDRThumbnailProcessNeeded()){
+                      // Skip thumbnail stream reprocessing in HDR
+                      continue;
+                  }
+                  uint32_t feature_mask = config.feature_mask;
+                  //Don't do WNR for thumbnail
+                  feature_mask &= ~CAM_QCOM_FEATURE_DENOISE2D;
+                  if(!feature_mask) {
+                    // Skip thumbnail stream reprocessing since no other
+                    //reprocessing is enabled.
+                      continue;
+                  }
             }
 
             pStreamInfoBuf = allocator.allocateStreamInfoBuf(CAM_STREAM_TYPE_OFFLINE_PROC);
@@ -754,6 +762,8 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
             if (!(pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
                 pStream->isOrignalTypeOf(CAM_STREAM_TYPE_SNAPSHOT))) {
                 streamInfo->reprocess_config.pp_feature_config.feature_mask &= ~CAM_QCOM_FEATURE_CAC;
+                //Don't do WNR for thumbnail
+                streamInfo->reprocess_config.pp_feature_config.feature_mask &= ~CAM_QCOM_FEATURE_DENOISE2D;
             }
             if (streamInfo->reprocess_config.pp_feature_config.feature_mask & CAM_QCOM_FEATURE_ROTATION) {
                 if (streamInfo->reprocess_config.pp_feature_config.rotation == ROTATE_90 ||
