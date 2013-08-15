@@ -1559,6 +1559,58 @@ int filter_resolutions(mm_camera_lib_handle *lib_handle,
 
     return rc;
 }
+
+/*===========================================================================
+ * FUNCTION   : enableAFR
+ *
+ * DESCRIPTION: This function will go through the list
+ *              of supported FPS ranges and select the
+ *              one which has maximum range
+ *
+ * PARAMETERS :
+ *   @lib_handle   : camera test library handle
+ *
+ * RETURN     : uint32_t type of stream handle
+ *              MM_CAMERA_OK  -- Success
+ *              !=MM_CAMERA_OK -- Error status
+ *==========================================================================*/
+int enableAFR(mm_camera_lib_handle *lib_handle)
+{
+    size_t i, j;
+    float max_range = 0.0f;
+    cam_capability_t cap;
+    int rc = MM_CAMERA_OK;
+
+    if ( NULL == lib_handle ) {
+        return MM_CAMERA_E_INVALID_INPUT;
+    }
+
+    rc = mm_camera_lib_get_caps(lib_handle, &cap);
+    if ( MM_CAMERA_OK != rc ) {
+        CDBG_ERROR("%s:mm_camera_lib_get_caps() err=%d\n", __func__, rc);
+        return rc;
+    }
+
+    for( i = 0, j = 0 ; i < cap.fps_ranges_tbl_cnt ; i++ ) {
+        if ( max_range < (cap.fps_ranges_tbl[i].max_fps - cap.fps_ranges_tbl[i].min_fps) ) {
+            j = i;
+        }
+    }
+
+    rc = mm_camera_lib_send_command(lib_handle,
+                                    MM_CAMERA_LIB_FPS_RANGE,
+                                    &cap.fps_ranges_tbl[j],
+                                    NULL);
+
+    CDBG_ERROR("%s : FPS range [%5.2f:%5.2f] rc = %d",
+              __func__,
+              cap.fps_ranges_tbl[j].min_fps,
+              cap.fps_ranges_tbl[j].max_fps,
+              rc);
+
+    return rc;
+}
+
 /*===========================================================================
  * FUNCTION     - submain -
  *
@@ -1612,6 +1664,12 @@ static int submain()
         }
         snap_dim.width = dimension_tbl[i].width;
         snap_dim.height = dimension_tbl[i].height;
+
+        rc = enableAFR(&lib_handle);
+        if (rc != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:enableAFR() err=%d\n", __func__, rc);
+            goto ERROR;
+        }
     }
 
     do {
@@ -1762,6 +1820,11 @@ static int submain()
                 snap_dim.width = dimension_tbl[i].width;
                 snap_dim.height = dimension_tbl[i].height;
 
+                rc = enableAFR(&lib_handle);
+                if (rc != MM_CAMERA_OK) {
+                    CDBG_ERROR("%s:enableAFR() err=%d\n", __func__, rc);
+                    goto ERROR;
+                }
                 break;
 
             case ACTION_TOGGLE_ZSL:
