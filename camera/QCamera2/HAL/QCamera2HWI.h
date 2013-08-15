@@ -358,6 +358,7 @@ private:
     bool isZSLMode() {return mParameters.isZSLMode();};
     uint8_t numOfSnapshotsExpected() {return mParameters.getNumOfSnapshots();};
     uint8_t getBufNumRequired(cam_stream_type_t stream_type);
+    bool needFDMetadata(qcamera_ch_type_enum_t channel_type);
 
     static void camEvtHandle(uint32_t camera_handle,
                           mm_camera_event_t *evt,
