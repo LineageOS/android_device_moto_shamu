@@ -37,6 +37,7 @@
 #include "mm_qcamera_main_menu.h"
 #include "mm_qcamera_app.h"
 #include "mm_qcamera_dbg.h"
+#include "mm_qcamera_socket.h"
 
 /*===========================================================================
  * Macro
@@ -1690,6 +1691,9 @@ static int submain()
             goto ERROR;
         }
     }
+    /*start the eztune server*/
+    CDBG_HIGH("Starting eztune Server \n");
+    eztune_server_start(&lib_handle);
 
     do {
         print_current_menu (current_menu_id);
@@ -1712,7 +1716,6 @@ static int submain()
                     CDBG_ERROR("%s:mm_camera_lib_start_stream() err=%d\n", __func__, rc);
                     goto ERROR;
                 }
-
                 previewing = 1;
                 break;
 
