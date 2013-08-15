@@ -68,6 +68,10 @@
 #define TUNING_CPP_DATA_OFFSET     (TUNING_SENSOR_DATA_MAX + TUNING_VFE_DATA_MAX)
 #define TUNING_CAC_DATA_OFFSET     (TUNING_SENSOR_DATA_MAX + \
                                    TUNING_VFE_DATA_MAX + TUNING_CPP_DATA_MAX)
+#define MAX_ISP_DATA_SIZE 9000
+#define MAX_PP_DATA_SIZE 2000
+#define MAX_STATS_DATA_SIZE 4000
+
 
 
 typedef enum {
@@ -827,6 +831,18 @@ typedef struct {
     uint8_t  data[TUNING_DATA_MAX];
 }tuning_params_t;
 
+typedef struct {
+  uint8_t private_isp_data[MAX_ISP_DATA_SIZE];
+} cam_chromatix_lite_isp_t;
+
+typedef struct {
+  uint8_t private_pp_data[MAX_PP_DATA_SIZE];
+} cam_chromatix_lite_pp_t;
+
+typedef struct {
+  uint8_t private_stats_data[MAX_STATS_DATA_SIZE];
+} cam_chromatix_lite_stats_t;
+
 typedef  struct {
     uint8_t is_stats_valid;               /* if histgram data is valid */
     cam_hist_stats_t stats_data;          /* histogram data */
@@ -903,9 +919,20 @@ typedef  struct {
     /* Meta valid params */
     uint8_t is_meta_valid;
     cam_meta_valid_t meta_valid_params;
+
     /*Tuning Data*/
     uint8_t is_tuning_params_valid;
     tuning_params_t tuning_params;
+
+    uint8_t is_chromatix_lite_isp_valid;
+    cam_chromatix_lite_isp_t chromatix_lite_isp_data;
+
+    uint8_t is_chromatix_lite_pp_valid;
+    cam_chromatix_lite_pp_t chromatix_lite_pp_data;
+
+    uint8_t is_chromatix_lite_stats_valid;
+    cam_chromatix_lite_stats_t chromatix_lite_stats_data;
+
 } cam_metadata_info_t;
 
 typedef enum {
