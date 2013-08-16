@@ -1814,6 +1814,34 @@ int32_t QCameraParameters::setAntibanding(const QCameraParameters& params)
 }
 
 /*===========================================================================
+ * FUNCTION   : setStatsDebugMask
+ *
+ * DESCRIPTION: get the value from persist file in Stats module that will
+ *              control funtionality in the module
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setStatsDebugMask()
+{
+    uint32_t mask = 0;
+    char value[PROPERTY_VALUE_MAX];
+
+    property_get("persist.camera.stats.debug.mask", value, "0");
+    mask = (uint32_t)atoi(value);
+
+    ALOGE("%s: ctrl mask :%d", __func__, mask);
+
+    return AddSetParmEntryToBatch(m_pParamBuf,
+                                  CAM_INTF_PARM_STATS_DEBUG_MASK,
+                                  sizeof(mask),
+                                  &mask);
+}
+
+/*===========================================================================
  * FUNCTION   : setSceneDetect
  *
  * DESCRIPTION: set scenen detect value from user setting
@@ -2907,6 +2935,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
 
     // update live snapshot size after all other parameters are set
     if ((rc = setLiveSnapshotSize(params)))             final_rc = rc;
+    if ((rc = setStatsDebugMask()))                     final_rc = rc;
 
 UPDATE_PARAM_DONE:
     needRestart = m_bNeedRestart;
