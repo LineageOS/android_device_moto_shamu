@@ -49,6 +49,9 @@
 #define MAX_ROI 5
 #define MAX_STREAM_NUM_IN_BUNDLE 4
 #define MAX_NUM_STREAMS          8
+#define CHROMATIX_SIZE 21292
+#define COMMONCHROMATIX_SIZE 42044
+#define AFTUNE_SIZE 1596
 #define MAX_SCALE_SIZES_CNT 8
 
 typedef enum {
@@ -523,12 +526,13 @@ typedef struct {
 } cam_hdr_bracketing_info_t;
 
 typedef struct {
-    uint8_t chromatixData[21292];
-    uint8_t common_chromatixData[42044];
+    uint8_t chromatixData[CHROMATIX_SIZE];
+    uint8_t snapchromatixData[CHROMATIX_SIZE];
+    uint8_t common_chromatixData[COMMONCHROMATIX_SIZE];
 } tune_chromatix_t;
 
 typedef struct {
-    uint8_t af_tuneData[1592];
+    uint8_t af_tuneData[AFTUNE_SIZE];
 } tune_autofocus_t;
 
 typedef struct {
