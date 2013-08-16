@@ -3549,9 +3549,6 @@ cam_denoise_process_type_t QCamera3HardwareInterface::getWaveletDenoiseProcessPl
  *==========================================================================*/
 bool QCamera3HardwareInterface::needRotationReprocess()
 {
-    // TODO: hack here to return false to avoid reprocess
-    // Need to be enabled after PP is enabled
-    return false;
 
     if (!mJpegSettings->is_jpeg_format) {
         // RAW image, no need to reprocess
@@ -3566,6 +3563,34 @@ bool QCamera3HardwareInterface::needRotationReprocess()
     }
 
     return false;
+}
+
+/*===========================================================================
+ * FUNCTION   : needReprocess
+ *
+ * DESCRIPTION: if reprocess in needed
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
+bool QCamera3HardwareInterface::needReprocess()
+{
+    if (!mJpegSettings->is_jpeg_format) {
+        // RAW image, no need to reprocess
+        return false;
+    }
+
+    if ((mJpegSettings->min_required_pp_mask > 0) ||
+         isWNREnabled()) {
+        // TODO: add for ZSL HDR later
+        // pp module has min requirement for zsl reprocess, or WNR in ZSL mode
+        ALOGD("%s: need do reprocess for ZSL WNR or min PP reprocess", __func__);
+        return true;
+    }
+
+    return needRotationReprocess();
 }
 
 /*===========================================================================
@@ -3644,38 +3669,6 @@ QCamera3ReprocessChannel *QCamera3HardwareInterface::addOnlineReprocChannel(
         return NULL;
     }
     return pChannel;
-}
-
-/*===========================================================================
- * FUNCTION   : needReprocess
- *
- * DESCRIPTION: if reprocess is needed
- *
- * PARAMETERS : none
- *
- * RETURN     : true: needed
- *              false: no need
- *==========================================================================*/
-bool QCamera3HardwareInterface::needReprocess()
-{
-    // TODO: hack here to return false to avoid reprocess
-    // Need to be enabled after PP is enabled
-    return false;
-
-    if (!mJpegSettings->is_jpeg_format) {
-        // RAW image, no need to reprocess
-        return false;
-    }
-
-    if (((gCamCapability[mCameraId]->min_required_pp_mask > 0) ||
-         isWNREnabled())) {
-        // TODO: add for ZSL HDR later
-        // pp module has min requirement for zsl reprocess, or WNR in ZSL mode
-        ALOGD("%s: need do reprocess for ZSL WNR or min PP reprocess", __func__);
-        return true;
-    }
-
-    return needRotationReprocess();
 }
 
 int QCamera3HardwareInterface::getMaxUnmatchedFramesInQueue()
