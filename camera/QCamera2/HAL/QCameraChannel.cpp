@@ -715,6 +715,16 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                 continue;
             }
 
+            if (param.isHDREnabled() && !param.isHDRThumbnailProcessNeeded() &&
+                (pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
+                pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW) ||
+                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
+                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_POSTVIEW))) {
+
+                  // Skip thumbnail stream reprocessing
+                  continue;
+            }
+
             pStreamInfoBuf = allocator.allocateStreamInfoBuf(CAM_STREAM_TYPE_OFFLINE_PROC);
             if (pStreamInfoBuf == NULL) {
                 ALOGE("%s: no mem for stream info buf", __func__);
