@@ -461,7 +461,7 @@ private:
     int mDumpSkipCnt; // frame skip count
     mm_jpeg_exif_params_t mExifParams;
     qcamera_thermal_level_enum_t mThermalLevel;
-    bool mHDRSceneEnabled;
+    bool m_HDRSceneEnabled;
 };
 
 }; // namespace qcamera

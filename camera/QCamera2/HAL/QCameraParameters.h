@@ -468,6 +468,7 @@ public:
     qcamera_thermal_mode getThermalMode() {return m_ThermalMode;};
     int32_t updateRecordingHintValue(int32_t value);
     int32_t setHDRAEBracket(cam_exp_bracketing_t hdrBracket);
+    bool isHDREnabled();
     int32_t restoreAEBracket();
 
     cam_focus_mode_type getFocusMode() const {return mFocusMode;};
@@ -486,7 +487,6 @@ public:
     bool isCAFLocked() {return m_bCAFLocked;};
     void setAFRunning(bool bflag) {m_bAFRunning = bflag;};
     bool isAFRunning() {return m_bAFRunning;};
-    bool isHDREnabled() {return m_bHDREnabled;};
     bool isHDR1xFrameEnabled() {return m_bHDR1xFrameEnabled;}
     bool isYUVFrameInfoNeeded();
     const char*getFrameFmtString(cam_format_t fmt);
@@ -494,6 +494,7 @@ public:
     bool isPreviewFlipChanged() { return m_bPreviewFlipChanged; };
     bool isVideoFlipChanged() { return m_bVideoFlipChanged; };
     bool isSnapshotFlipChanged() { return m_bSnapshotFlipChanged; };
+    void setHDRSceneEnable(bool bflag) {m_HDRSceneEnabled = bflag;};
 
     const char *getASDStateString(cam_auto_scene_t scene);
 private:
@@ -679,6 +680,7 @@ private:
     bool m_bHDREnabled;             // if HDR is enabled
     QCameraAdjustFPS *m_AdjustFPS;
     bool m_bHDR1xFrameEnabled;          // if frame with exposure compensation 0 during HDR is enabled
+    bool m_HDRSceneEnabled; // Auto HDR indication
 
     DefaultKeyedVector<String8,String8> m_tempMap; // map for temororily store parameters to be set
 };
