@@ -439,8 +439,8 @@ public:
     bool isNoDisplayMode() {return m_bNoDisplayMode;};
     bool isWNREnabled() {return m_bWNROn;};
     uint8_t getNumOfSnapshots();
-    uint8_t getNumOfExtraHDRBufsIfNeeded();
-    uint8_t getNumOfHDRBufsIfNeeded();
+    uint8_t getNumOfExtraHDRInBufsIfNeeded();
+    uint8_t getNumOfExtraHDROutBufsIfNeeded();
     int getBurstNum();
     bool getRecordingHintValue() {return m_bRecordingHint;}; // return local copy of video hint
     int setRecordingHintValue(int32_t value); // set local copy of video hint and send to server
@@ -490,6 +490,7 @@ public:
     bool isHDR1xFrameEnabled() {return m_bHDR1xFrameEnabled;}
     bool isYUVFrameInfoNeeded();
     const char*getFrameFmtString(cam_format_t fmt);
+    bool isHDR1xExtraBufferNeeded() {return m_bHDR1xExtraBufferNeeded;}
 
     bool isPreviewFlipChanged() { return m_bPreviewFlipChanged; };
     bool isVideoFlipChanged() { return m_bVideoFlipChanged; };
@@ -684,6 +685,7 @@ private:
     bool m_bHDR1xFrameEnabled;          // if frame with exposure compensation 0 during HDR is enabled
     bool m_HDRSceneEnabled; // Auto HDR indication
     bool m_bHDRThumbnailProcessNeeded;        // if thumbnail need to be processed for HDR
+    bool m_bHDR1xExtraBufferNeeded;     // if extra frame with exposure compensation 0 during HDR is needed
 
     DefaultKeyedVector<String8,String8> m_tempMap; // map for temororily store parameters to be set
 };
