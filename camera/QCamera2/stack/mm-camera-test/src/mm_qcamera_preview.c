@@ -581,12 +581,24 @@ int mm_app_start_preview(mm_camera_test_obj_t *test_obj)
     int rc = MM_CAMERA_OK;
     mm_camera_channel_t *channel = NULL;
     mm_camera_stream_t *stream = NULL;
+    mm_camera_stream_t *s_metadata = NULL;
     uint8_t i;
 
     channel =  mm_app_add_preview_channel(test_obj);
     if (NULL == channel) {
         CDBG_ERROR("%s: add channel failed", __func__);
         return -MM_CAMERA_E_GENERAL;
+    }
+
+    s_metadata = mm_app_add_metadata_stream(test_obj,
+                                            channel,
+                                            mm_app_metadata_notify_cb,
+                                            (void *)test_obj,
+                                            PREVIEW_BUF_NUM);
+    if (NULL == s_metadata) {
+        CDBG_ERROR("%s: add metadata stream failed\n", __func__);
+        mm_app_del_channel(test_obj, channel);
+        return rc;
     }
 
     rc = mm_app_start_channel(test_obj, channel);
