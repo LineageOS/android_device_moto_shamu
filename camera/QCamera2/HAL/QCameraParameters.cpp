@@ -1212,6 +1212,24 @@ int32_t QCameraParameters::setLiveSnapshotSize(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+
+/*===========================================================================
+ * FUNCTION   : setRawSize
+ *
+ * DESCRIPTION: set live snapshot size
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setRawSize(cam_dimension_t &dim)
+{
+    m_rawSize = dim;
+    return NO_ERROR;
+}
 /*===========================================================================
  * FUNCTION   : setPreviewFormat
  *
@@ -5112,7 +5130,8 @@ int32_t QCameraParameters::getStreamDimension(cam_stream_type_t streamType,
         getVideoSize(&dim.width, &dim.height);
         break;
     case CAM_STREAM_TYPE_RAW:
-        dim = m_pCapability->raw_dim;
+        //dim = m_pCapability->raw_dim;
+        getRawSize(dim);
         break;
     case CAM_STREAM_TYPE_METADATA:
         dim.width = sizeof(cam_metadata_info_t);
@@ -5972,6 +5991,51 @@ int32_t QCameraParameters::setFrameSkip(enum msm_vfe_frame_skip_pattern pattern)
     return rc;
 }
 
+int32_t QCameraParameters::updateRAW(cam_dimension_t max_dim)
+{
+    int32_t rc = NO_ERROR;
+    cam_dimension_t raw_dim;
+
+    if (max_dim.width == 0 || max_dim.height == 0) {
+        max_dim = m_pCapability->raw_dim;
+    }
+
+    rc = AddSetParmEntryToBatch(m_pParamBuf,
+                                CAM_INTF_PARM_MAX_DIMENSION,
+                                sizeof(cam_dimension_t),
+                                &max_dim);
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to update table for CAM_INTF_PARM_MAX_DIMENSION ", __func__);
+        return rc;
+    }
+
+    rc = commitSetBatch();
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to set lock CAM_INTF_PARM_MAX_DIMENSION parm", __func__);
+        return rc;
+    }
+
+    rc = AddGetParmEntryToBatch(m_pParamBuf,
+                                CAM_INTF_PARM_RAW_DIMENSION);
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to get CAM_INTF_PARM_RAW_DIMENSION", __func__);
+        return rc;
+    }
+
+    rc = commitGetBatch();
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to get commit CAM_INTF_PARM_RAW_DIMENSION", __func__);
+        return rc;
+    }
+    memcpy(&raw_dim,POINTER_OF(CAM_INTF_PARM_RAW_DIMENSION,m_pParamBuf),sizeof(cam_dimension_t));
+    ALOGE("%s : RAW Dimension = %d X %d",__func__,raw_dim.width,raw_dim.height);
+    if (raw_dim.width == 0 || raw_dim.height == 0) {
+        ALOGE("%s: Error getting RAW size. Setting to Capability value",__func__);
+        raw_dim = m_pCapability->raw_dim;
+    }
+    setRawSize(raw_dim);
+    return rc;
+}
 /*===========================================================================
  * FUNCTION   : getASDStateString
  *
