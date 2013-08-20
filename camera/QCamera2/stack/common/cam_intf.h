@@ -254,6 +254,7 @@ typedef struct{
 
     uint32_t max_face_detection_count;
 
+    uint8_t histogram_supported;
     /* Number of histogram buckets supported */
     int32_t histogram_size;
     /* Maximum value possible for a histogram bucket */
