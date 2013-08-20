@@ -4232,6 +4232,8 @@ int QCamera3HardwareInterface::getJpegSettings
         mJpegSettings->sensor_sensitivity = mMetadataResponse.iso_speed;
     }
 
+    mJpegSettings->sensor_exposure_time = mMetadataResponse.exposure_time;
+
     if (jpeg_settings.exists(ANDROID_LENS_FOCAL_LENGTH)) {
         mJpegSettings->lens_focal_length =
             jpeg_settings.find(ANDROID_LENS_FOCAL_LENGTH).data.f[0];

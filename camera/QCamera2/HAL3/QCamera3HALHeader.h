@@ -51,6 +51,7 @@ class QCamera3Channel;
         uint8_t jpeg_quality;
         cam_dimension_t thumbnail_size;
         int32_t sensor_sensitivity;
+        int64_t sensor_exposure_time;
         float lens_focal_length;
         int32_t max_jpeg_size;
         int exposure_compensation;
