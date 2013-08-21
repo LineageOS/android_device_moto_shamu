@@ -1594,6 +1594,19 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
         return -1;
     }
 
+   mm_stream_t* stream_obj = mm_channel_util_get_stream_by_handler(ch_obj,
+               buf_info->stream_id);
+   if (CAM_STREAM_TYPE_METADATA == stream_obj->stream_info->stream_type) {
+    const cam_metadata_info_t *metadata;
+    metadata = (const cam_metadata_info_t *)buf_info->buf->buffer;
+    CDBG("meta_valid: frame_id = %d meta_valid = %d\n",
+      metadata->meta_valid_params.meta_frame_id,
+      metadata->is_meta_valid);
+    if (!(metadata->is_meta_valid)) {
+      mm_channel_qbuf(ch_obj, buf_info->buf);
+      return 0;
+    }
+   }
     if (mm_channel_util_seq_comp_w_rollover(buf_info->frame_idx,
                                             queue->expected_frame_id) < 0) {
         /* incoming buf is older than expected buf id, will discard it */

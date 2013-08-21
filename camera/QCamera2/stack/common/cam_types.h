@@ -738,6 +738,10 @@ typedef enum {
   S_MAX,
 } cam_auto_scene_t;
 
+typedef struct {
+   uint32_t meta_frame_id;
+} cam_meta_valid_t;
+
 typedef  struct {
     float aperture_value;
 } cam_sensor_params_t;
@@ -871,6 +875,10 @@ typedef  struct {
     /* sensor parameters */
     uint8_t is_sensor_params_valid;
     cam_sensor_params_t sensor_params;
+
+    /* Meta valid params */
+    uint8_t is_meta_valid;
+    cam_meta_valid_t meta_valid_params;
 } cam_metadata_info_t;
 
 typedef enum {
