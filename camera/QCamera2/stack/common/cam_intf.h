@@ -441,6 +441,8 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_AEC_FORCE_SNAP_LC,        cam_aec_snap_lc_params_t,    1);
     INCLUDE(CAM_INTF_PARM_AEC_FORCE_SNAP_GAIN,      cam_aec_snap_gain_params_t,  1);
     INCLUDE(CAM_INTF_PARM_AEC_FORCE_SNAP_EXP,       cam_aec_snap_exp_params_t,   1);
+    INCLUDE(CAM_INTF_PARM_MAX_DIMENSION,            cam_dimension_t,             1);
+    INCLUDE(CAM_INTF_PARM_RAW_DIMENSION,            cam_dimension_t,             1);
 
     /* HAL3 sepcific */
     INCLUDE(CAM_INTF_META_FRAME_NUMBER,             uint32_t,                    1);
