@@ -3368,8 +3368,8 @@ int32_t QCameraParameters::initDefaultParameters()
     set(KEY_QC_FACE_DETECTION, VALUE_OFF);
 
     //Set Face Recognition
-    set(KEY_QC_SUPPORTED_FACE_RECOGNITION, onOffValues);
-    set(KEY_QC_FACE_RECOGNITION, VALUE_OFF);
+    //set(KEY_QC_SUPPORTED_FACE_RECOGNITION, onOffValues);
+    //set(KEY_QC_FACE_RECOGNITION, VALUE_OFF);
 
     //Set ZSL
     set(KEY_QC_SUPPORTED_ZSL_MODES, onOffValues);
