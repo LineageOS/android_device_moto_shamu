@@ -441,7 +441,20 @@ status_t  CameraContext::openCamera()
     }
 
     printf("openCamera(camera_index=%d)\n", mCameraIndex);
+
+#ifndef USE_JB_MR1
+
+    String16 packageName("CameraTest");
+
+    mCamera = Camera::connect(mCameraIndex,
+                              packageName,
+                              Camera::USE_CALLING_UID);
+
+#else
+
     mCamera = Camera::connect(mCameraIndex);
+
+#endif
 
     if ( NULL == mCamera.get() ) {
         printf("Unable to connect to CameraService\n");
@@ -524,6 +537,12 @@ status_t CameraContext::startPreview()
     Size currentPreviewSize = mSupportedPreviewSizes.itemAt(mCurrentPreviewSizeIdx);
     Size currentPictureSize = mSupportedPictureSizes.itemAt(mCurrentPictureSizeIdx);
 
+#ifndef USE_JB_MR1
+
+    sp<IGraphicBufferProducer> gbp;
+
+#endif
+
     if ( mPreviewRunning || !mHardwareActive ) {
         printf("Preview already running or camera not active! \n");
         return NO_INIT;
@@ -546,7 +565,18 @@ status_t CameraContext::startPreview()
         mParams.setPictureSize(currentPictureSize.width, currentPictureSize.height);
 
         ret |= mCamera->setParameters(mParams.flatten());
+
+#ifndef USE_JB_MR1
+
+        gbp = mPreviewSurface->getIGraphicBufferProducer();
+        ret |= mCamera->setPreviewTexture(gbp);
+
+#else
+
         ret |= mCamera->setPreviewDisplay(mPreviewSurface);
+
+#endif
+
         ret |= mCamera->startPreview();
         if ( NO_ERROR != ret ) {
             printf("Preview start failed! \n");
