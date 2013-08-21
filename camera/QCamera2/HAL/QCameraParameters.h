@@ -176,6 +176,7 @@ public:
     static const char KEY_QC_SNAPSHOT_BURST_NUM[];
     static const char KEY_QC_NO_DISPLAY_MODE[];
     static const char KEY_QC_RAW_PICUTRE_SIZE[];
+    static const char KEY_QC_TINTLESS_ENABLE[];
 
     // DENOISE
     static const char KEY_QC_DENOISE[];
@@ -554,6 +555,7 @@ private:
     int32_t setBurstNum(const QCameraParameters& params);
     int32_t setSnapshotFDReq(const QCameraParameters& );
     int32_t setStatsDebugMask();
+    int32_t setTintlessValue(const QCameraParameters& params);
 
     int32_t setAutoExposure(const char *autoExp);
     int32_t setPreviewFpsRange(int minFPS,int maxFPS);
@@ -586,6 +588,7 @@ private:
     int32_t setRedeyeReduction(const char *redeyeStr);
     int32_t setWaveletDenoise(const char *wnrStr);
     int32_t setFaceRecognition(const char *faceRecog, int maxFaces);
+    int32_t setTintlessValue(const char *tintStr);
 
     int32_t parse_pair(const char *str, int *first, int *second,
                        char delim, char **endptr);
