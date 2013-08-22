@@ -103,6 +103,7 @@ const char QCameraParameters::KEY_QC_SNAPSHOT_PICTURE_FLIP[] = "snapshot-picture
 const char QCameraParameters::KEY_QC_SUPPORTED_FLIP_MODES[] = "flip-mode-values";
 const char QCameraParameters::KEY_QC_VIDEO_HDR[] = "video-hdr";
 const char QCameraParameters::KEY_QC_SUPPORTED_VIDEO_HDR_MODES[] = "video-hdr-values";
+const char QCameraParameters::KEY_QC_AUTO_HDR_ENABLE [] = "auto-hdr-enable";
 const char QCameraParameters::KEY_QC_SNAPSHOT_BURST_NUM[] = "snapshot-burst-num";
 const char QCameraParameters::KEY_QC_SNAPSHOT_FD_DATA[] = "snapshot-fd-data-enable";
 
@@ -2051,6 +2052,72 @@ int32_t QCameraParameters::setAwbLock(const QCameraParameters& params)
 }
 
 /*===========================================================================
+ * FUNCTION   : setAutoHDR
+ *
+ * DESCRIPTION: Enable/disable auto HDR
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setAutoHDR(const QCameraParameters& params)
+{
+    const char *str = params.get(KEY_QC_AUTO_HDR_ENABLE);
+    const char *prev_str = get(KEY_QC_AUTO_HDR_ENABLE);
+    char prop[PROPERTY_VALUE_MAX];
+
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.camera.auto.hdr.enable", prop, VALUE_DISABLE);
+    if (str != NULL) {
+       if (prev_str == NULL ||
+           strcmp(str, prev_str) != 0) {
+           ALOGD("%s : Auto HDR set to: %s", __func__, str);
+           return updateParamEntry(KEY_QC_AUTO_HDR_ENABLE, str);
+       }
+    } else {
+       if (prev_str == NULL ||
+           strcmp(prev_str, prop) != 0 ) {
+           ALOGD("%s : Auto HDR set to: %s", __func__, prop);
+           updateParamEntry(KEY_QC_AUTO_HDR_ENABLE, prop);
+       }
+    }
+
+       return NO_ERROR;
+}
+
+/*===========================================================================
+* FUNCTION   : isAutoHDREnabled
+*
+* DESCRIPTION: Query auto HDR status
+*
+* PARAMETERS : None
+*
+* RETURN     : bool true/false
+*==========================================================================*/
+bool QCameraParameters::isAutoHDREnabled()
+{
+    const char *str = get(KEY_QC_AUTO_HDR_ENABLE);
+    if (str != NULL) {
+        int32_t value = lookupAttr(ENABLE_DISABLE_MODES_MAP,
+                                   sizeof(ENABLE_DISABLE_MODES_MAP)/sizeof(QCameraMap),
+                                   str);
+        if (value == NAME_NOT_FOUND) {
+            ALOGE("%s: Invalid Auto HDR value %s", __func__, str);
+            return false;
+        }
+
+        ALOGD("%s : Auto HDR status is: %d", __func__, value);
+        return value ? true : false;
+    }
+
+    ALOGD("%s : Auto HDR status not set!", __func__);
+    return false;
+}
+
+/*===========================================================================
  * FUNCTION   : setMCEValue
  *
  * DESCRIPTION: set memory color enhancement value from user setting
@@ -2904,6 +2971,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setSelectableZoneAf(params)))             final_rc = rc;
     if ((rc = setRedeyeReduction(params)))              final_rc = rc;
     if ((rc = setAEBracket(params)))                    final_rc = rc;
+    if ((rc = setAutoHDR(params)))                      final_rc = rc;
     if ((rc = setGpsLocation(params)))                  final_rc = rc;
     if ((rc = setWaveletDenoise(params)))               final_rc = rc;
     if ((rc = setFaceRecognition(params)))              final_rc = rc;

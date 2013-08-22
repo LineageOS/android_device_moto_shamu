@@ -966,7 +966,6 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
         ALOGE("%s: %s module not found", __func__, POWER_HARDWARE_MODULE_ID);
     }
 #endif
-
 }
 
 /*===========================================================================
@@ -2724,7 +2723,9 @@ int32_t QCamera2HardwareInterface::processHDRData(cam_asd_hdr_scene_data_t hdr_s
 {
     int rc = NO_ERROR;
 
-    if (hdr_scene.is_hdr_scene && (hdr_scene.hdr_confidence > HDR_CONFIDENCE_THRESHOLD)) {
+    if (hdr_scene.is_hdr_scene &&
+      (hdr_scene.hdr_confidence > HDR_CONFIDENCE_THRESHOLD) &&
+      mParameters.isAutoHDREnabled()) {
         m_HDRSceneEnabled = true;
     } else {
         m_HDRSceneEnabled = false;
