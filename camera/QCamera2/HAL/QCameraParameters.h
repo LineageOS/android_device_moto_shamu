@@ -552,6 +552,7 @@ private:
     int32_t setFlip(const QCameraParameters& );
     int32_t setBurstNum(const QCameraParameters& params);
     int32_t setSnapshotFDReq(const QCameraParameters& );
+    int32_t setStatsDebugMask();
 
     int32_t setAutoExposure(const char *autoExp);
     int32_t setPreviewFpsRange(int minFPS,int maxFPS);
