@@ -1469,7 +1469,7 @@ void QCameraCbNotifier::releaseNotifications(void *data, void *user_data)
 
     if ( ( NULL != arg ) && ( NULL != user_data ) ) {
         if ( arg->release_cb ) {
-            arg->release_cb(arg->user_data, arg->cookie);
+            arg->release_cb(arg->user_data, arg->cookie, FAILED_TRANSACTION);
         }
     }
 }
@@ -1521,6 +1521,7 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
     bool longShotEnabled = false;
     uint32_t numOfSnapshotExpected = 0;
     uint32_t numOfSnapshotRcvd = 0;
+    int32_t cbStatus = NO_ERROR;
 
     ALOGV("%s: E", __func__);
     do {
@@ -1557,6 +1558,7 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
             {
                 qcamera_callback_argm_t *cb =
                     (qcamera_callback_argm_t *)pme->mDataQ.dequeue();
+                cbStatus = NO_ERROR;
                 if (NULL != cb) {
                     ALOGV("%s: cb type %d received",
                           __func__,
@@ -1633,6 +1635,7 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                                 ALOGE("%s : invalid cb type %d",
                                       __func__,
                                       cb->cb_type);
+                                cbStatus = BAD_VALUE;
                             }
                             break;
                         };
@@ -1640,9 +1643,10 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                         ALOGE("%s : cb message type %d not enabled!",
                               __func__,
                               cb->msg_type);
+                        cbStatus = INVALID_OPERATION;
                     }
                     if ( cb->release_cb ) {
-                        cb->release_cb(cb->user_data, cb->cookie);
+                        cb->release_cb(cb->user_data, cb->cookie, cbStatus);
                     }
                     delete cb;
                 } else {

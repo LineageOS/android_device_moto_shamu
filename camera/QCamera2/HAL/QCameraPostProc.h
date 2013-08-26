@@ -66,6 +66,7 @@ typedef struct {
     camera_memory_t *        data;     // ptr to data memory struct
     mm_camera_super_buf_t *  frame;    // ptr to frame
     QCameraMemory *          streamBufs; //ptr to stream buffers
+    bool                     unlinkFile; // unlink any stored buffers on error
 } qcamera_release_data_t;
 
 typedef struct {
@@ -128,8 +129,11 @@ private:
     int32_t encodeData(qcamera_jpeg_data_t *jpeg_job_data,
                        uint8_t &needNewSess);
     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
-    static void releaseNotifyData(void *user_data, void *cookie);
+    static void releaseNotifyData(void *user_data,
+                                  void *cookie,
+                                  int32_t cb_status);
     void releaseJpegJobData(qcamera_jpeg_data_t *job);
+    static void releaseSaveJobData(void *data, void *user_data);
     int32_t processRawImageImpl(mm_camera_super_buf_t *recvd_frame);
 
     static void releaseJpegData(void *data, void *user_data);
@@ -137,6 +141,7 @@ private:
     static void releaseOngoingPPData(void *data, void *user_data);
 
     static void *dataProcessRoutine(void *data);
+    static void *dataSaveRoutine(void *data);
 
     int32_t setYUVFrameInfo(mm_camera_super_buf_t *recvd_frame);
 
@@ -160,8 +165,13 @@ private:
     QCameraQueue m_inputJpegQ;          // input jpeg job queue
     QCameraQueue m_ongoingJpegQ;        // ongoing jpeg job queue
     QCameraQueue m_inputRawQ;           // input raw job queue
+    QCameraQueue m_inputSaveQ;          // input save job queue
     QCameraCmdThread m_dataProcTh;      // thread for data processing
+    QCameraCmdThread m_saveProcTh;      // thread for storing buffers
     uint32_t mRawBurstCount;            // current raw burst count
+    uint32_t mSaveFrmCnt;               // save frame counter
+    static const char *STORE_LOCATION;  // path for storing buffers
+    bool mUseSaveProc;                  // use store thread
 };
 
 }; // namespace qcamera
