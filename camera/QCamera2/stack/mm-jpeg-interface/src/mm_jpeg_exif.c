@@ -415,7 +415,7 @@ int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info,
     return 0;
   }
   cam_ae_params_t *p_ae_params = p_meta->is_ae_params_valid ?
-    &p_meta->ae_params : &p_cam_exif_params->ae_params;
+    &p_meta->ae_params : NULL;
 
   if (NULL != p_ae_params) {
     rc = process_3a_data(p_ae_params, exif_info);
@@ -424,7 +424,7 @@ int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info,
     }
   }
   cam_sensor_params_t *p_sensor_params = p_meta->is_sensor_params_valid ?
-    &p_meta->sensor_params : &p_cam_exif_params->sensor_params;
+    &p_meta->sensor_params : NULL;
 
   if (NULL != p_sensor_params) {
     rc = process_sensor_data(p_sensor_params, exif_info);
