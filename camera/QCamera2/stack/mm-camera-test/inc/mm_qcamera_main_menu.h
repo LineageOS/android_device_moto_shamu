@@ -70,6 +70,7 @@ typedef enum
   TOGGLE_ZSL,
   TAKE_RAW_SNAPSHOT,
   SWITCH_SNAP_RESOLUTION,
+  TOGGLE_WNR,
   EXIT
 } Camera_main_menu_t;
 
@@ -104,6 +105,7 @@ typedef enum
   ACTION_TOGGLE_ZSL,
   ACTION_TAKE_RAW_SNAPSHOT,
   ACTION_SWITCH_RESOLUTION,
+  ACTION_TOGGLE_WNR,
   ACTION_EXIT
 } camera_action_t;
 
