@@ -1593,6 +1593,11 @@ int32_t QCameraParameters::setBrightness(const QCameraParameters& params)
 {
     int currentBrightness = getInt(KEY_QC_BRIGHTNESS);
     int brightness = params.getInt(KEY_QC_BRIGHTNESS);
+
+    if(params.get(KEY_QC_BRIGHTNESS) == NULL) {
+       ALOGD("%s: Brigtness not set by App ",__func__);
+       return NO_ERROR;
+    }
     if (currentBrightness !=  brightness) {
         if (brightness >= m_pCapability->brightness_ctrl.min_value &&
             brightness <= m_pCapability->brightness_ctrl.max_value) {
@@ -1627,6 +1632,11 @@ int32_t QCameraParameters::setSharpness(const QCameraParameters& params)
 {
     int shaprness = params.getInt(KEY_QC_SHARPNESS);
     int prev_sharp = getInt(KEY_QC_SHARPNESS);
+
+    if(params.get(KEY_QC_SHARPNESS) == NULL) {
+       ALOGD("%s: Sharpness not set by App ",__func__);
+       return NO_ERROR;
+    }
     if (prev_sharp !=  shaprness) {
         if((shaprness >= m_pCapability->sharpness_ctrl.min_value) &&
            (shaprness <= m_pCapability->sharpness_ctrl.max_value)) {
@@ -1661,7 +1671,12 @@ int32_t QCameraParameters::setSkinToneEnhancement(const QCameraParameters& param
 {
     int sceFactor = params.getInt(KEY_QC_SCE_FACTOR);
     int prev_sceFactor = getInt(KEY_QC_SCE_FACTOR);
-    if (prev_sceFactor !=  sceFactor) {
+
+    if(params.get(KEY_QC_SCE_FACTOR) == NULL) {
+       ALOGD("%s: Skintone enhancement not set by App ",__func__);
+       return NO_ERROR;
+    }
+    if (prev_sceFactor != sceFactor) {
         if((sceFactor >= m_pCapability->sce_ctrl.min_value) &&
            (sceFactor <= m_pCapability->sce_ctrl.max_value)) {
             ALOGV(" new Skintone Enhancement value : %d ", sceFactor);
@@ -1695,6 +1710,11 @@ int32_t QCameraParameters::setSaturation(const QCameraParameters& params)
 {
     int saturation = params.getInt(KEY_QC_SATURATION);
     int prev_sat = getInt(KEY_QC_SATURATION);
+
+    if(params.get(KEY_QC_SATURATION) == NULL) {
+       ALOGD("%s: Saturation not set by App ",__func__);
+       return NO_ERROR;
+    }
     if (prev_sat !=  saturation) {
         if((saturation >= m_pCapability->saturation_ctrl.min_value) &&
            (saturation <= m_pCapability->saturation_ctrl.max_value)) {
@@ -1729,6 +1749,11 @@ int32_t QCameraParameters::setContrast(const QCameraParameters& params)
 {
     int contrast = params.getInt(KEY_QC_CONTRAST);
     int prev_contrast = getInt(KEY_QC_CONTRAST);
+
+    if(params.get(KEY_QC_CONTRAST) == NULL) {
+       ALOGD("%s: Contrast not set by App ",__func__);
+       return NO_ERROR;
+    }
     if (prev_contrast !=  contrast) {
         if((contrast >= m_pCapability->contrast_ctrl.min_value) &&
            (contrast <= m_pCapability->contrast_ctrl.max_value)) {
@@ -1764,7 +1789,12 @@ int32_t QCameraParameters::setExposureCompensation(const QCameraParameters & par
 {
     int expComp = params.getInt(KEY_EXPOSURE_COMPENSATION);
     int prev_expComp = getInt(KEY_EXPOSURE_COMPENSATION);
-    if (prev_expComp !=  expComp) {
+
+    if(params.get(KEY_EXPOSURE_COMPENSATION) == NULL) {
+       ALOGD("%s: Exposure compensation not set by App ",__func__);
+       return NO_ERROR;
+    }
+    if (prev_expComp != expComp) {
         if((expComp >= m_pCapability->exposure_compensation_min) &&
            (expComp <= m_pCapability->exposure_compensation_max)) {
             ALOGV(" new Exposure Compensation value : %d ", expComp);
