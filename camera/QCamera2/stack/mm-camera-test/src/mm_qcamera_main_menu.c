@@ -38,14 +38,18 @@
 #include "mm_qcamera_app.h"
 #include "mm_qcamera_dbg.h"
 
+/*===========================================================================
+ * Macro
+ *===========================================================================*/
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 #define VIDEO_BUFFER_SIZE       (PREVIEW_WIDTH * PREVIEW_HEIGHT * 3/2)
 #define THUMBNAIL_BUFFER_SIZE   (THUMBNAIL_WIDTH * THUMBNAIL_HEIGHT * 3/2)
 #define SNAPSHOT_BUFFER_SIZE    (PICTURE_WIDTH * PICTURE_HEIGHT * 3/2)
-/*===========================================================================
- * Macro
- *===========================================================================*/
 //TODO:check this Macros with current app.
+
+/*===========================================================================
+ * Defines
+ *===========================================================================*/
 //#define VIDEO_FRAMES_NUM      4
 #define THUMBNAIL_FRAMES_NUM  1
 #define SNAPSHOT_FRAMES_NUM   1
@@ -56,9 +60,29 @@
 #define EXPOSURE_COMPENSATION_MINIMUM_NUMERATOR -12
 #define EXPOSURE_COMPENSATION_DEFAULT_NUMERATOR 0
 #define EXPOSURE_COMPENSATION_DENOMINATOR 6
-/*===========================================================================
- * Defines
- *===========================================================================*/
+
+//TODO: find correct values of Contrast defines.
+#define CAMERA_MIN_CONTRAST    0
+#define CAMERA_DEF_CONTRAST    5
+#define CAMERA_MAX_CONTRAST    10
+#define CAMERA_CONTRAST_STEP   1
+
+//TODO: find correct values of Brightness defines.
+#define CAMERA_MIN_BRIGHTNESS  0
+#define CAMERA_DEF_BRIGHTNESS  3
+#define CAMERA_MAX_BRIGHTNESS  6
+#define CAMERA_BRIGHTNESS_STEP 1
+
+//TODO: find correct values of Saturation defines.
+#define CAMERA_MIN_SATURATION  0
+#define CAMERA_DEF_SATURATION  5
+#define CAMERA_MAX_SATURATION  10
+#define CAMERA_SATURATION_STEP 1
+
+#define CAMERA_MIN_SHARPNESS 0
+#define CAMERA_MAX_SHARPNESS 10
+#define CAMERA_DEF_SHARPNESS 5
+#define CAMERA_SHARPNESS_STEP 1
 
 const CAMERA_MAIN_MENU_TBL_T camera_main_menu_tbl[] = {
   {START_PREVIEW,               "Start preview"},
@@ -213,17 +237,17 @@ USER_INPUT_DISPLAY_T input_display;
 int preview_video_resolution_flag = 0;
 
 //TODO: default values.
-#if 0
+#if 1
 int brightness = CAMERA_DEF_BRIGHTNESS;
 int contrast = CAMERA_DEF_CONTRAST;
 int saturation = CAMERA_DEF_SATURATION;
 int sharpness = CAMERA_DEF_SHARPNESS;
-#endif
+#else
 int brightness = 0;
 int contrast = 0;
 int saturation = 0;
 int sharpness = 0;
-
+#endif
 //TODO: find new method to calculate ev.
 //int32_t ev_numerator = EXPOSURE_COMPENSATION_DEFAULT_NUMERATOR;
 
@@ -234,28 +258,6 @@ int zoom_max_value;
 int cam_id;
 int is_rec = 0;
 
-//TODO: find correct values of Contrast defines.
-#define CAMERA_MIN_CONTRAST    0
-#define CAMERA_DEF_CONTRAST    5
-#define CAMERA_MAX_CONTRAST    10
-#define CAMERA_CONTRAST_STEP   1
-
-//TODO: find correct values of Brightness defines.
-#define CAMERA_MIN_BRIGHTNESS  0
-#define CAMERA_DEF_BRIGHTNESS  3
-#define CAMERA_MAX_BRIGHTNESS  6
-#define CAMERA_BRIGHTNESS_STEP 1
-
-//TODO: find correct values of Saturation defines.
-#define CAMERA_MIN_SATURATION  0
-#define CAMERA_DEF_SATURATION  5
-#define CAMERA_MAX_SATURATION  10
-#define CAMERA_SATURATION_STEP 1
-
-#define CAMERA_MIN_SHARPNESS 0
-#define CAMERA_MAX_SHARPNESS 10
-#define CAMERA_DEF_SHARPNESS 5
-#define CAMERA_SHARPNESS_STEP 1
 
 static int submain();
 
