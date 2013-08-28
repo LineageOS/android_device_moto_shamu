@@ -730,10 +730,6 @@ int mm_app_stop_preview_zsl(mm_camera_test_obj_t *test_obj)
 {
     int rc = MM_CAMERA_OK;
 
-    if ( test_obj->enable_reproc ) {
-        rc |= mm_app_stop_reprocess(test_obj);
-    }
-
     mm_camera_channel_t *channel =
         mm_app_get_channel_by_type(test_obj, MM_CHANNEL_TYPE_ZSL);
 
@@ -742,7 +738,9 @@ int mm_app_stop_preview_zsl(mm_camera_test_obj_t *test_obj)
         CDBG_ERROR("%s:Stop Preview failed rc=%d\n", __func__, rc);
     }
 
-
+    if ( test_obj->enable_reproc ) {
+        rc |= mm_app_stop_reprocess(test_obj);
+    }
 
     return rc;
 }

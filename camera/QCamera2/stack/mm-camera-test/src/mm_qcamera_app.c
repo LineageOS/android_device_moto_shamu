@@ -1552,6 +1552,7 @@ int setSharpness(mm_camera_test_obj_t *test_obj, int sharpness)
         goto ERROR;
     }
 
+    test_obj->reproc_sharpness = sharpness;
     CDBG_ERROR("%s: Sharpness set to: %d", __func__, value);
 
 ERROR:
@@ -1754,6 +1755,8 @@ int setWNR(mm_camera_test_obj_t *test_obj, int enable)
         goto ERROR;
     }
 
+
+    test_obj->reproc_wnr = param;
     CDBG_ERROR("%s: WNR enabled: %d", __func__, enable);
 
 ERROR:
