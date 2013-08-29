@@ -1399,7 +1399,7 @@ int set_flash_mode (mm_camera_lib_handle *lib_handle, int action_param) {
             break;
     }
     return mm_camera_lib_send_command(lib_handle,
-                                      MM_CAMERA_LIB_BESTSHOT,
+                                      MM_CAMERA_LIB_FLASH,
                                       &type,
                                       NULL);
 }
@@ -1642,6 +1642,7 @@ static int submain()
     mm_camera_lib_snapshot_params snap_dim;
     snap_dim.width = DEFAULT_SNAPSHOT_WIDTH;
     snap_dim.height = DEFAULT_SNAPSHOT_HEIGHT;
+    cam_scene_mode_type default_scene= CAM_SCENE_MODE_OFF;
 
     mm_camera_test_obj_t test_obj;
     memset(&test_obj, 0, sizeof(mm_camera_test_obj_t));
@@ -1677,6 +1678,15 @@ static int submain()
         rc = enableAFR(&lib_handle);
         if (rc != MM_CAMERA_OK) {
             CDBG_ERROR("%s:enableAFR() err=%d\n", __func__, rc);
+            goto ERROR;
+        }
+
+        rc =  mm_camera_lib_send_command(&lib_handle,
+                                         MM_CAMERA_LIB_BESTSHOT,
+                                         &default_scene,
+                                         NULL);
+        if (rc != MM_CAMERA_OK) {
+            CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
             goto ERROR;
         }
     }
@@ -1832,6 +1842,15 @@ static int submain()
                 rc = enableAFR(&lib_handle);
                 if (rc != MM_CAMERA_OK) {
                     CDBG_ERROR("%s:enableAFR() err=%d\n", __func__, rc);
+                    goto ERROR;
+                }
+
+                rc =  mm_camera_lib_send_command(&lib_handle,
+                                                 MM_CAMERA_LIB_BESTSHOT,
+                                                 &default_scene,
+                                                 NULL);
+                if (rc != MM_CAMERA_OK) {
+                    CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
                     goto ERROR;
                 }
                 break;
