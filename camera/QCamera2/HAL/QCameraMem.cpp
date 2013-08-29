@@ -1158,7 +1158,6 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
         ret = UNKNOWN_ERROR;
         goto end;
     }
-    count += mMinUndequeuedBuffers;
 
     err = mWindow->set_buffer_count(mWindow, count);
     if (err != 0) {
