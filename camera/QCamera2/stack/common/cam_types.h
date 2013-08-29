@@ -504,6 +504,16 @@ typedef enum {
     CAM_FLASH_MODE_MAX
 } cam_flash_mode_t;
 
+// Flash States
+typedef enum {
+    CAM_FLASH_STATE_UNAVAILABLE,
+    CAM_FLASH_STATE_CHARGING,
+    CAM_FLASH_STATE_READY,
+    CAM_FLASH_STATE_FIRED,
+    CAM_FLASH_STATE_PARTIAL,
+    CAM_FLASH_STATE_MAX
+} cam_flash_state_t;
+
 typedef enum {
     CAM_FLASH_FIRING_LEVEL_0,
     CAM_FLASH_FIRING_LEVEL_1,
@@ -942,6 +952,14 @@ typedef  struct {
     uint8_t is_chromatix_lite_af_stats_valid;
     cam_chromatix_lite_af_stats_t chromatix_lite_af_stats_data;
 } cam_metadata_info_t;
+
+typedef  struct {
+    float aperture_value;
+   /* Store current LED flash state */
+   cam_flash_mode_t         flash_mode;
+   cam_flash_state_t        flash_state;
+} cam_sensor_params_t;
+
 
 typedef enum {
     CAM_INTF_PARM_HAL_VERSION,
