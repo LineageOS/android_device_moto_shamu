@@ -105,6 +105,7 @@ const char QCameraParameters::KEY_QC_VIDEO_HDR[] = "video-hdr";
 const char QCameraParameters::KEY_QC_SUPPORTED_VIDEO_HDR_MODES[] = "video-hdr-values";
 const char QCameraParameters::KEY_QC_SNAPSHOT_BURST_NUM[] = "snapshot-burst-num";
 const char QCameraParameters::KEY_QC_SNAPSHOT_FD_DATA[] = "snapshot-fd-data-enable";
+const char QCameraParameters::KEY_QC_TINTLESS_ENABLE[] = "tintless";
 
 // Values for effect settings.
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
@@ -2936,6 +2937,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setVideoHDR(params)))                     final_rc = rc;
     if ((rc = setBurstNum(params)))                     final_rc = rc;
     if ((rc = setSnapshotFDReq(params)))                final_rc = rc;
+    if ((rc = setTintlessValue(params)))                final_rc = rc;
 
     // update live snapshot size after all other parameters are set
     if ((rc = setLiveSnapshotSize(params)))             final_rc = rc;
@@ -4276,6 +4278,72 @@ int32_t QCameraParameters::setMCEValue(const char *mceStr)
         }
     }
     ALOGE("Invalid MCE value: %s", (mceStr == NULL) ? "NULL" : mceStr);
+    return BAD_VALUE;
+}
+
+/*===========================================================================
+ * FUNCTION   : setTintlessValue
+ *
+ * DESCRIPTION: enable/disable tintless from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setTintlessValue(const QCameraParameters& params)
+{
+    const char *str = params.get(KEY_QC_TINTLESS_ENABLE);
+    const char *prev_str = get(KEY_QC_TINTLESS_ENABLE);
+    char prop[PROPERTY_VALUE_MAX];
+
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.camera.tintless", prop, VALUE_DISABLE);
+    if (str != NULL) {
+        if (prev_str == NULL ||
+            strcmp(str, prev_str) != 0) {
+            return setTintlessValue(str);
+        }
+    } else {
+        if (prev_str == NULL ||
+            strcmp(prev_str, prop) != 0 ) {
+            setTintlessValue(prop);
+        }
+    }
+
+    return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : setTintlessValue
+ *
+ * DESCRIPTION: set tintless value
+ *
+ * PARAMETERS :
+ *   @tintStr : Tintless value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setTintlessValue(const char *tintStr)
+{
+    if (tintStr != NULL) {
+        int32_t value = lookupAttr(ENABLE_DISABLE_MODES_MAP,
+                                   sizeof(ENABLE_DISABLE_MODES_MAP)/sizeof(QCameraMap),
+                                   tintStr);
+        if (value != NAME_NOT_FOUND) {
+            ALOGD("%s: Setting Tintless value %s", __func__, tintStr);
+            updateParamEntry(KEY_QC_TINTLESS_ENABLE, tintStr);
+            return AddSetParmEntryToBatch(m_pParamBuf,
+                                          CAM_INTF_PARM_TINTLESS,
+                                          sizeof(value),
+                                          &value);
+        }
+    }
+    ALOGE("Invalid Tintless value: %s", (tintStr == NULL) ? "NULL" : tintStr);
     return BAD_VALUE;
 }
 
