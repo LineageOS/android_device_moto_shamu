@@ -51,7 +51,7 @@
 #define MAX_NUM_STREAMS          8
 #define CHROMATIX_SIZE 21292
 #define COMMONCHROMATIX_SIZE 42044
-#define AFTUNE_SIZE 1596
+#define AFTUNE_SIZE 2000
 #define MAX_SCALE_SIZES_CNT 8
 
 typedef enum {
