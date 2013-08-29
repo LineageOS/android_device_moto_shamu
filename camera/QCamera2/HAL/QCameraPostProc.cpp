@@ -471,8 +471,10 @@ int32_t QCameraPostProcessor::processData(mm_camera_super_buf_t *frame)
     }
 
     if (m_parent->needReprocess()) {
-        //play shutter sound
-        m_parent->playShutter();
+        if ( !m_parent->isLongshotEnabled() ) {
+            //play shutter sound
+            m_parent->playShutter();
+        }
 
         ALOGD("%s: need reprocess", __func__);
         // enqueu to post proc input queue
@@ -673,6 +675,14 @@ int32_t QCameraPostProcessor::processPPData(mm_camera_super_buf_t *frame)
         if(m_parent->mParameters.isYUVFrameInfoNeeded())
             setYUVFrameInfo(frame);
         return processRawData(frame);
+    }
+
+    if ( m_parent->isLongshotEnabled() ) {
+        // play shutter sound for longshot
+        // after reprocess is done
+        // TODO: Move this after CAC done event
+
+        m_parent->playShutter();
     }
 
     qcamera_jpeg_data_t *jpeg_job =

@@ -160,6 +160,7 @@ public:
     int32_t procEvt(qcamera_sm_evt_enum_t evt, void *evt_payload);
 
     bool isPreviewRunning(); // check if preview is running
+    bool isCaptureRunning(); // check if image capture is running
 
 private:
     typedef enum {

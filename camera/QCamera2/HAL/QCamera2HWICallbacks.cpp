@@ -1518,6 +1518,7 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
     QCameraCbNotifier *pme = (QCameraCbNotifier *)data;
     QCameraCmdThread *cmdThread = &pme->mProcTh;
     uint8_t isSnapshotActive = FALSE;
+    bool longShotEnabled = false;
     uint32_t numOfSnapshotExpected = 0;
     uint32_t numOfSnapshotRcvd = 0;
 
@@ -1539,6 +1540,7 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
             {
                 isSnapshotActive = TRUE;
                 numOfSnapshotExpected = pme->mParent->numOfSnapshotsExpected();
+                longShotEnabled = pme->mParent->isLongshotEnabled();
                 numOfSnapshotRcvd = 0;
             }
             break;
@@ -1609,12 +1611,14 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                         case QCAMERA_DATA_SNAPSHOT_CALLBACK:
                             {
                                 if (TRUE == isSnapshotActive && pme->mDataCb ) {
-                                    numOfSnapshotRcvd++;
-                                    if (numOfSnapshotExpected > 0 &&
-                                        numOfSnapshotExpected == numOfSnapshotRcvd) {
-                                        // notify HWI that snapshot is done
-                                        pme->mParent->processSyncEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE,
-                                                                     NULL);
+                                    if (!longShotEnabled) {
+                                        numOfSnapshotRcvd++;
+                                        if (numOfSnapshotExpected > 0 &&
+                                            numOfSnapshotExpected == numOfSnapshotRcvd) {
+                                            // notify HWI that snapshot is done
+                                            pme->mParent->processSyncEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE,
+                                                                         NULL);
+                                        }
                                     }
                                     pme->mDataCb(cb->msg_type,
                                                  cb->data,
