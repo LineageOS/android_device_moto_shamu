@@ -3289,13 +3289,17 @@ int32_t QCameraParameters::initDefaultParameters()
     setWhiteBalance(WHITE_BALANCE_AUTO);
 
     // Set Flash mode
-    String8 flashValues = createValuesString(
-            (int *)m_pCapability->supported_flash_modes,
-            m_pCapability->supported_flash_modes_cnt,
-            FLASH_MODES_MAP,
-            sizeof(FLASH_MODES_MAP) / sizeof(QCameraMap));
-    set(KEY_SUPPORTED_FLASH_MODES, flashValues);
-    setFlash(FLASH_MODE_OFF);
+    if(m_pCapability->supported_flash_modes_cnt > 0) {
+       String8 flashValues = createValuesString(
+               (int *)m_pCapability->supported_flash_modes,
+               m_pCapability->supported_flash_modes_cnt,
+               FLASH_MODES_MAP,
+               sizeof(FLASH_MODES_MAP) / sizeof(QCameraMap));
+       set(KEY_SUPPORTED_FLASH_MODES, flashValues);
+       setFlash(FLASH_MODE_OFF);
+    } else {
+        ALOGE("%s: supported flash modes cnt is 0!!!", __func__);
+    }
 
     // Set Scene Mode
     String8 sceneModeValues = createValuesString(
