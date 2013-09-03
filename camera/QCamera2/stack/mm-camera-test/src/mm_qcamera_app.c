@@ -864,14 +864,6 @@ int mm_app_stop_channel(mm_camera_test_obj_t *test_obj,
                                             channel->ch_id);
 }
 
-int initBatchUpdate(mm_camera_test_obj_t *test_obj)
-{
-    parm_buffer_t *parm_buf = ( parm_buffer_t * ) test_obj->parm_buf.mem_info.data;
-    memset(parm_buf, 0, sizeof(parm_buffer_t));
-    parm_buf->first_flagged_entry = CAM_INTF_PARM_MAX;
-    return MM_CAMERA_OK;
-}
-
 int AddSetParmEntryToBatch(mm_camera_test_obj_t *test_obj,
                            cam_intf_parm_type_t paramType,
                            uint32_t paramLength,
@@ -912,6 +904,21 @@ int AddSetParmEntryToBatch(mm_camera_test_obj_t *test_obj,
         return MM_CAMERA_E_GENERAL;
     }
     memcpy(POINTER_OF(paramType,p_table), paramValue, paramLength);
+    return MM_CAMERA_OK;
+}
+
+int initBatchUpdate(mm_camera_test_obj_t *test_obj)
+{
+    int32_t hal_version = CAM_HAL_V1;
+
+    parm_buffer_t *parm_buf = ( parm_buffer_t * ) test_obj->parm_buf.mem_info.data;
+    memset(parm_buf, 0, sizeof(parm_buffer_t));
+    parm_buf->first_flagged_entry = CAM_INTF_PARM_MAX;
+    AddSetParmEntryToBatch(test_obj,
+                           CAM_INTF_PARM_HAL_VERSION,
+                           sizeof(hal_version),
+                           &hal_version);
+
     return MM_CAMERA_OK;
 }
 
