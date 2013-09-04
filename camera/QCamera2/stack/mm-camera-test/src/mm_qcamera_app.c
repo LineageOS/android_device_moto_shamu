@@ -1859,6 +1859,39 @@ ERROR:
     return rc;
 }
 
+int setFPSRange(mm_camera_test_obj_t *test_obj, cam_fps_range_t range)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_FPS_RANGE,
+                                sizeof(cam_fps_range_t),
+                                &range);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: FPS range parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: FPS Range set to: [%5.2f:%5.2f]",
+                __func__,
+                range.min_fps,
+                range.max_fps);
+
+ERROR:
+    return rc;
+}
 
 int setScene(mm_camera_test_obj_t *test_obj, cam_scene_mode_type scene)
 {
@@ -2229,15 +2262,20 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
         goto EXIT;
     }
 
-    if ( 0 == handle->stream_running ) {
-        CDBG_ERROR(" %s : Streaming is not enabled!", __func__);
-        rc = MM_CAMERA_E_INVALID_OPERATION;
-        goto EXIT;
-    }
-
     camera_cap = (cam_capability_t *) handle->test_obj.cap_buf.mem_info.data;
 
     switch(cmd) {
+        case MM_CAMERA_LIB_FPS_RANGE:
+            if ( NULL != in_data ) {
+                cam_fps_range_t range = *(( cam_fps_range_t * )in_data);
+                rc = setFPSRange(&handle->test_obj, range);
+                if (rc != MM_CAMERA_OK) {
+                        CDBG_ERROR("%s: setFPSRange() err=%d\n",
+                                   __func__, rc);
+                        goto EXIT;
+                }
+            }
+            break;
         case MM_CAMERA_LIB_FLASH:
             if ( NULL != in_data ) {
                 cam_flash_mode_t flash = *(( int * )in_data);
@@ -2373,7 +2411,8 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
         case MM_CAMERA_LIB_ZSL_ENABLE:
             if ( NULL != in_data) {
                 int enable_zsl = *(( int * )in_data);
-                if ( enable_zsl != handle->test_obj.zsl_enabled ) {
+                if ( ( enable_zsl != handle->test_obj.zsl_enabled ) &&
+                        handle->stream_running ) {
                     rc = mm_camera_lib_stop_stream(handle);
                     if (rc != MM_CAMERA_OK) {
                         CDBG_ERROR("%s: mm_camera_lib_stop_stream() err=%d\n",
@@ -2387,10 +2426,18 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                                    __func__, rc);
                         goto EXIT;
                     }
+                } else {
+                    handle->test_obj.zsl_enabled = enable_zsl;
                 }
             }
             break;
         case MM_CAMERA_LIB_RAW_CAPTURE:
+
+            if ( 0 == handle->stream_running ) {
+                CDBG_ERROR(" %s : Streaming is not enabled!", __func__);
+                rc = MM_CAMERA_E_INVALID_OPERATION;
+                goto EXIT;
+            }
 
             rc = mm_camera_lib_stop_stream(handle);
             if (rc != MM_CAMERA_OK) {
@@ -2437,6 +2484,12 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
             break;
 
         case MM_CAMERA_LIB_JPEG_CAPTURE:
+            if ( 0 == handle->stream_running ) {
+                CDBG_ERROR(" %s : Streaming is not enabled!", __func__);
+                rc = MM_CAMERA_E_INVALID_OPERATION;
+                goto EXIT;
+            }
+
             if ( NULL != in_data ) {
                 dim = ( mm_camera_lib_snapshot_params * ) in_data;
             }

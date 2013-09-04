@@ -298,7 +298,8 @@ typedef enum {
     MM_CAMERA_LIB_ISO,
     MM_CAMERA_LIB_ZOOM,
     MM_CAMERA_LIB_BESTSHOT,
-    MM_CAMERA_LIB_FLASH
+    MM_CAMERA_LIB_FLASH,
+    MM_CAMERA_LIB_FPS_RANGE
 } mm_camera_lib_commands;
 
 typedef struct {
