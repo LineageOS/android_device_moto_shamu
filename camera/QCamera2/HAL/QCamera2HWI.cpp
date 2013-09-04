@@ -4185,10 +4185,13 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
  * PARAMETERS :
  *   @data    : buffer to be released
  *   @cookie  : context data
+ *   @cbStatus: callback status
  *
  * RETURN     : None
  *==========================================================================*/
-void QCamera2HardwareInterface::releaseCameraMemory(void *data, void */*cookie*/)
+void QCamera2HardwareInterface::releaseCameraMemory(void *data,
+                                                    void */*cookie*/,
+                                                    int32_t /*cbStatus*/)
 {
     camera_memory_t *mem = ( camera_memory_t * ) data;
     if ( NULL != mem ) {
@@ -4204,10 +4207,13 @@ void QCamera2HardwareInterface::releaseCameraMemory(void *data, void */*cookie*/
  * PARAMETERS :
  *   @data    : buffer to be released
  *   @cookie  : context data
+ *   @cbStatus: callback status
  *
  * RETURN     : None
  *==========================================================================*/
-void QCamera2HardwareInterface::returnStreamBuffer(void *data, void *cookie)
+void QCamera2HardwareInterface::returnStreamBuffer(void *data,
+                                                   void *cookie,
+                                                   int32_t /*cbStatus*/)
 {
     QCameraStream *stream = ( QCameraStream * ) cookie;
     int idx = ( int ) data;
