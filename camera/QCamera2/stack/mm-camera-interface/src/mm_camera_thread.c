@@ -263,7 +263,7 @@ static void *mm_camera_poll_fn(mm_camera_poll_thread_t *poll_cb)
             usleep(10);
             continue;
         }
-    } while (poll_cb->state == MM_CAMERA_POLL_TASK_STATE_POLL);
+    } while ((poll_cb != NULL) && (poll_cb->state == MM_CAMERA_POLL_TASK_STATE_POLL));
     return NULL;
 }
 
