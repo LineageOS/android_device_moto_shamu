@@ -92,6 +92,10 @@ public:
 
     static void releaseFrameData(void *data, void *user_data);
 
+    int mDumpFrame;
+    int mDumpMetaFrame;
+    int mDumpSkipCnt;
+
 private:
     uint32_t mCamHandle;
     uint32_t mChannelHandle;

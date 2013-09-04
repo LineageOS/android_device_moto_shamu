@@ -54,6 +54,22 @@
 #define AFTUNE_SIZE 2000
 #define MAX_SCALE_SIZES_CNT 8
 
+#define TUNING_DATA_VERSION        1
+#define TUNING_SENSOR_DATA_MAX     0x10000 /*(need value from sensor team)*/
+#define TUNING_VFE_DATA_MAX        0x10000 /*(need value from vfe team)*/
+#define TUNING_CPP_DATA_MAX        0x10000 /*(need value from pproc team)*/
+#define TUNING_CAC_DATA_MAX        0x10000 /*(need value from imglib team)*/
+#define TUNING_DATA_MAX            (TUNING_SENSOR_DATA_MAX + \
+                                   TUNING_VFE_DATA_MAX + TUNING_CPP_DATA_MAX + \
+                                   TUNING_CAC_DATA_MAX)
+
+#define TUNING_SENSOR_DATA_OFFSET  0
+#define TUNING_VFE_DATA_OFFSET     TUNING_SENSOR_DATA_MAX
+#define TUNING_CPP_DATA_OFFSET     (TUNING_SENSOR_DATA_MAX + TUNING_VFE_DATA_MAX)
+#define TUNING_CAC_DATA_OFFSET     (TUNING_SENSOR_DATA_MAX + \
+                                   TUNING_VFE_DATA_MAX + TUNING_CPP_DATA_MAX)
+
+
 typedef enum {
     CAM_HAL_V1 = 1,
     CAM_HAL_V3 = 3
@@ -802,6 +818,14 @@ typedef struct {
     float force_snap_exp_value;
 } cam_aec_snap_exp_params_t;
 
+typedef struct {
+    uint32_t tuning_data_version;
+    uint32_t tuning_sensor_data_size;
+    uint32_t tuning_vfe_data_size;
+    uint32_t tuning_cpp_data_size;
+    uint32_t tuning_cac_data_size;
+    uint8_t  data[TUNING_DATA_MAX];
+}tuning_params_t;
 
 typedef  struct {
     uint8_t is_stats_valid;               /* if histgram data is valid */
@@ -879,6 +903,9 @@ typedef  struct {
     /* Meta valid params */
     uint8_t is_meta_valid;
     cam_meta_valid_t meta_valid_params;
+    /*Tuning Data*/
+    uint8_t is_tuning_params_valid;
+    tuning_params_t tuning_params;
 } cam_metadata_info_t;
 
 typedef enum {
