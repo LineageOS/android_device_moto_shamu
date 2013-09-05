@@ -41,7 +41,6 @@ static void mm_app_metadata_notify_cb(mm_camera_super_buf_t *bufs,
   mm_camera_stream_t *p_stream = NULL;
   mm_camera_test_obj_t *pme = (mm_camera_test_obj_t *)user_data;
   mm_camera_buf_def_t *frame = bufs->bufs[0];
-  cam_metadata_info_t *metadata;
 
   /* find channel */
   for (i = 0; i < MM_CHANNEL_TYPE_MAX; i++) {
@@ -69,7 +68,7 @@ static void mm_app_metadata_notify_cb(mm_camera_super_buf_t *bufs,
       CDBG_ERROR("%s: cannot find metadata stream", __func__);
       return;
   }
-  metadata = frame->buffer;
+  pme->metadata = frame->buffer;
 
   if (MM_CAMERA_OK != pme->cam->ops->qbuf(bufs->camera_handle,
                                           bufs->ch_id,

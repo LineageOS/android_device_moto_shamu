@@ -234,7 +234,7 @@ typedef struct {
     int8_t enable_CAC;
     mm_camera_queue_t pp_frames;
     mm_camera_stream_t *reproc_stream;
-    //
+    cam_metadata_info_t *metadata;
 } mm_camera_test_obj_t;
 
 typedef struct {
