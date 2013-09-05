@@ -1959,6 +1959,43 @@ ERROR:
     return rc;
 }
 
+int setWNR(mm_camera_test_obj_t *test_obj, int enable)
+{
+    int rc = MM_CAMERA_OK;
+
+    rc = initBatchUpdate(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch camera parameter update failed\n", __func__);
+        goto ERROR;
+    }
+
+    cam_denoise_param_t param;
+    memset(&param, 0, sizeof(cam_denoise_param_t));
+    param.denoise_enable = enable;
+    param.process_plates = CAM_WAVELET_DENOISE_YCBCR_PLANE;
+
+    rc = AddSetParmEntryToBatch(test_obj,
+                                CAM_INTF_PARM_WAVELET_DENOISE,
+                                sizeof(cam_denoise_param_t),
+                                &param);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: WNR enabled parameter not added to batch\n", __func__);
+        goto ERROR;
+    }
+
+    rc = commitSetBatch(test_obj);
+    if (rc != MM_CAMERA_OK) {
+        CDBG_ERROR("%s: Batch parameters commit failed\n", __func__);
+        goto ERROR;
+    }
+
+    CDBG_ERROR("%s: WNR enabled: %d", __func__, enable);
+
+ERROR:
+    return rc;
+}
+
+
 /** tuneserver_capture
  *    @lib_handle: the camera handle object
  *    @dim: snapshot dimensions
@@ -2743,6 +2780,15 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
            }
            break;
        }
+
+        case MM_CAMERA_LIB_WNR_ENABLE: {
+            int wnr_enable = *((uint8_t *)in_data);
+            rc = setWNR(&handle->test_obj, wnr_enable);
+            if ( rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: Set wnr enable failed\n", __func__);
+                goto EXIT;
+            }
+        }
 
       case MM_CAMERA_LIB_NO_ACTION:
         default:
