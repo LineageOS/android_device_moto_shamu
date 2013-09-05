@@ -771,7 +771,7 @@ int32_t QCamera3MetadataChannel::registerBuffers(uint32_t /*num_buffers*/,
 
 void QCamera3MetadataChannel::streamCbRoutine(
                         mm_camera_super_buf_t *super_frame,
-                        QCamera3Stream *stream)
+                        QCamera3Stream * /*stream*/)
 {
     uint32_t requestNumber = 0;
     if (super_frame == NULL || super_frame->num_bufs != 1) {
@@ -1594,6 +1594,16 @@ QCamera3Exif *QCamera3PicChannel::getExifData()
                    1,
                    (void *)&(isoSpeed));
 
+    rat_t sensorExpTime ;
+    rc = getExifExpTimeInfo(&sensorExpTime, (int64_t)mJpegSettings->sensor_exposure_time);
+    if (rc == NO_ERROR){
+        exif->addEntry(EXIFTAGID_EXPOSURE_TIME,
+                       EXIF_RATIONAL,
+                       1,
+                       (void *)&(sensorExpTime));
+    } else {
+        ALOGE("%s: getExifExpTimeInfo failed", __func__);
+    }
 
 
     if (strlen(mJpegSettings->gps_processing_method) > 0) {
@@ -1840,7 +1850,8 @@ QCamera3ReprocessChannel::QCamera3ReprocessChannel() :
  *
  * RETURN     : none
  *==========================================================================*/
-int32_t QCamera3ReprocessChannel::registerBuffers(uint32_t num_buffers, buffer_handle_t **buffers)
+int32_t QCamera3ReprocessChannel::registerBuffers(
+    uint32_t /*num_buffers*/, buffer_handle_t ** /*buffers*/)
 {
    return 0;
 }

@@ -145,6 +145,8 @@ camera3_device_ops_t QCamera3HardwareInterface::mCameraOps = {
     process_capture_request:            QCamera3HardwareInterface::process_capture_request,
     get_metadata_vendor_tag_ops:        QCamera3HardwareInterface::get_metadata_vendor_tag_ops,
     dump:                               QCamera3HardwareInterface::dump,
+    flush:                              QCamera3HardwareInterface::flush,
+    reserved:                           {0},
 };
 
 
@@ -552,7 +554,15 @@ int QCamera3HardwareInterface::configureStreams(
                     GRALLOC_USAGE_HW_CAMERA_WRITE;
                 break;
             case CAMERA3_STREAM_OUTPUT:
-                newStream->usage = GRALLOC_USAGE_HW_CAMERA_WRITE;
+                /* For video encoding stream, set read/write rarely
+                 * flag so that they may be set to un-cached */
+                if (newStream->usage & GRALLOC_USAGE_HW_VIDEO_ENCODER)
+                    newStream->usage =
+                         (GRALLOC_USAGE_SW_READ_RARELY |
+                         GRALLOC_USAGE_SW_WRITE_RARELY |
+                         GRALLOC_USAGE_HW_CAMERA_WRITE);
+                else
+                    newStream->usage = GRALLOC_USAGE_HW_CAMERA_WRITE;
                 break;
             default:
                 ALOGE("%s: Invalid stream_type %d", __func__, newStream->stream_type);
@@ -930,15 +940,6 @@ int QCamera3HardwareInterface::processCaptureRequest(
 
     pthread_mutex_lock(&mMutex);
 
-    // For first capture request, stream on all streams
-    if (mFirstRequest) {
-        for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
-            it != mStreamInfo.end(); it++) {
-            QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
-            channel->start();
-        }
-    }
-
     rc = validateCaptureRequest(request);
     if (rc != NO_ERROR) {
         ALOGE("%s: incoming request is not valid", __func__);
@@ -946,10 +947,37 @@ int QCamera3HardwareInterface::processCaptureRequest(
         return rc;
     }
 
+    meta = request->settings;
+
+    // For first capture request, send capture intent, and
+    // stream on all streams
+    if (mFirstRequest) {
+
+        if (meta.exists(ANDROID_CONTROL_CAPTURE_INTENT)) {
+            int32_t hal_version = CAM_HAL_V3;
+            uint8_t captureIntent =
+                meta.find(ANDROID_CONTROL_CAPTURE_INTENT).data.u8[0];
+
+            memset(mParameters, 0, sizeof(parm_buffer_t));
+            mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
+            AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
+                sizeof(hal_version), &hal_version);
+            AddSetParmEntryToBatch(mParameters, CAM_INTF_META_CAPTURE_INTENT,
+                sizeof(captureIntent), &captureIntent);
+            mCameraHandle->ops->set_parms(mCameraHandle->camera_handle,
+                mParameters);
+        }
+
+        for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+            it != mStreamInfo.end(); it++) {
+            QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+            channel->start();
+        }
+    }
+
     uint32_t frameNumber = request->frame_number;
     uint32_t streamTypeMask = 0;
 
-    meta = request->settings;
     if (meta.exists(ANDROID_REQUEST_ID)) {
         request_id = meta.find(ANDROID_REQUEST_ID).data.i32[0];
         mCurrentRequestId = request_id;
@@ -1144,6 +1172,26 @@ void QCamera3HardwareInterface::dump(int /*fd*/)
     return;
 }
 
+/*===========================================================================
+ * FUNCTION   : flush
+ *
+ * DESCRIPTION:
+ *
+ * PARAMETERS :
+ *
+ *
+ * RETURN     :
+ *==========================================================================*/
+int QCamera3HardwareInterface::flush()
+{
+    /*Enable lock when we implement this function*/
+    /*
+    pthread_mutex_lock(&mMutex);
+
+    pthread_mutex_unlock(&mMutex);
+    */
+    return 0;
+}
 
 /*===========================================================================
  * FUNCTION   : captureResultCb
@@ -2633,7 +2681,7 @@ int QCamera3HardwareInterface::getCamInfo(int cameraId,
 
 
     info->orientation = gCamCapability[cameraId]->sensor_mount_angle;
-    info->device_version = HARDWARE_DEVICE_API_VERSION(3, 0);
+    info->device_version = CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = gStaticMetadata[cameraId];
 
     return rc;
@@ -3706,6 +3754,34 @@ void QCamera3HardwareInterface::dump(
     hw->dump(fd);
     ALOGV("%s: X", __func__);
     return;
+}
+
+/*===========================================================================
+ * FUNCTION   : flush
+ *
+ * DESCRIPTION:
+ *
+ * PARAMETERS :
+ *
+ *
+ * RETURN     :
+ *==========================================================================*/
+
+int QCamera3HardwareInterface::flush(
+                const struct camera3_device *device)
+{
+    int rc;
+    ALOGV("%s: E", __func__);
+    QCamera3HardwareInterface *hw =
+        reinterpret_cast<QCamera3HardwareInterface *>(device->priv);
+    if (!hw) {
+        ALOGE("%s: NULL camera device", __func__);
+        return -EINVAL;
+    }
+
+    rc = hw->flush();
+    ALOGV("%s: X", __func__);
+    return rc;
 }
 
 /*===========================================================================
