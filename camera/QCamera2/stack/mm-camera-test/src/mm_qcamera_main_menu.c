@@ -912,7 +912,7 @@ int increase_contrast (mm_camera_lib_handle *lib_handle) {
         printf("Increase Contrast to %d\n", contrast);
         return mm_camera_lib_send_command(lib_handle,
                                           MM_CAMERA_LIB_CONTRAST,
-                                          &brightness,
+                                          &contrast,
                                           NULL);
 }
 
@@ -930,7 +930,7 @@ int decrease_contrast (mm_camera_lib_handle *lib_handle) {
         printf("Decrease Contrast to %d\n", contrast);
         return mm_camera_lib_send_command(lib_handle,
                                           MM_CAMERA_LIB_CONTRAST,
-                                          &brightness,
+                                          &contrast,
                                           NULL);
 }
 
