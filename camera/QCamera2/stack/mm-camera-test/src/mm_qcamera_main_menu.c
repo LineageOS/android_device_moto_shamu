@@ -107,6 +107,7 @@ const CAMERA_MAIN_MENU_TBL_T camera_main_menu_tbl[] = {
   {TOGGLE_ZSL,                 "Toggle ZSL On/Off"},
   {TAKE_RAW_SNAPSHOT,          "Take RAW snapshot"},
   {SWITCH_SNAP_RESOLUTION,     "Select Jpeg resolution"},
+  {TOGGLE_WNR,                 "Toggle Wavelet Denoise"},
   {EXIT,                       "Exit"}
 };
 
@@ -393,6 +394,11 @@ int next_menu(menu_id_change_t current_menu_id, char keypress, camera_action_t *
             * action_id_ptr = ACTION_TAKE_RAW_SNAPSHOT;
             next_menu_id = MENU_ID_MAIN;
             CDBG("Capture RAW\n");
+            break;
+        case TOGGLE_WNR:
+            * action_id_ptr = ACTION_TOGGLE_WNR;
+            next_menu_id = MENU_ID_MAIN;
+            CDBG("Toggle WNR");
             break;
         case EXIT:
           * action_id_ptr = ACTION_EXIT;
@@ -1627,6 +1633,7 @@ static int submain()
     int action_param;
     uint8_t previewing = 0;
     uint8_t isZSL = 0;
+    uint8_t wnr_enabled = 0;
     mm_camera_lib_handle lib_handle;
     int num_cameras;
     int available_sensors = sizeof(sensor_tbl) / sizeof(sensor_tbl[0]);
@@ -1905,6 +1912,19 @@ static int submain()
            printf("\n !!! Use live snapshot option while recording only !!!\n");
 #endif
         break;
+
+        case ACTION_TOGGLE_WNR:
+          wnr_enabled = !wnr_enabled;
+          printf("WNR Enabled = %d\n", wnr_enabled);
+          rc = mm_camera_lib_send_command(&lib_handle,
+                                          MM_CAMERA_LIB_WNR_ENABLE,
+                                          &wnr_enabled,
+                                          NULL);
+          if (rc != MM_CAMERA_OK) {
+              CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
+              goto ERROR;
+          }
+          break;
 
         case ACTION_EXIT:
             printf("Exiting....\n");
