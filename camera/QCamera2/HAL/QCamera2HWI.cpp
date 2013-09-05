@@ -2021,7 +2021,11 @@ int QCamera2HardwareInterface::takePicture()
             (QCameraPicChannel *)m_channels[QCAMERA_CH_TYPE_ZSL];
         if (NULL != pZSLChannel) {
             // start postprocessor
-            m_postprocessor.start(pZSLChannel);
+            rc = m_postprocessor.start(pZSLChannel);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: cannot start postprocessor", __func__);
+                return rc;
+            }
 
             rc = pZSLChannel->takePicture(numSnapshots);
             if (rc != NO_ERROR) {
@@ -2089,7 +2093,12 @@ int QCamera2HardwareInterface::takePicture()
             rc = addCaptureChannel();
             if (rc == NO_ERROR) {
                 // start postprocessor
-                m_postprocessor.start(m_channels[QCAMERA_CH_TYPE_CAPTURE]);
+                rc = m_postprocessor.start(m_channels[QCAMERA_CH_TYPE_CAPTURE]);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: cannot start postprocessor", __func__);
+                    delChannel(QCAMERA_CH_TYPE_CAPTURE);
+                    return rc;
+                }
 
                 // start catpure channel
                 rc = startChannel(QCAMERA_CH_TYPE_CAPTURE);
@@ -2107,7 +2116,13 @@ int QCamera2HardwareInterface::takePicture()
             rc = addRawChannel();
             if (rc == NO_ERROR) {
                 // start postprocessor
-                m_postprocessor.start(m_channels[QCAMERA_CH_TYPE_RAW]);
+                rc = m_postprocessor.start(m_channels[QCAMERA_CH_TYPE_RAW]);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: cannot start postprocessor", __func__);
+                    delChannel(QCAMERA_CH_TYPE_RAW);
+                    return rc;
+                }
+
                 rc = startChannel(QCAMERA_CH_TYPE_RAW);
                 if (rc != NO_ERROR) {
                     ALOGE("%s: cannot start raw channel", __func__);
