@@ -5044,20 +5044,28 @@ cam_denoise_process_type_t QCameraParameters::getWaveletDenoiseProcessPlate()
 {
     char prop[PROPERTY_VALUE_MAX];
     memset(prop, 0, sizeof(prop));
-    property_get("persist.denoise.process.plates", prop, "0");
-    int processPlate = atoi(prop);
-    switch(processPlate) {
-    case 0:
-        return CAM_WAVELET_DENOISE_YCBCR_PLANE;
-    case 1:
-        return CAM_WAVELET_DENOISE_CBCR_ONLY;
-    case 2:
-        return CAM_WAVELET_DENOISE_STREAMLINE_YCBCR;
-    case 3:
-        return CAM_WAVELET_DENOISE_STREAMLINED_CBCR;
-    default:
-        return CAM_WAVELET_DENOISE_STREAMLINE_YCBCR;
+    cam_denoise_process_type_t processPlate = CAM_WAVELET_DENOISE_CBCR_ONLY;
+    property_get("persist.denoise.process.plates", prop, "");
+    if (strlen(prop) > 0) {
+        switch(atoi(prop)) {
+        case 0:
+            processPlate = CAM_WAVELET_DENOISE_YCBCR_PLANE;
+            break;
+        case 1:
+            processPlate = CAM_WAVELET_DENOISE_CBCR_ONLY;
+            break;
+        case 2:
+            processPlate = CAM_WAVELET_DENOISE_STREAMLINE_YCBCR;
+            break;
+        case 3:
+            processPlate = CAM_WAVELET_DENOISE_STREAMLINED_CBCR;
+            break;
+        default:
+            processPlate = CAM_WAVELET_DENOISE_CBCR_ONLY;
+            break;
+        }
     }
+    return processPlate;
 }
 
 /*===========================================================================
