@@ -1632,7 +1632,7 @@ static int submain()
     camera_action_t action_id;
     int action_param;
     uint8_t previewing = 0;
-    uint8_t isZSL = 0;
+    int isZSL = 0;
     uint8_t wnr_enabled = 0;
     mm_camera_lib_handle lib_handle;
     int num_cameras;
