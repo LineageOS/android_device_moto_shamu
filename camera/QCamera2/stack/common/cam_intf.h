@@ -436,17 +436,12 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_SET_AUTOFOCUSTUNING,      tune_actuator_t,             1);
     INCLUDE(CAM_INTF_PARM_SET_VFE_COMMAND,          tune_cmd_t,                  1);
     INCLUDE(CAM_INTF_PARM_SET_PP_COMMAND,           tune_cmd_t,                  1);
-    INCLUDE(CAM_INTF_PARM_AEC_FORCE_LC,             cam_aec_lc_params_t,         1);
-    INCLUDE(CAM_INTF_PARM_AEC_FORCE_GAIN,           cam_aec_gain_params_t,       1);
-    INCLUDE(CAM_INTF_PARM_AEC_FORCE_EXP,            cam_aec_exp_params_t,        1);
-    INCLUDE(CAM_INTF_PARM_AEC_FORCE_SNAP_LC,        cam_aec_snap_lc_params_t,    1);
-    INCLUDE(CAM_INTF_PARM_AEC_FORCE_SNAP_GAIN,      cam_aec_snap_gain_params_t,  1);
-    INCLUDE(CAM_INTF_PARM_AEC_FORCE_SNAP_EXP,       cam_aec_snap_exp_params_t,   1);
     INCLUDE(CAM_INTF_PARM_MAX_DIMENSION,            cam_dimension_t,             1);
     INCLUDE(CAM_INTF_PARM_RAW_DIMENSION,            cam_dimension_t,             1);
     INCLUDE(CAM_INTF_PARM_TINTLESS,                 int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_EZTUNE_CMD,               cam_eztune_cmd_data_t,       1);
 
-    /* HAL3 sepcific */
+    /* HAL3 specific */
     INCLUDE(CAM_INTF_META_FRAME_NUMBER,             uint32_t,                    1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_MODE,       uint8_t,                     1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_TRANSFORM,  cam_color_correct_matrix_t,  1);
