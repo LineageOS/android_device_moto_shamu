@@ -216,6 +216,9 @@ public:
     //Face Detection, Facial processing requirement
     static const char KEY_QC_SNAPSHOT_FD_DATA[];
 
+    //Auto HDR enable
+    static const char KEY_QC_AUTO_HDR_ENABLE[];
+
     //Redeye Reduction
     static const char KEY_QC_REDEYE_REDUCTION[];
     static const char KEY_QC_SUPPORTED_REDEYE_REDUCTION[];
@@ -471,6 +474,7 @@ public:
     int32_t updateRecordingHintValue(int32_t value);
     int32_t setHDRAEBracket(cam_exp_bracketing_t hdrBracket);
     bool isHDREnabled();
+    bool isAutoHDREnabled();
     int32_t restoreAEBracket();
     int32_t updateRAW(cam_dimension_t max_dim);
 
@@ -552,6 +556,7 @@ private:
     int32_t setWaveletDenoise(const QCameraParameters& );
     int32_t setZslMode(const QCameraParameters& );
     int32_t setZslAttributes(const QCameraParameters& );
+    int32_t setAutoHDR(const QCameraParameters& params);
     int32_t setCameraMode(const QCameraParameters& );
     int32_t setFaceRecognition(const QCameraParameters& );
     int32_t setFlip(const QCameraParameters& );
