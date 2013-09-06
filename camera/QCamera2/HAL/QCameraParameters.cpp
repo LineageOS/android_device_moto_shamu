@@ -2672,6 +2672,17 @@ int32_t QCameraParameters::setZslMode(const QCameraParameters& params)
  *==========================================================================*/
 int32_t QCameraParameters::setWaveletDenoise(const QCameraParameters& params)
 {
+    const char *str_pf = params.getPictureFormat();
+    int32_t pictureFormat =
+        lookupAttr(PICTURE_TYPES_MAP,
+                   sizeof(PICTURE_TYPES_MAP) / sizeof(QCameraMap),
+                   str_pf);
+    if (pictureFormat != NAME_NOT_FOUND) {
+        if (CAM_FORMAT_YUV_422_NV16 == pictureFormat) {
+            ALOGE("NV16 format isn't supported in denoise lib!");
+            return setWaveletDenoise(DENOISE_OFF);
+        }
+    }
     const char *str = params.get(KEY_QC_DENOISE);
     const char *prev_str = get(KEY_QC_DENOISE);
     if (str != NULL) {
