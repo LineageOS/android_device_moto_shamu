@@ -194,10 +194,9 @@ mm_camera_channel_t * mm_app_add_reprocess_channel(mm_camera_test_obj_t *test_ob
         pp_config.sharpness = test_obj->reproc_sharpness;
     }
 
-    if (test_obj->enable_WNR) {
+    if (test_obj->reproc_wnr.denoise_enable) {
         pp_config.feature_mask |= CAM_QCOM_FEATURE_DENOISE2D;
-        pp_config.denoise2d.denoise_enable = 1;
-        pp_config.denoise2d.process_plates = test_obj->wnr_plates;
+        pp_config.denoise2d = test_obj->reproc_wnr;
     }
 
     if (test_obj->enable_CAC) {

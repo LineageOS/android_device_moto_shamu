@@ -229,8 +229,7 @@ typedef struct {
     //Reprocess params&stream
     int8_t enable_reproc;
     int32_t reproc_sharpness;
-    int8_t enable_WNR;
-    cam_denoise_process_type_t wnr_plates;
+    cam_denoise_param_t reproc_wnr;
     int8_t enable_CAC;
     mm_camera_queue_t pp_frames;
     mm_camera_stream_t *reproc_stream;
