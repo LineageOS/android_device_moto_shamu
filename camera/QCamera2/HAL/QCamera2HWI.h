@@ -460,7 +460,6 @@ private:
     bool m_bPreviewStarted;             //flag indicates first preview frame callback is received
     bool m_bRecordStarted;             //flag indicates Recording is started for first time
 
-
     // if auto focus is running, in other words, when auto_focus is called from service,
     // and beforeany focus callback/cancel_focus happens. This flag is not an indication
     // of whether lens is moving or not.
@@ -475,6 +474,13 @@ private:
     qcamera_thermal_level_enum_t mThermalLevel;
     bool m_HDRSceneEnabled;
     bool mLongshotEnabled;
+
+#ifdef USE_PERFORMANCE_LOCK
+
+    int mPerfLockHandle;  // Performance lock library handle
+
+#endif
+
 };
 
 }; // namespace qcamera

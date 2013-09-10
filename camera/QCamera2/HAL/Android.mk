@@ -43,6 +43,21 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface
 
+
+#Performance lock disabled by default
+#HAL_PERF_LOCK:=true
+
+ifdef HAL_PERF_LOCK
+
+LOCAL_C_INCLUDES += vendor/qcom/proprietary/android-perf-noship/inc \
+                    vendor/qcom/proprietary/android-perf-noship/libqc-opt
+
+LOCAL_SHARED_LIBRARIES += libqc-opt
+
+LOCAL_CFLAGS += -DUSE_PERFORMANCE_LOCK
+
+endif
+
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_TAGS := optional
