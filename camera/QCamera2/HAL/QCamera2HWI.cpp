@@ -43,6 +43,7 @@
 #define CAMERA_MIN_STREAMING_BUFFERS     3
 #define CAMERA_MIN_JPEG_ENCODING_BUFFERS 2
 #define CAMERA_MIN_VIDEO_BUFFERS         9
+#define CAMERA_LONGSHOT_STAGES           4
 
 //This multiplier signifies extra buffers that we need to allocate
 //for the output of pproc
@@ -1420,6 +1421,10 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
     case CAM_STREAM_TYPE_OFFLINE_PROC:
         {
             bufferCnt = minCaptureBuffers;
+            if ((mLongshotEnabled) ||
+                    ( bufferCnt > CAMERA_LONGSHOT_STAGES ) ) {
+                bufferCnt = CAMERA_LONGSHOT_STAGES;
+            }
         }
         break;
     case CAM_STREAM_TYPE_DEFAULT:
@@ -4040,10 +4045,6 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
         // 1 is added because getNumOfExtraBuffersForImageProc returns extra
         // buffers assuming number of capture is already added
         minStreamBufNum += imglib_extra_bufs + 1;
-    }
-
-    if ( mLongshotEnabled ) {
-        minStreamBufNum = getBufNumRequired(CAM_STREAM_TYPE_PREVIEW);
     }
 
     rc = pChannel->addReprocStreamsFromSource(*this,
