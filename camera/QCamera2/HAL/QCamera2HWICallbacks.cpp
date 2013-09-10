@@ -29,6 +29,7 @@
 
 #define LOG_TAG "QCamera2HWI"
 
+#include <time.h>
 #include <fcntl.h>
 #include <utils/Errors.h>
 #include <utils/Timers.h>
@@ -1450,6 +1451,13 @@ void QCamera2HardwareInterface::dumpFrameToFile(QCameraStream *stream,
                 }
                 if (mDumpFrmCnt >= 0 && mDumpFrmCnt <= frm_num) {
                     char buf[32];
+                    char timeBuf[128];
+                    time_t current_time;
+                    struct tm * timeinfo;
+
+
+                    time (&current_time);
+                    timeinfo = localtime (&current_time);
                     memset(buf, 0, sizeof(buf));
 
                     cam_dimension_t dim;
@@ -1460,34 +1468,36 @@ void QCamera2HardwareInterface::dumpFrameToFile(QCameraStream *stream,
                     memset(&offset, 0, sizeof(cam_frame_len_offset_t));
                     stream->getFrameOffset(offset);
 
+                    strftime (timeBuf, sizeof(timeBuf),"/data/%Y%m%d%H%M%S", timeinfo);
+                    String8 filePath(timeBuf);
                     switch (dump_type) {
                     case QCAMERA_DUMP_FRM_PREVIEW:
                         {
-                            snprintf(buf, sizeof(buf), "/data/%dp_%dx%d_%d.yuv",
+                            snprintf(buf, sizeof(buf), "%dp_%dx%d_%d.yuv",
                                      mDumpFrmCnt, dim.width, dim.height, frame->frame_idx);
                         }
                         break;
                     case QCAMERA_DUMP_FRM_THUMBNAIL:
                         {
-                            snprintf(buf, sizeof(buf), "/data/%dt_%dx%d_%d.yuv",
+                            snprintf(buf, sizeof(buf), "%dt_%dx%d_%d.yuv",
                                      mDumpFrmCnt, dim.width, dim.height, frame->frame_idx);
                         }
                         break;
                     case QCAMERA_DUMP_FRM_SNAPSHOT:
                         {
-                            snprintf(buf, sizeof(buf), "/data/%ds_%dx%d_%d.yuv",
+                            snprintf(buf, sizeof(buf), "%ds_%dx%d_%d.yuv",
                                      mDumpFrmCnt, dim.width, dim.height, frame->frame_idx);
                         }
                         break;
                     case QCAMERA_DUMP_FRM_VIDEO:
                         {
-                            snprintf(buf, sizeof(buf), "/data/%dv_%dx%d_%d.yuv",
+                            snprintf(buf, sizeof(buf), "%dv_%dx%d_%d.yuv",
                                      mDumpFrmCnt, dim.width, dim.height, frame->frame_idx);
                         }
                         break;
                     case QCAMERA_DUMP_FRM_RAW:
                         {
-                            snprintf(buf, sizeof(buf), "/data/%dr_%dx%d_%d.raw",
+                            snprintf(buf, sizeof(buf), "%dr_%dx%d_%d.raw",
                                      mDumpFrmCnt, offset.mp[0].stride,
                                      offset.mp[0].scanline, frame->frame_idx);
                         }
@@ -1498,7 +1508,8 @@ void QCamera2HardwareInterface::dumpFrameToFile(QCameraStream *stream,
                         return;
                     }
 
-                    int file_fd = open(buf, O_RDWR | O_CREAT, 0777);
+                    filePath.append(buf);
+                    int file_fd = open(filePath.string(), O_RDWR | O_CREAT, 0777);
                     if (file_fd > 0) {
                         void *data = NULL;
                         int written_len = 0;
