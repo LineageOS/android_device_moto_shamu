@@ -383,7 +383,6 @@ extern int32_t mm_jpeg_create_session(mm_jpeg_obj *my_obj,
   uint32_t* p_session_id);
 extern int32_t mm_jpeg_destroy_session_by_id(mm_jpeg_obj *my_obj,
   uint32_t session_id);
-extern int32_t mm_jpeg_destroy_job(mm_jpeg_job_session_t *p_session);
 
 extern int32_t mm_jpegdec_init(mm_jpeg_obj *my_obj);
 extern int32_t mm_jpegdec_deinit(mm_jpeg_obj *my_obj);
