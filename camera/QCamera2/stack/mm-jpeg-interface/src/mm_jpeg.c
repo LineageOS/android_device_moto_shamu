@@ -450,6 +450,47 @@ OMX_ERRORTYPE mm_jpeg_encoding_mode(
   return rc;
 }
 
+/** mm_jpeg_metadata:
+ *
+ *  Arguments:
+ *    @p_session: job session
+ *
+ *  Return:
+ *       OMX error values
+ *
+ *  Description:
+ *       Pass meta data
+ *
+ **/
+OMX_ERRORTYPE mm_jpeg_metadata(
+  mm_jpeg_job_session_t* p_session)
+{
+  OMX_ERRORTYPE rc = OMX_ErrorNone;
+  int32_t i = 0;
+  OMX_INDEXTYPE indexType;
+  mm_jpeg_encode_params_t *p_params = &p_session->params;
+  mm_jpeg_encode_job_t *p_jobparams = &p_session->encode_job;
+  QOMX_METADATA lMeta;
+
+  rc = OMX_GetExtensionIndex(p_session->omx_handle,
+      QOMX_IMAGE_EXT_METADATA_NAME, &indexType);
+
+  if (rc != OMX_ErrorNone) {
+    CDBG_ERROR("%s:%d] Failed", __func__, __LINE__);
+    return rc;
+  }
+
+  lMeta.metadata = (OMX_U8 *)p_jobparams->p_metadata;
+  lMeta.metaPayloadSize = sizeof(*p_jobparams->p_metadata);
+
+  rc = OMX_SetConfig(p_session->omx_handle, indexType, &lMeta);
+  if (rc != OMX_ErrorNone) {
+    CDBG_ERROR("%s:%d] Failed", __func__, __LINE__);
+    return rc;
+  }
+  return OMX_ErrorNone;
+}
+
 /** map_jpeg_format:
  *
  *  Arguments:
@@ -840,7 +881,11 @@ OMX_ERRORTYPE mm_jpeg_session_config_main(mm_jpeg_job_session_t *p_session)
   }
 
   /* set the encoding mode */
-  mm_jpeg_encoding_mode(p_session);
+  rc = mm_jpeg_encoding_mode(p_session);
+  if (OMX_ErrorNone != rc) {
+    CDBG_ERROR("%s: config encoding mode failed", __func__);
+    return rc;
+  }
 
   return rc;
 }
@@ -1058,6 +1103,13 @@ static OMX_ERRORTYPE mm_jpeg_configure_job_params(
     &work_buffer);
   if (ret) {
     CDBG_ERROR("%s:%d] Error", __func__, __LINE__);
+    return ret;
+  }
+
+  /* set metadata */
+  ret = mm_jpeg_metadata(p_session);
+  CDBG_ERROR("%s: config makernote data failed", __func__);
+  if (OMX_ErrorNone != ret) {
     return ret;
   }
 
