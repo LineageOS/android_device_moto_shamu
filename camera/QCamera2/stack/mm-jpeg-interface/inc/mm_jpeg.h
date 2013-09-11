@@ -359,6 +359,10 @@ typedef struct mm_jpeg_obj_t {
   mm_jpeg_job_cmd_thread_t job_mgr;               /* job mgr thread including todo_q*/
   mm_jpeg_queue_t ongoing_job_q;                  /* queue for ongoing jobs */
   buffer_t ionBuffer;
+
+  /* Max pic dimension for work buf calc*/
+  int32_t max_pic_w;
+  int32_t max_pic_h;
 } mm_jpeg_obj;
 
 /** mm_jpeg_pending_func_t:

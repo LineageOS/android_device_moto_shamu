@@ -214,6 +214,11 @@ typedef struct {
 } mm_jpeg_job_t;
 
 typedef struct {
+  uint32_t w;
+  uint32_t h;
+} mm_dimension;
+
+typedef struct {
   /* config a job -- async call */
   int (*start_job)(mm_jpeg_job_t* job, uint32_t* job_id);
 
@@ -253,7 +258,7 @@ typedef struct {
  * returns client_handle.
  * failed if client_handle=0
  * jpeg ops tbl will be filled in if open succeeds */
-uint32_t jpeg_open(mm_jpeg_ops_t *ops);
+uint32_t jpeg_open(mm_jpeg_ops_t *ops, mm_dimension picture_size);
 
 /* open a jpeg client -- sync call
  * returns client_handle.

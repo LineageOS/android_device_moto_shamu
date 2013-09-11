@@ -987,7 +987,9 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       mDumpSkipCnt(0),
       mThermalLevel(QCAMERA_THERMAL_NO_ADJUSTMENT),
       m_HDRSceneEnabled(false),
-      mLongshotEnabled(false)
+      mLongshotEnabled(false),
+      m_max_pic_width(0),
+      m_max_pic_height(0)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = HARDWARE_DEVICE_API_VERSION(1, 0);
@@ -1080,6 +1082,12 @@ int QCamera2HardwareInterface::openCamera(struct hw_device_t **hw_device)
  *==========================================================================*/
 int QCamera2HardwareInterface::openCamera()
 {
+    int32_t l_curr_width = 0;
+    int32_t l_curr_height = 0;
+    m_max_pic_width = 0;
+    m_max_pic_height = 0;
+    int i;
+
     if (mCameraHandle) {
         ALOGE("Failure: Camera already opened");
         return ALREADY_EXISTS;
@@ -1093,6 +1101,19 @@ int QCamera2HardwareInterface::openCamera()
     mCameraHandle->ops->register_event_notify(mCameraHandle->camera_handle,
                                               camEvtHandle,
                                               (void *) this);
+
+    /* get max pic size for jpeg work buf calculation*/
+    for(i = 0; i < gCamCapability[mCameraId]->picture_sizes_tbl_cnt - 1; i++)
+    {
+      l_curr_width = gCamCapability[mCameraId]->picture_sizes_tbl[i].width;
+      l_curr_height = gCamCapability[mCameraId]->picture_sizes_tbl[i].height;
+
+      if ((l_curr_width * l_curr_height) >
+        (m_max_pic_width * m_max_pic_height)) {
+        m_max_pic_width = l_curr_width;
+        m_max_pic_height = l_curr_height;
+      }
+    }
 
     int32_t rc = m_postprocessor.init(jpegEvtHandle, this);
     if (rc != 0) {

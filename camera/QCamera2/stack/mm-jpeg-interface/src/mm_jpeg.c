@@ -1051,8 +1051,8 @@ static OMX_ERRORTYPE mm_jpeg_configure_job_params(
   work_buffer.fd = p_session->work_buffer.p_pmem_fd;
   work_buffer.vaddr = p_session->work_buffer.addr;
   work_buffer.length = p_session->work_buffer.size;
-  CDBG_ERROR("%s:%d] Work buffer %d %p", __func__, __LINE__,
-    work_buffer.fd, work_buffer.vaddr);
+  CDBG_ERROR("%s:%d] Work buffer %d %p WorkBufSize: %d", __func__, __LINE__,
+    work_buffer.fd, work_buffer.vaddr, work_buffer.length);
 
   ret = OMX_SetConfig(p_session->omx_handle, work_buffer_index,
     &work_buffer);
@@ -1429,6 +1429,7 @@ int32_t mm_jpeg_jobmgr_thread_release(mm_jpeg_obj * my_obj)
 int32_t mm_jpeg_init(mm_jpeg_obj *my_obj)
 {
   int32_t rc = 0;
+  uint32_t work_buf_size;
 
   /* init locks */
   pthread_mutex_init(&my_obj->job_lock, NULL);
@@ -1448,8 +1449,18 @@ int32_t mm_jpeg_init(mm_jpeg_obj *my_obj)
     return -1;
   }
 
-  // Allocate Ion buffer of max jpeg size
-  my_obj->ionBuffer.size = MAX_JPEG_SIZE;
+  /* set work buf size from max picture size */
+  if (my_obj->max_pic_w <= 0 || my_obj->max_pic_h <= 0) {
+    CDBG_ERROR("%s:%d] Width and height are not valid "
+      "dimensions, cannot calc work buf size",__func__, __LINE__);
+    return -1;
+  }
+  work_buf_size = CEILING64(my_obj->max_pic_w) *
+    CEILING64(my_obj->max_pic_h) * 1.5;
+  my_obj->ionBuffer.size = CEILING32(work_buf_size);
+  CDBG_HIGH("Max picture size %d x %d, WorkBufSize = %ld",
+    my_obj->max_pic_w, my_obj->max_pic_h, my_obj->ionBuffer.size);
+
   my_obj->ionBuffer.addr = (uint8_t *)buffer_allocate(&my_obj->ionBuffer, 0);
   if (NULL == my_obj->ionBuffer.addr) {
     mm_jpeg_jobmgr_thread_release(my_obj);
