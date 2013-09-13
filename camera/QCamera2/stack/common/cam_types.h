@@ -780,6 +780,7 @@ typedef struct {
 typedef struct {
     float exp_time;
     int iso_value;
+    uint32_t flash_needed;
 } cam_ae_params_t;
 
 

@@ -606,10 +606,12 @@ int QCamera2HardwareInterface::take_picture(struct camera_device *device)
     hw->lockAPI();
 
     /* Prepare snapshot in case LED needs to be flashed */
-    ret = hw->processAPI(QCAMERA_SM_EVT_PREPARE_SNAPSHOT, NULL);
-    if (ret == NO_ERROR) {
-        hw->waitAPIResult(QCAMERA_SM_EVT_PREPARE_SNAPSHOT);
-        ret = hw->m_apiResult.status;
+    if (hw->mFlashNeeded == 1) {
+        ret = hw->processAPI(QCAMERA_SM_EVT_PREPARE_SNAPSHOT, NULL);
+        if (ret == NO_ERROR) {
+            hw->waitAPIResult(QCAMERA_SM_EVT_PREPARE_SNAPSHOT);
+            ret = hw->m_apiResult.status;
+        }
     }
 
     /* Regardless what the result value for prepare_snapshot,
@@ -955,7 +957,8 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       m_HDRSceneEnabled(false),
       mLongshotEnabled(false),
       m_max_pic_width(0),
-      m_max_pic_height(0)
+      m_max_pic_height(0),
+      mFlashNeeded(false)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = HARDWARE_DEVICE_API_VERSION(1, 0);
