@@ -107,6 +107,7 @@ const char QCameraParameters::KEY_QC_AUTO_HDR_ENABLE [] = "auto-hdr-enable";
 const char QCameraParameters::KEY_QC_SNAPSHOT_BURST_NUM[] = "snapshot-burst-num";
 const char QCameraParameters::KEY_QC_SNAPSHOT_FD_DATA[] = "snapshot-fd-data-enable";
 const char QCameraParameters::KEY_QC_TINTLESS_ENABLE[] = "tintless";
+const char QCameraParameters::KEY_QC_VIDEO_ROTATION[] = "video-rotation";
 
 // Values for effect settings.
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
@@ -2035,6 +2036,33 @@ int32_t  QCameraParameters::setISOValue(const QCameraParameters& params)
 }
 
 /*===========================================================================
+ * FUNCTION   : setVideoRotation
+ *
+ * DESCRIPTION: set rotation value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setVideoRotation(const QCameraParameters& params)
+{
+    int rotation = params.getInt(KEY_QC_VIDEO_ROTATION);
+    if (rotation != -1) {
+        if (rotation == 0 || rotation == 90 ||
+            rotation == 180 || rotation == 270) {
+            set(KEY_QC_VIDEO_ROTATION, rotation);
+        } else {
+            ALOGE("Invalid rotation value: %d", rotation);
+            return BAD_VALUE;
+        }
+    }
+    return NO_ERROR;
+}
+
+/*===========================================================================
  * FUNCTION   : setRotation
  *
  * DESCRIPTION: set rotation value from user setting
@@ -3015,6 +3043,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setJpegQuality(params)))                  final_rc = rc;
     if ((rc = setOrientation(params)))                  final_rc = rc;
     if ((rc = setRotation(params)))                     final_rc = rc;
+    if ((rc = setVideoRotation(params)))                final_rc = rc;
     if ((rc = setNoDisplayMode(params)))                final_rc = rc;
     if ((rc = setZslMode(params)))                      final_rc = rc;
     if ((rc = setZslAttributes(params)))                final_rc = rc;
@@ -5224,6 +5253,68 @@ void QCameraParameters::getTouchIndexAf(int *x, int *y)
         *x = tempX;
         *y = tempY;
 	}
+}
+
+/*===========================================================================
+ * FUNCTION   : getStreamFormat
+ *
+ * DESCRIPTION: get stream format by its type
+ *
+ * PARAMETERS :
+ *   @streamType : [input] stream type
+ *   @format     : [output] stream format
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::getStreamRotation(cam_stream_type_t streamType,
+                                            cam_pp_feature_config_t &featureConfig,
+                                            cam_dimension_t &dim)
+{
+    int32_t ret = NO_ERROR;
+    int rotationParam = getInt(KEY_QC_VIDEO_ROTATION);
+    featureConfig.rotation = ROTATE_0;
+    int swapDim = 0;
+    switch (streamType) {
+    case CAM_STREAM_TYPE_VIDEO:
+           switch(rotationParam) {
+            case 90:
+               featureConfig.feature_mask |= CAM_QCOM_FEATURE_ROTATION;
+               featureConfig.rotation = ROTATE_90;
+               swapDim = 1;
+               break;
+            case 180:
+               featureConfig.feature_mask |= CAM_QCOM_FEATURE_ROTATION;
+               featureConfig.rotation = ROTATE_180;
+               break;
+            case 270:
+               featureConfig.feature_mask |= CAM_QCOM_FEATURE_ROTATION;
+               featureConfig.rotation = ROTATE_270;
+               swapDim = 1;
+              break;
+            default:
+               featureConfig.rotation = ROTATE_0;
+        }
+        break;
+    case CAM_STREAM_TYPE_PREVIEW:
+    case CAM_STREAM_TYPE_POSTVIEW:
+    case CAM_STREAM_TYPE_SNAPSHOT:
+    case CAM_STREAM_TYPE_RAW:
+    case CAM_STREAM_TYPE_METADATA:
+    case CAM_STREAM_TYPE_OFFLINE_PROC:
+    case CAM_STREAM_TYPE_DEFAULT:
+    default:
+        break;
+    }
+
+    if (swapDim > 0) {
+        int w = 0;
+        w = dim.width;
+        dim.width = dim.height;
+        dim.height = w;
+    }
+    return ret;
 }
 
 /*===========================================================================
