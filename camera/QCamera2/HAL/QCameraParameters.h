@@ -513,6 +513,7 @@ public:
 
     const char *getASDStateString(cam_auto_scene_t scene);
     bool isHDRThumbnailProcessNeeded() { return m_bHDRThumbnailProcessNeeded; };
+	int getAutoFlickerMode();
 
 private:
     int32_t setPreviewSize(const QCameraParameters& );

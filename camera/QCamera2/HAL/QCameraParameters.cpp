@@ -4654,6 +4654,19 @@ int32_t QCameraParameters::setWhiteBalance(const char *wbStr)
     ALOGE("Invalid WhiteBalance value: %s", (wbStr == NULL) ? "NULL" : wbStr);
     return BAD_VALUE;
 }
+int QCameraParameters::getAutoFlickerMode()
+{
+    /* Enable Advanced Auto Antibanding where we can set
+       any of the following option
+       ie. CAM_ANTIBANDING_MODE_AUTO
+           CAM_ANTIBANDING_MODE_AUTO_50HZ
+           CAM_ANTIBANDING_MODE_AUTO_60HZ
+      Currently setting it to default    */
+    char prop[PROPERTY_VALUE_MAX];
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.camera.set.afd", prop, "3");
+    return atoi(prop);
+}
 
 /*===========================================================================
  * FUNCTION   : setAntibanding
@@ -4676,6 +4689,9 @@ int32_t QCameraParameters::setAntibanding(const char *antiBandingStr)
         if (value != NAME_NOT_FOUND) {
             ALOGD("%s: Setting AntiBanding value %s", __func__, antiBandingStr);
             updateParamEntry(KEY_ANTIBANDING, antiBandingStr);
+            if(value == CAM_ANTIBANDING_MODE_AUTO) {
+               value = getAutoFlickerMode();
+            }
             return AddSetParmEntryToBatch(m_pParamBuf,
                                           CAM_INTF_PARM_ANTIBANDING,
                                           sizeof(value),
