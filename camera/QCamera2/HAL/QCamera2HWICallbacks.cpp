@@ -1187,6 +1187,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
      /* Update 3a info */
     if(pMetaData->is_ae_params_valid) {
         pme->mExifParams.ae_params = pMetaData->ae_params;
+        pme->mFlashNeeded = pMetaData->ae_params.flash_needed;
     }
 
     /*Update Sensor info*/
