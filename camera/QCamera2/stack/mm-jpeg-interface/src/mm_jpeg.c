@@ -42,6 +42,8 @@
 
 #define ENCODING_MODE_PARALLEL 1
 
+#define META_KEYFILE "/data/metadata.key"
+
 OMX_ERRORTYPE mm_jpeg_ebd(OMX_HANDLETYPE hComponent,
     OMX_PTR pAppData,
     OMX_BUFFERHEADERTYPE* pBuffer);
@@ -340,6 +342,11 @@ void mm_jpeg_session_destroy(mm_jpeg_job_session_t* p_session)
 
   pthread_mutex_destroy(&p_session->lock);
   pthread_cond_destroy(&p_session->cond);
+
+  if (NULL != p_session->meta_enc_key) {
+    free(p_session->meta_enc_key);
+    p_session->meta_enc_key = NULL;
+  }
   CDBG("%s:%d] X", __func__, __LINE__);
 }
 
@@ -484,6 +491,51 @@ OMX_ERRORTYPE mm_jpeg_metadata(
   lMeta.metaPayloadSize = sizeof(*p_jobparams->p_metadata);
 
   rc = OMX_SetConfig(p_session->omx_handle, indexType, &lMeta);
+  if (rc != OMX_ErrorNone) {
+    CDBG_ERROR("%s:%d] Failed", __func__, __LINE__);
+    return rc;
+  }
+  return OMX_ErrorNone;
+}
+
+/** mm_jpeg_meta_enc_key:
+ *
+ *  Arguments:
+ *    @p_session: job session
+ *
+ *  Return:
+ *       OMX error values
+ *
+ *  Description:
+ *       Pass metadata encrypt key
+ *
+ **/
+OMX_ERRORTYPE mm_jpeg_meta_enc_key(
+  mm_jpeg_job_session_t* p_session)
+{
+  OMX_ERRORTYPE rc = OMX_ErrorNone;
+  OMX_INDEXTYPE indexType;
+  mm_jpeg_encode_params_t *p_params = &p_session->params;
+  mm_jpeg_encode_job_t *p_jobparams = &p_session->encode_job;
+  QOMX_META_ENC_KEY lKey;
+
+  lKey.metaKey = p_session->meta_enc_key;
+  lKey.keyLen = p_session->meta_enc_keylen;
+
+  if ((!lKey.metaKey) || (!lKey.keyLen)){
+    CDBG_ERROR("%s:%d] Key is invalid", __func__, __LINE__);
+    return OMX_ErrorNone;
+  }
+
+  rc = OMX_GetExtensionIndex(p_session->omx_handle,
+      QOMX_IMAGE_EXT_META_ENC_KEY_NAME, &indexType);
+
+  if (rc != OMX_ErrorNone) {
+    CDBG_ERROR("%s:%d] Failed", __func__, __LINE__);
+    return rc;
+  }
+
+  rc = OMX_SetConfig(p_session->omx_handle, indexType, &lKey);
   if (rc != OMX_ErrorNone) {
     CDBG_ERROR("%s:%d] Failed", __func__, __LINE__);
     return rc;
@@ -884,6 +936,13 @@ OMX_ERRORTYPE mm_jpeg_session_config_main(mm_jpeg_job_session_t *p_session)
   rc = mm_jpeg_encoding_mode(p_session);
   if (OMX_ErrorNone != rc) {
     CDBG_ERROR("%s: config encoding mode failed", __func__);
+    return rc;
+  }
+
+  /* set the metadata encrypt key */
+  rc = mm_jpeg_meta_enc_key(p_session);
+  if (OMX_ErrorNone != rc) {
+    CDBG_ERROR("%s: config session failed", __func__);
     return rc;
   }
 
@@ -1763,7 +1822,34 @@ abort_done:
 }
 
 
+static int32_t mm_jpeg_read_meta_keyfile(mm_jpeg_job_session_t *p_session, const char *filename)
+{
+  int rc = 0;
+  FILE *fp = NULL;
+  int file_size = 0;
+  fp = fopen(filename, "r");
+  if (!fp) {
+    CDBG_ERROR("%s:%d] Key not present", __func__, __LINE__);
+    return -1;
+  }
+  fseek(fp, 0, SEEK_END);
+  file_size = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
 
+  p_session->meta_enc_key = (uint8_t *) malloc((file_size + 1) * sizeof(uint8_t));
+
+  if (!p_session->meta_enc_key) {
+    CDBG_ERROR("%s:%d] error", __func__, __LINE__);
+    return -1;
+  }
+
+  fread(p_session->meta_enc_key, 1, file_size, fp);
+  fclose(fp);
+
+  p_session->meta_enc_keylen = file_size;
+
+  return rc;
+}
 
 /** mm_jpeg_create_session:
  *
@@ -1829,6 +1915,13 @@ int32_t mm_jpeg_create_session(mm_jpeg_obj *my_obj,
   p_session->sessionId = *p_session_id;
   p_session->jpeg_obj = (void*)my_obj; /* save a ptr to jpeg_obj */
   CDBG("%s:%d] session id %x", __func__, __LINE__, *p_session_id);
+
+  p_session->meta_enc_key = NULL;
+  p_session->meta_enc_keylen = 0;
+
+#ifdef MM_JPEG_READ_META_KEYFILE
+  mm_jpeg_read_meta_keyfile(p_session, META_KEYFILE);
+#endif
 
   return rc;
 }

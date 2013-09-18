@@ -313,6 +313,9 @@ typedef struct {
 
   OMX_EVENTTYPE omxEvent;
   int event_pending;
+
+  uint8_t *meta_enc_key;
+  uint32_t meta_enc_keylen;
 } mm_jpeg_job_session_t;
 
 typedef struct {

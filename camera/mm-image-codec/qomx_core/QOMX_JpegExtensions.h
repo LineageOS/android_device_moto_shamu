@@ -57,6 +57,7 @@ typedef enum {
 #define QOMX_IMAGE_EXT_ENCODING_MODE_NAME        "OMX.QCOM.image.encoding.mode"
 #define QOMX_IMAGE_EXT_WORK_BUFFER_NAME      "OMX.QCOM.image.exttype.workbuffer"
 #define QOMX_IMAGE_EXT_METADATA_NAME      "OMX.QCOM.image.exttype.metadata"
+#define QOMX_IMAGE_EXT_META_ENC_KEY_NAME      "OMX.QCOM.image.exttype.metaEncKey"
 
 /** QOMX_IMAGE_EXT_INDEXTYPE
 *  This enum is an extension of the OMX_INDEXTYPE enum and
@@ -86,6 +87,9 @@ typedef enum {
 
   //Name: OMX.QCOM.image.exttype.metadata
   QOMX_IMAGE_EXT_METADATA = 0x07F00008,
+
+  //Name: OMX.QCOM.image.exttype.metaEncKey
+  QOMX_IMAGE_EXT_META_ENC_KEY = 0x07F00009,
 
 } QOMX_IMAGE_EXT_INDEXTYPE;
 
@@ -208,6 +212,15 @@ typedef struct {
   OMX_U8  *metadata;
   OMX_U32 metaPayloadSize;
 } QOMX_METADATA;
+
+/**QOMX_META_ENC_KEY
+ *
+ * meta data encryption key
+ */
+typedef struct {
+  OMX_U8  *metaKey;
+  OMX_U32 keyLen;
+} QOMX_META_ENC_KEY;
 
 /** QOMX_IMG_COLOR_FORMATTYPE
 *  This enum is an extension of the OMX_COLOR_FORMATTYPE enum.
