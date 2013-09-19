@@ -3016,6 +3016,49 @@ int32_t QCameraParameters::setSnapshotFDReq(const QCameraParameters& params)
 }
 
 /*===========================================================================
+ * FUNCTION   : setMobicat
+ *
+ * DESCRIPTION: set Mobicat on/off.
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setMobicat(const QCameraParameters& )
+{
+    char value [32];
+    property_get("persist.camera.mobicat", value, "0");
+    bool enableMobi = atoi(value) > 0 ? true : false;
+    int32_t ret = NO_ERROR;;
+
+    if (enableMobi) {
+        tune_cmd_t tune_cmd;
+        tune_cmd.type = 2;
+        tune_cmd.module = 0;
+        tune_cmd.value = 1;
+
+        ret = AddSetParmEntryToBatch(m_pParamBuf,
+                                CAM_INTF_PARM_SET_VFE_COMMAND,
+                                sizeof(tune_cmd_t),
+                                &tune_cmd);
+        if (NO_ERROR != ret) {
+            return ret;
+        }
+        tune_cmd.module = 0;
+
+        ret = AddSetParmEntryToBatch(m_pParamBuf,
+                                CAM_INTF_PARM_SET_PP_COMMAND,
+                                sizeof(tune_cmd_t),
+                                &tune_cmd);
+    }
+
+    return ret;
+}
+
+/*===========================================================================
  * FUNCTION   : updateParameters
  *
  * DESCRIPTION: update parameters from user setting
@@ -3098,6 +3141,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     // update live snapshot size after all other parameters are set
     if ((rc = setLiveSnapshotSize(params)))             final_rc = rc;
     if ((rc = setStatsDebugMask()))                     final_rc = rc;
+    if ((rc = setMobicat(params)))                      final_rc = rc;
 
 UPDATE_PARAM_DONE:
     needRestart = m_bNeedRestart;
@@ -3909,6 +3953,8 @@ int32_t QCameraParameters::setPreviewFpsRange(int minFPS, int maxFPS)
                                   sizeof(cam_fps_range_t),
                                   &fps_range);
 }
+
+
 
 /*===========================================================================
  * FUNCTION   : setAutoExposure
