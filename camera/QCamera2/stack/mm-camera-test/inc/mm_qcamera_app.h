@@ -242,7 +242,8 @@ typedef struct {
 
   uint8_t (*get_num_of_cameras) ();
   mm_camera_vtbl_t *(*mm_camera_open) (uint8_t camera_idx);
-  uint32_t (*jpeg_open) (mm_jpeg_ops_t *ops);
+  uint32_t (*jpeg_open) (mm_jpeg_ops_t *ops, mm_dimension picture_size);
+
 } hal_interface_lib_t;
 
 typedef struct {
