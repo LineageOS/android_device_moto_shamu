@@ -561,7 +561,11 @@ int mm_app_open(mm_camera_app_t *cam_app,
         goto error_after_getparm_buf_map;
     }
     memset(&test_obj->jpeg_ops, 0, sizeof(mm_jpeg_ops_t));
-    test_obj->jpeg_hdl = cam_app->hal_lib.jpeg_open(&test_obj->jpeg_ops);
+    mm_dimension pic_size;
+    memset(&pic_size, 0, sizeof(mm_dimension));
+    pic_size.w = 4000;
+    pic_size.h = 3000;
+    test_obj->jpeg_hdl = cam_app->hal_lib.jpeg_open(&test_obj->jpeg_ops,pic_size);
     if (test_obj->jpeg_hdl == 0) {
         CDBG_ERROR("%s: jpeg lib open err", __func__);
         rc = -MM_CAMERA_E_GENERAL;
