@@ -1219,10 +1219,6 @@ int32_t QCameraParameters::setLiveSnapshotSize(const QCameraParameters& params)
     ALOGI("%s: live snapshot size %d x %d", __func__,
           m_LiveSnapshotSize.width, m_LiveSnapshotSize.height);
 
-    if (m_bRecordingHint) {
-        CameraParameters::setPictureSize(m_LiveSnapshotSize.width, m_LiveSnapshotSize.height);
-    }
-
     return NO_ERROR;
 }
 
