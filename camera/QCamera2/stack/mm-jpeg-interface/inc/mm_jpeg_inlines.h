@@ -65,35 +65,6 @@ static inline mm_jpeg_job_session_t *mm_jpeg_get_session(mm_jpeg_obj *my_obj, ui
   return p_session;
 }
 
-/** mm_jpeg_session_encode:
- *
- *  Arguments:
- *    @p_session: encode session
- *
- *  Return:
- *       OMX_ERRORTYPE
- *
- *  Description:
- *       Start the encoding
- *
- **/
-static inline void mm_jpeg_job_done(mm_jpeg_job_session_t *p_session)
-{
-  mm_jpeg_obj *my_obj = (mm_jpeg_obj *)p_session->jpeg_obj;
-  mm_jpeg_job_q_node_t *node = NULL;
-
-  /*remove the job*/
-  node = mm_jpeg_queue_remove_job_by_job_id(&my_obj->ongoing_job_q,
-    p_session->jobId);
-  if (node) {
-    free(node);
-  }
-  p_session->encoding = OMX_FALSE;
-
-  /* wake up jobMgr thread to work on new job if there is any */
-  cam_sem_post(&my_obj->job_mgr.job_sem);
-}
-
 /** mm_jpeg_get_job_idx:
  *
  *  Arguments:
