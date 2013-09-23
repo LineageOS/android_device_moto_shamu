@@ -161,6 +161,7 @@ public:
 
     bool isPreviewRunning(); // check if preview is running
     bool isCaptureRunning(); // check if image capture is running
+    bool isNonZSLCaptureRunning(); // check if image capture is running in non ZSL mode
 
 private:
     typedef enum {
