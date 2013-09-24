@@ -3023,13 +3023,14 @@ void QCamera2HardwareInterface::lockAPI()
 void QCamera2HardwareInterface::waitAPIResult(qcamera_sm_evt_enum_t api_evt)
 {
     ALOGV("%s: wait for API result of evt (%d)", __func__, api_evt);
-    memset(&m_apiResult, 0, sizeof(qcamera_api_result_t));
-    while (m_apiResult.request_api != api_evt) {
+    do {
         pthread_cond_wait(&m_cond, &m_lock);
-    }
+    } while (m_apiResult.request_api != api_evt);
+
     ALOGV("%s: return (%d) from API result wait for evt (%d)",
           __func__, m_apiResult.status, api_evt);
 }
+
 
 /*===========================================================================
  * FUNCTION   : unlockAPI
