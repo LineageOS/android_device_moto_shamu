@@ -720,11 +720,17 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW) ||
                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_POSTVIEW)) {
-                  if (param.isHDREnabled() && !param.isHDRThumbnailProcessNeeded()){
+                  uint32_t feature_mask = config.feature_mask;
+
+                  if ((feature_mask & ~CAM_QCOM_FEATURE_HDR) == 0
+                      && param.isHDREnabled()
+                      && !param.isHDRThumbnailProcessNeeded()) {
+
                       // Skip thumbnail stream reprocessing in HDR
+                      // if only hdr is enabled
                       continue;
                   }
-                  uint32_t feature_mask = config.feature_mask;
+
                   //Don't do WNR for thumbnail
                   feature_mask &= ~CAM_QCOM_FEATURE_DENOISE2D;
                   if(!feature_mask) {
@@ -764,7 +770,14 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                 streamInfo->reprocess_config.pp_feature_config.feature_mask &= ~CAM_QCOM_FEATURE_CAC;
                 //Don't do WNR for thumbnail
                 streamInfo->reprocess_config.pp_feature_config.feature_mask &= ~CAM_QCOM_FEATURE_DENOISE2D;
+
+                if (param.isHDREnabled()
+                  && !param.isHDRThumbnailProcessNeeded()){
+                    streamInfo->reprocess_config.pp_feature_config.feature_mask
+                      &= ~CAM_QCOM_FEATURE_HDR;
+                }
             }
+
             if (streamInfo->reprocess_config.pp_feature_config.feature_mask & CAM_QCOM_FEATURE_ROTATION) {
                 if (streamInfo->reprocess_config.pp_feature_config.rotation == ROTATE_90 ||
                     streamInfo->reprocess_config.pp_feature_config.rotation == ROTATE_270) {
