@@ -383,7 +383,7 @@ void QCamera2HardwareInterface::postproc_channel_cb_routine(mm_camera_super_buf_
     }
 
     if (pThmbStream == NULL) {
-        ALOGE("%s: Reprocessing stream not found", __func__);
+        ALOGE("%s: Reprocessing thumbnail stream not found", __func__);
     }
 
     for (int i = 0; i < recvd_frame->num_bufs; i++) {
@@ -400,7 +400,7 @@ void QCamera2HardwareInterface::postproc_channel_cb_routine(mm_camera_super_buf_
     }
 
     if (pSrcStream == NULL) {
-        ALOGE("%s: Snapshot stream doesn't exist, return here", __func__);
+        ALOGE("%s: Snapshot stream doesn't exist", __func__);
     }
 
     for (int i = 0; i < recvd_frame->num_bufs; i++) {
@@ -419,10 +419,10 @@ void QCamera2HardwareInterface::postproc_channel_cb_routine(mm_camera_super_buf_
     }
 
     if (pThmbSrcStream == NULL) {
-        ALOGE("%s: Thumbnail stream doesn't exist, return here", __func__);
+        ALOGE("%s: Thumbnail stream doesn't exist", __func__);
     }
 
-    if (pStream && pSrcStream && pThmbStream && pThmbSrcStream) {
+    if (pStream && pSrcStream) {
         cam_stream_parm_buffer_t param;
         memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
         param.type = CAM_STREAM_PARAM_TYPE_GET_OUTPUT_CROP;
@@ -438,6 +438,12 @@ void QCamera2HardwareInterface::postproc_channel_cb_routine(mm_camera_super_buf_
                }
            }
         }
+    }
+
+    if (pThmbStream && pThmbSrcStream) {
+        cam_stream_parm_buffer_t param;
+        memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
+        param.type = CAM_STREAM_PARAM_TYPE_GET_OUTPUT_CROP;
 
         rc = pThmbStream->getParameter(param);
         if (rc != NO_ERROR) {
