@@ -967,7 +967,6 @@ int setAecLock(mm_camera_test_obj_t *test_obj, int value)
         goto ERROR;
     }
 
-    printf("%s: Setting AECLock value %d \n", __func__, value);
     rc = AddSetParmEntryToBatch(test_obj,
                                 CAM_INTF_PARM_AEC_LOCK,
                                 sizeof(value),
@@ -997,7 +996,6 @@ int setAwbLock(mm_camera_test_obj_t *test_obj, int value)
         goto ERROR;
     }
 
-    printf("%s: Setting AWB Lock value %d \n", __func__, value);
     rc = AddSetParmEntryToBatch(test_obj,
                                 CAM_INTF_PARM_AWB_LOCK,
                                 sizeof(value),
@@ -1879,9 +1877,7 @@ int mm_app_start_regression_test(int run_tc)
     }
 
     if(run_tc) {
-        printf("\tRunning unit test engine only\n");
         rc = mm_app_unit_test_entry(&my_cam_app);
-        printf("\tUnit test engine. EXIT(%d)!!!\n", rc);
         return rc;
     }
 #if 0
@@ -1899,6 +1895,7 @@ int32_t mm_camera_load_tuninglibrary(mm_camera_tuning_lib_params_t *tuning_param
 {
   void *(*tuning_open_lib)(void) = NULL;
 
+  CDBG("%s  %d\n", __func__, __LINE__);
   tuning_param->lib_handle = dlopen("libmmcamera_tuning.so", RTLD_NOW);
   if (!tuning_param->lib_handle) {
     CDBG_ERROR("%s Failed opening libmmcamera_tuning.so\n", __func__);
@@ -1912,15 +1909,18 @@ int32_t mm_camera_load_tuninglibrary(mm_camera_tuning_lib_params_t *tuning_param
     return -EINVAL;
   }
 
+  if (tuning_param->func_tbl) {
+    CDBG_ERROR("%s already loaded tuninglib..", __func__);
+    return 0;
+  }
+
   tuning_param->func_tbl = (mm_camera_tune_func_t *)tuning_open_lib();
   if (!tuning_param->func_tbl) {
     CDBG_ERROR("%s Failed opening library func table ptr\n", __func__);
     return -EINVAL;
   }
 
-  CDBG_ERROR("tuning_param->func_tbl =%p",tuning_param->func_tbl);
-
-  CDBG("exit");
+  CDBG("%s  %d\n", __func__, __LINE__);
   return 0;
 }
 
@@ -2523,10 +2523,9 @@ int mm_camera_lib_set_preview_usercb(
    mm_camera_lib_handle *handle, prev_callback cb)
 {
     if (handle->test_obj.user_preview_cb != NULL) {
-        CDBG_ERROR("%s, already set user preview callbacks...", __func__);
+        CDBG_ERROR("%s, already set preview callbacks\n", __func__);
         return -1;
     }
     handle->test_obj.user_preview_cb = *cb;
-    printf("%s  %d pointer =%p\n", __func__, __LINE__, handle->test_obj.user_preview_cb);
     return 0;
 }

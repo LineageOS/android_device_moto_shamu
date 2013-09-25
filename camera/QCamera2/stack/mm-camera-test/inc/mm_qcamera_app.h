@@ -43,6 +43,7 @@
 
 #include "mm_camera_interface.h"
 #include "mm_jpeg_interface.h"
+#include "mm_qcamera_socket.h"
 
 #define MM_QCAMERA_APP_INTERATION 1
 
@@ -113,10 +114,18 @@ typedef enum {
 typedef void (*prev_callback) (mm_camera_buf_def_t *preview_frame);
 
 typedef struct {
-	int (*command_process) (void *recv, mm_camera_tune_cmd_t cmd, void *param);
-    int (*prevcommand_process) (void *recv, mm_camera_tune_prevcmd_t cmd, void *param);
+  char *send_buf;
+  uint32_t send_len;
+  void *next;
+} eztune_prevcmd_rsp;
+
+typedef struct {
+    int (*command_process) (void *recv, mm_camera_tune_cmd_t cmd,
+      void *param, char *send_buf, uint32_t send_len);
+    int (*prevcommand_process) (void *recv, mm_camera_tune_prevcmd_t cmd,
+      void *param, char **send_buf, uint32_t *send_len);
     void (*prevframe_callback) (mm_camera_buf_def_t *preview_frame);
-}mm_camera_tune_func_t;
+} mm_camera_tune_func_t;
 
 typedef struct {
     mm_camera_tune_func_t *func_tbl;
@@ -310,11 +319,19 @@ typedef struct {
 } mm_camera_lib_params;
 
 typedef struct {
+  tuneserver_protocol_t *proto;
+  int clientsocket_id;
+  prserver_protocol_t *pr_proto;
+  int pr_clientsocket_id;
+  mm_camera_tuning_lib_params_t tuning_params;
+} tuningserver_t;
+
+typedef struct {
     mm_camera_app_t app_ctx;
     mm_camera_test_obj_t test_obj;
     mm_camera_lib_params current_params;
     int stream_running;
-    mm_camera_tuning_lib_params_t tuning_params;
+    tuningserver_t tsctrl;
 } mm_camera_lib_ctx;
 
 typedef mm_camera_lib_ctx mm_camera_lib_handle;
@@ -449,8 +466,8 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
 int mm_camera_lib_stop_stream(mm_camera_lib_handle *handle);
 int mm_camera_lib_number_of_cameras(mm_camera_lib_handle *handle);
 int mm_camera_lib_close(mm_camera_lib_handle *handle);
-int32_t mm_camera_load_tuninglibrary
-    (mm_camera_tuning_lib_params_t *tuning_param);
+int32_t mm_camera_load_tuninglibrary(
+  mm_camera_tuning_lib_params_t *tuning_param);
 int mm_camera_lib_set_preview_usercb(
   mm_camera_lib_handle *handle, prev_callback cb);
 //
