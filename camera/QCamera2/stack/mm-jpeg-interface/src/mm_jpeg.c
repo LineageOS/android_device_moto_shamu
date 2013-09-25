@@ -40,6 +40,11 @@
 #include "mm_jpeg.h"
 #include "mm_jpeg_inlines.h"
 
+#ifdef LOAD_ADSP_RPC_LIB
+#include <dlfcn.h>
+#include <stdlib.h>
+#endif
+
 #define ENCODING_MODE_PARALLEL 1
 
 #define META_KEYFILE "/data/metadata.key"
@@ -1593,6 +1598,15 @@ int32_t mm_jpeg_init(mm_jpeg_obj *my_obj)
     pthread_mutex_destroy(&my_obj->job_lock);
   }
 
+#ifdef LOAD_ADSP_RPC_LIB
+  my_obj->adsprpc_lib_handle = dlopen("libadsprpc.so", RTLD_NOW);
+  if (NULL == my_obj->adsprpc_lib_handle) {
+    CDBG_ERROR("%s:%d] Cannot load the library", __func__, __LINE__);
+    /* not returning error here bcoz even if this loading fails
+        we can go ahead with SW JPEG enc */
+  }
+#endif
+
   return rc;
 }
 
@@ -2169,6 +2183,13 @@ int32_t mm_jpeg_close(mm_jpeg_obj *my_obj, uint32_t client_hdl)
   }
 
   CDBG("%s:%d] ", __func__, __LINE__);
+
+#ifdef LOAD_ADSP_RPC_LIB
+  if (NULL != my_obj->adsprpc_lib_handle) {
+    dlclose(my_obj->adsprpc_lib_handle);
+    my_obj->adsprpc_lib_handle = NULL;
+  }
+#endif
 
   pthread_mutex_unlock(&my_obj->job_lock);
   CDBG("%s:%d] ", __func__, __LINE__);
