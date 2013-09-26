@@ -2795,5 +2795,25 @@ bool QCameraStateMachine::isCaptureRunning()
         return false;
     }
 }
+/*===========================================================================
+ * FUNCTION   : isNonZSLCaptureRunning
+ *
+ * DESCRIPTION: check if image capture is in process in non ZSL mode.
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : true -- capture running in non ZSL mode
+ *              false -- Either in not capture mode or captur is not in non ZSL mode
+ *==========================================================================*/
+bool QCameraStateMachine::isNonZSLCaptureRunning()
+{
+    switch (m_state) {
+    case QCAMERA_SM_STATE_PIC_TAKING:
+        return true;
+    default:
+        return false;
+    }
+}
+
 
 }; // namespace qcamera
