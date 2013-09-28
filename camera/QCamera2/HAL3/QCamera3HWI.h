@@ -123,7 +123,7 @@ public:
     void dump(int fd);
     int flush();
 
-    int setFrameParameters(camera3_capture_request_t *request, uint32_t streamTypeMask);
+    int setFrameParameters(camera3_capture_request_t *request, cam_stream_ID_t streamID);
     int translateMetadataToParameters(const camera3_capture_request_t *request);
     camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata,
                             nsecs_t timestamp, int32_t request_id, int32_t BlobRequest,
@@ -219,7 +219,7 @@ private:
     } PendingRequestInfo;
     typedef struct {
         uint32_t frame_number;
-        uint32_t stream_type_mask;;
+        uint32_t stream_ID;
     } PendingFrameDropInfo;
     typedef KeyedVector<camera3_stream_t *, uint32_t> PendingBuffersMap;
     /*Data structure to store metadata information*/
