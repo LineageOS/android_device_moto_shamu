@@ -172,6 +172,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mInputStream(NULL),
       mMetadataChannel(NULL),
       mPictureChannel(NULL),
+      mRawChannel(NULL),
       mFirstRequest(false),
       mParamHeap(NULL),
       mParameters(NULL),
@@ -181,7 +182,8 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mMinJpegFrameDuration(0),
       mMinRawFrameDuration(0),
       m_pPowerModule(NULL),
-      mHdrHint(false)
+      mHdrHint(false),
+      mRawDump(0),
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = CAMERA_DEVICE_API_VERSION_3_0;
@@ -192,6 +194,10 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
     // TODO: hardcode for now until mctl add support for min_num_pp_bufs
     //TBD - To see if this hardcoding is needed. Check by printing if this is filled by mctl to 3
     gCamCapability[cameraId]->min_num_pp_bufs = 3;
+
+    char prop[PROPERTY_VALUE_MAX];
+    property_get("persist.camera.raw.dump", prop, "0");
+    mRawDump = atoi(prop);
 
     pthread_cond_init(&mRequestCond, NULL);
     mPendingRequest = 0;
@@ -261,6 +267,11 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
 
     /* Clean up all channels */
     if (mCameraInitialized) {
+        if (mRawChannel) {
+            mRawChannel->stop();
+            delete mRawChannel;
+            mRawChannel = NULL;
+        }
         if (mMetadataChannel) {
             mMetadataChannel->stop();
             delete mMetadataChannel;
@@ -463,6 +474,10 @@ int QCamera3HardwareInterface::configureStreams(
                 streamList->num_streams);
         return BAD_VALUE;
     }
+    // Stop the RAW Channel first
+    if (mRawChannel) {
+        mRawChannel->stop();
+    }
 
     /* first invalidate all the steams in the mStreamList
      * if they appear again, they will be validated */
@@ -497,7 +512,7 @@ int QCamera3HardwareInterface::configureStreams(
 
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
-        ALOGV("%s: newStream type = %d, stream format = %d stream size : %d x %d",
+        ALOGD("%s: newStream type = %d, stream format = %d stream size : %d x %d",
                 __func__, newStream->stream_type, newStream->format,
                  newStream->width, newStream->height);
         //if the stream is in the mStreamList validate it
@@ -577,6 +592,38 @@ int QCamera3HardwareInterface::configureStreams(
         pthread_mutex_unlock(&mMutex);
         return rc;
     }
+
+    if (mRawChannel) {
+        delete mRawChannel;
+        mRawChannel = NULL;
+    }
+    if (mRawDump) {
+        //Create RAW channel and initialize it
+        mRawChannel = new QCameraRawChannel(mCameraHandle->camera_handle,
+                        mCameraHandle->ops, captureResultCb,
+                        &gCamCapability[mCameraId]->padding_info, this,
+                        &gCamCapability[mCameraId]->raw_dim);
+        if (mRawChannel == NULL) {
+            ALOGE("%s: failed to allocate RAW channel", __func__);
+            rc = -ENOMEM;
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
+    }
+// TEMP Change: RAW Channel Initialization before stream ON of first stream
+// If we initialize the RAW channel here, then AF/AWB states are not updated
+#if 0
+    if (mRawDump && mRawChannel) {
+        rc = mRawChannel->initialize();
+        if (rc < 0) {
+            ALOGE("%s: RAW channel initialization failed", __func__);
+            delete mRawChannel;
+            mRawChannel = NULL;
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
+    }
+#endif
 
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
@@ -711,6 +758,18 @@ int QCamera3HardwareInterface::configureStreams(
 
     int32_t hal_version = CAM_HAL_V3;
     stream_config_info.num_streams = streamList->num_streams;
+    // ADD RAW Channel info to Stream Config
+    if (mRawDump) {
+        if (mRawChannel) {
+            stream_config_info.stream_sizes[streamList->num_streams].width =
+                               gCamCapability[mCameraId]->raw_dim.width;
+            stream_config_info.stream_sizes[streamList->num_streams].height =
+                               gCamCapability[mCameraId]->raw_dim.height;
+            stream_config_info.type[streamList->num_streams] =
+                               CAM_STREAM_TYPE_RAW;
+            stream_config_info.num_streams += 1;
+        }
+    }
 
     // settings/parameters don't carry over for new configureStreams
     memset(mParameters, 0, sizeof(parm_buffer_t));
@@ -1404,13 +1463,36 @@ int QCamera3HardwareInterface::processCaptureRequest(
             mCameraHandle->ops->set_parms(mCameraHandle->camera_handle,
                 mParameters);
         }
+// TEMP Change to initialize the RAW at the end of all streams
+#if 1
+        if (mRawDump && mRawChannel) {
+            ALOGD("%s: Initialize RAW Channel", __func__);
+            rc = mRawChannel->initialize();
+            if (rc < 0) {
+                ALOGE("%s: RAW channel initialization failed", __func__);
+                delete mRawChannel;
+                mRawChannel = NULL;
+                pthread_mutex_unlock(&mMutex);
+                return rc;
+            }
+        }
+#endif
 
+        ALOGD("%s: Start META Channel", __func__);
         mMetadataChannel->start();
+
         for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
             it != mStreamInfo.end(); it++) {
             QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+            ALOGD("%s: Start Regular Channel mask=%d", __func__, channel->getStreamTypeMask());
             channel->start();
         }
+
+        if (mRawDump) {
+            ALOGD("%s: Start RAW Channel last", __func__);
+            mRawChannel->start(); // Start RAW channel only when RAW set Prop is set
+        }
+
     }
 
     uint32_t frameNumber = request->frame_number;
@@ -1459,6 +1541,8 @@ int QCamera3HardwareInterface::processCaptureRequest(
             return rc;
         }
         streamTypeMask |= channel->getStreamTypeMask();
+        if (mRawDump && output.stream->format == HAL_PIXEL_FORMAT_BLOB)
+            streamTypeMask |= mRawChannel->getStreamTypeMask();
     }
 
     rc = setFrameParameters(request, streamTypeMask);
@@ -1535,6 +1619,9 @@ int QCamera3HardwareInterface::processCaptureRequest(
             if (queueMetadata) {
                 mPictureChannel->queueMetadata(reproc_meta.meta_buf,mMetadataChannel,false);
             }
+            // Notify RAW when we receive a BLOB request and RAW setprop is set
+            if (mRawDump)
+                mRawChannel->request(NULL, frameNumber);
         } else {
             ALOGV("%s: %d, request with buffer %p, frame_number %d", __func__,
                 __LINE__, output.buffer, frameNumber);

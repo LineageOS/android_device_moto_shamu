@@ -191,6 +191,7 @@ private:
     camera3_stream_t *mInputStream;
     QCamera3MetadataChannel *mMetadataChannel;
     QCamera3PicChannel *mPictureChannel;
+    QCameraRawChannel *mRawChannel;
 
      //First request yet to be processed after configureStreams
     bool mFirstRequest;
@@ -243,6 +244,7 @@ private:
     int64_t mMinProcessedFrameDuration;
     int64_t mMinJpegFrameDuration;
     int64_t mMinRawFrameDuration;
+    bool mRawDump;
 
     power_module_t *m_pPowerModule;   // power module
 
