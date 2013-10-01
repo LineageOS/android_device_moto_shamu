@@ -73,6 +73,7 @@ class QCamera3Channel;
 
     typedef struct {
         int32_t iso_speed;
+        int64_t exposure_time;
     } metadata_response_t;
 
 };//namespace qcamera

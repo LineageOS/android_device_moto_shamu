@@ -125,9 +125,11 @@ public:
 
     int setFrameParameters(camera3_capture_request_t *request, uint32_t streamTypeMask);
     int translateMetadataToParameters(const camera3_capture_request_t *request);
-    camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata,
-                            nsecs_t timestamp, int32_t request_id, int32_t BlobRequest,
-                            jpeg_settings_t* InputJpegSettings);
+    camera_metadata_t* translateCbMetadataToResultMetadata
+                                (metadata_buffer_t *metadata, nsecs_t timestamp,
+                                 int32_t request_id, int32_t BlobRequest,
+                                 jpeg_settings_t* inputjpegsettings,
+                                 uint32_t frameNumber);
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
     void deinitParameters();
@@ -163,11 +165,15 @@ private:
 
     void deriveMinFrameDuration();
     int64_t getMinFrameDuration(const camera3_capture_request_t *request);
-
     void handleMetadataWithLock(mm_camera_super_buf_t *metadata_buf);
     void handleBufferWithLock(camera3_stream_buffer_t *buffer,
         uint32_t frame_number);
     void unblockRequestIfNecessary();
+    void dumpMetadataToFile(tuning_params_t &meta,
+                            uint32_t &dumpFrameCount,
+                            int32_t enabled,
+                            const char *type,
+                            uint32_t frameNumber);
 public:
 
     bool needOnlineRotation();
@@ -248,9 +254,14 @@ private:
 
     power_module_t *m_pPowerModule;   // power module
 
+<<<<<<< HEAD
 #ifdef HAS_MULTIMEDIA_HINTS
     bool mHdrHint;
 #endif
+=======
+    uint32_t mMetaFrameCount;
+
+>>>>>>> 7c888dc... Camera3: Changes to dump tuning Parameter to binary file in HAL
     static const QCameraMap EFFECT_MODES_MAP[];
     static const QCameraMap WHITE_BALANCE_MODES_MAP[];
     static const QCameraMap SCENE_MODES_MAP[];
