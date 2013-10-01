@@ -125,11 +125,9 @@ public:
 
     int setFrameParameters(camera3_capture_request_t *request, uint32_t streamTypeMask);
     int translateMetadataToParameters(const camera3_capture_request_t *request);
-    camera_metadata_t* translateCbMetadataToResultMetadata
-                                (metadata_buffer_t *metadata, nsecs_t timestamp,
-                                 int32_t request_id, int32_t BlobRequest,
-                                 jpeg_settings_t* inputjpegsettings,
-                                 uint32_t frameNumber);
+    camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata,
+                            nsecs_t timestamp, int32_t request_id, int32_t BlobRequest,
+                            jpeg_settings_t* InputJpegSettings, uint32_t frameNumber);
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
     void deinitParameters();

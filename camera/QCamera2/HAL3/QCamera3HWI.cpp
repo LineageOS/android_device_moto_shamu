@@ -1113,7 +1113,7 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
         } else {
             result.result = translateCbMetadataToResultMetadata(metadata,
                     current_capture_time, i->request_id, i->blob_request,
-                    &(i->input_jpeg_settings));
+                    &(i->input_jpeg_settings), i->frame_number);
             if (mIsZslMode) {
                 int found_metadata = 0;
                 //for ZSL case store the metadata buffer and corresp. ZSL handle ptr
@@ -1769,7 +1769,6 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
         handleMetadataWithLock(metadata_buf);
     else
         handleBufferWithLock(buffer, frame_number);
-
     pthread_mutex_unlock(&mMutex);
     return;
 }
@@ -2296,7 +2295,7 @@ void QCamera3HardwareInterface::dumpMetadataToFile(tuning_params_t &meta,
             String8 filePath(timeBuf);
             snprintf(buf,
                      sizeof(buf),
-                     "%d_HAL_META_%s_%d.bin",
+                     "%dm_%s_%d.bin",
                      dumpFrameCount,
                      type,
                      frameNumber);
