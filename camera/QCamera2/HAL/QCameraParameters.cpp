@@ -102,6 +102,7 @@ const char QCameraParameters::KEY_QC_VIDEO_FLIP[] = "video-flip";
 const char QCameraParameters::KEY_QC_SNAPSHOT_PICTURE_FLIP[] = "snapshot-picture-flip";
 const char QCameraParameters::KEY_QC_SUPPORTED_FLIP_MODES[] = "flip-mode-values";
 const char QCameraParameters::KEY_QC_VIDEO_HDR[] = "video-hdr";
+const char QCameraParameters::KEY_QC_VT_ENABLE[] = "avtimer";
 const char QCameraParameters::KEY_QC_SUPPORTED_VIDEO_HDR_MODES[] = "video-hdr-values";
 const char QCameraParameters::KEY_QC_AUTO_HDR_ENABLE [] = "auto-hdr-enable";
 const char QCameraParameters::KEY_QC_SNAPSHOT_BURST_NUM[] = "snapshot-burst-num";
@@ -575,6 +576,7 @@ QCameraParameters::QCameraParameters()
       m_bSnapshotFlipChanged(false),
       m_bFixedFrameRateSet(false),
       m_bHDREnabled(false),
+      m_bAVTimerEnabled(false),
       m_AdjustFPS(NULL),
       m_bHDR1xFrameEnabled(true),
       m_HDRSceneEnabled(false),
@@ -642,6 +644,7 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bSnapshotFlipChanged(false),
     m_bFixedFrameRateSet(false),
     m_bHDREnabled(false),
+    m_bAVTimerEnabled(false),
     m_AdjustFPS(NULL),
     m_bHDR1xFrameEnabled(true),
     m_HDRSceneEnabled(false),
@@ -1943,6 +1946,31 @@ int32_t QCameraParameters::setVideoHDR(const QCameraParameters& params)
 }
 
 /*===========================================================================
+ * FUNCTION   : setVtEnable
+ *
+ * DESCRIPTION: set vt Time Stamp enable from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setVtEnable(const QCameraParameters& params)
+{
+    const char *str = params.get(KEY_QC_VT_ENABLE);
+    const char *prev_str = get(KEY_QC_VT_ENABLE);
+    if (str != NULL) {
+        if (prev_str == NULL ||
+            strcmp(str, prev_str) != 0) {
+            return setVtEnable(str);
+        }
+    }
+    return NO_ERROR;
+}
+
+/*===========================================================================
  * FUNCTION   : setFaceRecognition
  *
  * DESCRIPTION: set face recognition mode from user setting
@@ -3134,6 +3162,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setFaceRecognition(params)))              final_rc = rc;
     if ((rc = setFlip(params)))                         final_rc = rc;
     if ((rc = setVideoHDR(params)))                     final_rc = rc;
+    if ((rc = setVtEnable(params)))                     final_rc = rc;
     if ((rc = setBurstNum(params)))                     final_rc = rc;
     if ((rc = setSnapshotFDReq(params)))                final_rc = rc;
     if ((rc = setTintlessValue(params)))                final_rc = rc;
@@ -3629,7 +3658,8 @@ int32_t QCameraParameters::initDefaultParameters()
         set(KEY_QC_SUPPORTED_VIDEO_HDR_MODES, onOffValues);
         set(KEY_QC_VIDEO_HDR, VALUE_OFF);
     }
-
+    // Set VT TimeStamp
+    set(KEY_QC_VT_ENABLE, VALUE_DISABLE);
     //Set Touch AF/AEC
     String8 touchValues = createValuesStringFromMap(
        TOUCH_AF_AEC_MODES_MAP, sizeof(TOUCH_AF_AEC_MODES_MAP) / sizeof(QCameraMap));
@@ -4252,6 +4282,40 @@ int32_t QCameraParameters::setVideoHDR(const char *videoHDR)
     }
     ALOGE("Invalid Video HDR value: %s",
           (videoHDR == NULL) ? "NULL" : videoHDR);
+    return BAD_VALUE;
+}
+
+/*===========================================================================
+ * FUNCTION   : setVtEnable
+ *
+ * DESCRIPTION: set vt Enable value
+ *
+ * PARAMETERS :
+ *   @videoHDR  : svtEnable value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setVtEnable(const char *vtEnable)
+{
+    if (vtEnable != NULL) {
+        int32_t value = lookupAttr(ENABLE_DISABLE_MODES_MAP,
+                                   sizeof(ENABLE_DISABLE_MODES_MAP)/sizeof(QCameraMap),
+                                   vtEnable);
+        if (value != NAME_NOT_FOUND) {
+            ALOGD("%s: Setting Vt Enable %s", __func__, vtEnable);
+            m_bAVTimerEnabled = true;
+            updateParamEntry(KEY_QC_VT_ENABLE, vtEnable);
+            return AddSetParmEntryToBatch(m_pParamBuf,
+                                          CAM_INTF_PARM_VT,
+                                          sizeof(value),
+                                          &value);
+        }
+    }
+    ALOGE("Invalid Vt Enable value: %s",
+          (vtEnable == NULL) ? "NULL" : vtEnable);
+    m_bAVTimerEnabled = false;
     return BAD_VALUE;
 }
 
@@ -7376,5 +7440,19 @@ bool QCameraParameters::isHDREnabled()
     return (m_bHDREnabled || m_HDRSceneEnabled);
 }
 
+/*===========================================================================
+ * FUNCTION   : isAVTimerEnabled
+ *
+ * DESCRIPTION: if AVTimer is enabled
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
+bool QCameraParameters::isAVTimerEnabled()
+{
+    return m_bAVTimerEnabled;
+}
 
 }; // namespace qcamera

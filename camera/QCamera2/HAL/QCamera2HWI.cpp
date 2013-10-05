@@ -1589,6 +1589,9 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
             + mParameters.getNumOfExtraHDRInBufsIfNeeded()
             - mParameters.getNumOfExtraHDROutBufsIfNeeded();
         break;
+    case CAM_STREAM_TYPE_VIDEO:
+        streamInfo->useAVTimer = mParameters.isAVTimerEnabled();
+        break;
     default:
         break;
     }
