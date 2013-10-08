@@ -1207,13 +1207,14 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     main_stream->getFrameDimension(src_dim);
 
     cam_dimension_t dst_dim;
+    bool hdr_output_crop = m_parent->mParameters.isHDROutputCropEnabled();
 
-    if (crop.height) {
+    if (hdr_output_crop && crop.height) {
         dst_dim.height = crop.height;
     } else {
         dst_dim.height = src_dim.height;
     }
-    if (crop.width) {
+    if (hdr_output_crop && crop.width) {
         dst_dim.width = crop.width;
     } else {
         dst_dim.width = src_dim.width;
