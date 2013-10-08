@@ -507,6 +507,7 @@ public:
     bool isYUVFrameInfoNeeded();
     const char*getFrameFmtString(cam_format_t fmt);
     bool isHDR1xExtraBufferNeeded() {return m_bHDR1xExtraBufferNeeded;}
+    bool isHDROutputCropEnabled() {return m_bHDROutputCropEnabled;}
 
     bool isPreviewFlipChanged() { return m_bPreviewFlipChanged; };
     bool isVideoFlipChanged() { return m_bVideoFlipChanged; };
@@ -713,6 +714,7 @@ private:
     bool m_HDRSceneEnabled; // Auto HDR indication
     bool m_bHDRThumbnailProcessNeeded;        // if thumbnail need to be processed for HDR
     bool m_bHDR1xExtraBufferNeeded;     // if extra frame with exposure compensation 0 during HDR is needed
+    bool m_bHDROutputCropEnabled;     // if HDR output frame need to be scaled to user resolution
 
     DefaultKeyedVector<String8,String8> m_tempMap; // map for temororily store parameters to be set
 };
