@@ -292,4 +292,47 @@ void QCameraQueue::flushNodes(match_fn match){
     pthread_mutex_unlock(&m_lock);
 }
 
+/*===========================================================================
+ * FUNCTION   : flushNodes
+ *
+ * DESCRIPTION: flush only specific nodes, depending on
+ *              the given matching function.
+ *
+ * PARAMETERS :
+ *   @match   : matching function
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void QCameraQueue::flushNodes(match_fn_data match, void *match_data){
+    camera_q_node* node = NULL;
+    struct cam_list *head = NULL;
+    struct cam_list *pos = NULL;
+
+    if ( NULL == match ) {
+        return;
+    }
+
+    pthread_mutex_lock(&m_lock);
+    head = &m_head.list;
+    pos = head->next;
+
+    while(pos != head) {
+        node = member_of(pos, camera_q_node, list);
+        pos = pos->next;
+        if ( match(node->data, m_userData, match_data) ) {
+            cam_list_del_node(&node->list);
+            m_size--;
+
+            if (NULL != node->data) {
+                if (m_dataFn) {
+                    m_dataFn(node->data, m_userData);
+                }
+                free(node->data);
+            }
+            free(node);
+        }
+    }
+    pthread_mutex_unlock(&m_lock);
+}
+
 }; // namespace qcamera
