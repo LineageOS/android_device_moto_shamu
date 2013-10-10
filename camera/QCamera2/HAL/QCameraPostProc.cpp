@@ -505,7 +505,8 @@ int32_t QCameraPostProcessor::processData(mm_camera_super_buf_t *frame)
         processRawData(frame);
     } else {
         //play shutter sound
-        if(!m_parent->m_stateMachine.isNonZSLCaptureRunning())
+        if(!m_parent->m_stateMachine.isNonZSLCaptureRunning() &&
+           !m_parent->mLongshotEnabled)
            m_parent->playShutter();
 
         ALOGD("%s: no need offline reprocess, sending to jpeg encoding", __func__);
