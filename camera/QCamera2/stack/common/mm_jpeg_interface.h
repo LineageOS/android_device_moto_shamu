@@ -132,6 +132,18 @@ typedef struct {
   jpeg_encode_callback_t jpeg_cb;
   void* userdata;
 
+  /* thumbnail dimension */
+  mm_jpeg_dim_t thumb_dim;
+
+  /* rotation informaiton */
+  int rotation;
+
+  /* main image dimension */
+  mm_jpeg_dim_t main_dim;
+
+  /* enable encoder burst mode */
+  int8_t burst_mode;
+
 } mm_jpeg_encode_params_t;
 
 typedef struct {
@@ -157,8 +169,8 @@ typedef struct {
 
 typedef struct {
   /* active indices of the buffers for encoding */
-  uint32_t src_index;
-  uint32_t dst_index;
+  int32_t src_index;
+  int32_t dst_index;
   uint32_t thumb_index;
   mm_jpeg_dim_t thumb_dim;
 
