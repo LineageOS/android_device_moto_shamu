@@ -69,13 +69,27 @@ void* buffer_allocate(buffer_t *p_buffer, int cached);
  *     @p_buffer: ION buffer
  *
  *  Return:
- *     buffer address
+ *     error val
  *
  *  Description:
  *      deallocates ION buffer
  *
  **/
 int buffer_deallocate(buffer_t *p_buffer);
+
+/** buffer_invalidate:
+ *
+ *  Arguments:
+ *     @p_buffer: ION buffer
+ *
+ *  Return:
+ *     error val
+ *
+ *  Description:
+ *      Invalidates the cached buffer
+ *
+ **/
+int buffer_invalidate(buffer_t *p_buffer);
 
 #endif
 

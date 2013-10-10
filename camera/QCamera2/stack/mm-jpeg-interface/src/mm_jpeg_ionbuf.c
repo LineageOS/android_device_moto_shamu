@@ -128,4 +128,36 @@ int buffer_deallocate(buffer_t *p_buffer)
   return lrc;
 }
 
+/** buffer_invalidate:
+ *
+ *  Arguments:
+ *     @p_buffer: ION buffer
+ *
+ *  Return:
+ *     error val
+ *
+ *  Description:
+ *      Invalidates the cached buffer
+ *
+ **/
+int buffer_invalidate(buffer_t *p_buffer)
+{
+  int lrc = 0;
+  struct ion_flush_data cache_inv_data;
+  struct ion_custom_data custom_data;
 
+  memset(&cache_inv_data, 0, sizeof(cache_inv_data));
+  memset(&custom_data, 0, sizeof(custom_data));
+  cache_inv_data.vaddr = p_buffer->addr;
+  cache_inv_data.fd = p_buffer->ion_info_fd.fd;
+  cache_inv_data.handle = p_buffer->ion_info_fd.handle;
+  cache_inv_data.length = p_buffer->size;
+  custom_data.cmd = ION_IOC_INV_CACHES;
+  custom_data.arg = (unsigned long)&cache_inv_data;
+
+  lrc = ioctl(p_buffer->ion_info_fd.fd, ION_IOC_CUSTOM, &custom_data);
+  if (lrc < 0)
+    CDBG_ERROR("%s: Cache Invalidate failed: %s\n", __func__, strerror(errno));
+
+  return lrc;
+}

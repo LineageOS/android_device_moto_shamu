@@ -1165,6 +1165,8 @@ static OMX_ERRORTYPE mm_jpeg_configure_job_params(
   CDBG_ERROR("%s:%d] Work buffer %d %p WorkBufSize: %d", __func__, __LINE__,
     work_buffer.fd, work_buffer.vaddr, work_buffer.length);
 
+  buffer_invalidate(&p_session->work_buffer);
+
   ret = OMX_SetConfig(p_session->omx_handle, work_buffer_index,
     &work_buffer);
   if (ret) {
@@ -1579,7 +1581,7 @@ int32_t mm_jpeg_init(mm_jpeg_obj *my_obj)
   CDBG_HIGH("Max picture size %d x %d, WorkBufSize = %ld",
     my_obj->max_pic_w, my_obj->max_pic_h, my_obj->ionBuffer.size);
 
-  my_obj->ionBuffer.addr = (uint8_t *)buffer_allocate(&my_obj->ionBuffer, 0);
+  my_obj->ionBuffer.addr = (uint8_t *)buffer_allocate(&my_obj->ionBuffer, 1);
   if (NULL == my_obj->ionBuffer.addr) {
     mm_jpeg_jobmgr_thread_release(my_obj);
     mm_jpeg_queue_deinit(&my_obj->ongoing_job_q);
