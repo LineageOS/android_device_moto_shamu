@@ -136,6 +136,9 @@ public:
 
     int setFrameParameters(camera3_capture_request_t *request, cam_stream_ID_t streamID);
     int translateMetadataToParameters(const camera3_capture_request_t *request);
+    camera_metadata_t* translateCbUrgentMetadataToResultMetadata (
+                             metadata_buffer_t *metadata);
+
     camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata,
                             nsecs_t timestamp, int32_t request_id, int32_t BlobRequest,
                             jpeg_settings_t* InputJpegSettings, uint32_t frameNumber);
@@ -227,6 +230,8 @@ private:
         List<RequestedBufferInfo> buffers;
         int blob_request;
         jpeg_settings_t input_jpeg_settings;
+        nsecs_t timestamp;
+        uint8_t bNotified;
         int input_buffer_present;
     } PendingRequestInfo;
     typedef struct {
