@@ -119,6 +119,7 @@ private:
     cam_padding_info_t mPaddingInfo;
     cam_rect_t mCropInfo;
     pthread_mutex_t mCropLock; // lock to protect crop info
+    pthread_mutex_t mParameterLock; // lock to sync access to parameters
     bool mStreamBufsAcquired;
     bool m_bActive; // if stream mProcTh is active
     bool mDynBufAlloc; // allow buf allocation in 2 steps
