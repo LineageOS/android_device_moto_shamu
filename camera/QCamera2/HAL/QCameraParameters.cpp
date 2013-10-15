@@ -828,6 +828,10 @@ String8 QCameraParameters::createHfrValuesString(
                 }
             }
     }
+    if (count > 0) {
+        str.append(",");
+    }
+    str.append(VIDEO_HFR_OFF);
     return str;
 }
 
