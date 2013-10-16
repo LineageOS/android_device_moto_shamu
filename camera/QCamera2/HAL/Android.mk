@@ -40,6 +40,15 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
+#LOCAL_STATIC_LIBRARIES := libqcamera2_util
+ifneq ($(filter msm8974 msm8x74,$(TARGET_BOARD_PLATFORM)),)
+LOCAL_C_INCLUDES += \
+        hardware/qcom/display/libgralloc
+else
+LOCAL_C_INCLUDES += \
+        hardware/qcom/display/libgralloc
+endif
+
 LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface
 

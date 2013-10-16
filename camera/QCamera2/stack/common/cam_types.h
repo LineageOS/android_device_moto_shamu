@@ -965,13 +965,6 @@ typedef  struct {
     cam_chromatix_lite_af_stats_t chromatix_lite_af_stats_data;
 } cam_metadata_info_t;
 
-typedef  struct {
-    float aperture_value;
-   /* Store current LED flash state */
-   cam_flash_mode_t         flash_mode;
-   cam_flash_state_t        flash_state;
-} cam_sensor_params_t;
-
 
 typedef enum {
     CAM_INTF_PARM_HAL_VERSION,
@@ -1192,13 +1185,14 @@ typedef enum {
     CAM_INTF_META_TONEMAP_MODE,
 
     CAM_INTF_META_FLASH_MODE,
-    CAM_INTF_META_ASD_HDR_SCENE_DATA,
     /* 2D array of gain factors for each color channel that was used to
      * compensate for lens shading for this frame */
     CAM_INTF_META_LENS_SHADING_MAP,
+    CAM_INTF_META_ASD_HDR_SCENE_DATA,
     CAM_INTF_META_PRIVATE_DATA,
     /* Indicates streams this request needs buffers on */
     CAM_INTF_META_STREAM_TYPE_MASK,
+    CAM_INTF_PARM_STATS_DEBUG_MASK,
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 

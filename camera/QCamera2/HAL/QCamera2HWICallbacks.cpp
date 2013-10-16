@@ -1510,8 +1510,8 @@ void QCamera2HardwareInterface::dumpFrameToFile(QCameraStream *stream,
                                 mParameters.getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT, dim);
                             else
                                 mParameters.getStreamDimension(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT, dim);
-                            snprintf(buf, sizeof(buf), "/data/%ds_%dx%d_%d.yuv",
-                                     mDumpFrmCnt, dim.width, dim.height, index);
+                            /*snprintf(buf, sizeof(buf), "/data/%ds_%dx%d_%d.yuv",
+                                     mDumpFrmCnt, dim.width, dim.height, index); TODO */
                         }
                         break;
                     case QCAMERA_DUMP_FRM_VIDEO:
@@ -1523,8 +1523,8 @@ void QCamera2HardwareInterface::dumpFrameToFile(QCameraStream *stream,
                     case QCAMERA_DUMP_FRM_RAW:
                         {
                             mParameters.getStreamDimension(CAM_STREAM_TYPE_RAW, dim);
-                            snprintf(buf, sizeof(buf), "/data/%dr_%dx%d_%d.yuv",
-                                     mDumpFrmCnt, dim.width, dim.height, index);
+                            /*snprintf(buf, sizeof(buf), "/data/%dr_%dx%d_%d.yuv",
+                                     mDumpFrmCnt, dim.width, dim.height, index); TODO */
                         }
                         break;
                     case QCAMERA_DUMP_FRM_JPEG:
@@ -1533,8 +1533,8 @@ void QCamera2HardwareInterface::dumpFrameToFile(QCameraStream *stream,
                                 mParameters.getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT, dim);
                             else
                                 mParameters.getStreamDimension(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT, dim);
-                            snprintf(buf, sizeof(buf), "/data/%dj_%dx%d_%d.yuv",
-                                     mDumpFrmCnt, dim.width, dim.height, index);
+                            /*snprintf(buf, sizeof(buf), "/data/%dj_%dx%d_%d.yuv",
+                                     mDumpFrmCnt, dim.width, dim.height, index);TODO */
                         }
                         break;
                     default:
