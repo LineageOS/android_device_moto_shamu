@@ -193,6 +193,7 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
     memset(&mCropInfo, 0, sizeof(cam_rect_t));
     memset(&m_MemOpsTbl, 0, sizeof(mm_camera_map_unmap_ops_tbl_t));
     pthread_mutex_init(&mCropLock, NULL);
+    pthread_mutex_init(&mParameterLock, NULL);
 }
 
 /*===========================================================================
@@ -207,6 +208,7 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
 QCameraStream::~QCameraStream()
 {
     pthread_mutex_destroy(&mCropLock);
+    pthread_mutex_destroy(&mParameterLock);
 
     if (mStreamInfoBuf != NULL) {
         int rc = mCamOps->unmap_stream_buf(mCamHandle,
@@ -1078,6 +1080,7 @@ int32_t QCameraStream::unmapBuf(uint8_t buf_type, uint32_t buf_idx, int32_t plan
 int32_t QCameraStream::setParameter(cam_stream_parm_buffer_t &param)
 {
     int32_t rc = NO_ERROR;
+    pthread_mutex_lock(&mParameterLock);
     mStreamInfo->parm_buf = param;
     rc = mCamOps->set_stream_parms(mCamHandle,
                                    mChannelHandle,
@@ -1086,6 +1089,7 @@ int32_t QCameraStream::setParameter(cam_stream_parm_buffer_t &param)
     if (rc == NO_ERROR) {
         param = mStreamInfo->parm_buf;
     }
+    pthread_mutex_unlock(&mParameterLock);
     return rc;
 }
 
@@ -1104,6 +1108,7 @@ int32_t QCameraStream::setParameter(cam_stream_parm_buffer_t &param)
 int32_t QCameraStream::getParameter(cam_stream_parm_buffer_t &param)
 {
     int32_t rc = NO_ERROR;
+    pthread_mutex_lock(&mParameterLock);
     mStreamInfo->parm_buf = param;
     rc = mCamOps->get_stream_parms(mCamHandle,
                                    mChannelHandle,
@@ -1112,6 +1117,7 @@ int32_t QCameraStream::getParameter(cam_stream_parm_buffer_t &param)
     if (rc == NO_ERROR) {
         param = mStreamInfo->parm_buf;
     }
+    pthread_mutex_unlock(&mParameterLock);
     return rc;
 }
 
