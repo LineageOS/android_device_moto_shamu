@@ -490,7 +490,6 @@ int32_t QCameraStateMachine::procEvtPreviewStoppedState(qcamera_sm_evt_enum_t ev
     case QCAMERA_SM_EVT_RELEASE_RECORIDNG_FRAME:
     case QCAMERA_SM_EVT_PREPARE_SNAPSHOT:
     case QCAMERA_SM_EVT_TAKE_PICTURE:
-    case QCAMERA_SM_EVT_START_AUTO_FOCUS:
         {
             ALOGE("%s: cannot handle evt(%d) in state(%d)", __func__, evt, m_state);
             rc = INVALID_OPERATION;
@@ -500,6 +499,7 @@ int32_t QCameraStateMachine::procEvtPreviewStoppedState(qcamera_sm_evt_enum_t ev
             m_parent->signalAPIResult(&result);
         }
         break;
+    case QCAMERA_SM_EVT_START_AUTO_FOCUS:
     case QCAMERA_SM_EVT_CANCEL_PICTURE:
         {
             // no op needed here
