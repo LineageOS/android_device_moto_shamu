@@ -219,6 +219,8 @@ public:
     // Implementation of QCameraAllocator
     virtual QCameraMemory *allocateStreamBuf(cam_stream_type_t stream_type,
                                              int size,
+                                             int stride,
+                                             int scanline,
                                              uint8_t &bufferCnt);
     virtual int32_t allocateMoreStreamBuf(QCameraMemory *mem_obj,
                                           int size,

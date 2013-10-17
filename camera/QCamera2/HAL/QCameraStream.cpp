@@ -610,6 +610,8 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
     //Allocate and map stream info buffer
     mStreamBufs = mAllocator.allocateStreamBuf(mStreamInfo->stream_type,
                                                mFrameLenOffset.frame_len,
+                                               mFrameLenOffset.mp[0].stride,
+                                               mFrameLenOffset.mp[0].scanline,
                                                numBufAlloc);
     mNumBufs = numBufAlloc + mNumBufsNeedAlloc;
 
