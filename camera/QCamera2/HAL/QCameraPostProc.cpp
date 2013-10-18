@@ -1238,6 +1238,12 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
           m_pJpegExifObj->getNumOfEntries();
     }
 
+    // set rotation only when no online rotation or offline pp rotation is done before
+    if (!m_parent->needRotationReprocess()) {
+        jpg_job.encode_job.rotation = m_parent->getJpegRotation();
+    }
+    ALOGD("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.rotation);
+
     // thumbnail dim
     if (m_bThumbnailNeeded == TRUE) {
         if (thumb_stream == NULL) {
@@ -1253,8 +1259,10 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         jpg_job.encode_job.thumb_dim.src_dim = src_dim;
         m_parent->getThumbnailSize(jpg_job.encode_job.thumb_dim.dst_dim);
         int rotation = m_parent->getJpegRotation();
-        if (rotation == 90 || rotation ==270) {
-            // swap dimension if rotation is 90 or 270
+        if ((rotation == 90 || rotation == 270)
+            && jpg_job.encode_job.rotation == 0) {
+            // swap dimension if rotation is 90 or 270,
+            // and the rotation is already done in cpp.
             int32_t temp = jpg_job.encode_job.thumb_dim.dst_dim.height;
             jpg_job.encode_job.thumb_dim.dst_dim.height =
                 jpg_job.encode_job.thumb_dim.dst_dim.width;
@@ -1262,13 +1270,12 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         }
         jpg_job.encode_job.thumb_dim.crop = crop;
         jpg_job.encode_job.thumb_index = thumb_frame->buf_idx;
+        ALOGD("%s, thumbnail src w/h (%dx%d), dst w/h (%dx%d)", __func__,
+            jpg_job.encode_job.thumb_dim.src_dim.width,
+            jpg_job.encode_job.thumb_dim.src_dim.height,
+            jpg_job.encode_job.thumb_dim.dst_dim.width,
+            jpg_job.encode_job.thumb_dim.dst_dim.height);
     }
-
-    // set rotation only when no online rotation or offline pp rotation is done before
-    if (!m_parent->needRotationReprocess()) {
-        jpg_job.encode_job.rotation = m_parent->getJpegRotation();
-    }
-    ALOGV("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.rotation);
 
     // find meta data frame
     mm_camera_buf_def_t *meta_frame = NULL;
