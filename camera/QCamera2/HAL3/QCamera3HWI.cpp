@@ -146,6 +146,8 @@ camera3_device_ops_t QCamera3HardwareInterface::mCameraOps = {
     process_capture_request:            QCamera3HardwareInterface::process_capture_request,
     get_metadata_vendor_tag_ops:        QCamera3HardwareInterface::get_metadata_vendor_tag_ops,
     dump:                               QCamera3HardwareInterface::dump,
+    flush:                              QCamera3HardwareInterface::flush,
+    reserved:                           {0},
 };
 
 
@@ -1677,7 +1679,6 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
 
     int64_t  *sensorExpTime =
         (int64_t *)POINTER_OF(CAM_INTF_META_SENSOR_EXPOSURE_TIME, metadata);
-    mMetadataResponse.exposure_time = *sensorExpTime;
     ALOGV("%s: sensorExpTime = %lld", __func__, *sensorExpTime);
     camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME , sensorExpTime, 1);
 
@@ -1719,13 +1720,13 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
             (int32_t*)sharpnessMap->sharpness,
             CAM_MAX_MAP_WIDTH*CAM_MAX_MAP_HEIGHT);
 
-    /*cam_lens_shading_map_t *lensShadingMap = (cam_lens_shading_map_t *)
+    cam_lens_shading_map_t *lensShadingMap = (cam_lens_shading_map_t *)
         POINTER_OF(CAM_INTF_META_LENS_SHADING_MAP, metadata);
     int map_height = gCamCapability[mCameraId]->lens_shading_map_size.height;
     int map_width  = gCamCapability[mCameraId]->lens_shading_map_size.width;
     camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_MAP,
                        (float*)lensShadingMap->lens_shading,
-                       4*map_width*map_height); */
+                       4*map_width*map_height);
 
     //Populate CAM_INTF_META_TONEMAP_CURVES
     /* ch0 = G, ch 1 = B, ch 2 = R*/
@@ -1743,16 +1744,16 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
                        (float*)tonemap->curves[2].tonemap_points,
                        tonemap->tonemap_points_cnt * 2);
 
-    /*cam_color_correct_gains_t *colorCorrectionGains = (cam_color_correct_gains_t*)
+    cam_color_correct_gains_t *colorCorrectionGains = (cam_color_correct_gains_t*)
         POINTER_OF(CAM_INTF_META_COLOR_CORRECT_GAINS, metadata);
-    camMetadata.update(ANDROID_COLOR_CORRECTION_GAINS, colorCorrectionGains->gains, 4); */
+    camMetadata.update(ANDROID_COLOR_CORRECTION_GAINS, colorCorrectionGains->gains, 4);
 
     cam_color_correct_matrix_t *colorCorrectionMatrix = (cam_color_correct_matrix_t*)
         POINTER_OF(CAM_INTF_META_COLOR_CORRECT_TRANSFORM, metadata);
     camMetadata.update(ANDROID_COLOR_CORRECTION_TRANSFORM,
                        (camera_metadata_rational_t*)colorCorrectionMatrix->transform_matrix, 3*3);
 
-   /* cam_color_correct_gains_t *predColorCorrectionGains = (cam_color_correct_gains_t*)
+    cam_color_correct_gains_t *predColorCorrectionGains = (cam_color_correct_gains_t*)
         POINTER_OF(CAM_INTF_META_PRED_COLOR_CORRECT_GAINS, metadata);
     camMetadata.update(ANDROID_STATISTICS_PREDICTED_COLOR_GAINS,
                        predColorCorrectionGains->gains, 4);
@@ -1768,7 +1769,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
 
     uint8_t *sceneFlicker = (uint8_t*)
         POINTER_OF(CAM_INTF_META_SCENE_FLICKER, metadata);
-    camMetadata.update(ANDROID_STATISTICS_SCENE_FLICKER, sceneFlicker, 1);*/
+    camMetadata.update(ANDROID_STATISTICS_SCENE_FLICKER, sceneFlicker, 1);
 
 
     resultMetadata = camMetadata.release();
@@ -2123,8 +2124,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       lens_shading_map_size,
                       sizeof(lens_shading_map_size)/sizeof(int32_t));
 
-    staticInfo.update(ANDROID_LENS_INFO_SHADING_MAP, gCamCapability[cameraId]->lens_shading_map,
-            sizeof(gCamCapability[cameraId]->lens_shading_map)/ sizeof(float));
 
     int32_t geo_correction_map_size[] = {gCamCapability[cameraId]->geo_correction_map_size.width,
                                                       gCamCapability[cameraId]->geo_correction_map_size.height};
@@ -2400,12 +2399,12 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_ae_modes,
                       size);
 
-    /*int32_t sensitivity_range[2];
+    int32_t sensitivity_range[2];
     sensitivity_range[0] = gCamCapability[cameraId]->sensitivity_range.min_sensitivity;
     sensitivity_range[1] = gCamCapability[cameraId]->sensitivity_range.max_sensitivity;
     staticInfo.update(ANDROID_SENSOR_INFO_SENSITIVITY_RANGE,
                       sensitivity_range,
-                      sizeof(sensitivity_range) / sizeof(int32_t));*/
+                      sizeof(sensitivity_range) / sizeof(int32_t));
 
     staticInfo.update(ANDROID_SENSOR_MAX_ANALOG_SENSITIVITY,
                       &gCamCapability[cameraId]->max_analog_sensitivity,
@@ -3093,7 +3092,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                     sizeof(colorCorrectMode), &colorCorrectMode);
     }
 
-    /*if (frame_settings.exists(ANDROID_COLOR_CORRECTION_GAINS)) {
+    if (frame_settings.exists(ANDROID_COLOR_CORRECTION_GAINS)) {
         cam_color_correct_gains_t colorCorrectGains;
         for (int i = 0; i < 4; i++) {
             colorCorrectGains.gains[i] =
@@ -3102,7 +3101,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
         rc =
             AddSetParmEntryToBatch(mParameters, CAM_INTF_META_COLOR_CORRECT_GAINS,
                     sizeof(colorCorrectGains), &colorCorrectGains);
-    } */
+    }
 
     if (frame_settings.exists(ANDROID_COLOR_CORRECTION_TRANSFORM)) {
         cam_color_correct_matrix_t colorCorrectTransform;
@@ -3461,7 +3460,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 sizeof(captureIntent), &captureIntent);
     }
 
-    /*if (frame_settings.exists(ANDROID_BLACK_LEVEL_LOCK)) {
+    if (frame_settings.exists(ANDROID_BLACK_LEVEL_LOCK)) {
         uint8_t blackLevelLock =
             frame_settings.find(ANDROID_BLACK_LEVEL_LOCK).data.u8[0];
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_BLACK_LEVEL_LOCK,
@@ -3473,7 +3472,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
             frame_settings.find(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE).data.u8[0];
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_LENS_SHADING_MAP_MODE,
                 sizeof(lensShadingMapMode), &lensShadingMapMode);
-    } */
+    }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_REGIONS)) {
         cam_area_t roi;

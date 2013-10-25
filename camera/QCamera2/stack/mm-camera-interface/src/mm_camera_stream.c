@@ -2582,6 +2582,7 @@ int32_t mm_stream_calc_offset_postproc(cam_stream_info_t *stream_info,
 
     switch (stream_info->reprocess_config.online.input_stream_type) {
     case CAM_STREAM_TYPE_PREVIEW:
+    case CAM_STREAM_TYPE_CALLBACK:
         rc = mm_stream_calc_offset_preview(stream_info->fmt,
                                            &stream_info->dim,
                                            buf_planes);
@@ -2592,6 +2593,7 @@ int32_t mm_stream_calc_offset_postproc(cam_stream_info_t *stream_info,
                                            buf_planes);
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
+    case CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT:
         rc = mm_stream_calc_offset_snapshot(stream_info->fmt,
                                             &stream_info->dim,
                                             padding,
@@ -2650,12 +2652,14 @@ int32_t mm_stream_calc_offset(mm_stream_t *my_obj)
 
     switch (my_obj->stream_info->stream_type) {
     case CAM_STREAM_TYPE_PREVIEW:
+    case CAM_STREAM_TYPE_CALLBACK:
     case CAM_STREAM_TYPE_POSTVIEW:
         rc = mm_stream_calc_offset_preview(my_obj->stream_info->fmt,
                                            &dim,
                                            &my_obj->stream_info->buf_planes);
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
+    case CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT:
         rc = mm_stream_calc_offset_snapshot(my_obj->stream_info->fmt,
                                             &dim,
                                             &my_obj->padding_info,
