@@ -1069,6 +1069,8 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     QCameraStream *thumb_stream = NULL;
     mm_camera_buf_def_t *thumb_frame = NULL;
     mm_camera_super_buf_t *recvd_frame = jpeg_job_data->src_frame;
+    cam_rect_t crop;
+    cam_stream_parm_buffer_t param;
 
     // find channel
     QCameraChannel *pChannel = m_parent->getChannelByHandle(recvd_frame->ch_id);
@@ -1199,16 +1201,36 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     jpg_job.encode_job.src_index = main_frame->buf_idx;
     jpg_job.encode_job.dst_index = 0;
 
-    cam_rect_t crop;
-    memset(&crop, 0, sizeof(cam_rect_t));
-    main_stream->getCropInfo(crop);
-
     cam_dimension_t src_dim;
     memset(&src_dim, 0, sizeof(cam_dimension_t));
     main_stream->getFrameDimension(src_dim);
 
-    cam_dimension_t dst_dim;
     bool hdr_output_crop = m_parent->mParameters.isHDROutputCropEnabled();
+
+    crop.left = 0;
+    crop.top = 0;
+    crop.height = src_dim.height;
+    crop.width = src_dim.width;
+
+    if (hdr_output_crop) {
+        memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
+        param.type = CAM_STREAM_PARAM_TYPE_GET_OUTPUT_CROP;
+
+        ret = main_stream->getParameter(param);
+        if (ret != NO_ERROR) {
+            ALOGE("%s: stream getParameter for reprocess failed", __func__);
+        } else {
+           for (int i = 0; i < param.outputCrop.num_of_streams; i++) {
+               if (param.outputCrop.crop_info[i].stream_id
+                   == main_stream->getMyServerID()) {
+                       crop = param.outputCrop.crop_info[i].crop;
+                       main_stream->setCropInfo(crop);
+               }
+           }
+        }
+    }
+
+    cam_dimension_t dst_dim;
 
     if (hdr_output_crop && crop.height) {
         dst_dim.height = crop.height;
@@ -1252,11 +1274,34 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
             thumb_stream = main_stream;
             thumb_frame = main_frame;
         }
-        memset(&crop, 0, sizeof(cam_rect_t));
-        thumb_stream->getCropInfo(crop);
+
         memset(&src_dim, 0, sizeof(cam_dimension_t));
         thumb_stream->getFrameDimension(src_dim);
         jpg_job.encode_job.thumb_dim.src_dim = src_dim;
+
+        crop.left = 0;
+        crop.top = 0;
+        crop.height = src_dim.height;
+        crop.width = src_dim.width;
+
+        if (hdr_output_crop) {
+            memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
+            param.type = CAM_STREAM_PARAM_TYPE_GET_OUTPUT_CROP;
+
+            ret = thumb_stream->getParameter(param);
+            if (ret != NO_ERROR) {
+                ALOGE("%s: stream getParameter for reprocess failed", __func__);
+            } else {
+               for (int i = 0; i < param.outputCrop.num_of_streams; i++) {
+                   if (param.outputCrop.crop_info[i].stream_id
+                       == thumb_stream->getMyServerID()) {
+                           crop = param.outputCrop.crop_info[i].crop;
+                           thumb_stream->setCropInfo(crop);
+                   }
+               }
+            }
+        }
+
         m_parent->getThumbnailSize(jpg_job.encode_job.thumb_dim.dst_dim);
         int rotation = m_parent->getJpegRotation();
         if ((rotation == 90 || rotation == 270)
