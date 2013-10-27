@@ -1938,48 +1938,9 @@ int QCamera2HardwareInterface::autoFocus()
     switch (focusMode) {
     case CAM_FOCUS_MODE_AUTO:
     case CAM_FOCUS_MODE_MACRO:
-        {
-            rc = mCameraHandle->ops->do_auto_focus(mCameraHandle->camera_handle);
-            if (rc == NO_ERROR) {
-                mParameters.setAFRunning(true);
-            }
-        }
-        break;
     case CAM_FOCUS_MODE_CONTINOUS_VIDEO:
-        // According to Google API definition, the focus callback will immediately
-        // return with a boolean that indicates whether the focus is sharp or not.
-        // The focus position is locked after autoFocus call.
-        // in this sense, the effect is the same as cancel_auto_focus
-        {
-            rc = mParameters.setLockCAF(true);
-
-            // send evt notify that foucs is done
-            sendEvtNotify(CAMERA_MSG_FOCUS,
-                          (m_currentFocusState == CAM_AF_FOCUSED)? true : false,
-                          0);
-        }
-        break;
     case CAM_FOCUS_MODE_CONTINOUS_PICTURE:
-        // According to Google API definition, if the autofocus is in the middle
-        // of scanning, the focus callback will return when it completes. If the
-        // autofocus is not scanning, focus callback will immediately return with
-        // a boolean that indicates whether the focus is sharp or not. The apps
-        // can then decide if they want to take a picture immediately or to change
-        // the focus mode to auto, and run a full autofocus cycle. The focus position
-        // is locked after autoFocus call.
-        if (m_currentFocusState != CAM_AF_SCANNING) {
-            // lock focus
-            rc = mParameters.setLockCAF(true);
-
-            // send evt notify that foucs is done
-            sendEvtNotify(CAMERA_MSG_FOCUS,
-                          (m_currentFocusState == CAM_AF_FOCUSED)? true : false,
-                          0);
-        } else {
-            // set flag that lock CAF is needed once focus state becomes focsued/not focused
-            mParameters.setLockCAFNeeded(true);
-            rc = NO_ERROR;
-        }
+        rc = mCameraHandle->ops->do_auto_focus(mCameraHandle->camera_handle);
         break;
     case CAM_FOCUS_MODE_INFINITY:
     case CAM_FOCUS_MODE_FIXED:
@@ -2011,20 +1972,9 @@ int QCamera2HardwareInterface::cancelAutoFocus()
     switch (focusMode) {
     case CAM_FOCUS_MODE_AUTO:
     case CAM_FOCUS_MODE_MACRO:
-        if (mParameters.isAFRunning()) {
-            rc = mCameraHandle->ops->cancel_auto_focus(mCameraHandle->camera_handle);
-            if (rc == NO_ERROR) {
-                mParameters.setAFRunning(false);
-            }
-        }
-        break;
     case CAM_FOCUS_MODE_CONTINOUS_VIDEO:
     case CAM_FOCUS_MODE_CONTINOUS_PICTURE:
-        if (mParameters.isCAFLocked()) {
-            // resume CAF by unlock CAF
-            rc = mParameters.setLockCAF(false);;
-            mParameters.setLockCAFNeeded(false);
-        }
+        rc = mCameraHandle->ops->cancel_auto_focus(mCameraHandle->camera_handle);
         break;
     case CAM_FOCUS_MODE_INFINITY:
     case CAM_FOCUS_MODE_FIXED:
@@ -2775,22 +2725,16 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
     switch (focusMode) {
     case CAM_FOCUS_MODE_AUTO:
     case CAM_FOCUS_MODE_MACRO:
-        if (mParameters.isAFRunning()) {
-            if (focus_data.focus_state == CAM_AF_SCANNING) {
-                // in the middle of focusing, just ignore it
-                break;
-            }
-
-            // update focus distance
-            mParameters.updateFocusDistances(&focus_data.focus_dist);
-            ret = sendEvtNotify(CAMERA_MSG_FOCUS,
-                                (focus_data.focus_state == CAM_AF_FOCUSED)? true : false,
-                                0);
-            mParameters.setAFRunning(false);
-        } else {
-            ret = UNKNOWN_ERROR;
-            ALOGE("%s: autoFocusEvent when no auto_focus running", __func__);
+        if (focus_data.focus_state == CAM_AF_SCANNING) {
+            // in the middle of focusing, just ignore it
+            break;
         }
+
+        // update focus distance
+        mParameters.updateFocusDistances(&focus_data.focus_dist);
+        ret = sendEvtNotify(CAMERA_MSG_FOCUS,
+                            (focus_data.focus_state == CAM_AF_FOCUSED)? true : false,
+                            0);
         break;
     case CAM_FOCUS_MODE_CONTINOUS_VIDEO:
     case CAM_FOCUS_MODE_CONTINOUS_PICTURE:
@@ -2798,10 +2742,6 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
             focus_data.focus_state == CAM_AF_NOT_FOCUSED) {
             // update focus distance
             mParameters.updateFocusDistances(&focus_data.focus_dist);
-            if (mParameters.isLockCAFNeeded()) {
-                mParameters.setLockCAFNeeded(false);
-                ret = mParameters.setLockCAF(true);
-            }
 
             ret = sendEvtNotify(CAMERA_MSG_FOCUS,
                   (focus_data.focus_state == CAM_AF_FOCUSED)? true : false,

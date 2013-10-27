@@ -474,7 +474,6 @@ public:
     bool isFaceDetectionEnabled() {return ((m_nFaceProcMask & CAM_FACE_PROCESS_MASK_DETECTION) != 0);};
     int32_t setHistogram(bool enabled);
     int32_t setFaceDetection(bool enabled);
-    int32_t setLockCAF(bool bLock);
     int32_t setFrameSkip(enum msm_vfe_frame_skip_pattern pattern);
     qcamera_thermal_mode getThermalMode() {return m_ThermalMode;};
     int32_t updateRecordingHintValue(int32_t value);
@@ -498,11 +497,6 @@ public:
     int getFlipMode(cam_stream_type_t streamType);
     bool isSnapshotFDNeeded();
 
-    void setLockCAFNeeded(bool bNeedflag) {m_bNeedLockCAF = bNeedflag;};
-    bool isLockCAFNeeded() {return m_bNeedLockCAF;};
-    bool isCAFLocked() {return m_bCAFLocked;};
-    void setAFRunning(bool bflag) {m_bAFRunning = bflag;};
-    bool isAFRunning() {return m_bAFRunning;};
     bool isHDR1xFrameEnabled() {return m_bHDR1xFrameEnabled;}
     bool isYUVFrameInfoNeeded();
     const char*getFrameFmtString(cam_format_t fmt);
@@ -692,9 +686,6 @@ private:
     bool m_bNeedRestart;            // if preview needs restart after parameters updated
     bool m_bNoDisplayMode;
     bool m_bWNROn;
-    bool m_bNeedLockCAF;
-    bool m_bCAFLocked;
-    bool m_bAFRunning;
     bool m_bInited;
     int m_nBurstNum;
     cam_exp_bracketing_t m_AEBracketingClient;
