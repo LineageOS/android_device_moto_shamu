@@ -7422,4 +7422,121 @@ bool QCameraParameters::isAVTimerEnabled()
     return m_bAVTimerEnabled;
 }
 
+/*===========================================================================
+ * FUNCTION   : setStreamConfigure
+ *
+ * DESCRIPTION: set stream type, stream dimension for all configured streams.
+ *
+ * PARAMETERS :
+ *   @isCapture: Whether this configureation is for an image capture
+ *   @previewAsPostview: Use preview as postview
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+bool QCameraParameters::setStreamConfigure(bool isCapture, bool previewAsPostview)
+{
+    int32_t rc = NO_ERROR;
+    cam_stream_size_info_t stream_config_info;
+    char value[PROPERTY_VALUE_MAX];
+    bool raw_yuv = false;
+
+    if ( m_pParamBuf == NULL ) {
+        return NO_INIT;
+    }
+
+    memset(&stream_config_info, 0, sizeof(stream_config_info));
+    stream_config_info.num_streams = 0;
+
+    property_get("persist.camera.raw_yuv", value, "0");
+    raw_yuv = atoi(value) > 0 ? true : false;
+
+    if (isZSLMode() && getRecordingHintValue() != true) {
+        stream_config_info.type[stream_config_info.num_streams] =
+            CAM_STREAM_TYPE_PREVIEW;
+        getStreamDimension(CAM_STREAM_TYPE_PREVIEW,
+            stream_config_info.stream_sizes[stream_config_info.num_streams]);
+        stream_config_info.num_streams++;
+
+        stream_config_info.type[stream_config_info.num_streams] =
+            CAM_STREAM_TYPE_SNAPSHOT;
+        getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT,
+            stream_config_info.stream_sizes[stream_config_info.num_streams]);
+        stream_config_info.num_streams++;
+
+    } else if (!isCapture) {
+        if (m_bRecordingHint) {
+            stream_config_info.type[stream_config_info.num_streams] =
+                CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT;
+            getStreamDimension(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT,
+                stream_config_info.stream_sizes[stream_config_info.num_streams]);
+            stream_config_info.num_streams++;
+
+            stream_config_info.type[stream_config_info.num_streams] =
+                CAM_STREAM_TYPE_VIDEO;
+            getStreamDimension(CAM_STREAM_TYPE_VIDEO,
+                stream_config_info.stream_sizes[stream_config_info.num_streams]);
+            stream_config_info.num_streams++;
+        }
+
+        stream_config_info.type[stream_config_info.num_streams] =
+            CAM_STREAM_TYPE_PREVIEW;
+        getStreamDimension(CAM_STREAM_TYPE_PREVIEW,
+            stream_config_info.stream_sizes[stream_config_info.num_streams]);
+        stream_config_info.num_streams++;
+    } else {
+        if (isJpegPictureFormat() || isNV16PictureFormat() || isNV21PictureFormat()) {
+            stream_config_info.type[stream_config_info.num_streams] =
+                CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT;
+            getStreamDimension(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT,
+                stream_config_info.stream_sizes[stream_config_info.num_streams]);
+            stream_config_info.num_streams++;
+
+            if (previewAsPostview) {
+                stream_config_info.type[stream_config_info.num_streams] =
+                    CAM_STREAM_TYPE_PREVIEW;
+                getStreamDimension(CAM_STREAM_TYPE_PREVIEW,
+                    stream_config_info.stream_sizes[stream_config_info.num_streams]);
+                stream_config_info.num_streams++;
+            } else {
+                stream_config_info.type[stream_config_info.num_streams] =
+                    CAM_STREAM_TYPE_POSTVIEW;
+                getStreamDimension(CAM_STREAM_TYPE_POSTVIEW,
+                    stream_config_info.stream_sizes[stream_config_info.num_streams]);
+                stream_config_info.num_streams++;
+            }
+        }
+    }
+    if (raw_yuv) {
+        stream_config_info.type[stream_config_info.num_streams] =
+            CAM_STREAM_TYPE_RAW;
+        getStreamDimension(CAM_STREAM_TYPE_RAW,
+            stream_config_info.stream_sizes[stream_config_info.num_streams]);
+        stream_config_info.num_streams++;
+    }
+
+    if(initBatchUpdate(m_pParamBuf) < 0 ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return BAD_TYPE;
+    }
+
+    rc = AddSetParmEntryToBatch(m_pParamBuf,
+                                CAM_INTF_META_STREAM_INFO,
+                                sizeof(stream_config_info),
+                                &stream_config_info);
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to update table", __func__);
+        return rc;
+    }
+
+    rc = commitSetBatch();
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to set stream info parm", __func__);
+        return rc;
+    }
+
+    return rc;
+}
+
 }; // namespace qcamera

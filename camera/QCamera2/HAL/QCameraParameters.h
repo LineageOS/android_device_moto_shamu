@@ -512,6 +512,7 @@ public:
     bool isHDRThumbnailProcessNeeded() { return m_bHDRThumbnailProcessNeeded; };
 	int getAutoFlickerMode();
 
+    bool setStreamConfigure(bool isCapture, bool previewAsPostview);
 private:
     int32_t setPreviewSize(const QCameraParameters& );
     int32_t setVideoSize(const QCameraParameters& );

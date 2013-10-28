@@ -2030,6 +2030,16 @@ int QCamera2HardwareInterface::takePicture()
         stopChannel(QCAMERA_CH_TYPE_PREVIEW);
         delChannel(QCAMERA_CH_TYPE_PREVIEW);
 
+        // Update stream info configuration
+        pthread_mutex_lock(&m_parm_lock);
+        rc = mParameters.setStreamConfigure(true, mLongshotEnabled);
+        if (rc != NO_ERROR) {
+            ALOGE("%s: setStreamConfigure failed %d", __func__, rc);
+            pthread_mutex_unlock(&m_parm_lock);
+            return rc;
+        }
+        pthread_mutex_unlock(&m_parm_lock);
+
         if ( mParameters.isHDREnabled() ) {
             // 'values' should be in "idx1,idx2,idx3,..." format
             uint8_t hdrFrameCount = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
@@ -3553,11 +3563,11 @@ int32_t QCamera2HardwareInterface::addCaptureChannel()
         rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_PREVIEW,
                                 preview_stream_cb_routine, this);
 
-      if (rc != NO_ERROR) {
-          ALOGE("%s: add preview stream failed, ret = %d", __func__, rc);
-          delete pChannel;
-          return rc;
-      }
+        if (rc != NO_ERROR) {
+            ALOGE("%s: add preview stream failed, ret = %d", __func__, rc);
+            delete pChannel;
+            return rc;
+        }
     }
 
     rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT,
@@ -3969,6 +3979,15 @@ int32_t QCamera2HardwareInterface::stopChannel(qcamera_ch_type_enum_t ch_type)
 int32_t QCamera2HardwareInterface::preparePreview()
 {
     int32_t rc = NO_ERROR;
+
+    pthread_mutex_lock(&m_parm_lock);
+    rc = mParameters.setStreamConfigure(false, false);
+    if (rc != NO_ERROR) {
+        ALOGE("%s: setStreamConfigure failed %d", __func__, rc);
+        pthread_mutex_unlock(&m_parm_lock);
+        return rc;
+    }
+    pthread_mutex_unlock(&m_parm_lock);
 
     if (mParameters.isZSLMode() && mParameters.getRecordingHintValue() !=true) {
         rc = addChannel(QCAMERA_CH_TYPE_ZSL);
