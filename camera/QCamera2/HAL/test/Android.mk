@@ -15,6 +15,7 @@ LOCAL_SHARED_LIBRARIES:= \
     libui \
     libgui \
     libcamera_client \
+    libskia \
 
 ifneq (1,$(filter 1,$(shell echo "$$(( $(PLATFORM_SDK_VERSION) >= 18 ))" )))
 
@@ -30,6 +31,8 @@ LOCAL_C_INCLUDES += \
     frameworks/base/include/surfaceflinger \
     frameworks/base/include/camera \
     frameworks/base/include/media \
+    external/skia/include/core \
+    external/skia/include/images \
 
 LOCAL_MODULE:= camera_test
 LOCAL_MODULE_TAGS:= tests
