@@ -7402,7 +7402,7 @@ cam_dimension_t *QCameraReprocScaleParam::getTotalSizeTbl()
  *==========================================================================*/
 bool QCameraParameters::isHDREnabled()
 {
-    return (m_bHDREnabled || m_HDRSceneEnabled);
+    return ((m_nBurstNum == 1) && (m_bHDREnabled || m_HDRSceneEnabled));
 }
 
 /*===========================================================================
