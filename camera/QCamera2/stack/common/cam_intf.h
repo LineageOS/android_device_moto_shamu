@@ -519,16 +519,25 @@ typedef union {
  *  ID from (cam_intf_metadata_type_t)                DATATYPE                     COUNT
  **************************************************************************************/
     /* common between HAL1 and HAL3 */
-    INCLUDE(CAM_INTF_META_HISTOGRAM,                    cam_hist_stats_t,            1);
-    INCLUDE(CAM_INTF_META_FACE_DETECTION,               cam_face_detection_data_t,   1);
-    INCLUDE(CAM_INTF_META_AUTOFOCUS_DATA,               cam_auto_focus_data_t,       1);
+    INCLUDE(CAM_INTF_META_HISTOGRAM,                    cam_hist_stats_t,               1);
+    INCLUDE(CAM_INTF_META_FACE_DETECTION,               cam_face_detection_data_t,      1);
+    INCLUDE(CAM_INTF_META_AUTOFOCUS_DATA,               cam_auto_focus_data_t,          1);
 
     /* Specific to HAl1 */
-    INCLUDE(CAM_INTF_META_CROP_DATA,                    cam_crop_data_t,             1);
-    INCLUDE(CAM_INTF_META_PREP_SNAPSHOT_DONE,           int32_t,                     1);
-    INCLUDE(CAM_INTF_META_GOOD_FRAME_IDX_RANGE,         cam_frame_idx_range_t,       1);
+    INCLUDE(CAM_INTF_META_CROP_DATA,                    cam_crop_data_t,                1);
+    INCLUDE(CAM_INTF_META_PREP_SNAPSHOT_DONE,           int32_t,                        1);
+    INCLUDE(CAM_INTF_META_GOOD_FRAME_IDX_RANGE,         cam_frame_idx_range_t,          1);
+    INCLUDE(CAM_INTF_META_HDR_DATA,                     cam_asd_hdr_scene_data_t,       1);
+    INCLUDE(CAM_INTF_META_ASD_SCENE_TYPE,               int32_t,                        1);
+    INCLUDE(CAM_INTF_META_AEC_INFO,                     cam_ae_params_t,                1);
+    INCLUDE(CAM_INTF_META_CHROMATIX_LITE_ISP,           cam_chromatix_lite_isp_t,       1);
+    INCLUDE(CAM_INTF_META_CHROMATIX_LITE_PP,            cam_chromatix_lite_pp_t,        1);
+    INCLUDE(CAM_INTF_META_CHROMATIX_LITE_AE,            cam_chromatix_lite_ae_stats_t,  1);
+    INCLUDE(CAM_INTF_META_CHROMATIX_LITE_AWB,           cam_chromatix_lite_awb_stats_t, 1);
+    INCLUDE(CAM_INTF_META_CHROMATIX_LITE_AF,            cam_chromatix_lite_af_stats_t,  1);
+
     /* Specific to HAL3 */
-    INCLUDE(CAM_INTF_META_FRAME_NUMBER_VALID,           int32_t,                     1);
+    INCLUDE(CAM_INTF_META_VALID,                        int32_t,                     1);
     INCLUDE(CAM_INTF_META_FRAME_DROPPED,                cam_frame_dropped_t,         1);
     INCLUDE(CAM_INTF_META_PENDING_REQUESTS,             uint32_t,                    1);
     INCLUDE(CAM_INTF_META_FRAME_NUMBER,                 uint32_t,                    1);

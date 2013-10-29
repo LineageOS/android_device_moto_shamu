@@ -1495,6 +1495,13 @@ int32_t mm_channel_handle_metadata(
     mm_stream_t* stream_obj = NULL;
     stream_obj = mm_channel_util_get_stream_by_handler(ch_obj,
                 buf_info->stream_id);
+    uint8_t is_prep_snapshot_done_valid = 0;
+    uint8_t is_good_frame_idx_range_valid = 0;
+    int32_t prep_snapshot_done_state;
+    cam_frame_idx_range_t good_frame_idx_range;
+    good_frame_idx_range.min_frame_idx = 0;
+    good_frame_idx_range.max_frame_idx = 0;
+    uint8_t curr_entry;
 
     if (NULL == stream_obj) {
         CDBG_ERROR("%s: Invalid Stream Object for stream_id = %d",
@@ -1510,8 +1517,8 @@ int32_t mm_channel_handle_metadata(
     }
 
     if (CAM_STREAM_TYPE_METADATA == stream_obj->stream_info->stream_type) {
-        const cam_metadata_info_t *metadata;
-        metadata = (const cam_metadata_info_t *)buf_info->buf->buffer;
+        const metadata_buffer_t *metadata;
+        metadata = (const metadata_buffer_t *)buf_info->buf->buffer;
 
         if (NULL == metadata) {
             CDBG_ERROR("%s: NULL metadata buffer for metadata stream",
@@ -1520,15 +1527,30 @@ int32_t mm_channel_handle_metadata(
             goto end;
         }
 
-        if (metadata->is_prep_snapshot_done_valid &&
-                metadata->is_good_frame_idx_range_valid) {
+        curr_entry = GET_FIRST_PARAM_ID(metadata);
+        while (curr_entry != CAM_INTF_PARM_MAX) {
+           if (curr_entry == CAM_INTF_META_PREP_SNAPSHOT_DONE) {
+              prep_snapshot_done_state = *((int32_t*)POINTER_OF(CAM_INTF_META_PREP_SNAPSHOT_DONE, metadata));
+              is_prep_snapshot_done_valid = 1;
+              break;
+           } else if (curr_entry == CAM_INTF_META_GOOD_FRAME_IDX_RANGE){
+              good_frame_idx_range =
+                 *((cam_frame_idx_range_t*)POINTER_OF(CAM_INTF_META_GOOD_FRAME_IDX_RANGE, metadata));
+              is_good_frame_idx_range_valid = 1;
+              break;
+           }
+           curr_entry = GET_NEXT_PARAM_ID(curr_entry, metadata);
+        }
+
+        if (is_prep_snapshot_done_valid &&
+                is_good_frame_idx_range_valid) {
             CDBG_ERROR("%s: prep_snapshot_done and good_idx_range shouldn't be valid at the same time", __func__);
             rc = -1;
             goto end;
         }
 
-        if (metadata->is_prep_snapshot_done_valid) {
-            if (metadata->prep_snapshot_done_state == NEED_FUTURE_FRAME) {
+        if (is_prep_snapshot_done_valid) {
+            if (prep_snapshot_done_state == NEED_FUTURE_FRAME) {
                 /* Set expected frame id to a future frame idx, large enough to wait
                  * for good_frame_idx_range, and small enough to still capture an image */
                 const int max_future_frame_offset = 100;
@@ -1540,15 +1562,15 @@ int32_t mm_channel_handle_metadata(
             } else {
                 ch_obj->needLEDFlash = FALSE;
             }
-        } else if (metadata->is_good_frame_idx_range_valid) {
-            if (metadata->good_frame_idx_range.min_frame_idx >
+        } else if (is_good_frame_idx_range_valid) {
+            if (good_frame_idx_range.min_frame_idx >
                 queue->expected_frame_id) {
                 CDBG_HIGH("%s: min_frame_idx %d is greater than expected_frame_id %d",
-                    __func__, metadata->good_frame_idx_range.min_frame_idx,
+                    __func__, good_frame_idx_range.min_frame_idx,
                     queue->expected_frame_id);
             }
             queue->expected_frame_id =
-                metadata->good_frame_idx_range.min_frame_idx;
+                good_frame_idx_range.min_frame_idx;
         }
     }
 end:
@@ -1599,12 +1621,11 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
    mm_stream_t* stream_obj = mm_channel_util_get_stream_by_handler(ch_obj,
                buf_info->stream_id);
    if (CAM_STREAM_TYPE_METADATA == stream_obj->stream_info->stream_type) {
-    const cam_metadata_info_t *metadata;
-    metadata = (const cam_metadata_info_t *)buf_info->buf->buffer;
-    CDBG("meta_valid: frame_id = %d meta_valid = %d\n",
-      metadata->meta_valid_params.meta_frame_id,
-      metadata->is_meta_valid);
-    if (!(metadata->is_meta_valid)) {
+    const metadata_buffer_t *metadata;
+    metadata = (const metadata_buffer_t *)buf_info->buf->buffer;
+    int32_t is_meta_valid = *((int32_t*)POINTER_OF(CAM_INTF_META_VALID, metadata));
+    CDBG("%s: meta_valid: %d\n", __func__, is_meta_valid);
+    if (!is_meta_valid) {
       mm_channel_qbuf(ch_obj, buf_info->buf);
       return 0;
     }

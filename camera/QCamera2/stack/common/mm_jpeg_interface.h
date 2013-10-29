@@ -172,7 +172,7 @@ typedef struct {
   uint32_t session_id;
 
   /*Metadata stream*/
-  cam_metadata_info_t *p_metadata;
+  metadata_buffer_t *p_metadata;
 
   /* buf to exif entries, caller needs to
    * take care of the memory manage with insider ptr */

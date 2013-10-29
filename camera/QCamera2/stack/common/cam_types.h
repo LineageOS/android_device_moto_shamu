@@ -1045,6 +1045,14 @@ typedef enum {
     CAM_INTF_META_CROP_DATA,
     CAM_INTF_META_PREP_SNAPSHOT_DONE,
     CAM_INTF_META_GOOD_FRAME_IDX_RANGE,
+    CAM_INTF_META_HDR_DATA,
+    CAM_INTF_META_ASD_SCENE_TYPE,
+    CAM_INTF_META_AEC_INFO,
+    CAM_INTF_META_CHROMATIX_LITE_ISP,
+    CAM_INTF_META_CHROMATIX_LITE_PP,
+    CAM_INTF_META_CHROMATIX_LITE_AE,
+    CAM_INTF_META_CHROMATIX_LITE_AWB,
+    CAM_INTF_META_CHROMATIX_LITE_AF,
     CAM_INTF_PARM_GET_CHROMATIX,
     CAM_INTF_PARM_SET_RELOAD_CHROMATIX,
     CAM_INTF_PARM_SET_AUTOFOCUSTUNING,
@@ -1064,7 +1072,7 @@ typedef enum {
 
     /* specific to HAL3 */
     /* Whether the metadata maps to a valid frame number */
-    CAM_INTF_META_FRAME_NUMBER_VALID,
+    CAM_INTF_META_VALID,
     /* Whether the stream buffer corresponding this frame is dropped or not */
     CAM_INTF_META_FRAME_DROPPED,
     /* Number of pending requests yet to be processed */

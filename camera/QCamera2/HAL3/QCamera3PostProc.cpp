@@ -989,7 +989,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     }
     if (meta_frame != NULL) {
         // fill in meta data frame ptr
-        jpg_job.encode_job.p_metadata = (cam_metadata_info_t *)meta_frame->buffer;
+        jpg_job.encode_job.p_metadata = (metadata_buffer_t *)meta_frame->buffer;
     }
 
     //Start jpeg encoding

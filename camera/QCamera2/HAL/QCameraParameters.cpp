@@ -5644,7 +5644,7 @@ int32_t QCameraParameters::getStreamDimension(cam_stream_type_t streamType,
         getRawSize(dim);
         break;
     case CAM_STREAM_TYPE_METADATA:
-        dim.width = sizeof(cam_metadata_info_t);
+        dim.width = sizeof(metadata_buffer_t);
         dim.height = 1;
         break;
     case CAM_STREAM_TYPE_OFFLINE_PROC:
