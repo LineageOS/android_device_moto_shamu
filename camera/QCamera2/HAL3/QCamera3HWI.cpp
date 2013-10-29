@@ -182,9 +182,9 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mMinProcessedFrameDuration(0),
       mMinJpegFrameDuration(0),
       mMinRawFrameDuration(0),
+      mRawDump(0),
       m_pPowerModule(NULL),
       mHdrHint(false),
-      mRawDump(0),
       mMetaFrameCount(0)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
@@ -2604,13 +2604,13 @@ void QCamera3HardwareInterface::deinitParameters()
  *
  * RETURN     : max_jpeg_size
  *==========================================================================*/
-int QCamera3HardwareInterface::calcMaxJpegSize()
+int QCamera3HardwareInterface::calcMaxJpegSize(uint8_t camera_id)
 {
     int32_t max_jpeg_size = 0;
     int temp_width, temp_height;
-    for (int i = 0; i < gCamCapability[mCameraId]->picture_sizes_tbl_cnt; i++) {
-        temp_width = gCamCapability[mCameraId]->picture_sizes_tbl[i].width;
-        temp_height = gCamCapability[mCameraId]->picture_sizes_tbl[i].height;
+    for (int i = 0; i < gCamCapability[camera_id]->picture_sizes_tbl_cnt; i++) {
+        temp_width = gCamCapability[camera_id]->picture_sizes_tbl[i].width;
+        temp_height = gCamCapability[camera_id]->picture_sizes_tbl[i].height;
         if (temp_width * temp_height > max_jpeg_size ) {
             max_jpeg_size = temp_width * temp_height;
         }
@@ -2618,6 +2618,36 @@ int QCamera3HardwareInterface::calcMaxJpegSize()
     max_jpeg_size = max_jpeg_size * 3/2 + sizeof(camera3_jpeg_blob_t);
     return max_jpeg_size;
 }
+
+/*===========================================================================
+ * FUNCTION   : calcMaxJpegDim
+ *
+ * DESCRIPTION: Calculates maximum jpeg dimension supported by the cameraId
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : max_jpeg_dim
+ *==========================================================================*/
+cam_dimension_t QCamera3HardwareInterface::calcMaxJpegDim()
+{
+    cam_dimension_t max_jpeg_dim;
+    cam_dimension_t curr_jpeg_dim;
+    max_jpeg_dim.width = 0;
+    max_jpeg_dim.height = 0;
+    curr_jpeg_dim.width = 0;
+    curr_jpeg_dim.height = 0;
+    for (int i = 0; i < gCamCapability[mCameraId]->picture_sizes_tbl_cnt; i++) {
+        curr_jpeg_dim.width = gCamCapability[mCameraId]->picture_sizes_tbl[i].width;
+        curr_jpeg_dim.height = gCamCapability[mCameraId]->picture_sizes_tbl[i].height;
+        if (curr_jpeg_dim.width * curr_jpeg_dim.height >
+            max_jpeg_dim.width * max_jpeg_dim.height ) {
+            max_jpeg_dim.width = curr_jpeg_dim.width;
+            max_jpeg_dim.height = curr_jpeg_dim.height;
+        }
+    }
+    return max_jpeg_dim;
+}
+
 
 /*===========================================================================
  * FUNCTION   : initStaticMetadata
@@ -2831,16 +2861,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       available_thumbnail_sizes,
                       sizeof(available_thumbnail_sizes)/sizeof(int32_t));
 
-    int32_t max_jpeg_size = 0;
-    int temp_width, temp_height;
-    for (int i = 0; i < gCamCapability[cameraId]->picture_sizes_tbl_cnt; i++) {
-        temp_width = gCamCapability[cameraId]->picture_sizes_tbl[i].width;
-        temp_height = gCamCapability[cameraId]->picture_sizes_tbl[i].height;
-        if (temp_width * temp_height > max_jpeg_size ) {
-            max_jpeg_size = temp_width * temp_height;
-        }
-    }
-    max_jpeg_size = max_jpeg_size * 3/2 + sizeof(camera3_jpeg_blob_t);
+    int32_t max_jpeg_size = calcMaxJpegSize(cameraId);
     staticInfo.update(ANDROID_JPEG_MAX_SIZE,
                       &max_jpeg_size, 1);
 
@@ -4222,7 +4243,7 @@ int QCamera3HardwareInterface::getJpegSettings
         }
     }
     mJpegSettings->exposure_comp_step = gCamCapability[mCameraId]->exp_compensation_step;
-    mJpegSettings->max_jpeg_size = calcMaxJpegSize();
+    mJpegSettings->max_jpeg_size = calcMaxJpegSize(mCameraId);
     mJpegSettings->is_jpeg_format = true;
     mJpegSettings->min_required_pp_mask = gCamCapability[mCameraId]->min_required_pp_mask;
     return 0;

@@ -267,6 +267,8 @@ public:
 public:
     static int kMaxBuffers;
     QCamera3PostProcessor m_postprocessor; // post processor
+    cam_dimension_t m_max_pic_dim;
+
 private:
     camera3_stream_t *mCamera3Stream;
     uint32_t mNumBufs;

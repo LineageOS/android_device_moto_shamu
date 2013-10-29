@@ -158,6 +158,7 @@ private:
                       int len, int fwk_name);
     static int8_t lookupFwkName(const QCameraMap arr[],
                       int len, int hal_name);
+    static int calcMaxJpegSize(uint8_t camera_id);
 
     int validateCaptureRequest(camera3_capture_request_t *request);
 
@@ -173,11 +174,10 @@ private:
                             const char *type,
                             uint32_t frameNumber);
 public:
-
+    cam_dimension_t calcMaxJpegDim();
     bool needOnlineRotation();
     void getThumbnailSize(cam_dimension_t &dim);
     int getJpegQuality();
-    int calcMaxJpegSize();
     QCamera3Exif *getExifData();
 public:
     static int kMaxInFlight;
@@ -249,17 +249,14 @@ private:
     int64_t mMinJpegFrameDuration;
     int64_t mMinRawFrameDuration;
     bool mRawDump;
-
     power_module_t *m_pPowerModule;   // power module
 
-<<<<<<< HEAD
 #ifdef HAS_MULTIMEDIA_HINTS
     bool mHdrHint;
 #endif
-=======
+
     uint32_t mMetaFrameCount;
 
->>>>>>> 7c888dc... Camera3: Changes to dump tuning Parameter to binary file in HAL
     static const QCameraMap EFFECT_MODES_MAP[];
     static const QCameraMap WHITE_BALANCE_MODES_MAP[];
     static const QCameraMap SCENE_MODES_MAP[];

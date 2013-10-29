@@ -41,6 +41,7 @@
 #include <utils/Errors.h>
 #include <cutils/properties.h>
 #include "QCamera3Channel.h"
+#include "QCamera3HWI.h"
 
 using namespace android;
 
@@ -1082,6 +1083,8 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                         mYuvMemory(NULL),
                         mMetaFrame(NULL)
 {
+    QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)mUserData;
+    m_max_pic_dim = hal_obj->calcMaxJpegDim();
     int32_t rc = m_postprocessor.init(jpegEvtHandle, this);
     if (rc != 0) {
         ALOGE("Init Postprocessor failed");
