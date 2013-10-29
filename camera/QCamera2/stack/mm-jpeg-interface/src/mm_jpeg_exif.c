@@ -296,6 +296,7 @@ int process_sensor_data(cam_sensor_params_t *p_sensor_params,
 {
   int rc = 0;
   rat_t val_rat;
+  double av;
 
   if (NULL == p_sensor_params) {
     ALOGE("%s %d: Sensor params are null", __func__, __LINE__);
@@ -304,12 +305,15 @@ int process_sensor_data(cam_sensor_params_t *p_sensor_params,
 
   ALOGD("%s:%d] From metadata aperture = %f ", __func__, __LINE__,
     p_sensor_params->aperture_value );
-
-  val_rat.num = (uint32_t)(p_sensor_params->aperture_value * 100);
-  val_rat.denom = 100;
-  rc = addExifEntry(exif_info, EXIFTAGID_APERTURE, EXIF_RATIONAL, 1, &val_rat);
-  if (rc) {
-    ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+  if (p_sensor_params->aperture_value > 1.0) {
+    av = (double)2.0 * log(p_sensor_params->aperture_value) / log(2.0);
+    ALOGE("%s:%d] new aperture = %f ", __func__, __LINE__, av);
+    val_rat.num = (uint32_t)(av * 100);
+    val_rat.denom = 100;
+    rc = addExifEntry(exif_info, EXIFTAGID_APERTURE, EXIF_RATIONAL, 1, &val_rat);
+    if (rc) {
+      ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+    }
   }
 
   /*Flash*/
@@ -367,7 +371,7 @@ int process_3a_data(cam_ae_params_t *p_ae_params, QOMX_EXIF_INFO *exif_info)
       val_rat.num = 1;
       val_rat.denom = ROUND(1.0/p_ae_params->exp_time);
   }
-  ALOGD("%s: numer %d denom %d", __func__, val_rat.num, val_rat.denom );
+  ALOGD("%s: numer %d denom %d %d", __func__, val_rat.num, val_rat.denom, sizeof(val_rat)/(8));
 
   rc = addExifEntry(exif_info, EXIFTAGID_EXPOSURE_TIME, EXIF_RATIONAL,
     (sizeof(val_rat)/(8)), &val_rat);
