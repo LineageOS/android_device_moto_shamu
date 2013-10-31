@@ -1488,7 +1488,10 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(cam_stream_type_t st
     case CAM_STREAM_TYPE_PREVIEW:
         {
             if (isNoDisplayMode()) {
-                mem = new QCameraStreamMemory(mGetMemory, bCachedMem);
+                mem = new QCameraStreamMemory(mGetMemory,
+                                              bCachedMem,
+                                              &m_memoryPool,
+                                              stream_type);
             } else {
                 cam_dimension_t dim;
                 QCameraGrallocMemory *grallocMemory =
@@ -1525,7 +1528,10 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(cam_stream_type_t st
     case CAM_STREAM_TYPE_RAW:
     case CAM_STREAM_TYPE_METADATA:
     case CAM_STREAM_TYPE_OFFLINE_PROC:
-        mem = new QCameraStreamMemory(mGetMemory, bCachedMem);
+        mem = new QCameraStreamMemory(mGetMemory,
+                                      bCachedMem,
+                                      &m_memoryPool,
+                                      stream_type);
         break;
     case CAM_STREAM_TYPE_VIDEO:
         {

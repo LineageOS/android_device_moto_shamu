@@ -45,6 +45,7 @@
 #include "QCameraAllocator.h"
 #include "QCameraPostProc.h"
 #include "QCameraThermalAdapter.h"
+#include "QCameraMem.h"
 
 extern "C" {
 #include <mm_camera_interface.h>
@@ -471,6 +472,7 @@ private:
     pthread_mutex_t m_lock;
     pthread_cond_t m_cond;
     qcamera_api_result_t m_apiResult;
+    QCameraMemoryPool m_memoryPool;
 
     pthread_mutex_t m_evtLock;
     pthread_cond_t m_evtCond;
