@@ -138,6 +138,9 @@ typedef struct {
   /* rotation informaiton */
   int rotation;
 
+  /* thumb rotation informaiton */
+  int thumb_rotation;
+
   /* main image dimension */
   mm_jpeg_dim_t main_dim;
 

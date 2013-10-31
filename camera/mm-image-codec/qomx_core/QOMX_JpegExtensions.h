@@ -180,6 +180,7 @@ typedef struct {
   OMX_U32 output_width;
   OMX_U32 output_height;
   QOMX_YUV_FRAME_INFO tmbOffset;
+  OMX_U32 rotation;
 } QOMX_THUMBNAIL_INFO;
 
 /**qomx_mobicat
