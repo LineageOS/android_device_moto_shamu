@@ -432,7 +432,7 @@ extern void* mm_jpeg_queue_peek(mm_jpeg_queue_t* queue);
 extern int32_t addExifEntry(QOMX_EXIF_INFO *p_exif_info, exif_tag_id_t tagid,
   exif_tag_type_t type, uint32_t count, void *data);
 extern int32_t releaseExifEntry(QEXIF_INFO_DATA *p_exif_data);
-extern int process_meta_data(cam_metadata_info_t *p_meta,
+extern int process_meta_data(metadata_buffer_t *p_meta,
   QOMX_EXIF_INFO *exif_info, mm_jpeg_exif_params_t *p_cam3a_params);
 
 OMX_ERRORTYPE mm_jpeg_session_change_state(mm_jpeg_job_session_t* p_session,
