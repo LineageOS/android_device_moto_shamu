@@ -263,7 +263,7 @@ private:
     int autoFocus();
     int cancelAutoFocus();
     int takePicture();
-    int stopCaptureChannel();
+    int stopCaptureChannel(bool destroy);
     int cancelPicture();
     int takeLiveSnapshot();
     int cancelLiveSnapshot();
@@ -306,6 +306,7 @@ private:
     bool needDebugFps();
     bool isCACEnabled();
     bool isAFRunning();
+    bool isPreviewRestartEnabled();
     bool needReprocess();
     bool needRotationReprocess();
     bool needScaleReprocess();
@@ -341,7 +342,7 @@ private:
     int32_t addChannel(qcamera_ch_type_enum_t ch_type);
     int32_t startChannel(qcamera_ch_type_enum_t ch_type);
     int32_t stopChannel(qcamera_ch_type_enum_t ch_type);
-    int32_t delChannel(qcamera_ch_type_enum_t ch_type);
+    int32_t delChannel(qcamera_ch_type_enum_t ch_type, bool destroy = true);
     int32_t addPreviewChannel();
     int32_t addSnapshotChannel();
     int32_t addVideoChannel();

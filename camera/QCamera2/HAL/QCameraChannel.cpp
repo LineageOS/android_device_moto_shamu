@@ -109,6 +109,29 @@ QCameraChannel::~QCameraChannel()
 }
 
 /*===========================================================================
+ * FUNCTION   : deleteChannel
+ *
+ * DESCRIPTION: deletes a camera channel
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
+void QCameraChannel::deleteChannel()
+{
+    if (m_bIsActive) {
+        stop();
+    }
+
+    for (int i = 0; i < m_numStreams; i++) {
+        if (mStreams[i] != NULL) {
+            mStreams[i]->deleteStream();
+        }
+    }
+    m_camOps->delete_channel(m_camHandle, m_handle);
+}
+
+/*===========================================================================
  * FUNCTION   : init
  *
  * DESCRIPTION: initialization of channel
