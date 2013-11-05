@@ -4988,6 +4988,7 @@ QCameraExif *QCamera2HardwareInterface::getExifData()
         ALOGE("%s: getExifModel failed", __func__);
     }
 
+    pthread_mutex_unlock(&m_parm_lock);
     return exif;
 }
 
