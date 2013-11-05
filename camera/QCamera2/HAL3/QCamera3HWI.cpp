@@ -664,7 +664,7 @@ int QCamera3HardwareInterface::configureStreams(
 #endif
               break;
            case HAL_PIXEL_FORMAT_BLOB:
-              stream_config_info.type[i] = CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT;
+              stream_config_info.type[i] = CAM_STREAM_TYPE_SNAPSHOT;
               break;
            default:
               stream_config_info.type[i] = CAM_STREAM_TYPE_DEFAULT;

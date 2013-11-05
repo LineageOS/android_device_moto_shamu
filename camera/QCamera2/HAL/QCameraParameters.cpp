@@ -5488,7 +5488,6 @@ int32_t QCameraParameters::getStreamFormat(cam_stream_type_t streamType,
         format = mPreviewFormat;
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
-    case CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT:
         if ( mPictureFormat == CAM_FORMAT_YUV_422_NV16 ) {
             format = CAM_FORMAT_YUV_422_NV16;
         } else {
@@ -5554,7 +5553,7 @@ int QCameraParameters::getFlipMode(cam_stream_type_t type)
         str = get(KEY_QC_VIDEO_FLIP);
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
-    case CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT:
+    case CAM_STREAM_TYPE_POSTVIEW:
         str = get(KEY_QC_SNAPSHOT_PICTURE_FLIP);
         break;
     default:
@@ -5617,7 +5616,6 @@ int32_t QCameraParameters::getStreamDimension(cam_stream_type_t streamType,
         getPreviewSize(&dim.width, &dim.height);
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
-    case CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT:
         if (getRecordingHintValue() == true) {
             // live snapshot
             getLiveSnapshotSize(dim);
@@ -7468,8 +7466,8 @@ bool QCameraParameters::setStreamConfigure(bool isCapture, bool previewAsPostvie
     } else if (!isCapture) {
         if (m_bRecordingHint) {
             stream_config_info.type[stream_config_info.num_streams] =
-                CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT;
-            getStreamDimension(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT,
+                CAM_STREAM_TYPE_SNAPSHOT;
+            getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT,
                 stream_config_info.stream_sizes[stream_config_info.num_streams]);
             stream_config_info.num_streams++;
 
@@ -7488,8 +7486,8 @@ bool QCameraParameters::setStreamConfigure(bool isCapture, bool previewAsPostvie
     } else {
         if (isJpegPictureFormat() || isNV16PictureFormat() || isNV21PictureFormat()) {
             stream_config_info.type[stream_config_info.num_streams] =
-                CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT;
-            getStreamDimension(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT,
+                CAM_STREAM_TYPE_SNAPSHOT;
+            getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT,
                 stream_config_info.stream_sizes[stream_config_info.num_streams]);
             stream_config_info.num_streams++;
 
