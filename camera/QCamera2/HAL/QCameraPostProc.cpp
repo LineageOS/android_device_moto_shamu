@@ -77,7 +77,8 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
       mRawBurstCount(0),
       mSaveFrmCnt(0),
       mUseSaveProc(false),
-      mUseJpegBurst(false)
+      mUseJpegBurst(false),
+      mJpegMemOpt(true)
 {
     memset(&mJpegHandle, 0, sizeof(mJpegHandle));
     memset(&m_pJpegOutputMem, 0, sizeof(m_pJpegOutputMem));
@@ -269,6 +270,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
 {
     ALOGV("%s : E", __func__);
     int32_t ret = NO_ERROR;
+    uint32_t out_size;
 
     char prop[PROPERTY_VALUE_MAX];
     property_get("persist.camera.jpeg_burst", prop, "0");
@@ -401,19 +403,30 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
     if (mUseJpegBurst) {
         encode_parm.num_dst_bufs = MAX_JPEG_BURST;
     }
-
+    encode_parm.get_memory = NULL;
+    out_size = main_offset.frame_len;
+    if (mJpegMemOpt) {
+        encode_parm.get_memory = getJpegMemory;
+        out_size = sizeof(omx_jpeg_ouput_buf_t);
+    }
     for (int i = 0; i < (int)encode_parm.num_dst_bufs; i++) {
         if (m_pJpegOutputMem[i] != NULL)
           free(m_pJpegOutputMem[i]);
-
+        omx_jpeg_ouput_buf_t omx_out_buf;
+        omx_out_buf.handle = this;
         // allocate output buf for jpeg encoding
-        m_pJpegOutputMem[i] = malloc(main_offset.frame_len);
+        m_pJpegOutputMem[i] = malloc(out_size);
 
         if (NULL == m_pJpegOutputMem[i]) {
           ret = NO_MEMORY;
           ALOGE("%s : initHeapMem for jpeg, ret = NO_MEMORY", __func__);
           goto on_error;
         }
+
+        if (mJpegMemOpt) {
+            memcpy(m_pJpegOutputMem[i], &omx_out_buf, sizeof(omx_out_buf));
+        }
+
 
         encode_parm.dest_buf[i].index = i;
         encode_parm.dest_buf[i].buf_size = main_offset.frame_len;
@@ -625,6 +638,7 @@ int32_t QCameraPostProcessor::processJpegEvt(qcamera_jpeg_evt_payload_t *evt)
 
     int32_t rc = NO_ERROR;
     camera_memory_t *jpeg_mem = NULL;
+    omx_jpeg_ouput_buf_t *jpeg_out = NULL;
 
     if (mUseSaveProc && m_parent->isLongshotEnabled()) {
         qcamera_jpeg_evt_payload_t *saveData = ( qcamera_jpeg_evt_payload_t * ) malloc(sizeof(qcamera_jpeg_evt_payload_t));
@@ -661,14 +675,20 @@ int32_t QCameraPostProcessor::processJpegEvt(qcamera_jpeg_evt_payload_t *evt)
                                   evt->jobId);
         ALOGD("%s: Dump jpeg_size=%d", __func__, evt->out_data.buf_filled_len);
 
-        // alloc jpeg memory to pass to upper layer
-        jpeg_mem = m_parent->mGetMemory(-1, evt->out_data.buf_filled_len, 1, m_parent->mCallbackCookie);
-        if (NULL == jpeg_mem) {
-            rc = NO_MEMORY;
-            ALOGE("%s : getMemory for jpeg, ret = NO_MEMORY", __func__);
-            goto end;
+        if (!mJpegMemOpt) {
+            // alloc jpeg memory to pass to upper layer
+            jpeg_mem = m_parent->mGetMemory(-1, evt->out_data.buf_filled_len,
+                1, m_parent->mCallbackCookie);
+            if (NULL == jpeg_mem) {
+                rc = NO_MEMORY;
+                ALOGE("%s : getMemory for jpeg, ret = NO_MEMORY", __func__);
+                goto end;
+            }
+            memcpy(jpeg_mem->data, evt->out_data.buf_vaddr, evt->out_data.buf_filled_len);
+        } else {
+            jpeg_out  = (omx_jpeg_ouput_buf_t*) evt->out_data.buf_vaddr;
+            jpeg_mem = (camera_memory_t *)jpeg_out->mem_hdl;
         }
-        memcpy(jpeg_mem->data, evt->out_data.buf_vaddr, evt->out_data.buf_filled_len);
 
         ALOGE("%s : Calling upperlayer callback to store JPEG image", __func__);
         qcamera_release_data_t release_data;
@@ -1932,6 +1952,30 @@ bool QCameraPostProcessor::matchJobId(void *data, void *, void *match_data)
   return job->jobId == job_id;
 }
 
+/*===========================================================================
+ * FUNCTION   : getJpegMemory
+ *
+ * DESCRIPTION: buffer allocation function
+ *   to pass to jpeg interface
+ *
+ * PARAMETERS :
+ *   @out_buf : buffer descriptor struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCameraPostProcessor::getJpegMemory(omx_jpeg_ouput_buf_t *out_buf)
+{
+    ALOGD("%s: Allocating jpeg out buffer of size: %d", __func__, out_buf->size);
+    QCameraPostProcessor *procInst = (QCameraPostProcessor *) out_buf->handle;
+    camera_memory_t *cam_mem = procInst->m_parent->mGetMemory(-1, out_buf->size,
+        1, procInst->m_parent->mCallbackCookie);
+    out_buf->mem_hdl = cam_mem;
+    out_buf->vaddr = cam_mem->data;
+
+    return 0;
+}
 
 /*===========================================================================
  * FUNCTION   : QCameraExif

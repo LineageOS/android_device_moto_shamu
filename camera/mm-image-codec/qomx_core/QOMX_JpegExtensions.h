@@ -58,6 +58,7 @@ typedef enum {
 #define QOMX_IMAGE_EXT_WORK_BUFFER_NAME      "OMX.QCOM.image.exttype.workbuffer"
 #define QOMX_IMAGE_EXT_METADATA_NAME      "OMX.QCOM.image.exttype.metadata"
 #define QOMX_IMAGE_EXT_META_ENC_KEY_NAME      "OMX.QCOM.image.exttype.metaEncKey"
+#define QOMX_IMAGE_EXT_MEM_OPS_NAME      "OMX.QCOM.image.exttype.mem_ops"
 
 /** QOMX_IMAGE_EXT_INDEXTYPE
 *  This enum is an extension of the OMX_INDEXTYPE enum and
@@ -83,13 +84,16 @@ typedef enum {
   QOMX_IMAGE_EXT_ENCODING_MODE = 0x07F00004,
 
   //Name: OMX.QCOM.image.exttype.workbuffer
-  QOMX_IMAGE_EXT_WORK_BUFFER = 0x07F00004,
+  QOMX_IMAGE_EXT_WORK_BUFFER = 0x07F00005,
 
   //Name: OMX.QCOM.image.exttype.metadata
   QOMX_IMAGE_EXT_METADATA = 0x07F00008,
 
   //Name: OMX.QCOM.image.exttype.metaEncKey
   QOMX_IMAGE_EXT_META_ENC_KEY = 0x07F00009,
+
+  //Name: OMX.QCOM.image.exttype.memOps
+  QOMX_IMAGE_EXT_MEM_OPS = 0x07F0000A,
 
 } QOMX_IMAGE_EXT_INDEXTYPE;
 
@@ -249,6 +253,33 @@ typedef enum {
   OMX_Serial_Encoding,
   OMX_Parallel_Encoding
 } QOMX_ENCODING_MODE;
+
+
+/**omx_jpeg_ouput_buf_t
+*  Structure describing jpeg output buffer
+*  @handle - Handle to the containing class
+*  @mem_hdl - Handle to camera memory struct
+*  @vaddr - Buffer address
+*  @size - Buffer size
+*  @fd - file descriptor
+**/
+typedef struct {
+  void *handle;
+  void *mem_hdl;
+  int8_t isheap;
+  int size; /*input*/
+  void *vaddr;
+  int fd;
+} omx_jpeg_ouput_buf_t;
+
+/** QOMX_MEM_OPS
+* Structure holding the function pointers to
+* buffer memory operations
+* @get_memory - function to allocate buffer memory
+**/
+typedef struct {
+  int (*get_memory)( omx_jpeg_ouput_buf_t *p_out_buf);
+} QOMX_MEM_OPS;
 
 #ifdef __cplusplus
  }
