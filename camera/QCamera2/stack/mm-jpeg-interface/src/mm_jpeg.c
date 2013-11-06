@@ -582,6 +582,8 @@ int map_jpeg_format(mm_jpeg_color_format color_fmt)
     return (int)OMX_QCOM_IMG_COLOR_FormatYVU444SemiPlanar;
   case MM_JPEG_COLOR_FORMAT_YCBCRLP_H1V1:
     return (int)OMX_QCOM_IMG_COLOR_FormatYUV444SemiPlanar;
+  case MM_JPEG_COLOR_FORMAT_MONOCHROME:
+     return (int)OMX_COLOR_FormatMonochrome;
   default:
     CDBG_ERROR("%s:%d] invalid format %d", __func__, __LINE__, color_fmt);
     return (int)OMX_QCOM_IMG_COLOR_FormatYVU420SemiPlanar;
