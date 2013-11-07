@@ -59,6 +59,7 @@ typedef enum {
 #define QOMX_IMAGE_EXT_METADATA_NAME      "OMX.QCOM.image.exttype.metadata"
 #define QOMX_IMAGE_EXT_META_ENC_KEY_NAME      "OMX.QCOM.image.exttype.metaEncKey"
 #define QOMX_IMAGE_EXT_MEM_OPS_NAME      "OMX.QCOM.image.exttype.mem_ops"
+#define QOMX_IMAGE_EXT_JPEG_SPEED_NAME      "OMX.QCOM.image.exttype.jpeg.speed"
 
 /** QOMX_IMAGE_EXT_INDEXTYPE
 *  This enum is an extension of the OMX_INDEXTYPE enum and
@@ -94,6 +95,9 @@ typedef enum {
 
   //Name: OMX.QCOM.image.exttype.memOps
   QOMX_IMAGE_EXT_MEM_OPS = 0x07F0000A,
+
+  //Name: OMX.QCOM.image.exttype.jpeg.speed
+  QOMX_IMAGE_EXT_JPEG_SPEED = 0x07F000B,
 
 } QOMX_IMAGE_EXT_INDEXTYPE;
 
@@ -280,6 +284,24 @@ typedef struct {
 typedef struct {
   int (*get_memory)( omx_jpeg_ouput_buf_t *p_out_buf);
 } QOMX_MEM_OPS;
+
+/** QOMX_JPEG_SPEED_MODE
+* Enum specifying the values for the jpeg
+* speed mode setting
+**/
+typedef enum {
+  QOMX_JPEG_SPEED_MODE_NORMAL,
+  QOMX_JPEG_SPEED_MODE_HIGH
+} QOMX_JPEG_SPEED_MODE;
+
+/** QOMX_JPEG_SPEED
+* Structure used to set the jpeg speed mode
+* parameter
+* @speedMode - jpeg speed mode
+**/
+typedef struct {
+  QOMX_JPEG_SPEED_MODE speedMode;
+} QOMX_JPEG_SPEED;
 
 #ifdef __cplusplus
  }
