@@ -1644,3 +1644,62 @@ int32_t mm_camera_util_g_ctrl( int32_t fd, uint32_t id, int32_t *value)
     }
     return (rc >= 0)? 0 : -1;
 }
+
+/*===========================================================================
+ * FUNCTION   : mm_camera_channel_bracketing
+ *
+ * DESCRIPTION: sets the channel bracketing
+ *
+ * PARAMETERS :
+ *   @my_obj       : camera object
+ *   @bracketing_type : bracketing type.
+ *   @ch_id        : channel handle
+ *   @start_flag  : flag to indicate start/stop
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_camera_channel_bracketing(mm_camera_obj_t *my_obj,
+                                        mm_camera_bracketing_t bracketing_type,
+                                        uint32_t ch_id,
+                                        int32_t start_flag)
+{
+    CDBG("%s: E",__func__);
+    int32_t rc = -1;
+    mm_channel_t * ch_obj =
+        mm_camera_util_get_channel_by_handler(my_obj, ch_id);
+
+    if (NULL != ch_obj) {
+        pthread_mutex_lock(&ch_obj->ch_lock);
+        pthread_mutex_unlock(&my_obj->cam_lock);
+        switch (bracketing_type) {
+            case MM_CAMERA_AF_BRACKETING:
+                rc = mm_channel_fsm_fn(ch_obj,
+                                       MM_CHANNEL_EVT_AF_BRACKETING,
+                                       (void *)start_flag,
+                                       NULL);
+                break;
+            case MM_CAMERA_AE_BRACKETING:
+                rc = mm_channel_fsm_fn(ch_obj,
+                                       MM_CHANNEL_EVT_AE_BRACKETING,
+                                       (void *)start_flag,
+                                       NULL);
+                break;
+            case MM_CAMERA_FLASH_BRACKETING:
+                rc = mm_channel_fsm_fn(ch_obj,
+                                       MM_CHANNEL_EVT_FLASH_BRACKETING,
+                                       (void *)start_flag,
+                                       NULL);
+                break;
+            default:
+                break;
+        }
+
+    } else {
+        pthread_mutex_unlock(&my_obj->cam_lock);
+    }
+
+    CDBG("%s: X",__func__);
+    return rc;
+}

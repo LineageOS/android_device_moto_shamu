@@ -611,7 +611,7 @@ int QCamera2HardwareInterface::take_picture(struct camera_device *device)
     hw->lockAPI();
 
     /* Prepare snapshot in case LED needs to be flashed */
-    if (hw->mFlashNeeded == 1) {
+    if (hw->mFlashNeeded == 1 || hw->mParameters.isChromaFlashEnabled()) {
         ret = hw->processAPI(QCAMERA_SM_EVT_PREPARE_SNAPSHOT, NULL);
         if (ret == NO_ERROR) {
             hw->waitAPIResult(QCAMERA_SM_EVT_PREPARE_SNAPSHOT);
@@ -964,7 +964,9 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       m_max_pic_width(0),
       m_max_pic_height(0),
       mFlashNeeded(false),
-      mCaptureRotation(0)
+      mCaptureRotation(0),
+      mIs3ALocked(false),
+      mZoomLevel(0)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = HARDWARE_DEVICE_API_VERSION(1, 0);
@@ -1402,6 +1404,7 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
     case CAM_STREAM_TYPE_OFFLINE_PROC:
         {
             bufferCnt = minCaptureBuffers;
+            bufferCnt += mParameters.getNumOfExtraBuffersForImageProc();
         }
         break;
     case CAM_STREAM_TYPE_DEFAULT:
@@ -1996,6 +1999,167 @@ int QCamera2HardwareInterface::cancelAutoFocus()
 }
 
 /*===========================================================================
+ * FUNCTION   : configureBracketing
+ *
+ * DESCRIPTION: configure Bracketing.
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::configureBracketing()
+{
+    ALOGD("%s: E",__func__);
+    int32_t rc = NO_ERROR;
+    if(mParameters.isUbiFocusEnabled()) {
+        rc = configureAFBracketing();
+    } else if (mParameters.isOptiZoomEnabled()) {
+        rc = configureOptiZoom();
+    } else if (mParameters.isChromaFlashEnabled()) {
+        rc = configureFlashBracketing();
+    } else {
+        ALOGE("%s: No Bracketing feature enabled!! ",__func__);
+        rc = BAD_VALUE;
+    }
+    ALOGD("%s: X",__func__);
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : configureAFBracketing
+ *
+ * DESCRIPTION: configure AF Bracketing.
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::configureAFBracketing()
+{
+    ALOGD("%s: E",__func__);
+    int32_t rc = NO_ERROR;
+
+    //Enable AF Bracketing.
+    cam_af_bracketing_t afBracket;
+    memset(&afBracket, 0, sizeof(cam_af_bracketing_t));
+    afBracket.enable = 1;
+    afBracket.burst_count = gCamCapability[mCameraId]->ubifocus_af_bracketing_need.burst_count;
+    for(int8_t i = 0; i < MAX_AF_BRACKETING_VALUES; i++) {
+        afBracket.focus_steps[i] = gCamCapability[mCameraId]->ubifocus_af_bracketing_need.focus_steps[i];
+        ALOGD("%s: focus_step[%d] = %d", __func__, i, afBracket.focus_steps[i]);
+    }
+    //Send cmd to backend to set AF Bracketing for Ubi Focus.
+    rc = mParameters.commitAFBracket(afBracket);
+    if ( NO_ERROR != rc ) {
+        ALOGE("%s: cannot configure AF bracketing", __func__);
+        return rc;
+    }
+    mParameters.set3ALock(QCameraParameters::VALUE_TRUE);
+    mIs3ALocked = true;
+    ALOGD("%s: X",__func__);
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : configureFlashBracketing
+ *
+ * DESCRIPTION: configure Flash Bracketing.
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::configureFlashBracketing()
+{
+    ALOGD("%s: E",__func__);
+    int32_t rc = NO_ERROR;
+
+    cam_flash_bracketing_t flashBracket;
+    memset(&flashBracket, 0, sizeof(cam_flash_bracketing_t));
+    flashBracket.enable = 1;
+    //TODO: Hardcoded value.
+    flashBracket.burst_count = 2;
+    //Send cmd to backend to set Flash Bracketing for chroma flash.
+    rc = mParameters.commitFlashBracket(flashBracket);
+    if ( NO_ERROR != rc ) {
+        ALOGE("%s: cannot configure AF bracketing", __func__);
+    }
+    ALOGD("%s: X",__func__);
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : configureOptiZoom
+ *
+ * DESCRIPTION: configure Opti Zoom.
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::configureOptiZoom()
+{
+    int32_t rc = NO_ERROR;
+    //Get current zoom level and zoom threshold value to start opti zoom.
+    uint8_t zoom_level = (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
+    uint8_t zoom_threshold = gCamCapability[mCameraId]->opti_zoom_settings_need.zoom_threshold;
+    ALOGD("%s: current zoom level =%d & zoom_threshold =%d",__func__,zoom_level,zoom_threshold);
+    if(zoom_level > zoom_threshold) {
+        //set zoom level to 1x;
+        mParameters.setAndCommitZoom(0);
+        //store current zoom level.
+        mZoomLevel = zoom_level;
+        mParameters.set3ALock(QCameraParameters::VALUE_TRUE);
+        mIs3ALocked = true;
+    } else {
+       //zoom threshold is less than current zoom level.
+       //dont start OptiZoom, current zoom level should
+       //be greater than threshold to start opti zoom.
+       //TODO:
+       return BAD_VALUE;
+    }
+
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : startZslBracketing
+ *
+ * DESCRIPTION: starts zsl bracketing based on bracket type(AF/AE/FLASH).
+ *
+ * PARAMETERS :
+ *   @pZSLchannel : zsl channel.
+ *   @type    : 3A bracketing type.
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::startZslBracketing(QCameraPicChannel *pZSLchannel)
+{
+    ALOGD("%s: Start Zsl bracketig",__func__);
+    int32_t rc = NO_ERROR;
+
+    if(mParameters.isUbiFocusEnabled()) {
+        rc = pZSLchannel->startBracketing(MM_CAMERA_AF_BRACKETING);
+    } else if (mParameters.isChromaFlashEnabled()) {
+    rc = pZSLchannel->startBracketing(MM_CAMERA_FLASH_BRACKETING);
+    } else {
+        ALOGE("%s: No Bracketing feature enabled!",__func__);
+        rc = BAD_VALUE;
+    }
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : takePicture
  *
  * DESCRIPTION: take picture impl
@@ -2010,6 +2174,17 @@ int QCamera2HardwareInterface::takePicture()
 {
     int rc = NO_ERROR;
     uint8_t numSnapshots = mParameters.getNumOfSnapshots();
+
+    if (mParameters.isUbiFocusEnabled()|
+        mParameters.isOptiZoomEnabled()|
+        mParameters.isChromaFlashEnabled()) {
+        rc = configureBracketing();
+        if (rc == NO_ERROR) {
+            numSnapshots = mParameters.getBurstCountForBracketing();
+        }
+    }
+    ALOGE("%s: numSnapshot = %d",__func__, numSnapshots);
+
     getOrientation();
     ALOGD("%s: E", __func__);
     if (mParameters.isZSLMode()) {
@@ -2022,7 +2197,14 @@ int QCamera2HardwareInterface::takePicture()
                 ALOGE("%s: cannot start postprocessor", __func__);
                 return rc;
             }
-
+            if (mParameters.isUbiFocusEnabled()|
+                mParameters.isChromaFlashEnabled()) {
+                rc = startZslBracketing(pZSLChannel);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: cannot start zsl bracketing", __func__);
+                    return rc;
+                }
+            }
             rc = pZSLChannel->takePicture(numSnapshots);
             if (rc != NO_ERROR) {
                 ALOGE("%s: cannot take ZSL picture", __func__);
@@ -2229,6 +2411,14 @@ int QCamera2HardwareInterface::cancelPicture()
             stopChannel(QCAMERA_CH_TYPE_RAW);
             delChannel(QCAMERA_CH_TYPE_RAW);
         }
+    }
+    if(mIs3ALocked) {
+        mParameters.set3ALock(QCameraParameters::VALUE_FALSE);
+        mIs3ALocked = false;
+    }
+    if(mParameters.isOptiZoomEnabled()) {
+        ALOGD("%s: Restoring previous zoom value!!",__func__);
+        mParameters.setAndCommitZoom(mZoomLevel);
     }
     return NO_ERROR;
 }
@@ -3759,6 +3949,35 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
 
     ALOGD("%s: After pproc config check, ret = %x", __func__, pp_config.feature_mask);
 
+    if(mParameters.isUbiFocusEnabled()) {
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_UBIFOCUS;
+    } else {
+        pp_config.feature_mask &= ~CAM_QCOM_FEATURE_UBIFOCUS;
+    }
+
+    if(mParameters.isChromaFlashEnabled()) {
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_CHROMA_FLASH;
+        //TODO: check flash value for captured image, then assign.
+        pp_config.flash_value = CAM_FLASH_ON;
+    } else {
+        pp_config.feature_mask &= ~CAM_QCOM_FEATURE_CHROMA_FLASH;
+    }
+
+    if(mParameters.isOptiZoomEnabled()) {
+        uint8_t zoom_level = (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
+        uint8_t zoom_threshold =
+            gCamCapability[mCameraId]->opti_zoom_settings_need.zoom_threshold;
+        //Check for threshold value of zoom required for optizoom algo.
+        //if it is above then threshold then only set feature mask, and
+        //pass zoom level.
+        if (zoom_level >= zoom_threshold) {
+           pp_config.feature_mask |= CAM_QCOM_FEATURE_OPTIZOOM;
+           pp_config.zoom_level = zoom_level;
+        }
+    } else {
+        pp_config.feature_mask &= ~CAM_QCOM_FEATURE_OPTIZOOM;
+    }
+
     //WNR and HDR happen inline. No extra buffers needed.
     uint32_t temp_feature_mask = pp_config.feature_mask;
     temp_feature_mask &= ~CAM_QCOM_FEATURE_HDR;
@@ -4709,6 +4928,17 @@ bool QCamera2HardwareInterface::needReprocess()
         mParameters.m_reprocScaleParam.isUnderScaling()) {
         // Reproc Scale is enaled and also need Scaling to current Snapshot
         ALOGD("%s: need do reprocess for scale", __func__);
+        pthread_mutex_unlock(&m_parm_lock);
+        return true;
+    }
+
+    if (mParameters.isUbiFocusEnabled() |
+        mParameters.isChromaFlashEnabled() |
+        mParameters.isOptiZoomEnabled()) {
+        ALOGD("%s: need do reprocess for |UbiFocus=%d|ChramaFlash=%d|OptiZoom=%d|",
+                                         __func__,mParameters.isUbiFocusEnabled(),
+                                         mParameters.isChromaFlashEnabled(),
+                                         mParameters.isOptiZoomEnabled());
         pthread_mutex_unlock(&m_parm_lock);
         return true;
     }
