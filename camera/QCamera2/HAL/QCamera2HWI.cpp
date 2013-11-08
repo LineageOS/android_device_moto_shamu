@@ -1413,6 +1413,7 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
                     ( bufferCnt > CAMERA_LONGSHOT_STAGES ) ) {
                 bufferCnt = CAMERA_LONGSHOT_STAGES;
             }
+            bufferCnt += mParameters.getNumOfExtraBuffersForImageProc();
         }
         break;
     case CAM_STREAM_TYPE_DEFAULT:
@@ -2081,14 +2082,18 @@ int32_t QCamera2HardwareInterface::configureAFBracketing()
 {
     ALOGD("%s: E",__func__);
     int32_t rc = NO_ERROR;
+    cam_af_bracketing_t *af_bracketing_need;
+    af_bracketing_need =
+        &gCamCaps[mCameraId]->ubifocus_af_bracketing_need;
 
     //Enable AF Bracketing.
     cam_af_bracketing_t afBracket;
     memset(&afBracket, 0, sizeof(cam_af_bracketing_t));
     afBracket.enable = 1;
-    afBracket.burst_count = gCamCaps[mCameraId]->ubifocus_af_bracketing_need.burst_count;
+    afBracket.burst_count = af_bracketing_need->burst_count;
+
     for(int8_t i = 0; i < MAX_AF_BRACKETING_VALUES; i++) {
-        afBracket.focus_steps[i] = gCamCaps[mCameraId]->ubifocus_af_bracketing_need.focus_steps[i];
+        afBracket.focus_steps[i] = af_bracketing_need->focus_steps[i];
         ALOGD("%s: focus_step[%d] = %d", __func__, i, afBracket.focus_steps[i]);
     }
     //Send cmd to backend to set AF Bracketing for Ubi Focus.
@@ -2148,9 +2153,13 @@ int32_t QCamera2HardwareInterface::configureOptiZoom()
 {
     int32_t rc = NO_ERROR;
     //Get current zoom level and zoom threshold value to start opti zoom.
-    uint8_t zoom_level = (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
-    uint8_t zoom_threshold = gCamCaps[mCameraId]->opti_zoom_settings_need.zoom_threshold;
-    ALOGD("%s: current zoom level =%d & zoom_threshold =%d",__func__,zoom_level,zoom_threshold);
+    uint8_t zoom_level =
+        (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
+    cam_opti_zoom_t *opti_zoom_settings_need =
+        &gCamCaps[mCameraId]->opti_zoom_settings_need;
+    uint8_t zoom_threshold = opti_zoom_settings_need->zoom_threshold;
+    ALOGD("%s: current zoom level =%d & zoom_threshold =%d",
+          __func__, zoom_level,zoom_threshold);
     if(zoom_level >= zoom_threshold) {
         //set zoom level to 1x;
         mParameters.setAndCommitZoom(0);
@@ -2182,7 +2191,8 @@ int32_t QCamera2HardwareInterface::configureOptiZoom()
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera2HardwareInterface::startZslBracketing(QCameraPicChannel *pZSLchannel)
+int32_t QCamera2HardwareInterface::startZslBracketing(
+    QCameraPicChannel *pZSLchannel)
 {
     ALOGD("%s: Start Zsl bracketig",__func__);
     int32_t rc = NO_ERROR;
@@ -4234,7 +4244,8 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addReprocChannel(
     }
 
     if(mParameters.isOptiZoomEnabled()) {
-        uint8_t zoom_level = (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
+        uint8_t zoom_level =
+            (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
         uint8_t zoom_threshold =
             gCamCaps[mCameraId]->opti_zoom_settings_need.zoom_threshold;
         //Check for threshold value of zoom required for optizoom algo.
@@ -5313,8 +5324,9 @@ bool QCamera2HardwareInterface::needReprocess()
     if (mParameters.isUbiFocusEnabled() |
         mParameters.isChromaFlashEnabled() |
         mParameters.isOptiZoomEnabled()) {
-        ALOGD("%s: need do reprocess for |UbiFocus=%d|ChramaFlash=%d|OptiZoom=%d|",
-                                         __func__,mParameters.isUbiFocusEnabled(),
+        ALOGD("%s: need reprocess for |UbiFocus=%d|ChramaFlash=%d|OptiZoom=%d|",
+                                         __func__,
+                                         mParameters.isUbiFocusEnabled(),
                                          mParameters.isChromaFlashEnabled(),
                                          mParameters.isOptiZoomEnabled());
         pthread_mutex_unlock(&m_parm_lock);

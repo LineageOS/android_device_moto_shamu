@@ -3962,30 +3962,33 @@ int32_t QCameraParameters::initDefaultParameters()
     setAEBracket(AE_BRACKET_OFF);
 
     //Set AF Bracketing.
-    if ((m_pCapability->qcom_supported_feature_mask & CAM_QCOM_FEATURE_UBIFOCUS) > 0){
-        String8 afBracketingValues = createValuesStringFromMap(
-            AF_BRACKETING_MODES_MAP,
-            sizeof(AF_BRACKETING_MODES_MAP) / sizeof(QCameraMap));
-        set(KEY_QC_SUPPORTED_AF_BRACKET_MODES, afBracketingValues);
-        setAFBracket(AF_BRACKET_OFF);
+    if ((m_pCapability->qcom_supported_feature_mask &
+        CAM_QCOM_FEATURE_UBIFOCUS) > 0){
+            String8 afBracketingValues = createValuesStringFromMap(
+                AF_BRACKETING_MODES_MAP,
+                sizeof(AF_BRACKETING_MODES_MAP) / sizeof(QCameraMap));
+            set(KEY_QC_SUPPORTED_AF_BRACKET_MODES, afBracketingValues);
+            setAFBracket(AF_BRACKET_OFF);
     }
 
     //Set Chroma Flash.
-    if ((m_pCapability->qcom_supported_feature_mask & CAM_QCOM_FEATURE_CHROMA_FLASH) > 0){
-        String8 chromaFlashValues = createValuesStringFromMap(
-            CHROMA_FLASH_MODES_MAP,
-            sizeof(CHROMA_FLASH_MODES_MAP) / sizeof(QCameraMap));
-        set(KEY_QC_SUPPORTED_CHROMA_FLASH_MODES, chromaFlashValues);
-        setChromaFlash(CHROMA_FLASH_OFF);
+    if ((m_pCapability->qcom_supported_feature_mask &
+        CAM_QCOM_FEATURE_CHROMA_FLASH) > 0){
+          String8 chromaFlashValues = createValuesStringFromMap(
+              CHROMA_FLASH_MODES_MAP,
+              sizeof(CHROMA_FLASH_MODES_MAP) / sizeof(QCameraMap));
+          set(KEY_QC_SUPPORTED_CHROMA_FLASH_MODES, chromaFlashValues);
+          setChromaFlash(CHROMA_FLASH_OFF);
     }
 
     //Set Opti Zoom.
-    if ((m_pCapability->qcom_supported_feature_mask & CAM_QCOM_FEATURE_OPTIZOOM) > 0){
-        String8 optiZoomValues = createValuesStringFromMap(
-            OPTI_ZOOM_MODES_MAP,
-            sizeof(OPTI_ZOOM_MODES_MAP) / sizeof(QCameraMap));
-        set(KEY_QC_SUPPORTED_OPTI_ZOOM_MODES, optiZoomValues);
-        setOptiZoom(OPTI_ZOOM_OFF);
+    if ((m_pCapability->qcom_supported_feature_mask &
+        CAM_QCOM_FEATURE_OPTIZOOM) > 0){
+            String8 optiZoomValues = createValuesStringFromMap(
+                OPTI_ZOOM_MODES_MAP,
+                sizeof(OPTI_ZOOM_MODES_MAP) / sizeof(QCameraMap));
+            set(KEY_QC_SUPPORTED_OPTI_ZOOM_MODES, optiZoomValues);
+            setOptiZoom(OPTI_ZOOM_OFF);
     }
 
     // Set Denoise
@@ -5005,8 +5008,9 @@ int32_t QCameraParameters::setAecLock(const char *aecLockStr)
 {
     if (aecLockStr != NULL) {
         int32_t value = lookupAttr(TRUE_FALSE_MODES_MAP,
-                                   sizeof(TRUE_FALSE_MODES_MAP)/sizeof(QCameraMap),
-                                   aecLockStr);
+                                  sizeof(TRUE_FALSE_MODES_MAP)/
+                                      sizeof(QCameraMap),
+                                  aecLockStr);
         if (value != NAME_NOT_FOUND) {
             ALOGD("%s: Setting AECLock value %s", __func__, aecLockStr);
             updateParamEntry(KEY_AUTO_EXPOSURE_LOCK, aecLockStr);
@@ -5016,7 +5020,8 @@ int32_t QCameraParameters::setAecLock(const char *aecLockStr)
                                           &value);
         }
     }
-    ALOGE("Invalid AECLock value: %s", (aecLockStr == NULL) ? "NULL" : aecLockStr);
+    ALOGE("Invalid AECLock value: %s",
+        (aecLockStr == NULL) ? "NULL" : aecLockStr);
     return BAD_VALUE;
 }
 
@@ -5807,7 +5812,8 @@ int32_t QCameraParameters::commitAFBracket(cam_af_bracketing_t afBracket)
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCameraParameters::commitFlashBracket(cam_flash_bracketing_t flashBracket)
+int32_t QCameraParameters::commitFlashBracket(
+    cam_flash_bracketing_t flashBracket)
 {
     ALOGD("%s: E",__func__);
     int32_t rc = NO_ERROR;
@@ -5852,8 +5858,9 @@ int32_t QCameraParameters::setAFBracket(const char *afBracketStr)
 
     if(afBracketStr != NULL) {
         int value = lookupAttr(AF_BRACKETING_MODES_MAP,
-                               sizeof(AF_BRACKETING_MODES_MAP)/sizeof(QCameraMap),
-                               afBracketStr);
+                              sizeof(AF_BRACKETING_MODES_MAP)/
+                                  sizeof(QCameraMap),
+                              afBracketStr);
         if (value != NAME_NOT_FOUND) {
             m_bAFBracketingOn = (value != 0);
             updateParamEntry(KEY_QC_AF_BRACKET, afBracketStr);
@@ -5861,7 +5868,8 @@ int32_t QCameraParameters::setAFBracket(const char *afBracketStr)
         }
     }
 
-    ALOGE("Invalid af bracket value: %s", (afBracketStr == NULL) ? "NULL" : afBracketStr);
+    ALOGE("Invalid af bracket value: %s",
+        (afBracketStr == NULL) ? "NULL" : afBracketStr);
     return BAD_VALUE;
 }
 
@@ -5882,8 +5890,8 @@ int32_t QCameraParameters::setChromaFlash(const char *chromaFlashStr)
     ALOGD("%s: chromaFlashStr =%s",__func__,chromaFlashStr);
     if(chromaFlashStr != NULL) {
         int value = lookupAttr(CHROMA_FLASH_MODES_MAP,
-                               sizeof(CHROMA_FLASH_MODES_MAP)/sizeof(QCameraMap),
-                               chromaFlashStr);
+                              sizeof(CHROMA_FLASH_MODES_MAP)/sizeof(QCameraMap),
+                              chromaFlashStr);
         if(value != NAME_NOT_FOUND) {
             m_bChromaFlashOn = (value != 0);
             updateParamEntry(KEY_QC_CHROMA_FLASH, chromaFlashStr);
@@ -5896,7 +5904,8 @@ int32_t QCameraParameters::setChromaFlash(const char *chromaFlashStr)
         }
     }
 
-    ALOGE("Invalid chroma flash value: %s", (chromaFlashStr == NULL) ? "NULL" : chromaFlashStr);
+    ALOGE("Invalid chroma flash value: %s",
+        (chromaFlashStr == NULL) ? "NULL" : chromaFlashStr);
     return BAD_VALUE;
 }
 
@@ -5925,7 +5934,8 @@ int32_t QCameraParameters::setOptiZoom(const char *optiZoomStr)
             return NO_ERROR;
         }
     }
-    ALOGE("Invalid opti zoom value: %s", (optiZoomStr == NULL) ? "NULL" : optiZoomStr);
+    ALOGE("Invalid opti zoom value: %s",
+        (optiZoomStr == NULL) ? "NULL" : optiZoomStr);
     return BAD_VALUE;
 }
 
