@@ -1768,6 +1768,10 @@ QCamera3Exif *QCamera3PicChannel::getExifData()
                        EXIF_ASCII,
                        count,
                        (void *)dateTime);
+        exif->addEntry(EXIFTAGID_EXIF_DATE_TIME_DIGITIZED,
+                       EXIF_ASCII,
+                       count,
+                       (void *)dateTime);
     } else {
         ALOGE("%s: getExifDateTime failed", __func__);
     }
