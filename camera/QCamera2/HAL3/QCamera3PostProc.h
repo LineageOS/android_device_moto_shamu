@@ -61,7 +61,7 @@ typedef struct {
     mm_camera_super_buf_t *src_frame;// source frame (need to be returned back to kernel after done)
 } qcamera_hal3_pp_data_t;
 
-#define MAX_EXIF_TABLE_ENTRIES 16
+#define MAX_EXIF_TABLE_ENTRIES 17
 class QCamera3Exif
 {
 public:
