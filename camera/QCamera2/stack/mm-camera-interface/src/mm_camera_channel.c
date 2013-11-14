@@ -230,7 +230,6 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
 
     /* bufdone for overflowed bufs */
     mm_channel_superbuf_bufdone_overflow(ch_obj, &ch_obj->bundle.superbuf_queue);
-
     /* dispatch frame if pending_cnt>0 or is in continuous streaming mode */
     while ( (ch_obj->pending_cnt > 0) ||
             (MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS == notify_mode) ) {
@@ -250,7 +249,6 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
                     ch_obj->startZSlSnapshotCalled = FALSE;
                 }
             }
-
             /* dispatch superbuf */
             if (NULL != ch_obj->bundle.super_buf_notify_cb) {
                 uint8_t i;
@@ -270,10 +268,8 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
                     }
                     cb_node->u.superbuf.camera_handle = ch_obj->cam_obj->my_hdl;
                     cb_node->u.superbuf.ch_id = ch_obj->my_hdl;
-
                     /* enqueue to cb thread */
                     cam_queue_enq(&(ch_obj->cb_thread.cmd_queue), cb_node);
-
                     /* wake up cb thread */
                     cam_sem_post(&(ch_obj->cb_thread.cmd_sem));
                 } else {
@@ -1617,9 +1613,10 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
     if (mm_channel_handle_metadata(ch_obj, queue, buf_info) < 0) {
         return -1;
     }
-
+   #if 0
    mm_stream_t* stream_obj = mm_channel_util_get_stream_by_handler(ch_obj,
                buf_info->stream_id);
+
    if (CAM_STREAM_TYPE_METADATA == stream_obj->stream_info->stream_type) {
     const metadata_buffer_t *metadata;
     metadata = (const metadata_buffer_t *)buf_info->buf->buffer;
@@ -1630,6 +1627,7 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
       return 0;
     }
    }
+   #endif
     if (mm_channel_util_seq_comp_w_rollover(buf_info->frame_idx,
                                             queue->expected_frame_id) < 0) {
         /* incoming buf is older than expected buf id, will discard it */
@@ -1682,7 +1680,6 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
             }
         }
     }
-
     if ( found_super_buf ) {
             super_buf->super_buf[buf_s_idx] = *buf_info;
 
@@ -1756,7 +1753,6 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
                 new_buf->num_of_bufs = queue->num_streams;
                 new_buf->super_buf[buf_s_idx] = *buf_info;
                 new_buf->frame_idx = buf_info->frame_idx;
-
                 /* enqueue */
                 if ( insert_before_buf ) {
                     cam_list_insert_before_node(&new_node->list, insert_before_buf);
@@ -1786,7 +1782,6 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
     }
 
     pthread_mutex_unlock(&queue->que.lock);
-
     CDBG("%s: X", __func__);
     return 0;
 }
