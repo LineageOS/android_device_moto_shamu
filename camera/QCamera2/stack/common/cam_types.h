@@ -234,7 +234,6 @@ typedef enum {
 
     /* applies to HAL 3 */
     CAM_STREAM_TYPE_CALLBACK,      /* app requested callback */
-    CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT, /* non zsl snapshot */
     CAM_STREAM_TYPE_IMPL_DEFINED, /* opaque format: could be display, video enc, ZSL YUV */
 
     /* applies to both HAL 1 and HAL 3 */

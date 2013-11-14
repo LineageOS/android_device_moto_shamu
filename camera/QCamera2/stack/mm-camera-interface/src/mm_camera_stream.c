@@ -2610,7 +2610,6 @@ int32_t mm_stream_calc_offset_postproc(cam_stream_info_t *stream_info,
                                            buf_planes);
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
-    case CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT:
         rc = mm_stream_calc_offset_snapshot(stream_info->fmt,
                                             &stream_info->dim,
                                             padding,
@@ -2676,7 +2675,6 @@ int32_t mm_stream_calc_offset(mm_stream_t *my_obj)
                                            &my_obj->stream_info->buf_planes);
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
-    case CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT:
         rc = mm_stream_calc_offset_snapshot(my_obj->stream_info->fmt,
                                             &dim,
                                             &my_obj->padding_info,

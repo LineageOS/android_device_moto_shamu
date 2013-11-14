@@ -1144,7 +1144,7 @@ int32_t QCamera3PicChannel::initialize()
         return rc;
     }
 
-    streamType = CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT;
+    streamType = CAM_STREAM_TYPE_SNAPSHOT;
     streamFormat = CAM_FORMAT_YUV_420_NV21;
     streamDim.width = mCamera3Stream->width;
     streamDim.height = mCamera3Stream->height;
@@ -1272,7 +1272,7 @@ int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
     }
 
     if (mCamera3Stream->format == HAL_PIXEL_FORMAT_BLOB) {
-        streamType = CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT;
+        streamType = CAM_STREAM_TYPE_SNAPSHOT;
         streamFormat = CAM_FORMAT_YUV_420_NV21;
     } else {
         //TODO: Fail for other types of streams for now
