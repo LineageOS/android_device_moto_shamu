@@ -1089,6 +1089,8 @@ int QCamera2HardwareInterface::openCamera()
         return UNKNOWN_ERROR;
     }
 
+    initCapabilities(mCameraId,mCameraHandle);
+
     mCameraHandle->ops->register_event_notify(mCameraHandle->camera_handle,
                                               camEvtHandle,
                                               (void *) this);
@@ -1202,18 +1204,10 @@ int QCamera2HardwareInterface::closeCamera()
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int QCamera2HardwareInterface::initCapabilities(int cameraId)
+int QCamera2HardwareInterface::initCapabilities(int cameraId,mm_camera_vtbl_t *cameraHandle)
 {
     int rc = NO_ERROR;
-    mm_camera_vtbl_t *cameraHandle = NULL;
     QCameraHeapMemory *capabilityHeap = NULL;
-
-    cameraHandle = camera_open(cameraId);
-    if (!cameraHandle) {
-        ALOGE("%s: camera_open failed", __func__);
-        rc = UNKNOWN_ERROR;
-        goto open_failed;
-    }
 
     /* Allocate memory for capability buffer */
     capabilityHeap = new QCameraHeapMemory(QCAMERA_ION_USE_CACHE);
@@ -1257,9 +1251,6 @@ map_failed:
     capabilityHeap->deallocate();
     delete capabilityHeap;
 allocate_failed:
-    cameraHandle->ops->close_camera(cameraHandle->camera_handle);
-    cameraHandle = NULL;
-open_failed:
     return rc;
 }
 
@@ -1280,35 +1271,12 @@ int QCamera2HardwareInterface::getCapabilities(int cameraId,
                                     struct camera_info *info)
 {
     int rc = NO_ERROR;
-
+    struct  camera_info *p_info;
     pthread_mutex_lock(&g_camlock);
-    if (NULL == gCamCaps[cameraId]) {
-        rc = initCapabilities(cameraId);
-        if (rc < 0) {
-            pthread_mutex_unlock(&g_camlock);
-            return rc;
-        }
-    }
-
-    switch(gCamCaps[cameraId]->position) {
-    case CAM_POSITION_BACK:
-        info->facing = CAMERA_FACING_BACK;
-        break;
-
-    case CAM_POSITION_FRONT:
-        info->facing = CAMERA_FACING_FRONT;
-        break;
-
-    default:
-        ALOGE("%s:Unknown position type for camera id:%d", __func__, cameraId);
-        rc = BAD_VALUE;
-        break;
-    }
-
-    info->orientation = gCamCaps[cameraId]->sensor_mount_angle;
-    info->device_version = CAMERA_DEVICE_API_VERSION_1_0;
-    info->static_camera_characteristics = NULL;
-
+    p_info = get_cam_info(cameraId);
+    p_info->device_version = CAMERA_DEVICE_API_VERSION_1_0;
+    p_info->static_camera_characteristics = NULL;
+    memcpy(info, p_info, sizeof (struct camera_info));
     pthread_mutex_unlock(&g_camlock);
     return rc;
 }
