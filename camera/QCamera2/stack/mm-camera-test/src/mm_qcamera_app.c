@@ -2336,7 +2336,8 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                 CDBG_ERROR("%s:autofocus error\n", __func__);
                 goto EXIT;
             }
-
+            /*Waiting for Auto Focus Done Call Back*/
+            mm_camera_app_wait();
             break;
 
         case MM_CAMERA_LIB_CANCEL_AF:
