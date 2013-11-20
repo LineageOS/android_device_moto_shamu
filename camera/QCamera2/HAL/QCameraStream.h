@@ -53,7 +53,8 @@ public:
                   uint32_t camHandle,
                   uint32_t chId,
                   mm_camera_ops_t *camOps,
-                  cam_padding_info_t *paddingInfo);
+                  cam_padding_info_t *paddingInfo,
+                  bool deffered = false);
     virtual ~QCameraStream();
     virtual int32_t init(QCameraHeapMemory *streamInfoBuf,
                          uint8_t minStreamBufNum,
@@ -67,6 +68,10 @@ public:
     virtual int32_t processDataNotify(mm_camera_super_buf_t *bufs);
     virtual int32_t start();
     virtual int32_t stop();
+
+    /* Used for deffered allocation of buffers */
+    virtual int32_t allocateBuffers();
+    virtual int32_t releaseBuffs();
 
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame, void *userdata);
     static void *dataProcRoutine(void *data);
@@ -94,6 +99,8 @@ public:
     cam_stream_parm_buffer_t getBufferInfo() { return m_BufferInfo;};
 
     static void releaseFrameData(void *data, void *user_data);
+    int32_t configStream();
+    bool isDeffered() const { return mDefferedAllocation; }
 
     int mDumpFrame;
     int mDumpMetaFrame;
@@ -111,6 +118,7 @@ private:
     mm_camera_stream_mem_vtbl_t mMemVtbl;
     uint8_t mNumBufs;
     uint8_t mNumBufsNeedAlloc;
+    uint8_t *mRegFlags;
     stream_cb_routine mDataCB;
     void *mUserData;
 
@@ -141,9 +149,23 @@ private:
                      mm_camera_buf_def_t **bufs,
                      mm_camera_map_unmap_ops_tbl_t *ops_tbl,
                      void *user_data);
+
+    static int32_t get_bufs_deffered(
+            cam_frame_len_offset_t *offset,
+            uint8_t *num_bufs,
+            uint8_t **initial_reg_flag,
+            mm_camera_buf_def_t **bufs,
+            mm_camera_map_unmap_ops_tbl_t *ops_tbl,
+            void *user_data);
+
     static int32_t put_bufs(
                      mm_camera_map_unmap_ops_tbl_t *ops_tbl,
                      void *user_data);
+
+    static int32_t put_bufs_deffered(
+            mm_camera_map_unmap_ops_tbl_t *ops_tbl,
+            void *user_data);
+
     static int32_t invalidate_buf(int index, void *user_data);
     static int32_t clean_invalidate_buf(int index, void *user_data);
 
@@ -155,6 +177,8 @@ private:
     int32_t putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl);
     int32_t invalidateBuf(int index);
     int32_t cleanInvalidateBuf(int index);
+    int32_t calcOffset(cam_stream_info_t *streamInfo);
+    bool mDefferedAllocation;
 
     bool wait_for_cond;
     pthread_mutex_t m_lock;

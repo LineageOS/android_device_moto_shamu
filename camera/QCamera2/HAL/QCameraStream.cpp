@@ -72,6 +72,44 @@ int32_t QCameraStream::get_bufs(
 }
 
 /*===========================================================================
+ * FUNCTION   : get_bufs_deffered
+ *
+ * DESCRIPTION: static function entry to allocate deffered stream buffers
+ *
+ * PARAMETERS :
+ *   @offset     : offset info of stream buffers
+ *   @num_bufs   : number of buffers allocated
+ *   @initial_reg_flag: flag to indicate if buffer needs to be registered
+ *                      at kernel initially
+ *   @bufs       : output of allocated buffers
+ *   @ops_tbl    : ptr to buf mapping/unmapping ops
+ *   @user_data  : user data ptr of ops_tbl
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraStream::get_bufs_deffered(
+        cam_frame_len_offset_t * /* offset */,
+        uint8_t *num_bufs,
+        uint8_t **initial_reg_flag,
+        mm_camera_buf_def_t **bufs,
+        mm_camera_map_unmap_ops_tbl_t * /* ops_tbl */,
+        void *user_data)
+{
+    QCameraStream *stream = reinterpret_cast<QCameraStream *>(user_data);
+    if (!stream) {
+        ALOGE("getBufs invalid stream pointer");
+        return NO_MEMORY;
+    }
+
+    *initial_reg_flag   = stream->mRegFlags;
+    *num_bufs           = stream->mNumBufs;
+    *bufs               = stream->mBufDefs;
+    return NO_ERROR;
+}
+
+/*===========================================================================
  * FUNCTION   : put_bufs
  *
  * DESCRIPTION: static function entry to deallocate stream buffers
@@ -94,6 +132,28 @@ int32_t QCameraStream::put_bufs(
         return NO_MEMORY;
     }
     return stream->putBufs(ops_tbl);
+}
+
+/*===========================================================================
+ * FUNCTION   : put_bufs_deffered
+ *
+ * DESCRIPTION: static function entry to deallocate deffered stream buffers
+ *
+ * PARAMETERS :
+ *   @ops_tbl    : ptr to buf mapping/unmapping ops
+ *   @user_data  : user data ptr of ops_tbl
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraStream::put_bufs_deffered(
+        mm_camera_map_unmap_ops_tbl_t * /*ops_tbl */,
+        void * /*user_data*/ )
+{
+    // No op
+    // Used for handling buffers with deffered allocation. They are freed separately.
+    return NO_ERROR;
 }
 
 /*===========================================================================
@@ -160,7 +220,8 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
                              uint32_t camHandle,
                              uint32_t chId,
                              mm_camera_ops_t *camOps,
-                             cam_padding_info_t *paddingInfo) :
+                             cam_padding_info_t *paddingInfo,
+                             bool deffered) :
         mDumpFrame(0),
         mDumpMetaFrame(0),
         mDumpSkipCnt(0),
@@ -182,11 +243,17 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
         m_bActive(false),
         mDynBufAlloc(false),
         mBufAllocPid(0),
+        mDefferedAllocation(deffered),
         wait_for_cond(false)
 {
     mMemVtbl.user_data = this;
-    mMemVtbl.get_bufs = get_bufs;
-    mMemVtbl.put_bufs = put_bufs;
+    if ( !deffered ) {
+        mMemVtbl.get_bufs = get_bufs;
+        mMemVtbl.put_bufs = put_bufs;
+    } else {
+        mMemVtbl.get_bufs = get_bufs_deffered;
+        mMemVtbl.put_bufs = put_bufs_deffered;
+    }
     mMemVtbl.invalidate_buf = invalidate_buf;
     mMemVtbl.clean_invalidate_buf = clean_invalidate_buf;
     memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
@@ -212,6 +279,9 @@ QCameraStream::~QCameraStream()
 {
     pthread_mutex_destroy(&mCropLock);
     pthread_mutex_destroy(&mParameterLock);
+
+    if (mDefferedAllocation)
+        releaseBuffs();
 
     if (mStreamInfoBuf != NULL) {
         int rc = mCamOps->unmap_stream_buf(mCamHandle,
@@ -253,7 +323,6 @@ int32_t QCameraStream::init(QCameraHeapMemory *streamInfoBuf,
                             bool bDynallocBuf)
 {
     int32_t rc = OK;
-    mm_camera_stream_config_t stream_config;
 
     mHandle = mCamOps->add_stream(mCamHandle, mChannelHandle);
     if (!mHandle) {
@@ -275,17 +344,19 @@ int32_t QCameraStream::init(QCameraHeapMemory *streamInfoBuf,
         goto err1;
     }
 
-    // Configure the stream
-    stream_config.stream_info = mStreamInfo;
-    stream_config.mem_vtbl = mMemVtbl;
-    stream_config.stream_cb = dataNotifyCB;
-    stream_config.padding_info = mPaddingInfo;
-    stream_config.userdata = this;
-    rc = mCamOps->config_stream(mCamHandle,
-                mChannelHandle, mHandle, &stream_config);
-    if (rc < 0) {
-        ALOGE("Failed to config stream, rc = %d", rc);
-        goto err2;
+    // Calculate buffer size for deffered allocation
+    if (mDefferedAllocation) {
+        rc = calcOffset(mStreamInfo);
+        if (rc < 0) {
+            ALOGE("%s : Failed to calculate stream offset", __func__);
+            goto err1;
+        }
+    } else {
+        rc = configStream();
+        if (rc < 0) {
+            ALOGE("%s : Failed to config stream ", __func__);
+            goto err1;
+        }
     }
 
     mDataCB = stream_cb;
@@ -293,9 +364,6 @@ int32_t QCameraStream::init(QCameraHeapMemory *streamInfoBuf,
     mDynBufAlloc = bDynallocBuf;
     return 0;
 
-err2:
-    mCamOps->unmap_stream_buf(mCamHandle,
-                mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO, 0, -1);
 err1:
     mCamOps->delete_stream(mCamHandle, mChannelHandle, mHandle);
     mHandle = 0;
@@ -303,6 +371,79 @@ err1:
     mStreamInfo = NULL;
     mNumBufs = 0;
 done:
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : calcOffset
+ *
+ * DESCRIPTION: calculate frame offset based on format and padding information
+ *
+ * PARAMETERS :
+ *   @streamInfo  : stream information
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t QCameraStream::calcOffset(cam_stream_info_t *streamInfo)
+{
+    int32_t rc = 0;
+
+    cam_dimension_t dim = streamInfo->dim;
+    if (streamInfo->pp_config.feature_mask & CAM_QCOM_FEATURE_ROTATION &&
+            streamInfo->stream_type != CAM_STREAM_TYPE_VIDEO) {
+        if (streamInfo->pp_config.rotation == ROTATE_90 ||
+                streamInfo->pp_config.rotation == ROTATE_270) {
+            // rotated by 90 or 270, need to switch width and height
+            dim.width = streamInfo->dim.height;
+            dim.height = streamInfo->dim.width;
+        }
+    }
+
+    switch (streamInfo->stream_type) {
+    case CAM_STREAM_TYPE_PREVIEW:
+        rc = mm_stream_calc_offset_preview(streamInfo->fmt,
+                &dim,
+                &streamInfo->buf_planes);
+        break;
+    case CAM_STREAM_TYPE_POSTVIEW:
+        rc = mm_stream_calc_offset_post_view(streamInfo->fmt,
+                &dim,
+                &streamInfo->buf_planes);
+        break;
+    case CAM_STREAM_TYPE_SNAPSHOT:
+        rc = mm_stream_calc_offset_snapshot(streamInfo->fmt,
+                &dim,
+                &mPaddingInfo,
+                &streamInfo->buf_planes);
+        break;
+    case CAM_STREAM_TYPE_OFFLINE_PROC:
+        rc = mm_stream_calc_offset_postproc(streamInfo,
+                &mPaddingInfo,
+                &streamInfo->buf_planes);
+        break;
+    case CAM_STREAM_TYPE_VIDEO:
+        rc = mm_stream_calc_offset_video(&dim,
+                &streamInfo->buf_planes);
+        break;
+    case CAM_STREAM_TYPE_RAW:
+        rc = mm_stream_calc_offset_raw(streamInfo->fmt,
+                &dim,
+                &mPaddingInfo,
+                &streamInfo->buf_planes);
+        break;
+    case CAM_STREAM_TYPE_METADATA:
+        rc = mm_stream_calc_offset_metadata(&dim,
+                &mPaddingInfo,
+                &streamInfo->buf_planes);
+        break;
+    default:
+        ALOGE("%s: not supported for stream type %d",
+                __func__, streamInfo->stream_type);
+        rc = -1;
+        break;
+    }
     return rc;
 }
 
@@ -621,10 +762,10 @@ int32_t QCameraStream::bufDone(const void *opaque, bool isMetaData)
  *              none-zero failure code
  *==========================================================================*/
 int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
-                     uint8_t *num_bufs,
-                     uint8_t **initial_reg_flag,
-                     mm_camera_buf_def_t **bufs,
-                     mm_camera_map_unmap_ops_tbl_t *ops_tbl)
+        uint8_t *num_bufs,
+        uint8_t **initial_reg_flag,
+        mm_camera_buf_def_t **bufs,
+        mm_camera_map_unmap_ops_tbl_t *ops_tbl)
 {
     int rc = NO_ERROR;
     uint8_t *regFlags;
@@ -745,6 +886,140 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
 
     return NO_ERROR;
 }
+
+/*===========================================================================
+ * FUNCTION   : allocateBuffers
+ *
+ * DESCRIPTION: allocate stream buffers
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraStream::allocateBuffers()
+{
+    int rc = NO_ERROR;
+
+    mFrameLenOffset = mStreamInfo->buf_planes.plane_info;
+
+    //Allocate and map stream info buffer
+    mStreamBufs = mAllocator.allocateStreamBuf(mStreamInfo->stream_type,
+            mFrameLenOffset.frame_len,
+            mFrameLenOffset.mp[0].stride,
+            mFrameLenOffset.mp[0].scanline,
+            mNumBufs);
+
+    if (!mStreamBufs) {
+        ALOGE("%s: Failed to allocate stream buffers", __func__);
+        return NO_MEMORY;
+    }
+
+    for (int i = 0; i < mNumBufs; i++) {
+        rc = mapBuf(CAM_MAPPING_BUF_TYPE_STREAM_BUF,
+                i, -1,
+                mStreamBufs->getFd(i),
+                mStreamBufs->getSize(i));
+        if (rc < 0) {
+            ALOGE("%s: map_stream_buf failed: %d", __func__, rc);
+            for (int j = 0; j < i; j++) {
+                unmapBuf(CAM_MAPPING_BUF_TYPE_STREAM_BUF, i, -1);
+            }
+            mStreamBufs->deallocate();
+            delete mStreamBufs;
+            mStreamBufs = NULL;
+            return INVALID_OPERATION;
+        }
+    }
+
+    //regFlags array is allocated by us,
+    // but consumed and freed by mm-camera-interface
+    mRegFlags = (uint8_t *)malloc(sizeof(uint8_t) * mNumBufs);
+    if (!mRegFlags) {
+        ALOGE("%s: Out of memory", __func__);
+        for (int i = 0; i < mNumBufs; i++) {
+            unmapBuf(CAM_MAPPING_BUF_TYPE_STREAM_BUF, i, -1);
+        }
+        mStreamBufs->deallocate();
+        delete mStreamBufs;
+        mStreamBufs = NULL;
+        return NO_MEMORY;
+    }
+    memset(mRegFlags, 0, sizeof(uint8_t) * mNumBufs);
+
+    size_t bufDefsSize = mNumBufs * sizeof(mm_camera_buf_def_t);
+    mBufDefs = (mm_camera_buf_def_t *)malloc(bufDefsSize);
+    if (mBufDefs == NULL) {
+        ALOGE("%s: getRegFlags failed %d", __func__, rc);
+        for (int i = 0; i < mNumBufs; i++) {
+            unmapBuf(CAM_MAPPING_BUF_TYPE_STREAM_BUF, i, -1);
+        }
+        mStreamBufs->deallocate();
+        delete mStreamBufs;
+        mStreamBufs = NULL;
+        free(mRegFlags);
+        mRegFlags = NULL;
+        return INVALID_OPERATION;
+    }
+    memset(mBufDefs, 0, bufDefsSize);
+    for (int i = 0; i < mNumBufs; i++) {
+        mStreamBufs->getBufDef(mFrameLenOffset, mBufDefs[i], i);
+    }
+
+    rc = mStreamBufs->getRegFlags(mRegFlags);
+    if (rc < 0) {
+        ALOGE("%s: getRegFlags failed %d", __func__, rc);
+        for (int i = 0; i < mNumBufs; i++) {
+            unmapBuf(CAM_MAPPING_BUF_TYPE_STREAM_BUF, i, -1);
+        }
+        mStreamBufs->deallocate();
+        delete mStreamBufs;
+        mStreamBufs = NULL;
+        free(mBufDefs);
+        mBufDefs = NULL;
+        free(mRegFlags);
+        mRegFlags = NULL;
+        return INVALID_OPERATION;
+    }
+
+    return NO_ERROR;
+}
+
+
+/*===========================================================================
+ * FUNCTION   : releaseBuffs
+ *
+ * DESCRIPTION: method to deallocate stream buffers
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraStream::releaseBuffs()
+{
+    int rc = NO_ERROR;
+
+    for (int i = 0; i < mNumBufs; i++) {
+        rc = unmapBuf(CAM_MAPPING_BUF_TYPE_STREAM_BUF, i, -1);
+        if (rc < 0) {
+            ALOGE("%s: map_stream_buf failed: %d", __func__, rc);
+        }
+    }
+    // mBufDefs just keep a ptr to the buffer
+    // mm-camera-interface own the buffer, so no need to free
+    mBufDefs = NULL;
+    memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
+    if ( !mStreamBufsAcquired ) {
+        mStreamBufs->deallocate();
+        delete mStreamBufs;
+    }
+
+    return rc;
+}
+
 
 /*===========================================================================
  * FUNCTION   : BufAllocRoutine
@@ -1220,6 +1495,44 @@ void QCameraStream::releaseFrameData(void *data, void *user_data)
     if (NULL != pme) {
         pme->bufDone(frame->bufs[0]->buf_idx);
     }
+}
+
+/*===========================================================================
+ * FUNCTION   : configStream
+ *
+ * DESCRIPTION: send stream configuration to back end
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraStream::configStream()
+{
+    int rc = NO_ERROR;
+
+    // Configure the stream
+    mm_camera_stream_config_t stream_config;
+    stream_config.stream_info = mStreamInfo;
+    stream_config.mem_vtbl = mMemVtbl;
+    stream_config.stream_cb = dataNotifyCB;
+    stream_config.padding_info = mPaddingInfo;
+    stream_config.userdata = this;
+    rc = mCamOps->config_stream(mCamHandle,
+                mChannelHandle, mHandle, &stream_config);
+    if (rc < 0) {
+        ALOGE("Failed to config stream, rc = %d", rc);
+        mCamOps->unmap_stream_buf(mCamHandle,
+                mChannelHandle,
+                mHandle,
+                CAM_MAPPING_BUF_TYPE_STREAM_INFO,
+                0,
+                -1);
+        return UNKNOWN_ERROR;
+    }
+
+    return rc;
 }
 
 }; // namespace qcamera

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -56,7 +56,8 @@ public:
                               cam_padding_info_t *paddingInfo,
                               stream_cb_routine stream_cb,
                               void *userdata,
-                              bool bDynAllocBuf);
+                              bool bDynAllocBuf,
+                              bool bDeffAlloc = false);
     virtual int32_t start();
     virtual int32_t stop();
     virtual int32_t bufDone(mm_camera_super_buf_t *recvd_frame);

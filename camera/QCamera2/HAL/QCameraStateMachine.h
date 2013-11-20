@@ -85,6 +85,7 @@ typedef enum {
     QCAMERA_SM_EVT_JPEG_EVT_NOTIFY,          // evt notify from jpeg
     QCAMERA_SM_EVT_SNAPSHOT_DONE,            // internal evt that snapshot is done
     QCAMERA_SM_EVT_THERMAL_NOTIFY,           // evt notify from thermal daemon
+    QCAMERA_SM_EVT_STOP_CAPTURE_CHANNEL,     // stop capture channel
     QCAMERA_SM_EVT_MAX
 } qcamera_sm_evt_enum_t;
 
