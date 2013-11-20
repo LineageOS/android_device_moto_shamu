@@ -180,6 +180,8 @@ public:
     static const char KEY_QC_RAW_PICUTRE_SIZE[];
     static const char KEY_QC_TINTLESS_ENABLE[];
 
+    static const char KEY_INTERNAL_PERVIEW_RESTART[];
+
     // DENOISE
     static const char KEY_QC_DENOISE[];
     static const char KEY_QC_SUPPORTED_DENOISE[];

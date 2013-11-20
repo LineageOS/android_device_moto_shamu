@@ -745,6 +745,8 @@ QCameraReprocessChannel::~QCameraReprocessChannel()
  *   @burstNum       : number of burst captures needed
  *   @paddingInfo    : padding information
  *   @param          : reference to parameters
+ *   @contStream     : continous streaming mode or burst
+ *   @offline        : configure for offline reprocessing
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
@@ -757,7 +759,8 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                                                             uint32_t burstNum,
                                                             cam_padding_info_t *paddingInfo,
                                                             QCameraParameters &param,
-                                                            bool contStream)
+                                                            bool contStream,
+                                                            bool offline)
 {
     int32_t rc = 0;
     QCameraStream *pStream = NULL;
@@ -833,9 +836,26 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                 streamInfo->num_of_burst = burstNum;
             }
 
-            streamInfo->reprocess_config.pp_type = CAM_ONLINE_REPROCESS_TYPE;
-            streamInfo->reprocess_config.online.input_stream_id = pStream->getMyServerID();
-            streamInfo->reprocess_config.online.input_stream_type = pStream->getMyType();
+            cam_stream_reproc_config_t rp_cfg;
+            memset(&rp_cfg, 0, sizeof(cam_stream_reproc_config_t));
+            if (offline) {
+                cam_frame_len_offset_t offset;
+                memset(&offset, 0, sizeof(cam_frame_len_offset_t));
+
+                rp_cfg.pp_type = CAM_OFFLINE_REPROCESS_TYPE;
+                pStream->getFormat(rp_cfg.offline.input_fmt);
+                pStream->getFrameDimension(rp_cfg.offline.input_dim);
+                pStream->getFrameOffset(offset);
+                rp_cfg.offline.input_buf_planes.plane_info = offset;
+                rp_cfg.offline.input_type = pStream->getMyType();
+                //For input metadata + input buffer
+                rp_cfg.offline.num_of_bufs = 2;
+            } else {
+                rp_cfg.pp_type = CAM_ONLINE_REPROCESS_TYPE;
+                rp_cfg.online.input_stream_id = pStream->getMyServerID();
+                rp_cfg.online.input_stream_type = pStream->getMyType();
+            }
+            streamInfo->reprocess_config = rp_cfg;
             streamInfo->reprocess_config.pp_feature_config = config;
 
             if (!(pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
@@ -933,6 +953,167 @@ QCameraStream * QCameraReprocessChannel::getStreamBySrouceHandle(uint32_t srcHan
     }
 
     return pStream;
+}
+
+/*===========================================================================
+ * FUNCTION   : stop
+ *
+ * DESCRIPTION: Unmap offline buffers and stop channel
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraReprocessChannel::stop()
+{
+    if (!mOfflineBuffers.empty()) {
+        QCameraStream *stream = NULL;
+        List<OfflineBuffer>::iterator it = mOfflineBuffers.begin();
+        int error = NO_ERROR;
+        for( ; it != mOfflineBuffers.end(); it++) {
+            stream = (*it).stream;
+            if (NULL != stream) {
+                error = stream->unmapBuf((*it).type,
+                                         (*it).index,
+                                         -1);
+                if (NO_ERROR != error) {
+                    ALOGE("%s: Error during offline buffer unmap %d",
+                          __func__, error);
+                }
+            }
+        }
+        mOfflineBuffers.clear();
+    }
+
+    return QCameraChannel::stop();
+}
+
+/*===========================================================================
+ * FUNCTION   : doReprocessOffline
+ *
+ * DESCRIPTION: request to do offline reprocess on the frame
+ *
+ * PARAMETERS :
+ *   @frame   : frame to be performed a reprocess
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraReprocessChannel::doReprocessOffline(
+                mm_camera_super_buf_t *frame)
+{
+    int32_t rc = 0;
+    OfflineBuffer mappedBuffer;
+
+    if (m_numStreams < 1) {
+        ALOGE("%s: No reprocess stream is created", __func__);
+        return -1;
+    }
+    if (m_pSrcChannel == NULL) {
+        ALOGE("%s: No source channel for reprocess", __func__);
+        return -1;
+    }
+
+    if (frame == NULL) {
+        ALOGE("%s: Invalid source frame", __func__);
+        return BAD_VALUE;
+    }
+
+    // find meta data stream and index of meta data frame in the superbuf
+    uint8_t meta_buf_index = -1;
+    mm_camera_buf_def_t *meta_buf = NULL;
+    QCameraStream *pStream = NULL;
+    for (int i = 0; i < frame->num_bufs; i++) {
+        pStream = m_pSrcChannel->getStreamByHandle(frame->bufs[i]->stream_id);
+        if (pStream != NULL) {
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)) {
+                meta_buf = frame->bufs[i];
+                break;
+            }
+        }
+    }
+
+    for (int i = 0; i < frame->num_bufs; i++) {
+        pStream = getStreamBySrouceHandle(frame->bufs[i]->stream_id);
+        if (pStream != NULL) {
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)) {
+                continue;
+            }
+
+            meta_buf_index = 0;
+            if (NULL != meta_buf) {
+                rc = pStream->mapBuf(CAM_MAPPING_BUF_TYPE_OFFLINE_META_BUF,
+                                     meta_buf_index,
+                                     -1,
+                                     meta_buf->fd,
+                                     meta_buf->frame_len);
+                if (NO_ERROR != rc ) {
+                    ALOGE("%s : Error during metadata buffer mapping",
+                          __func__);
+                    break;
+                }
+            }
+            mappedBuffer.index = meta_buf_index;
+            mappedBuffer.stream = pStream;
+            mappedBuffer.type = CAM_MAPPING_BUF_TYPE_OFFLINE_META_BUF;
+            mOfflineBuffers.push_back(mappedBuffer);
+
+            int buf_index = 1;
+            rc = pStream->mapBuf(CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF,
+                                 buf_index,
+                                 -1,
+                                 frame->bufs[i]->fd,
+                                 frame->bufs[i]->frame_len);
+            if (NO_ERROR != rc ) {
+                ALOGE("%s : Error during reprocess input buffer mapping",
+                      __func__);
+                break;
+            }
+            mappedBuffer.index = buf_index;
+            mappedBuffer.stream = pStream;
+            mappedBuffer.type = CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF;
+            mOfflineBuffers.push_back(mappedBuffer);
+
+            cam_stream_parm_buffer_t param;
+            memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
+            param.type = CAM_STREAM_PARAM_TYPE_DO_REPROCESS;
+            param.reprocess.buf_index = buf_index;
+            param.reprocess.frame_pp_config.uv_upsample =
+                            frame->bufs[i]->is_uv_subsampled;
+            if (NULL != meta_buf) {
+                // we have meta data sent together with reprocess frame
+                param.reprocess.meta_present = 1;
+                param.reprocess.meta_buf_index = meta_buf_index;
+                uint32_t stream_id = frame->bufs[i]->stream_id;
+                QCameraStream *srcStream =
+                        m_pSrcChannel->getStreamByHandle(stream_id);
+                cam_metadata_info_t *meta =
+                        (cam_metadata_info_t *)meta_buf->buffer;
+                if ((NULL != meta) && (NULL != srcStream)) {
+
+                    for (int j = 0; j < MAX_NUM_STREAMS; j++) {
+                        if (meta->crop_data.crop_info[j].stream_id ==
+                                        srcStream->getMyServerID()) {
+                            param.reprocess.frame_pp_config.crop.crop_enabled = 1;
+                            param.reprocess.frame_pp_config.crop.input_crop =
+                                    meta->crop_data.crop_info[j].crop;
+                            break;
+                        }
+                    }
+                }
+            }
+            rc = pStream->setParameter(param);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: stream setParameter for reprocess failed",
+                      __func__);
+                break;
+            }
+        }
+    }
+    return rc;
 }
 
 /*===========================================================================

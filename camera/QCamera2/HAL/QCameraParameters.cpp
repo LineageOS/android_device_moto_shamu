@@ -118,6 +118,7 @@ const char QCameraParameters::KEY_QC_CHROMA_FLASH[] = "chroma-flash";
 const char QCameraParameters::KEY_QC_SUPPORTED_CHROMA_FLASH_MODES[] = "chroma-flash-values";
 const char QCameraParameters::KEY_QC_OPTI_ZOOM[] = "opti-zoom";
 const char QCameraParameters::KEY_QC_SUPPORTED_OPTI_ZOOM_MODES[] = "opti-zoom-values";
+const char QCameraParameters::KEY_INTERNAL_PERVIEW_RESTART[] = "internal-restart";
 
 // Values for effect settings.
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
@@ -4091,6 +4092,9 @@ int32_t QCameraParameters::initDefaultParameters()
 
     // Set default Camera mode
     set(KEY_QC_CAMERA_MODE, 0);
+
+    // Add support for internal preview restart
+    set(KEY_INTERNAL_PERVIEW_RESTART, VALUE_TRUE);
 
     int32_t rc = commitParameters();
     if (rc == NO_ERROR) {

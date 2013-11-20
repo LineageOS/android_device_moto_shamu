@@ -268,6 +268,7 @@ typedef enum {
     CAM_MAPPING_BUF_TYPE_STREAM_BUF,        /* mapping stream buffers */
     CAM_MAPPING_BUF_TYPE_STREAM_INFO,       /* mapping stream information buffer */
     CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF, /* mapping offline process input buffer */
+    CAM_MAPPING_BUF_TYPE_OFFLINE_META_BUF,  /* mapping offline meta buffer */
     CAM_MAPPING_BUF_TYPE_MAX
 } cam_mapping_buf_type;
 
@@ -1531,6 +1532,9 @@ typedef struct {
 
     /* number of input reprocess buffers */
     uint8_t num_of_bufs;
+
+    /* input source type */
+    cam_stream_type_t input_type;
 } cam_pp_offline_src_config_t;
 
 /* reprocess stream input configuration */

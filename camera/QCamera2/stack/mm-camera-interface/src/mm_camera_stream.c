@@ -94,7 +94,7 @@ int32_t mm_stream_calc_offset_metadata(cam_dimension_t *dim,
                                        cam_stream_buf_plane_info_t *buf_planes);
 int32_t mm_stream_calc_offset_postproc(cam_stream_info_t *stream_info,
                                        cam_padding_info_t *padding,
-                                       cam_stream_buf_plane_info_t *buf_planes);
+                                       cam_stream_buf_plane_info_t *plns);
 
 
 /* state machine function declare */
@@ -2580,7 +2580,7 @@ int32_t mm_stream_calc_offset_metadata(cam_dimension_t *dim,
  * PARAMETERS :
  *   @stream_info: ptr to stream info
  *   @padding : padding information
- *   @buf_planes : [out] buffer plane information
+ *   @plns : [out] buffer plane information
  *
  * RETURN     : int32_t type of status
  *              0  -- success
@@ -2588,53 +2588,59 @@ int32_t mm_stream_calc_offset_metadata(cam_dimension_t *dim,
  *==========================================================================*/
 int32_t mm_stream_calc_offset_postproc(cam_stream_info_t *stream_info,
                                        cam_padding_info_t *padding,
-                                       cam_stream_buf_plane_info_t *buf_planes)
+                                       cam_stream_buf_plane_info_t *plns)
 {
     int32_t rc = 0;
+    cam_stream_type_t type = CAM_STREAM_TYPE_DEFAULT;
     if (stream_info->reprocess_config.pp_type == CAM_OFFLINE_REPROCESS_TYPE) {
-        if (buf_planes->plane_info.frame_len == 0) {
-            // take offset from input source
-            *buf_planes = stream_info->reprocess_config.offline.input_buf_planes;
+        type = stream_info->reprocess_config.offline.input_type;
+        if (CAM_STREAM_TYPE_DEFAULT == type) {
+            if (plns->plane_info.frame_len == 0) {
+                // take offset from input source
+                *plns = stream_info->reprocess_config.offline.input_buf_planes;
+            }
+            return rc;
         }
-        return rc;
+    } else {
+        type = stream_info->reprocess_config.online.input_stream_type;
     }
 
-    switch (stream_info->reprocess_config.online.input_stream_type) {
+    switch (type) {
     case CAM_STREAM_TYPE_PREVIEW:
     case CAM_STREAM_TYPE_CALLBACK:
         rc = mm_stream_calc_offset_preview(stream_info->fmt,
                                            &stream_info->dim,
-                                           buf_planes);
+                                           plns);
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
         rc = mm_stream_calc_offset_post_view(stream_info->fmt,
                                            &stream_info->dim,
-                                           buf_planes);
+                                           plns);
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
         rc = mm_stream_calc_offset_snapshot(stream_info->fmt,
                                             &stream_info->dim,
                                             padding,
-                                            buf_planes);
+                                            plns);
         break;
     case CAM_STREAM_TYPE_VIDEO:
         rc = mm_stream_calc_offset_video(&stream_info->dim,
-                                         buf_planes);
+                        plns);
         break;
     case CAM_STREAM_TYPE_RAW:
         rc = mm_stream_calc_offset_raw(stream_info->fmt,
                                        &stream_info->dim,
                                        padding,
-                                       buf_planes);
+                                       plns);
         break;
     case CAM_STREAM_TYPE_METADATA:
         rc = mm_stream_calc_offset_metadata(&stream_info->dim,
                                             padding,
-                                            buf_planes);
+                                            plns);
         break;
     default:
         CDBG_ERROR("%s: not supported for stream type %d",
-                   __func__, stream_info->reprocess_config.online.input_stream_type);
+                   __func__, type);
         rc = -1;
         break;
     }
