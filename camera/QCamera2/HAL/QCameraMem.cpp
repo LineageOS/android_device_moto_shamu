@@ -1043,7 +1043,7 @@ QCameraGrallocMemory::QCameraGrallocMemory(camera_request_memory getMemory)
 {
     mMinUndequeuedBuffers = 0;
     mWindow = NULL;
-    mWidth = mHeight = 0;
+    mWidth = mHeight = mStride = mScanline = 0;
     mFormat = HAL_PIXEL_FORMAT_YCrCb_420_SP;
     mGetMemory = getMemory;
     for (int i = 0; i < MM_CAMERA_MAX_NUM_FRAMES; i ++) {
@@ -1075,16 +1075,20 @@ QCameraGrallocMemory::~QCameraGrallocMemory()
  *   @window  : gralloc ops table ptr
  *   @width   : width of preview frame
  *   @height  : height of preview frame
+ *   @stride  : stride of preview frame
+ *   @scanline: scanline of preview frame
  *   @foramt  : format of preview image
  *
  * RETURN     : none
  *==========================================================================*/
 void QCameraGrallocMemory::setWindowInfo(preview_stream_ops_t *window,
-        int width, int height, int format)
+        int width, int height, int stride, int scanline, int format)
 {
     mWindow = window;
     mWidth = width;
     mHeight = height;
+    mStride = stride;
+    mScanline = scanline;
     mFormat = format;
 }
 
@@ -1183,9 +1187,17 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
          goto end;
     }
 
-    err = mWindow->set_buffers_geometry(mWindow, mWidth, mHeight, mFormat);
+    err = mWindow->set_buffers_geometry(mWindow, mStride, mScanline, mFormat);
     if (err != 0) {
          ALOGE("%s: set_buffers_geometry failed: %s (%d)",
+               __func__, strerror(-err), -err);
+         ret = UNKNOWN_ERROR;
+         goto end;
+    }
+
+    err = mWindow->set_crop(mWindow, 0, 0, mWidth, mHeight);
+    if (err != 0) {
+         ALOGE("%s: set_crop failed: %s (%d)",
                __func__, strerror(-err), -err);
          ret = UNKNOWN_ERROR;
          goto end;
@@ -1199,8 +1211,9 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
         ret = UNKNOWN_ERROR;
         goto end;
     }
-    ALOGD("%s: usage = %d, geometry: %p, %d, %d, %d",
-          __func__, gralloc_usage, mWindow, mWidth, mHeight, mFormat);
+    ALOGD("%s: usage = %d, geometry: %p, %d, %d, %d, %d, %d",
+          __func__, gralloc_usage, mWindow, mWidth, mHeight, mStride,
+          mScanline, mFormat);
 
     //Allocate cnt number of buffers from native window
     for (int cnt = 0; cnt < count; cnt++) {
