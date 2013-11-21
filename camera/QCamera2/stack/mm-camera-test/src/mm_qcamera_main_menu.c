@@ -1041,7 +1041,7 @@ int decrease_EV (void) {
  *
  * DESCRIPTION:
  * ===========================================================================*/
-int increase_saturation (void) {
+int increase_saturation (mm_camera_lib_handle *lib_handle) {
 #if 0
   saturation += CAMERA_SATURATION_STEP;
   if (saturation > CAMERA_MAX_SATURATION) {
@@ -1051,7 +1051,16 @@ int increase_saturation (void) {
   printf("Increase Saturation to %d\n", saturation);
   return mm_app_set_config_parm(cam_id, MM_CAMERA_PARM_SATURATION, saturation);
 #endif
-  return 0;
+  saturation += CAMERA_SATURATION_STEP;
+  if (saturation > CAMERA_MAX_SATURATION) {
+    saturation = CAMERA_MAX_SATURATION;
+    printf("Reached max saturation. \n");
+  }
+  printf("Increase saturation to %d\n", contrast);
+  return mm_camera_lib_send_command(lib_handle,
+                                       MM_CAMERA_LIB_SATURATION,
+                                       &saturation,
+                                       NULL);
 }
 
 /*===========================================================================
@@ -1059,7 +1068,7 @@ int increase_saturation (void) {
  *
  * DESCRIPTION:
  * ===========================================================================*/
-int decrease_saturation (void) {
+int decrease_saturation (mm_camera_lib_handle *lib_handle) {
 #if 0
   saturation -= CAMERA_SATURATION_STEP;
   if (saturation < CAMERA_MIN_SATURATION) {
@@ -1069,7 +1078,16 @@ int decrease_saturation (void) {
   printf("Dcrease Saturation to %d\n", saturation);
   return mm_app_set_config_parm(cam_id, MM_CAMERA_PARM_SATURATION, saturation);
 #endif
-  return 0;
+  saturation -= CAMERA_SATURATION_STEP;
+  if (saturation < CAMERA_MIN_SATURATION) {
+    saturation = CAMERA_MIN_SATURATION;
+    printf("Reached min saturation. \n");
+  }
+  printf("decrease saturation to %d\n", contrast);
+  return mm_camera_lib_send_command(lib_handle,
+                                       MM_CAMERA_LIB_SATURATION,
+                                       &saturation,
+                                       NULL);
 }
 
 
@@ -1776,12 +1794,12 @@ static int submain()
 
             case ACTION_SATURATION_INCREASE:
                 CDBG("Selection for the EV increase\n");
-                increase_saturation ();
+                increase_saturation (&lib_handle);
                 break;
 
             case ACTION_SATURATION_DECREASE:
                 CDBG("Selection for the EV decrease\n");
-                decrease_saturation ();
+                decrease_saturation (&lib_handle);
                 break;
 
             case ACTION_TOGGLE_AFR:
