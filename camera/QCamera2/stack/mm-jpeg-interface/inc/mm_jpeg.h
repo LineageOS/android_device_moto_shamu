@@ -45,6 +45,8 @@
 #define MM_JPEG_MAX_SESSION 10
 #define MAX_EXIF_TABLE_ENTRIES 50
 #define MAX_JPEG_SIZE 20000000
+#define MAX_OMX_HANDLES (5)
+
 
 /** mm_jpeg_abort_state_t:
  *  @MM_JPEG_ABORT_NONE: Abort is not issued
@@ -62,7 +64,7 @@ typedef enum {
 
 /* define max num of supported concurrent jpeg jobs by OMX engine.
  * Current, only one per time */
-#define NUM_MAX_JPEG_CNCURRENT_JOBS 1
+#define NUM_MAX_JPEG_CNCURRENT_JOBS 2
 
 #define JOB_ID_MAGICVAL 0x1
 #define JOB_HIST_MAX 10000
@@ -257,7 +259,7 @@ typedef enum {
   MM_JPEG_CMD_TYPE_MAX
 } mm_jpeg_cmd_type_t;
 
-typedef struct {
+typedef struct mm_jpeg_job_session {
   uint32_t client_hdl;           /* client handler */
   uint32_t jobId;                /* job ID */
   uint32_t sessionId;            /* session ID */
@@ -316,6 +318,16 @@ typedef struct {
 
   uint8_t *meta_enc_key;
   uint32_t meta_enc_keylen;
+
+  struct mm_jpeg_job_session *next_session;
+
+  uint32_t curr_out_buf_idx;
+
+  uint32_t num_omx_sessions;
+  OMX_BOOL auto_out_buf;
+
+  mm_jpeg_queue_t *session_handle_q;
+  mm_jpeg_queue_t *out_buf_q;
 } mm_jpeg_job_session_t;
 
 typedef struct {
@@ -361,7 +373,8 @@ typedef struct mm_jpeg_obj_t {
   pthread_mutex_t job_lock;                       /* job lock */
   mm_jpeg_job_cmd_thread_t job_mgr;               /* job mgr thread including todo_q*/
   mm_jpeg_queue_t ongoing_job_q;                  /* queue for ongoing jobs */
-  buffer_t ionBuffer;
+  buffer_t ionBuffer[MM_JPEG_CONCURRENT_SESSIONS_COUNT];
+
 
   /* Max pic dimension for work buf calc*/
   int32_t max_pic_w;
@@ -369,6 +382,9 @@ typedef struct mm_jpeg_obj_t {
 #ifdef LOAD_ADSP_RPC_LIB
   void *adsprpc_lib_handle;
 #endif
+
+  int work_buf_cnt;
+
 } mm_jpeg_obj;
 
 /** mm_jpeg_pending_func_t:
@@ -424,6 +440,7 @@ uint8_t mm_jpeg_util_get_index_by_handler(uint32_t handler);
 /* basic queue functions */
 extern int32_t mm_jpeg_queue_init(mm_jpeg_queue_t* queue);
 extern int32_t mm_jpeg_queue_enq(mm_jpeg_queue_t* queue, void* node);
+extern int32_t mm_jpeg_queue_enq_head(mm_jpeg_queue_t* queue, void* node);
 extern void* mm_jpeg_queue_deq(mm_jpeg_queue_t* queue);
 extern int32_t mm_jpeg_queue_deinit(mm_jpeg_queue_t* queue);
 extern int32_t mm_jpeg_queue_flush(mm_jpeg_queue_t* queue);
