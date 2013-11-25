@@ -16,7 +16,7 @@ LOCAL_SHARED_LIBRARIES:= \
     libgui \
     libcamera_client \
 
-ifneq ($(call is-platform-sdk-version-at-least,18),true)
+ifneq (1,$(filter 1,$(shell echo "$$(( $(PLATFORM_SDK_VERSION) >= 18 ))" )))
 
 LOCAL_SHARED_LIBRARIES += \
     libmedia_native \

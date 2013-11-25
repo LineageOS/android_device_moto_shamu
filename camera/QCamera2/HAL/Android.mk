@@ -22,7 +22,7 @@ LOCAL_CFLAGS = -Wall -Werror
 #Debug logs are enabled
 #LOCAL_CFLAGS += -DDISABLE_DEBUG_LOG
 
-ifneq ($(call is-platform-sdk-version-at-least,18),true)
+ifneq (1,$(filter 1,$(shell echo "$$(( $(PLATFORM_SDK_VERSION) >= 18 ))" )))
 LOCAL_CFLAGS += -DUSE_JB_MR1
 endif
 
