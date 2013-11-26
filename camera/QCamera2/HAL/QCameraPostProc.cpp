@@ -1286,7 +1286,13 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     main_stream->getFrameDimension(src_dim);
 
     bool hdr_output_crop = m_parent->mParameters.isHDROutputCropEnabled();
+    bool crop_upscale_needed =
+      m_parent->mParameters.isUbiFocusEnabled() ||
+      m_parent->mParameters.isChromaFlashEnabled() ||
+      m_parent->mParameters.isOptiZoomEnabled();
 
+    ALOGE("%s:%d] Crop needed %d", __func__, __LINE__, crop_upscale_needed);
+    hdr_output_crop = hdr_output_crop || crop_upscale_needed;
     crop.left = 0;
     crop.top = 0;
     crop.height = src_dim.height;
@@ -1312,12 +1318,12 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
 
     cam_dimension_t dst_dim;
 
-    if (hdr_output_crop && crop.height) {
+    if (hdr_output_crop && crop.height && !crop_upscale_needed) {
         dst_dim.height = crop.height;
     } else {
         dst_dim.height = src_dim.height;
     }
-    if (hdr_output_crop && crop.width) {
+    if (hdr_output_crop && crop.width && !crop_upscale_needed) {
         dst_dim.width = crop.width;
     } else {
         dst_dim.width = src_dim.width;
