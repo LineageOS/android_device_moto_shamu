@@ -952,9 +952,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
 
     mm_camera_buf_def_t *frame = super_frame->bufs[0];
     metadata_buffer_t *pMetaData = (metadata_buffer_t *)frame->buffer;
-    int32_t is_meta_valid = *((int32_t*)POINTER_OF(CAM_INTF_META_VALID, pMetaData));
     if(pme->m_stateMachine.isNonZSLCaptureRunning()&&
-       is_meta_valid == 1 &&
        !pme->mLongshotEnabled) {
        //Make shutter call back in non ZSL mode once raw frame is received from VFE.
        pme->playShutter();
