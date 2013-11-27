@@ -2,7 +2,7 @@ OLD_LOCAL_PATH := $(LOCAL_PATH)
 LOCAL_PATH:=$(call my-dir)
 include $(CLEAR_VARS)
 
-ifeq ($(call is-board-platform,msm8960),true)
+ifeq ($(TARGET_BOARD_PLATFORM),msm8960)
 LOCAL_CFLAGS:= \
         -DAMSS_VERSION=$(AMSS_VERSION) \
         $(mmcamera_debug_defines) \
@@ -43,7 +43,7 @@ LOCAL_C_INCLUDES+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media
 LOCAL_C_INCLUDES+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
-ifeq ($(call is-board-platform,msm8960),true)
+ifeq ($(TARGET_BOARD_PLATFORM),msm8960)
 LOCAL_CFLAGS += -DCAMERA_ION_HEAP_ID=ION_CP_MM_HEAP_ID
 else
 LOCAL_CFLAGS += -DCAMERA_ION_HEAP_ID=ION_CAMERA_HEAP_ID

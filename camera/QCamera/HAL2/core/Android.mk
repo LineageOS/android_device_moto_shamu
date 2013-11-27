@@ -1,5 +1,5 @@
 
-#ifeq ($(call is-board-platform,msm8960),true)
+#ifeq ($(TARGET_BOARD_PLATFORM),msm8960)
 OLD_LOCAL_PATH := $(LOCAL_PATH)
 LOCAL_PATH := $(call my-dir)
 

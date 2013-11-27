@@ -1,4 +1,4 @@
-ifeq ($(call is-vendor-board-platform,QCOM),true)
+ifneq (,$(filter $(QCOM_BOARD_PLATFORMS),$(TARGET_BOARD_PLATFORM)))
 OLD_LOCAL_PATH := $(LOCAL_PATH)
 LOCAL_PATH := $(call my-dir)
 
@@ -16,7 +16,7 @@ ifeq ($(strip $(TARGET_USES_ION)),true)
     LOCAL_CFLAGS += -DUSE_ION
 endif
 
-ifeq ($(call is-board-platform-in-list,msm8974 msm8226 msm8610 apq8084),true)
+ifneq (,$(filter msm8974 msm8226 msm8610 apq8084,$(TARGET_BOARD_PLATFORM)))
     LOCAL_CFLAGS += -DVENUS_PRESENT
 endif
 
@@ -35,7 +35,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 LOCAL_C_INCLUDES += hardware/qcom/media/mm-core/inc
 
-ifneq ($(call is-platform-sdk-version-at-least,17),true)
+ifneq (1,$(filter 1,$(shell echo "$$(( $(PLATFORM_SDK_VERSION) >= 17 ))" )))
   LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/socket.h
   LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/un.h
 endif
