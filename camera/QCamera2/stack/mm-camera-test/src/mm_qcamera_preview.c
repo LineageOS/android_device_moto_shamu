@@ -41,6 +41,8 @@ static void mm_app_metadata_notify_cb(mm_camera_super_buf_t *bufs,
   mm_camera_stream_t *p_stream = NULL;
   mm_camera_test_obj_t *pme = (mm_camera_test_obj_t *)user_data;
   mm_camera_buf_def_t *frame = bufs->bufs[0];
+  cam_metadata_info_t *pMetadata;
+  cam_auto_focus_data_t *focus_data;
 
   /* find channel */
   for (i = 0; i < MM_CHANNEL_TYPE_MAX; i++) {
@@ -69,6 +71,17 @@ static void mm_app_metadata_notify_cb(mm_camera_super_buf_t *bufs,
       return;
   }
   pme->metadata = frame->buffer;
+
+  pMetadata = (cam_metadata_info_t *)frame->buffer;
+
+  if (pMetadata->is_focus_valid) {
+    focus_data = (cam_auto_focus_data_t *)&(pMetadata->focus_data);
+
+    if (focus_data->focus_state == CAM_AF_FOCUSED) {
+      CDBG_ERROR("%s: AutoFocus Done Call Back Received\n",__func__);
+      mm_camera_app_done();
+    }
+  }
 
   if (MM_CAMERA_OK != pme->cam->ops->qbuf(bufs->camera_handle,
                                           bufs->ch_id,
