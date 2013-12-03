@@ -30,6 +30,9 @@
 #include "mm_jpeg_interface.h"
 #include "mm_jpeg_ionbuf.h"
 #include <sys/time.h>
+#include <stdlib.h>
+
+#define MAX_NUM_BUFS (12)
 
 /** DUMP_TO_FILE:
  *  @filename: file name
@@ -56,28 +59,39 @@ typedef struct {
   int width;
   int height;
   char *out_filename;
+  int burst_mode;
+  int min_out_bufs;
 } jpeg_test_input_t;
 
 static jpeg_test_input_t jpeg_input[] = {
-  {"/data/test.yuv", 1280, 720, "/data/test.jpg"}
+  {"/data/test_1.yuv", 4000, 3008, "/data/test_1.jpg", 0, 0},
+  {"/data/test_2.yuv", 4000, 3008, "/data/test_2.jpg", 0, 0},
+  {"/data/test_3.yuv", 4000, 3008, "/data/test_3.jpg", 0, 0},
+  {"/data/test_4.yuv", 4000, 3008, "/data/test_4.jpg", 0, 0},
+  {"/data/test_5.yuv", 4000, 3008, "/data/test_5.jpg", 0, 0},
+  {"/data/test_6.yuv", 4000, 3008, "/data/test_6.jpg", 0, 0},
+  {NULL, 0, 0, NULL, 0, 0}
 };
 
 typedef struct {
-  char *filename;
+  char *filename[MAX_NUM_BUFS];
   int width;
   int height;
-  char *out_filename;
+  char *out_filename[MAX_NUM_BUFS];
   pthread_mutex_t lock;
   pthread_cond_t cond;
-  buffer_t input;
-  buffer_t output;
+  buffer_t input[MAX_NUM_BUFS];
+  buffer_t output[MAX_NUM_BUFS];
   int use_ion;
   uint32_t handle;
   mm_jpeg_ops_t ops;
-  uint32_t job_id[5];
+  uint32_t job_id[MAX_NUM_BUFS];
   mm_jpeg_encode_params_t params;
   mm_jpeg_job_t job;
   uint32_t session_id;
+  uint32_t num_bufs;
+  int min_out_bufs;
+  uint32_t buf_filled_len[MAX_NUM_BUFS];
 } mm_jpeg_intf_test_t;
 
 static void mm_jpeg_encode_callback(jpeg_job_status_t status,
@@ -88,19 +102,40 @@ static void mm_jpeg_encode_callback(jpeg_job_status_t status,
 {
   mm_jpeg_intf_test_t *p_obj = (mm_jpeg_intf_test_t *)userData;
 
+  pthread_mutex_lock(&p_obj->lock);
+
   if (status == JPEG_JOB_STATUS_ERROR) {
     CDBG_ERROR("%s:%d] Encode error", __func__, __LINE__);
   } else {
-    CDBG_ERROR("%s:%d] Encode success file%s addr %p len %d",
-      __func__, __LINE__, p_obj->out_filename,
-      p_output->buf_vaddr, p_output->buf_filled_len);
-    DUMP_TO_FILE(p_obj->out_filename, p_output->buf_vaddr, p_output->buf_filled_len);
+    int i = 0;
+    for (i = 0; p_obj->job_id[i] && (jobId != p_obj->job_id[i]); i++)
+      ;
+    if (!p_obj->job_id[i]) {
+      CDBG_ERROR("%s:%d] Cannot find job ID!!!", __func__, __LINE__);
+      goto error;
+    }
+    CDBG_ERROR("%s:%d] Encode success addr %p len %d idx %d",
+      __func__, __LINE__, p_output->buf_vaddr, p_output->buf_filled_len, i);
+
+    p_obj->buf_filled_len[i] = p_output->buf_filled_len;
+    if (p_obj->min_out_bufs) {
+      CDBG_ERROR("%s:%d] Saving file%s addr %p len %d",
+          __func__, __LINE__, p_obj->out_filename[i],
+          p_output->buf_vaddr, p_output->buf_filled_len);
+
+      DUMP_TO_FILE(p_obj->out_filename[i], p_output->buf_vaddr,
+        p_output->buf_filled_len);
+    }
   }
   g_i++;
+
+error:
+
   if (g_i >= g_count) {
     CDBG_ERROR("%s:%d] Signal the thread", __func__, __LINE__);
     pthread_cond_signal(&p_obj->cond);
   }
+  pthread_mutex_unlock(&p_obj->lock);
 }
 
 int mm_jpeg_test_alloc(buffer_t *p_buffer, int use_pmem)
@@ -137,12 +172,12 @@ void mm_jpeg_test_free(buffer_t *p_buffer)
   memset(p_buffer, 0x0, sizeof(buffer_t));
 }
 
-int mm_jpeg_test_read(mm_jpeg_intf_test_t *p_obj)
+int mm_jpeg_test_read(mm_jpeg_intf_test_t *p_obj, int idx)
 {
   int rc = 0;
   FILE *fp = NULL;
   int file_size = 0;
-  fp = fopen(p_obj->filename, "rb");
+  fp = fopen(p_obj->filename[idx], "rb");
   if (!fp) {
     CDBG_ERROR("%s:%d] error", __func__, __LINE__);
     return -1;
@@ -151,14 +186,14 @@ int mm_jpeg_test_read(mm_jpeg_intf_test_t *p_obj)
   file_size = ftell(fp);
   fseek(fp, 0, SEEK_SET);
   CDBG_ERROR("%s:%d] input file size is %d buf_size %ld",
-    __func__, __LINE__, file_size, p_obj->input.size);
+    __func__, __LINE__, file_size, p_obj->input[idx].size);
 
-  if (p_obj->input.size > file_size) {
+  if (p_obj->input[idx].size > file_size) {
     CDBG_ERROR("%s:%d] error", __func__, __LINE__);
     fclose(fp);
     return -1;
   }
-  fread(p_obj->input.addr, 1, p_obj->input.size, fp);
+  fread(p_obj->input[idx].addr, 1, p_obj->input[idx].size, fp);
   fclose(fp);
   return 0;
 }
@@ -169,36 +204,53 @@ static int encode_init(jpeg_test_input_t *p_input, mm_jpeg_intf_test_t *p_obj)
   int size = p_input->width * p_input->height;
   mm_jpeg_encode_params_t *p_params = &p_obj->params;
   mm_jpeg_encode_job_t *p_job_params = &p_obj->job.encode_job;
+  int i = 0;
+  int burst_mode = p_input->burst_mode;
 
-  p_obj->filename = p_input->filename;
-  p_obj->width = p_input->width;
-  p_obj->height = p_input->height;
-  p_obj->out_filename = p_input->out_filename;
-  p_obj->use_ion = 1;
+  do {
+    p_obj->filename[i] = p_input->filename;
+    p_obj->width = p_input->width;
+    p_obj->height = p_input->height;
+    p_obj->out_filename[i] = p_input->out_filename;
+    p_obj->use_ion = 1;
+    p_obj->min_out_bufs = p_input->min_out_bufs;
+
+    /* allocate buffers */
+    p_obj->input[i].size = size * 3/2;
+    rc = mm_jpeg_test_alloc(&p_obj->input[i], p_obj->use_ion);
+    if (rc) {
+      CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
+      return -1;
+    }
+
+
+    rc = mm_jpeg_test_read(p_obj, i);
+    if (rc) {
+      CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
+      return -1;
+    }
+
+    /* src buffer config*/
+    p_params->src_main_buf[i].buf_size = p_obj->input[i].size;
+    p_params->src_main_buf[i].buf_vaddr = p_obj->input[i].addr;
+    p_params->src_main_buf[i].fd = p_obj->input[i].p_pmem_fd;
+    p_params->src_main_buf[i].index = i;
+    p_params->src_main_buf[i].format = MM_JPEG_FMT_YUV;
+    p_params->src_main_buf[i].offset.mp[0].len = size;
+    p_params->src_main_buf[i].offset.mp[0].stride = p_input->width;
+    p_params->src_main_buf[i].offset.mp[0].scanline = p_input->height;
+    p_params->src_main_buf[i].offset.mp[1].len = size >> 1;
+
+
+
+    i++;
+  } while((++p_input)->filename);
+
+  p_obj->num_bufs = i;
 
   pthread_mutex_init(&p_obj->lock, NULL);
   pthread_cond_init(&p_obj->cond, NULL);
 
-  /* allocate buffers */
-  p_obj->input.size = size * 3/2;
-  rc = mm_jpeg_test_alloc(&p_obj->input, p_obj->use_ion);
-  if (rc) {
-    CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
-    return -1;
-  }
-
-  p_obj->output.size = size * 3/2;
-  rc = mm_jpeg_test_alloc(&p_obj->output, 0);
-  if (rc) {
-    CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
-    return -1;
-  }
-
-  rc = mm_jpeg_test_read(p_obj);
-  if (rc) {
-    CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
-    return -1;
-  }
 
   /* set encode parameters */
   p_params->jpeg_cb = mm_jpeg_encode_callback;
@@ -206,24 +258,31 @@ static int encode_init(jpeg_test_input_t *p_input, mm_jpeg_intf_test_t *p_obj)
   p_params->color_format = MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2;
   p_params->thumb_color_format = MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2;
 
-  /* dest buffer config */
-  p_params->dest_buf[0].buf_size = p_obj->output.size;
-  p_params->dest_buf[0].buf_vaddr = p_obj->output.addr;
-  p_params->dest_buf[0].fd = p_obj->output.p_pmem_fd;
-  p_params->dest_buf[0].index = 0;
-  p_params->num_dst_bufs = 1;
+  if (p_obj->min_out_bufs) {
+    p_params->num_dst_bufs = 2;
+  } else {
+    p_params->num_dst_bufs = p_obj->num_bufs;
+  }
 
-  /* src buffer config*/
-  p_params->src_main_buf[0].buf_size = p_obj->input.size;
-  p_params->src_main_buf[0].buf_vaddr = p_obj->input.addr;
-  p_params->src_main_buf[0].fd = p_obj->input.p_pmem_fd;
-  p_params->src_main_buf[0].index = 0;
-  p_params->src_main_buf[0].format = MM_JPEG_FMT_YUV;
-  p_params->src_main_buf[0].offset.mp[0].len = size;
-  p_params->src_main_buf[0].offset.mp[1].len = size >> 1;
-  p_params->num_src_bufs = 1;
+  for (i = 0; i < (int)p_params->num_dst_bufs; i++) {
+    p_obj->output[i].size = size * 3/2;
+    rc = mm_jpeg_test_alloc(&p_obj->output[i], 0);
+    if (rc) {
+      CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
+      return -1;
+    }
+    /* dest buffer config */
+    p_params->dest_buf[i].buf_size = p_obj->output[i].size;
+    p_params->dest_buf[i].buf_vaddr = p_obj->output[i].addr;
+    p_params->dest_buf[i].fd = p_obj->output[i].p_pmem_fd;
+    p_params->dest_buf[i].index = i;
+  }
 
-  p_params->encode_thumbnail = 1;
+
+  p_params->num_src_bufs = p_obj->num_bufs;
+  g_count = p_params->num_src_bufs;
+
+  p_params->encode_thumbnail = 0;
   p_params->quality = 80;
 
   p_job_params->dst_index = 0;
@@ -240,6 +299,8 @@ static int encode_init(jpeg_test_input_t *p_input, mm_jpeg_intf_test_t *p_obj)
   p_job_params->main_dim.crop.width = p_obj->width;
   p_job_params->main_dim.crop.height = p_obj->height;
 
+  p_params->main_dim  = p_job_params->main_dim;
+
   /* thumb dimension */
   p_job_params->thumb_dim.src_dim.width = p_obj->width;
   p_job_params->thumb_dim.src_dim.height = p_obj->height;
@@ -250,7 +311,11 @@ static int encode_init(jpeg_test_input_t *p_input, mm_jpeg_intf_test_t *p_obj)
   p_job_params->thumb_dim.crop.width = p_obj->width;
   p_job_params->thumb_dim.crop.height = p_obj->height;
 
+  p_params->thumb_dim  = p_job_params->thumb_dim;
+
   p_job_params->exif_info.numOfEntries = 0;
+  p_params->burst_mode = burst_mode;
+
   return 0;
 }
 
@@ -258,7 +323,7 @@ static int encode_test(jpeg_test_input_t *p_input)
 {
   int rc = 0;
   mm_jpeg_intf_test_t jpeg_obj;
-  int i = 0;
+  unsigned int i = 0;
 
   memset(&jpeg_obj, 0x0, sizeof(jpeg_obj));
   rc = encode_init(p_input, &jpeg_obj);
@@ -272,11 +337,13 @@ static int encode_test(jpeg_test_input_t *p_input)
   pic_size.w = 4000;
   pic_size.h = 3000;
 
+
   jpeg_obj.handle = jpeg_open(&jpeg_obj.ops, pic_size);
   if (jpeg_obj.handle == 0) {
     CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
     goto end;
   }
+
 
   rc = jpeg_obj.ops.create_session(jpeg_obj.handle, &jpeg_obj.params,
     &jpeg_obj.job.encode_job.session_id);
@@ -285,14 +352,24 @@ static int encode_test(jpeg_test_input_t *p_input)
     goto end;
   }
 
-  for (i = 0; i < g_count; i++) {
+
+
+  for (i = 0; i < jpeg_obj.num_bufs; i++) {
     jpeg_obj.job.job_type = JPEG_JOB_TYPE_ENCODE;
+    jpeg_obj.job.encode_job.src_index = i;
+    jpeg_obj.job.encode_job.dst_index = i;
+    if (jpeg_obj.params.burst_mode && jpeg_obj.min_out_bufs) {
+      jpeg_obj.job.encode_job.dst_index = -1;
+    }
+
     rc = jpeg_obj.ops.start_job(&jpeg_obj.job, &jpeg_obj.job_id[i]);
+
     if (rc) {
       CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
       goto end;
     }
   }
+  jpeg_obj.job_id[i] = 0;
 
   /*
   usleep(5);
@@ -302,15 +379,120 @@ static int encode_test(jpeg_test_input_t *p_input)
   pthread_cond_wait(&jpeg_obj.cond, &jpeg_obj.lock);
   pthread_mutex_unlock(&jpeg_obj.lock);
 
-  jpeg_obj.ops.destroy_session(jpeg_obj.job.encode_job.session_id);
 
+  jpeg_obj.ops.destroy_session(jpeg_obj.job.encode_job.session_id);
   jpeg_obj.ops.close(jpeg_obj.handle);
 
-
 end:
-  mm_jpeg_test_free(&jpeg_obj.input);
-  mm_jpeg_test_free(&jpeg_obj.output);
+  for (i = 0; i < jpeg_obj.num_bufs; i++) {
+    if (!jpeg_obj.min_out_bufs) {
+      // Save output files
+      CDBG_ERROR("%s:%d] Saving file%s addr %p len %d",
+          __func__, __LINE__,jpeg_obj.out_filename[i],
+          jpeg_obj.output[i].addr, jpeg_obj.buf_filled_len[i]);
+
+      DUMP_TO_FILE(jpeg_obj.out_filename[i], jpeg_obj.output[i].addr,
+        jpeg_obj.buf_filled_len[i]);
+    }
+    mm_jpeg_test_free(&jpeg_obj.input[i]);
+    mm_jpeg_test_free(&jpeg_obj.output[i]);
+  }
   return 0;
+}
+
+#define MAX_FILE_CNT (20)
+static int mm_jpeg_test_get_input(int argc, char *argv[],
+    jpeg_test_input_t *p_test)
+{
+  int c, in_file_cnt = 0, out_file_cnt = 0, i;
+  int idx = 0;
+  jpeg_test_input_t *p_test_base = p_test;
+
+  char *in_files[MAX_FILE_CNT];
+  char *out_files[MAX_FILE_CNT];
+
+  while ((c = getopt(argc, argv, "-I:O:W:H:B")) != -1) {
+    switch (c) {
+    case 'B':
+      fprintf(stderr, "%-25s\n", "Using burst mode");
+      p_test->burst_mode = 1;
+      break;
+    case 'I':
+      for (idx = optind - 1; idx < argc; idx++) {
+        if (argv[idx][0] == '-') {
+          break;
+        }
+        in_files[in_file_cnt++] = argv[idx];
+      }
+      optind = idx -1;
+
+      break;
+    case 'O':
+      for (idx = optind - 1; idx < argc; idx++) {
+        if (argv[idx][0] == '-') {
+          break;
+        }
+        out_files[out_file_cnt++] = argv[idx];
+      }
+      optind = idx -1;
+
+      break;
+    case 'W':
+      p_test->width = atoi(optarg);
+      fprintf(stderr, "%-25s%d\n", "Width: ", p_test->width);
+      break;
+    case 'H':
+      p_test->height = atoi(optarg);
+      fprintf(stderr, "%-25s%d\n", "Height: ", p_test->height);
+      break;
+    case 'M':
+      p_test->min_out_bufs = 1;
+      fprintf(stderr, "%-25s\n", "Using minimum number of output buffers");
+      break;
+    default:;
+    }
+  }
+  fprintf(stderr, "Infiles: %d Outfiles: %d\n", in_file_cnt, out_file_cnt);
+
+  if (in_file_cnt > out_file_cnt) {
+    fprintf(stderr, "%-25s\n", "Insufficient number of output files!");
+    return 1;
+  }
+
+  // Discard the extra out files
+  out_file_cnt = in_file_cnt;
+
+  p_test = realloc(p_test, (in_file_cnt + 1) * sizeof(*p_test));
+  if (!p_test) {
+    CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
+    return 1;
+  }
+  memset(p_test+1, 0, (in_file_cnt) * sizeof(*p_test));
+
+  for (i = 0; i < in_file_cnt; i++, p_test++) {
+    memcpy(p_test, p_test_base, sizeof(*p_test));
+    p_test->filename = in_files[i];
+    p_test->out_filename = out_files[i];
+    fprintf(stderr, "Inf: %s Outf: %s\n", in_files[i], out_files[i]);
+  }
+
+
+  return 0;
+}
+
+static void mm_jpeg_test_print_usage()
+{
+  fprintf(stderr, "Usage: program_name [options]\n");
+  fprintf(stderr, "Mandatory options:\n");
+  fprintf(stderr, "  -I FILE1 [FILE2] [FILEN]\tList of input files\n");
+  fprintf(stderr, "  -O FILE1 [FILE2] [FILEN]\tList of output files\n");
+  fprintf(stderr, "  -W WIDTH\t\tOutput image width\n");
+  fprintf(stderr, "  -H HEIGHT\t\tOutput image height\n");
+  fprintf(stderr, "Optional:\n");
+  fprintf(stderr, "  -B \t\tBurst mode. Utilize both encoder engines on supported targets\n");
+  fprintf(stderr, "  -M \t\tUse minimum number of output buffers \n");
+
+  fprintf(stderr, "\n");
 }
 
 /** main:
@@ -328,7 +510,40 @@ end:
  **/
 int main(int argc, char* argv[])
 {
-  return encode_test(&jpeg_input[0]);
+  jpeg_test_input_t *p_test_input = &jpeg_input[0];
+  int ret = 0;
+  if (argc > 1) {
+    p_test_input = calloc(2, sizeof(*p_test_input));
+    if (!p_test_input) {
+      CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
+      goto exit;
+    }
+    ret = mm_jpeg_test_get_input(argc, argv, p_test_input);
+    if (ret) {
+      CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
+      goto exit;
+    }
+  } else {
+    mm_jpeg_test_print_usage();
+    return 1;
+  }
+  ret = encode_test(p_test_input);
+
+exit:
+  if (!ret) {
+    fprintf(stderr, "%-25s\n", "Success!");
+  } else {
+    fprintf(stderr, "%-25s\n", "Fail!");
+  }
+
+  if (argc > 1) {
+    if (p_test_input) {
+      free(p_test_input);
+      p_test_input = NULL;
+    }
+  }
+
+  return ret;
 }
 
 
