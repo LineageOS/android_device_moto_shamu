@@ -716,6 +716,14 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                 continue;
             }
 
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW) ||
+                pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW)) {
+                // Skip postview: in non zsl case, dont want to send
+                // thumbnail through reprocess.
+                // Skip preview: for same reason for zsl case
+                continue;
+            }
+
             if(pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
                pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW) ||
                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
@@ -906,6 +914,14 @@ int32_t QCameraReprocessChannel::doReprocess(mm_camera_super_buf_t *frame)
             if (pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)) {
                 // Skip metadata for reprocess now because PP module cannot handle meta data
                 // May need furthur discussion if Imaginglib need meta data
+                continue;
+            }
+
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW) ||
+                pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW)) {
+                // Skip postview: In non zsl case, dont want to send
+                // thumbnail through reprocess.
+                // Skip preview: for same reason in ZSL case
                 continue;
             }
 

@@ -382,14 +382,8 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
         thumb_stream->getFrameDimension(src_dim);
         encode_parm.thumb_dim.src_dim = src_dim;
         m_parent->getThumbnailSize(encode_parm.thumb_dim.dst_dim);
-        int rotation = m_parent->getJpegRotation();
-        if (rotation == 90 || rotation ==270) {
-            // swap dimension if rotation is 90 or 270
-            int32_t temp = encode_parm.thumb_dim.dst_dim.height;
-            encode_parm.thumb_dim.dst_dim.height =
-                encode_parm.thumb_dim.dst_dim.width;
-            encode_parm.thumb_dim.dst_dim.width = temp;
-          }
+
+        encode_parm.thumb_rotation = m_parent->getJpegRotation();
         encode_parm.thumb_dim.crop = crop;
     }
 
@@ -1386,16 +1380,7 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         }
 
         m_parent->getThumbnailSize(jpg_job.encode_job.thumb_dim.dst_dim);
-        int rotation = m_parent->getJpegRotation();
-        if ((rotation == 90 || rotation == 270)
-            && jpg_job.encode_job.rotation == 0) {
-            // swap dimension if rotation is 90 or 270,
-            // and the rotation is already done in cpp.
-            int32_t temp = jpg_job.encode_job.thumb_dim.dst_dim.height;
-            jpg_job.encode_job.thumb_dim.dst_dim.height =
-                jpg_job.encode_job.thumb_dim.dst_dim.width;
-            jpg_job.encode_job.thumb_dim.dst_dim.width = temp;
-        }
+
         jpg_job.encode_job.thumb_dim.crop = crop;
         jpg_job.encode_job.thumb_index = thumb_frame->buf_idx;
         ALOGD("%s, thumbnail src w/h (%dx%d), dst w/h (%dx%d)", __func__,
