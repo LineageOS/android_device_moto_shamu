@@ -703,6 +703,7 @@ QCameraReprocessChannel::~QCameraReprocessChannel()
  *   @config         : pp feature configuration
  *   @pSrcChannel    : ptr to input source channel that needs reprocess
  *   @minStreamBufNum: number of stream buffers needed
+ *   @burstNum       : number of burst captures needed
  *   @paddingInfo    : padding information
  *   @param          : reference to parameters
  *
@@ -714,6 +715,7 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                                                             cam_pp_feature_config_t &config,
                                                             QCameraChannel *pSrcChannel,
                                                             uint8_t minStreamBufNum,
+                                                            uint32_t burstNum,
                                                             cam_padding_info_t *paddingInfo,
                                                             QCameraParameters &param,
                                                             bool contStream)
@@ -789,7 +791,7 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                 streamInfo->num_of_burst = 0;
             } else {
                 streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
-                streamInfo->num_of_burst = minStreamBufNum;
+                streamInfo->num_of_burst = burstNum;
             }
 
             streamInfo->reprocess_config.pp_type = CAM_ONLINE_REPROCESS_TYPE;

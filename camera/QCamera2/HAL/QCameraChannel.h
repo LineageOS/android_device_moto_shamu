@@ -118,6 +118,7 @@ public:
                                        cam_pp_feature_config_t &config,
                                        QCameraChannel *pSrcChannel,
                                        uint8_t minStreamBufNum,
+                                       uint32_t burstNum,
                                        cam_padding_info_t *paddingInfo,
                                        QCameraParameters &param,
                                        bool contStream);
