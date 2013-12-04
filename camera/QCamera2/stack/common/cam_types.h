@@ -606,6 +606,13 @@ typedef enum {
     CAM_STREAMING_MODE_MAX
 } cam_streaming_mode_t;
 
+typedef enum {
+    IS_TYPE_DIS,
+    IS_TYPE_GA_DIS,
+    IS_TYPE_EIS_1_0,
+    IS_TYPE_EIS_2_0
+} cam_is_type_t;
+
 #define CAM_REPROCESS_MASK_TYPE_WNR (1<<0)
 
 /* event from server */

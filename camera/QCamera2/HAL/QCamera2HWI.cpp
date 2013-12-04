@@ -1602,6 +1602,12 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
         break;
     case CAM_STREAM_TYPE_VIDEO:
         streamInfo->useAVTimer = mParameters.isAVTimerEnabled();
+    case CAM_STREAM_TYPE_PREVIEW:
+        if (mParameters.getRecordingHintValue()) {
+            char value[PROPERTY_VALUE_MAX];
+            property_get("persist.camera.is_type", value, "0");
+            streamInfo->is_type = static_cast<cam_is_type_t>(atoi(value));
+        }
         break;
     default:
         break;
