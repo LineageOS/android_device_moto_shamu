@@ -1970,6 +1970,7 @@ EXIT:
 int mm_camera_lib_start_stream(mm_camera_lib_handle *handle)
 {
     int rc = MM_CAMERA_OK;
+    cam_capability_t camera_cap;
 
     if ( NULL == handle ) {
         CDBG_ERROR(" %s : Invalid handle", __func__);
@@ -1995,12 +1996,24 @@ int mm_camera_lib_start_stream(mm_camera_lib_handle *handle)
     }
 
     // Configure focus mode after stream starts
+    rc = mm_camera_lib_get_caps(handle, &camera_cap);
+    if ( MM_CAMERA_OK != rc ) {
+      CDBG_ERROR("%s:mm_camera_lib_get_caps() err=%d\n", __func__, rc);
+      return -1;
+    }
+    if (camera_cap.supported_focus_modes_cnt == 1 &&
+      camera_cap.supported_focus_modes[0] == CAM_FOCUS_MODE_FIXED) {
+      CDBG("focus not supported");
+      handle->test_obj.focus_supported = 0;
+      handle->current_params.af_mode = CAM_FOCUS_MODE_FIXED;
+    } else {
+      handle->test_obj.focus_supported = 1;
+    }
     rc = setFocusMode(&handle->test_obj, handle->current_params.af_mode);
     if (rc != MM_CAMERA_OK) {
       CDBG_ERROR("%s:autofocus error\n", __func__);
       goto EXIT;
     }
-
     handle->stream_running = 1;
 
 EXIT:
@@ -2331,13 +2344,15 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
         }
 
         case MM_CAMERA_LIB_DO_AF:
-            rc = handle->test_obj.cam->ops->do_auto_focus(handle->test_obj.cam->camera_handle);
-            if (rc != MM_CAMERA_OK) {
+            if (handle->test_obj.focus_supported) {
+              rc = handle->test_obj.cam->ops->do_auto_focus(handle->test_obj.cam->camera_handle);
+              if (rc != MM_CAMERA_OK) {
                 CDBG_ERROR("%s:autofocus error\n", __func__);
                 goto EXIT;
+              }
+              /*Waiting for Auto Focus Done Call Back*/
+              mm_camera_app_wait();
             }
-            /*Waiting for Auto Focus Done Call Back*/
-            mm_camera_app_wait();
             break;
 
         case MM_CAMERA_LIB_CANCEL_AF:

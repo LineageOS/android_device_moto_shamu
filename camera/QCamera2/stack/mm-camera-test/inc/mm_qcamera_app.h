@@ -231,6 +231,7 @@ typedef struct {
     uint32_t frame_count;
     int encodeJpeg;
     int zsl_enabled;
+    int8_t focus_supported;
     prev_callback user_preview_cb;
     parm_buffer_t *params_buffer;
     USER_INPUT_DISPLAY_T preview_resolution;
