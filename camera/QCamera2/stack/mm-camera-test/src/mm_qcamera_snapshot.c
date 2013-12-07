@@ -156,6 +156,10 @@ int createEncodingSession(mm_camera_test_obj_t *test_obj,
     encode_param.dest_buf[0].fd = test_obj->jpeg_buf.buf.fd;
     encode_param.dest_buf[0].format = MM_JPEG_FMT_YUV;
 
+    /* main dimension */
+    encode_param.main_dim.src_dim = m_stream->s_config.stream_info->dim;
+    encode_param.main_dim.dst_dim = m_stream->s_config.stream_info->dim;
+
     return test_obj->jpeg_ops.create_session(test_obj->jpeg_hdl,
                                              &encode_param,
                                              &test_obj->current_jpeg_sess_id);
