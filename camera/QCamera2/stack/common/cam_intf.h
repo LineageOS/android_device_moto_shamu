@@ -297,6 +297,11 @@ typedef struct{
     uint8_t flash_available;
 
     cam_rational_type_t base_gain_factor;    /* sensor base gain factor */
+    /* AF Bracketing info */
+    cam_af_bracketing_t  ubifocus_af_bracketing_need;
+    /* opti Zoom info */
+    cam_opti_zoom_t      opti_zoom_settings_need;
+
 } cam_capability_t;
 
 typedef enum {
@@ -515,8 +520,10 @@ typedef union {
     INCLUDE(CAM_INTF_META_TONEMAP_MODE,             uint8_t,                     1);
     INCLUDE(CAM_INTF_META_FLASH_MODE,               uint8_t,                     1);
     INCLUDE(CAM_INTF_META_STREAM_ID,                cam_stream_ID_t,             1);
+    INCLUDE(CAM_INTF_PARM_STATS_DEBUG_MASK,         uint32_t,                    1);
+    INCLUDE(CAM_INTF_PARM_FOCUS_BRACKETING,         cam_af_bracketing_t,         1);
+    INCLUDE(CAM_INTF_PARM_FLASH_BRACKETING,         cam_flash_bracketing_t,      1);
 } parm_type_t;
-
 
 typedef union {
 /**************************************************************************************

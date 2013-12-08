@@ -553,6 +553,25 @@ int32_t QCameraPicChannel::cancelPicture()
 }
 
 /*===========================================================================
+ * FUNCTION   : startBracketing
+ *
+ * DESCRIPTION: start bracketing based on bracketing type.
+ *
+ * PARAMETERS :
+ *   @type : bracketing type.
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraPicChannel::startBracketing(mm_camera_bracketing_t type)
+{
+    int32_t rc = m_camOps->process_bracketing(m_camHandle, type,
+                                              m_handle, 1);
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : QCameraVideoChannel
  *
  * DESCRIPTION: constructor of QCameraVideoChannel
@@ -736,6 +755,11 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
 
                       // Skip thumbnail stream reprocessing in HDR
                       // if only hdr is enabled
+                      continue;
+                  }
+
+                  // skip thumbnail reprocessing if not needed
+                  if (!param.needThumbnailReprocess(&feature_mask)) {
                       continue;
                   }
 

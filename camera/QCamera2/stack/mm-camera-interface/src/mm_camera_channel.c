@@ -111,6 +111,10 @@ int32_t mm_channel_superbuf_bufdone_overflow(mm_channel_t *my_obj,
 int32_t mm_channel_superbuf_skip(mm_channel_t *my_obj,
                                  mm_channel_queue_t *queue);
 
+static int32_t mm_channel_proc_general_cmd(mm_channel_t *my_obj,
+                                           mm_camera_generic_cmd_t *p_gen_cmd);
+int32_t mm_channel_superbuf_flush_matched(mm_channel_t* my_obj,
+                                          mm_channel_queue_t * queue);
 /*===========================================================================
  * FUNCTION   : mm_channel_util_get_stream_by_handler
  *
@@ -196,7 +200,6 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
     if (NULL == ch_obj) {
         return;
     }
-
     if (MM_CAMERA_CMD_TYPE_DATA_CB  == cmd_cb->cmd_type) {
         /* comp_and_enqueue */
         mm_channel_superbuf_comp_and_enqueue(
@@ -208,7 +211,10 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
         ch_obj->pending_cnt = cmd_cb->u.req_buf.num_buf_requested;
         mm_channel_superbuf_skip(ch_obj, &ch_obj->bundle.superbuf_queue);
 
-        if (ch_obj->pending_cnt > 0 && ch_obj->needLEDFlash == TRUE) {
+        if (ch_obj->pending_cnt > 0
+            && (ch_obj->needLEDFlash == TRUE || ch_obj->need3ABracketing == TRUE)
+            && ch_obj->startZSlSnapshotCalled == FALSE) {
+
             CDBG_HIGH("%s: need flash, start zsl snapshot", __func__);
             mm_camera_start_zsl_snapshot(ch_obj->cam_obj);
             ch_obj->startZSlSnapshotCalled = TRUE;
@@ -218,6 +224,7 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
             mm_camera_stop_zsl_snapshot(ch_obj->cam_obj);
             ch_obj->startZSlSnapshotCalled = FALSE;
             ch_obj->needLEDFlash = FALSE;
+            ch_obj->need3ABracketing = FALSE;
         }
     } else if (MM_CAMERA_CMD_TYPE_CONFIG_NOTIFY == cmd_cb->cmd_type) {
            ch_obj->bundle.superbuf_queue.attr.notify_mode = cmd_cb->u.notify_mode;
@@ -225,6 +232,39 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
         ch_obj->bundle.superbuf_queue.expected_frame_id = cmd_cb->u.frame_idx;
         mm_channel_superbuf_flush(ch_obj, &ch_obj->bundle.superbuf_queue);
         return;
+    } else if (MM_CAMERA_CMD_TYPE_GENERAL == cmd_cb->cmd_type) {
+        CDBG_HIGH("%s:%d] MM_CAMERA_CMD_TYPE_GENERAL", __func__, __LINE__);
+        switch (cmd_cb->u.gen_cmd.type) {
+            case MM_CAMERA_GENERIC_CMD_TYPE_AE_BRACKETING:
+            case MM_CAMERA_GENERIC_CMD_TYPE_AF_BRACKETING: {
+                int8_t start = cmd_cb->u.gen_cmd.payload[0];
+                CDBG_HIGH("%s:%d] MM_CAMERA_GENERIC_CMDTYPE_AF_BRACKETING %d",
+                    __func__, __LINE__, start);
+                mm_channel_superbuf_flush(ch_obj,
+                                         &ch_obj->bundle.superbuf_queue);
+
+                if (start) {
+                    CDBG_HIGH("%s:%d] need AE bracketing, start zsl snapshot",
+                        __func__, __LINE__);
+                    ch_obj->need3ABracketing = TRUE;
+                }
+            }
+                break;
+            case MM_CAMERA_GENERIC_CMD_TYPE_FLASH_BRACKETING: {
+                int8_t start = cmd_cb->u.gen_cmd.payload[0];
+                CDBG_HIGH("%s:%d] MM_CAMERA_GENERIC_CMDTYPE_FLASH_BRACKETING %d",
+                    __func__, __LINE__, start);
+                if (start) {
+                    CDBG_HIGH("%s:%d] need flash bracketing",
+                        __func__, __LINE__);
+                    ch_obj->isFlashBracketingEnabled = TRUE;
+                }
+            }
+                break;
+            default:
+                CDBG_ERROR("%s:%d] Error: Invalid command", __func__, __LINE__);
+                break;
+        }
     }
     notify_mode = ch_obj->bundle.superbuf_queue.attr.notify_mode;
 
@@ -588,6 +628,36 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
             }
         }
         break;
+    case MM_CHANNEL_EVT_AF_BRACKETING:
+        {
+            CDBG_HIGH("MM_CHANNEL_EVT_AF_BRACKETING");
+            int32_t start_flag = ( int32_t ) in_val;
+            mm_camera_generic_cmd_t gen_cmd;
+            gen_cmd.type = MM_CAMERA_GENERIC_CMD_TYPE_AF_BRACKETING;
+            gen_cmd.payload[0] = start_flag;
+            rc = mm_channel_proc_general_cmd(my_obj, &gen_cmd);
+        }
+        break;
+    case MM_CHANNEL_EVT_AE_BRACKETING:
+        {
+            CDBG_HIGH("MM_CHANNEL_EVT_AE_BRACKETING");
+            int32_t start_flag = ( int32_t ) in_val;
+            mm_camera_generic_cmd_t gen_cmd;
+            gen_cmd.type = MM_CAMERA_GENERIC_CMD_TYPE_AE_BRACKETING;
+            gen_cmd.payload[0] = start_flag;
+            rc = mm_channel_proc_general_cmd(my_obj, &gen_cmd);
+        }
+        break;
+    case MM_CHANNEL_EVT_FLASH_BRACKETING:
+        {
+            CDBG_HIGH("MM_CHANNEL_EVT_FLASH_BRACKETING");
+            int32_t start_flag = ( int32_t ) in_val;
+            mm_camera_generic_cmd_t gen_cmd;
+            gen_cmd.type = MM_CAMERA_GENERIC_CMD_TYPE_FLASH_BRACKETING;
+            gen_cmd.payload[0] = start_flag;
+            rc = mm_channel_proc_general_cmd(my_obj, &gen_cmd);
+        }
+        break;
     default:
         CDBG_ERROR("%s: invalid state (%d) for evt (%d), in(%p), out(%p)",
                    __func__, my_obj->state, evt, in_val, out_val);
@@ -910,6 +980,7 @@ int32_t mm_channel_start(mm_channel_t *my_obj)
         mm_channel_superbuf_queue_init(&my_obj->bundle.superbuf_queue);
         my_obj->bundle.superbuf_queue.num_streams = num_streams_to_start;
         my_obj->bundle.superbuf_queue.expected_frame_id = 0;
+        my_obj->bundle.superbuf_queue.expected_frame_id_without_led = 0;
 
         for (i = 0; i < num_streams_to_start; i++) {
             /* set bundled flag to streams */
@@ -1487,6 +1558,7 @@ int32_t mm_channel_handle_metadata(
                         mm_channel_queue_t * queue,
                         mm_camera_buf_info_t *buf_info)
 {
+
     int rc = 0 ;
     mm_stream_t* stream_obj = NULL;
     stream_obj = mm_channel_util_get_stream_by_handler(ch_obj,
@@ -1567,6 +1639,31 @@ int32_t mm_channel_handle_metadata(
             }
             queue->expected_frame_id =
                 good_frame_idx_range.min_frame_idx;
+        } else if(ch_obj->need3ABracketing &&
+                   !is_good_frame_idx_range_valid) {
+               /* Flush unwanted frames */
+               mm_channel_superbuf_flush_matched(ch_obj, queue);
+        }
+        if (ch_obj->isFlashBracketingEnabled &&
+            is_good_frame_idx_range_valid) {
+            /* Flash bracketing needs two frames, with & without led flash.
+            * in valid range min frame is with led flash and max frame is
+            * without led flash */
+            queue->expected_frame_id =
+                good_frame_idx_range.min_frame_idx;
+            /* max frame is without led flash */
+            queue->expected_frame_id_without_led =
+                good_frame_idx_range.max_frame_idx;
+        } else if (is_good_frame_idx_range_valid) {
+             if (good_frame_idx_range.min_frame_idx >
+                 queue->expected_frame_id) {
+                 CDBG_HIGH("%s: min_frame_idx %d is greater than expected_frame_id %d",
+                     __func__, good_frame_idx_range.min_frame_idx,
+                     queue->expected_frame_id);
+             }
+             queue->expected_frame_id =
+                 good_frame_idx_range.min_frame_idx;
+             ch_obj->need3ABracketing = FALSE;
         }
     }
 end:
@@ -1693,7 +1790,13 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
             }
 
             if (super_buf->matched) {
-                queue->expected_frame_id = buf_info->frame_idx + queue->attr.post_frame_skip;
+                if(ch_obj->isFlashBracketingEnabled) {
+                   queue->expected_frame_id = queue->expected_frame_id_without_led;
+                   ch_obj->isFlashBracketingEnabled = FALSE;
+                } else {
+                   queue->expected_frame_id = buf_info->frame_idx
+                                              + queue->attr.post_frame_skip;
+                }
                 queue->match_cnt++;
                 /* Any older unmatched buffer need to be released */
                 if ( last_buf ) {
@@ -1971,6 +2074,82 @@ int32_t mm_channel_superbuf_flush(mm_channel_t* my_obj,
         }
         free(super_buf);
         super_buf = mm_channel_superbuf_dequeue_internal(queue, FALSE);
+    }
+    pthread_mutex_unlock(&queue->que.lock);
+
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : mm_channel_proc_general_cmd
+ *
+ * DESCRIPTION: process general command
+ *
+ * PARAMETERS :
+ *   @my_obj  : channel object
+ *   @notify_mode : notification mode
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_channel_proc_general_cmd(mm_channel_t *my_obj,
+                                      mm_camera_generic_cmd_t *p_gen_cmd)
+{
+    CDBG("%s: E",__func__);
+    int32_t rc = 0;
+    mm_camera_cmdcb_t* node = NULL;
+
+    node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
+    if (NULL != node) {
+        memset(node, 0, sizeof(mm_camera_cmdcb_t));
+        node->u.gen_cmd = *p_gen_cmd;
+        node->cmd_type = MM_CAMERA_CMD_TYPE_GENERAL;
+
+        /* enqueue to cmd thread */
+        cam_queue_enq(&(my_obj->cmd_thread.cmd_queue), node);
+
+        /* wake up cmd thread */
+        cam_sem_post(&(my_obj->cmd_thread.cmd_sem));
+    } else {
+        CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
+        rc = -1;
+    }
+    CDBG("%s: X",__func__);
+
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : mm_channel_superbuf_flush_matched
+ *
+ * DESCRIPTION: flush matched buffers from the superbuf queue.
+ *
+ * PARAMETERS :
+ *   @my_obj  : channel object
+ *   @queue   : superbuf queue
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_channel_superbuf_flush_matched(mm_channel_t* my_obj,
+                                  mm_channel_queue_t * queue)
+{
+    int32_t rc = 0, i;
+    mm_channel_queue_node_t* super_buf = NULL;
+
+    /* bufdone bufs */
+    pthread_mutex_lock(&queue->que.lock);
+    super_buf = mm_channel_superbuf_dequeue_internal(queue, TRUE);
+    while (super_buf != NULL) {
+        for (i=0; i<super_buf->num_of_bufs; i++) {
+            if (NULL != super_buf->super_buf[i].buf) {
+                mm_channel_qbuf(my_obj, super_buf->super_buf[i].buf);
+            }
+        }
+        free(super_buf);
+        super_buf = mm_channel_superbuf_dequeue_internal(queue, TRUE);
     }
     pthread_mutex_unlock(&queue->que.lock);
 

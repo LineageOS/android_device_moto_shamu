@@ -370,6 +370,17 @@ private:
     uint8_t getBufNumRequired(cam_stream_type_t stream_type);
     bool needFDMetadata(qcamera_ch_type_enum_t channel_type);
 
+    bool removeSizeFromList(cam_dimension_t* size_list,
+                            uint8_t length,
+                            cam_dimension_t size);
+    int32_t configureBracketing();
+    int32_t configureAFBracketing();
+    int32_t configureFlashBracketing();
+    int32_t startZslBracketing(QCameraPicChannel *pZSLchannel);
+    int32_t configureOptiZoom();
+
+    static void copyList(cam_dimension_t* src_list,
+                   cam_dimension_t* dst_list, uint8_t len);
     static void camEvtHandle(uint32_t camera_handle,
                           mm_camera_event_t *evt,
                           void *user_data);
@@ -483,6 +494,11 @@ private:
     int32_t m_max_pic_height;
     uint8_t mFlashNeeded;
     int mCaptureRotation;
+    int32_t mFlash;
+    int32_t mRedEye;
+    int32_t mFlashPresence;
+    bool mIs3ALocked;
+    int32_t mZoomLevel;
 };
 
 }; // namespace qcamera
