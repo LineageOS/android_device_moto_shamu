@@ -188,6 +188,7 @@ public:
     static const char KEY_QC_RAW_PICUTRE_SIZE[];
     static const char KEY_QC_TINTLESS_ENABLE[];
     static const char KEY_QC_SCENE_SELECTION[];
+    static const char KEY_QC_CDS_MODE[];
 
     static const char KEY_INTERNAL_PERVIEW_RESTART[];
 
@@ -445,6 +446,11 @@ public:
     static const char FLIP_MODE_H[];
     static const char FLIP_MODE_VH[];
 
+    //Values for CDS Mode
+    static const char CDS_MODE_OFF[];
+    static const char CDS_MODE_ON[];
+    static const char CDS_MODE_AUTO[];
+
     static const char KEY_SELECTED_AUTO_SCENE[];
 
     enum {
@@ -663,6 +669,7 @@ private:
     int32_t setSnapshotFDReq(const QCameraParameters& );
     int32_t setStatsDebugMask();
     int32_t setTintlessValue(const QCameraParameters& params);
+    int32_t setCDSMode(const QCameraParameters& params);
     int32_t setMobicat(const QCameraParameters& params);
     int32_t setRdiMode(const QCameraParameters& );
     int32_t setSecureMode(const QCameraParameters& );
@@ -772,6 +779,7 @@ private:
     static const QCameraMap CHROMA_FLASH_MODES_MAP[];
     static const QCameraMap OPTI_ZOOM_MODES_MAP[];
     static const QCameraMap RDI_MODES_MAP[];
+    static const QCameraMap CDS_MODES_MAP[];
 
     cam_capability_t *m_pCapability;
     mm_camera_vtbl_t *m_pCamOpsTbl;
