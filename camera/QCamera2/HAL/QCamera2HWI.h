@@ -297,6 +297,7 @@ private:
     // send request to server to set parameters
     int commitParameterChanges();
 
+    bool isCaptureShutterEnabled();
     bool needDebugFps();
     bool isCACEnabled();
     bool isAFRunning();

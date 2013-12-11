@@ -546,7 +546,10 @@ int32_t QCameraPostProcessor::processData(mm_camera_super_buf_t *frame)
     }
 
     if (m_parent->needReprocess()) {
-        if ( !m_parent->isLongshotEnabled() ) {
+        if ((!m_parent->isLongshotEnabled() &&
+             !m_parent->m_stateMachine.isNonZSLCaptureRunning()) ||
+            (m_parent->isLongshotEnabled() &&
+             m_parent->isCaptureShutterEnabled())) {
             //play shutter sound
             m_parent->playShutter();
         }
@@ -767,11 +770,11 @@ int32_t QCameraPostProcessor::processPPData(mm_camera_super_buf_t *frame)
         return processRawData(frame);
     }
 
-    if ( m_parent->isLongshotEnabled() ) {
+    if (m_parent->isLongshotEnabled() &&
+            !m_parent->isCaptureShutterEnabled()) {
         // play shutter sound for longshot
         // after reprocess is done
         // TODO: Move this after CAC done event
-
         m_parent->playShutter();
     }
 
