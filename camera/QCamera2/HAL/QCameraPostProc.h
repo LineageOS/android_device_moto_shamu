@@ -36,6 +36,8 @@ extern "C" {
 }
 #include "QCamera2HWI.h"
 
+#define MAX_JPEG_BURST 2
+
 namespace qcamera {
 
 class QCameraExif;
@@ -156,7 +158,7 @@ private:
     uint32_t                   mJpegClientHandle;
     uint32_t                   mJpegSessionId;
 
-    QCameraStreamMemory *      m_pJpegOutputMem;
+    void *                     m_pJpegOutputMem[MAX_JPEG_BURST];
     QCameraExif *              m_pJpegExifObj;
     int8_t                     m_bThumbnailNeeded;
     QCameraReprocessChannel *  m_pReprocChannel;

@@ -40,6 +40,15 @@ namespace qcamera {
 
 const char *QCameraPostProcessor::STORE_LOCATION = "/sdcard/img_%d.jpg";
 
+#define FREE_JPEG_OUTPUT_BUFFER(ptr)     \
+    int jpeg_bufs; \
+    for (jpeg_bufs = 0; jpeg_bufs < MAX_JPEG_BURST; jpeg_bufs++)  { \
+      if (ptr[jpeg_bufs] != NULL) { \
+          free(ptr[jpeg_bufs]); \
+          ptr[jpeg_bufs] = NULL; \
+      } \
+    }
+
 /*===========================================================================
  * FUNCTION   : QCameraPostProcessor
  *
@@ -56,7 +65,6 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
       mJpegUserData(NULL),
       mJpegClientHandle(0),
       mJpegSessionId(0),
-      m_pJpegOutputMem(NULL),
       m_pJpegExifObj(NULL),
       m_bThumbnailNeeded(TRUE),
       m_pReprocChannel(NULL),
@@ -72,6 +80,7 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
       mUseJpegBurst(false)
 {
     memset(&mJpegHandle, 0, sizeof(mJpegHandle));
+    memset(&m_pJpegOutputMem, 0, sizeof(m_pJpegOutputMem));
 }
 
 /*===========================================================================
@@ -85,11 +94,7 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
  *==========================================================================*/
 QCameraPostProcessor::~QCameraPostProcessor()
 {
-    if (m_pJpegOutputMem != NULL) {
-        m_pJpegOutputMem->deallocate();
-        delete m_pJpegOutputMem;
-        m_pJpegOutputMem = NULL;
-    }
+    FREE_JPEG_OUTPUT_BUFFER(m_pJpegOutputMem);
     if (m_pJpegExifObj != NULL) {
         delete m_pJpegExifObj;
         m_pJpegExifObj = NULL;
@@ -264,7 +269,6 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
 {
     ALOGV("%s : E", __func__);
     int32_t ret = NO_ERROR;
-    camera_memory_t *jpeg_mem = NULL;
 
     char prop[PROPERTY_VALUE_MAX];
     property_get("persist.camera.jpeg_burst", prop, "0");
@@ -387,45 +391,28 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
         encode_parm.thumb_dim.crop = crop;
     }
 
-
-    // allocate output buf for jpeg encoding
-    if (m_pJpegOutputMem != NULL) {
-        m_pJpegOutputMem->deallocate();
-        delete m_pJpegOutputMem;
-        m_pJpegOutputMem = NULL;
-    }
-    m_pJpegOutputMem = new QCameraStreamMemory(m_parent->mGetMemory,
-                                               QCAMERA_ION_USE_CACHE);
-    if (NULL == m_pJpegOutputMem) {
-        ret = NO_MEMORY;
-        ALOGE("%s : No memory for m_pJpegOutputMem", __func__);
-        goto on_error;
-    }
-
     encode_parm.num_dst_bufs = 1;
     if (mUseJpegBurst) {
-        encode_parm.num_dst_bufs = 2;
-    }
-
-    ret = m_pJpegOutputMem->allocate(encode_parm.num_dst_bufs, main_offset.frame_len);
-    if(ret != OK) {
-        ret = NO_MEMORY;
-        ALOGE("%s : No memory for m_pJpegOutputMem", __func__);
-        goto on_error;
+        encode_parm.num_dst_bufs = MAX_JPEG_BURST;
     }
 
     for (int i = 0; i < (int)encode_parm.num_dst_bufs; i++) {
-        jpeg_mem = m_pJpegOutputMem->getMemory(i, false);
-        if (NULL == jpeg_mem) {
+        if (m_pJpegOutputMem[i] != NULL)
+          free(m_pJpegOutputMem[i]);
+
+        // allocate output buf for jpeg encoding
+        m_pJpegOutputMem[i] = malloc(main_offset.frame_len);
+
+        if (NULL == m_pJpegOutputMem[i]) {
           ret = NO_MEMORY;
           ALOGE("%s : initHeapMem for jpeg, ret = NO_MEMORY", __func__);
           goto on_error;
         }
 
         encode_parm.dest_buf[i].index = i;
-        encode_parm.dest_buf[i].buf_size = jpeg_mem->size;
-        encode_parm.dest_buf[i].buf_vaddr = (uint8_t *)jpeg_mem->data;
-        encode_parm.dest_buf[i].fd = m_pJpegOutputMem->getFd(i);
+        encode_parm.dest_buf[i].buf_size = main_offset.frame_len;
+        encode_parm.dest_buf[i].buf_vaddr = (uint8_t *)m_pJpegOutputMem[i];
+        encode_parm.dest_buf[i].fd = 0;
         encode_parm.dest_buf[i].format = MM_JPEG_FMT_YUV;
         encode_parm.dest_buf[i].offset = main_offset;
     }
@@ -435,11 +422,8 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
     return NO_ERROR;
 
 on_error:
-    if (m_pJpegOutputMem != NULL) {
-        m_pJpegOutputMem->deallocate();
-        delete m_pJpegOutputMem;
-        m_pJpegOutputMem = NULL;
-    }
+    FREE_JPEG_OUTPUT_BUFFER(m_pJpegOutputMem);
+
     ALOGV("%s : X with error %d", __func__, ret);
     return ret;
 }
@@ -1743,11 +1727,8 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                 }
 
                 // free jpeg out buf and exif obj
-                if (pme->m_pJpegOutputMem != NULL) {
-                    pme->m_pJpegOutputMem->deallocate();
-                    delete pme->m_pJpegOutputMem;
-                    pme->m_pJpegOutputMem = NULL;
-                }
+                FREE_JPEG_OUTPUT_BUFFER(pme->m_pJpegOutputMem);
+
                 if (pme->m_pJpegExifObj != NULL) {
                     delete pme->m_pJpegExifObj;
                     pme->m_pJpegExifObj = NULL;
