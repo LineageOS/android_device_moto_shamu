@@ -1316,7 +1316,8 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
 
     int maxStreamBuf = minCaptureBuffers + mParameters.getMaxUnmatchedFramesInQueue() +
                        mParameters.getNumOfExtraHDRInBufsIfNeeded() -
-                       mParameters.getNumOfExtraHDROutBufsIfNeeded();
+                       mParameters.getNumOfExtraHDROutBufsIfNeeded() +
+                       mParameters.getNumOfExtraBuffersForImageProc();
 
     int minUndequeCount = 0;
     if (!isNoDisplayMode() && mPreviewWindow != NULL) {
@@ -1343,7 +1344,8 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
         {
             bufferCnt = minCaptureBuffers*CAMERA_PPROC_OUT_BUFFER_MULTIPLIER +
                         mParameters.getNumOfExtraHDRInBufsIfNeeded() -
-                        mParameters.getNumOfExtraHDROutBufsIfNeeded();
+                        mParameters.getNumOfExtraHDROutBufsIfNeeded() +
+                        mParameters.getNumOfExtraBuffersForImageProc();
 
             if (bufferCnt > maxStreamBuf) {
                 bufferCnt = maxStreamBuf;
@@ -1358,7 +1360,8 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
             } else {
                 bufferCnt = minCaptureBuffers*CAMERA_PPROC_OUT_BUFFER_MULTIPLIER +
                             mParameters.getNumOfExtraHDRInBufsIfNeeded() -
-                            mParameters.getNumOfExtraHDROutBufsIfNeeded();
+                            mParameters.getNumOfExtraHDROutBufsIfNeeded() +
+                            mParameters.getNumOfExtraBuffersForImageProc();
 
                 if (bufferCnt > maxStreamBuf) {
                     bufferCnt = maxStreamBuf;
@@ -1372,7 +1375,8 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
         } else {
             bufferCnt = minCaptureBuffers*CAMERA_PPROC_OUT_BUFFER_MULTIPLIER +
                         mParameters.getNumOfExtraHDRInBufsIfNeeded() -
-                        mParameters.getNumOfExtraHDROutBufsIfNeeded();
+                        mParameters.getNumOfExtraHDROutBufsIfNeeded() +
+                        mParameters.getNumOfExtraBuffersForImageProc();
 
             if (bufferCnt > maxStreamBuf) {
                 bufferCnt = maxStreamBuf;
@@ -1393,7 +1397,8 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
                             mParameters.getNumOfExtraHDRInBufsIfNeeded() -
                             mParameters.getNumOfExtraHDROutBufsIfNeeded() +
                             mParameters.getMaxUnmatchedFramesInQueue() +
-                            CAMERA_MIN_STREAMING_BUFFERS;
+                            CAMERA_MIN_STREAMING_BUFFERS +
+                            mParameters.getNumOfExtraBuffersForImageProc();
 
                 if (bufferCnt > zslQBuffers + minCircularBufNum) {
                     bufferCnt = zslQBuffers + minCircularBufNum;
@@ -1404,7 +1409,6 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
     case CAM_STREAM_TYPE_OFFLINE_PROC:
         {
             bufferCnt = minCaptureBuffers;
-            bufferCnt += mParameters.getNumOfExtraBuffersForImageProc();
         }
         break;
     case CAM_STREAM_TYPE_DEFAULT:
@@ -1590,7 +1594,8 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
             streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
             streamInfo->num_of_burst = mParameters.getNumOfSnapshots()
                 + mParameters.getNumOfExtraHDRInBufsIfNeeded()
-                - mParameters.getNumOfExtraHDROutBufsIfNeeded();
+                - mParameters.getNumOfExtraHDROutBufsIfNeeded()
+                + mParameters.getNumOfExtraBuffersForImageProc();
         }
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
@@ -1600,7 +1605,8 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
             streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
             streamInfo->num_of_burst = mParameters.getNumOfSnapshots()
                 + mParameters.getNumOfExtraHDRInBufsIfNeeded()
-                - mParameters.getNumOfExtraHDROutBufsIfNeeded();
+                - mParameters.getNumOfExtraHDROutBufsIfNeeded()
+                + mParameters.getNumOfExtraBuffersForImageProc();
         }
         break;
     case CAM_STREAM_TYPE_VIDEO:
@@ -2112,7 +2118,7 @@ int32_t QCamera2HardwareInterface::configureOptiZoom()
     uint8_t zoom_level = (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
     uint8_t zoom_threshold = gCamCapability[mCameraId]->opti_zoom_settings_need.zoom_threshold;
     ALOGD("%s: current zoom level =%d & zoom_threshold =%d",__func__,zoom_level,zoom_threshold);
-    if(zoom_level > zoom_threshold) {
+    if(zoom_level >= zoom_threshold) {
         //set zoom level to 1x;
         mParameters.setAndCommitZoom(0);
         //store current zoom level.
@@ -3985,8 +3991,12 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
 
     if (temp_feature_mask) {
         int minCaptureBuffers = mParameters.getNumOfSnapshots();
-        int maxStreamBuf = minCaptureBuffers + mParameters.getMaxUnmatchedFramesInQueue();
-        minStreamBufNum *= CAMERA_PPROC_OUT_BUFFER_MULTIPLIER;
+        int maxStreamBuf = minCaptureBuffers +
+            mParameters.getMaxUnmatchedFramesInQueue() +
+            mParameters.getNumOfExtraBuffersForImageProc();
+
+        minStreamBufNum *= CAMERA_PPROC_OUT_BUFFER_MULTIPLIER +
+            mParameters.getNumOfExtraBuffersForImageProc();
         if (minStreamBufNum > maxStreamBuf) {
             minStreamBufNum = maxStreamBuf;
         }
@@ -4000,6 +4010,7 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
                                               pp_config,
                                               pInputChannel,
                                               minStreamBufNum,
+                                              mParameters.getNumOfSnapshots(),
                                               &gCamCapability[mCameraId]->padding_info,
                                               mParameters,
                                               mLongshotEnabled);
