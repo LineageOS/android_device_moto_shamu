@@ -1063,6 +1063,19 @@ int32_t mm_channel_start(mm_channel_t *my_obj)
                              NULL,
                              NULL);
         }
+
+        /* destroy super buf cmd thread */
+        if (TRUE == my_obj->bundle.is_active) {
+            /* first stop bundle thread */
+            mm_camera_cmd_thread_release(&my_obj->cmd_thread);
+            mm_camera_cmd_thread_release(&my_obj->cb_thread);
+
+            /* deinit superbuf queue */
+            mm_channel_superbuf_queue_deinit(&my_obj->bundle.superbuf_queue);
+
+            /* memset bundle info */
+            memset(&my_obj->bundle, 0, sizeof(mm_channel_bundle_t));
+        }
     }
 
     return rc;
