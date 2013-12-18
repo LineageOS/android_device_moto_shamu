@@ -185,7 +185,6 @@ private:
     QCameraQueue m_delayReleaseBuffers; // delayed buffer release queue
     QCameraCmdThread m_dataProcTh;      // thread for data processing
     QCameraCmdThread m_saveProcTh;      // thread for storing buffers
-    uint32_t mRawBurstCount;            // current raw burst count
     uint32_t mSaveFrmCnt;               // save frame counter
     static const char *STORE_LOCATION;  // path for storing buffers
     bool mUseSaveProc;                  // use store thread
