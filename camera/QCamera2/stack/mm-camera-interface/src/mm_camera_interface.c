@@ -35,6 +35,8 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <linux/media.h>
+#include <signal.h>
+#include <media/msm_cam_sensor.h>
 
 #include "mm_camera_dbg.h"
 #include "mm_camera_interface.h"
@@ -1189,10 +1191,79 @@ uint8_t get_num_of_cameras()
     struct media_device_info mdev_info;
     int num_media_devices = 0;
     uint8_t num_cameras = 0;
+    char subdev_name[32];
+    int32_t sd_fd = 0;
+    struct sensor_init_cfg_data cfg;
 
     CDBG("%s : E", __func__);
     /* lock the mutex */
     pthread_mutex_lock(&g_intf_lock);
+
+    while (1) {
+        int32_t num_entities = 1;
+        char dev_name[32];
+
+        snprintf(dev_name, sizeof(dev_name), "/dev/media%d", num_media_devices);
+        dev_fd = open(dev_name, O_RDWR | O_NONBLOCK);
+        if (dev_fd < 0) {
+            CDBG("Done discovering media devices\n");
+            break;
+        }
+        num_media_devices++;
+        rc = ioctl(dev_fd, MEDIA_IOC_DEVICE_INFO, &mdev_info);
+        if (rc < 0) {
+            CDBG_ERROR("Error: ioctl media_dev failed: %s\n", strerror(errno));
+            close(dev_fd);
+            dev_fd = 0;
+            break;
+        }
+
+        if (strncmp(mdev_info.model, "msm_config", sizeof(mdev_info.model) != 0)) {
+            close(dev_fd);
+            dev_fd = 0;
+            continue;
+        }
+
+        while (1) {
+            struct media_entity_desc entity;
+            memset(&entity, 0, sizeof(entity));
+            entity.id = num_entities++;
+            CDBG_ERROR("entity id %d", entity.id);
+            rc = ioctl(dev_fd, MEDIA_IOC_ENUM_ENTITIES, &entity);
+            if (rc < 0) {
+                CDBG_ERROR("Done enumerating media entities");
+                rc = 0;
+                break;
+            }
+            CDBG_ERROR("entity name %s type %d group id %d",
+                entity.name, entity.type, entity.group_id);
+            if (entity.type == MEDIA_ENT_T_V4L2_SUBDEV &&
+                entity.group_id == MSM_CAMERA_SUBDEV_SENSOR_INIT) {
+                snprintf(subdev_name, sizeof(dev_name), "/dev/%s", entity.name);
+                break;
+            }
+        }
+        close(dev_fd);
+        dev_fd = 0;
+    }
+
+    /* Open sensor_init subdev */
+    sd_fd = open(subdev_name, O_RDWR);
+    if (sd_fd < 0) {
+        CDBG_ERROR("Open sensor_init subdev failed");
+        return FALSE;
+    }
+
+    cfg.cfgtype = CFG_SINIT_PROBE_WAIT_DONE;
+    cfg.cfg.setting = NULL;
+    if (ioctl(sd_fd, VIDIOC_MSM_SENSOR_INIT_CFG, &cfg) < 0) {
+        CDBG_ERROR("failed");
+    }
+    close(sd_fd);
+    dev_fd = 0;
+
+
+    num_media_devices = 0;
     while (1) {
         char dev_name[32];
         int num_entities;
