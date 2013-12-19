@@ -185,8 +185,7 @@ static int32_t mm_camera_intf_query_capability(uint32_t camera_handle)
  *              domain socket. Corresponding fields of parameters to be set
  *              are already filled in by upper layer caller.
  *==========================================================================*/
-static int32_t mm_camera_intf_set_parms(uint32_t camera_handle,
-                                        parm_buffer_t *parms)
+static int32_t mm_camera_intf_set_parms(uint32_t camera_handle, void *parms)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;
@@ -222,8 +221,7 @@ static int32_t mm_camera_intf_set_parms(uint32_t camera_handle,
  *              fields of requested parameters will be filled in by server with
  *              detailed information.
  *==========================================================================*/
-static int32_t mm_camera_intf_get_parms(uint32_t camera_handle,
-                                        parm_buffer_t *parms)
+static int32_t mm_camera_intf_get_parms(uint32_t camera_handle, void *parms)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;

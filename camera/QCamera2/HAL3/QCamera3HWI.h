@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -150,7 +150,7 @@ private:
 
     int openCamera();
     int closeCamera();
-    int AddSetParmEntryToBatch(parm_buffer_t *p_table,
+    int AddSetParmEntryToBatch(void *p_table,
                                cam_intf_parm_type_t paramType,
                                uint32_t paramLength,
                                void *paramValue);
@@ -200,7 +200,7 @@ private:
      //First request yet to be processed after configureStreams
     bool mFirstRequest;
     QCamera3HeapMemory *mParamHeap;
-    parm_buffer_t* mParameters;
+    parm_buffer_new_t* mParameters;
     bool m_bWNROn;
 
     /* Data structure to store pending request */
