@@ -89,6 +89,8 @@ const CAMERA_MAIN_MENU_TBL_T camera_main_menu_tbl[] = {
   {START_PREVIEW,               "Start preview"},
   {STOP_PREVIEW,               "Stop preview/video"},
   {SET_WHITE_BALANCE,          "Set white balance mode"},
+  {SET_TINTLESS_ENABLE,        "Set Tintless Enable"},
+  {SET_TINTLESS_DISABLE,       "Set Tintless Disable"},
   {SET_EXP_METERING,           "Set exposure metering mode"},
   {GET_CTRL_VALUE,             "Get control value menu"},
   {TOGGLE_AFR,                 "Toggle auto frame rate. Default fixed frame rate"},
@@ -305,6 +307,18 @@ int next_menu(menu_id_change_t current_menu_id, char keypress, camera_action_t *
         case SET_WHITE_BALANCE:
           next_menu_id = MENU_ID_WHITEBALANCECHANGE;
           CDBG("next_menu_id = MENU_ID_WHITEBALANCECHANGE = %d\n", next_menu_id);
+          break;
+
+        case SET_TINTLESS_ENABLE:
+          * action_id_ptr = ACTION_SET_TINTLESS_ENABLE;
+          next_menu_id = MENU_ID_MAIN;
+          CDBG("next_menu_id = MENU_ID_TINTLESSENABLE = %d\n", next_menu_id);
+          break;
+
+        case SET_TINTLESS_DISABLE:
+          * action_id_ptr = ACTION_SET_TINTLESS_DISABLE;
+          next_menu_id = MENU_ID_MAIN;
+          CDBG("next_menu_id = MENU_ID_TINTLESSDISABLE = %d\n", next_menu_id);
           break;
 
         case SET_EXP_METERING:
@@ -1662,6 +1676,7 @@ static int submain()
     snap_dim.width = DEFAULT_SNAPSHOT_WIDTH;
     snap_dim.height = DEFAULT_SNAPSHOT_HEIGHT;
     cam_scene_mode_type default_scene= CAM_SCENE_MODE_OFF;
+    int set_tintless= 0;
 
     mm_camera_test_obj_t test_obj;
     memset(&test_obj, 0, sizeof(mm_camera_test_obj_t));
@@ -1750,6 +1765,32 @@ static int submain()
             case ACTION_SET_WHITE_BALANCE:
                 CDBG("Selection for the White Balance changes\n");
                 set_whitebalance(&lib_handle, action_param);
+                break;
+
+            case ACTION_SET_TINTLESS_ENABLE:
+                CDBG("Selection for the Tintless enable changes\n");
+                set_tintless = 1;
+                rc =  mm_camera_lib_send_command(&lib_handle,
+                                                 MM_CAMERA_LIB_SET_TINTLESS,
+                                                 &set_tintless,
+                                                 NULL);
+                if (rc != MM_CAMERA_OK) {
+                    CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
+                    goto ERROR;
+                }
+                break;
+
+            case ACTION_SET_TINTLESS_DISABLE:
+                CDBG("Selection for the Tintless disable changes\n");
+                set_tintless = 0;
+                rc =  mm_camera_lib_send_command(&lib_handle,
+                                                 MM_CAMERA_LIB_SET_TINTLESS,
+                                                 &set_tintless,
+                                                 NULL);
+                if (rc != MM_CAMERA_OK) {
+                    CDBG_ERROR("%s:mm_camera_lib_send_command() err=%d\n", __func__, rc);
+                    goto ERROR;
+                }
                 break;
 
             case ACTION_SET_EXP_METERING:
