@@ -70,7 +70,11 @@ static void mm_app_metadata_notify_cb(mm_camera_super_buf_t *bufs,
       CDBG_ERROR("%s: cannot find metadata stream", __func__);
       return;
   }
-  pme->metadata = frame->buffer;
+  if (pme->metadata == NULL) {
+    /* The app will free the meta data, we don't need to bother here */
+    pme->metadata = malloc(sizeof(cam_metadata_info_t));
+  }
+  memcpy(pme->metadata, frame->buffer, sizeof(cam_metadata_info_t));
 
   pMetadata = (cam_metadata_info_t *)frame->buffer;
 
