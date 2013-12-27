@@ -775,8 +775,10 @@ void *eztune_proc(void *data)
         }
       }*/
       cam_dimension_t dim;
-      dim.width = lib_handle->test_obj.buffer_width;
-      dim.height = lib_handle->test_obj.buffer_height;
+      //dim.width = lib_handle->test_obj.buffer_width;
+      //dim.height = lib_handle->test_obj.buffer_height;
+      dim.width = DEFAULT_PREVIEW_WIDTH;
+      dim.height = DEFAULT_PREVIEW_HEIGHT;
 
       CDBG("preview dimension info: w(%d), h(%d)\n", dim.width, dim.height);
       // we have to make sure that camera is running, before init connection,
