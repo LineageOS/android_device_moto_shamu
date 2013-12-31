@@ -2373,6 +2373,16 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
                 goto EXIT;
             }
 
+            if (handle->test_obj.is_chromatix_reload == TRUE) {
+              /**Re-load Chromatix is taken care to make sure Tuned data **
+              ** is not lost when capture Snapshot                       **/
+              rc = setReloadChromatix(&handle->test_obj,
+                (tune_chromatix_t *)&(handle->test_obj.tune_data));
+              if (rc != MM_CAMERA_OK) {
+                CDBG_ERROR("%s: setReloadChromatix failed\n", __func__);
+                goto EXIT;
+              }
+            }
             break;
 
         case MM_CAMERA_LIB_SET_FOCUS_MODE: {
@@ -2465,6 +2475,9 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
              CDBG_ERROR("%s: setReloadChromatix failed\n", __func__);
              goto EXIT;
            }
+           handle->test_obj.is_chromatix_reload = TRUE;
+           memcpy((void *)&(handle->test_obj.tune_data),
+             (void *)in_data, sizeof(tune_chromatix_t));
            break;
        }
 
