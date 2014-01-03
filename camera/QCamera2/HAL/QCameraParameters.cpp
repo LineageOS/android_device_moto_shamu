@@ -3087,6 +3087,11 @@ int32_t QCameraParameters::setNumOfSnapshot()
         }
     }
 
+    if (isUbiRefocus()) {
+        nBurstNum = m_pCapability->ubifocus_af_bracketing_need.output_count;
+        nExpnum = 1;
+    }
+
     ALOGD("%s: nBurstNum = %d, nExpnum = %d", __func__, nBurstNum, nExpnum);
     set(KEY_QC_NUM_SNAPSHOT_PER_SHUTTER, nBurstNum * nExpnum);
     return NO_ERROR;
@@ -6843,6 +6848,11 @@ uint8_t QCameraParameters::getNumOfSnapshots()
     if (numOfSnapshot <= 0) {
         numOfSnapshot = 1; // set to default value
     }
+
+    /* update the count for refocus */
+    if (isUbiRefocus())
+       numOfSnapshot += UfOutputCount();
+
     return (uint8_t)numOfSnapshot;
 }
 
@@ -8679,10 +8689,14 @@ uint8_t QCameraParameters::getNumOfExtraBuffersForImageProc()
 
     if (isUbiFocusEnabled()) {
         numOfBufs += m_pCapability->ubifocus_af_bracketing_need.burst_count - 1;
+        if (isUbiRefocus()) {
+            numOfBufs +=
+                m_pCapability->ubifocus_af_bracketing_need.burst_count + 1;
+        }
     } else if (isOptiZoomEnabled()) {
         numOfBufs += m_pCapability->opti_zoom_settings_need.burst_count - 1;
     } else if (isChromaFlashEnabled()) {
-        numOfBufs += 1;
+        numOfBufs += 1; /* flash and non flash */
     }
 
     return numOfBufs * getBurstNum();

@@ -310,6 +310,7 @@ typedef enum {
     CAM_STREAM_PARAM_TYPE_SET_BUNDLE_INFO = CAM_INTF_PARM_SET_BUNDLE,
     CAM_STREAM_PARAM_TYPE_SET_FLIP = CAM_INTF_PARM_STREAM_FLIP,
     CAM_STREAM_PARAM_TYPE_GET_OUTPUT_CROP = CAM_INTF_PARM_GET_OUTPUT_CROP,
+    CAM_STREAM_PARAM_TYPE_GET_IMG_PROP = CAM_INTF_PARM_GET_IMG_PROP,
     CAM_STREAM_PARAM_TYPE_MAX
 } cam_stream_param_type_e;
 
@@ -330,6 +331,18 @@ typedef struct {
     uint32_t flip_mask;
 } cam_flip_mode_t;
 
+#define IMG_NAME_SIZE 32
+typedef struct {
+    cam_rect_t crop;  /* crop info for the image */
+    cam_dimension_t input; /* input dimension of the image */
+    cam_dimension_t output; /* output dimension of the image */
+    char name[IMG_NAME_SIZE]; /* optional name of the ext*/
+    int is_raw_image; /* image is raw */
+    cam_format_t format; /* image format */
+    int analysis_image; /* image is used for analysis. hence skip thumbnail */
+    uint32_t size; /* size of the image */
+} cam_stream_img_prop_t;
+
 typedef struct {
     cam_stream_param_type_e type;
     union {
@@ -337,6 +350,7 @@ typedef struct {
         cam_bundle_config_t bundleInfo; /* set bundle info*/
         cam_flip_mode_t flipInfo;       /* flip mode */
         cam_crop_data_t outputCrop;     /* output crop for current frame */
+        cam_stream_img_prop_t imgProp;  /* image properties of current frame */
     };
 } cam_stream_parm_buffer_t;
 
