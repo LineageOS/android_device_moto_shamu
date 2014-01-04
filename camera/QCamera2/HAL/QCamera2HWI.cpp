@@ -4009,6 +4009,17 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
         }
     }
 
+    // Add non inplace image lib buffers only when ppproc is present,
+    // becuase pproc is non inplace and input buffers for img lib
+    // are output for pproc and this number of extra buffers is required
+    // If pproc is not there, input buffers for imglib are from snapshot stream
+    uint8_t imglib_extra_bufs = mParameters.getNumOfExtraBuffersForImageProc();
+    if (temp_feature_mask && imglib_extra_bufs) {
+        // 1 is added because getNumOfExtraBuffersForImageProc returns extra
+        // buffers assuming number of capture is already added
+        minStreamBufNum += imglib_extra_bufs + 1;
+    }
+
     if ( mLongshotEnabled ) {
         minStreamBufNum = getBufNumRequired(CAM_STREAM_TYPE_PREVIEW);
     }
