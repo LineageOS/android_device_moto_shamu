@@ -2859,6 +2859,7 @@ int32_t QCameraParameters::setAFBracket(const QCameraParameters& params)
     if (str != NULL) {
         if (prev_str == NULL ||
             strcmp(str, prev_str) != 0) {
+            m_bNeedRestart = true;
             return setAFBracket(str);
         }
     }
@@ -2890,6 +2891,7 @@ int32_t QCameraParameters::setChromaFlash(const QCameraParameters& params)
     if (str != NULL) {
         if (prev_str == NULL ||
             strcmp(str, prev_str) != 0) {
+            m_bNeedRestart = true;
             return setChromaFlash(str);
         }
     }
@@ -2921,6 +2923,7 @@ int32_t QCameraParameters::setOptiZoom(const QCameraParameters& params)
     if (str != NULL) {
         if (prev_str == NULL ||
             strcmp(str, prev_str) != 0) {
+            m_bNeedRestart = true;
             return setOptiZoom(str);
         }
     }
