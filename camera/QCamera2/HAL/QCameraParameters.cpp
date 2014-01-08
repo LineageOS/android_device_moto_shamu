@@ -6726,6 +6726,9 @@ uint8_t QCameraParameters::getBurstCountForBracketing()
         //number of snapshots required for Chroma Flash.
         //TODO: remove hardcoded value, add in capability.
         burstCount = 2;
+    } else if (isHDREnabled()) {
+        //number of snapshots required for HDR.
+        burstCount = m_pCapability->hdr_bracketing_setting.num_frames;
     }
     if (burstCount <= 0) {
         burstCount = 1;
