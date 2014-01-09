@@ -86,6 +86,11 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
     }
     *frame = *recvd_frame;
 
+    if (recvd_frame->num_bufs > 0) {
+        ALOGD("[KPI Perf] %s: superbuf frame_idx %d", __func__,
+            recvd_frame->bufs[0]->frame_idx);
+    }
+
     // DUMP RAW if available
     property_get("persist.camera.zsl_raw", value, "0");
     dump_raw = atoi(value) > 0 ? true : false;

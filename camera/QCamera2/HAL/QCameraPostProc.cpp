@@ -763,6 +763,19 @@ int32_t QCameraPostProcessor::processJpegEvt(qcamera_jpeg_evt_payload_t *evt)
                                   evt->jobId);
         ALOGD("%s: Dump jpeg_size=%d", __func__, evt->out_data.buf_filled_len);
 
+        /* check if the all the captures are done */
+        if (m_parent->mParameters.isUbiRefocus() &&
+            (m_parent->getOutputImageCount() <
+            m_parent->mParameters.UfOutputCount())) {
+            jpeg_out  = (omx_jpeg_ouput_buf_t*) evt->out_data.buf_vaddr;
+            jpeg_mem = (camera_memory_t *)jpeg_out->mem_hdl;
+            if (NULL != jpeg_mem) {
+                jpeg_mem->release(jpeg_mem);
+                jpeg_mem = NULL;
+            }
+            goto end;
+        }
+
         if (!mJpegMemOpt) {
             // alloc jpeg memory to pass to upper layer
             jpeg_mem = m_parent->mGetMemory(-1, evt->out_data.buf_filled_len,

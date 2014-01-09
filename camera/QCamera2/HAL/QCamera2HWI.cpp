@@ -2081,6 +2081,29 @@ bool QCamera2HardwareInterface::processUFDumps(qcamera_jpeg_evt_payload_t *evt)
        int index = getOutputImageCount();
        bool allFocusImage = (index == ((int)mParameters.UfOutputCount()-1));
        char name[CAM_FN_CNT];
+
+       camera_memory_t *jpeg_mem = NULL;
+       omx_jpeg_ouput_buf_t *jpeg_out = NULL;
+       uint32_t dataLen;
+       uint8_t *dataPtr;
+       if (!m_postprocessor.getJpegMemOpt()) {
+           dataLen = evt->out_data.buf_filled_len;
+           dataPtr = evt->out_data.buf_vaddr;
+       } else {
+           jpeg_out  = (omx_jpeg_ouput_buf_t*) evt->out_data.buf_vaddr;
+           if (!jpeg_out) {
+              ALOGE("%s:%d] Null pointer detected",  __func__, __LINE__);
+              return false;
+           }
+           jpeg_mem = (camera_memory_t *)jpeg_out->mem_hdl;
+           if (!jpeg_mem) {
+              ALOGE("%s:%d] Null pointer detected",  __func__, __LINE__);
+              return false;
+           }
+           dataPtr = (uint8_t *)jpeg_mem->data;
+           dataLen = jpeg_mem->size;
+       }
+
        if (allFocusImage)  {
            strncpy(name, "AllFocusImage", CAM_FN_CNT - 1);
            index = -1;
@@ -2088,11 +2111,10 @@ bool QCamera2HardwareInterface::processUFDumps(qcamera_jpeg_evt_payload_t *evt)
            strncpy(name, "0", CAM_FN_CNT - 1);
        }
        CAM_DUMP_TO_FILE("/data/local/ubifocus", name, index, "jpg",
-           (uint8_t *)evt->out_data.buf_vaddr,
-           evt->out_data.buf_filled_len);
+           dataPtr, dataLen);
        ALOGV("%s:%d] Dump the image %d %d allFocusImage %d", __func__, __LINE__,
            getOutputImageCount(), index, allFocusImage);
-       setOutputImageCount(index + 1);
+       setOutputImageCount(getOutputImageCount() + 1);
        if (!allFocusImage) {
            ret = false;
        }
