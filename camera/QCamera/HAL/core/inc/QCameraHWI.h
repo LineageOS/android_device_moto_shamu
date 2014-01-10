@@ -145,7 +145,7 @@ typedef enum {
 typedef struct {
     int                     fd;
     int                     main_ion_fd;
-    struct ion_handle *     handle;
+    ion_user_handle_t       handle;
     uint32_t                size;
 } QCameraHalMemInfo_t;
 
