@@ -968,7 +968,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
         switch (curr_entry) {
             case CAM_INTF_META_HISTOGRAM: {
                 cam_hist_stats_t *stats_data =
-                (cam_hist_stats_t *)POINTER_OF(CAM_INTF_META_FACE_DETECTION, pMetaData);
+                (cam_hist_stats_t *)POINTER_OF(CAM_INTF_META_HISTOGRAM, pMetaData);
                 // process histogram statistics info
                 qcamera_sm_internal_evt_payload_t *payload =
                     (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
