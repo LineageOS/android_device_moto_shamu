@@ -38,7 +38,10 @@ namespace qcamera {
 
 using namespace android;
 
-class CameraContext : public CameraListener {
+class TestContext;
+
+class CameraContext : public CameraListener,
+    public ICameraRecordingProxyListener{
 public:
     typedef enum {
         READ_METADATA = 1,
@@ -58,6 +61,8 @@ public:
     CameraContext(int cameraIndex);
     virtual ~CameraContext();
 
+
+
     status_t openCamera();
     status_t closeCamera();
 
@@ -69,6 +74,9 @@ public:
     status_t takePicture();
     status_t startRecording();
     status_t stopRecording();
+    status_t startViVRecording();
+    status_t stopViVRecording();
+    status_t configureViVRecording();
 
     status_t nextPreviewSize();
     status_t setPreviewSize(const char *format);
@@ -86,9 +94,12 @@ public:
     Sections_t *FindSection(int SectionType);
     status_t ReadSectionsFromBuffer (unsigned char *buffer,
         unsigned int buffer_size, ReadMode_t ReadMode);
+    virtual IBinder* onAsBinder();
+    void setTestCtxInstance(TestContext *instance);
 
     void printMenu(sp<CameraContext> currentCamera);
     void printSupportedParams();
+
 
     int getCameraIndex() { return mCameraIndex; }
     int getNumberOfCameras();
@@ -99,21 +110,28 @@ public:
     void CheckSectionsAllocated();
     void DiscardData();
     void DiscardSections();
+    size_t calcBufferSize(int width, int height);
+    size_t calcStride(int width);
+    size_t calcYScanLines(int height);
+    size_t calcUVScanLines(int height);
 
     virtual void notify(int32_t msgType, int32_t ext1, int32_t ext2);
     virtual void postData(int32_t msgType,
-                          const sp<IMemory>& dataPtr,
-                          camera_frame_metadata_t *metadata);
+            const sp<IMemory>& dataPtr,
+            camera_frame_metadata_t *metadata);
 
     virtual void postDataTimestamp(nsecs_t timestamp,
-                                   int32_t msgType,
-                                   const sp<IMemory>& dataPtr);
+            int32_t msgType,
+            const sp<IMemory>& dataPtr);
+    virtual void dataCallbackTimestamp(nsecs_t timestamp,
+            int32_t msgType,
+            const sp<IMemory>& dataPtr);
 
 private:
 
     status_t createPreviewSurface(unsigned int width,
-                                  unsigned int height,
-                                  int32_t pixFormat);
+            unsigned int height,
+            int32_t pixFormat);
     status_t destroyPreviewSurface();
 
     status_t saveFile(const sp<IMemory>& mem, String8 path);
@@ -144,6 +162,11 @@ private:
     Sections_t * mJEXIFTmp;
     Sections_t mJEXIFSection;
     int mHaveAll;
+    TestContext *mInterpr;
+    Mutex mViVLock;
+    Condition mViVCond;
+    bool mViVinUse;
+
 
     sp<Camera> mCamera;
     sp<SurfaceComposerClient> mClient;
@@ -169,6 +192,8 @@ private:
 
     void useLock();
     void signalFinished();
+    void mutexLock();
+    void mutexUnlock();
 
     //------------------------------------------------------------------------
     // JPEG markers consist of one or more 0xFF bytes, followed by a marker
@@ -202,11 +227,6 @@ private:
     #define PSEUDO_IMAGE_MARKER 0x123; // Extra value.
 };
 
-
-}; //namespace qcamera
-
-using namespace qcamera;
-
 class Interpreter
 {
 public:
@@ -215,10 +235,13 @@ public:
         RESUME_PREVIEW_CMD = '[',
         START_PREVIEW_CMD = '1',
         STOP_PREVIEW_CMD = '2',
+        CHANGE_VIDEO_SIZE_CMD = '3',
         CHANGE_PREVIEW_SIZE_CMD = '4',
         CHANGE_PICTURE_SIZE_CMD = '5',
-        START_RECORD_CMD = '7',
-        STOP_RECORD_CMD = '8',
+        START_RECORD_CMD = '6',
+        STOP_RECORD_CMD = '7',
+        START_VIV_RECORD_CMD = '8',
+        STOP_VIV_RECORD_CMD = '9',
         DUMP_CAPS_CMD = 'E',
         AUTOFOCUS_CMD = 'f',
         TAKEPICTURE_CMD = 'p',
@@ -231,24 +254,34 @@ public:
 
     struct Command {
         Command( Commands_e cmd, char *arg = NULL)
-            : cmd(cmd)
-            , arg(arg) {}
+        : cmd(cmd)
+        , arg(arg) {}
         Command()
-            : cmd(INVALID_CMD)
-            , arg(NULL) {}
+        : cmd(INVALID_CMD)
+        , arg(NULL) {}
         Commands_e cmd;
         char *arg;
     };
 
     /* API */
     Interpreter()
-        : mUseScript(false)
-        , mScript(NULL) {}
+    : mUseScript(false)
+    , mScript(NULL) {}
 
     Interpreter(const char *file);
     ~Interpreter();
 
     Command getCommand(sp<CameraContext> currentCamera);
+    void releasePiPBuff();
+    status_t configureViVCodec();
+    //status_t configureViVCodec();
+    void setViVSize(Size VideoSize, int camIndex);
+    void setTestCtxInst(TestContext *instance);
+    status_t unconfigureViVCodec();
+    status_t ViVEncoderThread();
+    void ViVEncode();
+    static void *ThreadWrapper(void *context);
+
 private:
     static const int numberOfCommands;
 
@@ -256,11 +289,14 @@ private:
     int mCmdIndex;
     char *mScript;
     Vector<Command> mCommands;
-
+    TestContext *mTestContext;
+    pthread_t mViVEncThread;
 };
 
 class TestContext
 {
+    friend class CameraContext;
+    friend class Interpreter;
 public:
     TestContext();
     ~TestContext();
@@ -268,14 +304,48 @@ public:
     int32_t GetCamerasNum();
     status_t FunctionalTest();
     status_t AddScriptFromFile(const char *scriptFile);
+    void setViVSize(Size VideoSize, int camIndex);
+
 private:
     char GetNextCmd(sp<qcamera::CameraContext> currentCamera);
-
-    Vector< sp<qcamera::CameraContext> > mAvailableCameras;
-    bool mTestRunning;
     int  mCurrentCameraIndex;
     int  mSaveCurrentCameraIndex;
+    Vector< sp<qcamera::CameraContext> > mAvailableCameras;
+    bool mTestRunning;
     Interpreter *mInterpreter;
+
+    typedef struct ViVBuff_t{
+        void *buff;
+        size_t buffSize;
+        size_t YStride;
+        size_t UVStride;
+        size_t YScanLines;
+        size_t UVScanLines;
+        size_t srcWidth;
+        size_t srcHeight;
+    } ViVBuff_t;
+
+    typedef struct ViVVid_t{
+        sp<IGraphicBufferProducer> bufferProducer;
+        sp<Surface> surface;
+        sp<MediaCodec> codec;
+        sp<MediaMuxer> muxer;
+        sp<ANativeWindow> ANW;
+        Vector<sp<ABuffer> > buffers;
+        Size VideoSizes[2];
+        int ViVIdx;
+        size_t buff_cnt;
+        sp<GraphicBuffer> graphBuf;
+        void * mappedBuff;
+        bool isBuffValid;
+        int sourceCameraID;
+        int destinationCameraID;
+    } vidPiP_t;
+
+    ViVVid_t mViVVid;
+    ViVBuff_t mViVBuff;
 };
+
+}; //namespace qcamera
 
 #endif
