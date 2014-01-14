@@ -2241,7 +2241,7 @@ static int32_t mm_jpegenc_destroy_job(mm_jpeg_job_session_t *p_session)
   mm_jpeg_encode_job_t *p_jobparams = &p_session->encode_job;
   int i = 0, rc = 0;
 
-  CDBG_ERROR("%s:%d] Exif entry count %d %d", __func__, __LINE__,
+  CDBG_HIGH("%s:%d] Exif entry count %d %d", __func__, __LINE__,
     (int)p_jobparams->exif_info.numOfEntries,
     (int)p_session->exif_count_local);
   for (i = 0; i < p_session->exif_count_local; i++) {
@@ -2649,12 +2649,12 @@ mm_jpeg_job_q_node_t* mm_jpeg_queue_remove_job_by_client_id(
     data = (mm_jpeg_job_q_node_t *)node->data;
 
     if (data && (data->enc_info.client_handle == client_hdl)) {
-      CDBG_ERROR("%s:%d] found matching client handle", __func__, __LINE__);
+      CDBG_HIGH("%s:%d] found matching client handle", __func__, __LINE__);
       job_node = data;
       cam_list_del_node(&node->list);
       queue->size--;
       free(node);
-      CDBG_ERROR("%s: queue size = %d", __func__, queue->size);
+      CDBG_HIGH("%s: queue size = %d", __func__, queue->size);
       break;
     }
     pos = pos->next;
@@ -2683,12 +2683,12 @@ mm_jpeg_job_q_node_t* mm_jpeg_queue_remove_job_by_session_id(
     data = (mm_jpeg_job_q_node_t *)node->data;
 
     if (data && (data->enc_info.encode_job.session_id == session_id)) {
-      CDBG_ERROR("%s:%d] found matching session id", __func__, __LINE__);
+      CDBG_HIGH("%s:%d] found matching session id", __func__, __LINE__);
       job_node = data;
       cam_list_del_node(&node->list);
       queue->size--;
       free(node);
-      CDBG_ERROR("%s: queue size = %d", __func__, queue->size);
+      CDBG_HIGH("%s: queue size = %d", __func__, queue->size);
       break;
     }
     pos = pos->next;
@@ -2724,7 +2724,7 @@ mm_jpeg_job_q_node_t* mm_jpeg_queue_remove_job_by_job_id(
     }
 
     if (data && (lq_job_id == job_id)) {
-      CDBG_ERROR("%s:%d] found matching job id", __func__, __LINE__);
+      CDBG_HIGH("%s:%d] found matching job id", __func__, __LINE__);
       job_node = data;
       cam_list_del_node(&node->list);
       queue->size--;

@@ -66,7 +66,7 @@ extern volatile uint32_t gMmJpegIntfLogLevel;
 #endif
 
 #ifdef _ANDROID_
-  #define CDBG_HIGH(fmt, args...) ALOGD_IF(gMmJpegIntfLogLevel >= 1, fmt, ##args)
+  #define CDBG_HIGH(fmt, args...)  ALOGI(fmt, ##args)
   #define CDBG_ERROR(fmt, args...)  ALOGE(fmt, ##args)
 #else
   #define CDBG_HIGH(fmt, args...) fprintf(stderr, fmt, ##args)
