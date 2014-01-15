@@ -244,6 +244,8 @@ typedef struct {
     mm_camera_queue_t pp_frames;
     mm_camera_stream_t *reproc_stream;
     cam_metadata_info_t *metadata;
+    int8_t is_chromatix_reload;
+    tune_chromatix_t tune_data;
 } mm_camera_test_obj_t;
 
 typedef struct {
