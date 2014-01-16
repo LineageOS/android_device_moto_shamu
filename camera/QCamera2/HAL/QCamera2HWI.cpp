@@ -955,7 +955,7 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       m_bShutterSoundPlayed(false),
       m_bPreviewStarted(false),
       m_bRecordStarted(false),
-      m_currentFocusState(CAM_AF_SCANNING),
+      m_currentFocusState(CAM_AF_NOT_FOCUSED),
       m_pPowerModule(NULL),
       mDumpFrmCnt(0),
       mDumpSkipCnt(0),
@@ -2000,6 +2000,7 @@ int QCamera2HardwareInterface::cancelAutoFocus()
     case CAM_FOCUS_MODE_CONTINOUS_VIDEO:
     case CAM_FOCUS_MODE_CONTINOUS_PICTURE:
         rc = mCameraHandle->ops->cancel_auto_focus(mCameraHandle->camera_handle);
+        m_currentFocusState = CAM_AF_CANCELLED;
         break;
     case CAM_FOCUS_MODE_INFINITY:
     case CAM_FOCUS_MODE_FIXED:
@@ -2941,6 +2942,8 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
 {
     int32_t ret = NO_ERROR;
     ALOGD("%s: E",__func__);
+
+    cam_autofocus_state_t prevFocusState = m_currentFocusState;
     m_currentFocusState = focus_data.focus_state;
 
     cam_focus_mode_type focusMode = mParameters.getFocusMode();
@@ -2957,6 +2960,15 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
         ret = sendEvtNotify(CAMERA_MSG_FOCUS,
                             (focus_data.focus_state == CAM_AF_FOCUSED)? true : false,
                             0);
+        if (CAM_AF_CANCELLED == prevFocusState) {
+            //Notify CancelAF API
+            qcamera_api_result_t result;
+            memset(&result, 0, sizeof(qcamera_api_result_t));
+            result.status = NO_ERROR;
+            result.request_api = QCAMERA_SM_EVT_STOP_AUTO_FOCUS;
+            result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
+            signalAPIResult(&result);
+        }
         break;
     case CAM_FOCUS_MODE_CONTINOUS_VIDEO:
     case CAM_FOCUS_MODE_CONTINOUS_PICTURE:
@@ -2980,6 +2992,7 @@ int32_t QCamera2HardwareInterface::processAutoFocusEvent(cam_auto_focus_data_t &
         ALOGD("%s: no ops for autofocus event in focusmode %d", __func__, focusMode);
         break;
     }
+
     ALOGD("%s: X",__func__);
     return ret;
 }
@@ -4901,6 +4914,26 @@ bool QCamera2HardwareInterface::isCACEnabled()
 }
 
 /*===========================================================================
+ * FUNCTION   : isAFRunning
+ *
+ * DESCRIPTION: if AF is in progress while in Auto/Macro focus modes
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: AF in progress
+ *              false: AF not in progress
+ *==========================================================================*/
+bool QCamera2HardwareInterface::isAFRunning()
+{
+    bool isAFInProgress = (m_currentFocusState == CAM_AF_SCANNING &&
+            (mParameters.getFocusMode() == CAM_FOCUS_MODE_AUTO ||
+            mParameters.getFocusMode() == CAM_FOCUS_MODE_MACRO));
+
+    return isAFInProgress;
+}
+
+/*===========================================================================
+
  * FUNCTION   : needReprocess
  *
  * DESCRIPTION: if reprocess is needed
