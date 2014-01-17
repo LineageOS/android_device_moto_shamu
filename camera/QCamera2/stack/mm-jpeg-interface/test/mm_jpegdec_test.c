@@ -202,10 +202,41 @@ int mm_jpegdec_test_read(mm_jpegdec_intf_test_t *p_obj)
   return 0;
 }
 
+void chromaScale(mm_jpeg_color_format format, float *cScale)
+{
+  float scale;
+
+  switch(format) {
+    case MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V2:
+    case MM_JPEG_COLOR_FORMAT_YCBCRLP_H2V2:
+      scale = 1.5;
+      break;
+    case MM_JPEG_COLOR_FORMAT_YCRCBLP_H2V1:
+    case MM_JPEG_COLOR_FORMAT_YCBCRLP_H2V1:
+    case MM_JPEG_COLOR_FORMAT_YCRCBLP_H1V2:
+    case MM_JPEG_COLOR_FORMAT_YCBCRLP_H1V2:
+      scale = 2.0;
+      break;
+    case MM_JPEG_COLOR_FORMAT_YCRCBLP_H1V1:
+    case MM_JPEG_COLOR_FORMAT_YCBCRLP_H1V1:
+      scale = 3.0;
+      break;
+    case MM_JPEG_COLOR_FORMAT_MONOCHROME:
+      scale = 1.0;
+      break;
+    default:
+      scale = 0;
+      CDBG_ERROR("%s:%d] color format Error",__func__, __LINE__);
+    }
+
+  *cScale = scale;
+}
+
 static int decode_init(jpeg_test_input_t *p_input, mm_jpegdec_intf_test_t *p_obj)
 {
   int rc = -1;
   int size = CEILING16(p_input->width) * CEILING16(p_input->height);
+  float cScale;
   mm_jpeg_decode_params_t *p_params = &p_obj->params;
   mm_jpeg_decode_job_t *p_job_params = &p_obj->job.decode_job;
 
@@ -218,7 +249,8 @@ static int decode_init(jpeg_test_input_t *p_input, mm_jpegdec_intf_test_t *p_obj
   pthread_mutex_init(&p_obj->lock, NULL);
   pthread_cond_init(&p_obj->cond, NULL);
 
-  p_obj->output.size = size * 3/2;
+  chromaScale(p_input->format, &cScale);
+  p_obj->output.size = size * cScale;
   rc = mm_jpegdec_test_alloc(&p_obj->output, p_obj->use_ion);
   if (rc) {
     CDBG_ERROR("%s:%d] Error",__func__, __LINE__);
@@ -242,7 +274,7 @@ static int decode_init(jpeg_test_input_t *p_input, mm_jpegdec_intf_test_t *p_obj
   p_params->dest_buf[0].fd = p_obj->output.p_pmem_fd;
   p_params->dest_buf[0].format = MM_JPEG_FMT_YUV;
   p_params->dest_buf[0].offset.mp[0].len = size;
-  p_params->dest_buf[0].offset.mp[1].len = size >> 1;
+  p_params->dest_buf[0].offset.mp[1].len = size * (cScale-1.0);
   p_params->dest_buf[0].offset.mp[0].stride = CEILING16(p_input->width);
   p_params->dest_buf[0].offset.mp[0].scanline = CEILING16(p_input->height);
   p_params->dest_buf[0].offset.mp[1].stride = CEILING16(p_input->width);
