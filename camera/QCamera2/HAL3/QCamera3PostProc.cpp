@@ -1103,9 +1103,6 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                             (qcamera_hal3_jpeg_data_t *)pme->m_inputJpegQ.dequeue();
 
                         if (NULL != jpeg_job) {
-                            //TBD_later - play shutter sound
-                            //pme->m_parent->playShutter();
-
                             // add into ongoing jpeg job Q
                             pme->m_ongoingJpegQ.enqueue((void *)jpeg_job);
                             ret = pme->encodeData(jpeg_job, needNewSess);
@@ -1326,7 +1323,7 @@ int32_t QCamera3Exif::addEntry(exif_tag_id_t tagid,
                               void *data)
 {
     int32_t rc = NO_ERROR;
-    if(m_nNumEntries >= MAX_EXIF_TABLE_ENTRIES) {
+    if(m_nNumEntries >= MAX_HAL3_EXIF_TABLE_ENTRIES) {
         ALOGE("%s: Number of entries exceeded limit", __func__);
         return NO_MEMORY;
     }

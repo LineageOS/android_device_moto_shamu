@@ -61,7 +61,7 @@ typedef struct {
     mm_camera_super_buf_t *src_frame;// source frame (need to be returned back to kernel after done)
 } qcamera_hal3_pp_data_t;
 
-#define MAX_EXIF_TABLE_ENTRIES 17
+#define MAX_HAL3_EXIF_TABLE_ENTRIES 22
 class QCamera3Exif
 {
 public:
@@ -76,7 +76,7 @@ public:
     QEXIF_INFO_DATA *getEntries() {return m_Entries;};
 
 private:
-    QEXIF_INFO_DATA m_Entries[MAX_EXIF_TABLE_ENTRIES];  // exif tags for JPEG encoder
+    QEXIF_INFO_DATA m_Entries[MAX_HAL3_EXIF_TABLE_ENTRIES];  // exif tags for JPEG encoder
     uint32_t  m_nNumEntries;                            // number of valid entries
 };
 

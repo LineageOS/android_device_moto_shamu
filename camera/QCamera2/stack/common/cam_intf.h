@@ -534,7 +534,6 @@ typedef union {
     INCLUDE(CAM_INTF_META_GOOD_FRAME_IDX_RANGE,         cam_frame_idx_range_t,          1);
     INCLUDE(CAM_INTF_META_HDR_DATA,                     cam_asd_hdr_scene_data_t,       1);
     INCLUDE(CAM_INTF_META_ASD_SCENE_TYPE,               int32_t,                        1);
-    INCLUDE(CAM_INTF_META_AEC_INFO,                     cam_ae_params_t,                1);
     INCLUDE(CAM_INTF_META_CHROMATIX_LITE_ISP,           cam_chromatix_lite_isp_t,       1);
     INCLUDE(CAM_INTF_META_CHROMATIX_LITE_PP,            cam_chromatix_lite_pp_t,        1);
     INCLUDE(CAM_INTF_META_CHROMATIX_LITE_AE,            cam_chromatix_lite_ae_stats_t,  1);
@@ -591,6 +590,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_STATS_SHARPNESS_MAP,          cam_sharpness_map_t,         3);
     INCLUDE(CAM_INTF_META_LENS_SHADING_MAP,             cam_lens_shading_map_t,      1);
     INCLUDE(CAM_INTF_TUNING_PARAMS,                     tuning_params_t,             1);
+    INCLUDE(CAM_INTF_META_AEC_INFO,                     cam_3a_params_t,             1);
     INCLUDE(CAM_INTF_META_PRIVATE_DATA,                 char,                        MAX_METADATA_PRIVATE_PAYLOAD_SIZE);
 } metadata_type_t;
 
