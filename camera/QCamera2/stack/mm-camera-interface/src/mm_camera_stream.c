@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -1132,8 +1132,9 @@ int32_t mm_stream_qbuf(mm_stream_t *my_obj, mm_camera_buf_def_t *buf)
     int32_t rc = 0;
     struct v4l2_buffer buffer;
     struct v4l2_plane planes[VIDEO_MAX_PLANES];
-    CDBG("%s: E, my_handle = 0x%x, fd = %d, state = %d",
-         __func__, my_obj->my_hdl, my_obj->fd, my_obj->state);
+    CDBG("%s: E, my_handle = 0x%x, fd = %d, state = %d, stream type = %d",
+         __func__, my_obj->my_hdl, my_obj->fd, my_obj->state,
+         my_obj->stream_info->stream_type);
 
     memcpy(planes, buf->planes, sizeof(planes));
     memset(&buffer, 0, sizeof(buffer));
