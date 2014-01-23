@@ -1602,6 +1602,8 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
                                 0,
                                 NULL,
                                 &release_data);
+        } else {
+            raw_mem->release(raw_mem);
         }
     } else {
         ALOGE("%s: Cannot get raw mem", __func__);
