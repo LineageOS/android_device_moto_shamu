@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -1218,7 +1218,8 @@ uint8_t get_num_of_cameras()
             break;
         }
 
-        if (strncmp(mdev_info.model, "msm_config", sizeof(mdev_info.model) != 0)) {
+        if (strncmp(mdev_info.model, MSM_CONFIGURATION_NAME,
+          sizeof(mdev_info.model)) != 0) {
             close(dev_fd);
             dev_fd = 0;
             continue;
