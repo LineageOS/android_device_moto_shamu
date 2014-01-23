@@ -62,7 +62,7 @@ QCamera3Memory::QCamera3Memory()
     for (int i = 0; i < MM_CAMERA_MAX_NUM_FRAMES; i++) {
         mMemInfo[i].fd = 0;
         mMemInfo[i].main_ion_fd = 0;
-        mMemInfo[i].handle = NULL;
+        mMemInfo[i].handle = 0;
         mMemInfo[i].size = 0;
     }
 }
@@ -114,9 +114,9 @@ int QCamera3Memory::cacheOpsInternal(int index, unsigned int cmd, void *vaddr)
     custom_data.cmd = cmd;
     custom_data.arg = (unsigned long)&cache_inv_data;
 
-    ALOGV("%s: addr = %p, fd = %d, handle = %p length = %d, ION Fd = %d",
+    ALOGV("%s: addr = %p, fd = %d, handle = %lx length = %d, ION Fd = %d",
          __func__, cache_inv_data.vaddr, cache_inv_data.fd,
-         cache_inv_data.handle, cache_inv_data.length,
+         (unsigned long)cache_inv_data.handle, cache_inv_data.length,
          mMemInfo[index].main_ion_fd);
     ret = ioctl(mMemInfo[index].main_ion_fd, ION_IOC_CUSTOM, &custom_data);
     if (ret < 0)
@@ -390,7 +390,7 @@ void QCamera3HeapMemory::deallocOneBuffer(QCamera3MemInfo &memInfo)
         close(memInfo.main_ion_fd);
         memInfo.main_ion_fd = 0;
     }
-    memInfo.handle = NULL;
+    memInfo.handle = 0;
     memInfo.size = 0;
 }
 
