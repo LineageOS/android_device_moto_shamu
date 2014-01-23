@@ -37,6 +37,8 @@
 #include <linux/media.h>
 #include <signal.h>
 #include <media/msm_cam_sensor.h>
+#include <cutils/properties.h>
+#include <stdlib.h>
 
 #include "mm_camera_dbg.h"
 #include "mm_camera_interface.h"
@@ -1194,8 +1196,15 @@ uint8_t get_num_of_cameras()
     char subdev_name[32];
     int32_t sd_fd = 0;
     struct sensor_init_cfg_data cfg;
+    char prop[PROPERTY_VALUE_MAX];
 
     CDBG("%s : E", __func__);
+
+    property_get("vold.decrypt", prop, "0");
+    int decrypt = atoi(prop);
+    if (decrypt == 1)
+     return 0;
+
     /* lock the mutex */
     pthread_mutex_lock(&g_intf_lock);
 
