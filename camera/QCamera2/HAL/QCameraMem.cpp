@@ -118,9 +118,9 @@ int QCameraMemory::cacheOpsInternal(int index, unsigned int cmd, void *vaddr)
     custom_data.cmd = cmd;
     custom_data.arg = (unsigned long)&cache_inv_data;
 
-    ALOGD("%s: addr = %p, fd = %d, handle = %p length = %d, ION Fd = %d",
+    ALOGD("%s: addr = %p, fd = %d, handle = %lx length = %d, ION Fd = %d",
          __func__, cache_inv_data.vaddr, cache_inv_data.fd,
-         cache_inv_data.handle, cache_inv_data.length,
+         (unsigned long)cache_inv_data.handle, cache_inv_data.length,
          mMemInfo[index].main_ion_fd);
     ret = ioctl(mMemInfo[index].main_ion_fd, ION_IOC_CUSTOM, &custom_data);
     if (ret < 0)
@@ -370,7 +370,7 @@ void QCameraMemory::deallocOneBuffer(QCameraMemInfo &memInfo)
         close(memInfo.main_ion_fd);
         memInfo.main_ion_fd = 0;
     }
-    memInfo.handle = NULL;
+    memInfo.handle = 0;
     memInfo.size = 0;
 }
 
