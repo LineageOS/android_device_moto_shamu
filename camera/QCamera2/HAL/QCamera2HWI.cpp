@@ -53,7 +53,7 @@
 
 namespace qcamera {
 
-cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
+cam_capability_t *gCamCaps[MM_CAMERA_MAX_NUM_SENSORS];
 static pthread_mutex_t g_camlock = PTHREAD_MUTEX_INITIALIZER;
 
 camera_device_ops_t QCamera2HardwareInterface::mCameraOps = {
@@ -1080,10 +1080,10 @@ int QCamera2HardwareInterface::openCamera()
                                               (void *) this);
 
     /* get max pic size for jpeg work buf calculation*/
-    for(i = 0; i < gCamCapability[mCameraId]->picture_sizes_tbl_cnt - 1; i++)
+    for(i = 0; i < gCamCaps[mCameraId]->picture_sizes_tbl_cnt - 1; i++)
     {
-      l_curr_width = gCamCapability[mCameraId]->picture_sizes_tbl[i].width;
-      l_curr_height = gCamCapability[mCameraId]->picture_sizes_tbl[i].height;
+      l_curr_width = gCamCaps[mCameraId]->picture_sizes_tbl[i].width;
+      l_curr_height = gCamCaps[mCameraId]->picture_sizes_tbl[i].height;
 
       if ((l_curr_width * l_curr_height) >
         (m_max_pic_width * m_max_pic_height)) {
@@ -1103,17 +1103,18 @@ int QCamera2HardwareInterface::openCamera()
     // update padding info from jpeg
     cam_padding_info_t padding_info;
     m_postprocessor.getJpegPaddingReq(padding_info);
-    if (gCamCapability[mCameraId]->padding_info.width_padding < padding_info.width_padding) {
-        gCamCapability[mCameraId]->padding_info.width_padding = padding_info.width_padding;
+    if (gCamCaps[mCameraId]->padding_info.width_padding < padding_info.width_padding) {
+        gCamCaps[mCameraId]->padding_info.width_padding = padding_info.width_padding;
     }
-    if (gCamCapability[mCameraId]->padding_info.height_padding < padding_info.height_padding) {
-        gCamCapability[mCameraId]->padding_info.height_padding = padding_info.height_padding;
+    if (gCamCaps[mCameraId]->padding_info.height_padding < padding_info.height_padding) {
+        gCamCaps[mCameraId]->padding_info.height_padding = padding_info.height_padding;
     }
-    if (gCamCapability[mCameraId]->padding_info.plane_padding < padding_info.plane_padding) {
-        gCamCapability[mCameraId]->padding_info.plane_padding = padding_info.plane_padding;
+    if (gCamCaps[mCameraId]->padding_info.plane_padding < padding_info.plane_padding) {
+        gCamCaps[mCameraId]->padding_info.plane_padding = padding_info.plane_padding;
     }
 
-    mParameters.init(gCamCapability[mCameraId], mCameraHandle, this);
+    mParameters.init(gCamCaps[mCameraId], mCameraHandle, this);
+
     mCameraOpened = true;
 
     return NO_ERROR;
@@ -1225,12 +1226,12 @@ int QCamera2HardwareInterface::initCapabilities(int cameraId)
         ALOGE("%s: failed to query capability",__func__);
         goto query_failed;
     }
-    gCamCapability[cameraId] = (cam_capability_t *)malloc(sizeof(cam_capability_t));
-    if (!gCamCapability[cameraId]) {
+    gCamCaps[cameraId] = (cam_capability_t *)malloc(sizeof(cam_capability_t));
+    if (!gCamCaps[cameraId]) {
         ALOGE("%s: out of memory", __func__);
         goto query_failed;
     }
-    memcpy(gCamCapability[cameraId], DATA_PTR(capabilityHeap,0),
+    memcpy(gCamCaps[cameraId], DATA_PTR(capabilityHeap,0),
                                         sizeof(cam_capability_t));
 
     rc = NO_ERROR;
@@ -1267,7 +1268,7 @@ int QCamera2HardwareInterface::getCapabilities(int cameraId,
     int rc = NO_ERROR;
 
     pthread_mutex_lock(&g_camlock);
-    if (NULL == gCamCapability[cameraId]) {
+    if (NULL == gCamCaps[cameraId]) {
         rc = initCapabilities(cameraId);
         if (rc < 0) {
             pthread_mutex_unlock(&g_camlock);
@@ -1275,7 +1276,7 @@ int QCamera2HardwareInterface::getCapabilities(int cameraId,
         }
     }
 
-    switch(gCamCapability[cameraId]->position) {
+    switch(gCamCaps[cameraId]->position) {
     case CAM_POSITION_BACK:
         info->facing = CAMERA_FACING_BACK;
         break;
@@ -1290,7 +1291,10 @@ int QCamera2HardwareInterface::getCapabilities(int cameraId,
         break;
     }
 
-    info->orientation = gCamCapability[cameraId]->sensor_mount_angle;
+    info->orientation = gCamCaps[cameraId]->sensor_mount_angle;
+    info->device_version = CAMERA_DEVICE_API_VERSION_1_0;
+    info->static_camera_characteristics = NULL;
+
     pthread_mutex_unlock(&g_camlock);
     return rc;
 }
@@ -1641,12 +1645,12 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
     }
 
     if (!isZSLMode()) {
-        if (gCamCapability[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
+        if (gCamCaps[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
             streamInfo->pp_config.feature_mask |= CAM_QCOM_FEATURE_SHARPNESS;
             streamInfo->pp_config.sharpness = mParameters.getInt(QCameraParameters::KEY_QC_SHARPNESS);
         }
 
-        if (gCamCapability[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_EFFECT) {
+        if (gCamCaps[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_EFFECT) {
             streamInfo->pp_config.feature_mask |= CAM_QCOM_FEATURE_EFFECT;
             effect = mParameters.get(CameraParameters::KEY_EFFECT);
             streamInfo->pp_config.effect = getEffectValue(effect);
@@ -2061,9 +2065,9 @@ int32_t QCamera2HardwareInterface::configureAFBracketing()
     cam_af_bracketing_t afBracket;
     memset(&afBracket, 0, sizeof(cam_af_bracketing_t));
     afBracket.enable = 1;
-    afBracket.burst_count = gCamCapability[mCameraId]->ubifocus_af_bracketing_need.burst_count;
+    afBracket.burst_count = gCamCaps[mCameraId]->ubifocus_af_bracketing_need.burst_count;
     for(int8_t i = 0; i < MAX_AF_BRACKETING_VALUES; i++) {
-        afBracket.focus_steps[i] = gCamCapability[mCameraId]->ubifocus_af_bracketing_need.focus_steps[i];
+        afBracket.focus_steps[i] = gCamCaps[mCameraId]->ubifocus_af_bracketing_need.focus_steps[i];
         ALOGD("%s: focus_step[%d] = %d", __func__, i, afBracket.focus_steps[i]);
     }
     //Send cmd to backend to set AF Bracketing for Ubi Focus.
@@ -2124,7 +2128,7 @@ int32_t QCamera2HardwareInterface::configureOptiZoom()
     int32_t rc = NO_ERROR;
     //Get current zoom level and zoom threshold value to start opti zoom.
     uint8_t zoom_level = (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
-    uint8_t zoom_threshold = gCamCapability[mCameraId]->opti_zoom_settings_need.zoom_threshold;
+    uint8_t zoom_threshold = gCamCaps[mCameraId]->opti_zoom_settings_need.zoom_threshold;
     ALOGD("%s: current zoom level =%d & zoom_threshold =%d",__func__,zoom_level,zoom_threshold);
     if(zoom_level >= zoom_threshold) {
         //set zoom level to 1x;
@@ -2247,22 +2251,22 @@ int QCamera2HardwareInterface::takePicture()
 
         if ( mParameters.isHDREnabled() ) {
             // 'values' should be in "idx1,idx2,idx3,..." format
-            uint8_t hdrFrameCount = gCamCapability[mCameraId]->hdr_bracketing_setting.num_frames;
+            uint8_t hdrFrameCount = gCamCaps[mCameraId]->hdr_bracketing_setting.num_frames;
             ALOGE("%s : HDR values %d, %d frame count: %d",
                   __func__,
-                  (int8_t) gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.values[0],
-                  (int8_t) gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.values[1],
+                  (int8_t) gCamCaps[mCameraId]->hdr_bracketing_setting.exp_val.values[0],
+                  (int8_t) gCamCaps[mCameraId]->hdr_bracketing_setting.exp_val.values[1],
                   hdrFrameCount);
 
             // Enable AE Bracketing for HDR
             cam_exp_bracketing_t aeBracket;
             memset(&aeBracket, 0, sizeof(cam_exp_bracketing_t));
             aeBracket.mode =
-                gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.mode;
+                gCamCaps[mCameraId]->hdr_bracketing_setting.exp_val.mode;
             String8 tmp;
             for ( unsigned int i = 0; i < hdrFrameCount ; i++ ) {
                 tmp.appendFormat("%d",
-                    (int8_t) gCamCapability[mCameraId]->hdr_bracketing_setting.exp_val.values[i]);
+                    (int8_t) gCamCaps[mCameraId]->hdr_bracketing_setting.exp_val.values[i]);
                 tmp.append(",");
             }
             if (mParameters.isHDR1xFrameEnabled()
@@ -3365,7 +3369,7 @@ int32_t QCamera2HardwareInterface::addStreamToChannel(QCameraChannel *pChannel,
     rc = pChannel->addStream(*this,
                              pStreamInfo,
                              minStreamBufNum,
-                             &gCamCapability[mCameraId]->padding_info,
+                             &gCamCaps[mCameraId]->padding_info,
                              streamCB, userData,
                              bDynAllocBuf);
     if (rc != NO_ERROR) {
@@ -3914,23 +3918,24 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
         return NULL;
     }
 
-    ALOGD("%s: Before pproc config check, ret = %x", __func__, gCamCapability[mCameraId]->min_required_pp_mask);
+    ALOGD("%s: Before pproc config check, ret = %x", __func__,
+            gCamCaps[mCameraId]->min_required_pp_mask);
 
     // pp feature config
     cam_pp_feature_config_t pp_config;
     memset(&pp_config, 0, sizeof(cam_pp_feature_config_t));
     if (mParameters.isZSLMode()) {
-        if (gCamCapability[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_EFFECT) {
+        if (gCamCaps[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_EFFECT) {
             pp_config.feature_mask |= CAM_QCOM_FEATURE_EFFECT;
             effect = mParameters.get(CameraParameters::KEY_EFFECT);
             pp_config.effect = getEffectValue(effect);
         }
-        if (gCamCapability[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
+        if (gCamCaps[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
             pp_config.feature_mask |= CAM_QCOM_FEATURE_SHARPNESS;
             pp_config.sharpness = mParameters.getInt(QCameraParameters::KEY_QC_SHARPNESS);
         }
 
-        if (gCamCapability[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_CROP) {
+        if (gCamCaps[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_CROP) {
             pp_config.feature_mask |= CAM_QCOM_FEATURE_CROP;
         }
 
@@ -3996,7 +4001,7 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
     if(mParameters.isOptiZoomEnabled()) {
         uint8_t zoom_level = (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
         uint8_t zoom_threshold =
-            gCamCapability[mCameraId]->opti_zoom_settings_need.zoom_threshold;
+            gCamCaps[mCameraId]->opti_zoom_settings_need.zoom_threshold;
         //Check for threshold value of zoom required for optizoom algo.
         //if it is above then threshold then only set feature mask, and
         //pass zoom level.
@@ -4046,7 +4051,7 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
                                               pInputChannel,
                                               minStreamBufNum,
                                               mParameters.getNumOfSnapshots(),
-                                              &gCamCapability[mCameraId]->padding_info,
+                                              &gCamCaps[mCameraId]->padding_info,
                                               mParameters,
                                               mLongshotEnabled);
     if (rc != NO_ERROR) {
@@ -4116,7 +4121,7 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOfflineReprocChannel(
 
     rc = pChannel->addStream(*this,
                              pStreamInfo, img_config.num_of_bufs,
-                             &gCamCapability[mCameraId]->padding_info,
+                             &gCamCaps[mCameraId]->padding_info,
                              stream_cb, userdata, false);
 
     if (rc != NO_ERROR) {
@@ -4719,9 +4724,9 @@ int QCamera2HardwareInterface::calcThermalLevel(
             // Set lowest min FPS for now
             adjustedRange.min_fps = minFPS/1000.0f;
             adjustedRange.max_fps = minFPS/1000.0f;
-            for ( int i = 0 ; i < gCamCapability[mCameraId]->fps_ranges_tbl_cnt ; i++ ) {
-                if ( gCamCapability[mCameraId]->fps_ranges_tbl[i].min_fps < adjustedRange.min_fps ) {
-                    adjustedRange.min_fps = gCamCapability[mCameraId]->fps_ranges_tbl[i].min_fps;
+            for ( int i = 0 ; i < gCamCaps[mCameraId]->fps_ranges_tbl_cnt ; i++ ) {
+                if ( gCamCaps[mCameraId]->fps_ranges_tbl[i].min_fps < adjustedRange.min_fps ) {
+                    adjustedRange.min_fps = gCamCaps[mCameraId]->fps_ranges_tbl[i].min_fps;
                     adjustedRange.max_fps = adjustedRange.min_fps;
                 }
             }
@@ -4963,7 +4968,7 @@ bool QCamera2HardwareInterface::needReprocess()
         return true;
     }
 
-    if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
+    if ((gCamCaps[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
             (getJpegRotation() > 0) &&  (mParameters.getRecordingHintValue() == false)) {
             // current rotation is not zero, and pp has the capability to process rotation
             ALOGD("%s: need to do reprocess for rotation=%d", __func__, getJpegRotation());
@@ -4972,7 +4977,7 @@ bool QCamera2HardwareInterface::needReprocess()
     }
 
     if (isZSLMode()) {
-        if (((gCamCapability[mCameraId]->min_required_pp_mask > 0) ||
+        if (((gCamCaps[mCameraId]->min_required_pp_mask > 0) ||
              mParameters.isWNREnabled() || isCACEnabled())) {
             // TODO: add for ZSL HDR later
             ALOGD("%s: need do reprocess for ZSL WNR or min PP reprocess", __func__);
@@ -4989,7 +4994,7 @@ bool QCamera2HardwareInterface::needReprocess()
         }
     }
 
-    if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_SCALE) > 0 &&
+    if ((gCamCaps[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_SCALE) > 0 &&
         mParameters.m_reprocScaleParam.isScaleEnabled() &&
         mParameters.m_reprocScaleParam.isUnderScaling()) {
         // Reproc Scale is enaled and also need Scaling to current Snapshot
@@ -5033,7 +5038,7 @@ bool QCamera2HardwareInterface::needRotationReprocess()
         return false;
     }
 
-        if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
+        if ((gCamCaps[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
             (getJpegRotation() > 0) && (mParameters.getRecordingHintValue() == false)) {
             // current rotation is not zero, and pp has the capability to process rotation
             ALOGD("%s: need to do reprocess for rotation=%d", __func__, getJpegRotation());
@@ -5065,7 +5070,7 @@ bool QCamera2HardwareInterface::needScaleReprocess()
         return false;
     }
 
-    if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_SCALE) > 0 &&
+    if ((gCamCaps[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_SCALE) > 0 &&
         mParameters.m_reprocScaleParam.isScaleEnabled() &&
         mParameters.m_reprocScaleParam.isUnderScaling()) {
         // Reproc Scale is enaled and also need Scaling to current Snapshot
@@ -5077,7 +5082,6 @@ bool QCamera2HardwareInterface::needScaleReprocess()
     pthread_mutex_unlock(&m_parm_lock);
     return false;
 }
-
 
 /*===========================================================================
  * FUNCTION   : getThumbnailSize

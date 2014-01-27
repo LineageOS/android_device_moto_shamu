@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -27,7 +27,7 @@
 *
 */
 
-#include "QCamera3Factory.h"
+#include "QCamera2Factory.h"
 
 static hw_module_t camera_common = {
     tag: HARDWARE_MODULE_TAG,
@@ -36,15 +36,15 @@ static hw_module_t camera_common = {
     id: CAMERA_HARDWARE_MODULE_ID,
     name: "QCamera Module",
     author: "Qualcomm Innovation Center Inc",
-    methods: &qcamera::QCamera3Factory::mModuleMethods,
+    methods: &qcamera::QCamera2Factory::mModuleMethods,
     dso: NULL,
     reserved:  {0},
 };
 
 camera_module_t HAL_MODULE_INFO_SYM = {
     common: camera_common,
-    get_number_of_cameras: qcamera::QCamera3Factory::get_number_of_cameras,
-    get_camera_info: qcamera::QCamera3Factory::get_camera_info,
+    get_number_of_cameras: qcamera::QCamera2Factory::get_number_of_cameras,
+    get_camera_info: qcamera::QCamera2Factory::get_camera_info,
     set_callbacks: NULL,
     get_vendor_tag_ops: NULL,
     reserved: {0}

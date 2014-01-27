@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -43,7 +43,7 @@ namespace qcamera {
 class QCamera3Stream;
 class QCamera3Channel;
 
-typedef void (*stream_cb_routine)(mm_camera_super_buf_t *frame,
+typedef void (*hal3_stream_cb_routine)(mm_camera_super_buf_t *frame,
                                   QCamera3Stream *stream,
                                   void *userdata);
 
@@ -61,7 +61,7 @@ public:
                          cam_dimension_t streamDim,
                          cam_stream_reproc_config_t* reprocess_config,
                          uint8_t minStreamBufNum,
-                         stream_cb_routine stream_cb,
+                         hal3_stream_cb_routine stream_cb,
                          void *userdata);
     virtual int32_t bufDone(int index);
     virtual int32_t processDataNotify(mm_camera_super_buf_t *bufs);
@@ -92,7 +92,7 @@ private:
     cam_stream_info_t *mStreamInfo; // ptr to stream info buf
     mm_camera_stream_mem_vtbl_t mMemVtbl;
     uint8_t mNumBufs;
-    stream_cb_routine mDataCB;
+    hal3_stream_cb_routine mDataCB;
     void *mUserData;
 
     QCameraQueue     mDataQ;
