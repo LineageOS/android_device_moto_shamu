@@ -964,6 +964,7 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       mLongshotEnabled(false),
       m_max_pic_width(0),
       m_max_pic_height(0),
+      mLiveSnapshotThread(0),
       mFlashNeeded(false),
       mCaptureRotation(0),
       mIs3ALocked(false),
@@ -2453,6 +2454,27 @@ int QCamera2HardwareInterface::cancelPicture()
 }
 
 /*===========================================================================
+ * FUNCTION   : Live_Snapshot_thread
+ *
+ * DESCRIPTION: Seperate thread for taking live snapshot during recording
+ *
+ * PARAMETERS : @data - pointer to QCamera2HardwareInterface class object
+ *
+ * RETURN     : none
+ *==========================================================================*/
+void* Live_Snapshot_thread (void* data)
+{
+
+    QCamera2HardwareInterface *hw = reinterpret_cast<QCamera2HardwareInterface *>(data);
+    if (!hw) {
+        ALOGE("take_picture_thread: NULL camera device");
+        return (void *)BAD_VALUE;
+    }
+    hw->takeLiveSnapshot_internal();
+    return (void* )NULL;
+}
+
+/*===========================================================================
  * FUNCTION   : takeLiveSnapshot
  *
  * DESCRIPTION: take live snapshot during recording
@@ -2466,6 +2488,24 @@ int QCamera2HardwareInterface::cancelPicture()
 int QCamera2HardwareInterface::takeLiveSnapshot()
 {
     int rc = NO_ERROR;
+    rc= pthread_create(&mLiveSnapshotThread, NULL, Live_Snapshot_thread, (void *) this);
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : takeLiveSnapshot_internal
+ *
+ * DESCRIPTION: take live snapshot during recording
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCamera2HardwareInterface::takeLiveSnapshot_internal()
+{
+    int rc;
 
     getOrientation();
 
@@ -2475,6 +2515,11 @@ int QCamera2HardwareInterface::takeLiveSnapshot()
     // start snapshot channel
     if (rc == NO_ERROR) {
         rc = startChannel(QCAMERA_CH_TYPE_SNAPSHOT);
+    }
+
+    if (rc != NO_ERROR) {
+        rc = processAPI(QCAMERA_SM_EVT_CANCEL_PICTURE, NULL);
+        rc = sendEvtNotify(CAMERA_MSG_ERROR, UNKNOWN_ERROR, 0);
     }
     return rc;
 }
@@ -2493,6 +2538,11 @@ int QCamera2HardwareInterface::takeLiveSnapshot()
 int QCamera2HardwareInterface::cancelLiveSnapshot()
 {
     int rc = NO_ERROR;
+
+    if (mLiveSnapshotThread != 0) {
+        pthread_join(mLiveSnapshotThread,NULL);
+        mLiveSnapshotThread = 0;
+    }
 
     //stop post processor
     m_postprocessor.stop();
@@ -3273,9 +3323,10 @@ void QCamera2HardwareInterface::unlockAPI()
  *==========================================================================*/
 void QCamera2HardwareInterface::signalAPIResult(qcamera_api_result_t *result)
 {
+
     pthread_mutex_lock(&m_lock);
     m_apiResult = *result;
-    pthread_cond_signal(&m_cond);
+    pthread_cond_broadcast(&m_cond);
     pthread_mutex_unlock(&m_lock);
 }
 

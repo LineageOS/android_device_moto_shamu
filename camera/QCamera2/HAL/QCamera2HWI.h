@@ -195,6 +195,7 @@ public:
     static int auto_focus(struct camera_device *);
     static int cancel_auto_focus(struct camera_device *);
     static int take_picture(struct camera_device *);
+    int takeLiveSnapshot_internal();
     static int cancel_picture(struct camera_device *);
     static int set_parameters(struct camera_device *, const char *parms);
     static char* get_parameters(struct camera_device *);
@@ -494,6 +495,7 @@ private:
 
     int32_t m_max_pic_width;
     int32_t m_max_pic_height;
+    pthread_t mLiveSnapshotThread;
     uint8_t mFlashNeeded;
     int mCaptureRotation;
     int32_t mFlash;
