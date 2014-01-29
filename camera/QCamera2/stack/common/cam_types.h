@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -881,6 +881,7 @@ typedef struct {
     float exp_time;
     int iso_value;
     uint32_t flash_needed;
+    int settled;
 } cam_ae_params_t;
 
 
