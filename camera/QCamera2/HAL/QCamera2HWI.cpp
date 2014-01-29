@@ -4011,19 +4011,8 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addOnlineReprocChannel(
     //WNR and HDR happen inline. No extra buffers needed.
     uint32_t temp_feature_mask = pp_config.feature_mask;
     temp_feature_mask &= ~CAM_QCOM_FEATURE_HDR;
-    temp_feature_mask &= ~CAM_QCOM_FEATURE_DENOISE2D;
-
-    if (temp_feature_mask) {
-        int minCaptureBuffers = mParameters.getNumOfSnapshots();
-        int maxStreamBuf = minCaptureBuffers +
-            mParameters.getMaxUnmatchedFramesInQueue() +
-            mParameters.getNumOfExtraBuffersForImageProc();
-
-        minStreamBufNum *= CAMERA_PPROC_OUT_BUFFER_MULTIPLIER +
-            mParameters.getNumOfExtraBuffersForImageProc();
-        if (minStreamBufNum > maxStreamBuf) {
-            minStreamBufNum = maxStreamBuf;
-        }
+    if (temp_feature_mask && mParameters.isHDREnabled()) {
+        minStreamBufNum = 1 + mParameters.getNumOfExtraHDRInBufsIfNeeded();
     }
 
     // Add non inplace image lib buffers only when ppproc is present,
