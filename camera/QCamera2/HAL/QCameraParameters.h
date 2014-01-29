@@ -553,7 +553,7 @@ public:
     bool needThumbnailReprocess(uint32_t *pFeatureMask);
     inline bool isUbiFocusEnabled() {return m_bAFBracketingOn;};
     inline bool isChromaFlashEnabled() {return m_bChromaFlashOn;};
-    inline bool isOptiZoomEnabled() {return m_bOptiZoomOn;};
+    bool isOptiZoomEnabled();
     int32_t commitAFBracket(cam_af_bracketing_t afBracket);
     int32_t commitFlashBracket(cam_flash_bracketing_t flashBracket);
     int32_t set3ALock(const char *lockStr);
