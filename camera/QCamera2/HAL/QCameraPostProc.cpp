@@ -1360,22 +1360,20 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     crop.height = src_dim.height;
     crop.width = src_dim.width;
 
-    if (hdr_output_crop) {
-        memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
-        param.type = CAM_STREAM_PARAM_TYPE_GET_OUTPUT_CROP;
+    memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
+    param.type = CAM_STREAM_PARAM_TYPE_GET_OUTPUT_CROP;
 
-        ret = main_stream->getParameter(param);
-        if (ret != NO_ERROR) {
-            ALOGE("%s: stream getParameter for reprocess failed", __func__);
-        } else {
-           for (int i = 0; i < param.outputCrop.num_of_streams; i++) {
-               if (param.outputCrop.crop_info[i].stream_id
-                   == main_stream->getMyServerID()) {
-                       crop = param.outputCrop.crop_info[i].crop;
-                       main_stream->setCropInfo(crop);
-               }
+    ret = main_stream->getParameter(param);
+    if (ret != NO_ERROR) {
+        ALOGE("%s: stream getParameter for reprocess failed", __func__);
+    } else {
+       for (int i = 0; i < param.outputCrop.num_of_streams; i++) {
+           if (param.outputCrop.crop_info[i].stream_id
+               == main_stream->getMyServerID()) {
+                   crop = param.outputCrop.crop_info[i].crop;
+                   main_stream->setCropInfo(crop);
            }
-        }
+       }
     }
 
     cam_dimension_t dst_dim;
@@ -1429,22 +1427,20 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         crop.height = src_dim.height;
         crop.width = src_dim.width;
 
-        if (hdr_output_crop) {
-            memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
-            param.type = CAM_STREAM_PARAM_TYPE_GET_OUTPUT_CROP;
+        memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
+        param.type = CAM_STREAM_PARAM_TYPE_GET_OUTPUT_CROP;
 
-            ret = thumb_stream->getParameter(param);
-            if (ret != NO_ERROR) {
-                ALOGE("%s: stream getParameter for reprocess failed", __func__);
-            } else {
-               for (int i = 0; i < param.outputCrop.num_of_streams; i++) {
-                   if (param.outputCrop.crop_info[i].stream_id
-                       == thumb_stream->getMyServerID()) {
-                           crop = param.outputCrop.crop_info[i].crop;
-                           thumb_stream->setCropInfo(crop);
-                   }
+        ret = thumb_stream->getParameter(param);
+        if (ret != NO_ERROR) {
+            ALOGE("%s: stream getParameter for reprocess failed", __func__);
+        } else {
+           for (int i = 0; i < param.outputCrop.num_of_streams; i++) {
+               if (param.outputCrop.crop_info[i].stream_id
+                   == thumb_stream->getMyServerID()) {
+                       crop = param.outputCrop.crop_info[i].crop;
+                       thumb_stream->setCropInfo(crop);
                }
-            }
+           }
         }
 
         m_parent->getThumbnailSize(jpg_job.encode_job.thumb_dim.dst_dim);
