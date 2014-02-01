@@ -56,10 +56,6 @@ typedef struct {
 } qcamera_pp_data_t;
 
 typedef struct {
-    mm_camera_super_buf_t *frame;    // source frame that needs post process
-} qcamera_pp_request_t;
-
-typedef struct {
     uint32_t jobId;                  // job ID (obtained when start_jpeg_job)
     jpeg_job_status_t status;        // jpeg encoding status
     mm_jpeg_output_t out_data;         // ptr to jpeg output buf
