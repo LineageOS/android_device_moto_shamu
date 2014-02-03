@@ -41,6 +41,7 @@
 
 #define MAP_TO_DRIVER_COORDINATE(val, base, scale, offset) (val * scale / base + offset)
 #define CAMERA_MIN_STREAMING_BUFFERS     3
+#define EXTRA_ZSL_PREVIEW_STREAM_BUF     2
 #define CAMERA_MIN_JPEG_ENCODING_BUFFERS 2
 #define CAMERA_MIN_VIDEO_BUFFERS         9
 #define CAMERA_LONGSHOT_STAGES           4
@@ -1325,8 +1326,15 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
     case CAM_STREAM_TYPE_PREVIEW:
         {
             if (mParameters.isZSLMode()) {
+                // We need to add two extra streming buffers to add
+                // flexibility in forming matched super buf in ZSL queue.
+                // with number being 'zslQBuffers + minCircularBufNum'
+                // we see preview buffers sometimes get dropped at CPP
+                // and super buf is not forming in ZSL Q for long time.
+
                 bufferCnt = zslQBuffers + minCircularBufNum +
-                            mParameters.getNumOfExtraBuffersForImageProc();
+                        mParameters.getNumOfExtraBuffersForImageProc() +
+                        EXTRA_ZSL_PREVIEW_STREAM_BUF;
             } else {
                 bufferCnt = CAMERA_MIN_STREAMING_BUFFERS +
                             mParameters.getMaxUnmatchedFramesInQueue();
