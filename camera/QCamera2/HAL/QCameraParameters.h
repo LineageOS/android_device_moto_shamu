@@ -245,6 +245,9 @@ public:
     static const char KEY_QC_OPTI_ZOOM[];
     static const char KEY_QC_SUPPORTED_OPTI_ZOOM_MODES[];
 
+    // Auto HDR supported
+    static const char KEY_QC_AUTO_HDR_SUPPORTED[];
+
     // Values for Touch AF/AEC
     static const char TOUCH_AF_AEC_OFF[];
     static const char TOUCH_AF_AEC_ON[];
