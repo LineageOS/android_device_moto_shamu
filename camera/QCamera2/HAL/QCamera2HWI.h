@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -232,8 +232,8 @@ public:
     virtual int thermalEvtHandle(qcamera_thermal_level_enum_t level,
             void *userdata, void *data);
 
-    virtual int recalcFPSRange(int &minFPS, int &maxFPS);
-
+    virtual int recalcFPSRange(int &minFPS, int &maxFPS,
+            int &vidMinFps, int &vidMaxFps);
     friend class QCameraStateMachine;
     friend class QCameraPostProcessor;
     friend class QCameraCbNotifier;
@@ -368,6 +368,7 @@ private:
     bool isZSLMode() {return mParameters.isZSLMode();};
     uint8_t numOfSnapshotsExpected() {return mParameters.getNumOfSnapshots();};
     bool isLongshotEnabled() { return mLongshotEnabled; };
+    bool isHFRMode() {return mParameters.isHfrMode();};
     uint8_t getBufNumRequired(cam_stream_type_t stream_type);
     bool needFDMetadata(qcamera_ch_type_enum_t channel_type);
 
