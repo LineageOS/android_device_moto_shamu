@@ -4673,11 +4673,27 @@ int QCamera2HardwareInterface::calcThermalLevel(
             cam_fps_range_t &adjustedRange,
             enum msm_vfe_frame_skip_pattern &skipPattern)
 {
+    // Initialize video fps to preview fps
+    int minVideoFps = minFPS, maxVideoFps = maxFPS;
+    cam_fps_range_t videoFps;
+    // If HFR mode, update video fps accordingly
+    if(isHFRMode()) {
+        mParameters.getHfrFps(videoFps);
+        minVideoFps = videoFps.video_min_fps;
+        maxVideoFps = videoFps.video_max_fps;
+    }
+
+    ALOGE("%s: level: %d, preview minfps %d, preview maxfpS %d"
+          "video minfps %d, video maxfpS %d",
+          __func__, level, minFPS, maxFPS, minVideoFps, maxVideoFps);
+
     switch(level) {
     case QCAMERA_THERMAL_NO_ADJUSTMENT:
         {
             adjustedRange.min_fps = minFPS / 1000.0f;
             adjustedRange.max_fps = maxFPS / 1000.0f;
+            adjustedRange.video_min_fps = minVideoFps / 1000.0f;
+            adjustedRange.video_max_fps = maxVideoFps / 1000.0f;
             skipPattern = NO_SKIP;
         }
         break;
@@ -4685,11 +4701,19 @@ int QCamera2HardwareInterface::calcThermalLevel(
         {
             adjustedRange.min_fps = (minFPS / 2) / 1000.0f;
             adjustedRange.max_fps = (maxFPS / 2) / 1000.0f;
+            adjustedRange.video_min_fps = (minVideoFps / 2) / 1000.0f;
+            adjustedRange.video_max_fps = (maxVideoFps / 2 ) / 1000.0f;
             if ( adjustedRange.min_fps < 1 ) {
                 adjustedRange.min_fps = 1;
             }
             if ( adjustedRange.max_fps < 1 ) {
                 adjustedRange.max_fps = 1;
+            }
+            if ( adjustedRange.video_min_fps < 1 ) {
+                adjustedRange.video_min_fps = 1;
+            }
+            if ( adjustedRange.video_max_fps < 1 ) {
+                adjustedRange.video_max_fps = 1;
             }
             skipPattern = EVERY_2FRAME;
         }
@@ -4698,11 +4722,19 @@ int QCamera2HardwareInterface::calcThermalLevel(
         {
             adjustedRange.min_fps = (minFPS / 4) / 1000.0f;
             adjustedRange.max_fps = (maxFPS / 4) / 1000.0f;
+            adjustedRange.video_min_fps = (minVideoFps / 4) / 1000.0f;
+            adjustedRange.video_max_fps = (maxVideoFps / 4 ) / 1000.0f;
             if ( adjustedRange.min_fps < 1 ) {
                 adjustedRange.min_fps = 1;
             }
             if ( adjustedRange.max_fps < 1 ) {
                 adjustedRange.max_fps = 1;
+            }
+            if ( adjustedRange.video_min_fps < 1 ) {
+                adjustedRange.video_min_fps = 1;
+            }
+            if ( adjustedRange.video_max_fps < 1 ) {
+                adjustedRange.video_max_fps = 1;
             }
             skipPattern = EVERY_4FRAME;
         }
@@ -4720,6 +4752,8 @@ int QCamera2HardwareInterface::calcThermalLevel(
                 }
             }
             skipPattern = MAX_SKIP;
+            adjustedRange.video_min_fps = adjustedRange.min_fps;
+            adjustedRange.video_max_fps = adjustedRange.max_fps;
         }
         break;
     default:
@@ -4729,13 +4763,9 @@ int QCamera2HardwareInterface::calcThermalLevel(
         }
         break;
     }
-
-    ALOGI("%s: Thermal level %d, FPS range [%3.2f,%3.2f], frameskip %d",
-          __func__,
-          level,
-          adjustedRange.min_fps,
-          adjustedRange.max_fps,
-          skipPattern);
+    ALOGI("%s: Thermal level %d, FPS [%3.2f,%3.2f, %3.2f,%3.2f], frameskip %d",
+          __func__, level, adjustedRange.min_fps, adjustedRange.max_fps,
+          adjustedRange.video_min_fps, adjustedRange.video_max_fps, skipPattern);
 
     return NO_ERROR;
 }
@@ -4754,7 +4784,8 @@ int QCamera2HardwareInterface::calcThermalLevel(
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int QCamera2HardwareInterface::recalcFPSRange(int &minFPS, int &maxFPS)
+int QCamera2HardwareInterface::recalcFPSRange(int &minFPS, int &maxFPS,
+        int &vidMinFps, int &vidMaxFps)
 {
     cam_fps_range_t adjustedRange;
     enum msm_vfe_frame_skip_pattern skipPattern;
@@ -4765,6 +4796,8 @@ int QCamera2HardwareInterface::recalcFPSRange(int &minFPS, int &maxFPS)
                      skipPattern);
     minFPS = adjustedRange.min_fps;
     maxFPS = adjustedRange.max_fps;
+    vidMinFps = adjustedRange.video_min_fps;
+    vidMaxFps = adjustedRange.video_max_fps;
 
     return NO_ERROR;
 }

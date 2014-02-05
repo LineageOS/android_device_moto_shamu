@@ -1,7 +1,7 @@
 /*
 **
 ** Copyright 2008, The Android Open Source Project
-** Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+** Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
 ** Not a Contribution. Apache license notifications and license are
 ** retained for attribution purposes only.
 **
@@ -48,7 +48,8 @@ static const char ExifUndefinedPrefix[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 class QCameraAdjustFPS
 {
 public:
-    virtual int recalcFPSRange(int &minFPS, int &maxFPS) = 0;
+    virtual int recalcFPSRange(int &minFPS, int &maxFPS,
+            int &vidMinFps, int &vidMaxFps) = 0;
     virtual ~QCameraAdjustFPS() {}
 };
 
@@ -473,6 +474,8 @@ public:
     bool isZSLMode() {return m_bZslMode;};
     bool isNoDisplayMode() {return m_bNoDisplayMode;};
     bool isWNREnabled() {return m_bWNROn;};
+    bool isHfrMode() {return m_bHfrMode;};
+    void getHfrFps(cam_fps_range_t &pFpsRange) { pFpsRange = m_hfrFpsRange;};
     uint8_t getNumOfSnapshots();
     uint8_t getNumOfExtraHDRInBufsIfNeeded();
     uint8_t getNumOfExtraHDROutBufsIfNeeded();
@@ -610,7 +613,8 @@ private:
     int32_t setMobicat(const QCameraParameters& params);
 
     int32_t setAutoExposure(const char *autoExp);
-    int32_t setPreviewFpsRange(int minFPS,int maxFPS);
+    int32_t setPreviewFpsRange(int min_fps,int max_fps,
+            int vid_min_fps,int vid_max_fps);
     int32_t setEffect(const char *effect);
     int32_t setBrightness(int brightness);
     int32_t setFocusMode(const char *focusMode);
@@ -645,6 +649,7 @@ private:
     int32_t setWaveletDenoise(const char *wnrStr);
     int32_t setFaceRecognition(const char *faceRecog, int maxFaces);
     int32_t setTintlessValue(const char *tintStr);
+    bool UpdateHFRFrameRate(const QCameraParameters& params);
 
 
     int32_t parse_pair(const char *str, int *first, int *second,
@@ -757,6 +762,8 @@ private:
     bool m_bAFBracketingOn;
     bool m_bChromaFlashOn;
     bool m_bOptiZoomOn;
+    cam_fps_range_t m_hfrFpsRange;
+    bool m_bHfrMode;
 };
 
 }; // namespace qcamera
