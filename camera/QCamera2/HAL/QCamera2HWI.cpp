@@ -2250,6 +2250,13 @@ int QCamera2HardwareInterface::takePicture()
         pthread_mutex_unlock(&m_parm_lock);
 
         if ( mParameters.isHDREnabled() ) {
+
+            rc = mParameters.enableFlash(false);
+            if ( NO_ERROR != rc ) {
+                ALOGE("%s: cannot configure flash", __func__);
+                return rc;
+            }
+
             // 'values' should be in "idx1,idx2,idx3,..." format
             uint8_t hdrFrameCount = gCamCaps[mCameraId]->hdr_bracketing_setting.num_frames;
             ALOGE("%s : HDR values %d, %d frame count: %d",

@@ -509,6 +509,7 @@ public:
     bool isHDREnabled();
     bool isAutoHDREnabled();
     int32_t restoreAEBracket();
+    int32_t enableFlash(bool enableFlash);
     int32_t updateRAW(cam_dimension_t max_dim);
     bool isAVTimerEnabled();
 
@@ -534,7 +535,7 @@ public:
     bool isPreviewFlipChanged() { return m_bPreviewFlipChanged; };
     bool isVideoFlipChanged() { return m_bVideoFlipChanged; };
     bool isSnapshotFlipChanged() { return m_bSnapshotFlipChanged; };
-    void setHDRSceneEnable(bool bflag) {m_HDRSceneEnabled = bflag;};
+    void setHDRSceneEnable(bool bflag);
 
     const char *getASDStateString(cam_auto_scene_t scene);
     bool isHDRThumbnailProcessNeeded() { return m_bHDRThumbnailProcessNeeded; };
