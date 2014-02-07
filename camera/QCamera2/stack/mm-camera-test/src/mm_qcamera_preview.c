@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -41,8 +41,9 @@ static void mm_app_metadata_notify_cb(mm_camera_super_buf_t *bufs,
   mm_camera_stream_t *p_stream = NULL;
   mm_camera_test_obj_t *pme = (mm_camera_test_obj_t *)user_data;
   mm_camera_buf_def_t *frame = bufs->bufs[0];
-  cam_metadata_info_t *pMetadata;
+  metadata_buffer_t *pMetadata;
   cam_auto_focus_data_t *focus_data;
+  uint8_t curr_entry;
 
   /* find channel */
   for (i = 0; i < MM_CHANNEL_TYPE_MAX; i++) {
@@ -72,19 +73,23 @@ static void mm_app_metadata_notify_cb(mm_camera_super_buf_t *bufs,
   }
   if (pme->metadata == NULL) {
     /* The app will free the meta data, we don't need to bother here */
-    pme->metadata = malloc(sizeof(cam_metadata_info_t));
+    pme->metadata = malloc(sizeof(metadata_buffer_t));
   }
-  memcpy(pme->metadata, frame->buffer, sizeof(cam_metadata_info_t));
+  memcpy(pme->metadata, frame->buffer, sizeof(metadata_buffer_t));
 
-  pMetadata = (cam_metadata_info_t *)frame->buffer;
-
-  if (pMetadata->is_focus_valid) {
-    focus_data = (cam_auto_focus_data_t *)&(pMetadata->focus_data);
-
-    if (focus_data->focus_state == CAM_AF_FOCUSED) {
-      CDBG_ERROR("%s: AutoFocus Done Call Back Received\n",__func__);
-      mm_camera_app_done();
-    }
+  pMetadata = (metadata_buffer_t *)frame->buffer;
+  curr_entry = GET_FIRST_PARAM_ID(pMetadata);
+  while (curr_entry != CAM_INTF_PARM_MAX) {
+    if (curr_entry == CAM_INTF_META_AUTOFOCUS_DATA) {
+      focus_data =
+                  (cam_auto_focus_data_t *)POINTER_OF(CAM_INTF_META_AUTOFOCUS_DATA, pMetadata);
+      if (focus_data->focus_state == CAM_AF_FOCUSED) {
+        CDBG_ERROR("%s: AutoFocus Done Call Back Received\n",__func__);
+        mm_camera_app_done();
+      }
+      break;
+   }
+   curr_entry = GET_NEXT_PARAM_ID(curr_entry, pMetadata);
   }
 
   if (MM_CAMERA_OK != pme->cam->ops->qbuf(bufs->camera_handle,
@@ -362,7 +367,7 @@ mm_camera_stream_t * mm_app_add_metadata_stream(mm_camera_test_obj_t *test_obj,
     stream->s_config.stream_info->stream_type = CAM_STREAM_TYPE_METADATA;
     stream->s_config.stream_info->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
     stream->s_config.stream_info->fmt = DEFAULT_PREVIEW_FORMAT;
-    stream->s_config.stream_info->dim.width = sizeof(cam_metadata_info_t);
+    stream->s_config.stream_info->dim.width = sizeof(metadata_buffer_t);
     stream->s_config.stream_info->dim.height = 1;
     stream->s_config.padding_info = cam_cap->padding_info;
 
