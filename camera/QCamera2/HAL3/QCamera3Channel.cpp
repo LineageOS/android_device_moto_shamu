@@ -808,9 +808,11 @@ void QCamera3MetadataChannel::streamCbRoutine(
 QCamera3Memory* QCamera3MetadataChannel::getStreamBufs(uint32_t len)
 {
     int rc;
-    if (len != sizeof(metadata_buffer_t)) {
-        ALOGE("%s: size doesn't match %d vs %d", __func__,
-                len, sizeof(metadata_buffer_t));
+    if (len < sizeof(metadata_buffer_t)) {
+        ALOGE("%s: Metadata buffer size less than structure %d vs %d",
+                __func__,
+                len,
+                sizeof(metadata_buffer_t));
         return NULL;
     }
     mMemory = new QCamera3HeapMemory();
