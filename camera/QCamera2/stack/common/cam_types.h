@@ -52,6 +52,7 @@
 #define MAX_NUM_STREAMS          8
 #define CHROMATIX_SIZE 21292
 #define COMMONCHROMATIX_SIZE 42044
+#define CPPCHROMATIX_SIZE 35432
 #define AFTUNE_SIZE 2000
 #define MAX_SCALE_SIZES_CNT 8
 #define MAX_SAMP_DECISION_CNT     64
@@ -645,6 +646,7 @@ typedef struct {
     uint8_t chromatixData[CHROMATIX_SIZE];
     uint8_t snapchromatixData[CHROMATIX_SIZE];
     uint8_t common_chromatixData[COMMONCHROMATIX_SIZE];
+    uint8_t cpp_chromatixData[CPPCHROMATIX_SIZE];
 } tune_chromatix_t;
 
 typedef struct {
