@@ -2540,16 +2540,23 @@ int32_t QCameraParameters::setHighSpeedRecording(const QCameraParameters& params
 {
     const char *str = params.get(KEY_QC_VIDEO_HIGH_SPEED_RECORDING);
     const char *prev_str = get(KEY_QC_VIDEO_HIGH_SPEED_RECORDING);
+    const char *hfr_str = params.get(KEY_QC_VIDEO_HIGH_FRAME_RATE);
+    int32_t hfr_mode = CAM_HFR_MODE_OFF;
+    if (hfr_str != NULL) {
+        hfr_mode = lookupAttr(HFR_MODES_MAP,
+                sizeof(HFR_MODES_MAP)/sizeof(QCameraMap),
+                hfr_str);
+    }
     if (str != NULL) {
         if (prev_str == NULL ||
             strcmp(str, prev_str) != 0) {
             int32_t value;
+            // if HSR is off, take HFR fps value
             if (!strcmp(str,"on")) value = CAM_HFR_MODE_120FPS;
-            else value = CAM_HFR_MODE_OFF;
+            else value = hfr_mode;
             // HFR value changed, need to restart preview
             m_bNeedRestart = true;
             // Set HFR value
-            ALOGV("%s: Setting HFR value %s", __func__, hfrStr);
             updateParamEntry(KEY_QC_VIDEO_HIGH_SPEED_RECORDING, str);
             return AddSetParmEntryToBatch(m_pParamBuf,
                                           CAM_INTF_PARM_HFR,
