@@ -1480,16 +1480,20 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(cam_stream_type_t st
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
         {
-            cam_dimension_t dim;
-            QCameraGrallocMemory *grallocMemory =
-                new QCameraGrallocMemory(mGetMemory);
+            if (isNoDisplayMode()) {
+                mem = new QCameraStreamMemory(mGetMemory, bCachedMem);
+            } else {
+                cam_dimension_t dim;
+                QCameraGrallocMemory *grallocMemory =
+                        new QCameraGrallocMemory(mGetMemory);
 
-            mParameters.getStreamDimension(stream_type, dim);
-            if (grallocMemory)
-                grallocMemory->setWindowInfo(mPreviewWindow, dim.width,
-                    dim.height, stride, scanline,
-                    mParameters.getPreviewHalPixelFormat());
-            mem = grallocMemory;
+                mParameters.getStreamDimension(stream_type, dim);
+                if (grallocMemory)
+                    grallocMemory->setWindowInfo(mPreviewWindow, dim.width,
+                            dim.height, stride, scanline,
+                            mParameters.getPreviewHalPixelFormat());
+                mem = grallocMemory;
+            }
         }
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
