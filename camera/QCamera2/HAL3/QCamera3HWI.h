@@ -87,8 +87,6 @@ public:
                 const camera3_callback_ops_t *callback_ops);
     static int configure_streams(const struct camera3_device *,
                 camera3_stream_configuration_t *stream_list);
-    static int register_stream_buffers(const struct camera3_device *,
-                const camera3_stream_buffer_set_t *buffer_set);
     static const camera_metadata_t* construct_default_request_settings(
                                 const struct camera3_device *, int type);
     static int process_capture_request(const struct camera3_device *,
@@ -128,7 +126,6 @@ public:
 
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(camera3_stream_configuration_t *stream_list);
-    int registerStreamBuffers(const camera3_stream_buffer_set_t *buffer_set);
     int processCaptureRequest(camera3_capture_request_t *request);
     void getMetadataVendorTagOps(vendor_tag_query_ops_t* ops);
     void dump(int fd);

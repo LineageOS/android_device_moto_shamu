@@ -150,7 +150,7 @@ const int32_t available_thumbnail_sizes[] = {0, 0,
 camera3_device_ops_t QCamera3HardwareInterface::mCameraOps = {
     initialize:                         QCamera3HardwareInterface::initialize,
     configure_streams:                  QCamera3HardwareInterface::configure_streams,
-    register_stream_buffers:            QCamera3HardwareInterface::register_stream_buffers,
+    register_stream_buffers:            NULL,
     construct_default_request_settings: QCamera3HardwareInterface::construct_default_request_settings,
     process_capture_request:            QCamera3HardwareInterface::process_capture_request,
     get_metadata_vendor_tag_ops:        NULL,
@@ -262,9 +262,6 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
         QCamera3Channel *channel = (*it)->channel;
-        if ((*it)->registered && (*it)->buffer_set.buffers) {
-             delete[] (buffer_handle_t*)(*it)->buffer_set.buffers;
-        }
         if (channel)
             delete channel;
         free (*it);
@@ -538,10 +535,8 @@ int QCamera3HardwareInterface::configureStreams(
                 QCamera3Channel *channel =
                     (QCamera3Channel*)(*it)->stream->priv;
                 stream_exists = true;
-                (*it)->status = RECONFIGURE;
-                /*delete the channel object associated with the stream because
-                  we need to reconfigure*/
                 delete channel;
+                (*it)->status = VALID;
                 (*it)->stream->priv = NULL;
                 (*it)->channel = NULL;
             }
@@ -552,7 +547,6 @@ int QCamera3HardwareInterface::configureStreams(
             stream_info = (stream_info_t* )malloc(sizeof(stream_info_t));
             stream_info->stream = newStream;
             stream_info->status = VALID;
-            stream_info->registered = 0;
             stream_info->channel = NULL;
             mStreamInfo.push_back(stream_info);
         }
@@ -577,7 +571,6 @@ int QCamera3HardwareInterface::configureStreams(
         if(((*it)->status) == INVALID){
             QCamera3Channel *channel = (QCamera3Channel*)(*it)->stream->priv;
             delete channel;
-            delete[] (buffer_handle_t*)(*it)->buffer_set.buffers;
             free(*it);
             it = mStreamInfo.erase(it);
         } else {
@@ -712,7 +705,7 @@ int QCamera3HardwareInterface::configureStreams(
 
             if (newStream->stream_type == CAMERA3_STREAM_OUTPUT ||
                     newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL) {
-                QCamera3Channel *channel;
+                QCamera3Channel *channel = NULL;
                 switch (newStream->format) {
                 case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
                 case HAL_PIXEL_FORMAT_YCbCr_420_888:
@@ -725,11 +718,15 @@ int QCamera3HardwareInterface::configureStreams(
                         channel = new QCamera3RegularChannel(mCameraHandle->camera_handle,
                             mCameraHandle->ops, captureResultCb,
                             &gCamCapability[mCameraId]->padding_info, this, newStream,
-                            width, height);
+                            width, height,
+                            (cam_stream_type_t) stream_config_info.type[i]);
                     } else
                         channel = new QCamera3RegularChannel(mCameraHandle->camera_handle,
                             mCameraHandle->ops, captureResultCb,
-                            &gCamCapability[mCameraId]->padding_info, this, newStream);
+                            &gCamCapability[mCameraId]->padding_info,
+                            this,
+                            newStream,
+                            (cam_stream_type_t) stream_config_info.type[i]);
                     if (channel == NULL) {
                         ALOGE("%s: allocation of channel failed", __func__);
                         pthread_mutex_unlock(&mMutex);
@@ -797,27 +794,6 @@ int QCamera3HardwareInterface::configureStreams(
                 sizeof(stream_config_info), &stream_config_info);
 
     mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
-
-    /*For the streams to be reconfigured we need to register the buffers
-      since the framework wont*/
-    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
-            it != mStreamInfo.end(); it++) {
-        if ((*it)->status == RECONFIGURE) {
-            QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
-            /*only register buffers for streams that have already been
-              registered*/
-            if ((*it)->registered) {
-                rc = channel->registerBuffers((*it)->buffer_set.num_buffers,
-                        (*it)->buffer_set.buffers);
-                if (rc != NO_ERROR) {
-                    ALOGE("%s: Failed to register the buffers of old stream,\
-                            rc = %d", __func__, rc);
-                }
-                CDBG("%s: channel %p has %d buffers",
-                        __func__, channel, (*it)->buffer_set.num_buffers);
-            }
-        }
-    }
 
     /* Initialize mPendingRequestInfo and mPendnigBuffersMap */
     mPendingRequestsList.clear();
@@ -1435,78 +1411,6 @@ void QCamera3HardwareInterface::unblockRequestIfNecessary()
 }
 
 /*===========================================================================
- * FUNCTION   : registerStreamBuffers
- *
- * DESCRIPTION: Register buffers for a given stream with the HAL device.
- *
- * PARAMETERS :
- *   @stream_list : streams to be configured
- *
- * RETURN     :
- *
- *==========================================================================*/
-int QCamera3HardwareInterface::registerStreamBuffers(
-        const camera3_stream_buffer_set_t *buffer_set)
-{
-    int rc = 0;
-
-    pthread_mutex_lock(&mMutex);
-
-    if (buffer_set == NULL) {
-        ALOGE("%s: Invalid buffer_set parameter.", __func__);
-        pthread_mutex_unlock(&mMutex);
-        return -EINVAL;
-    }
-    if (buffer_set->stream == NULL) {
-        ALOGE("%s: Invalid stream parameter.", __func__);
-        pthread_mutex_unlock(&mMutex);
-        return -EINVAL;
-    }
-    if (buffer_set->num_buffers < 1) {
-        ALOGE("%s: Invalid num_buffers %d.", __func__, buffer_set->num_buffers);
-        pthread_mutex_unlock(&mMutex);
-        return -EINVAL;
-    }
-    if (buffer_set->buffers == NULL) {
-        ALOGE("%s: Invalid buffers parameter.", __func__);
-        pthread_mutex_unlock(&mMutex);
-        return -EINVAL;
-    }
-
-    camera3_stream_t *stream = buffer_set->stream;
-    QCamera3Channel *channel = (QCamera3Channel *)stream->priv;
-
-    //set the buffer_set in the mStreamInfo array
-    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
-            it != mStreamInfo.end(); it++) {
-        if ((*it)->stream == stream) {
-            uint32_t numBuffers = buffer_set->num_buffers;
-            (*it)->buffer_set.stream = buffer_set->stream;
-            (*it)->buffer_set.num_buffers = numBuffers;
-            (*it)->buffer_set.buffers = new buffer_handle_t*[numBuffers];
-            if ((*it)->buffer_set.buffers == NULL) {
-                ALOGE("%s: Failed to allocate buffer_handle_t*", __func__);
-                pthread_mutex_unlock(&mMutex);
-                return -ENOMEM;
-            }
-            for (size_t j = 0; j < numBuffers; j++){
-                (*it)->buffer_set.buffers[j] = buffer_set->buffers[j];
-            }
-            (*it)->registered = 1;
-        }
-    }
-    rc = channel->registerBuffers(buffer_set->num_buffers, buffer_set->buffers);
-    if (rc < 0) {
-        ALOGE("%s: registerBUffers for stream %p failed", __func__, stream);
-        pthread_mutex_unlock(&mMutex);
-        return -ENODEV;
-    }
-
-    pthread_mutex_unlock(&mMutex);
-    return NO_ERROR;
-}
-
-/*===========================================================================
  * FUNCTION   : processCaptureRequest
  *
  * DESCRIPTION: process a capture request from camera service
@@ -1541,6 +1445,18 @@ int QCamera3HardwareInterface::processCaptureRequest(
     // stream on all streams
     if (mFirstRequest) {
 
+        for (size_t i = 0; i < request->num_output_buffers; i++) {
+            const camera3_stream_buffer_t& output = request->output_buffers[i];
+            QCamera3Channel *channel = (QCamera3Channel *)output.stream->priv;
+            rc = channel->registerBuffer(output.buffer);
+            if (rc < 0) {
+                ALOGE("%s: registerBuffer failed",
+                        __func__);
+                pthread_mutex_unlock(&mMutex);
+                return -ENODEV;
+            }
+        }
+
         if (meta.exists(ANDROID_CONTROL_CAPTURE_INTENT)) {
             int32_t hal_version = CAM_HAL_V3;
             uint8_t captureIntent =
@@ -1573,6 +1489,19 @@ int QCamera3HardwareInterface::processCaptureRequest(
         CDBG_HIGH("%s: Start META Channel", __func__);
         mMetadataChannel->start();
 
+        //First initialize all streams
+        for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+            it != mStreamInfo.end(); it++) {
+            QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+            rc = channel->initialize();
+            if (NO_ERROR != rc) {
+                ALOGE("%s : Channel initialization failed %d", __func__, rc);
+                mMetadataChannel->stop();
+                pthread_mutex_unlock(&mMutex);
+                return rc;
+            }
+        }
+        //Then start them
         for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
             it != mStreamInfo.end(); it++) {
             QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
@@ -1632,6 +1561,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
             pthread_mutex_unlock(&mMutex);
             return rc;
         }
+
         streamID.streamID[i]=channel->getStreamID(channel->getStreamTypeMask());
     }
     streamID.num_streams=request->num_output_buffers;
@@ -4608,31 +4538,6 @@ int QCamera3HardwareInterface::configure_streams(
         return -ENODEV;
     }
     int rc = hw->configureStreams(stream_list);
-    CDBG("%s: X", __func__);
-    return rc;
-}
-
-/*===========================================================================
- * FUNCTION   : register_stream_buffers
- *
- * DESCRIPTION: Register stream buffers with the device
- *
- * PARAMETERS :
- *
- * RETURN     :
- *==========================================================================*/
-int QCamera3HardwareInterface::register_stream_buffers(
-        const struct camera3_device *device,
-        const camera3_stream_buffer_set_t *buffer_set)
-{
-    CDBG("%s: E", __func__);
-    QCamera3HardwareInterface *hw =
-        reinterpret_cast<QCamera3HardwareInterface *>(device->priv);
-    if (!hw) {
-        ALOGE("%s: NULL camera device", __func__);
-        return -ENODEV;
-    }
-    int rc = hw->registerStreamBuffers(buffer_set);
     CDBG("%s: X", __func__);
     return rc;
 }
