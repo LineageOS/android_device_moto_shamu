@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -2865,5 +2865,69 @@ bool QCameraStateMachine::isNonZSLCaptureRunning()
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : dump
+ *
+ * DESCRIPTION: Composes a string based on current configuration
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : Formatted string
+ *==========================================================================*/
+String8 QCameraStateMachine::dump()
+{
+    String8 str("\n");
+    char s[128];
+
+    snprintf(s, 128, "Is Preview Running: %d\n", isPreviewRunning());
+    str += s;
+
+    snprintf(s, 128, "Is Capture Running: %d\n", isCaptureRunning());
+    str += s;
+
+    snprintf(s, 128, "Is Non ZSL Capture Running: %d\n",
+        isNonZSLCaptureRunning());
+    str += s;
+
+    snprintf(s, 128, "Current State: %d \n", m_state);
+    str += s;
+
+    switch(m_state){
+        case QCAMERA_SM_STATE_PREVIEW_STOPPED:
+        snprintf(s, 128, " QCAMERA_SM_STATE_PREVIEW_STOPPED \n");
+        break;
+
+        case QCAMERA_SM_STATE_PREVIEW_READY:
+        snprintf(s, 128, " QCAMERA_SM_STATE_PREVIEW_READY \n");
+        break;
+
+        case QCAMERA_SM_STATE_PREVIEWING:
+        snprintf(s, 128, " QCAMERA_SM_STATE_PREVIEWING \n");
+        break;
+
+        case QCAMERA_SM_STATE_PREPARE_SNAPSHOT:
+        snprintf(s, 128, " QCAMERA_SM_STATE_PREPARE_SNAPSHOT \n");
+        break;
+
+        case QCAMERA_SM_STATE_PIC_TAKING:
+        snprintf(s, 128, " QCAMERA_SM_STATE_PIC_TAKING \n");
+        break;
+
+        case QCAMERA_SM_STATE_RECORDING:
+        snprintf(s, 128, " QCAMERA_SM_STATE_RECORDING \n");
+        break;
+
+        case QCAMERA_SM_STATE_VIDEO_PIC_TAKING:
+        snprintf(s, 128, " QCAMERA_SM_STATE_VIDEO_PIC_TAKING \n");
+        break;
+
+        case QCAMERA_SM_STATE_PREVIEW_PIC_TAKING:
+        snprintf(s, 128, " QCAMERA_SM_STATE_PREVIEW_PIC_TAKING \n");
+        break;
+    }
+    str += s;
+
+    return str;
+}
 
 }; // namespace qcamera

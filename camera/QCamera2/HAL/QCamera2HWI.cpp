@@ -2743,10 +2743,15 @@ int QCamera2HardwareInterface::release()
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int QCamera2HardwareInterface::dump(int /*fd*/)
+int QCamera2HardwareInterface::dump(int fd)
 {
-    ALOGE("%s: not supported yet", __func__);
-    return INVALID_OPERATION;
+    fdprintf(fd, "\n Camera HAL information Begin \n");
+    fdprintf(fd, "Camera ID: %d \n", mCameraId);
+    fdprintf(fd, "StoreMetaDataInFrame: %d \n", mStoreMetaDataInFrame);
+    fdprintf(fd, "\n Configuration: %s", mParameters.dump().string());
+    fdprintf(fd, "\n State Information: %s", m_stateMachine.dump().string());
+    fdprintf(fd, "\n Camera HAL information End \n");
+    return NO_ERROR;
 }
 
 /*===========================================================================
