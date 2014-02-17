@@ -60,6 +60,7 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
     char value[PROPERTY_VALUE_MAX];
     bool dump_raw = false;
     bool dump_yuv = false;
+    bool log_matching = false;
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -187,6 +188,25 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
                     }
                     break;
                 }
+            }
+        }
+    }
+
+    property_get("persist.camera.zsl_matching", value, "0");
+    log_matching = atoi(value) > 0 ? true : false;
+    if (log_matching) {
+        ALOGD("%s : ZSL super buffer contains:", __func__);
+        QCameraStream *pStream = NULL;
+        for (int i = 0; i < frame->num_bufs; i++) {
+            pStream = pChannel->getStreamByHandle(frame->bufs[i]->stream_id);
+            if (pStream != NULL ) {
+                ALOGD("%s: Buffer with V4L index %d frame index %d of type %d Timestamp: %ld %ld ",
+                        __func__,
+                        frame->bufs[i]->buf_idx,
+                        frame->bufs[i]->frame_idx,
+                        pStream->getMyType(),
+                        frame->bufs[i]->ts.tv_sec,
+                        frame->bufs[i]->ts.tv_nsec);
             }
         }
     }
