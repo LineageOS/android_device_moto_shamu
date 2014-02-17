@@ -66,9 +66,11 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 enum rmnetctl_error_codes_e {
 	/* API succeeded. This should always be the first element. */
 	RMNETCTL_API_SUCCESS,
+
+	RMNETCTL_API_FIRST_ERR,
 	/* API failed because not enough memory to create buffer to send
 	 * message */
-	RMNETCTL_API_ERR_REQUEST_INVALID,
+	RMNETCTL_API_ERR_REQUEST_INVALID = RMNETCTL_API_FIRST_ERR,
 	/* API failed because not enough memory to create buffer for the
 	 *  response message */
 	RMNETCTL_API_ERR_RESPONSE_INVALID,
@@ -76,16 +78,20 @@ enum rmnetctl_error_codes_e {
 	RMNETCTL_API_ERR_MESSAGE_SEND,
 	/* API failed because could not receive message from the kernel */
 	RMNETCTL_API_ERR_MESSAGE_RECEIVE,
+
+	RMNETCTL_INIT_FIRST_ERR,
 	/* Invalid process id. So return an error. */
-	RMNETCTL_INIT_ERR_PROCESS_ID,
+	RMNETCTL_INIT_ERR_PROCESS_ID = RMNETCTL_INIT_FIRST_ERR,
 	/* Invalid socket descriptor id. So return an error. */
 	RMNETCTL_INIT_ERR_NETLINK_FD,
 	/* Could not bind the socket to the Netlink file descriptor */
 	RMNETCTL_INIT_ERR_BIND,
 	/* Invalid user id. Only root has access to this function. (NA) */
 	RMNETCTL_INIT_ERR_INVALID_USER,
+
+	RMNETCTL_API_SECOND_ERR,
 	/* API failed because the RmNet handle for the transaction was NULL */
-	RMNETCTL_API_ERR_HNDL_INVALID,
+	RMNETCTL_API_ERR_HNDL_INVALID = RMNETCTL_API_SECOND_ERR,
 	/* API failed because the request buffer for the transaction was NULL */
 	RMNETCTL_API_ERR_REQUEST_NULL,
 	/* API failed because the response buffer for the transaction was NULL*/
@@ -96,6 +102,33 @@ enum rmnetctl_error_codes_e {
 	RMNETCTL_API_ERR_RETURN_TYPE,
 	/* API failed because the string was truncated */
 	RMNETCTL_API_ERR_STRING_TRUNCATION,
+
+	/* These error are 1-to-1 with rmnet_data config errors in rmnet_data.h
+	   for each conversion.
+	   please keep the enums synced.
+	*/
+	RMNETCTL_KERNEL_FIRST_ERR,
+	/* No error */
+	RMNETCTL_KERNEL_ERROR_NO_ERR = RMNETCTL_KERNEL_FIRST_ERR,
+	/* Invalid / unsupported message */
+	RMNETCTL_KERNEL_ERR_UNKNOWN_MESSAGE,
+	/* Internal problem in the kernel modeule */
+	RMNETCTL_KERNEL_ERR_INTERNAL,
+	/* Kernel is temporarely out of memory */
+	RMNETCTL_KERNEL_ERR_OUT_OF_MEM,
+	/* Device already exists / Still in use */
+	RMETNCTL_KERNEL_ERR_DEVICE_IN_USE,
+	/* Invalid request / Unsupported scenario */
+	RMNETCTL_KERNEL_ERR_INVALID_REQUEST,
+	/* Device doesn't exist */
+	RMNETCTL_KERNEL_ERR_NO_SUCH_DEVICE,
+	/* One or more of the arguments is invalid */
+	RMNETCTL_KERNEL_ERR_BAD_ARGS,
+	/* Egress device is invalid */
+	RMNETCTL_KERNEL_ERR_BAD_EGRESS_DEVICE,
+	/* TC handle is full */
+	RMNETCTL_KERNEL_ERR_TC_HANDLE_FULL,
+
 	/* This should always be the last element */
 	RMNETCTL_API_ERR_ENUM_LENGTH
 };
@@ -121,7 +154,18 @@ char rmnetctl_error_code_text
 	"ERROR: Response buffer for the transaction was NULL\n",
 	"ERROR: Request and response type do not match\n",
 	"ERROR: Return type is invalid\n",
-	"ERROR: String was truncated\n"
+	"ERROR: String was truncated\n",
+	/* Kernel errors */
+	"ERROR: Kernel call succeeded\n",
+	"ERROR: Invalid / Unsupported directive\n",
+	"ERROR: Internal problem in the kernel module\n",
+	"ERROR: The kernel is temporarely out of memory\n",
+	"ERROR: Device already exists / Still in use\n",
+	"ERROR: Invalid request / Unsupported scenario\n",
+	"ERROR: Device doesn't exist\n",
+	"ERROR: One or more of the arguments is invalid\n",
+	"ERROR: Egress device is invalid\n",
+	"ERROR: TC handle is full\n"
 };
 
 /*===========================================================================
@@ -348,7 +392,8 @@ int rmnet_unset_logical_ep_config(rmnetctl_hndl_t *hndl,
 * @param logical_ep_id Logical end point id from which to get the configuration
 * @param dev_name Device on which to get the logical end point configuration
 * @param rmnet_mode RmNet mode from the device
-* @param egress_dev_name Egress Device if operating in bridge mode
+* @param next_dev Egress Device name
+* @param next_dev_len Egress Device I/O string len
 * @param error_code Status code of this operation returned from the kernel
 * @return RMNETCTL_SUCCESS if successful
 * @return RMNETCTL_LIB_ERR if there was a library error. Check error_code
@@ -361,6 +406,7 @@ int rmnet_get_logical_ep_config(rmnetctl_hndl_t *hndl,
 				const char *dev_name,
 				uint8_t *operating_mode,
 				char **next_dev,
+				uint32_t next_dev_len,
 				uint16_t *error_code);
 
 /*!

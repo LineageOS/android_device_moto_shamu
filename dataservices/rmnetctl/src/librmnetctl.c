@@ -63,7 +63,17 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define KERNEL_PROCESS_ID 0
 #define UNICAST 0
 #define MAX_BUF_SIZE sizeof(struct nlmsghdr) + sizeof(struct rmnet_nl_msg_s)
+#define INGRESS_FLAGS_MASK   (RMNET_INGRESS_FIX_ETHERNET | \
+			      RMNET_INGRESS_FORMAT_MAP | \
+			      RMNET_INGRESS_FORMAT_DEAGGREGATION | \
+			      RMNET_INGRESS_FORMAT_DEMUXING | \
+			      RMNET_INGRESS_FORMAT_MAP_COMMANDS)
+#define EGRESS_FLAGS_MASK    (RMNET_EGRESS_FORMAT__RESERVED__ | \
+			      RMNET_EGRESS_FORMAT_MAP | \
+			      RMNET_EGRESS_FORMAT_AGGREGATION | \
+			      RMNET_EGRESS_FORMAT_MUXING)
 
+#define min(a, b) (((a) < (b)) ? (a) : (b))
 /*===========================================================================
 			LOCAL FUNCTION DEFINITIONS
 ===========================================================================*/
@@ -183,6 +193,8 @@ static int rmnetctl_transact(rmnetctl_hndl_t *hndl,
 	}
 	return_code = RMNETCTL_SUCCESS;
 	} while(0);
+	free(request_buf);
+	free(response_buf);
 	return return_code;
 }
 
@@ -279,9 +291,10 @@ static inline int _rmnetctl_check_data(int crd, uint16_t *error_code) {
 */
 static inline int _rmnetctl_set_codes(int error_val, uint16_t *error_code) {
 	int return_code = RMNETCTL_KERNEL_ERR;
-	*error_code = error_val;
-	if (*error_code == RMNETCTL_SUCCESS)
+	if (error_val == RMNET_CONFIG_OK)
 		return_code = RMNETCTL_SUCCESS;
+	else
+		*error_code = error_val + RMNETCTL_KERNEL_FIRST_ERR;
 	return return_code;
 }
 
@@ -432,7 +445,8 @@ int rmnet_set_link_egress_data_format(rmnetctl_hndl_t *hndl,
 	struct rmnet_nl_msg_s request, response;
 	int str_len = -1, return_code = RMNETCTL_LIB_ERR;
 	do {
-	if ((!hndl) || (!error_code) || _rmnetctl_check_dev_name(dev_name)) {
+	if ((!hndl) || (!error_code) || _rmnetctl_check_dev_name(dev_name) ||
+	    ((~EGRESS_FLAGS_MASK) & egress_flags)) {
 		return_code = RMNETCTL_INVALID_ARG;
 		break;
 	}
@@ -509,7 +523,8 @@ int rmnet_set_link_ingress_data_format_tailspace(rmnetctl_hndl_t *hndl,
 	struct rmnet_nl_msg_s request, response;
 	int str_len = -1, return_code = RMNETCTL_LIB_ERR;
 	do {
-	if ((!hndl) || (!error_code) || _rmnetctl_check_dev_name(dev_name)) {
+	if ((!hndl) || (!error_code) || _rmnetctl_check_dev_name(dev_name) ||
+	    ((~INGRESS_FLAGS_MASK) & ingress_flags)) {
 		return_code = RMNETCTL_INVALID_ARG;
 		break;
 	}
@@ -590,7 +605,8 @@ int rmnet_set_logical_ep_config(rmnetctl_hndl_t *hndl,
 	do {
 	if ((!hndl) || ((ep_id < -1) || (ep_id > 31)) || (!error_code) ||
 		_rmnetctl_check_dev_name(dev_name) ||
-		_rmnetctl_check_dev_name(next_dev)) {
+		_rmnetctl_check_dev_name(next_dev) ||
+		operating_mode >= RMNET_EPMODE_LENGTH) {
 		return_code = RMNETCTL_INVALID_ARG;
 		break;
 	}
@@ -667,12 +683,14 @@ int rmnet_get_logical_ep_config(rmnetctl_hndl_t *hndl,
 				const char *dev_name,
 				uint8_t *operating_mode,
 				char **next_dev,
+				uint32_t next_dev_len,
 				uint16_t *error_code) {
 	struct rmnet_nl_msg_s request, response;
 	int str_len = -1, return_code = RMNETCTL_LIB_ERR;
 	do {
 	if ((!hndl) || (!operating_mode) || (!error_code) || ((ep_id < -1) ||
-	(ep_id > 31)) || _rmnetctl_check_dev_name(dev_name) || (!next_dev)) {
+	    (ep_id > 31)) || _rmnetctl_check_dev_name(dev_name) || (!next_dev)
+	    || (0 == next_dev_len)) {
 		return_code = RMNETCTL_INVALID_ARG;
 		break;
 	}
@@ -693,10 +711,10 @@ int rmnet_get_logical_ep_config(rmnetctl_hndl_t *hndl,
 		break;
 	if (_rmnetctl_check_data(response.crd, error_code) != RMNETCTL_SUCCESS)
 		break;
-	printf("%s\n", (char *)(response.local_ep_config.next_dev));
+
 	str_len = strlcpy(*next_dev,
 			  (char *)(response.local_ep_config.next_dev),
-			  RMNET_MAX_STR_LEN);
+			  min(RMNET_MAX_STR_LEN, next_dev_len));
 	if (_rmnetctl_check_len(str_len, error_code) != RMNETCTL_SUCCESS)
 		break;
 
@@ -770,7 +788,7 @@ int rmnet_get_vnd_name(rmnetctl_hndl_t *hndl,
 	uint32_t str_len;
 	int return_code = RMNETCTL_LIB_ERR;
 	do {
-	if ((!hndl) || (!error_code)) {
+	if ((!hndl) || (!error_code) || (!buf) || (0 == buflen)) {
 		return_code = RMNETCTL_INVALID_ARG;
 		break;
 	}
@@ -808,8 +826,8 @@ int rmnet_add_del_vnd_tc_flow(rmnetctl_hndl_t *hndl,
 	struct rmnet_nl_msg_s request, response;
 	int return_code = RMNETCTL_LIB_ERR;
 	do {
-	if ((!hndl) || ((set_flow != RMNETCTL_ADD_FLOW) &&
-	(set_flow != RMNETCTL_DEL_FLOW))) {
+	if ((!hndl) || (!error_code) || ((set_flow != RMNETCTL_ADD_FLOW) &&
+	    (set_flow != RMNETCTL_DEL_FLOW))) {
 		return_code = RMNETCTL_INVALID_ARG;
 		break;
 	}
