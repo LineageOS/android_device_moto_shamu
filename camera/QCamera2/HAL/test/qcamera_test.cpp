@@ -60,11 +60,20 @@
 #include <cutils/memory.h>
 #include <SkImageDecoder.h>
 #include <SkImageEncoder.h>
+#include <MediaCodec.h>
+#include <OMX_IVCommon.h>
+#include <foundation/AMessage.h>
+#include <media/ICrypto.h>
+#include <MediaMuxer.h>
+#include <foundation/ABuffer.h>
+#include <MediaErrors.h>
+#include <gralloc_priv.h>
 
 #include "qcamera_test.h"
 
 #define ERROR(format, ...) printf( \
     "%s[%d] : ERROR: "format"\n", __func__, __LINE__, ##__VA_ARGS__)
+#define VIDEO_BUF_ALLIGN(size, allign) (((size) + (allign-1)) & (~(allign-1)))
 
 namespace qcamera {
 
@@ -102,6 +111,15 @@ void CameraContext::previewCallback(const sp<IMemory>& mem)
            ptr[9]);
 }
 
+/*===========================================================================
+ * FUNCTION   : useLock
+ *
+ * DESCRIPTION: Mutex lock for CameraContext
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void CameraContext::useLock()
 {
     Mutex::Autolock l(mLock);
@@ -112,12 +130,58 @@ void CameraContext::useLock()
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : signalFinished
+ *
+ * DESCRIPTION: Mutex unlock CameraContext
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 void CameraContext::signalFinished()
 {
     Mutex::Autolock l(mLock);
     mInUse = false;
     mCond.signal();
 }
+
+/*===========================================================================
+ * FUNCTION   : mutexLock
+ *
+ * DESCRIPTION: Mutex lock for ViV Video
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
+void CameraContext::mutexLock()
+{
+    Mutex::Autolock l(mViVLock);
+    if (mViVinUse ) {
+        mViVCond.wait(mViVLock);
+    } else {
+        mViVinUse = true;
+    }
+}
+
+/*===========================================================================
+ * FUNCTION   : mutexUnLock
+ *
+ * DESCRIPTION: Mutex unlock for ViV Video
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
+void CameraContext::mutexUnlock()
+{
+    Mutex::Autolock l(mViVLock);
+    mViVinUse = false;
+    mViVCond.signal();
+}
+
+
 
 /*===========================================================================
  * FUNCTION   : saveFile
@@ -626,6 +690,16 @@ status_t CameraContext::ReadSectionsFromBuffer (unsigned char *buffer,
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : CheckSectionsAllocated
+ *
+ * DESCRIPTION: Check allocated jpeg sections.
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+
+ *==========================================================================*/
 void CameraContext::CheckSectionsAllocated(void)
 {
     if (mSectionsRead > mSectionsAllocated){
@@ -875,6 +949,402 @@ void CameraContext::postDataTimestamp(nsecs_t timestamp,
 }
 
 /*===========================================================================
+ * FUNCTION   : dataCallbackTimestamp
+ *
+ * DESCRIPTION: handles recording callbacks. Used for ViV recording
+ *
+ * PARAMETERS :
+ *   @timestamp : timestamp of buffer
+ *   @msgType : type of buffer
+ *   @dataPtr : buffer data
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void CameraContext::dataCallbackTimestamp(nsecs_t timestamp,
+        int32_t msgType,
+        const sp<IMemory>& dataPtr)
+{
+    mutexLock();
+    // Not needed check. Just avoiding warnings of not used variables.
+    if (timestamp > 0)
+        timestamp = 0;
+    // Not needed check. Just avoiding warnings of not used variables.
+    if (msgType > 0)
+        msgType = 0;
+    int i = 0;
+    void * srcBuff = NULL;
+    void * dstBuff = NULL;
+
+    size_t srcYStride = 0, dstYStride = 0;
+    size_t srcUVStride = 0, dstUVStride = 0;
+    size_t srcYScanLines = 0, dstYScanLines = 0;
+    size_t srcUVScanLines = 0, dstUVScanLines = 0;
+    size_t srcOffset = 0, dstOffset = 0;
+    size_t srcBaseOffset = 0;
+    size_t dstBaseOffset = 0;
+    Size currentVideoSize = mSupportedVideoSizes.itemAt(mCurrentVideoSizeIdx);
+    status_t err = NO_ERROR;
+    ANativeWindowBuffer* anb = NULL;
+
+    dstBuff = (void *) dataPtr->pointer();
+
+    if (mCameraIndex == mInterpr->mViVVid.sourceCameraID) {
+        srcYStride = calcStride(currentVideoSize.width);
+        srcUVStride = calcStride(currentVideoSize.width);
+        srcYScanLines = calcYScanLines(currentVideoSize.height);
+        srcUVScanLines = calcUVScanLines(currentVideoSize.height);
+        mInterpr->mViVBuff.srcWidth = currentVideoSize.width;
+        mInterpr->mViVBuff.srcHeight = currentVideoSize.height;
+
+
+        mInterpr->mViVBuff.YStride = srcYStride;
+        mInterpr->mViVBuff.UVStride = srcUVStride;
+        mInterpr->mViVBuff.YScanLines = srcYScanLines;
+        mInterpr->mViVBuff.UVScanLines = srcUVScanLines;
+
+        memcpy( mInterpr->mViVBuff.buff, (void *) dataPtr->pointer(),
+            mInterpr->mViVBuff.buffSize);
+
+        mInterpr->mViVVid.isBuffValid = true;
+    } else if (mCameraIndex == mInterpr->mViVVid.destinationCameraID) {
+        if(mInterpr->mViVVid.isBuffValid == true) {
+            dstYStride = calcStride(currentVideoSize.width);
+            dstUVStride = calcStride(currentVideoSize.width);
+            dstYScanLines = calcYScanLines(currentVideoSize.height);
+            dstUVScanLines = calcUVScanLines(currentVideoSize.height);
+
+            srcYStride = mInterpr->mViVBuff.YStride;
+            srcUVStride = mInterpr->mViVBuff.UVStride;
+            srcYScanLines = mInterpr->mViVBuff.YScanLines;
+            srcUVScanLines = mInterpr->mViVBuff.UVScanLines;
+
+
+            for (i=0; i<(int) mInterpr->mViVBuff.srcHeight; i++) {
+                srcOffset = i*srcYStride;
+                dstOffset = i*dstYStride;
+                memcpy((unsigned char *) dstBuff + dstOffset,
+                    (unsigned char *) mInterpr->mViVBuff.buff +
+                    srcOffset, mInterpr->mViVBuff.srcWidth);
+            }
+            srcBaseOffset = srcYStride * srcYScanLines;
+            dstBaseOffset = dstYStride * dstYScanLines;
+            for (i=0;i<(int) mInterpr->mViVBuff.srcHeight/2;i++) {
+                srcOffset = i*srcUVStride + srcBaseOffset;
+                dstOffset = i*dstUVStride + dstBaseOffset;
+                memcpy((unsigned char *) dstBuff + dstOffset,
+                    (unsigned char *) mInterpr->mViVBuff.buff +
+                    srcOffset, mInterpr->mViVBuff.srcWidth);
+            }
+
+            err = native_window_dequeue_buffer_and_wait(
+                mInterpr->mViVVid.ANW.get(),&anb);
+            if (err != NO_ERROR) {
+                printf("Cannot dequeue anb for sensor %d!!!\n", mCameraIndex);
+                return;
+            }
+            mInterpr->mViVVid.graphBuf = new GraphicBuffer(anb, false);
+            if(NULL == mInterpr->mViVVid.graphBuf.get()) {
+                printf("Invalid Graphic buffer\n");
+                return;
+            }
+            err = mInterpr->mViVVid.graphBuf->lock(
+                GRALLOC_USAGE_SW_WRITE_OFTEN,
+                (void**)(&mInterpr->mViVVid.mappedBuff));
+            if (err != NO_ERROR) {
+                printf("Graphic buffer could not be locked %d!!!\n", err);
+                return;
+            }
+
+            srcYStride = dstYStride;
+            srcUVStride = dstUVStride;
+            srcYScanLines = dstYScanLines;
+            srcUVScanLines = dstUVScanLines;
+            srcBuff = dstBuff;
+
+            for (i=0; i<(int) currentVideoSize.height; i++) {
+                srcOffset = i*srcYStride;
+                dstOffset = i*dstYStride;
+                memcpy((unsigned char *) mInterpr->mViVVid.mappedBuff +
+                    dstOffset, (unsigned char *) srcBuff +
+                    srcOffset, currentVideoSize.width);
+            }
+
+            srcBaseOffset = srcYStride * srcYScanLines;
+            dstBaseOffset = dstUVStride * currentVideoSize.height;
+
+            for (i=0;i<(int) currentVideoSize.height/2;i++) {
+                srcOffset = i*srcUVStride + srcBaseOffset;
+                dstOffset = i*dstUVStride + dstBaseOffset;
+                memcpy((unsigned char *) mInterpr->mViVVid.mappedBuff +
+                    dstOffset, (unsigned char *) srcBuff +
+                    srcOffset, currentVideoSize.width);
+            }
+
+
+            mInterpr->mViVVid.graphBuf->unlock();
+
+            err = mInterpr->mViVVid.ANW->queueBuffer(
+                mInterpr->mViVVid.ANW.get(), anb, -1);
+            if(err)
+                printf("Failed to enqueue buffer to recorder!!!\n");
+        }
+    }
+    mCamera->releaseRecordingFrame(dataPtr);
+
+    mutexUnlock();
+}
+
+/*===========================================================================
+ * FUNCTION   : ViVEncoderThread
+ *
+ * DESCRIPTION: Creates a separate thread for ViV recording
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
+status_t Interpreter::ViVEncoderThread()
+{
+    int ret = NO_ERROR;
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+
+    ret = pthread_create(&mViVEncThread, &attr, ThreadWrapper, this);
+    ret = pthread_attr_destroy(&attr);
+
+    return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : ThreadWrapper
+ *
+ * DESCRIPTION: Helper function for for ViV recording thread
+ *
+ * PARAMETERS : Interpreter context
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void *Interpreter::ThreadWrapper(void *context) {
+    Interpreter *writer = static_cast<Interpreter *>(context);
+    writer->ViVEncode();
+    return NULL;
+}
+
+/*===========================================================================
+ * FUNCTION   : ViVEncode
+ *
+ * DESCRIPTION: Thread for ViV encode. Buffers from video codec are sent to
+ *              muxer and saved in a file.
+ *
+ * PARAMETERS : Interpreter context
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void Interpreter::ViVEncode()
+{
+    status_t err = NO_ERROR;
+    ssize_t trackIdx = -1;
+    uint32_t debugNumFrames = 0;
+
+    size_t bufIndex, offset, size;
+    int64_t ptsUsec;
+    uint32_t flags;
+    bool DoRecording = true;
+
+
+    err = mTestContext->mViVVid.codec->getOutputBuffers(
+        &mTestContext->mViVVid.buffers);
+    if (err != NO_ERROR) {
+        printf("Unable to get output buffers (err=%d)\n", err);
+    }
+
+    while (DoRecording) {
+        err = mTestContext->mViVVid.codec->dequeueOutputBuffer(
+            &bufIndex,
+            &offset,
+            &size,
+            &ptsUsec,
+            &flags, -1);
+
+        switch (err) {
+
+        case NO_ERROR:
+            // got a buffer
+            if ((flags & MediaCodec::BUFFER_FLAG_CODECCONFIG) != 0) {
+                // ignore this -- we passed the CSD into MediaMuxer when
+                // we got the format change notification
+                size = 0;
+            }
+            if (size != 0) {
+                // If the virtual display isn't providing us with timestamps,
+                // use the current time.
+                if (ptsUsec == 0) {
+                    ptsUsec = systemTime(SYSTEM_TIME_MONOTONIC) / 1000;
+                }
+
+                // The MediaMuxer docs are unclear, but it appears that we
+                // need to pass either the full set of BufferInfo flags, or
+                // (flags & BUFFER_FLAG_SYNCFRAME).
+                err = mTestContext->mViVVid.muxer->writeSampleData(
+                    mTestContext->mViVVid.buffers[bufIndex],
+                    trackIdx,
+                    ptsUsec,
+                    flags);
+                if (err != NO_ERROR) {
+                    fprintf(stderr, "Failed writing data to muxer (err=%d)\n",
+                            err);
+                }
+                debugNumFrames++;
+            }
+            err = mTestContext->mViVVid.codec->releaseOutputBuffer(bufIndex);
+            if (err != NO_ERROR) {
+                fprintf(stderr, "Unable to release output buffer (err=%d)\n",
+                        err);
+            }
+            if ((flags & MediaCodec::BUFFER_FLAG_EOS) != 0) {
+                // Not expecting EOS from SurfaceFlinger.  Go with it.
+                printf("Received end-of-stream\n");
+                //DoRecording = false;
+            }
+            break;
+        case -EAGAIN:                       // INFO_TRY_AGAIN_LATER
+            ALOGV("Got -EAGAIN, looping");
+            break;
+        case INFO_FORMAT_CHANGED:           // INFO_OUTPUT_FORMAT_CHANGED
+        {
+            // format includes CSD, which we must provide to muxer
+            sp<AMessage> newFormat;
+            mTestContext->mViVVid.codec->getOutputFormat(&newFormat);
+            trackIdx = mTestContext->mViVVid.muxer->addTrack(newFormat);
+            err = mTestContext->mViVVid.muxer->start();
+            if (err != NO_ERROR) {
+                printf("Unable to start muxer (err=%d)\n", err);
+            }
+        }
+        break;
+        case INFO_OUTPUT_BUFFERS_CHANGED:   // INFO_OUTPUT_BUFFERS_CHANGED
+            // not expected for an encoder; handle it anyway
+            ALOGV("Encoder buffers changed");
+            err = mTestContext->mViVVid.codec->getOutputBuffers(
+                &mTestContext->mViVVid.buffers);
+            if (err != NO_ERROR) {
+                printf("Unable to get new output buffers (err=%d)\n", err);
+            }
+        break;
+        case INVALID_OPERATION:
+            DoRecording = false;
+        break;
+        default:
+            printf("Got weird result %d from dequeueOutputBuffer\n", err);
+        break;
+        }
+    }
+
+    return;
+}
+
+
+/*===========================================================================
+ * FUNCTION   : calcBufferSize
+ *
+ * DESCRIPTION: Temp buffer size calculation. Temp buffer is used to store
+ *              the buffer from the camera with smaller resolution. It is
+ *              copied to the buffer from camera with higher resolution.
+ *
+ * PARAMETERS :
+ *   @width   : video size width
+ *   @height  : video size height
+ *
+ * RETURN     : size_t
+ *==========================================================================*/
+size_t CameraContext::calcBufferSize(int width, int height)
+{
+    size_t size = 0;
+    size_t UVAlignment;
+    size_t YPlane, UVPlane, YStride, UVStride, YScanlines, UVScanlines;
+    if (!width || !height) {
+        return size;
+    }
+    UVAlignment = 4096;
+    YStride = calcStride(width);
+    UVStride = calcStride(width);
+    YScanlines = calcYScanLines(height);
+    UVScanlines = calcUVScanLines(height);
+    YPlane = YStride * YScanlines;
+    UVPlane = UVStride * UVScanlines + UVAlignment;
+    size = YPlane + UVPlane;
+    size = VIDEO_BUF_ALLIGN(size, 4096);
+
+    return size;
+}
+
+/*===========================================================================
+ * FUNCTION   : calcStride
+ *
+ * DESCRIPTION: Temp buffer stride calculation.
+ *
+ * PARAMETERS :
+ *   @width   : video size width
+ *
+ * RETURN     : size_t
+ *==========================================================================*/
+size_t CameraContext::calcStride(int width)
+{
+    size_t alignment, stride = 0;
+    if (!width) {
+        return stride;
+    }
+    alignment = 128;
+    stride = VIDEO_BUF_ALLIGN(width, alignment);
+
+    return stride;
+}
+
+/*===========================================================================
+ * FUNCTION   : calcYScanLines
+ *
+ * DESCRIPTION: Temp buffer scanlines calculation for Y plane.
+ *
+ * PARAMETERS :
+ *   @width   : video size height
+ *
+ * RETURN     : size_t
+ *==========================================================================*/
+size_t CameraContext::calcYScanLines(int height)
+{
+    size_t alignment, scanlines = 0;
+        if (!height) {
+            return scanlines;
+        }
+    alignment = 32;
+    scanlines = VIDEO_BUF_ALLIGN(height, alignment);
+
+    return scanlines;
+}
+
+/*===========================================================================
+ * FUNCTION   : calcUVScanLines
+ *
+ * DESCRIPTION: Temp buffer scanlines calculation for UV plane.
+ *
+ * PARAMETERS :
+ *   @width   : video size height
+ *
+ * RETURN     : size_t
+ *==========================================================================*/
+size_t CameraContext::calcUVScanLines(int height)
+{
+    size_t alignment, scanlines = 0;
+    if (!height) {
+        return scanlines;
+    }
+    alignment = 16;
+    scanlines = VIDEO_BUF_ALLIGN(((height + 1) >> 1), alignment);
+
+    return scanlines;
+}
+
+/*===========================================================================
  * FUNCTION   : printSupportedParams
  *
  * DESCRIPTION: dump common supported parameters
@@ -900,6 +1370,10 @@ void CameraContext::printSupportedParams()
            mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES)?
            mParams.get(
                CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES) : "NULL");
+    printf("\n\r\tSupported Video Sizes: %s",
+            mParams.get(CameraParameters::KEY_SUPPORTED_VIDEO_SIZES)?
+            mParams.get(
+               CameraParameters::KEY_SUPPORTED_VIDEO_SIZES) : "NULL");
     printf("\n\r\tSupported Preview Formats: %s",
            mParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FORMATS)?
            mParams.get(
@@ -1076,6 +1550,7 @@ CameraContext::CameraContext(int cameraIndex) :
     mSections(NULL),
     mJEXIFTmp(NULL),
     mHaveAll(false),
+    mViVinUse(false),
     mCamera(NULL),
     mClient(NULL),
     mSurfaceControl(NULL),
@@ -1083,6 +1558,36 @@ CameraContext::CameraContext(int cameraIndex) :
     mInUse(false)
 {
     mRecorder = new MediaRecorder();
+}
+
+/*===========================================================================
+ * FUNCTION     : setTestCtxInstance
+ *
+ * DESCRIPTION  : Sends TestContext instance to CameraContext
+ *
+ * PARAMETERS   :
+ *    @instance : TestContext instance
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void CameraContext::setTestCtxInstance(TestContext  *instance)
+{
+    mInterpr = instance;
+}
+
+/*===========================================================================
+ * FUNCTION     : setTestCtxInst
+ *
+ * DESCRIPTION  : Sends TestContext instance to Interpreter
+ *
+ * PARAMETERS   :
+ *    @instance : TestContext instance
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void Interpreter::setTestCtxInst(TestContext  *instance)
+{
+    mTestContext = instance;
 }
 
 /*===========================================================================
@@ -1153,9 +1658,26 @@ status_t  CameraContext::openCamera()
     mCamera->setListener(this);
     mHardwareActive = true;
 
+    mInterpr->setViVSize((Size) mSupportedVideoSizes.itemAt(
+        mCurrentVideoSizeIdx),
+        mCameraIndex);
+
     signalFinished();
 
     return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : onAsBinder
+ *
+ * DESCRIPTION: onAsBinder
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : Pointer to IBinder
+ *==========================================================================*/
+IBinder* CameraContext::onAsBinder() {
+    return NULL;
 }
 
 /*===========================================================================
@@ -1272,7 +1794,6 @@ status_t CameraContext::startPreview()
             return ret;
         }
 
-
         mParams.setPreviewSize(previewWidth, previewHeight);
         mParams.setPictureSize(currentPictureSize.width,
             currentPictureSize.height);
@@ -1387,22 +1908,28 @@ status_t CameraContext::takePicture()
     return ret;
 }
 
-
+/*===========================================================================
+ * FUNCTION   : configureRecorder
+ *
+ * DESCRIPTION: Configure video recorder
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : status_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 status_t CameraContext::configureRecorder()
 {
     useLock();
     status_t ret = NO_ERROR;
-
-    mParams.unflatten(mCamera->getParameters());
-    int width, height;
-    mParams.getVideoSize(&width, &height);
 
     mResizePreview = true;
     mParams.set("recording-hint", "true");
     mRecordingHint = true;
     mCamera->setParameters(mParams.flatten());
 
-
+    Size videoSize = mSupportedVideoSizes.itemAt(mCurrentVideoSizeIdx);
     ret = mRecorder->setParameters(
         String8("video-param-encoding-bitrate=64000"));
     if ( ret != NO_ERROR ) {
@@ -1432,10 +1959,16 @@ status_t CameraContext::configureRecorder()
         return ret;
     }
 
+    ret = mRecorder->setVideoEncoder(VIDEO_ENCODER_DEFAULT);
+    if ( ret != NO_ERROR ) {
+        ERROR("Could not set video encoder (%d)", ret);
+        return ret;
+    }
+
     char fileName[100];
 
     sprintf(fileName, "/sdcard/vid_cam%d_%dx%d_%d.mpeg", mCameraIndex,
-            width, height, mVideoIdx++);
+            videoSize.width, videoSize.height, mVideoIdx++);
 
     if ( mVideoFd < 0 ) {
         mVideoFd = open(fileName, O_CREAT | O_RDWR );
@@ -1451,23 +1984,20 @@ status_t CameraContext::configureRecorder()
         ERROR("Could not set output file (%d)", ret);
         return ret;
     }
+
+    ret = mRecorder->setVideoSize(videoSize.width, videoSize.height);
+    if ( ret  != NO_ERROR ) {
+        ERROR("Could not set video size %dx%d", videoSize.width,
+            videoSize.height);
+        return ret;
+    }
+
     ret = mRecorder->setVideoFrameRate(30);
     if ( ret != NO_ERROR ) {
         ERROR("Could not set video frame rate (%d)", ret);
         return ret;
     }
 
-    ret = mRecorder->setVideoSize(width, height);
-    if ( ret  != NO_ERROR ) {
-        ERROR("Could not set video size %dx%d", width, height);
-        return ret;
-    }
-
-    ret = mRecorder->setVideoEncoder(VIDEO_ENCODER_DEFAULT);
-    if ( ret != NO_ERROR ) {
-        ERROR("Could not set video encoder (%d)", ret);
-        return ret;
-    }
     ret = mRecorder->setAudioEncoder(AUDIO_ENCODER_DEFAULT);
     if ( ret != NO_ERROR ) {
         ERROR("Could not set audio encoder (%d)", ret);
@@ -1478,6 +2008,17 @@ status_t CameraContext::configureRecorder()
     return ret;
 }
 
+/*===========================================================================
+ * FUNCTION   : unconfigureViVRecording
+ *
+ * DESCRIPTION: Unconfigures video in video recording
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : status_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 status_t CameraContext::unconfigureRecorder()
 {
     useLock();
@@ -1493,6 +2034,30 @@ status_t CameraContext::unconfigureRecorder()
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : configureViVRecording
+ *
+ * DESCRIPTION: Configures video in video recording
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : status_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+status_t CameraContext::configureViVRecording()
+{
+    status_t ret = NO_ERROR;
+
+    mResizePreview = true;
+    mParams.set("recording-hint", "true");
+    mRecordingHint = true;
+    mCamera->setParameters(mParams.flatten());
+    mCamera->setRecordingProxyListener(this);
+
+    signalFinished();
+    return ret;
+}
 
 /*===========================================================================
  * FUNCTION   : startRecording
@@ -1509,6 +2074,7 @@ status_t CameraContext::startRecording()
 {
     useLock();
     status_t ret = NO_ERROR;
+
 
     if ( mPreviewRunning ) {
 
@@ -1549,15 +2115,85 @@ status_t CameraContext::stopRecording()
     status_t ret = NO_ERROR;
 
     if ( mRecordRunning ) {
-        mRecorder->stop();
+            mRecorder->stop();
+            close(mVideoFd);
+            mVideoFd = -1;
 
-        close(mVideoFd);
-        mVideoFd = -1;
         mRecordRunning = false;
     }
 
     signalFinished();
 
+    return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : startViVRecording
+ *
+ * DESCRIPTION: Starts video in video recording
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : status_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+status_t CameraContext::startViVRecording()
+{
+    useLock();
+    status_t ret;
+
+    if (mInterpr->mViVVid.VideoSizes[0].width *
+            mInterpr->mViVVid.VideoSizes[0].height >=
+            mInterpr->mViVVid.VideoSizes[1].width *
+            mInterpr->mViVVid.VideoSizes[1].height) {
+        mInterpr->mViVBuff.buffSize = calcBufferSize(
+            mInterpr->mViVVid.VideoSizes[1].width,
+            mInterpr->mViVVid.VideoSizes[1].height);
+        if (mInterpr->mViVBuff.buff == NULL) {
+            mInterpr->mViVBuff.buff =
+                (void *)malloc(mInterpr->mViVBuff.buffSize);
+        }
+        mInterpr->mViVVid.sourceCameraID = 1;
+        mInterpr->mViVVid.destinationCameraID = 0;
+
+    } else {
+        mInterpr->mViVBuff.buffSize = calcBufferSize(
+            mInterpr->mViVVid.VideoSizes[0].width,
+            mInterpr->mViVVid.VideoSizes[0].height);
+        if (mInterpr->mViVBuff.buff == NULL) {
+            mInterpr->mViVBuff.buff =
+                (void *)malloc(mInterpr->mViVBuff.buffSize);
+        }
+        mInterpr->mViVVid.sourceCameraID = 0;
+        mInterpr->mViVVid.destinationCameraID = 1;
+    }
+
+    ret = mCamera->startRecording();
+
+    signalFinished();
+    return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : stopViVRecording
+ *
+ * DESCRIPTION: Stops video in video recording
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : status_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+status_t CameraContext::stopViVRecording()
+{
+    useLock();
+    status_t ret = NO_ERROR;
+
+    mCamera->stopRecording();
+
+    signalFinished();
     return ret;
 }
 
@@ -1801,6 +2437,17 @@ status_t CameraContext::setPictureSize(const char *format)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : nextVideoSize
+ *
+ * DESCRIPTION: Select the next available video size
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : status_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 status_t CameraContext::nextVideoSize()
 {
     useLock();
@@ -1811,11 +2458,25 @@ status_t CameraContext::nextVideoSize()
         mParams.setVideoSize(videoSize.width,
                              videoSize.height);
         mCamera->setParameters(mParams.flatten());
+        mInterpr->setViVSize((Size) mSupportedVideoSizes.itemAt(
+            mCurrentVideoSizeIdx), mCameraIndex);
     }
     signalFinished();
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : setVideoSize
+ *
+ * DESCRIPTION: Set video size
+ *
+ * PARAMETERS :
+ *   @format  : format
+ *
+ * RETURN     : status_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
 status_t CameraContext::setVideoSize(const char *format)
 {
     useLock();
@@ -1850,6 +2511,18 @@ status_t CameraContext::setVideoSize(const char *format)
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION    : getCurrentVideoSize
+ *
+ * DESCRIPTION : Get current video size
+ *
+ * PARAMETERS  :
+ *   @videoSize: video Size
+ *
+ * RETURN      : status_t type of status
+ *               NO_ERROR  -- success
+ *               none-zero failure code
+ *==========================================================================*/
 status_t CameraContext::getCurrentVideoSize(Size &videoSize)
 {
     useLock();
@@ -1899,12 +2572,13 @@ using namespace qcamera;
 void CameraContext::printMenu(sp<CameraContext> currentCamera)
 {
     if ( !mDoPrintMenu ) return;
-    Size currentPictureSize, currentPreviewSize;
+    Size currentPictureSize, currentPreviewSize, currentVideoSize;
 
     assert(currentCamera.get());
 
     currentCamera->getCurrentPictureSize(currentPictureSize);
     currentCamera->getCurrentPreviewSize(currentPreviewSize);
+    currentCamera->getCurrentVideoSize(currentVideoSize);
 
     printf("\n\n=========== FUNCTIONAL TEST MENU ===================\n\n");
 
@@ -1930,10 +2604,18 @@ void CameraContext::printMenu(sp<CameraContext> currentCamera)
            Interpreter::CHANGE_PREVIEW_SIZE_CMD,
            currentPreviewSize.width,
            currentPreviewSize.height);
+    printf("   %c. Video size:  %dx%d\n",
+            Interpreter::CHANGE_VIDEO_SIZE_CMD,
+            currentVideoSize.width,
+            currentVideoSize.height);
     printf("   %c. Start Recording\n",
             Interpreter::START_RECORD_CMD);
     printf("   %c. Stop Recording\n",
             Interpreter::STOP_RECORD_CMD);
+    printf("   %c. Start ViV Recording\n",
+            Interpreter::START_VIV_RECORD_CMD);
+    printf("   %c. Stop ViV Recording\n",
+            Interpreter::STOP_VIV_RECORD_CMD);
     printf("   %c. Enable preview frames\n",
             Interpreter::ENABLE_PRV_CALLBACKS_CMD);
     printf("   %c. Trigger autofocus \n",
@@ -1954,26 +2636,215 @@ void CameraContext::printMenu(sp<CameraContext> currentCamera)
     printf("   Choice: ");
 }
 
+/*===========================================================================
+ * FUNCTION   : enablePrintPreview
+ *
+ * DESCRIPTION: Enables printing the preview
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void CameraContext::enablePrintPreview()
 {
     mDoPrintMenu = true;
 }
 
+/*===========================================================================
+ * FUNCTION   : disablePrintPreview
+ *
+ * DESCRIPTION: Disables printing the preview
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void CameraContext::disablePrintPreview()
 {
     mDoPrintMenu = false;
 }
 
+/*===========================================================================
+ * FUNCTION   : enablePiPCapture
+ *
+ * DESCRIPTION: Enables picture in picture capture
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void CameraContext::enablePiPCapture()
 {
     mPiPCapture = true;
 }
 
+/*===========================================================================
+ * FUNCTION   : disablePiPCapture
+ *
+ * DESCRIPTION: Disables picture in picture capture
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
 void CameraContext::disablePiPCapture()
 {
     mPiPCapture = false;
 }
 
+/*===========================================================================
+ * FUNCTION   : configureViVCodec
+ *
+ * DESCRIPTION: Configures video in video codec
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : status_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+status_t Interpreter::configureViVCodec()
+{
+    status_t ret = NO_ERROR;
+    char fileName[100];
+    sp<AMessage> format = new AMessage;
+    sp<ALooper> looper = new ALooper;
+
+    if (mTestContext->mViVVid.VideoSizes[0].width *
+            mTestContext->mViVVid.VideoSizes[0].height >=
+            mTestContext->mViVVid.VideoSizes[1].width *
+            mTestContext->mViVVid.VideoSizes[1].height) {
+        sprintf(fileName, "/sdcard/ViV_vid_%dx%d_%d.mp4",
+            mTestContext->mViVVid.VideoSizes[0].width,
+            mTestContext->mViVVid.VideoSizes[0].height,
+            mTestContext->mViVVid.ViVIdx++);
+        format->setInt32("width", mTestContext->mViVVid.VideoSizes[0].width);
+        format->setInt32("height", mTestContext->mViVVid.VideoSizes[0].height);
+    } else {
+        sprintf(fileName, "/sdcard/ViV_vid_%dx%d_%d.mp4",
+            mTestContext->mViVVid.VideoSizes[1].width,
+            mTestContext->mViVVid.VideoSizes[1].height,
+            mTestContext->mViVVid.ViVIdx++);
+        format->setInt32("width", mTestContext->mViVVid.VideoSizes[1].width);
+        format->setInt32("height", mTestContext->mViVVid.VideoSizes[1].height);
+    }
+    mTestContext->mViVVid.muxer = new MediaMuxer(
+        fileName, MediaMuxer::OUTPUT_FORMAT_MPEG_4);
+
+    format->setString("mime", "video/avc");
+    format->setInt32("color-format", OMX_COLOR_FormatAndroidOpaque);
+
+    format->setInt32("bitrate", 1000000);
+    format->setFloat("frame-rate", 30);
+    format->setInt32("i-frame-interval", 10);
+
+    looper->setName("ViV_recording_looper");
+    looper->start();
+    ALOGV("Creating codec");
+    mTestContext->mViVVid.codec = MediaCodec::CreateByType(
+        looper, "video/avc", true);
+    if (mTestContext->mViVVid.codec == NULL) {
+        fprintf(stderr, "ERROR: unable to create video/avc codec instance\n");
+        return UNKNOWN_ERROR;
+    }
+    ret = mTestContext->mViVVid.codec->configure(format, NULL, NULL,
+            MediaCodec::CONFIGURE_FLAG_ENCODE);
+    if (ret != NO_ERROR) {
+        mTestContext->mViVVid.codec->release();
+        mTestContext->mViVVid.codec.clear();
+
+        fprintf(stderr, "ERROR: unable to configure codec (err=%d)\n", ret);
+        return ret;
+    }
+
+    ALOGV("Creating buffer producer");
+    ret = mTestContext->mViVVid.codec->createInputSurface(
+        &mTestContext->mViVVid.bufferProducer);
+    if (ret != NO_ERROR) {
+        mTestContext->mViVVid.codec->release();
+        mTestContext->mViVVid.codec.clear();
+
+        fprintf(stderr,
+            "ERROR: unable to create encoder input surface (err=%d)\n", ret);
+        return ret;
+    }
+
+    ret = mTestContext->mViVVid.codec->start();
+    if (ret != NO_ERROR) {
+        mTestContext->mViVVid.codec->release();
+        mTestContext->mViVVid.codec.clear();
+
+        fprintf(stderr, "ERROR: unable to start codec (err=%d)\n", ret);
+        return ret;
+    }
+    ALOGV("Codec prepared");
+
+    mTestContext->mViVVid.surface = new Surface(
+        mTestContext->mViVVid.bufferProducer);
+    mTestContext->mViVVid.ANW = mTestContext->mViVVid.surface;
+    ret = native_window_api_connect(mTestContext->mViVVid.ANW.get(),
+        NATIVE_WINDOW_API_CPU);
+    if (mTestContext->mViVVid.VideoSizes[0].width *
+        mTestContext->mViVVid.VideoSizes[0].height >=
+        mTestContext->mViVVid.VideoSizes[1].width *
+        mTestContext->mViVVid.VideoSizes[1].height) {
+        native_window_set_buffers_geometry(mTestContext->mViVVid.ANW.get(),
+            mTestContext->mViVVid.VideoSizes[0].width,
+            mTestContext->mViVVid.VideoSizes[0].height,
+            HAL_PIXEL_FORMAT_NV12_ENCODEABLE);
+    } else {
+        native_window_set_buffers_geometry(mTestContext->mViVVid.ANW.get(),
+            mTestContext->mViVVid.VideoSizes[1].width,
+            mTestContext->mViVVid.VideoSizes[1].height,
+            HAL_PIXEL_FORMAT_NV12_ENCODEABLE);
+    }
+    native_window_set_usage(mTestContext->mViVVid.ANW.get(),
+        GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN);
+    native_window_set_buffer_count(mTestContext->mViVVid.ANW.get(),
+        mTestContext->mViVVid.buff_cnt);
+
+    ViVEncoderThread();
+
+    return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : unconfigureViVCodec
+ *
+ * DESCRIPTION: Unconfigures video in video codec
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : status_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+status_t Interpreter::unconfigureViVCodec()
+{
+    status_t ret = NO_ERROR;
+
+    ret = native_window_api_disconnect(mTestContext->mViVVid.ANW.get(),
+        NATIVE_WINDOW_API_CPU);
+    mTestContext->mViVVid.bufferProducer = NULL;
+    mTestContext->mViVVid.codec->stop();
+    pthread_join(mViVEncThread, NULL);
+    mTestContext->mViVVid.muxer->stop();
+    mTestContext->mViVVid.codec->release();
+    mTestContext->mViVVid.codec.clear();
+    mTestContext->mViVVid.muxer.clear();
+    mTestContext->mViVVid.surface.clear();
+  return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : Interpreter
+ *
+ * DESCRIPTION: Interpreter constructor
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 Interpreter::Interpreter(const char *file)
     : mCmdIndex(0)
     , mScript(NULL)
@@ -2030,6 +2901,8 @@ Interpreter::Interpreter(const char *file)
         case CHANGE_PICTURE_SIZE_CMD:
         case START_RECORD_CMD:
         case STOP_RECORD_CMD:
+        case START_VIV_RECORD_CMD:
+        case STOP_VIV_RECORD_CMD:
         case DUMP_CAPS_CMD:
         case AUTOFOCUS_CMD:
         case TAKEPICTURE_CMD:
@@ -2062,6 +2935,15 @@ Interpreter::Interpreter(const char *file)
     mUseScript = true;
 }
 
+/*===========================================================================
+ * FUNCTION   : ~Interpreter
+ *
+ * DESCRIPTION: Interpreter destructor
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
 Interpreter::~Interpreter()
 {
     if ( mScript )
@@ -2070,6 +2952,16 @@ Interpreter::~Interpreter()
     mCommands.clear();
 }
 
+/*===========================================================================
+ * FUNCTION        : getCommand
+ *
+ * DESCRIPTION     : Get a command from interpreter
+ *
+ * PARAMETERS      :
+ *   @currentCamera: Current camera context
+ *
+ * RETURN          : command
+ *==========================================================================*/
 Interpreter::Command Interpreter::getCommand(
     sp<CameraContext> currentCamera)
 {
@@ -2082,14 +2974,29 @@ Interpreter::Command Interpreter::getCommand(
     }
 }
 
-
+/*===========================================================================
+ * FUNCTION        : TestContext
+ *
+ * DESCRIPTION     : TestContext constructor
+ *
+ * PARAMETERS      : None
+ *
+ * RETURN          : None
+ *==========================================================================*/
 TestContext::TestContext()
-    : mTestRunning(false)
-    , mCurrentCameraIndex(0)
-    , mInterpreter(NULL)
 {
     sp<CameraContext> camera;
     int i = 0;
+    mTestRunning = false;
+    mInterpreter = NULL;
+    mViVVid.ViVIdx = 0;
+    mViVVid.buff_cnt = 9;
+    mViVVid.graphBuf = 0;
+    mViVVid.mappedBuff = NULL;
+    mViVVid.isBuffValid = false;
+    mViVVid.sourceCameraID = -1;
+    mViVVid.destinationCameraID = -1;
+    memset(&mViVBuff, 0, sizeof(ViVBuff_t));
 
     ProcessState::self()->startThreadPool();
 
@@ -2098,6 +3005,7 @@ TestContext::TestContext()
         if ( NULL == camera.get() ) {
             break;
         }
+        camera->setTestCtxInstance(this);
 
         status_t stat = camera->openCamera();
         if ( NO_ERROR != stat ) {
@@ -2120,6 +3028,15 @@ TestContext::TestContext()
     }
 }
 
+/*===========================================================================
+ * FUNCTION        : ~TestContext
+ *
+ * DESCRIPTION     : TestContext destructor
+ *
+ * PARAMETERS      : None
+ *
+ * RETURN          : None
+ *==========================================================================*/
 TestContext::~TestContext()
 {
     delete mInterpreter;
@@ -2133,16 +3050,52 @@ TestContext::~TestContext()
     mAvailableCameras.clear();
 }
 
+/*===========================================================================
+ * FUNCTION        : GetCamerasNum
+ *
+ * DESCRIPTION     : Get the number of available cameras
+ *
+ * PARAMETERS      : None
+ *
+ * RETURN          : Number of cameras
+ *==========================================================================*/
 int32_t TestContext::GetCamerasNum()
 {
     return mAvailableCameras.size();
 }
 
+/*===========================================================================
+ * FUNCTION        : AddScriptFromFile
+ *
+ * DESCRIPTION     : Add script from file
+ *
+ * PARAMETERS      :
+ *   @scriptFile   : Script file
+ *
+ * RETURN          : status_t type of status
+ *                   NO_ERROR  -- success
+ *                   none-zero failure code
+ *==========================================================================*/
 status_t TestContext::AddScriptFromFile(const char *scriptFile)
 {
     mInterpreter = new Interpreter(scriptFile);
+    mInterpreter->setTestCtxInst(this);
 
     return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION        : releasePiPBuff
+ *
+ * DESCRIPTION     : Release video in video temp buffer
+ *
+ * PARAMETERS      : None
+ *
+ * RETURN          : None
+ *==========================================================================*/
+void Interpreter::releasePiPBuff() {
+    free(mTestContext->mViVBuff.buff);
+    mTestContext->mViVBuff.buff = NULL;
 }
 
 /*===========================================================================
@@ -2164,8 +3117,11 @@ status_t TestContext::FunctionalTest()
 
     assert(mAvailableCameras.size());
 
-    if ( !mInterpreter )
+    if ( !mInterpreter ) {
         mInterpreter = new Interpreter();
+        mInterpreter->setTestCtxInst(this);
+    }
+
 
     mTestRunning = true;
 
@@ -2202,6 +3158,15 @@ status_t TestContext::FunctionalTest()
             stat = currentCamera->stopPreview();
         }
             break;
+
+        case Interpreter::CHANGE_VIDEO_SIZE_CMD:
+        {
+            if ( command.arg )
+                stat = currentCamera->setVideoSize(command.arg);
+            else
+                stat = currentCamera->nextVideoSize();
+        }
+        break;
 
         case Interpreter::CHANGE_PREVIEW_SIZE_CMD:
         {
@@ -2268,7 +3233,6 @@ status_t TestContext::FunctionalTest()
             stat = currentCamera->stopPreview();
             stat = currentCamera->configureRecorder();
             stat = currentCamera->startPreview();
-
             stat = currentCamera->startRecording();
         }
             break;
@@ -2282,6 +3246,52 @@ status_t TestContext::FunctionalTest()
             stat = currentCamera->startPreview();
         }
             break;
+
+        case Interpreter::START_VIV_RECORD_CMD:
+        {
+
+            if (mAvailableCameras.size() == 2) {
+                mSaveCurrentCameraIndex = mCurrentCameraIndex;
+                stat = mInterpreter->configureViVCodec();
+                for ( size_t i = 0; i < mAvailableCameras.size(); i++ ) {
+                    mCurrentCameraIndex = i;
+                    currentCamera = mAvailableCameras.itemAt(
+                        mCurrentCameraIndex);
+                    stat = currentCamera->stopPreview();
+                    stat = currentCamera->configureViVRecording();
+                    stat = currentCamera->startPreview();
+                    stat = currentCamera->startViVRecording();
+                }
+                mCurrentCameraIndex = mSaveCurrentCameraIndex;
+            } else {
+                printf("Number of available sensors should be 2\n");
+            }
+
+        }
+            break;
+
+        case Interpreter::STOP_VIV_RECORD_CMD:
+        {
+            if (mAvailableCameras.size() == 2) {
+                mSaveCurrentCameraIndex = mCurrentCameraIndex;
+                for ( size_t i = 0; i < mAvailableCameras.size(); i++ ) {
+                    mCurrentCameraIndex = i;
+                    currentCamera = mAvailableCameras.itemAt(
+                        mCurrentCameraIndex);
+                    stat = currentCamera->stopViVRecording();
+                    stat = currentCamera->stopPreview();
+                    stat = currentCamera->unconfigureRecorder();
+                    stat = currentCamera->startPreview();
+                }
+                stat = mInterpreter->unconfigureViVCodec();
+                mCurrentCameraIndex = mSaveCurrentCameraIndex;
+
+                mInterpreter->releasePiPBuff();
+            } else {
+                printf("Number of available sensors should be 2\n");
+            }
+        }
+        break;
 
         case Interpreter::EXIT_CMD:
         {
@@ -2307,8 +3317,34 @@ status_t TestContext::FunctionalTest()
     return NO_ERROR;
 }
 
-int
-main(int argc, char *argv[])
+/*===========================================================================
+ * FUNCTION     : setViVSize
+ *
+ * DESCRIPTION  : Set video in video size
+ *
+ * PARAMETERS   :
+ *   @VideoSize : video size
+ *   @camIndex  : camera index
+ *
+ * RETURN       : none
+ *==========================================================================*/
+void TestContext::setViVSize(Size VideoSize, int camIndex)
+{
+    mViVVid.VideoSizes[camIndex] = VideoSize;
+}
+
+/*===========================================================================
+ * FUNCTION     : main
+ *
+ * DESCRIPTION  : main function
+ *
+ * PARAMETERS   :
+ *   @argc      : argc
+ *   @argv      : argv
+ *
+ * RETURN       : int status
+ *==========================================================================*/
+int main(int argc, char *argv[])
 {
     TestContext ctx;
 
