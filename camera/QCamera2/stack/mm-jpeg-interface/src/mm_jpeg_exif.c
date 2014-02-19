@@ -332,7 +332,7 @@ int process_sensor_data(cam_sensor_params_t *p_sensor_params,
   } else {
     val_short = 0;
   }
-  ALOGI("%s: Flash value %d flash mode %d flash state %d", __func__, val_short,
+  CDBG_HIGH("%s: Flash value %d flash mode %d flash state %d", __func__, val_short,
     p_sensor_params->flash_mode, p_sensor_params->flash_state);
   rc = addExifEntry(exif_info, EXIFTAGID_FLASH, EXIF_SHORT, 1, &val_short);
   if (rc) {
@@ -390,7 +390,7 @@ int process_3a_data(cam_3a_params_t *p_3a_params, QOMX_EXIF_INFO *exif_info)
     return 0;
   }
 
-  ALOGD("%s:%d] exp_time %f, iso_value %d, wb_mode %d", __func__, __LINE__,
+  CDBG_HIGH("%s:%d] exp_time %f, iso_value %d, wb_mode %d", __func__, __LINE__,
     p_3a_params->exp_time, p_3a_params->iso_value, p_3a_params->wb_mode);
 
   /*Exposure time*/

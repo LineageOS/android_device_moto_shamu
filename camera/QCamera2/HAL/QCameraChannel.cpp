@@ -932,7 +932,7 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
                         streamInfo->dim.height = streamInfo->reprocess_config.pp_feature_config.scale_param.output_height;
                     }
                 }
-                ALOGD("%s: stream width=%d, height=%d.", __func__, streamInfo->dim.width, streamInfo->dim.height);
+                CDBG_HIGH("%s: stream width=%d, height=%d.", __func__, streamInfo->dim.width, streamInfo->dim.height);
             }
 
             // save source stream handler

@@ -44,7 +44,7 @@ static mm_jpeg_obj* g_jpeg_obj = NULL;
 
 static pthread_mutex_t g_handler_lock = PTHREAD_MUTEX_INITIALIZER;
 static uint16_t g_handler_history_count = 0; /* history count for handler */
-volatile uint32_t gMmJpegIntfLogLevel = 0;
+volatile uint32_t gMmJpegIntfLogLevel = 1;
 
 /** mm_jpeg_util_generate_handler:
  *

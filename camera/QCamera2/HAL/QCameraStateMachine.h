@@ -219,7 +219,6 @@ private:
     QCameraQueue evt_queue;               // cmd queue for evt from mm-camera-intf/mm-jpeg-intf
     pthread_t cmd_pid;                    // cmd thread ID
     cam_semaphore_t cmd_sem;              // semaphore for cmd thread
-
 };
 
 }; // namespace qcamera

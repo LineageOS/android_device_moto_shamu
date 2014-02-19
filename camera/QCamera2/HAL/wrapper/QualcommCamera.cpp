@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2014, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -117,7 +117,7 @@ extern "C" int get_camera_info(int camera_id, struct camera_info *info)
     if(info) {
         QCamera2Factory::get_camera_info(camera_id, info);
     }
-    ALOGV("Q%s: X", __func__);
+    CDBG("Q%s: X", __func__);
     return rc;
 }
 
@@ -327,7 +327,7 @@ int recording_enabled(struct camera_device * device)
 void release_recording_frame(struct camera_device * device,
                 const void *opaque)
 {
-    ALOGV("Q%s: E", __func__);
+    CDBG("Q%s: E", __func__);
     QCamera2HardwareInterface *hardware = util_get_Hal_obj(device);
     if(hardware != NULL){
         hardware->release_recording_frame(device, opaque);

@@ -51,7 +51,7 @@ static mm_camera_ctrl_t g_cam_ctrl = {0, {{0}}, {0}, {{0}}};
 
 static pthread_mutex_t g_handler_lock = PTHREAD_MUTEX_INITIALIZER;
 static uint16_t g_handler_history_count = 0; /* history count for handler */
-volatile uint32_t gMmCameraIntfLogLevel = 0;
+volatile uint32_t gMmCameraIntfLogLevel = 1;
 
 /*===========================================================================
  * FUNCTION   : mm_camera_util_generate_handler

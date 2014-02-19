@@ -54,7 +54,7 @@ namespace qcamera {
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 parm_buffer_t *prevSettings;
 const camera_metadata_t *gStaticMetadata[MM_CAMERA_MAX_NUM_SENSORS];
-volatile uint32_t gCamHal3LogLevel = 0;
+volatile uint32_t gCamHal3LogLevel = 1;
 
 pthread_mutex_t QCamera3HardwareInterface::mCameraSessionLock =
     PTHREAD_MUTEX_INITIALIZER;

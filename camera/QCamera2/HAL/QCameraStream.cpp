@@ -662,12 +662,12 @@ int32_t QCameraStream::processZoomDone(preview_stream_ops_t *previewWindow,
  *==========================================================================*/
 int32_t QCameraStream::processDataNotify(mm_camera_super_buf_t *frame)
 {
-    ALOGI("%s:\n", __func__);
+    CDBG("%s:\n", __func__);
     if (m_bActive) {
         mDataQ.enqueue((void *)frame);
         return mProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
     } else {
-        ALOGD("%s: Stream thread is not active, no ops here", __func__);
+        CDBG_HIGH("%s: Stream thread is not active, no ops here", __func__);
         bufDone(frame->bufs[0]->buf_idx);
         free(frame);
         return NO_ERROR;
@@ -689,7 +689,7 @@ int32_t QCameraStream::processDataNotify(mm_camera_super_buf_t *frame)
 void QCameraStream::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
                                  void *userdata)
 {
-    ALOGI("%s:\n", __func__);
+    CDBG("%s:\n", __func__);
     QCameraStream* stream = (QCameraStream *)userdata;
     if (stream == NULL ||
         recvd_frame == NULL ||
@@ -728,7 +728,7 @@ void *QCameraStream::dataProcRoutine(void *data)
     QCameraStream *pme = (QCameraStream *)data;
     QCameraCmdThread *cmdThread = &pme->mProcTh;
 
-    ALOGI("%s: E", __func__);
+    CDBG("%s: E", __func__);
     do {
         do {
             ret = cam_sem_wait(&cmdThread->cmd_sem);
@@ -744,7 +744,7 @@ void *QCameraStream::dataProcRoutine(void *data)
         switch (cmd) {
         case CAMERA_CMD_TYPE_DO_NEXT_JOB:
             {
-                ALOGD("%s: Do next job", __func__);
+                CDBG_HIGH("%s: Do next job", __func__);
                 mm_camera_super_buf_t *frame =
                     (mm_camera_super_buf_t *)pme->mDataQ.dequeue();
                 if (NULL != frame) {
@@ -759,7 +759,7 @@ void *QCameraStream::dataProcRoutine(void *data)
             }
             break;
         case CAMERA_CMD_TYPE_EXIT:
-            ALOGD("%s: Exit", __func__);
+            CDBG_HIGH("%s: Exit", __func__);
             /* flush data buf queue */
             pme->mDataQ.flush();
             running = 0;
@@ -768,7 +768,7 @@ void *QCameraStream::dataProcRoutine(void *data)
             break;
         }
     } while (running);
-    ALOGD("%s: X", __func__);
+    CDBG_HIGH("%s: X", __func__);
     return NULL;
 }
 
@@ -820,7 +820,7 @@ int32_t QCameraStream::bufDone(const void *opaque, bool isMetaData)
         ALOGE("%s: Cannot find buf for opaque data = %p", __func__, opaque);
         return BAD_INDEX;
     }
-    ALOGD("%s: Buffer Index = %d, Frame Idx = %d", __func__, index, mBufDefs[index].frame_idx);
+    CDBG_HIGH("%s: Buffer Index = %d, Frame Idx = %d", __func__, index, mBufDefs[index].frame_idx);
     rc = bufDone(index);
     return rc;
 }
@@ -954,7 +954,7 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
         pthread_mutex_lock(&m_lock);
         wait_for_cond = TRUE;
         pthread_mutex_unlock(&m_lock);
-        ALOGD("%s: Still need to allocate %d buffers",
+        CDBG_HIGH("%s: Still need to allocate %d buffers",
               __func__, mNumBufsNeedAlloc);
         // remember memops table
         m_MemOpsTbl = *ops_tbl;
@@ -1120,7 +1120,7 @@ void *QCameraStream::BufAllocRoutine(void *data)
     QCameraStream *pme = (QCameraStream *)data;
     int32_t rc = NO_ERROR;
 
-    ALOGD("%s: E", __func__);
+    CDBG_HIGH("%s: E", __func__);
     pme->cond_wait();
     if (pme->mNumBufsNeedAlloc > 0) {
         uint8_t numBufAlloc = pme->mNumBufs - pme->mNumBufsNeedAlloc;
@@ -1147,7 +1147,7 @@ void *QCameraStream::BufAllocRoutine(void *data)
             pme->mNumBufsNeedAlloc = 0;
         }
     }
-    ALOGD("%s: X", __func__);
+    CDBG_HIGH("%s: X", __func__);
     return NULL;
 }
 
@@ -1200,10 +1200,10 @@ int32_t QCameraStream::putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl)
     int rc = NO_ERROR;
 
     if (mBufAllocPid != 0) {
-        ALOGD("%s: wait for buf allocation thread dead", __func__);
+        CDBG_HIGH("%s: wait for buf allocation thread dead", __func__);
         pthread_join(mBufAllocPid, NULL);
         mBufAllocPid = 0;
-        ALOGD("%s: return from buf allocation thread", __func__);
+        CDBG_HIGH("%s: return from buf allocation thread", __func__);
     }
 
     for (int i = 0; i < mNumBufs; i++) {
