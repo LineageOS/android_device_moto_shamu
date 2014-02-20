@@ -57,7 +57,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct rmnetctl_hndl_s {
 	 uint32_t pid;
 	 uint32_t transaction_id;
-	 uint32_t netlink_fd;
+	 int netlink_fd;
 	 struct sockaddr_nl src_addr, dest_addr;
 };
 

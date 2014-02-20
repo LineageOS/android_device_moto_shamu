@@ -98,13 +98,15 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * @return RMNETCTL_API_ERR_MESSAGE_TYPE if the request and response type do not
 * match
 */
-static int rmnetctl_transact(rmnetctl_hndl_t *hndl,
+static uint16_t rmnetctl_transact(rmnetctl_hndl_t *hndl,
 			struct rmnet_nl_msg_s *request,
 			struct rmnet_nl_msg_s *response) {
 	uint8_t *request_buf, *response_buf;
 	struct nlmsghdr *nlmsghdr_val;
 	struct rmnet_nl_msg_s *rmnet_nl_msg_s_val;
-	int bytes_read = -1, return_code = RMNETCTL_API_ERR_HNDL_INVALID;
+	ssize_t bytes_read = -1;
+	uint16_t return_code = RMNETCTL_API_ERR_HNDL_INVALID;
+	struct sockaddr_nl* __attribute__((__may_alias__)) saddr_ptr;
 	request_buf = NULL;
 	response_buf = NULL;
 	nlmsghdr_val = NULL;
@@ -150,12 +152,13 @@ static int rmnetctl_transact(rmnetctl_hndl_t *hndl,
 	rmnet_nl_msg_s_val->crd = RMNET_NETLINK_MSG_COMMAND;
 	hndl->transaction_id++;
 
+	saddr_ptr = &hndl->dest_addr;
 	socklen_t addrlen = sizeof(struct sockaddr_nl);
 	if (sendto(hndl->netlink_fd,
 			request_buf,
 			MAX_BUF_SIZE,
 			RMNETCTL_SOCK_FLAG,
-			(struct sockaddr *) &hndl->dest_addr,
+			(struct sockaddr*)saddr_ptr,
 			sizeof(struct sockaddr_nl)) < 0) {
 		return_code = RMNETCTL_API_ERR_MESSAGE_SEND;
 		free(request_buf);
@@ -163,11 +166,12 @@ static int rmnetctl_transact(rmnetctl_hndl_t *hndl,
 		break;
 	}
 
+	saddr_ptr = &hndl->src_addr;
 	bytes_read = recvfrom(hndl->netlink_fd,
 			response_buf,
 			MAX_BUF_SIZE,
 			RMNETCTL_SOCK_FLAG,
-			(struct sockaddr *) &hndl->src_addr,
+			(struct sockaddr*)saddr_ptr,
 			&addrlen);
 	if (bytes_read < 0) {
 		return_code = RMNETCTL_API_ERR_MESSAGE_RECEIVE;
@@ -227,10 +231,10 @@ static inline int _rmnetctl_check_dev_name(const char *dev_name) {
 * @return RMNETCTL_SUCCESS if successful
 * @return RMNETCTL_LIB_ERR if there was a library error. Check error_code
 */
-static inline int _rmnetctl_check_len(int str_len, uint16_t *error_code) {
+static inline int _rmnetctl_check_len(size_t str_len, uint16_t *error_code) {
 	int return_code = RMNETCTL_LIB_ERR;
 	do {
-	if ((str_len < 0) || (str_len > RMNET_MAX_STR_LEN)) {
+	if (str_len > RMNET_MAX_STR_LEN) {
 		*error_code = RMNETCTL_API_ERR_STRING_TRUNCATION;
 		break;
 	}
@@ -294,7 +298,7 @@ static inline int _rmnetctl_set_codes(int error_val, uint16_t *error_code) {
 	if (error_val == RMNET_CONFIG_OK)
 		return_code = RMNETCTL_SUCCESS;
 	else
-		*error_code = error_val + RMNETCTL_KERNEL_FIRST_ERR;
+		*error_code = (uint16_t)error_val + RMNETCTL_KERNEL_FIRST_ERR;
 	return return_code;
 }
 
@@ -304,7 +308,9 @@ static inline int _rmnetctl_set_codes(int error_val, uint16_t *error_code) {
 
 int rmnetctl_init(rmnetctl_hndl_t **hndl, uint16_t *error_code)
 {
-	int pid = -1, netlink_fd = -1, return_code = RMNETCTL_LIB_ERR;
+	pid_t pid = 0;
+	int netlink_fd = -1, return_code = RMNETCTL_LIB_ERR;
+	struct sockaddr_nl* __attribute__((__may_alias__)) saddr_ptr;
 	do {
 	if ((!hndl) || (!error_code)){
 		return_code = RMNETCTL_INVALID_ARG;
@@ -325,7 +331,7 @@ int rmnetctl_init(rmnetctl_hndl_t **hndl, uint16_t *error_code)
 		*error_code = RMNETCTL_INIT_ERR_PROCESS_ID;
 		break;
 	}
-	(*hndl)->pid = pid;
+	(*hndl)->pid = (uint32_t)pid;
 	netlink_fd = socket(PF_NETLINK, SOCK_RAW, RMNET_NETLINK_PROTO);
 	if (netlink_fd < MIN_VALID_SOCKET_FD) {
 		free(*hndl);
@@ -340,8 +346,9 @@ int rmnetctl_init(rmnetctl_hndl_t **hndl, uint16_t *error_code)
 	(*hndl)->src_addr.nl_family = AF_NETLINK;
 	(*hndl)->src_addr.nl_pid = (*hndl)->pid;
 
+	saddr_ptr = &(*hndl)->src_addr;
 	if (bind((*hndl)->netlink_fd,
-		(struct sockaddr *)&(*hndl)->src_addr,
+		(struct sockaddr*)saddr_ptr,
 		sizeof(struct sockaddr_nl)) < 0) {
 		close((*hndl)->netlink_fd);
 		free(*hndl);
@@ -374,7 +381,8 @@ int rmnet_associate_network_device(rmnetctl_hndl_t *hndl,
 				   uint8_t assoc_dev)
 {
 	struct rmnet_nl_msg_s request, response;
-	int str_len = -1, return_code = RMNETCTL_LIB_ERR;
+	size_t str_len = 0;
+	int return_code = RMNETCTL_LIB_ERR;
 	do {
 	if ((!hndl) || (!error_code) || _rmnetctl_check_dev_name(dev_name) ||
 		((assoc_dev != RMNETCTL_DEVICE_ASSOCIATE) &&
@@ -389,7 +397,7 @@ int rmnet_associate_network_device(rmnetctl_hndl_t *hndl,
 		request.message_type = RMNET_NETLINK_UNASSOCIATE_NETWORK_DEVICE;
 
 	request.arg_length = RMNET_MAX_STR_LEN;
-	str_len = strlcpy((char *)(request.data), dev_name, RMNET_MAX_STR_LEN);
+	str_len = strlcpy((char *)(request.data), dev_name, (size_t)RMNET_MAX_STR_LEN);
 	if (_rmnetctl_check_len(str_len, error_code) != RMNETCTL_SUCCESS)
 		break;
 
@@ -408,7 +416,8 @@ int rmnet_get_network_device_associated(rmnetctl_hndl_t *hndl,
 					int *register_status,
 					uint16_t *error_code) {
 	struct rmnet_nl_msg_s request, response;
-	int str_len = -1, return_code = RMNETCTL_LIB_ERR;
+	size_t str_len = 0;
+	int  return_code = RMNETCTL_LIB_ERR;
 	do {
 	if ((!hndl) || (!register_status) || (!error_code) ||
 	_rmnetctl_check_dev_name(dev_name)) {
@@ -443,7 +452,8 @@ int rmnet_set_link_egress_data_format(rmnetctl_hndl_t *hndl,
 				      const char *dev_name,
 				      uint16_t *error_code) {
 	struct rmnet_nl_msg_s request, response;
-	int str_len = -1, return_code = RMNETCTL_LIB_ERR;
+	size_t str_len = 0;
+	int  return_code = RMNETCTL_LIB_ERR;
 	do {
 	if ((!hndl) || (!error_code) || _rmnetctl_check_dev_name(dev_name) ||
 	    ((~EGRESS_FLAGS_MASK) & egress_flags)) {
@@ -484,7 +494,8 @@ int rmnet_get_link_egress_data_format(rmnetctl_hndl_t *hndl,
 				      uint16_t *agg_count,
 				      uint16_t *error_code) {
 	struct rmnet_nl_msg_s request, response;
-	int str_len = -1, return_code = RMNETCTL_LIB_ERR;
+	size_t str_len = 0;
+	int  return_code = RMNETCTL_LIB_ERR;
 	do {
 	if ((!hndl) || (!egress_flags) || (!agg_size) || (!agg_count) ||
 	(!error_code) || _rmnetctl_check_dev_name(dev_name)) {
@@ -521,7 +532,8 @@ int rmnet_set_link_ingress_data_format_tailspace(rmnetctl_hndl_t *hndl,
 						 const char *dev_name,
 						 uint16_t *error_code) {
 	struct rmnet_nl_msg_s request, response;
-	int str_len = -1, return_code = RMNETCTL_LIB_ERR;
+	size_t str_len = 0;
+	int  return_code = RMNETCTL_LIB_ERR;
 	do {
 	if ((!hndl) || (!error_code) || _rmnetctl_check_dev_name(dev_name) ||
 	    ((~INGRESS_FLAGS_MASK) & ingress_flags)) {
@@ -559,7 +571,8 @@ int rmnet_get_link_ingress_data_format_tailspace(rmnetctl_hndl_t *hndl,
 						 uint8_t  *tail_spacing,
 						 uint16_t *error_code) {
 	struct rmnet_nl_msg_s request, response;
-	int str_len = -1, return_code = RMNETCTL_LIB_ERR;
+	size_t str_len = 0;
+	int  return_code = RMNETCTL_LIB_ERR;
 	do {
 	if ((!hndl) || (!error_code) ||
 		_rmnetctl_check_dev_name(dev_name)) {
@@ -601,7 +614,8 @@ int rmnet_set_logical_ep_config(rmnetctl_hndl_t *hndl,
 				const char *next_dev,
 				uint16_t *error_code) {
 	struct rmnet_nl_msg_s request, response;
-	int str_len = -1, return_code = RMNETCTL_LIB_ERR;
+	size_t str_len = 0;
+	int return_code = RMNETCTL_LIB_ERR;
 	do {
 	if ((!hndl) || ((ep_id < -1) || (ep_id > 31)) || (!error_code) ||
 		_rmnetctl_check_dev_name(dev_name) ||
@@ -645,7 +659,8 @@ int rmnet_unset_logical_ep_config(rmnetctl_hndl_t *hndl,
 				  const char *dev_name,
 				  uint16_t *error_code) {
 	struct rmnet_nl_msg_s request, response;
-	int str_len = -1, return_code = RMNETCTL_LIB_ERR;
+	size_t str_len = 0;
+	int return_code = RMNETCTL_LIB_ERR;
 	do {
 
 	if ((!hndl) || ((ep_id < -1) || (ep_id > 31)) || (!error_code) ||
@@ -686,7 +701,8 @@ int rmnet_get_logical_ep_config(rmnetctl_hndl_t *hndl,
 				uint32_t next_dev_len,
 				uint16_t *error_code) {
 	struct rmnet_nl_msg_s request, response;
-	int str_len = -1, return_code = RMNETCTL_LIB_ERR;
+	size_t str_len = 0;
+	int return_code = RMNETCTL_LIB_ERR;
 	do {
 	if ((!hndl) || (!operating_mode) || (!error_code) || ((ep_id < -1) ||
 	    (ep_id > 31)) || _rmnetctl_check_dev_name(dev_name) || (!next_dev)
@@ -732,7 +748,7 @@ int rmnet_new_vnd_prefix(rmnetctl_hndl_t *hndl,
 {
 	struct rmnet_nl_msg_s request, response;
 	int return_code = RMNETCTL_LIB_ERR;
-	int str_len = -1;
+	size_t str_len = 0;
 	do {
 	if ((!hndl) || (!error_code) ||
 	((new_vnd != RMNETCTL_NEW_VND) && (new_vnd != RMNETCTL_FREE_VND))) {
@@ -804,7 +820,7 @@ int rmnet_get_vnd_name(rmnetctl_hndl_t *hndl,
 	if (_rmnetctl_check_data(response.crd, error_code) != RMNETCTL_SUCCESS)
 		break;
 
-	str_len = strlcpy(buf,
+	str_len = (uint32_t)strlcpy(buf,
 			  (char *)(response.vnd.vnd_name),
 			  buflen);
 	if (str_len >= buflen) {
