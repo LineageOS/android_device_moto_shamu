@@ -89,6 +89,9 @@ public:
     int32_t unmapBuf(uint8_t buf_type, uint32_t buf_idx, int32_t plane_idx);
     int32_t setParameter(cam_stream_parm_buffer_t &param);
     int32_t getParameter(cam_stream_parm_buffer_t &param);
+    int32_t syncRuntimeParams();
+    cam_stream_parm_buffer_t getOutputCrop() { return m_OutputCrop;};
+    cam_stream_parm_buffer_t getBufferInfo() { return m_BufferInfo;};
 
     static void releaseFrameData(void *data, void *user_data);
 
@@ -125,6 +128,8 @@ private:
     bool mDynBufAlloc; // allow buf allocation in 2 steps
     pthread_t mBufAllocPid;
     mm_camera_map_unmap_ops_tbl_t m_MemOpsTbl;
+    cam_stream_parm_buffer_t m_OutputCrop;
+    cam_stream_parm_buffer_t m_BufferInfo;
 
     static int32_t get_bufs(
                      cam_frame_len_offset_t *offset,
