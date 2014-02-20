@@ -299,6 +299,7 @@ private:
 
     bool needDebugFps();
     bool isCACEnabled();
+    bool is4k2kResolution(cam_dimension_t* resolution);
     bool isAFRunning();
     bool needReprocess();
     bool needRotationReprocess();
