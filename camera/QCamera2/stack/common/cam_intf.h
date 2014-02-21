@@ -532,7 +532,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_CROP_DATA,                    cam_crop_data_t,                1);
     INCLUDE(CAM_INTF_META_PREP_SNAPSHOT_DONE,           int32_t,                        1);
     INCLUDE(CAM_INTF_META_GOOD_FRAME_IDX_RANGE,         cam_frame_idx_range_t,          1);
-    INCLUDE(CAM_INTF_META_HDR_DATA,                     cam_asd_hdr_scene_data_t,       1);
+    INCLUDE(CAM_INTF_META_ASD_HDR_SCENE_DATA,           cam_asd_hdr_scene_data_t,       1);
     INCLUDE(CAM_INTF_META_ASD_SCENE_TYPE,               int32_t,                        1);
     INCLUDE(CAM_INTF_META_AEC_INFO,                     cam_ae_params_t,                1);
     INCLUDE(CAM_INTF_META_CHROMATIX_LITE_ISP,           cam_chromatix_lite_isp_t,       1);
