@@ -567,6 +567,8 @@ public:
         return m_pCapability->ubifocus_af_bracketing_need.output_count;};
     inline bool generateThumbFromMain() {return isUbiFocusEnabled() ||
         isChromaFlashEnabled() || isOptiZoomEnabled(); }
+    bool isDisplayFrameNeeded() { return m_bDisplayFrame; };
+    int32_t setDisplayFrame(bool enabled) {m_bDisplayFrame=enabled; return 0;};
 
 private:
     int32_t setPreviewSize(const QCameraParameters& );
@@ -786,6 +788,7 @@ private:
     bool m_bSensorHDREnabled;             // if HDR is enabled
     bool m_bRdiMode;                // if RDI mode
     bool m_bUbiRefocus;
+    bool m_bDisplayFrame;
 };
 
 }; // namespace qcamera

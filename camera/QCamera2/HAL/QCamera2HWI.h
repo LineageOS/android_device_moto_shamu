@@ -373,7 +373,7 @@ private:
     int32_t setHistogram(bool histogram_en);
     int32_t setFaceDetection(bool enabled);
     int32_t prepareHardwareForSnapshot(int32_t afNeeded);
-    bool needProcessPreviewFrame() {return m_stateMachine.isPreviewRunning();};
+    bool needProcessPreviewFrame();
     bool isNoDisplayMode() {return mParameters.isNoDisplayMode();};
     bool isZSLMode() {return mParameters.isZSLMode();};
     bool isRdiMode() {return mParameters.isRdiMode();};

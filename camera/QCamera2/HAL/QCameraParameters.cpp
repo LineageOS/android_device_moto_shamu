@@ -625,7 +625,8 @@ QCameraParameters::QCameraParameters()
       m_bOptiZoomOn(false),
       m_bHfrMode(false),
       m_bSensorHDREnabled(false),
-      m_bRdiMode(false)
+      m_bRdiMode(false),
+      m_bDisplayFrame(true)
 {
     char value[PROPERTY_VALUE_MAX];
     // TODO: may move to parameter instead of sysprop
