@@ -5167,6 +5167,10 @@ int32_t QCameraParameters::setDISValue(const char *disStr)
                                    sizeof(ENABLE_DISABLE_MODES_MAP)/sizeof(QCameraMap),
                                    disStr);
         if (value != NAME_NOT_FOUND) {
+            //For some IS types (like EIS 2.0), when DIS value is changed, we need to restart
+            //preview because of topology change in backend. But, for now, restart preview
+            //for all IS types.
+            m_bNeedRestart = true;
             ALOGD("%s: Setting DIS value %s", __func__, disStr);
             updateParamEntry(KEY_QC_DIS, disStr);
             return AddSetParmEntryToBatch(m_pParamBuf,
