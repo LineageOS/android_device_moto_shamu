@@ -376,6 +376,8 @@ public:
     static const char KEY_QC_SUPPORTED_VIDEO_HDR_MODES[];
     static const char KEY_QC_SENSOR_HDR[];
     static const char KEY_QC_SUPPORTED_SENSOR_HDR_MODES[];
+    static const char KEY_QC_RDI_MODE[];
+    static const char KEY_QC_SUPPORTED_RDI_MODES[];
 
     // Values for SKIN TONE ENHANCEMENT
     static const char SKIN_TONE_ENHANCEMENT_ENABLE[] ;
@@ -477,6 +479,7 @@ public:
     int getZSLBackLookCount();
     int getMaxUnmatchedFramesInQueue();
     bool isZSLMode() {return m_bZslMode;};
+    bool isRdiMode() {return m_bRdiMode;};
     bool isNoDisplayMode() {return m_bNoDisplayMode;};
     bool isWNREnabled() {return m_bWNROn;};
     bool isHfrMode() {return m_bHfrMode;};
@@ -621,7 +624,7 @@ private:
     int32_t setStatsDebugMask();
     int32_t setTintlessValue(const QCameraParameters& params);
     int32_t setMobicat(const QCameraParameters& params);
-
+    int32_t setRdiMode(const QCameraParameters& );
     int32_t setAutoExposure(const char *autoExp);
     int32_t setPreviewFpsRange(int min_fps,int max_fps,
             int vid_min_fps,int vid_max_fps);
@@ -661,7 +664,7 @@ private:
     int32_t setFaceRecognition(const char *faceRecog, int maxFaces);
     int32_t setTintlessValue(const char *tintStr);
     bool UpdateHFRFrameRate(const QCameraParameters& params);
-
+    int32_t setRdiMode(const char *str);
 
     int32_t parse_pair(const char *str, int *first, int *second,
                        char delim, char **endptr);
@@ -727,6 +730,7 @@ private:
     static const QCameraMap AF_BRACKETING_MODES_MAP[];
     static const QCameraMap CHROMA_FLASH_MODES_MAP[];
     static const QCameraMap OPTI_ZOOM_MODES_MAP[];
+    static const QCameraMap RDI_MODES_MAP[];
 
     cam_capability_t *m_pCapability;
     mm_camera_vtbl_t *m_pCamOpsTbl;
@@ -766,17 +770,15 @@ private:
     bool m_bHDRThumbnailProcessNeeded;        // if thumbnail need to be processed for HDR
     bool m_bHDR1xExtraBufferNeeded;     // if extra frame with exposure compensation 0 during HDR is needed
     bool m_bHDROutputCropEnabled;     // if HDR output frame need to be scaled to user resolution
-
     DefaultKeyedVector<String8,String8> m_tempMap; // map for temororily store parameters to be set
     cam_fps_range_t m_default_fps_range;
-
     bool m_bAFBracketingOn;
     bool m_bChromaFlashOn;
     bool m_bOptiZoomOn;
     cam_fps_range_t m_hfrFpsRange;
     bool m_bHfrMode;
     bool m_bSensorHDREnabled;             // if HDR is enabled
-
+    bool m_bRdiMode;                // if RDI mode
 };
 
 }; // namespace qcamera

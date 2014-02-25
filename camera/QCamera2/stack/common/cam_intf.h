@@ -178,6 +178,7 @@ typedef struct{
     uint32_t min_required_pp_mask;        /* min required pp feature masks for ZSL.
                                            * depends on hardware limitation, i.e. for 8974,
                                            * sharpness is required for all ZSL snapshot frames */
+    cam_format_t rdi_mode_stream_fmt;  /* stream format supported in rdi mode */
 
     /* capabilities specific to HAL 3 */
 
@@ -479,6 +480,7 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_TINTLESS,                 int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_EZTUNE_CMD,               cam_eztune_cmd_data_t,       1);
     INCLUDE(CAM_INTF_PARAM_LONGSHOT_ENABLE,         int8_t,                      1);
+    INCLUDE(CAM_INTF_PARM_RDI_MODE,                 int32_t,                     1);
 
     /* HAL3 specific */
     INCLUDE(CAM_INTF_META_FRAME_NUMBER,             uint32_t,                    1);
@@ -585,6 +587,7 @@ typedef union {
          GET_SIZE(CAM_INTF_PARM_RAW_DIMENSION,            cam_dimension_t) + \
          GET_SIZE(CAM_INTF_PARM_TINTLESS,                 int32_t) + \
          GET_SIZE(CAM_INTF_PARM_EZTUNE_CMD,               cam_eztune_cmd_data_t) + \
+         GET_SIZE(CAM_INTF_PARM_RDI_MODE,                 int32_t) + \
          GET_SIZE(CAM_INTF_META_FRAME_NUMBER,             uint32_t) + \
          GET_SIZE(CAM_INTF_META_STREAM_INFO,              cam_stream_size_info_t) + \
          GET_SIZE(CAM_INTF_META_COLOR_CORRECT_MODE,       uint8_t) + \

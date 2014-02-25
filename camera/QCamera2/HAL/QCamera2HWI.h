@@ -376,6 +376,7 @@ private:
     bool needProcessPreviewFrame() {return m_stateMachine.isPreviewRunning();};
     bool isNoDisplayMode() {return mParameters.isNoDisplayMode();};
     bool isZSLMode() {return mParameters.isZSLMode();};
+    bool isRdiMode() {return mParameters.isRdiMode();};
     uint8_t numOfSnapshotsExpected() {return mParameters.getNumOfSnapshots();};
     bool isLongshotEnabled() { return mLongshotEnabled; };
     bool isHFRMode() {return mParameters.isHfrMode();};
@@ -411,6 +412,9 @@ private:
                                            void *userdata);
     static void postproc_channel_cb_routine(mm_camera_super_buf_t *recvd_frame,
                                             void *userdata);
+    static void rdi_mode_stream_cb_routine(mm_camera_super_buf_t *frame,
+                                              QCameraStream *stream,
+                                              void *userdata);
     static void nodisplay_preview_stream_cb_routine(mm_camera_super_buf_t *frame,
                                                     QCameraStream *stream,
                                                     void *userdata);
