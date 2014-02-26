@@ -160,7 +160,7 @@ public:
                 camera3_stream_buffer_t *buffer, uint32_t frame_number);
 
     typedef struct {
-        uint8_t fwk_name;
+        uint32_t fwk_name;
         uint8_t hal_name;
     } QCameraMap;
 
@@ -173,8 +173,8 @@ private:
                                uint32_t paramLength,
                                void *paramValue);
     static int8_t lookupHalName(const QCameraMap arr[],
-                      int len, int fwk_name);
-    static int8_t lookupFwkName(const QCameraMap arr[],
+                      int len, unsigned int fwk_name);
+    static int32_t lookupFwkName(const QCameraMap arr[],
                       int len, int hal_name);
     static int calcMaxJpegSize(uint8_t camera_id);
 
@@ -295,6 +295,7 @@ private:
     static const QCameraMap FLASH_MODES_MAP[];
     static const QCameraMap FACEDETECT_MODES_MAP[];
     static const QCameraMap FOCUS_CALIBRATION_MAP[];
+    static const QCameraMap TEST_PATTERN_MAP[];
     static const QCameraMap REFERENCE_ILLUMINANT_MAP[];
 
     static pthread_mutex_t mCameraSessionLock;

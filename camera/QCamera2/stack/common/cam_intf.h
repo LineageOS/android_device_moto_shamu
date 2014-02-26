@@ -305,6 +305,9 @@ typedef struct{
     cam_opti_zoom_t      opti_zoom_settings_need;
 
     uint8_t focus_dist_calibrated;
+    uint8_t supported_test_pattern_modes_cnt;
+    cam_test_pattern_mode_t supported_test_pattern_modes[MAX_TEST_PATTERN_CNT];
+
     cam_illuminat_t reference_illuminant1;
     cam_illuminat_t reference_illuminant2;
 } cam_capability_t;
@@ -593,6 +596,7 @@ typedef struct {
     INCLUDE(CAM_INTF_META_JPEG_QUALITY,                 uint32_t,                    1);
     INCLUDE(CAM_INTF_META_JPEG_THUMB_QUALITY,           uint32_t,                    1);
     INCLUDE(CAM_INTF_META_JPEG_THUMB_SIZE,              cam_dimension_t,             1);
+    INCLUDE(CAM_INTF_META_TEST_PATTERN_DATA,            cam_test_pattern_data_t,     1);
 } parm_data_t;
 
 typedef parm_data_t metadata_data_t;

@@ -156,6 +156,13 @@ const int32_t available_thumbnail_sizes[] = {0, 0,
                                              512, 288,
                                              512, 384};
 
+const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::TEST_PATTERN_MAP[] = {
+    { ANDROID_SENSOR_TEST_PATTERN_MODE_OFF,          CAM_TEST_PATTERN_OFF   },
+    { ANDROID_SENSOR_TEST_PATTERN_MODE_SOLID_COLOR,  CAM_TEST_PATTERN_SOLID_COLOR },
+    { ANDROID_SENSOR_TEST_PATTERN_MODE_COLOR_BARS,   CAM_TEST_PATTERN_COLOR_BARS },
+    { ANDROID_SENSOR_TEST_PATTERN_MODE_COLOR_BARS_FADE_TO_GRAY, CAM_TEST_PATTERN_COLOR_BARS_FADE_TO_GRAY },
+    { ANDROID_SENSOR_TEST_PATTERN_MODE_PN9,          CAM_TEST_PATTERN_PN9 },
+};
 
 /* Since there is no mapping for all the options some Android enum are not listed.
  * Also, the order in this list is important because while mapping from HAL to Android it will
@@ -2105,7 +2112,7 @@ QCamera3HardwareInterface::translateFromHalMetadata
     if (IS_META_AVAILABLE(CAM_INTF_META_STATS_FACEDETECT_MODE, metadata)) {
         uint8_t  *faceDetectMode =
             (uint8_t *)POINTER_OF_META(CAM_INTF_META_STATS_FACEDETECT_MODE, metadata);
-        uint8_t fwk_faceDetectMode = lookupFwkName(FACEDETECT_MODES_MAP,
+        uint8_t fwk_faceDetectMode = (uint8_t)lookupFwkName(FACEDETECT_MODES_MAP,
             sizeof(FACEDETECT_MODES_MAP)/sizeof(FACEDETECT_MODES_MAP[0]), *faceDetectMode);
         camMetadata.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &fwk_faceDetectMode, 1);
     }
@@ -2194,10 +2201,19 @@ QCamera3HardwareInterface::translateFromHalMetadata
     if (IS_META_AVAILABLE(CAM_INTF_PARM_EFFECT, metadata)) {
         uint8_t *effectMode = (uint8_t*)
             POINTER_OF_META(CAM_INTF_PARM_EFFECT, metadata);
-        uint8_t fwk_effectMode = lookupFwkName(EFFECT_MODES_MAP,
+        uint8_t fwk_effectMode = (uint8_t)lookupFwkName(EFFECT_MODES_MAP,
                                             sizeof(EFFECT_MODES_MAP),
                                             *effectMode);
         camMetadata.update(ANDROID_CONTROL_EFFECT_MODE, &fwk_effectMode, 1);
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_TEST_PATTERN_DATA, metadata)) {
+        cam_test_pattern_data_t *testPatternData = (cam_test_pattern_data_t *)
+            POINTER_OF_META(CAM_INTF_META_TEST_PATTERN_DATA, metadata);
+        int32_t fwk_testPatternMode = lookupFwkName(TEST_PATTERN_MAP,
+                sizeof(TEST_PATTERN_MAP)/sizeof(TEST_PATTERN_MAP[0]),
+                testPatternData->mode);
+        camMetadata.update(ANDROID_SENSOR_TEST_PATTERN_MODE,
+                &fwk_testPatternMode, 1);
     }
     if (IS_META_AVAILABLE(CAM_INTF_META_JPEG_GPS_COORDINATES, metadata)) {
         double *gps_coords = (double *)POINTER_OF_META(
@@ -2422,7 +2438,7 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
     if (IS_META_AVAILABLE(CAM_INTF_PARM_FOCUS_MODE, metadata)) {
         uint8_t  *focusMode = (uint8_t *)
             POINTER_OF_META(CAM_INTF_PARM_FOCUS_MODE, metadata);
-        uint8_t fwkAfMode = lookupFwkName(FOCUS_MODES_MAP,
+        uint8_t fwkAfMode = (uint8_t)lookupFwkName(FOCUS_MODES_MAP,
             sizeof(FOCUS_MODES_MAP)/sizeof(FOCUS_MODES_MAP[0]), *focusMode);
         camMetadata.update(ANDROID_CONTROL_AF_MODE, &fwkAfMode, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_AF_MODE", __func__);
@@ -2452,7 +2468,7 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         uint8_t  *whiteBalance = (uint8_t *)
             POINTER_OF_META(CAM_INTF_PARM_WHITE_BALANCE, metadata);
         uint8_t fwkWhiteBalanceMode =
-            lookupFwkName(WHITE_BALANCE_MODES_MAP,
+            (uint8_t)lookupFwkName(WHITE_BALANCE_MODES_MAP,
                 sizeof(WHITE_BALANCE_MODES_MAP)/
                 sizeof(WHITE_BALANCE_MODES_MAP[0]), *whiteBalance);
         camMetadata.update(ANDROID_CONTROL_AWB_MODE,
@@ -3019,9 +3035,9 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       &max_jpeg_size, 1);
 
     uint8_t avail_effects[CAM_EFFECT_MODE_MAX];
-    int32_t size = 0;
+    size_t size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_effects_cnt; i++) {
-        int val = lookupFwkName(EFFECT_MODES_MAP,
+        int32_t val = lookupFwkName(EFFECT_MODES_MAP,
                                    sizeof(EFFECT_MODES_MAP)/sizeof(EFFECT_MODES_MAP[0]),
                                    gCamCapability[cameraId]->supported_effects[i]);
         if (val != NAME_NOT_FOUND) {
@@ -3037,7 +3053,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     uint8_t supported_indexes[CAM_SCENE_MODE_MAX];
     int32_t supported_scene_modes_cnt = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_scene_modes_cnt; i++) {
-        int val = lookupFwkName(SCENE_MODES_MAP,
+        int32_t val = lookupFwkName(SCENE_MODES_MAP,
                                 sizeof(SCENE_MODES_MAP)/sizeof(SCENE_MODES_MAP[0]),
                                 gCamCapability[cameraId]->supported_scene_modes[i]);
         if (val != NAME_NOT_FOUND) {
@@ -3064,7 +3080,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     uint8_t avail_antibanding_modes[CAM_ANTIBANDING_MODE_MAX];
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_antibandings_cnt; i++) {
-        int val = lookupFwkName(ANTIBANDING_MODES_MAP,
+        int32_t val = lookupFwkName(ANTIBANDING_MODES_MAP,
                                  sizeof(ANTIBANDING_MODES_MAP)/sizeof(ANTIBANDING_MODES_MAP[0]),
                                  gCamCapability[cameraId]->supported_antibandings[i]);
         if (val != NAME_NOT_FOUND) {
@@ -3080,7 +3096,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     uint8_t avail_af_modes[CAM_FOCUS_MODE_MAX];
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_focus_modes_cnt; i++) {
-        int val = lookupFwkName(FOCUS_MODES_MAP,
+        int32_t val = lookupFwkName(FOCUS_MODES_MAP,
                                 sizeof(FOCUS_MODES_MAP)/sizeof(FOCUS_MODES_MAP[0]),
                                 gCamCapability[cameraId]->supported_focus_modes[i]);
         if (val != NAME_NOT_FOUND) {
@@ -3095,7 +3111,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     uint8_t avail_awb_modes[CAM_WB_MODE_MAX];
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_white_balances_cnt; i++) {
-        int8_t val = lookupFwkName(WHITE_BALANCE_MODES_MAP,
+        int32_t val = lookupFwkName(WHITE_BALANCE_MODES_MAP,
                                     sizeof(WHITE_BALANCE_MODES_MAP)/sizeof(WHITE_BALANCE_MODES_MAP[0]),
                                     gCamCapability[cameraId]->supported_white_balances[i]);
         if (val != NAME_NOT_FOUND) {
@@ -3166,13 +3182,32 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     uint8_t avail_leds = 0;
     staticInfo.update(ANDROID_LED_AVAILABLE_LEDS,
                       &avail_leds, 0);
-    int8_t val = lookupFwkName(FOCUS_CALIBRATION_MAP,
+
+    uint8_t focus_dist_calibrated;
+    int32_t val = lookupFwkName(FOCUS_CALIBRATION_MAP,
             sizeof(FOCUS_CALIBRATION_MAP)/sizeof(FOCUS_CALIBRATION_MAP[0]),
             gCamCapability[cameraId]->focus_dist_calibrated);
     if (val != NAME_NOT_FOUND) {
+        focus_dist_calibrated = (uint8_t)val;
         staticInfo.update(ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION,
-                     &gCamCapability[cameraId]->focus_dist_calibrated, 1);
+                     &focus_dist_calibrated, 1);
     }
+
+    int32_t avail_testpattern_modes[MAX_TEST_PATTERN_CNT];
+    size = 0;
+    for (int i = 0; i < gCamCapability[cameraId]->supported_test_pattern_modes_cnt;
+            i++) {
+        int32_t val = lookupFwkName(TEST_PATTERN_MAP,
+                                    sizeof(TEST_PATTERN_MAP)/sizeof(TEST_PATTERN_MAP[0]),
+                                    gCamCapability[cameraId]->supported_test_pattern_modes[i]);
+        if (val != NAME_NOT_FOUND) {
+            avail_testpattern_modes[size] = val;
+            size++;
+        }
+    }
+    staticInfo.update(ANDROID_SENSOR_AVAILABLE_TEST_PATTERN_MODES,
+                      avail_testpattern_modes,
+                      size);
 
     uint8_t max_pipeline_depth = kMaxInFlight;
     staticInfo.update(ANDROID_REQUEST_PIPELINE_MAX_DEPTH,
@@ -3596,7 +3631,7 @@ int32_t QCamera3HardwareInterface::AddSetParmEntryToBatch(parm_buffer_t *p_table
  *              fwk_name  -- success
  *              none-zero failure code
  *==========================================================================*/
-int8_t QCamera3HardwareInterface::lookupFwkName(const QCameraMap arr[],
+int32_t QCamera3HardwareInterface::lookupFwkName(const QCameraMap arr[],
                                              int len, int hal_name)
 {
 
@@ -3628,7 +3663,7 @@ int8_t QCamera3HardwareInterface::lookupFwkName(const QCameraMap arr[],
  *              none-zero failure code
  *==========================================================================*/
 int8_t QCamera3HardwareInterface::lookupHalName(const QCameraMap arr[],
-                                             int len, int fwk_name)
+                                             int len, unsigned int fwk_name)
 {
     for (int i = 0; i < len; i++) {
        if (arr[i].fwk_name == fwk_name)
@@ -4581,6 +4616,41 @@ int QCamera3HardwareInterface::translateToHalMetadata
             rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_META_AWB_REGIONS,
                     sizeof(roi), &roi);
         }
+    }
+
+    if (frame_settings.exists(ANDROID_SENSOR_TEST_PATTERN_MODE)) {
+        cam_test_pattern_data_t testPatternData;
+        uint32_t fwk_testPatternMode = frame_settings.find(ANDROID_SENSOR_TEST_PATTERN_MODE).data.i32[0];
+        uint8_t testPatternMode = lookupHalName(TEST_PATTERN_MAP,
+               sizeof(TEST_PATTERN_MAP), fwk_testPatternMode);
+
+        memset(&testPatternData, 0, sizeof(testPatternData));
+        testPatternData.mode = (cam_test_pattern_mode_t)testPatternMode;
+        if (testPatternMode == CAM_TEST_PATTERN_SOLID_COLOR &&
+                frame_settings.exists(ANDROID_SENSOR_TEST_PATTERN_DATA)) {
+            int32_t* fwk_testPatternData = frame_settings.find(
+                    ANDROID_SENSOR_TEST_PATTERN_DATA).data.i32;
+            testPatternData.r = fwk_testPatternData[0];
+            testPatternData.b = fwk_testPatternData[3];
+            switch (gCamCapability[mCameraId]->color_arrangement) {
+            case CAM_FILTER_ARRANGEMENT_RGGB:
+            case CAM_FILTER_ARRANGEMENT_GRBG:
+                testPatternData.gr = fwk_testPatternData[1];
+                testPatternData.gb = fwk_testPatternData[2];
+                break;
+            case CAM_FILTER_ARRANGEMENT_GBRG:
+            case CAM_FILTER_ARRANGEMENT_BGGR:
+                testPatternData.gr = fwk_testPatternData[2];
+                testPatternData.gb = fwk_testPatternData[1];
+                break;
+            default:
+                ALOGE("%s: color arrangement %d is not supported", __func__,
+                    gCamCapability[mCameraId]->color_arrangement);
+                break;
+            }
+        }
+        rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_META_TEST_PATTERN_DATA,
+            sizeof(testPatternData), &testPatternData);
     }
 
     if (frame_settings.exists(ANDROID_JPEG_GPS_COORDINATES)) {

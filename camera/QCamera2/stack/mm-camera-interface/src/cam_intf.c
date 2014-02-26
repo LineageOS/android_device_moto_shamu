@@ -327,6 +327,8 @@ void *get_pointer_of(cam_intf_parm_type_t meta_id,
             return POINTER_OF_META(CAM_INTF_META_JPEG_THUMB_QUALITY, metadata);
         case CAM_INTF_META_JPEG_THUMB_SIZE:
             return POINTER_OF_META(CAM_INTF_META_JPEG_THUMB_SIZE, metadata);
+        case CAM_INTF_META_TEST_PATTERN_DATA:
+            return POINTER_OF_META(CAM_INTF_META_TEST_PATTERN_DATA, metadata);
         default:
             return NULL;
     }
@@ -630,6 +632,8 @@ uint32_t get_size_of(cam_intf_parm_type_t param_id)
             return SIZE_OF_PARAM(CAM_INTF_META_JPEG_THUMB_QUALITY, metadata);
         case CAM_INTF_META_JPEG_THUMB_SIZE:
             return SIZE_OF_PARAM(CAM_INTF_META_JPEG_THUMB_SIZE, metadata);
+        case CAM_INTF_META_TEST_PATTERN_DATA:
+            return SIZE_OF_PARAM(CAM_INTF_META_TEST_PATTERN_DATA, metadata);
         default:
             return 0;
     }
