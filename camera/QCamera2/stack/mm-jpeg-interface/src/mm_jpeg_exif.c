@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,6 +27,7 @@
  *
  */
 
+#include <pthread.h>
 #include "mm_jpeg_dbg.h"
 #include "mm_jpeg.h"
 #include <errno.h>
@@ -303,7 +304,7 @@ int process_sensor_data(cam_sensor_params_t *p_sensor_params,
     return 0;
   }
 
-  ALOGD("%s:%d] From metadata aperture = %f ", __func__, __LINE__,
+  CDBG_HIGH("%s:%d] From metadata aperture = %f ", __func__, __LINE__,
     p_sensor_params->aperture_value );
   if (p_sensor_params->aperture_value > 1.0) {
     av = (double)2.0 * log(p_sensor_params->aperture_value) / log(2.0);
@@ -371,7 +372,7 @@ int process_3a_data(cam_ae_params_t *p_ae_params, QOMX_EXIF_INFO *exif_info)
       val_rat.num = 1;
       val_rat.denom = ROUND(1.0/p_ae_params->exp_time);
   }
-  ALOGD("%s: numer %d denom %d %d", __func__, val_rat.num, val_rat.denom, sizeof(val_rat)/(8));
+  CDBG_HIGH("%s: numer %d denom %d %d", __func__, val_rat.num, val_rat.denom, sizeof(val_rat)/(8));
 
   rc = addExifEntry(exif_info, EXIFTAGID_EXPOSURE_TIME, EXIF_RATIONAL,
     (sizeof(val_rat)/(8)), &val_rat);
