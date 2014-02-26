@@ -2113,6 +2113,7 @@ void QCamera3ReprocessChannel::streamCbRoutine(mm_camera_super_buf_t *super_fram
     }
     *frame = *super_frame;
     obj->m_postprocessor.processPPData(frame);
+    free(super_frame);
     return;
 }
 
