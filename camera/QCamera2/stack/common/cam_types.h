@@ -36,7 +36,7 @@
 #include <media/msmb_camera.h>
 
 #define CAM_MAX_NUM_BUFS_PER_STREAM 24
-#define MAX_METADATA_PAYLOAD_SIZE 1024
+#define MAX_METADATA_PRIVATE_PAYLOAD_SIZE 4096
 
 #define CEILING64(X) (((X) + 0x0003F) & 0xFFFFFFC0)
 #define CEILING32(X) (((X) + 0x0001F) & 0xFFFFFFE0)
@@ -956,7 +956,7 @@ typedef  struct {
     uint8_t is_asd_decision_valid;
     cam_auto_scene_t scene; //scene type as decided by ASD
 
-    char private_metadata[MAX_METADATA_PAYLOAD_SIZE];
+    char private_metadata[MAX_METADATA_PRIVATE_PAYLOAD_SIZE];
 
     /* AE parameters */
     uint8_t is_ae_params_valid;
