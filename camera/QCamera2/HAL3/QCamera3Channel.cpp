@@ -381,7 +381,7 @@ mm_camera_buf_def_t* QCamera3RegularChannel::getInternalFormatBuffer(
     int32_t index;
     if(buffer == NULL)
         return NULL;
-    index = mMemory->getMatchBufIndex((void*)buffer);
+    index = mMemory.getMatchBufIndex((void*)buffer);
     if(index < 0) {
         ALOGE("%s: Could not find object among registered buffers",__func__);
         return NULL;
@@ -476,9 +476,6 @@ QCamera3RegularChannel::QCamera3RegularChannel(uint32_t cam_handle,
                                 paddingInfo, userData),
                         mCamera3Stream(stream),
                         mNumBufs(0),
-                        mRegisteredBuffers(0),
-                        mCamera3Buffers(NULL),
-                        mMemory(NULL),
                         mWidth(width),
                         mHeight(height),
                         mStreamType(stream_type)
@@ -510,9 +507,6 @@ QCamera3RegularChannel::QCamera3RegularChannel(uint32_t cam_handle,
                                 paddingInfo, userData),
                         mCamera3Stream(stream),
                         mNumBufs(0),
-                        mRegisteredBuffers(0),
-                        mCamera3Buffers(NULL),
-                        mMemory(NULL),
                         mWidth(stream->width),
                         mHeight(stream->height),
                         mStreamType(stream_type)
@@ -530,9 +524,7 @@ QCamera3RegularChannel::QCamera3RegularChannel(uint32_t cam_handle,
  *==========================================================================*/
 QCamera3RegularChannel::~QCamera3RegularChannel()
 {
-    if (mCamera3Buffers) {
-        delete[] mCamera3Buffers;
-    }
+    mCamera3Buffers.clear();
 }
 
 /*===========================================================================
@@ -570,11 +562,6 @@ int32_t QCamera3RegularChannel::initialize()
     }
 
     mNumBufs = CAM_MAX_NUM_BUFS_PER_STREAM;
-    mCamera3Buffers = new buffer_handle_t*[mNumBufs];
-    if (mCamera3Buffers == NULL) {
-        ALOGE("%s: Failed to allocate buffer_handle_t*", __func__);
-        return -ENOMEM;
-    }
 
     if (mCamera3Stream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
         if (mStreamType ==  CAM_STREAM_TYPE_VIDEO) {
@@ -620,7 +607,7 @@ int32_t QCamera3RegularChannel::start()
 {
     int32_t rc = NO_ERROR;
 
-    if (0 < mRegisteredBuffers) {
+    if (0 < mCamera3Buffers.size()) {
         rc = QCamera3Channel::start();
     }
     return rc;
@@ -666,12 +653,7 @@ int32_t QCamera3RegularChannel::request(buffer_handle_t *buffer, uint32_t frameN
         CDBG("%s: Request on an existing stream",__func__);
     }
 
-    if(!mMemory) {
-        ALOGE("%s: error, Gralloc Memory object not yet created for this stream",__func__);
-        return NO_MEMORY;
-    }
-
-    index = mMemory->getMatchBufIndex((void*)buffer);
+    index = mMemory.getMatchBufIndex((void*)buffer);
     if(index < 0) {
         rc = registerBuffer(buffer);
         if (NO_ERROR != rc) {
@@ -680,7 +662,7 @@ int32_t QCamera3RegularChannel::request(buffer_handle_t *buffer, uint32_t frameN
             return rc;
         }
 
-        index = mMemory->getMatchBufIndex((void*)buffer);
+        index = mMemory.getMatchBufIndex((void*)buffer);
         if (index < 0) {
             ALOGE("%s: Could not find object among registered buffers",
                     __func__);
@@ -694,7 +676,7 @@ int32_t QCamera3RegularChannel::request(buffer_handle_t *buffer, uint32_t frameN
         return rc;
     }
 
-    rc = mMemory->markFrameNumber(index, frameNumber);
+    rc = mMemory.markFrameNumber(index, frameNumber);
     return rc;
 }
 
@@ -714,7 +696,7 @@ int32_t QCamera3RegularChannel::registerBuffer(buffer_handle_t *buffer)
 {
     int rc = 0;
 
-    if (mRegisteredBuffers > (mNumBufs - 1)) {
+    if (mCamera3Buffers.size() > (mNumBufs - 1)) {
         ALOGE("%s: Trying to register more buffers than initially requested",
                 __func__);
         return BAD_VALUE;
@@ -729,14 +711,7 @@ int32_t QCamera3RegularChannel::registerBuffer(buffer_handle_t *buffer)
         }
     }
 
-    if(NULL == mMemory) {
-        mMemory = new QCamera3GrallocMemory();
-        if (mMemory == NULL) {
-            return NO_MEMORY;
-        }
-    }
-
-    rc = mMemory->registerBuffer(buffer);
+    rc = mMemory.registerBuffer(buffer);
     if (ALREADY_EXISTS == rc) {
         return NO_ERROR;
     } else if (NO_ERROR != rc) {
@@ -744,8 +719,7 @@ int32_t QCamera3RegularChannel::registerBuffer(buffer_handle_t *buffer)
         return rc;
     }
 
-    mCamera3Buffers[mRegisteredBuffers] = buffer;
-    mRegisteredBuffers++;
+    mCamera3Buffers.add(buffer);
 
     return rc;
 }
@@ -786,7 +760,7 @@ void QCamera3RegularChannel::streamCbRoutine(
 
     ////Use below data to issue framework callback
     resultBuffer = mCamera3Buffers[frameIndex];
-    resultFrameNumber = mMemory->getFrameNumber(frameIndex);
+    resultFrameNumber = mMemory.getFrameNumber(frameIndex);
 
     result.stream = mCamera3Stream;
     result.buffer = resultBuffer;
@@ -801,23 +775,12 @@ void QCamera3RegularChannel::streamCbRoutine(
 
 QCamera3Memory* QCamera3RegularChannel::getStreamBufs(uint32_t /*len*/)
 {
-    if(NULL == mMemory) {
-        mMemory = new QCamera3GrallocMemory();
-        if (mMemory == NULL) {
-            return NULL;
-        }
-    }
-
-    return mMemory;
+    return &mMemory;
 }
 
 void QCamera3RegularChannel::putStreamBufs()
 {
-    if (NULL != mMemory) {
-        mMemory->unregisterBuffers();
-        delete mMemory;
-        mMemory = NULL;
-    }
+    mMemory.unregisterBuffers();
 }
 
 int QCamera3RegularChannel::kMaxBuffers = 7;
@@ -1139,21 +1102,21 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
         char* jpeg_buf = (char *)p_output->buf_vaddr;
 
         if(obj->mJpegSettings->max_jpeg_size <= 0 ||
-                obj->mJpegSettings->max_jpeg_size > obj->mMemory->getSize(obj->mCurrentBufIndex)){
+                obj->mJpegSettings->max_jpeg_size > obj->mMemory.getSize(obj->mCurrentBufIndex)){
             ALOGW("%s:Max Jpeg size :%d is out of valid range setting to size of buffer",
                     __func__, obj->mJpegSettings->max_jpeg_size);
-            maxJpegSize =  obj->mMemory->getSize(obj->mCurrentBufIndex);
+            maxJpegSize =  obj->mMemory.getSize(obj->mCurrentBufIndex);
         } else {
             maxJpegSize = obj->mJpegSettings->max_jpeg_size;
             ALOGI("%s: Setting max jpeg size to %d",__func__, maxJpegSize);
         }
         jpeg_eof = &jpeg_buf[maxJpegSize-sizeof(jpegHeader)];
         memcpy(jpeg_eof, &jpegHeader, sizeof(jpegHeader));
-        obj->mMemory->cleanInvalidateCache(obj->mCurrentBufIndex);
+        obj->mMemory.cleanInvalidateCache(obj->mCurrentBufIndex);
 
         ////Use below data to issue framework callback
         resultBuffer = obj->mCamera3Buffers[obj->mCurrentBufIndex];
-        resultFrameNumber = obj->mMemory->getFrameNumber(obj->mCurrentBufIndex);
+        resultFrameNumber = obj->mMemory.getFrameNumber(obj->mCurrentBufIndex);
 
         result.stream = obj->mCamera3Stream;
         result.buffer = resultBuffer;
@@ -1187,11 +1150,8 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                         m_postprocessor(this),
                         mCamera3Stream(stream),
                         mNumBufs(0),
-                        mCamera3Buffers(NULL),
                         mJpegSettings(NULL),
                         mCurrentBufIndex(-1),
-                        mRegisteredBuffers(0),
-                        mMemory(NULL),
                         mYuvMemory(NULL),
                         mMetaFrame(NULL)
 {
@@ -1210,9 +1170,8 @@ QCamera3PicChannel::~QCamera3PicChannel()
     if (rc != 0) {
         ALOGE("De-init Postprocessor failed");
     }
-    if (mCamera3Buffers) {
-        delete[] mCamera3Buffers;
-    }
+
+    mCamera3Buffers.clear();
 }
 
 int32_t QCamera3PicChannel::initialize()
@@ -1253,12 +1212,6 @@ int32_t QCamera3PicChannel::initialize()
 
     int num_buffers = 1;
     mNumBufs = CAM_MAX_NUM_BUFS_PER_STREAM;
-    mCamera3Buffers = new buffer_handle_t*[num_buffers];
-    if (mCamera3Buffers == NULL) {
-        ALOGE("%s: Failed to allocate buffer_handle_t*", __func__);
-        return -ENOMEM;
-    }
-
     rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,
             num_buffers);
 
@@ -1283,14 +1236,7 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
     if (pInputBuffer == NULL)
         mStreams[0]->bufDone(0);
 
-    if(NULL == mMemory) {
-        mMemory = new QCamera3GrallocMemory();
-        if (mMemory == NULL) {
-            return NO_MEMORY;
-        }
-    }
-
-    index = mMemory->getMatchBufIndex((void*)buffer);
+    index = mMemory.getMatchBufIndex((void*)buffer);
     if(index < 0) {
         rc = registerBuffer(buffer);
         if (NO_ERROR != rc) {
@@ -1299,24 +1245,24 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
             return rc;
         }
 
-        index = mMemory->getMatchBufIndex((void*)buffer);
+        index = mMemory.getMatchBufIndex((void*)buffer);
         if (index < 0) {
             ALOGE("%s: Could not find object among registered buffers",__func__);
             return DEAD_OBJECT;
         }
     }
-    rc = mMemory->markFrameNumber(index, frameNumber);
+    rc = mMemory.markFrameNumber(index, frameNumber);
 
     //Start the postprocessor for jpeg encoding. Pass mMemory as destination buffer
     mCurrentBufIndex = index;
 
     if(pInputBuffer) {
-        m_postprocessor.start(mMemory, index, pInputChannel);
+        m_postprocessor.start(&mMemory, index, pInputChannel);
         CDBG_HIGH("%s: Post-process started", __func__);
         CDBG_HIGH("%s: Issue call to reprocess", __func__);
         m_postprocessor.processAuxiliaryData(pInputBuffer,pInputChannel);
     } else {
-        m_postprocessor.start(mMemory, index, this);
+        m_postprocessor.start(&mMemory, index, this);
     }
     return rc;
 }
@@ -1378,7 +1324,7 @@ int32_t QCamera3PicChannel::registerBuffer(buffer_handle_t *buffer)
 {
     int rc = 0;
 
-    if (mRegisteredBuffers > (mNumBufs - 1)) {
+    if (mCamera3Buffers.size() > (mNumBufs - 1)) {
         ALOGE("%s: Trying to register more buffers than initially requested",
                 __func__);
         return BAD_VALUE;
@@ -1393,14 +1339,7 @@ int32_t QCamera3PicChannel::registerBuffer(buffer_handle_t *buffer)
         }
     }
 
-    if(NULL == mMemory) {
-        mMemory = new QCamera3GrallocMemory();
-        if (mMemory == NULL) {
-            return NO_MEMORY;
-        }
-    }
-
-    rc = mMemory->registerBuffer(buffer);
+    rc = mMemory.registerBuffer(buffer);
     if (ALREADY_EXISTS == rc) {
         return NO_ERROR;
     } else if (NO_ERROR != rc) {
@@ -1408,8 +1347,7 @@ int32_t QCamera3PicChannel::registerBuffer(buffer_handle_t *buffer)
         return rc;
     }
 
-    mCamera3Buffers[mRegisteredBuffers] = buffer;
-    mRegisteredBuffers++;
+    mCamera3Buffers.add(buffer);
 
     CDBG("%s: X",__func__);
 
@@ -1470,18 +1408,6 @@ QCamera3Memory* QCamera3PicChannel::getStreamBufs(uint32_t len)
 {
     int rc = 0;
 
-    if (mNumBufs == 0 || mCamera3Buffers == NULL) {
-        ALOGE("%s: buffers not registered yet", __func__);
-        return NULL;
-    }
-
-    if(NULL == mMemory) {
-        mMemory = new QCamera3GrallocMemory();
-        if (mMemory == NULL) {
-            return NULL;
-        }
-    }
-
     mYuvMemory = new QCamera3HeapMemory();
     if (!mYuvMemory) {
         ALOGE("%s: unable to create metadata memory", __func__);
@@ -1501,11 +1427,7 @@ QCamera3Memory* QCamera3PicChannel::getStreamBufs(uint32_t len)
 
 void QCamera3PicChannel::putStreamBufs()
 {
-    if (NULL != mMemory) {
-        mMemory->unregisterBuffers();
-        delete mMemory;
-        mMemory = NULL;
-    }
+    mMemory.unregisterBuffers();
 
     mYuvMemory->deallocate();
     delete mYuvMemory;

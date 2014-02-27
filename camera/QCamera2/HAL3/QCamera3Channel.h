@@ -35,6 +35,7 @@
 #include "QCamera3Mem.h"
 #include "QCamera3PostProc.h"
 #include "QCamera3HALHeader.h"
+#include "utils/Vector.h"
 
 extern "C" {
 #include <mm_camera_interface.h>
@@ -158,10 +159,9 @@ private:
 
     camera3_stream_t *mCamera3Stream;
     uint32_t mNumBufs;
-    uint32_t mRegisteredBuffers;
-    buffer_handle_t **mCamera3Buffers;
+    Vector<buffer_handle_t *> mCamera3Buffers;
 
-    QCamera3GrallocMemory *mMemory;
+    QCamera3GrallocMemory mMemory;
     // width and height of internal stream may be different than what's
     // specified in camera3_stream_t. For example: ZSL stream size is
     // always the active region size, but internally we use the JPEG
@@ -280,13 +280,12 @@ public:
 private:
     camera3_stream_t *mCamera3Stream;
     uint32_t mNumBufs;
-    buffer_handle_t **mCamera3Buffers;
     jpeg_settings_t* mJpegSettings;
     int32_t mCurrentBufIndex;
     bool m_bWNROn;
-    uint32_t mRegisteredBuffers;
+    Vector<buffer_handle_t *> mCamera3Buffers;
 
-    QCamera3GrallocMemory *mMemory;
+    QCamera3GrallocMemory mMemory;
     QCamera3HeapMemory *mYuvMemory;
     QCamera3Channel *m_pMetaChannel;
     mm_camera_super_buf_t *mMetaFrame;
