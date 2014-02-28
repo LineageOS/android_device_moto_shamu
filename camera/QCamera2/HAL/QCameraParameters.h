@@ -501,6 +501,8 @@ public:
     int32_t getExifGpsDateTimeStamp(char *gpsDateStamp, uint32_t bufLen, rat_t *gpsTimeStamp);
     int32_t updateFocusDistances(cam_focus_distances_info_t *focusDistances);
 
+    bool isAEBracketEnabled();
+    int32_t setAEBracketing();
     bool isFpsDebugEnabled() {return m_bDebugFps;};
     bool isHistogramEnabled() {return m_bHistogramEnabled;};
     bool isFaceDetectionEnabled() {return ((m_nFaceProcMask & CAM_FACE_PROCESS_MASK_DETECTION) != 0);};
@@ -512,7 +514,7 @@ public:
     int32_t setHDRAEBracket(cam_exp_bracketing_t hdrBracket);
     bool isHDREnabled();
     bool isAutoHDREnabled();
-    int32_t restoreAEBracket();
+    int32_t stopAEBracket();
     int32_t enableFlash(bool enableFlash, bool commitSettings);
     int32_t updateRAW(cam_dimension_t max_dim);
     bool isAVTimerEnabled();

@@ -392,6 +392,7 @@ private:
     int32_t configureHDRBracketing();
     int32_t startBracketing(QCameraPicChannel *pChannel);
     int32_t configureOptiZoom();
+    int32_t configureAEBracketing();
 
     static void copyList(cam_dimension_t* src_list,
                    cam_dimension_t* dst_list, uint8_t len);
