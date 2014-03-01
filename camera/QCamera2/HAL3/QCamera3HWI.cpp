@@ -4249,7 +4249,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     }
 
     if (frame_settings.exists(ANDROID_SHADING_MODE)) {
-        int32_t shadingMode =
+        uint8_t shadingMode =
             frame_settings.find(ANDROID_SHADING_MODE).data.u8[0];
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_SHADING_MODE,
                 sizeof(shadingMode), &shadingMode);
