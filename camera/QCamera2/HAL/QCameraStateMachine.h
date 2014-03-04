@@ -108,6 +108,11 @@ typedef struct {
     };
 } qcamera_api_result_t;
 
+typedef struct api_result_list {
+   qcamera_api_result_t result;
+   struct api_result_list *next;
+}api_result_list;
+
 // definition for payload type of setting callback
 typedef struct {
     camera_notify_callback notify_cb;
