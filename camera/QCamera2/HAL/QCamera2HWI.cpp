@@ -576,6 +576,7 @@ int QCamera2HardwareInterface::cancel_auto_focus(struct camera_device *device)
         ALOGE("NULL camera device");
         return BAD_VALUE;
     }
+    ALOGE("[KPI Perf] %s : E PROFILE_CANCEL_AUTO_FOCUS", __func__);
     hw->lockAPI();
     ret = hw->processAPI(QCAMERA_SM_EVT_STOP_AUTO_FOCUS, NULL);
     if (ret == NO_ERROR) {
@@ -583,7 +584,7 @@ int QCamera2HardwareInterface::cancel_auto_focus(struct camera_device *device)
         ret = hw->m_apiResult.status;
     }
     hw->unlockAPI();
-
+    ALOGD("[KPI Perf] %s : X", __func__);
     return ret;
 }
 
@@ -1836,6 +1837,9 @@ int QCamera2HardwareInterface::stopPreview()
 
     // delete all channels from preparePreview
     unpreparePreview();
+
+    //reset focus state
+    m_currentFocusState = CAM_AF_NOT_FOCUSED;
     ALOGD("%s: X", __func__);
     return NO_ERROR;
 }
