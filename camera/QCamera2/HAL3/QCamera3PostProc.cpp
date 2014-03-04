@@ -393,10 +393,10 @@ int32_t QCamera3PostProcessor::processAuxiliaryData(mm_camera_buf_def_t *frame,
         // enqueu to post proc input queue
         m_inputPPQ.enqueue((void *)aux_frame);
         if (!(m_inputMetaQ.isEmpty())) {
-           ALOGE("%s: meta queue is not empty, do next job", __func__);
+           ALOGI("%s: meta queue is not empty, do next job", __func__);
            m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
         } else {
-           ALOGE("%s: meta queue is empty, not calling do next job", __func__);
+           ALOGI("%s: meta queue is empty, not calling do next job", __func__);
         }
         pthread_mutex_unlock(&mReprocJobLock);
     } else {
@@ -487,10 +487,10 @@ int32_t QCamera3PostProcessor::processPPMetadata(mm_camera_super_buf_t *frame)
     // enqueue to metadata input queue
     m_inputMetaQ.enqueue((void *)frame);
     if (!(m_inputPPQ.isEmpty())) {
-       ALOGE("%s: pp queue is not empty, do next job", __func__);
+       ALOGI("%s: pp queue is not empty, do next job", __func__);
        m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
     } else {
-       ALOGE("%s: pp queue is empty, not calling do next job", __func__);
+       ALOGI("%s: pp queue is empty, not calling do next job", __func__);
     }
     pthread_mutex_unlock(&mReprocJobLock);
     return NO_ERROR;
@@ -1097,7 +1097,7 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                 if (is_active == TRUE) {
                     // check if there is any ongoing jpeg jobs
                     if (pme->m_ongoingJpegQ.isEmpty()) {
-                       ALOGE("%s: ongoing jpeg queue is empty so doing the jpeg job", __func__);
+                       ALOGI("%s: ongoing jpeg queue is empty so doing the jpeg job", __func__);
                         // no ongoing jpeg job, we are fine to send jpeg encoding job
                         qcamera_hal3_jpeg_data_t *jpeg_job =
                             (qcamera_hal3_jpeg_data_t *)pme->m_inputJpegQ.dequeue();
@@ -1118,7 +1118,7 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                             }
                         }
                     }
-                    ALOGE("%s: dequeuing pp frame", __func__);
+                    ALOGD("%s: dequeuing pp frame", __func__);
                     mm_camera_super_buf_t *pp_frame =
                         (mm_camera_super_buf_t *)pme->m_inputPPQ.dequeue();
                     if (NULL != pp_frame) {

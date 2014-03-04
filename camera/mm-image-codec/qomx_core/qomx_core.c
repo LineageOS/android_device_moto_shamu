@@ -91,7 +91,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Init()
     rc = OMX_ErrorInsufficientResources;
   }
   pthread_mutex_unlock(&g_omxcore_lock);
-  ALOGE("%s:%d] Complete %d", __func__, __LINE__, comp_cnt);
+  ALOGI("%s:%d] Complete %d", __func__, __LINE__, comp_cnt);
   return rc;
 }
 
@@ -115,7 +115,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_Deinit()
     g_omxcore_cnt--;
   }
 
-  ALOGE("%s:%d] Complete", __func__, __LINE__);
+  ALOGI("%s:%d] Complete", __func__, __LINE__);
   pthread_mutex_unlock(&g_omxcore_lock);
   return OMX_ErrorNone;
 }
@@ -233,7 +233,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(
 
   /* Call the function from the address to create the obj */
   p_obj = (*p_core_comp->get_instance)();
-  ALOGE("%s:%d] get instance pts is %p", __func__, __LINE__, p_obj);
+  ALOGI("%s:%d] get instance pts is %p", __func__, __LINE__, p_obj);
   if (NULL == p_obj) {
     ALOGE("%s:%d] Error cannot create object", __func__, __LINE__);
     rc = OMX_ErrorInvalidComponent;
@@ -257,7 +257,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(
 
   p_comp->SetCallbacks(p_comp, callBacks, appData);
   pthread_mutex_unlock(&g_omxcore_lock);
-  ALOGE("%s:%d] Success", __func__, __LINE__);
+  ALOGI("%s:%d] Success", __func__, __LINE__);
   return OMX_ErrorNone;
 
 error:
@@ -287,7 +287,7 @@ static int get_idx_from_handle(OMX_IN OMX_HANDLETYPE *ahComp, int *aCompIdx,
     for (j = 0; j < OMX_COMP_MAX_INSTANCES; j++) {
       if ((OMX_COMPONENTTYPE *)g_omxcore->component[i].handle[j] ==
         (OMX_COMPONENTTYPE *)ahComp) {
-        ALOGE("%s:%d] comp_idx %d inst_idx %d", __func__, __LINE__, i, j);
+        ALOGD("%s:%d] comp_idx %d inst_idx %d", __func__, __LINE__, i, j);
         *aCompIdx = i;
         *aInstIdx = j;
         return TRUE;
@@ -328,7 +328,7 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(
   OMX_COMPONENTTYPE *p_comp = NULL;
   omx_core_component_t *p_core_comp = NULL;
 
-  ALOGE("%s:%d] ", __func__, __LINE__);
+  ALOGV("%s:%d] ", __func__, __LINE__);
   if (hComp == NULL) {
     return OMX_ErrorBadParameter;
   }
@@ -360,9 +360,9 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_FreeHandle(
     p_core_comp->create_comp_func = NULL;
     p_core_comp->open = FALSE;
   } else {
-    ALOGE("%s:%d] Error Component is still Active", __func__, __LINE__);
+    ALOGI("%s:%d] Error Component is still Active", __func__, __LINE__);
   }
   pthread_mutex_unlock(&g_omxcore_lock);
-  ALOGE("%s:%d] Success", __func__, __LINE__);
+  ALOGV("%s:%d] Success", __func__, __LINE__);
   return rc;
 }

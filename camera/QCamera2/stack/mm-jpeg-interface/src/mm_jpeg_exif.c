@@ -324,7 +324,7 @@ int process_sensor_data(cam_sensor_params_t *p_sensor_params,
   } else {
     val_short = 0;
   }
-  ALOGE("%s: Flash value %d flash mode %d flash state %d", __func__, val_short,
+  ALOGI("%s: Flash value %d flash mode %d flash state %d", __func__, val_short,
     p_sensor_params->flash_mode, p_sensor_params->flash_state);
   rc = addExifEntry(exif_info, EXIFTAGID_FLASH, EXIF_SHORT, 1, &val_short);
   if (rc) {
