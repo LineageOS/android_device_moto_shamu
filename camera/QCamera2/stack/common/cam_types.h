@@ -884,7 +884,8 @@ typedef struct {
     int iso_value;
     uint32_t flash_needed;
     int settled;
-} cam_ae_params_t;
+    cam_wb_mode_type wb_mode;
+} cam_3a_params_t;
 
 
 
@@ -959,8 +960,8 @@ typedef  struct {
     char private_metadata[MAX_METADATA_PRIVATE_PAYLOAD_SIZE];
 
     /* AE parameters */
-    uint8_t is_ae_params_valid;
-    cam_ae_params_t ae_params;
+    uint8_t is_3a_params_valid;
+    cam_3a_params_t cam_3a_params;
 
     /* sensor parameters */
     uint8_t is_sensor_params_valid;
