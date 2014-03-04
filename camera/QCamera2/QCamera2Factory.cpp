@@ -44,7 +44,7 @@ using namespace android;
 
 namespace qcamera {
 
-QCamera2Factory gQCamera2Factory;
+QCamera2Factory *gQCamera2Factory = NULL;
 
 /*===========================================================================
  * FUNCTION   : QCamera2Factory
@@ -121,7 +121,14 @@ QCamera2Factory::~QCamera2Factory()
  *==========================================================================*/
 int QCamera2Factory::get_number_of_cameras()
 {
-    return gQCamera2Factory.getNumberOfCameras();
+    if (!gQCamera2Factory) {
+        gQCamera2Factory = new QCamera2Factory();
+        if (!gQCamera2Factory) {
+            ALOGE("%s: Failed to allocate Camera2Factory object", __func__);
+            return 0;
+        }
+    }
+    return gQCamera2Factory->getNumberOfCameras();
 }
 
 /*===========================================================================
@@ -139,7 +146,7 @@ int QCamera2Factory::get_number_of_cameras()
  *==========================================================================*/
 int QCamera2Factory::get_camera_info(int camera_id, struct camera_info *info)
 {
-    return gQCamera2Factory.getCameraInfo(camera_id, info);
+    return gQCamera2Factory->getCameraInfo(camera_id, info);
 }
 
 /*===========================================================================
@@ -282,7 +289,7 @@ int QCamera2Factory::camera_device_open(
         ALOGE("Invalid camera id");
         return BAD_VALUE;
     }
-    return gQCamera2Factory.cameraDeviceOpen(atoi(id), hw_device);
+    return gQCamera2Factory->cameraDeviceOpen(atoi(id), hw_device);
 }
 
 struct hw_module_methods_t QCamera2Factory::mModuleMethods = {
