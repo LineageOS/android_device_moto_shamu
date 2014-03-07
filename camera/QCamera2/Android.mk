@@ -74,7 +74,7 @@ LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)
 
-#include $(LOCAL_PATH)/test/Android.mk
+#include $(LOCAL_PATH)/HAL/test/Android.mk
 
 include $(call first-makefiles-under,$(LOCAL_PATH))
 
