@@ -1086,9 +1086,9 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
                 }
                 break;
             }
-            case CAM_INTF_META_HDR_DATA: {
+            case CAM_INTF_META_ASD_HDR_SCENE_DATA: {
                 cam_asd_hdr_scene_data_t *hdr_scene_data =
-                (cam_asd_hdr_scene_data_t *)POINTER_OF(CAM_INTF_META_HDR_DATA, pMetaData);
+                (cam_asd_hdr_scene_data_t *)POINTER_OF(CAM_INTF_META_ASD_HDR_SCENE_DATA, pMetaData);
                 ALOGD("%s: hdr_scene_data: %d %f\n",
                   __func__,
                   hdr_scene_data->is_hdr_scene,

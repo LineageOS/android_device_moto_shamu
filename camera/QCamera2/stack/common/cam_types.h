@@ -1074,7 +1074,7 @@ typedef enum {
     CAM_INTF_META_CROP_DATA,
     CAM_INTF_META_PREP_SNAPSHOT_DONE,
     CAM_INTF_META_GOOD_FRAME_IDX_RANGE,
-    CAM_INTF_META_HDR_DATA,
+    CAM_INTF_META_ASD_HDR_SCENE_DATA,
     CAM_INTF_META_ASD_SCENE_TYPE,
     CAM_INTF_META_AEC_INFO,
     CAM_INTF_META_CHROMATIX_LITE_ISP,
@@ -1244,7 +1244,6 @@ typedef enum {
     /* 2D array of gain factors for each color channel that was used to
      * compensate for lens shading for this frame */
     CAM_INTF_META_LENS_SHADING_MAP,
-    CAM_INTF_META_ASD_HDR_SCENE_DATA,
     CAM_INTF_META_PRIVATE_DATA,
     CAM_INTF_PARM_STATS_DEBUG_MASK,
     /* Indicates streams ID of all the requested buffers */
