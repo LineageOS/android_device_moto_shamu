@@ -8447,5 +8447,147 @@ uint8_t QCameraParameters::getNumOfExtraBuffersForImageProc()
 
     return numOfBufs * getBurstNum();
 }
+/*===========================================================================
+ * FUNCTION   : dump
+ *
+ * DESCRIPTION: Composes a string based on current configuration
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : Formatted string
+ *==========================================================================*/
+String8 QCameraParameters::dump()
+{
+    String8 str("\n");
+    char s[128];
 
+    snprintf(s, 128, "Preview Pixel Fmt: %d\n", getPreviewHalPixelFormat());
+    str += s;
+
+    snprintf(s, 128, "ZSL Burst Interval: %d\n", getZSLBurstInterval());
+    str += s;
+
+    snprintf(s, 128, "ZSL Queue Depth: %d\n", getZSLQueueDepth());
+    str += s;
+
+    snprintf(s, 128, "ZSL Back Look Count %d\n", getZSLBackLookCount());
+    str += s;
+
+    snprintf(s, 128, "Max Unmatched Frames In Queue: %d\n",
+        getMaxUnmatchedFramesInQueue());
+    str += s;
+
+    snprintf(s, 128, "Is ZSL Mode: %d\n", isZSLMode());
+    str += s;
+
+    snprintf(s, 128, "Is No Display Mode: %d\n", isNoDisplayMode());
+    str += s;
+
+    snprintf(s, 128, "Is WNR Enabled: %d\n", isWNREnabled());
+    str += s;
+
+    snprintf(s, 128, "isHfrMode: %d\n", isHfrMode());
+    str += s;
+
+    snprintf(s, 128, "getNumOfSnapshots: %d\n", getNumOfSnapshots());
+    str += s;
+
+    snprintf(s, 128, "getNumOfExtraHDRInBufsIfNeeded: %d\n",
+        getNumOfExtraHDRInBufsIfNeeded());
+    str += s;
+
+    snprintf(s, 128, "getNumOfExtraHDROutBufsIfNeeded: %d\n",
+        getNumOfExtraHDROutBufsIfNeeded());
+    str += s;
+
+    snprintf(s, 128, "getBurstNum: %d\n", getBurstNum());
+    str += s;
+
+    snprintf(s, 128, "getRecordingHintValue: %d\n", getRecordingHintValue());
+    str += s;
+
+    snprintf(s, 128, "getJpegQuality: %d\n", getJpegQuality());
+    str += s;
+
+    snprintf(s, 128, "getJpegRotation: %d\n", getJpegRotation());
+    str += s;
+
+    snprintf(s, 128, "isHistogramEnabled: %d\n", isHistogramEnabled());
+    str += s;
+
+    snprintf(s, 128, "isFaceDetectionEnabled: %d\n", isFaceDetectionEnabled());
+    str += s;
+
+    snprintf(s, 128, "isHDREnabled: %d\n", isHDREnabled());
+    str += s;
+
+    snprintf(s, 128, "isAutoHDREnabled: %d\n", isAutoHDREnabled());
+    str += s;
+
+    snprintf(s, 128, "isAVTimerEnabled: %d\n", isAVTimerEnabled());
+    str += s;
+
+    snprintf(s, 128, "getFocusMode: %d\n", getFocusMode());
+    str += s;
+
+    snprintf(s, 128, "isJpegPictureFormat: %d\n", isJpegPictureFormat());
+    str += s;
+
+    snprintf(s, 128, "isNV16PictureFormat: %d\n", isNV16PictureFormat());
+    str += s;
+
+    snprintf(s, 128, "isNV21PictureFormat: %d\n", isNV21PictureFormat());
+    str += s;
+
+    snprintf(s, 128, "isSnapshotFDNeeded: %d\n", isSnapshotFDNeeded());
+    str += s;
+
+    snprintf(s, 128, "isHDR1xFrameEnabled: %d\n", isHDR1xFrameEnabled());
+    str += s;
+
+    snprintf(s, 128, "isYUVFrameInfoNeeded: %d\n", isYUVFrameInfoNeeded());
+    str += s;
+
+    snprintf(s, 128, "isHDR1xExtraBufferNeeded: %d\n",
+        isHDR1xExtraBufferNeeded());
+    str += s;
+
+    snprintf(s, 128, "isHDROutputCropEnabled: %d\n", isHDROutputCropEnabled());
+    str += s;
+
+    snprintf(s, 128, "isPreviewFlipChanged: %d\n", isPreviewFlipChanged());
+    str += s;
+
+    snprintf(s, 128, "isVideoFlipChanged: %d\n", isVideoFlipChanged());
+    str += s;
+
+    snprintf(s, 128, "isSnapshotFlipChanged: %d\n", isSnapshotFlipChanged());
+    str += s;
+
+    snprintf(s, 128, "isHDRThumbnailProcessNeeded: %d\n",
+        isHDRThumbnailProcessNeeded());
+    str += s;
+
+    snprintf(s, 128, "getAutoFlickerMode: %d\n", getAutoFlickerMode());
+    str += s;
+
+    snprintf(s, 128, "getNumOfExtraBuffersForImageProc: %d\n",
+        getNumOfExtraBuffersForImageProc());
+    str += s;
+
+    snprintf(s, 128, "isUbiFocusEnabled: %d\n", isUbiFocusEnabled());
+    str += s;
+
+    snprintf(s, 128, "isChromaFlashEnabled: %d\n", isChromaFlashEnabled());
+    str += s;
+
+    snprintf(s, 128, "isOptiZoomEnabled: %d\n", isOptiZoomEnabled());
+    str += s;
+
+    snprintf(s, 128, "getBurstCountForBracketing: %d\n",
+        getBurstCountForBracketing());
+    str += s;
+
+    return str;
+}
 }; // namespace qcamera

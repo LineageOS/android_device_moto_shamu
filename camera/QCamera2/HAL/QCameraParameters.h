@@ -554,6 +554,7 @@ public:
     int32_t set3ALock(const char *lockStr);
     int32_t setAndCommitZoom(int zoom_level);
     uint8_t getBurstCountForBracketing();
+    String8 dump();
 private:
     int32_t setPreviewSize(const QCameraParameters& );
     int32_t setVideoSize(const QCameraParameters& );

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -162,7 +162,7 @@ public:
     bool isPreviewRunning(); // check if preview is running
     bool isCaptureRunning(); // check if image capture is running
     bool isNonZSLCaptureRunning(); // check if image capture is running in non ZSL mode
-
+    String8 dump(); //returns the state information in a string
 private:
     typedef enum {
         QCAMERA_SM_STATE_PREVIEW_STOPPED,          // preview is stopped
