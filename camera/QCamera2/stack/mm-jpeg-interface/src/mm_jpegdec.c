@@ -586,6 +586,13 @@ static OMX_ERRORTYPE mm_jpegdec_session_decode(mm_jpeg_job_session_t *p_session)
   }
 
   // Set port definition
+  p_session->outputPort.format.image.nFrameWidth =
+    p_jobparams->main_dim.dst_dim.width;
+  p_session->outputPort.format.image.nFrameHeight =
+    p_jobparams->main_dim.dst_dim.height;
+  p_session->outputPort.format.image.eColorFormat =
+    map_jpeg_format(p_params->color_format);
+
   p_session->outputPort.nBufferSize =
      p_params->dest_buf[p_jobparams->dst_index].buf_size;
    p_session->outputPort.nBufferCountActual = p_params->num_dst_bufs;
