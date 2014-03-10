@@ -240,6 +240,9 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
 
     CDBG("%s:  begin\n", __func__);
 
+    if (NULL == my_obj) {
+        goto on_error;
+    }
     snprintf(dev_name, sizeof(dev_name), "/dev/%s",
              mm_camera_util_get_dev_name(my_obj->my_hdl));
     sscanf(dev_name, "/dev/video%u", &cam_idx);
@@ -310,13 +313,18 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
     return rc;
 
 on_error:
-    if (my_obj->ctrl_fd > 0) {
-        close(my_obj->ctrl_fd);
-        my_obj->ctrl_fd = 0;
-    }
-    if (my_obj->ds_fd > 0) {
-        mm_camera_socket_close(my_obj->ds_fd);
-       my_obj->ds_fd = 0;
+    if (NULL == my_obj) {
+        CDBG_ERROR("%s: Invalid camera object\n", __func__);
+        rc = -1;
+    } else {
+        if (my_obj->ctrl_fd > 0) {
+            close(my_obj->ctrl_fd);
+            my_obj->ctrl_fd = 0;
+        }
+        if (my_obj->ds_fd > 0) {
+            mm_camera_socket_close(my_obj->ds_fd);
+            my_obj->ds_fd = 0;
+        }
     }
 
     /* we do not need to unlock cam_lock here before return

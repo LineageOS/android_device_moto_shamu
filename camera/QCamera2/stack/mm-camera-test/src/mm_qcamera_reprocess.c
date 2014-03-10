@@ -113,7 +113,7 @@ mm_camera_stream_t * mm_app_add_reprocess_stream_from_source(mm_camera_test_obj_
 {
     int rc = MM_CAMERA_OK;
     mm_camera_stream_t *stream = NULL;
-    cam_capability_t *cam_cap = (cam_capability_t *)(test_obj->cap_buf.buf.buffer);
+    cam_capability_t *cam_cap = NULL;
     cam_stream_info_t *source_stream_info;
 
     if ( ( NULL == test_obj ) ||
@@ -122,6 +122,8 @@ mm_camera_stream_t * mm_app_add_reprocess_stream_from_source(mm_camera_test_obj_
         CDBG_ERROR("%s: Invalid input\n", __func__);
         return NULL;
     }
+
+    cam_cap = (cam_capability_t *)(test_obj->cap_buf.buf.buffer);
 
     stream = mm_app_add_stream(test_obj, channel);
     if (NULL == stream) {

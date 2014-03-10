@@ -249,12 +249,17 @@ int mm_app_stop_and_del_rdi_channel(mm_camera_test_obj_t *test_obj,
         CDBG_ERROR("%s:Stop RDI failed rc=%d\n", __func__, rc);
     }
 
-    for (i = 0; i < channel->num_streams; i++) {
-        stream = &channel->streams[i];
-        rc = mm_app_del_stream(test_obj, channel, stream);
-        if (MM_CAMERA_OK != rc) {
-            CDBG_ERROR("%s:del stream(%d) failed rc=%d\n", __func__, i, rc);
+    if (channel->num_streams <= MAX_STREAM_NUM_IN_BUNDLE) {
+        for (i = 0; i < channel->num_streams; i++) {
+            stream = &channel->streams[i];
+            rc = mm_app_del_stream(test_obj, channel, stream);
+            if (MM_CAMERA_OK != rc) {
+                CDBG_ERROR("%s:del stream(%d) failed rc=%d\n", __func__, i, rc);
+            }
         }
+    } else {
+        CDBG_ERROR("%s: num_streams = %d. Should not be more than %d\n",
+            __func__, channel->num_streams, MAX_STREAM_NUM_IN_BUNDLE);
     }
 
     rc = mm_app_del_channel(test_obj, channel);

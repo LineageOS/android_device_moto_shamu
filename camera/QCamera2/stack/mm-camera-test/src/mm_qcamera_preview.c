@@ -45,6 +45,11 @@ static void mm_app_metadata_notify_cb(mm_camera_super_buf_t *bufs,
   cam_auto_focus_data_t *focus_data;
   uint8_t curr_entry;
 
+  if (NULL == bufs || NULL == user_data) {
+      CDBG_ERROR("%s: bufs or user_data are not valid ", __func__);
+      return;
+  }
+
   /* find channel */
   for (i = 0; i < MM_CHANNEL_TYPE_MAX; i++) {
       if (pme->channels[i].ch_id == bufs->ch_id) {
@@ -74,12 +79,16 @@ static void mm_app_metadata_notify_cb(mm_camera_super_buf_t *bufs,
   if (pme->metadata == NULL) {
     /* The app will free the meta data, we don't need to bother here */
     pme->metadata = malloc(sizeof(metadata_buffer_t));
+    if (NULL == pme->metadata) {
+        CDBG_ERROR("%s: Canot allocate metadata memory\n", __func__);
+        return;
+    }
   }
   memcpy(pme->metadata, frame->buffer, sizeof(metadata_buffer_t));
 
   pMetadata = (metadata_buffer_t *)frame->buffer;
   curr_entry = GET_FIRST_PARAM_ID(pMetadata);
-  while (curr_entry != CAM_INTF_PARM_MAX) {
+  while (curr_entry < CAM_INTF_PARM_MAX) {
     if (curr_entry == CAM_INTF_META_AUTOFOCUS_DATA) {
       focus_data =
                   (cam_auto_focus_data_t *)POINTER_OF(CAM_INTF_META_AUTOFOCUS_DATA, pMetadata);
@@ -113,6 +122,11 @@ static void mm_app_preview_notify_cb(mm_camera_super_buf_t *bufs,
 
     CDBG_ERROR("%s: BEGIN - length=%d, frame idx = %d\n",
          __func__, frame->frame_len, frame->frame_idx);
+
+    if (NULL == bufs || NULL == user_data) {
+        CDBG_ERROR("%s: bufs or user_data are not valid ", __func__);
+        return;
+    }
 
     /* find channel */
     for (i = 0; i < MM_CHANNEL_TYPE_MAX; i++) {
@@ -181,6 +195,11 @@ static void mm_app_zsl_notify_cb(mm_camera_super_buf_t *bufs,
     mm_camera_buf_def_t *md_frame = NULL;
 
     CDBG("%s: BEGIN\n", __func__);
+
+    if (NULL == bufs || NULL == user_data) {
+        CDBG_ERROR("%s: bufs or user_data are not valid ", __func__);
+        return;
+    }
 
     /* find channel */
     for (i = 0; i < MM_CHANNEL_TYPE_MAX; i++) {
@@ -581,14 +600,18 @@ int mm_app_stop_and_del_channel(mm_camera_test_obj_t *test_obj,
         CDBG_ERROR("%s:Stop Preview failed rc=%d\n", __func__, rc);
     }
 
-    for (i = 0; i < channel->num_streams; i++) {
-        stream = &channel->streams[i];
-        rc = mm_app_del_stream(test_obj, channel, stream);
-        if (MM_CAMERA_OK != rc) {
-            CDBG_ERROR("%s:del stream(%d) failed rc=%d\n", __func__, i, rc);
+    if (channel->num_streams <= MAX_STREAM_NUM_IN_BUNDLE) {
+        for (i = 0; i < channel->num_streams; i++) {
+            stream = &channel->streams[i];
+            rc = mm_app_del_stream(test_obj, channel, stream);
+            if (MM_CAMERA_OK != rc) {
+                CDBG_ERROR("%s:del stream(%d) failed rc=%d\n", __func__, i, rc);
+            }
         }
+    } else {
+        CDBG_ERROR("%s: num_streams = %d. Should not be more than %d\n",
+            __func__, channel->num_streams, MAX_STREAM_NUM_IN_BUNDLE);
     }
-
     rc = mm_app_del_channel(test_obj, channel);
     if (MM_CAMERA_OK != rc) {
         CDBG_ERROR("%s:delete channel failed rc=%d\n", __func__, rc);
@@ -625,9 +648,11 @@ int mm_app_start_preview(mm_camera_test_obj_t *test_obj)
     rc = mm_app_start_channel(test_obj, channel);
     if (MM_CAMERA_OK != rc) {
         CDBG_ERROR("%s:start preview failed rc=%d\n", __func__, rc);
-        for (i = 0; i < channel->num_streams; i++) {
-            stream = &channel->streams[i];
-            mm_app_del_stream(test_obj, channel, stream);
+        if (channel->num_streams <= MAX_STREAM_NUM_IN_BUNDLE) {
+            for (i = 0; i < channel->num_streams; i++) {
+                stream = &channel->streams[i];
+                mm_app_del_stream(test_obj, channel, stream);
+            }
         }
         mm_app_del_channel(test_obj, channel);
         return rc;
