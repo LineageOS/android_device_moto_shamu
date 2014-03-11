@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014 The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -254,6 +254,11 @@ int32_t QCameraChannel::start()
         }
     } else {
         m_bIsActive = true;
+        for (int i = 0; i < m_numStreams; i++) {
+            if (mStreams[i] != NULL) {
+                mStreams[i]->cond_signal();
+            }
+        }
     }
 
     return rc;

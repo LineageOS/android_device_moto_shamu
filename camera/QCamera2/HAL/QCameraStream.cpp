@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014 The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -181,7 +181,8 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
         mStreamBufsAcquired(false),
         m_bActive(false),
         mDynBufAlloc(false),
-        mBufAllocPid(0)
+        mBufAllocPid(0),
+        wait_for_cond(false)
 {
     mMemVtbl.user_data = this;
     mMemVtbl.get_bufs = get_bufs;
@@ -322,6 +323,8 @@ int32_t QCameraStream::start()
     if (rc == NO_ERROR) {
         m_bActive = true;
     }
+    pthread_mutex_init(&m_lock, NULL);
+    pthread_cond_init(&m_cond, NULL);
     return rc;
 }
 
@@ -688,6 +691,9 @@ int32_t QCameraStream::getBufs(cam_frame_len_offset_t *offset,
     *bufs = mBufDefs;
 
     if (mNumBufsNeedAlloc > 0) {
+        pthread_mutex_lock(&m_lock);
+        wait_for_cond = TRUE;
+        pthread_mutex_unlock(&m_lock);
         ALOGD("%s: Still need to allocate %d buffers",
               __func__, mNumBufsNeedAlloc);
         // remember memops table
@@ -718,6 +724,7 @@ void *QCameraStream::BufAllocRoutine(void *data)
     int32_t rc = NO_ERROR;
 
     ALOGD("%s: E", __func__);
+    pme->cond_wait();
     if (pme->mNumBufsNeedAlloc > 0) {
         uint8_t numBufAlloc = pme->mNumBufs - pme->mNumBufsNeedAlloc;
         rc = pme->mAllocator.allocateMoreStreamBuf(pme->mStreamBufs,
@@ -745,6 +752,40 @@ void *QCameraStream::BufAllocRoutine(void *data)
     }
     ALOGD("%s: X", __func__);
     return NULL;
+}
+
+/*===========================================================================
+ * FUNCTION   : cond_signal
+ *
+ * DESCRIPTION: signal if flag "wait_for_cond" is set
+ *
+ *==========================================================================*/
+void QCameraStream::cond_signal()
+{
+    pthread_mutex_lock(&m_lock);
+    if(wait_for_cond == TRUE){
+        wait_for_cond = FALSE;
+        pthread_cond_signal(&m_cond);
+    }
+    pthread_mutex_unlock(&m_lock);
+}
+
+
+/*===========================================================================
+ * FUNCTION   : cond_wait
+ *
+ * DESCRIPTION: wait on if flag "wait_for_cond" is set
+ *
+ *==========================================================================*/
+void QCameraStream::cond_wait()
+{
+    pthread_mutex_lock(&m_lock);
+    if(wait_for_cond == TRUE){
+        pthread_mutex_unlock(&m_lock);
+        pthread_cond_wait(&m_cond, &m_lock);
+    }else{
+        pthread_mutex_unlock(&m_lock);
+    }
 }
 
 /*===========================================================================

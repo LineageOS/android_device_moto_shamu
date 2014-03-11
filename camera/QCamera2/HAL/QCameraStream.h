@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012,2014 The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -96,6 +96,9 @@ public:
     int mDumpMetaFrame;
     int mDumpSkipCnt;
 
+    void cond_wait();
+    void cond_signal();
+
 private:
     uint32_t mCamHandle;
     uint32_t mChannelHandle;
@@ -147,6 +150,10 @@ private:
     int32_t putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl);
     int32_t invalidateBuf(int index);
     int32_t cleanInvalidateBuf(int index);
+
+    bool wait_for_cond;
+    pthread_mutex_t m_lock;
+    pthread_cond_t m_cond;
 
 };
 
