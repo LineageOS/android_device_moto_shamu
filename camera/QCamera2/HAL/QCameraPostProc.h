@@ -127,6 +127,15 @@ private:
                                   QCameraStream *thumb_stream);
     int32_t encodeData(qcamera_jpeg_data_t *jpeg_job_data,
                        uint8_t &needNewSess);
+    int32_t queryStreams(QCameraStream **main,
+            QCameraStream **thumb,
+            QCameraStream **reproc,
+            mm_camera_buf_def_t **main_image,
+            mm_camera_buf_def_t **thumb_image,
+            mm_camera_super_buf_t *main_frame,
+            mm_camera_super_buf_t *reproc_frame);
+    int32_t syncStreamParams(mm_camera_super_buf_t *frame,
+            mm_camera_super_buf_t *reproc_frame);
     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
     static void releaseNotifyData(void *user_data,
                                   void *cookie,

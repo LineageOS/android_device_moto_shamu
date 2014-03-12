@@ -1159,6 +1159,169 @@ mm_jpeg_format_t QCameraPostProcessor::getJpegImgTypeFromImgFmt(cam_format_t img
 }
 
 /*===========================================================================
+ * FUNCTION   : queryStreams
+ *
+ * DESCRIPTION: utility method for retrieving main, thumbnail and reprocess
+ *              streams and frame from bundled super buffer
+ *
+ * PARAMETERS :
+ *   @main    : ptr to main stream if present
+ *   @thumb   : ptr to thumbnail stream if present
+ *   @reproc  : ptr to reprocess stream if present
+ *   @main_image : ptr to main image if present
+ *   @thumb_image: ptr to thumbnail image if present
+ *   @frame   : bundled super buffer
+ *   @reproc_frame : bundled source frame buffer
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraPostProcessor::queryStreams(QCameraStream **main,
+        QCameraStream **thumb,
+        QCameraStream **reproc,
+        mm_camera_buf_def_t **main_image,
+        mm_camera_buf_def_t **thumb_image,
+        mm_camera_super_buf_t *frame,
+        mm_camera_super_buf_t *reproc_frame)
+{
+    if (NULL == frame) {
+        return NO_INIT;
+    }
+
+    QCameraChannel *pChannel = m_parent->getChannelByHandle(frame->ch_id);
+    // check reprocess channel if not found
+    if (pChannel == NULL) {
+        if (m_pReprocChannel != NULL &&
+            m_pReprocChannel->getMyHandle() == frame->ch_id) {
+            pChannel = m_pReprocChannel;
+        }
+    }
+    if (pChannel == NULL) {
+        ALOGD("%s: No corresponding channel (ch_id = %d) exist, return here",
+              __func__, frame->ch_id);
+        return BAD_VALUE;
+    }
+
+    *main = *thumb = *reproc = NULL;
+    *main_image = *thumb_image = NULL;
+    // find snapshot frame and thumnail frame
+    for (int i = 0; i < frame->num_bufs; i++) {
+        QCameraStream *pStream =
+                pChannel->getStreamByHandle(frame->bufs[i]->stream_id);
+        if (pStream != NULL) {
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
+                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_SNAPSHOT)) {
+                *main= pStream;
+                *main_image = frame->bufs[i];
+            } else if (pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
+                       pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW) ||
+                       pStream->isOrignalTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
+                       pStream->isOrignalTypeOf(CAM_STREAM_TYPE_POSTVIEW)) {
+                *thumb = pStream;
+                *thumb_image = frame->bufs[i];
+            }
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_OFFLINE_PROC) ) {
+                *reproc = pStream;
+            }
+        }
+    }
+
+    if (*thumb_image == NULL && reproc_frame != NULL) {
+        QCameraChannel *pSrcReprocChannel = NULL;
+        pSrcReprocChannel = m_parent->getChannelByHandle(reproc_frame->ch_id);
+        if (pSrcReprocChannel != NULL) {
+            // find thumbnail frame
+            for (int i = 0; i < reproc_frame->num_bufs; i++) {
+                QCameraStream *pStream =
+                        pSrcReprocChannel->getStreamByHandle(
+                                reproc_frame->bufs[i]->stream_id);
+                if (pStream != NULL) {
+                    if (pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
+                        pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW)) {
+                        *thumb = pStream;
+                        *thumb_image = reproc_frame->bufs[i];
+                    }
+                }
+            }
+        }
+    }
+
+    return NO_ERROR;
+}
+
+/*===========================================================================
+* FUNCTION   : syncStreamParams
+*
+* DESCRIPTION: Query the runtime parameters of all streams included
+*              in the main and reprocessed frames
+*
+* PARAMETERS :
+*   @frame : Main image super buffer
+*   @reproc_frame : Image supper buffer that got processed
+*
+* RETURN     : int32_t type of status
+*              NO_ERROR  -- success
+*              none-zero failure code
+*==========================================================================*/
+int32_t QCameraPostProcessor::syncStreamParams(mm_camera_super_buf_t *frame,
+        mm_camera_super_buf_t *reproc_frame)
+{
+    QCameraStream *reproc_stream = NULL;
+    QCameraStream *main_stream = NULL;
+    QCameraStream *thumb_stream = NULL;
+    mm_camera_buf_def_t *main_frame = NULL;
+    mm_camera_buf_def_t *thumb_frame = NULL;
+    int32_t ret = NO_ERROR;
+
+    ret = queryStreams(&main_stream,
+            &thumb_stream,
+            &reproc_stream,
+            &main_frame,
+            &thumb_frame,
+            frame,
+            reproc_frame);
+    if (NO_ERROR != ret) {
+        ALOGE("%s : Camera streams query from input frames failed %d",
+                __func__,
+                ret);
+        return ret;
+    }
+
+    if (NULL != main_stream) {
+        ret = main_stream->syncRuntimeParams();
+        if (NO_ERROR != ret) {
+            ALOGE("%s : Syncing of main stream runtime parameters failed %d",
+                    __func__,
+                    ret);
+            return ret;
+        }
+    }
+
+    if (NULL != thumb_stream) {
+        ret = thumb_stream->syncRuntimeParams();
+        if (NO_ERROR != ret) {
+            ALOGE("%s : Syncing of thumb stream runtime parameters failed %d",
+                    __func__,
+                    ret);
+            return ret;
+        }
+    }
+
+    if (NULL != reproc_stream) {
+        ret = reproc_stream->syncRuntimeParams();
+        if (NO_ERROR != ret) {
+            ALOGE("%s : Syncing of reproc stream runtime parameters failed %d",
+                    __func__,
+                    ret);
+            return ret;
+        }
+    }
+
+    return ret;
+}
+
+/*===========================================================================
  * FUNCTION   : encodeData
  *
  * DESCRIPTION: function to prepare encoding job information and send to
@@ -1204,55 +1367,20 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         return BAD_VALUE;
     }
 
-    // find snapshot frame and thumnail frame
-    for (int i = 0; i < recvd_frame->num_bufs; i++) {
-        QCameraStream *pStream =
-            pChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
-        if (pStream != NULL) {
-            if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
-                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_SNAPSHOT)) {
-                main_stream = pStream;
-                main_frame = recvd_frame->bufs[i];
-            } else if (pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
-                       pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW) ||
-                       pStream->isOrignalTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
-                       pStream->isOrignalTypeOf(CAM_STREAM_TYPE_POSTVIEW)) {
-                thumb_stream = pStream;
-                thumb_frame = recvd_frame->bufs[i];
-            }
-            if (pStream->isTypeOf(CAM_STREAM_TYPE_OFFLINE_PROC) ) {
-                reproc_stream = pStream;
-            }
-        }
+    ret = queryStreams(&main_stream,
+            &thumb_stream,
+            &reproc_stream,
+            &main_frame,
+            &thumb_frame,
+            recvd_frame,
+            jpeg_job_data->src_reproc_frame);
+    if (NO_ERROR != ret) {
+        return ret;
     }
 
     if(NULL == main_frame){
        ALOGE("%s : Main frame is NULL", __func__);
        return BAD_VALUE;
-    }
-
-    //Sometimes thumbnail might be skipped in reprocess. Reprocessed channel will not have
-    //thumbnail in such case.  Hence, look through reprocess source superbuf.
-    if (thumb_frame == NULL && jpeg_job_data->src_reproc_frame != NULL) {
-        mm_camera_super_buf_t *src_reproc_frame = jpeg_job_data->src_reproc_frame;
-        QCameraChannel *pSrcReprocChannel = m_parent->getChannelByHandle(src_reproc_frame->ch_id);
-        if (pSrcReprocChannel == NULL) {
-            ALOGE("%s: No corresponding channel (ch_id = %d) exist, return here",
-                __func__, src_reproc_frame->ch_id);
-            return BAD_VALUE;
-        }
-        // find thumnail frame
-        for (int i = 0; i < src_reproc_frame->num_bufs; i++) {
-            QCameraStream *pStream =
-                pSrcReprocChannel->getStreamByHandle(src_reproc_frame->bufs[i]->stream_id);
-            if (pStream != NULL) {
-                if (pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
-                    pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW)) {
-                    thumb_stream = pStream;
-                    thumb_frame = src_reproc_frame->bufs[i];
-                }
-            }
-        }
     }
 
     if(NULL == thumb_frame){
@@ -1328,20 +1456,12 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     }
 
     if (reproc_stream) {
-        memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
-        param.type = CAM_STREAM_PARAM_TYPE_GET_BUFFER_INFO;
-
-        ret = reproc_stream->getParameter(param);
-        if (ret != NO_ERROR) {
-            ALOGE("%s: stream getParameter for buffer info failed", __func__);
-            mHoldBuffers = false;
-        } else {
-            for (int i = 0; i < param.buffer.num_of_streams; i++) {
-                if (param.buffer.info[i].stream_id
-                    == reproc_stream->getMyServerID()) {
-                        mHoldBuffers = param.buffer.info[i].hold_buffers;
-                    break;
-                }
+        param = reproc_stream->getBufferInfo();
+        for (int i = 0; i < param.buffer.num_of_streams; i++) {
+            if (param.buffer.info[i].stream_id
+                == reproc_stream->getMyServerID()) {
+                    mHoldBuffers = param.buffer.info[i].hold_buffers;
+                break;
             }
         }
     }
@@ -1363,19 +1483,12 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     crop.height = src_dim.height;
     crop.width = src_dim.width;
 
-    memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
-    param.type = CAM_STREAM_PARAM_TYPE_GET_OUTPUT_CROP;
-
-    ret = main_stream->getParameter(param);
-    if (ret != NO_ERROR) {
-        ALOGE("%s: stream getParameter for reprocess failed", __func__);
-    } else {
-       for (int i = 0; i < param.outputCrop.num_of_streams; i++) {
-           if (param.outputCrop.crop_info[i].stream_id
-               == main_stream->getMyServerID()) {
-                   crop = param.outputCrop.crop_info[i].crop;
-                   main_stream->setCropInfo(crop);
-           }
+    param = main_stream->getOutputCrop();
+    for (int i = 0; i < param.outputCrop.num_of_streams; i++) {
+       if (param.outputCrop.crop_info[i].stream_id
+           == main_stream->getMyServerID()) {
+               crop = param.outputCrop.crop_info[i].crop;
+               main_stream->setCropInfo(crop);
        }
     }
 
@@ -1430,19 +1543,12 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         crop.height = src_dim.height;
         crop.width = src_dim.width;
 
-        memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
-        param.type = CAM_STREAM_PARAM_TYPE_GET_OUTPUT_CROP;
-
-        ret = thumb_stream->getParameter(param);
-        if (ret != NO_ERROR) {
-            ALOGE("%s: stream getParameter for reprocess failed", __func__);
-        } else {
-           for (int i = 0; i < param.outputCrop.num_of_streams; i++) {
-               if (param.outputCrop.crop_info[i].stream_id
-                   == thumb_stream->getMyServerID()) {
-                       crop = param.outputCrop.crop_info[i].crop;
-                       thumb_stream->setCropInfo(crop);
-               }
+        param = thumb_stream->getOutputCrop();
+        for (int i = 0; i < param.outputCrop.num_of_streams; i++) {
+           if (param.outputCrop.crop_info[i].stream_id
+               == thumb_stream->getMyServerID()) {
+                   crop = param.outputCrop.crop_info[i].crop;
+                   thumb_stream->setCropInfo(crop);
            }
         }
 
@@ -1855,6 +1961,11 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                         (qcamera_jpeg_data_t *)pme->m_inputJpegQ.dequeue();
 
                     if (NULL != jpeg_job) {
+                        // To avoid any race conditions,
+                        // sync any stream specific parameters here.
+                        pme->syncStreamParams(jpeg_job->src_frame,
+                                jpeg_job->src_reproc_frame);
+
                       // add into ongoing jpeg job Q
                       pme->m_ongoingJpegQ.enqueue((void *)jpeg_job);
                       ret = pme->encodeData(jpeg_job, needNewSess);
