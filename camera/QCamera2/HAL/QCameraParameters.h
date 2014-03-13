@@ -511,7 +511,7 @@ public:
     bool isHDREnabled();
     bool isAutoHDREnabled();
     int32_t restoreAEBracket();
-    int32_t enableFlash(bool enableFlash);
+    int32_t enableFlash(bool enableFlash, bool commitSettings);
     int32_t updateRAW(cam_dimension_t max_dim);
     bool isAVTimerEnabled();
 
