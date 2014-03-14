@@ -161,7 +161,8 @@ int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
                                   cam_padding_info_t *paddingInfo,
                                   stream_cb_routine stream_cb,
                                   void *userdata,
-                                  bool bDynAllocBuf)
+                                  bool bDynAllocBuf,
+                                  bool bDeffAlloc)
 {
     int32_t rc = NO_ERROR;
     if (m_numStreams >= MAX_STREAM_NUM_IN_BUNDLE) {
@@ -173,7 +174,8 @@ int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
                                                m_camHandle,
                                                m_handle,
                                                m_camOps,
-                                               paddingInfo);
+                                               paddingInfo,
+                                               bDeffAlloc);
     if (pStream == NULL) {
         ALOGE("%s: No mem for Stream", __func__);
         return NO_MEMORY;
@@ -204,6 +206,11 @@ int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
 int32_t QCameraChannel::start()
 {
     int32_t rc = NO_ERROR;
+
+    for (int i = 0; i < m_numStreams; ++i) {
+        if ( mStreams[i]->isDeffered() )
+            mStreams[i]->configStream();
+    }
 
     if (m_numStreams > 1) {
         // there is more than one stream in the channel
@@ -398,6 +405,10 @@ QCameraStream *QCameraChannel::getStreamByServerID(uint32_t serverID)
  *==========================================================================*/
 QCameraStream *QCameraChannel::getStreamByIndex(uint8_t index)
 {
+    if (index >= MAX_STREAM_NUM_IN_BUNDLE) {
+        return NULL;
+    }
+
     if (index < m_numStreams) {
         return mStreams[index];
     }

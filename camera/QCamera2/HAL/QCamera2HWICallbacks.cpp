@@ -283,6 +283,9 @@ void QCamera2HardwareInterface::capture_channel_cb_routine(mm_camera_super_buf_t
         }
     }
 
+    // Wait on Postproc initialization if needed
+    pme->waitDefferedWork(pme->mReprocJob);
+
     // send to postprocessor
     pme->m_postprocessor.processData(frame);
 

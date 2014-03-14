@@ -47,6 +47,10 @@ typedef struct {
     uint32_t client_hdl;             // handle of jpeg client (obtained when open jpeg)
     mm_camera_super_buf_t *src_frame;// source frame (need to be returned back to kernel after done)
     mm_camera_super_buf_t *src_reproc_frame; // original source frame for reproc if not NULL
+    metadata_buffer_t *metadata;     // source frame metadata
+    bool reproc_frame_release;       // false release original buffer, true don't release it
+    mm_camera_buf_def_t *src_reproc_bufs;
+    mm_camera_buf_def_t *src_bufs;
     QCameraExif *pJpegExifObj;
 } qcamera_jpeg_data_t;
 
@@ -189,6 +193,7 @@ private:
     bool mJpegMemOpt;
     bool mHoldBuffers;                  // buffers are held in daemon
     uint32_t   m_JpegOutputMemCount;
+    uint8_t mNewJpegSessionNeeded;
 };
 
 }; // namespace qcamera
