@@ -352,6 +352,10 @@ int32_t QCameraStateMachine::procEvtPreviewStoppedState(qcamera_sm_evt_enum_t ev
         {
             bool needRestart = false;
             rc = m_parent->updateParameters((char*)payload, needRestart);
+            if (needRestart) {
+                // Clear memory pools
+                m_parent->m_memoryPool.clear();
+            }
             if (rc == NO_ERROR) {
                 rc = m_parent->commitParameterChanges();
             }
@@ -673,6 +677,8 @@ int32_t QCameraStateMachine::procEvtPreviewReadyState(qcamera_sm_evt_enum_t evt,
                 if (needRestart) {
                     // need restart preview for parameters to take effect
                     m_parent->unpreparePreview();
+                    // Clear memory pools
+                    m_parent->m_memoryPool.clear();
                     // commit parameter changes to server
                     m_parent->commitParameterChanges();
                     // prepare preview again
@@ -959,6 +965,8 @@ int32_t QCameraStateMachine::procEvtPreviewingState(qcamera_sm_evt_enum_t evt,
                     // need restart preview for parameters to take effect
                     // stop preview
                     m_parent->stopPreview();
+                    // Clear memory pools
+                    m_parent->m_memoryPool.clear();
                     // commit parameter changes to server
                     m_parent->commitParameterChanges();
                     // start preview again
@@ -2516,6 +2524,8 @@ int32_t QCameraStateMachine::procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t 
                     // need restart preview for parameters to take effect
                     // stop preview
                     m_parent->stopPreview();
+                    // Clear memory pools
+                    m_parent->m_memoryPool.clear();
                     // commit parameter changes to server
                     m_parent->commitParameterChanges();
                     // start preview again

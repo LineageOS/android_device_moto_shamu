@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -32,6 +32,7 @@
 
 #include <hardware/camera.h>
 #include <utils/Mutex.h>
+#include <utils/List.h>
 
 extern "C" {
 #include <sys/types.h>
@@ -40,6 +41,8 @@ extern "C" {
 }
 
 namespace qcamera {
+
+class QCameraMemoryPool;
 
 // Base class for all memory types. Abstract.
 class QCameraMemory {
@@ -61,29 +64,69 @@ public:
     virtual int getMatchBufIndex(const void *opaque, bool metadata) const = 0;
     virtual void *getPtr(int index) const= 0;
 
-    QCameraMemory(bool cached);
+    QCameraMemory(bool cached,
+                  QCameraMemoryPool *pool = NULL,
+                  cam_stream_type_t streamType = CAM_STREAM_TYPE_DEFAULT);
     virtual ~QCameraMemory();
 
     void getBufDef(const cam_frame_len_offset_t &offset,
                 mm_camera_buf_def_t &bufDef, int index) const;
 
 protected:
+
+    friend class QCameraMemoryPool;
+
     struct QCameraMemInfo {
         int fd;
         int main_ion_fd;
         ion_user_handle_t handle;
         uint32_t size;
+        bool cached;
+        int heap_id;
     };
 
     int alloc(int count, int size, int heap_id);
     void dealloc();
-    int allocOneBuffer(struct QCameraMemInfo &memInfo, int heap_id, int size);
-    void deallocOneBuffer(struct QCameraMemInfo &memInfo);
+    static int allocOneBuffer(struct QCameraMemInfo &memInfo,
+                              int heap_id,
+                              int size,
+                              bool cached);
+    static void deallocOneBuffer(struct QCameraMemInfo &memInfo);
     int cacheOpsInternal(int index, unsigned int cmd, void *vaddr);
 
     bool m_bCached;
     int mBufferCount;
     struct QCameraMemInfo mMemInfo[MM_CAMERA_MAX_NUM_FRAMES];
+    QCameraMemoryPool *mMemoryPool;
+    cam_stream_type_t mStreamType;
+};
+
+class QCameraMemoryPool {
+
+public:
+
+    QCameraMemoryPool();
+    virtual ~QCameraMemoryPool();
+
+    int allocateBuffer(struct QCameraMemory::QCameraMemInfo &memInfo,
+                       int heap_id,
+                       int size,
+                       bool cached,
+                       cam_stream_type_t streamType);
+    void releaseBuffer(struct QCameraMemory::QCameraMemInfo &memInfo,
+                       cam_stream_type_t streamType);
+    void clear();
+
+protected:
+
+    int findBufferLocked(struct QCameraMemory::QCameraMemInfo &memInfo,
+                         int heap_id,
+                         uint32_t size,
+                         bool cached,
+                         cam_stream_type_t streamType);
+
+    android::List<QCameraMemory::QCameraMemInfo> mPools[CAM_STREAM_TYPE_MAX];
+    pthread_mutex_t mLock;
 };
 
 // Internal heap memory is used for memories used internally
@@ -110,7 +153,10 @@ private:
 // framework. They are allocated from /dev/ion or gralloc.
 class QCameraStreamMemory : public QCameraMemory {
 public:
-    QCameraStreamMemory(camera_request_memory getMemory, bool cached);
+    QCameraStreamMemory(camera_request_memory getMemory,
+                        bool cached,
+                        QCameraMemoryPool *pool = NULL,
+                        cam_stream_type_t streamType = CAM_STREAM_TYPE_DEFAULT);
     virtual ~QCameraStreamMemory();
 
     virtual int allocate(int count, int size);
