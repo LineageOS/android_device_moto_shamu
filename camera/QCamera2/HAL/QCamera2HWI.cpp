@@ -1505,7 +1505,7 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(cam_stream_type_t st
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
         {
-            if (isNoDisplayMode()) {
+            if (isNoDisplayMode() || isPreviewRestartEnabled()) {
                 mem = new QCameraStreamMemory(mGetMemory, bCachedMem);
             } else {
                 cam_dimension_t dim;
@@ -2503,18 +2503,24 @@ end:
  *
  * DESCRIPTION: Stops capture channel
  *
- * PARAMETERS : none
+ * PARAMETERS :
+ *   @destroy : Set to true to stop and delete camera channel.
+ *              Set to false to only stop capture channel.
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int QCamera2HardwareInterface::stopCaptureChannel()
+int QCamera2HardwareInterface::stopCaptureChannel(bool destroy)
 {
     if (mParameters.isJpegPictureFormat() ||
         mParameters.isNV16PictureFormat() ||
         mParameters.isNV21PictureFormat()) {
         stopChannel(QCAMERA_CH_TYPE_CAPTURE);
+        if (destroy) {
+            // Destroy camera channel but dont release context
+            delChannel(QCAMERA_CH_TYPE_CAPTURE, false);
+        }
     }
 
     return NO_ERROR;
@@ -4403,16 +4409,22 @@ int32_t QCamera2HardwareInterface::addChannel(qcamera_ch_type_enum_t ch_type)
  *
  * PARAMETERS :
  *   @ch_type : channel type
+ *   @destroy : delete context as well
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera2HardwareInterface::delChannel(qcamera_ch_type_enum_t ch_type)
+int32_t QCamera2HardwareInterface::delChannel(qcamera_ch_type_enum_t ch_type,
+                                              bool destroy)
 {
     if (m_channels[ch_type] != NULL) {
-        delete m_channels[ch_type];
-        m_channels[ch_type] = NULL;
+        if (destroy) {
+            delete m_channels[ch_type];
+            m_channels[ch_type] = NULL;
+        } else {
+            m_channels[ch_type]->deleteChannel();
+        }
     }
 
     return NO_ERROR;
@@ -5196,7 +5208,26 @@ bool QCamera2HardwareInterface::isAFRunning()
 }
 
 /*===========================================================================
+ * FUNCTION   : isPreviewRestartEnabled
+ *
+ * DESCRIPTION: Check whether preview should be restarted automatically
+ *              during image capture.
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
+bool QCamera2HardwareInterface::isPreviewRestartEnabled()
+{
+    char prop[PROPERTY_VALUE_MAX];
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.camera.feature.restart", prop, "0");
+    int earlyRestart = atoi(prop);
+    return earlyRestart == 1;
+}
 
+/*===========================================================================
  * FUNCTION   : needReprocess
  *
  * DESCRIPTION: if reprocess is needed

@@ -101,6 +101,7 @@ public:
     static void releaseFrameData(void *data, void *user_data);
     int32_t configStream();
     bool isDeffered() const { return mDefferedAllocation; }
+    void deleteStream();
 
     int mDumpFrame;
     int mDumpMetaFrame;
@@ -178,6 +179,8 @@ private:
     int32_t invalidateBuf(int index);
     int32_t cleanInvalidateBuf(int index);
     int32_t calcOffset(cam_stream_info_t *streamInfo);
+    int32_t unmapStreamInfoBuf();
+    int32_t releaseStreamInfoBuf();
     bool mDefferedAllocation;
 
     bool wait_for_cond;

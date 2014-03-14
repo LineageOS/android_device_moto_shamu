@@ -280,24 +280,92 @@ QCameraStream::~QCameraStream()
     pthread_mutex_destroy(&mCropLock);
     pthread_mutex_destroy(&mParameterLock);
 
-    if (mDefferedAllocation)
+    if (mDefferedAllocation) {
+        mStreamBufsAcquired = false;
         releaseBuffs();
-
-    if (mStreamInfoBuf != NULL) {
-        int rc = mCamOps->unmap_stream_buf(mCamHandle,
-                    mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO, 0, -1);
-        if (rc < 0) {
-            ALOGE("Failed to map stream info buffer");
-        }
-        mStreamInfoBuf->deallocate();
-        delete mStreamInfoBuf;
-        mStreamInfoBuf = NULL;
     }
+
+    unmapStreamInfoBuf();
+    releaseStreamInfoBuf();
 
     // delete stream
     if (mHandle > 0) {
         mCamOps->delete_stream(mCamHandle, mChannelHandle, mHandle);
         mHandle = 0;
+    }
+}
+
+/*===========================================================================
+ * FUNCTION   : unmapStreamInfoBuf
+ *
+ * DESCRIPTION: Unmap stream info buffer
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraStream::unmapStreamInfoBuf()
+{
+    int rc = NO_ERROR;
+
+    if (mStreamInfoBuf != NULL) {
+        rc = mCamOps->unmap_stream_buf(mCamHandle,
+            mChannelHandle,
+            mHandle,
+            CAM_MAPPING_BUF_TYPE_STREAM_INFO,
+            0,
+            -1);
+
+        if (rc < 0) {
+            ALOGE("Failed to unmap stream info buffer");
+        }
+    }
+
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : releaseStreamInfoBuf
+ *
+ * DESCRIPTION: Release stream info buffer
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraStream::releaseStreamInfoBuf()
+{
+    int rc = NO_ERROR;
+
+    if (mStreamInfoBuf != NULL) {
+        mStreamInfoBuf->deallocate();
+        delete mStreamInfoBuf;
+        mStreamInfoBuf = NULL;
+    }
+
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : deleteStream
+ *
+ * DESCRIPTION: Deletes a camera stream
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void QCameraStream::deleteStream()
+{
+    if (mHandle > 0) {
+        acquireStreamBufs();
+        releaseBuffs();
+        unmapStreamInfoBuf();
+        mCamOps->delete_stream(mCamHandle, mChannelHandle, mHandle);
     }
 }
 
@@ -543,6 +611,11 @@ int32_t QCameraStream::processZoomDone(preview_stream_ops_t *previewWindow,
                                        cam_crop_data_t &crop_info)
 {
     int32_t rc = 0;
+
+    if (!m_bActive) {
+        ALOGV("%s : Stream not active", __func__);
+        return NO_ERROR;
+    }
 
     // get stream param for crop info
     for (int i = 0; i < crop_info.num_of_streams; i++) {
@@ -1002,16 +1075,19 @@ int32_t QCameraStream::releaseBuffs()
 {
     int rc = NO_ERROR;
 
-    for (int i = 0; i < mNumBufs; i++) {
-        rc = unmapBuf(CAM_MAPPING_BUF_TYPE_STREAM_BUF, i, -1);
-        if (rc < 0) {
-            ALOGE("%s: map_stream_buf failed: %d", __func__, rc);
+    if (NULL != mBufDefs) {
+        for (int i = 0; i < mNumBufs; i++) {
+            rc = unmapBuf(CAM_MAPPING_BUF_TYPE_STREAM_BUF, i, -1);
+            if (rc < 0) {
+                ALOGE("%s: map_stream_buf failed: %d", __func__, rc);
+            }
         }
+
+        // mBufDefs just keep a ptr to the buffer
+        // mm-camera-interface own the buffer, so no need to free
+        mBufDefs = NULL;
+        memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
     }
-    // mBufDefs just keep a ptr to the buffer
-    // mm-camera-interface own the buffer, so no need to free
-    mBufDefs = NULL;
-    memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
     if ( !mStreamBufsAcquired ) {
         mStreamBufs->deallocate();
         delete mStreamBufs;

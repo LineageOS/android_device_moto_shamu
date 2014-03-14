@@ -1699,7 +1699,17 @@ int32_t QCameraStateMachine::procEvtPicTakingState(qcamera_sm_evt_enum_t evt,
         break;
     case QCAMERA_SM_EVT_STOP_CAPTURE_CHANNEL:
         {
-            rc = m_parent->stopCaptureChannel();
+            bool restartPreview = m_parent->isPreviewRestartEnabled();
+            rc = m_parent->stopCaptureChannel(restartPreview);
+
+            if (restartPreview && (NO_ERROR == rc)) {
+                rc = m_parent->preparePreview();
+                if (NO_ERROR == rc) {
+                    m_parent->m_bPreviewStarted = true;
+                    rc = m_parent->startPreview();
+                }
+            }
+
             result.status = rc;
             result.request_api = evt;
             result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
@@ -1709,7 +1719,14 @@ int32_t QCameraStateMachine::procEvtPicTakingState(qcamera_sm_evt_enum_t evt,
     case QCAMERA_SM_EVT_SNAPSHOT_DONE:
         {
             rc = m_parent->cancelPicture();
-            m_state = QCAMERA_SM_STATE_PREVIEW_STOPPED;
+
+            bool restartPreview = m_parent->isPreviewRestartEnabled();
+            if (restartPreview) {
+                m_state = QCAMERA_SM_STATE_PREVIEWING;
+            } else {
+                m_state = QCAMERA_SM_STATE_PREVIEW_STOPPED;
+            }
+
             result.status = rc;
             result.request_api = evt;
             result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
