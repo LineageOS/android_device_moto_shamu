@@ -2403,6 +2403,10 @@ int QCamera2HardwareInterface::takePicture()
                 return rc;
             }
         } else {
+
+            stopChannel(QCAMERA_CH_TYPE_PREVIEW);
+            delChannel(QCAMERA_CH_TYPE_PREVIEW);
+
             rc = addRawChannel();
             if (rc == NO_ERROR) {
                 // start postprocessor
@@ -3834,6 +3838,7 @@ int32_t QCamera2HardwareInterface::addRawChannel()
         delete pChannel;
         return rc;
     }
+    waitDefferedWork(mMetadataJob);
 
     rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_RAW,
                             raw_stream_cb_routine, this);

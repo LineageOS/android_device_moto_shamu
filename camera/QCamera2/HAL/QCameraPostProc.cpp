@@ -75,7 +75,6 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
       m_ongoingJpegQ(releaseJpegData, this),
       m_inputRawQ(releaseRawData, this),
       m_delayReleaseBuffers(releaseDelayedBufferData, this),
-      mRawBurstCount(0),
       mSaveFrmCnt(0),
       mUseSaveProc(false),
       mUseJpegBurst(false),
@@ -228,7 +227,6 @@ int32_t QCameraPostProcessor::start(QCameraChannel *pSrcChannel)
 
     m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, FALSE, FALSE);
     m_parent->m_cbNotifier.startSnapshots();
-    mRawBurstCount = m_parent->numOfSnapshotsExpected();
 
     // Create Jpeg session
     if ( !m_parent->mParameters.getRecordingHintValue() &&
@@ -1748,10 +1746,24 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
     }
 
     QCameraMemory *rawMemObj = (QCameraMemory *)frame->mem_info;
+    bool zslChannelUsed = m_parent->isZSLMode() &&
+            ( pChannel != m_pReprocChannel );
     camera_memory_t *raw_mem = NULL;
 
     if (rawMemObj != NULL) {
-        raw_mem = rawMemObj->getMemory(frame->buf_idx, false);
+        if (zslChannelUsed) {
+            raw_mem = rawMemObj->getMemory(frame->buf_idx, false);
+        } else {
+            raw_mem = m_parent->mGetMemory(-1,
+                                           frame->frame_len,
+                                           1,
+                                           m_parent->mCallbackCookie);
+            if (NULL == raw_mem) {
+                ALOGE("%s : Not enough memory for RAW cb ", __func__);
+                return NO_MEMORY;
+            }
+            memcpy(raw_mem->data, frame->buffer, frame->frame_len);
+        }
     }
 
     if (NULL != rawMemObj && NULL != raw_mem) {
@@ -1786,17 +1798,14 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
             m_parent->m_cbNotifier.notifyCallback(cbArg);
         }
 
-        bool zslChannelUsed = m_parent->isZSLMode() && ( pChannel != m_pReprocChannel );
         if ((m_parent->mDataCb != NULL) &&
             m_parent->msgTypeEnabledWithLock(CAMERA_MSG_COMPRESSED_IMAGE) > 0) {
-            mRawBurstCount--;
             qcamera_release_data_t release_data;
             memset(&release_data, 0, sizeof(qcamera_release_data_t));
-            if ( ( 0 == mRawBurstCount ) && (!zslChannelUsed) ) {
-                release_data.streamBufs = rawMemObj;
-                pStream->acquireStreamBufs();
-            } else {
+            if ( zslChannelUsed ) {
                 release_data.frame = recvd_frame;
+            } else {
+                release_data.data = raw_mem;
             }
             rc = sendDataNotify(CAMERA_MSG_COMPRESSED_IMAGE,
                                 raw_mem,
