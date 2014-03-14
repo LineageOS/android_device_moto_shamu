@@ -1769,14 +1769,63 @@ void QCamera3HardwareInterface::getMetadataVendorTagOps(
  *
  * RETURN     :
  *==========================================================================*/
-void QCamera3HardwareInterface::dump(int /*fd*/)
+void QCamera3HardwareInterface::dump(int fd)
 {
-    /*Enable lock when we implement this function*/
-    /*
     pthread_mutex_lock(&mMutex);
+    fdprintf(fd, "\n Camera HAL3 information Begin \n");
 
+    fdprintf(fd, "\nNumber of pending requests: %d \n",
+        mPendingRequestsList.size());
+    fdprintf(fd, "-------+-------------------+-------------+----------+---------------------\n");
+    fdprintf(fd, " Frame | Number of Buffers |   Req Id:   | Blob Req | Input buffer present\n");
+    fdprintf(fd, "-------+-------------------+-------------+----------+---------------------\n");
+    for(List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
+        i != mPendingRequestsList.end(); i++) {
+        fdprintf(fd, " %5d | %17d | %11d | %8d | %19d \n",
+        i->frame_number, i->num_buffers, i->request_id, i->blob_request,
+        i->input_buffer_present);
+    }
+    fdprintf(fd, "-------+-------------------+-------------+----------+---------------------\n");
+
+    fdprintf(fd, "\nStored metadata list size: %d \n",
+                mStoredMetadataList.size());
+    fdprintf(fd, "-------+----------+------------------\n");
+    fdprintf(fd, " Frame | MD ch id | MD number of bufs\n");
+    fdprintf(fd, "-------+----------+------------------\n");
+    for(List<MetadataBufferInfo>::iterator i = mStoredMetadataList.begin();
+        i != mStoredMetadataList.end(); i++) {
+        fdprintf(fd, " %5d | %8d | %16d \n",
+        i->frame_number, i->meta_buf->ch_id, i->meta_buf->num_bufs);
+    }
+    fdprintf(fd, "-------+----------+------------------\n");
+
+    fdprintf(fd, "\nPending buffer map: Number of buffers: %d\n",
+                mPendingBuffersMap.num_buffers);
+    fdprintf(fd, "-------+-------------\n");
+    fdprintf(fd, " Frame | Stream type \n");
+    fdprintf(fd, "-------+-------------\n");
+    for(List<PendingBufferInfo>::iterator i =
+        mPendingBuffersMap.mPendingBufferList.begin();
+        i != mPendingBuffersMap.mPendingBufferList.end(); i++) {
+        fdprintf(fd, " %5d | %11d \n",
+            i->frame_number, i->stream->stream_type);
+    }
+    fdprintf(fd, "-------+-------------\n");
+
+    fdprintf(fd, "\nPending frame drop list: %d\n",
+        mPendingFrameDropList.size());
+    fdprintf(fd, "-------+-----------\n");
+    fdprintf(fd, " Frame | Stream ID \n");
+    fdprintf(fd, "-------+-----------\n");
+    for(List<PendingFrameDropInfo>::iterator i = mPendingFrameDropList.begin();
+        i != mPendingFrameDropList.end(); i++) {
+        fdprintf(fd, " %5d | %9d \n",
+            i->frame_number, i->stream_ID);
+    }
+    fdprintf(fd, "-------+-----------\n");
+
+    fdprintf(fd, "\n Camera HAL3 information End \n");
     pthread_mutex_unlock(&mMutex);
-    */
     return;
 }
 
