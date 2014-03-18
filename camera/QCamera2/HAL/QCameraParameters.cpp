@@ -118,6 +118,8 @@ const char QCameraParameters::KEY_QC_CDS_MODE[] = "cds-mode";
 const char QCameraParameters::KEY_QC_VIDEO_ROTATION[] = "video-rotation";
 const char QCameraParameters::KEY_QC_AF_BRACKET[] = "af-bracket";
 const char QCameraParameters::KEY_QC_SUPPORTED_AF_BRACKET_MODES[] = "af-bracket-values";
+const char QCameraParameters::KEY_QC_RE_FOCUS[] = "re-focus";
+const char QCameraParameters::KEY_QC_SUPPORTED_RE_FOCUS_MODES[] = "re-focus-values";
 const char QCameraParameters::KEY_QC_CHROMA_FLASH[] = "chroma-flash";
 const char QCameraParameters::KEY_QC_SUPPORTED_CHROMA_FLASH_MODES[] = "chroma-flash-values";
 const char QCameraParameters::KEY_QC_OPTI_ZOOM[] = "opti-zoom";
@@ -302,6 +304,10 @@ const char QCameraParameters::AE_BRACKET[] = "AE-Bracket";
 // Values for AF Bracketing setting.
 const char QCameraParameters::AF_BRACKET_OFF[] = "af-bracket-off";
 const char QCameraParameters::AF_BRACKET_ON[] = "af-bracket-on";
+
+// Values for Refocus setting.
+const char QCameraParameters::RE_FOCUS_OFF[] = "re-focus-off";
+const char QCameraParameters::RE_FOCUS_ON[] = "re-focus-on";
 
 // Values for Chroma Flash setting.
 const char QCameraParameters::CHROMA_FLASH_OFF[] = "chroma-flash-off";
@@ -570,6 +576,11 @@ const QCameraParameters::QCameraMap QCameraParameters::FLIP_MODES_MAP[] = {
 const QCameraParameters::QCameraMap QCameraParameters::AF_BRACKETING_MODES_MAP[] = {
     { AF_BRACKET_OFF, 0 },
     { AF_BRACKET_ON,  1 }
+};
+
+const QCameraParameters::QCameraMap QCameraParameters::RE_FOCUS_MODES_MAP[] = {
+    { RE_FOCUS_OFF, 0 },
+    { RE_FOCUS_ON,  1 }
 };
 
 const QCameraParameters::QCameraMap QCameraParameters::CHROMA_FLASH_MODES_MAP[] = {
@@ -4267,6 +4278,16 @@ int32_t QCameraParameters::initDefaultParameters()
             setAFBracket(AF_BRACKET_OFF);
             break;
          }
+    }
+
+    //Set Refocus.
+    //Re-use ubifocus flag for now.
+    if ((m_pCapability->qcom_supported_feature_mask &
+        CAM_QCOM_FEATURE_UBIFOCUS) > 0){
+            String8 reFocusValues = createValuesStringFromMap(
+                RE_FOCUS_MODES_MAP,
+                sizeof(RE_FOCUS_MODES_MAP) / sizeof(QCameraMap));
+            set(KEY_QC_SUPPORTED_RE_FOCUS_MODES, reFocusValues);
     }
 
     //Set Chroma Flash.
