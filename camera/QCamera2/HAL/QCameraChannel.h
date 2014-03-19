@@ -63,6 +63,7 @@ public:
     virtual int32_t bufDone(mm_camera_super_buf_t *recvd_frame);
     virtual int32_t processZoomDone(preview_stream_ops_t *previewWindow,
                                     cam_crop_data_t &crop_info);
+    int32_t config();
     QCameraStream *getStreamByHandle(uint32_t streamHandle);
     uint32_t getMyHandle() const {return m_handle;};
     uint8_t getNumOfStreams() const {return m_numStreams;};

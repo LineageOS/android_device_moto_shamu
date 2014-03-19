@@ -225,7 +225,7 @@ int32_t QCameraPostProcessor::start(QCameraChannel *pSrcChannel)
     property_get("persist.camera.longshot.save", prop, "0");
     mUseSaveProc = atoi(prop) > 0 ? true : false;
 
-    m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, FALSE, FALSE);
+    m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, TRUE, FALSE);
     m_parent->m_cbNotifier.startSnapshots();
 
     // Create Jpeg session
@@ -1993,6 +1993,10 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
             pme->m_saveProcTh.sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC,
                                       FALSE,
                                       FALSE);
+
+            // signal cmd is completed
+            cam_sem_post(&cmdThread->sync_sem);
+
             break;
         case CAMERA_CMD_TYPE_STOP_DATA_PROC:
             {

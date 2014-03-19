@@ -2387,21 +2387,31 @@ int QCamera2HardwareInterface::takePicture()
                 rc = addCaptureChannel();
             }
 
-            if (rc == NO_ERROR) {
+            if ((rc == NO_ERROR) &&
+                (NULL != m_channels[QCAMERA_CH_TYPE_CAPTURE])) {
 
-                // start catpure channel
-                rc = startChannel(QCAMERA_CH_TYPE_CAPTURE);
+                // configure capture channel
+                rc = m_channels[QCAMERA_CH_TYPE_CAPTURE]->config();
                 if (rc != NO_ERROR) {
-                    ALOGE("%s: cannot start capture channel", __func__);
+                    ALOGE("%s: cannot configure capture channel", __func__);
                     delChannel(QCAMERA_CH_TYPE_CAPTURE);
                     return rc;
                 }
+
                 DefferWorkArgs args;
                 memset(&args, 0, sizeof(DefferWorkArgs));
 
                 args.pprocArgs = m_channels[QCAMERA_CH_TYPE_CAPTURE];
                 mReprocJob = queueDefferedWork(CMD_DEFF_PPROC_START,
                         args);
+
+                // start catpure channel
+                rc =  m_channels[QCAMERA_CH_TYPE_CAPTURE]->start();
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: cannot start capture channel", __func__);
+                    delChannel(QCAMERA_CH_TYPE_CAPTURE);
+                    return rc;
+                }
 
                 if ( mLongshotEnabled ) {
                     rc = longShot();
@@ -4458,7 +4468,10 @@ int32_t QCamera2HardwareInterface::startChannel(qcamera_ch_type_enum_t ch_type)
 {
     int32_t rc = UNKNOWN_ERROR;
     if (m_channels[ch_type] != NULL) {
-        rc = m_channels[ch_type]->start();
+        rc = m_channels[ch_type]->config();
+        if (NO_ERROR == rc) {
+            rc = m_channels[ch_type]->start();
+        }
     }
 
     return rc;
