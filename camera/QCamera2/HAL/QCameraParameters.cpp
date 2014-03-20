@@ -1388,20 +1388,31 @@ int32_t QCameraParameters::setJpegThumbnailSize(const QCameraParameters& params)
 
     int sizes_cnt = sizeof(THUMBNAIL_SIZES_MAP) / sizeof(cam_dimension_t);
 
-    int pic_width = 0, pic_height = 0;
-    params.getPictureSize(&pic_width, &pic_height);
-    if (pic_height == 0) {
-        ALOGE("%s: picture size is invalid (%d x %d)", __func__, pic_width, pic_height);
+    cam_dimension_t dim;
+
+    // While taking livesnaphot match jpeg thumbnail size aspect
+    // ratio to liveshot size. For normal snapshot match thumbnail
+    // aspect ratio to picture size.
+    if (m_bRecordingHint) {
+        getLiveSnapshotSize(dim);
+    } else {
+        params.getPictureSize(&dim.width, &dim.height);
+    }
+
+    if (0 == dim.height) {
+        ALOGE("%s: picture size is invalid (%d x %d)", __func__, dim.width, dim.height);
         return BAD_VALUE;
     }
-    double picAspectRatio = (double)pic_width / pic_height;
+    double picAspectRatio = (double)dim.width / (double)dim.height;
 
     int optimalWidth = 0, optimalHeight = 0;
     if (width != 0 || height != 0) {
         // If input jpeg thumnmail size is (0,0), meaning no thumbnail needed
         // hornor this setting.
-        // Otherwise, find optimal jpeg thumbnail size that has same aspect ration
-        // as picture size
+        // Otherwise, search for optimal jpeg thumbnail size that has the same
+        // aspect ratio as picture size.
+        // If missign jpeg thumbnail size with appropriate aspect ratio,
+        // just honor setting supplied by application.
 
         // Try to find a size matches aspect ratio and has the largest width
         for (int i = 0; i < sizes_cnt; i++) {
@@ -1417,6 +1428,19 @@ int32_t QCameraParameters::setJpegThumbnailSize(const QCameraParameters& params)
             if (THUMBNAIL_SIZES_MAP[i].width > optimalWidth) {
                 optimalWidth = THUMBNAIL_SIZES_MAP[i].width;
                 optimalHeight = THUMBNAIL_SIZES_MAP[i].height;
+            }
+        }
+
+        if ((0 == optimalWidth) || (0 == optimalHeight)) {
+            // Optimal size not found
+            // Validate thumbnail size
+            for (int i = 0; i < sizes_cnt; i++) {
+                if (width == THUMBNAIL_SIZES_MAP[i].width &&
+                    height == THUMBNAIL_SIZES_MAP[i].height) {
+                    optimalWidth = width;
+                    optimalHeight = height;
+                    break;
+                }
             }
         }
     }
@@ -3471,7 +3495,6 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setPictureSize(params)))                  final_rc = rc;
     if ((rc = setPreviewFormat(params)))                final_rc = rc;
     if ((rc = setPictureFormat(params)))                final_rc = rc;
-    if ((rc = setJpegThumbnailSize(params)))            final_rc = rc;
     if ((rc = setJpegQuality(params)))                  final_rc = rc;
     if ((rc = setOrientation(params)))                  final_rc = rc;
     if ((rc = setRotation(params)))                     final_rc = rc;
@@ -3524,6 +3547,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
 
     // update live snapshot size after all other parameters are set
     if ((rc = setLiveSnapshotSize(params)))             final_rc = rc;
+    if ((rc = setJpegThumbnailSize(params)))            final_rc = rc;
     if ((rc = setStatsDebugMask()))                     final_rc = rc;
     if ((rc = setMobicat(params)))                      final_rc = rc;
     if ((rc = setAFBracket(params)))                    final_rc = rc;
