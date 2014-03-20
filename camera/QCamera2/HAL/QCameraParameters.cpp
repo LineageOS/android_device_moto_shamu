@@ -3417,12 +3417,16 @@ int32_t QCameraParameters::setBurstNum(const QCameraParameters& params)
 {
     int nBurstNum = params.getInt(KEY_QC_SNAPSHOT_BURST_NUM);
     if (nBurstNum <= 0) {
-        // if burst number is not set in parameters,
-        // read from sys prop
-        char prop[PROPERTY_VALUE_MAX];
-        memset(prop, 0, sizeof(prop));
-        property_get("persist.camera.snapshot.number", prop, "0");
-        nBurstNum = atoi(prop);
+        if (!isAdvCamFeaturesEnabled()) {
+            // if burst number is not set in parameters,
+            // read from sys prop
+            char prop[PROPERTY_VALUE_MAX];
+            memset(prop, 0, sizeof(prop));
+            property_get("persist.camera.snapshot.number", prop, "0");
+            nBurstNum = atoi(prop);
+        } else {
+            nBurstNum = 1;
+        }
         if (nBurstNum <= 0) {
             nBurstNum = 1;
         }
