@@ -88,6 +88,8 @@ int QCameraThermalAdapter::init(QCameraThermalCallback *thermalCb)
         goto error2;
     }
 
+    mCallback = thermalCb;
+
     // Register camera and camcorder callbacks
     mCameraHandle = mRegister(mStrCamera, thermalCallback, NULL);
     if (mCameraHandle < 0) {
@@ -104,7 +106,6 @@ int QCameraThermalAdapter::init(QCameraThermalCallback *thermalCb)
         goto error3;
     }
 
-    mCallback = thermalCb;
     ALOGV("%s X", __func__);
     return rc;
 
