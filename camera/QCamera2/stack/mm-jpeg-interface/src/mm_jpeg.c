@@ -774,7 +774,7 @@ OMX_ERRORTYPE mm_jpeg_session_config_ports(mm_jpeg_job_session_t* p_session)
     p_session->inputTmbPort.format.image.nSliceHeight =
       p_tmb_buf->offset.mp[0].scanline;
     p_session->inputTmbPort.format.image.eColorFormat =
-      map_jpeg_format(p_params->color_format);
+      map_jpeg_format(p_params->thumb_color_format);
     p_session->inputTmbPort.nBufferSize =
       p_params->src_thumb_buf[0].buf_size;
     p_session->inputTmbPort.nBufferCountActual = p_params->num_tmb_bufs;
