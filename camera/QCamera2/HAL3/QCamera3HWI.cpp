@@ -2214,6 +2214,11 @@ QCamera3HardwareInterface::translateFromHalMetadata(
         camMetadata.update(ANDROID_STATISTICS_PREDICTED_COLOR_TRANSFORM,
             (camera_metadata_rational_t*)predColorCorrectionMatrix->transform_matrix, 3*3);
     }
+    if (IS_META_AVAILABLE(CAM_INTF_META_OTP_WB_GRGB, metadata)) {
+        float *otpWbGrGb = (float*) POINTER_OF_META(
+                CAM_INTF_META_OTP_WB_GRGB, metadata);
+        camMetadata.update(ANDROID_SENSOR_GREEN_SPLIT, otpWbGrGb, 1);
+    }
     if (IS_META_AVAILABLE(CAM_INTF_META_BLACK_LEVEL_LOCK, metadata)){
         uint8_t *blackLevelLock = (uint8_t*)
             POINTER_OF_META(CAM_INTF_META_BLACK_LEVEL_LOCK, metadata);
