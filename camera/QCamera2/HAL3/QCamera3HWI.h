@@ -44,6 +44,15 @@ extern "C" {
 #include <mm_camera_interface.h>
 #include <mm_jpeg_interface.h>
 }
+#ifdef CDBG
+#undef CDBG
+#endif //#ifdef CDBG
+#define CDBG(fmt, args...) ALOGD_IF(gCamHal3LogLevel >= 2, fmt, ##args)
+
+#ifdef CDBG_HIGH
+#undef CDBG_HIGH
+#endif //#ifdef CDBG_HIGH
+#define CDBG_HIGH(fmt, args...) ALOGD_IF(gCamHal3LogLevel >= 1, fmt, ##args)
 
 using namespace android;
 
@@ -62,6 +71,8 @@ typedef int64_t nsecs_t;
 #define NSEC_PER_SEC 1000000000LL
 #define NSEC_PER_USEC 1000
 #define NSEC_PER_33MSEC 33000000LL
+
+extern volatile uint32_t gCamHal3LogLevel;
 
 class QCamera3MetadataChannel;
 class QCamera3PicChannel;
@@ -173,6 +184,7 @@ private:
                             int32_t enabled,
                             const char *type,
                             uint32_t frameNumber);
+    static void getLogLevel();
 public:
     cam_dimension_t calcMaxJpegDim();
     bool needOnlineRotation();

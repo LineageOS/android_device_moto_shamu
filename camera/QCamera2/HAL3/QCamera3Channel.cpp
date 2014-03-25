@@ -548,14 +548,14 @@ int32_t QCamera3RegularChannel::request(buffer_handle_t *buffer, uint32_t frameN
     int32_t rc = NO_ERROR;
     int index;
     if(!m_bIsActive) {
-        ALOGD("%s: First request on this channel starting stream",__func__);
+        CDBG_HIGH("%s: First request on this channel starting stream",__func__);
         start();
         if(rc != NO_ERROR) {
             ALOGE("%s: Failed to start the stream on the request",__func__);
             return rc;
         }
     } else {
-        ALOGV("%s: Request on an existing stream",__func__);
+        CDBG("%s: Request on an existing stream",__func__);
     }
 
     if(!mMemory) {
@@ -890,7 +890,7 @@ int32_t QCameraRawChannel::initialize()
     streamType = CAM_STREAM_TYPE_RAW;
     streamFormat = CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GBRG;
 
-    ALOGD("%s: mWidth=%d, mHeight=%d", __func__, mWidth, mHeight);
+    CDBG_HIGH("%s: mWidth=%d, mHeight=%d", __func__, mWidth, mHeight);
 
     rc = QCamera3Channel::addStream(streamType, streamFormat,
         streamDim, mMaxBuffers);
@@ -934,7 +934,7 @@ void QCameraRawChannel::streamCbRoutine(
     }
     // Dump the RAW data here and then hold the RAW frame
     // untill next BLOB request comes
-    ALOGD("%s: Got the raw snapshot callback, going to dump it", __func__);
+    CDBG_HIGH("%s: Got the raw snapshot callback, going to dump it", __func__);
     dumpRawSnapshot(super_frame->bufs[0]);
     return;
 }
@@ -947,7 +947,7 @@ QCamera3Memory* QCameraRawChannel::getStreamBufs(uint32_t len)
         ALOGE("%s: unable to create RAW memory", __func__);
         return NULL;
     }
-    ALOGD("%s: num_buffers=%d, len=%d", __func__, mMaxBuffers, len);
+    CDBG_HIGH("%s: num_buffers=%d, len=%d", __func__, mMaxBuffers, len);
     rc = mMemory->allocate(mMaxBuffers, len, false);
     if (rc < 0) {
         ALOGE("%s: unable to allocate RAW memory", __func__);
@@ -1073,7 +1073,7 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
         result.acquire_fence = -1;
         result.release_fence = -1;
 
-        ALOGV("%s: Issue Callback", __func__);
+        CDBG("%s: Issue Callback", __func__);
         obj->mChannelCB(NULL, &result, resultFrameNumber, obj->mUserData);
 
         // release internal data for jpeg job
@@ -1209,8 +1209,8 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
 
     if(pInputBuffer) {
         m_postprocessor.start(mMemory, index, pInputChannel);
-        ALOGD("%s: Post-process started", __func__);
-        ALOGD("%s: Issue call to reprocess", __func__);
+        CDBG_HIGH("%s: Post-process started", __func__);
+        CDBG_HIGH("%s: Issue call to reprocess", __func__);
         m_postprocessor.processAuxiliaryData(pInputBuffer,pInputChannel);
     } else {
         m_postprocessor.start(mMemory, index, this);
@@ -1234,7 +1234,7 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
 void QCamera3PicChannel::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
                                  void *userdata)
 {
-    ALOGV("%s: E\n", __func__);
+    CDBG("%s: E\n", __func__);
     QCamera3PicChannel *channel = (QCamera3PicChannel *)userdata;
 
     if (channel == NULL) {
@@ -1255,7 +1255,7 @@ void QCamera3PicChannel::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
 
     channel->QCamera3PicChannel::streamCbRoutine(recvd_frame, channel->mStreams[0]);
 
-    ALOGV("%s: X\n", __func__);
+    CDBG("%s: X\n", __func__);
     return;
 }
 
@@ -1267,7 +1267,7 @@ int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
     cam_stream_type_t streamType;
     cam_format_t streamFormat;
 
-    ALOGV("%s: E",__func__);
+    CDBG("%s: E",__func__);
     rc = QCamera3PicChannel::initialize();
     if (rc < 0) {
         ALOGE("%s: init failed", __func__);
@@ -1292,7 +1292,7 @@ int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
     for (size_t i = 0; i < num_buffers; i++)
         mCamera3Buffers[i] = buffers[i];
 
-    ALOGV("%s: X",__func__);
+    CDBG("%s: X",__func__);
     return rc;
 }
 
