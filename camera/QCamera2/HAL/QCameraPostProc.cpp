@@ -207,7 +207,7 @@ int32_t QCameraPostProcessor::start(QCameraChannel *pSrcChannel)
             m_pReprocChannel = NULL;
         }
         // if reprocess is needed, start reprocess channel
-        m_pReprocChannel = m_parent->addOnlineReprocChannel(pSrcChannel);
+        m_pReprocChannel = m_parent->addReprocChannel(pSrcChannel);
         if (m_pReprocChannel == NULL) {
             ALOGE("%s: cannot add reprocess channel", __func__);
             return UNKNOWN_ERROR;
@@ -864,7 +864,9 @@ int32_t QCameraPostProcessor::processPPData(mm_camera_super_buf_t *frame)
 
     memset(jpeg_job, 0, sizeof(qcamera_jpeg_data_t));
     jpeg_job->src_frame = frame;
-    jpeg_job->src_reproc_frame = job->src_frame;
+    jpeg_job->src_reproc_frame = job ? job->src_frame : NULL;
+    jpeg_job->src_reproc_bufs = job ? job->src_reproc_bufs : NULL;
+    jpeg_job->reproc_frame_release = job ? job->reproc_frame_release : false;
 
     // find meta data frame
     mm_camera_buf_def_t *meta_frame = NULL;
@@ -987,7 +989,9 @@ void QCameraPostProcessor::releaseOngoingPPData(void *data, void *user_data)
     if (NULL != pme) {
         qcamera_pp_data_t *pp_job = (qcamera_pp_data_t *)data;
         if (NULL != pp_job->src_frame) {
-            pme->releaseSuperBuf(pp_job->src_frame);
+            if (!pp_job->reproc_frame_release) {
+                pme->releaseSuperBuf(pp_job->src_frame);
+            }
             free(pp_job->src_frame);
             pp_job->src_frame = NULL;
         }
@@ -1141,9 +1145,6 @@ void QCameraPostProcessor::releaseJpegJobData(qcamera_jpeg_data_t *job)
             delete [] job->src_reproc_bufs;
         }
 
-        if (NULL != job->src_bufs) {
-            delete [] job->src_bufs;
-        }
     }
     ALOGV("%s: X", __func__);
 }
@@ -2067,59 +2068,7 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                     if (NULL != jpeg_job) {
                         // To avoid any race conditions,
                         // sync any stream specific parameters here.
-                        pme->syncStreamParams(jpeg_job->src_frame,
-                                jpeg_job->src_reproc_frame);
-
-                      if (pme->m_parent->numOfSnapshotsExpected() == 1 &&
-                              !pme->m_parent->isLongshotEnabled() &&
-                              !pme->m_parent->mParameters.getRecordingHintValue() &&
-                              !pme->m_parent->isZSLMode()) {
-
-                          if ((NULL != jpeg_job->src_reproc_frame) &&
-                              (0 < jpeg_job->src_reproc_frame->num_bufs)) {
-                              mm_camera_buf_def_t *bufs = NULL;
-                              uint8_t num_bufs = -1;
-                              num_bufs = jpeg_job->src_reproc_frame->num_bufs;
-                              bufs = new mm_camera_buf_def_t[num_bufs];
-                              if (NULL == bufs) {
-                                  ALOGE("%s:Unable to allocate cached buffers",
-                                          __func__);
-                                  break;
-                              }
-
-                              for (int i = 0; i < num_bufs; i++) {
-                                  bufs[i] = *jpeg_job->src_reproc_frame->bufs[i];
-                                  jpeg_job->src_reproc_frame->bufs[i] = &bufs[i];
-                              }
-                              jpeg_job->src_reproc_bufs = bufs;
-                          }
-
-                          if ((NULL != jpeg_job->src_frame) &&
-                              (0 < jpeg_job->src_frame->num_bufs)) {
-                              mm_camera_buf_def_t *bufs = NULL;
-                              uint8_t num_bufs = -1;
-                              num_bufs = jpeg_job->src_frame->num_bufs;
-                              bufs = new mm_camera_buf_def_t[num_bufs];
-                              if (NULL == bufs) {
-                                  ALOGE("%s:Unable to allocate cached buffers",
-                                          __func__);
-                                  break;
-                              }
-
-                              for (int i = 0; i < num_bufs; i++) {
-                                  bufs[i] = *jpeg_job->src_frame->bufs[i];
-                                  jpeg_job->src_frame->bufs[i] = &bufs[i];
-                              }
-                              jpeg_job->src_bufs = bufs;
-                          }
-
-                          pme->m_parent->processAPI(
-                                  QCAMERA_SM_EVT_STOP_CAPTURE_CHANNEL,
-                                  NULL);
-                          // Don't release source frame after encoding
-                          // at this point the source channel will not exist.
-                          jpeg_job->reproc_frame_release = true;
-                      }
+                        pme->syncStreamParams(jpeg_job->src_frame, NULL);
 
                       // add into ongoing jpeg job Q
                       pme->m_ongoingJpegQ.enqueue((void *)jpeg_job);
@@ -2156,15 +2105,14 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                         qcamera_pp_data_t *pp_job =
                             (qcamera_pp_data_t *)malloc(sizeof(qcamera_pp_data_t));
                         if (pp_job != NULL) {
+                            pme->syncStreamParams(pp_frame, NULL);
                             memset(pp_job, 0, sizeof(qcamera_pp_data_t));
                             if (pme->m_pReprocChannel != NULL) {
                                 // add into ongoing PP job Q
                                 pp_job->src_frame = pp_frame;
-                                pme->m_ongoingPPQ.enqueue((void *)pp_job);
-                                ret = pme->m_pReprocChannel->doReprocess(pp_frame);
-                                if (NO_ERROR != ret) {
-                                    // remove from ongoing PP job Q
-                                    pme->m_ongoingPPQ.dequeue(false);
+                                ret = pme->reprocess(pp_job);
+                                if (NO_ERROR == ret) {
+                                    pme->stopCapture();
                                 }
                             } else {
                                 ALOGE("%s: Reprocess channel is NULL", __func__);
@@ -2220,6 +2168,89 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
     } while (running);
     ALOGD("%s: X", __func__);
     return NULL;
+}
+
+/*===========================================================================
+ * FUNCTION   : reprocess
+ *
+ * DESCRIPTION: Trigger reprocessing
+ *
+ * PARAMETERS :
+ *   @pp_job  : Postproc job
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraPostProcessor::reprocess(qcamera_pp_data_t *pp_job)
+{
+    int rc = NO_ERROR;
+
+    if (NULL == pp_job) {
+        return BAD_VALUE;
+    }
+
+    if (m_parent->isRegularCapture()) {
+       if ((NULL != pp_job->src_frame) &&
+           (0 < pp_job->src_frame->num_bufs)) {
+           mm_camera_buf_def_t *bufs = NULL;
+           uint8_t num_bufs = -1;
+           num_bufs = pp_job->src_frame->num_bufs;
+           bufs = new mm_camera_buf_def_t[num_bufs];
+           if (NULL == bufs) {
+               ALOGE("%s:Unable to allocate cached buffers",
+                     __func__);
+               return NO_MEMORY;
+           }
+
+           for (int i = 0; i < num_bufs; i++) {
+               bufs[i] = *pp_job->src_frame->bufs[i];
+               pp_job->src_frame->bufs[i] = &bufs[i];
+           }
+           pp_job->src_reproc_bufs = bufs;
+       }
+
+       // Don't release source frame after encoding
+       // at this point the source channel will not exist.
+       pp_job->reproc_frame_release = true;
+       m_ongoingPPQ.enqueue((void *)pp_job);
+       rc = m_pReprocChannel->doReprocessOffline(pp_job->src_frame);
+    } else {
+        m_ongoingPPQ.enqueue((void *)pp_job);
+        rc = m_pReprocChannel->doReprocess(pp_job->src_frame);
+    }
+
+    if (NO_ERROR != rc) {
+        // remove from ongoing PP job Q
+        m_ongoingPPQ.dequeue(false);
+    }
+
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : stopCapture
+ *
+ * DESCRIPTION: Trigger image capture stop
+ *
+ * PARAMETERS :
+ * None
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraPostProcessor::stopCapture()
+{
+     int rc = NO_ERROR;
+
+     if (m_parent->isRegularCapture()) {
+        rc = m_parent->processAPI(
+                        QCAMERA_SM_EVT_STOP_CAPTURE_CHANNEL,
+                        NULL);
+     }
+
+     return rc;
 }
 
 /*===========================================================================
