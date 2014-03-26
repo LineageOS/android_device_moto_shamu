@@ -838,16 +838,6 @@ typedef struct {
     cam_stream_crop_info_t crop_info[MAX_NUM_STREAMS];
 } cam_crop_data_t;
 
-typedef struct {
-    uint32_t stream_id;
-    uint32_t hold_buffers;
-} cam_stream_buffer_info_t;
-
-typedef struct {
-    uint8_t num_of_streams;
-    cam_stream_buffer_info_t info[MAX_NUM_STREAMS];
-} cam_buffer_data_t;
-
 typedef enum {
     DO_NOT_NEED_FUTURE_FRAME,
     NEED_FUTURE_FRAME,
@@ -1100,7 +1090,6 @@ typedef enum {
     CAM_INTF_PARM_GET_OUTPUT_CROP,
 
     CAM_INTF_PARM_EZTUNE_CMD,
-    CAM_INTF_PARM_GET_BUFFER_INFO,
 
     /* specific to HAL3 */
     /* Whether the metadata maps to a valid frame number */
