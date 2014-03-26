@@ -777,9 +777,10 @@ int QCamera3HardwareInterface::configureStreams(
     }
 
     // settings/parameters don't carry over for new configureStreams
-    memset(mParameters, 0, sizeof(parm_buffer_t));
+    memset(mParameters, 0, PARAM_TABLE_SIZE);
+    mParameters->num_entry = 0;
+    mParameters->curr_size = 0;
 
-    mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
     AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
                 sizeof(hal_version), &hal_version);
 
@@ -1495,8 +1496,9 @@ int QCamera3HardwareInterface::processCaptureRequest(
             uint8_t captureIntent =
                 meta.find(ANDROID_CONTROL_CAPTURE_INTENT).data.u8[0];
 
-            memset(mParameters, 0, sizeof(parm_buffer_t));
-            mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
+            memset(mParameters, 0, PARAM_TABLE_SIZE);
+            mParameters->num_entry = 0;
+            mParameters->curr_size = 0;
             AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
                 sizeof(hal_version), &hal_version);
             AddSetParmEntryToBatch(mParameters, CAM_INTF_META_CAPTURE_INTENT,
@@ -2795,7 +2797,7 @@ int QCamera3HardwareInterface::initParameters()
 
     //Allocate Set Param Buffer
     mParamHeap = new QCamera3HeapMemory();
-    rc = mParamHeap->allocate(1, sizeof(parm_buffer_t), false);
+    rc = mParamHeap->allocate(1, PARAM_TABLE_SIZE, false);
     if(rc != OK) {
         rc = NO_MEMORY;
         ALOGE("Failed to allocate SETPARM Heap memory");
@@ -2808,7 +2810,7 @@ int QCamera3HardwareInterface::initParameters()
     rc = mCameraHandle->ops->map_buf(mCameraHandle->camera_handle,
             CAM_MAPPING_BUF_TYPE_PARM_BUF,
             mParamHeap->getFd(0),
-            sizeof(parm_buffer_t));
+            PARAM_TABLE_SIZE);
     if(rc < 0) {
         ALOGE("%s:failed to map SETPARM buffer",__func__);
         rc = FAILED_TRANSACTION;
@@ -2818,7 +2820,7 @@ int QCamera3HardwareInterface::initParameters()
         return rc;
     }
 
-    mParameters = (parm_buffer_t*) DATA_PTR(mParamHeap,0);
+    mParameters = (parm_buffer_new_t*) DATA_PTR(mParamHeap,0);
     return rc;
 }
 
@@ -3431,45 +3433,50 @@ int32_t QCamera3HardwareInterface::getSensorSensitivity(int32_t iso_mode)
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera3HardwareInterface::AddSetParmEntryToBatch(parm_buffer_t *p_table,
+int32_t QCamera3HardwareInterface::AddSetParmEntryToBatch(void *p_table,
                                                           cam_intf_parm_type_t paramType,
                                                           uint32_t paramLength,
                                                           void *paramValue)
 {
-    int position = paramType;
-    int current, next;
+    uint32_t j = 0;
+    parm_buffer_new_t *param_buf = (parm_buffer_new_t *)p_table;
+    uint32_t num_entry = param_buf->num_entry;
+    uint32_t size_req = paramLength + sizeof(parm_entry_type_new_t);
+    uint32_t aligned_size_req = (size_req + 3) & (~3);
+    parm_entry_type_new_t *curr_param = (parm_entry_type_new_t *)&param_buf->entry[0];
 
-    /*************************************************************************
-    *                 Code to take care of linking next flags                *
-    *************************************************************************/
-    current = GET_FIRST_PARAM_ID(p_table);
-    if (position == current){
-        //DO NOTHING
-    } else if (position < current){
-        SET_NEXT_PARAM_ID(position, p_table, current);
-        SET_FIRST_PARAM_ID(p_table, position);
-    } else {
-        /* Search for the position in the linked list where we need to slot in*/
-        while (position > GET_NEXT_PARAM_ID(current, p_table))
-            current = GET_NEXT_PARAM_ID(current, p_table);
-
-        /*If node already exists no need to alter linking*/
-        if (position != GET_NEXT_PARAM_ID(current, p_table)) {
-            next = GET_NEXT_PARAM_ID(current, p_table);
-            SET_NEXT_PARAM_ID(current, p_table, position);
-            SET_NEXT_PARAM_ID(position, p_table, next);
-        }
+    /* first search if the key is already present in the batch list
+     * this is a search penalty but as the batch list is never more
+     * than a few tens of entries at most,it should be ok.
+     * if search performance becomes a bottleneck, we can
+     * think of implementing a hashing mechanism.
+     * but it is still better than the huge memory required for
+     * direct indexing
+     */
+    for (j = 0; j < num_entry; j++) {
+      if (paramType == curr_param->entry_type) {
+        ALOGV("%s:Batch parameter overwrite for param: %d",
+                                                __func__, paramType);
+        break;
+      }
+      curr_param = GET_NEXT_PARAM(curr_param, parm_entry_type_new_t);
     }
 
-    /*************************************************************************
-    *                   Copy contents into entry                             *
-    *************************************************************************/
-
-    if (paramLength > sizeof(parm_type_t)) {
-        ALOGE("%s:Size of input larger than max entry size",__func__);
-        return BAD_VALUE;
+    //new param, search not found
+    if (j == num_entry) {
+      curr_param = (parm_entry_type_new_t *)(&param_buf->entry[0] +
+                                                  param_buf->curr_size);
+      param_buf->curr_size += aligned_size_req;
+      param_buf->num_entry++;
     }
-    memcpy(POINTER_OF(paramType,p_table), paramValue, paramLength);
+
+    curr_param->entry_type = paramType;
+    curr_param->size = (int32_t)paramLength;
+    curr_param->aligned_size = aligned_size_req;
+    memcpy(&curr_param->data[0], paramValue, paramLength);
+    ALOGE("%s: num_entry: %d, paramType: %d, paramLength: %d, aligned_size_req: %d",
+            __func__, param_buf->num_entry, paramType, paramLength, aligned_size_req);
+
     return NO_ERROR;
 }
 
@@ -3773,8 +3780,9 @@ int QCamera3HardwareInterface::setFrameParameters(camera3_capture_request_t *req
 
     int32_t hal_version = CAM_HAL_V3;
 
-    memset(mParameters, 0, sizeof(parm_buffer_t));
-    mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
+    memset(mParameters, 0, PARAM_TABLE_SIZE);
+    mParameters->num_entry = 0;
+    mParameters->curr_size = 0;
     rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
                 sizeof(hal_version), &hal_version);
     if (rc < 0) {
