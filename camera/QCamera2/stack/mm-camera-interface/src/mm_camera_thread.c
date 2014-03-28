@@ -549,6 +549,8 @@ static void *mm_camera_cmd_thread(void *data)
             case MM_CAMERA_CMD_TYPE_REQ_DATA_CB:
             case MM_CAMERA_CMD_TYPE_SUPER_BUF_DATA_CB:
             case MM_CAMERA_CMD_TYPE_CONFIG_NOTIFY:
+            case MM_CAMERA_CMD_TYPE_START_ZSL:
+            case MM_CAMERA_CMD_TYPE_STOP_ZSL:
             case MM_CAMERA_CMD_TYPE_GENERAL:
             case MM_CAMERA_CMD_TYPE_FLUSH_QUEUE:
                 if (NULL != cmd_thread->cb) {

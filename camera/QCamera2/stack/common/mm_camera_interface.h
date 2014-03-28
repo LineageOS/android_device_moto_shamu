@@ -388,6 +388,24 @@ typedef struct {
     int32_t (*prepare_snapshot) (uint32_t camera_handle,
                                  int32_t do_af_flag);
 
+    /** start_zsl_snapshot: function definition for starting
+     *                    zsl snapshot.
+     *    @camera_handle : camer handler
+     *    @ch_id         : channel id
+     *  Return value: 0 -- success
+     *                -1 -- failure
+     **/
+    int32_t (*start_zsl_snapshot) (uint32_t camera_handle, uint32_t ch_id);
+
+    /** stop_zsl_snapshot: function definition for stopping
+     *                    zsl snapshot.
+     *    @camera_handle : camer handler
+     *    @ch_id         : channel id
+     *  Return value: 0 -- success
+     *                -1 -- failure
+     **/
+    int32_t (*stop_zsl_snapshot) (uint32_t camera_handle, uint32_t ch_id);
+
     /** add_channel: fucntion definition for adding a channel
      *    @camera_handle : camer handler
      *    @ch_id : channel handler
