@@ -219,7 +219,7 @@ public:
     int openCamera(struct hw_device_t **hw_device);
 
     static int getCapabilities(int cameraId, struct camera_info *info);
-    static int initCapabilities(int cameraId);
+    static int initCapabilities(int cameraId,mm_camera_vtbl_t *cameraHandle);
 
     // Implementation of QCameraAllocator
     virtual QCameraMemory *allocateStreamBuf(cam_stream_type_t stream_type,
