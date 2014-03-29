@@ -1307,7 +1307,7 @@ void get_sensor_info()
             }
             if(entity.type == MEDIA_ENT_T_V4L2_SUBDEV &&
                 entity.group_id == MSM_CAMERA_SUBDEV_SENSOR) {
-                temp = entity.flags;
+                temp = entity.flags >> 8;
                 mount_angle = (temp & 0xFF) * 90;
                 facing = (temp >> 8);
                 ALOGD("index = %d flag = %x mount_angle = %d facing = %d\n"
