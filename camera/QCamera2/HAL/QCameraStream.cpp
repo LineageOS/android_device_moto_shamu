@@ -176,7 +176,10 @@ int32_t QCameraStream::invalidate_buf(int index, void *user_data)
         ALOGE("invalid stream pointer");
         return NO_MEMORY;
     }
-    return stream->invalidateBuf(index);
+    if (stream->mStreamInfo->is_secure != SECURE)
+        return stream->invalidateBuf(index);
+
+    return 0;
 }
 
 /*===========================================================================
@@ -199,7 +202,11 @@ int32_t QCameraStream::clean_invalidate_buf(int index, void *user_data)
         ALOGE("invalid stream pointer");
         return NO_MEMORY;
     }
-    return stream->cleanInvalidateBuf(index);
+
+    if (stream->mStreamInfo->is_secure != SECURE)
+        return stream->cleanInvalidateBuf(index);
+
+    return 0;
 }
 
 /*===========================================================================
