@@ -1171,6 +1171,12 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
                 pme->mFlashNeeded = ae_params->flash_needed;
                 break;
             }
+            case CAM_INTF_META_SENSOR_INFO: {
+                cam_sensor_params_t* sensor_params =
+                    (cam_sensor_params_t*)POINTER_OF(CAM_INTF_META_SENSOR_INFO, pMetaData);
+                pme->mExifParams.sensor_params = *sensor_params;
+                break;
+            }
             default:
                 ALOGV("%s: This metadata entry is not supported/expected for the HAL implementation, %d",
                       __func__, curr_entry);

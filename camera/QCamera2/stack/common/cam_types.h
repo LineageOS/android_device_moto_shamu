@@ -881,6 +881,10 @@ typedef struct {
     cam_flash_mode_t flash_mode;
     float            aperture_value;
     cam_flash_state_t        flash_state;
+    float            focal_length;
+    float            f_number;
+    int              sensing_method;
+    float            crop_factor;
 } cam_sensor_params_t;
 
 typedef struct {
@@ -889,6 +893,11 @@ typedef struct {
     uint32_t flash_needed;
     int settled;
     cam_wb_mode_type wb_mode;
+    uint32_t metering_mode;
+    uint32_t exposure_program;
+    uint32_t exposure_mode;
+    uint32_t scenetype;
+    float brightness;
 } cam_3a_params_t;
 
 
@@ -1079,6 +1088,8 @@ typedef enum {
     CAM_INTF_META_ASD_HDR_SCENE_DATA,
     CAM_INTF_META_ASD_SCENE_TYPE,
     CAM_INTF_META_AEC_INFO,
+    CAM_INTF_META_SENSOR_INFO,
+    CAM_INTF_META_ASD_SCENE_CAPTURE_TYPE,
     CAM_INTF_META_CHROMATIX_LITE_ISP,
     CAM_INTF_META_CHROMATIX_LITE_PP,
     CAM_INTF_META_CHROMATIX_LITE_AE,
