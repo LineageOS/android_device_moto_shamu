@@ -1642,9 +1642,16 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
         streamInfo->useAVTimer = mParameters.isAVTimerEnabled();
     case CAM_STREAM_TYPE_PREVIEW:
         if (mParameters.getRecordingHintValue()) {
-            char value[PROPERTY_VALUE_MAX];
-            property_get("persist.camera.is_type", value, "0");
-            streamInfo->is_type = static_cast<cam_is_type_t>(atoi(value));
+            const char* dis_param = mParameters.get(QCameraParameters::KEY_QC_DIS);
+            bool disEnabled = (dis_param != NULL)
+                    && !strcmp(dis_param,QCameraParameters::VALUE_ENABLE);
+            if(disEnabled) {
+                char value[PROPERTY_VALUE_MAX];
+                property_get("persist.camera.is_type", value, "0");
+                streamInfo->is_type = static_cast<cam_is_type_t>(atoi(value));
+            } else {
+                streamInfo->is_type = IS_TYPE_NONE;
+            }
         }
         break;
     default:
