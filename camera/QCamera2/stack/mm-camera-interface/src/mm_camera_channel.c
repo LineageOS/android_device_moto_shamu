@@ -1818,6 +1818,7 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
     }
 
     if (mm_channel_handle_metadata(ch_obj, queue, buf_info) < 0) {
+        mm_channel_qbuf(ch_obj, buf_info->buf);
         return -1;
     }
    #if 0
