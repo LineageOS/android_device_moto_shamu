@@ -1437,7 +1437,7 @@ uint8_t get_num_of_cameras()
         snprintf(dev_name, sizeof(dev_name), "/dev/media%d", num_media_devices);
         dev_fd = open(dev_name, O_RDWR | O_NONBLOCK);
         if (dev_fd <= 0) {
-            CDBG("Done discovering media devices\n");
+            CDBG("Done discovering media devices: %s\n", strerror(errno));
             break;
         }
         num_media_devices++;

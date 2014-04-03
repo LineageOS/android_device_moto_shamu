@@ -119,6 +119,8 @@ const char QCameraParameters::KEY_QC_SUPPORTED_CHROMA_FLASH_MODES[] = "chroma-fl
 const char QCameraParameters::KEY_QC_OPTI_ZOOM[] = "opti-zoom";
 const char QCameraParameters::KEY_QC_SUPPORTED_OPTI_ZOOM_MODES[] = "opti-zoom-values";
 const char QCameraParameters::KEY_INTERNAL_PERVIEW_RESTART[] = "internal-restart";
+const char QCameraParameters::KEY_QC_RDI_MODE[] = "rdi-mode";
+const char QCameraParameters::KEY_QC_SUPPORTED_RDI_MODES[] = "rdi-mode-values";
 
 // Values for effect settings.
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
@@ -519,7 +521,7 @@ const QCameraParameters::QCameraMap QCameraParameters::HFR_MODES_MAP[] = {
 
 const QCameraParameters::QCameraMap QCameraParameters::BRACKETING_MODES_MAP[] = {
     { AE_BRACKET_OFF, CAM_EXP_BRACKETING_OFF },
-    { AE_BRACKET,         CAM_EXP_BRACKETING_ON }
+    { AE_BRACKET,     CAM_EXP_BRACKETING_ON }
 };
 
 const QCameraParameters::QCameraMap QCameraParameters::ON_OFF_MODES_MAP[] = {
@@ -622,7 +624,8 @@ QCameraParameters::QCameraParameters()
       m_bChromaFlashOn(false),
       m_bOptiZoomOn(false),
       m_bHfrMode(false),
-      m_bSensorHDREnabled(false)
+      m_bSensorHDREnabled(false),
+      m_bRdiMode(false)
 {
     char value[PROPERTY_VALUE_MAX];
     // TODO: may move to parameter instead of sysprop
@@ -695,7 +698,8 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bChromaFlashOn(false),
     m_bOptiZoomOn(false),
     m_bHfrMode(false),
-    m_bSensorHDREnabled(false)
+    m_bSensorHDREnabled(false),
+    m_bRdiMode(false)
 {
     memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
     memset(&m_default_fps_range, 0, sizeof(m_default_fps_range));
@@ -1364,7 +1368,7 @@ int32_t QCameraParameters::setPictureFormat(const QCameraParameters& params)
         ALOGE("%s: format %d\n", __func__, mPictureFormat);
         return NO_ERROR;
     }
-    ALOGE("Invalid picture format value: %s", (str == NULL) ? "NULL" : str);
+    ALOGE("%s: Invalid picture format value: %s", __func__, (str == NULL) ? "NULL" : str);
     return BAD_VALUE;
 }
 
@@ -3249,6 +3253,31 @@ int32_t QCameraParameters::setCameraMode(const QCameraParameters& params)
     return NO_ERROR;
 }
 
+/*==========================================================
+ * FUNCTION   : setRdiMode
+ *
+ * DESCRIPTION: set Rdi mode from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *===========================================================*/
+int32_t QCameraParameters::setRdiMode(
+  const QCameraParameters& params)
+{
+  const char *str = params.get(KEY_QC_RDI_MODE);
+  const char *prev_str = get(KEY_QC_RDI_MODE);
+  if (str != NULL) {
+    if ((prev_str == NULL) ||strcmp(str, prev_str) != 0) {
+      return setRdiMode(str);
+    }
+  }
+  return NO_ERROR;
+}
+
 /*===========================================================================
  * FUNCTION   : setZslAttributes
  *
@@ -3505,7 +3534,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setZslAttributes(params)))                final_rc = rc;
     if ((rc = setCameraMode(params)))                   final_rc = rc;
     if ((rc = setRecordingHint(params)))                final_rc = rc;
-
+    if ((rc = setRdiMode(params)))                       final_rc = rc;
     if ((rc = setPreviewFrameRate(params)))             final_rc = rc;
     if ((rc = setPreviewFpsRange(params)))              final_rc = rc;
     if ((rc = setAutoExposure(params)))                 final_rc = rc;
@@ -3746,6 +3775,8 @@ int32_t QCameraParameters::initDefaultParameters()
     snprintf(raw_size_str, sizeof(raw_size_str), "%dx%d",
              m_pCapability->raw_dim.width, m_pCapability->raw_dim.height);
     set(KEY_QC_RAW_PICUTRE_SIZE, raw_size_str);
+    ALOGV("%s: KEY_QC_RAW_PICUTRE_SIZE: w: %d, h: %d ", __func__,
+       m_pCapability->raw_dim.width, m_pCapability->raw_dim.height);
 
     //set default jpeg quality and thumbnail quality
     set(KEY_JPEG_QUALITY, 85);
@@ -4080,6 +4111,10 @@ int32_t QCameraParameters::initDefaultParameters()
     m_bZslMode = false;
 #endif
     m_bZslMode_new = m_bZslMode;
+
+    // Rdi mode
+    set(KEY_QC_SUPPORTED_RDI_MODES, enableDisableValues);
+    setRdiMode(VALUE_DISABLE);
 
     //Set video HDR
     if ((m_pCapability->qcom_supported_feature_mask & CAM_QCOM_FEATURE_VIDEO_HDR) > 0) {
@@ -6169,6 +6204,40 @@ int32_t QCameraParameters::setWaveletDenoise(const char *wnrStr)
 }
 
 /*===========================================================================
+ * FUNCTION   : setRdiMode
+ *
+ * DESCRIPTION: set rdi mode value
+ *
+ * PARAMETERS :
+ *   @str     : rdi mode value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setRdiMode(const char *str)
+{
+  ALOGV("RDI_DEBUG %s: rdi mode value: %s", __func__, str);
+
+  if (str != NULL) {
+    int32_t value = lookupAttr(ENABLE_DISABLE_MODES_MAP,
+                           sizeof(ENABLE_DISABLE_MODES_MAP)/sizeof(QCameraMap),
+                           str);
+    if (value != NAME_NOT_FOUND) {
+      updateParamEntry(KEY_QC_RDI_MODE, str);
+      m_bRdiMode = (value == 0)? false : true;
+      return AddSetParmEntryToBatch(m_pParamBuf,
+                                                     CAM_INTF_PARM_RDI_MODE,
+                                                     sizeof(value),
+                                                     &value);
+    }
+  }
+  ALOGE("%s: Invalid rdi mode value: %s",
+    __func__, (str == NULL) ? "NULL" : str);
+  return BAD_VALUE;
+}
+
+/*===========================================================================
  * FUNCTION   : setPreviewFrameRateMode
  *
  * DESCRIPTION: set preview frame rate mode
@@ -6391,7 +6460,9 @@ int32_t QCameraParameters::getStreamFormat(cam_stream_type_t streamType,
         format = CAM_FORMAT_YUV_420_NV12;
         break;
     case CAM_STREAM_TYPE_RAW:
-        if (mPictureFormat >= CAM_FORMAT_YUV_RAW_8BIT_YUYV) {
+        if (isRdiMode()) {
+            format = m_pCapability->rdi_mode_stream_fmt;
+        } else if (mPictureFormat >= CAM_FORMAT_YUV_RAW_8BIT_YUYV) {
             format = (cam_format_t)mPictureFormat;
         } else {
             format = CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GBRG;
@@ -6431,7 +6502,9 @@ int QCameraParameters::getFlipMode(cam_stream_type_t type)
 
     switch(type){
     case CAM_STREAM_TYPE_PREVIEW:
-        str = get(KEY_QC_PREVIEW_FLIP);
+        if (!isRdiMode()) {
+            str = get(KEY_QC_PREVIEW_FLIP);
+        }
         break;
     case CAM_STREAM_TYPE_VIDEO:
         str = get(KEY_QC_VIDEO_FLIP);

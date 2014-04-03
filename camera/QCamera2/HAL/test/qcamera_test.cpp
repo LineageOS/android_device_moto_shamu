@@ -1794,6 +1794,23 @@ status_t CameraContext::startPreview()
             return ret;
         }
 
+        // set rdi mode if system prop is set for front camera
+        if (mCameraIndex == 1) {
+            char value[32];
+            property_get("persist.camera.rdimode", value, "0");
+            int rdimode = atoi(value);
+            printf("rdi mode = %d\n", rdimode);
+            if (rdimode == 1) {
+                mParams.set("rdi-mode", "enable");
+            } else {
+                mParams.set("rdi-mode", "disable");
+            }
+        } else {
+            mParams.set("rdi-mode", "disable");
+        }
+
+        //mParams.set("rdi-mode", "enable");
+        mParams.set("recording-hint", "true");
         mParams.setPreviewSize(previewWidth, previewHeight);
         mParams.setPictureSize(currentPictureSize.width,
             currentPictureSize.height);

@@ -1370,7 +1370,11 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
         }
         break;
     case CAM_STREAM_TYPE_RAW:
-        if (mParameters.isZSLMode()) {
+        if (isRdiMode()) {
+            ALOGD("RDI_DEBUG %s[%d]: CAM_STREAM_TYPE_RAW",
+              __func__, __LINE__);
+            bufferCnt = zslQBuffers + minCircularBufNum;
+        } else if (mParameters.isZSLMode()) {
             bufferCnt = zslQBuffers + minCircularBufNum;
         } else {
             bufferCnt = minCaptureBuffers*CAMERA_PPROC_OUT_BUFFER_MULTIPLIER +
@@ -1608,9 +1612,8 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
     streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
     switch (stream_type) {
     case CAM_STREAM_TYPE_SNAPSHOT:
-    case CAM_STREAM_TYPE_RAW:
         if ((mParameters.isZSLMode() && mParameters.getRecordingHintValue() != true) ||
-                 mLongshotEnabled) {
+            mLongshotEnabled) {
             streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
         } else {
             property_get("persist.camera.raw_yuv", value, "0");
@@ -1625,6 +1628,16 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
                     - mParameters.getNumOfExtraHDROutBufsIfNeeded()
                     + mParameters.getNumOfExtraBuffersForImageProc();
             }
+        }
+        break;
+    case CAM_STREAM_TYPE_RAW:
+        if (mParameters.isZSLMode() || isRdiMode()) {
+            ALOGD("RDI_DEBUG %s[%d]: CAM_STREAM_TYPE_RAW",
+              __func__, __LINE__);
+            streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
+        } else {
+            streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
+            streamInfo->num_of_burst = mParameters.getNumOfSnapshots();
         }
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
@@ -3672,12 +3685,18 @@ int32_t QCamera2HardwareInterface::addPreviewChannel()
         return rc;
     }
 
-    if (isNoDisplayMode()) {
-        rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_PREVIEW,
-                                nodisplay_preview_stream_cb_routine, this);
+    if (isRdiMode()) {
+        ALOGD("RDI_DEBUG %s[%d]: Add stream to channel", __func__, __LINE__);
+        rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_RAW,
+                                rdi_mode_stream_cb_routine, this);
     } else {
-        rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_PREVIEW,
-                                preview_stream_cb_routine, this);
+        if (isNoDisplayMode()) {
+            rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_PREVIEW,
+                                    nodisplay_preview_stream_cb_routine, this);
+        } else {
+            rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_PREVIEW,
+                                    preview_stream_cb_routine, this);
+        }
     }
     if (rc != NO_ERROR) {
         ALOGE("%s: add preview stream failed, ret = %d", __func__, rc);
@@ -4506,11 +4525,12 @@ int32_t QCamera2HardwareInterface::preparePreview()
     if (mParameters.isZSLMode() && mParameters.getRecordingHintValue() !=true) {
         rc = addChannel(QCAMERA_CH_TYPE_ZSL);
         if (rc != NO_ERROR) {
+            ALOGE("%s[%d]: failed!! rc = %d", __func__, __LINE__, rc);
             return rc;
         }
     } else {
         bool recordingHint = mParameters.getRecordingHintValue();
-        if(recordingHint) {
+        if(!isRdiMode() && recordingHint) {
             cam_dimension_t videoSize;
             mParameters.getVideoSize(&videoSize.width, &videoSize.height);
             if (!is4k2kResolution(&videoSize)) {
@@ -4522,16 +4542,18 @@ int32_t QCamera2HardwareInterface::preparePreview()
             rc = addChannel(QCAMERA_CH_TYPE_VIDEO);
             if (rc != NO_ERROR) {
                 delChannel(QCAMERA_CH_TYPE_SNAPSHOT);
+                ALOGE("%s[%d]:failed!! rc = %d", __func__, __LINE__, rc);
                 return rc;
             }
         }
 
         rc = addChannel(QCAMERA_CH_TYPE_PREVIEW);
-        if (rc != NO_ERROR) {
+        if (!isRdiMode() && (rc != NO_ERROR)) {
             if (recordingHint) {
                 delChannel(QCAMERA_CH_TYPE_SNAPSHOT);
                 delChannel(QCAMERA_CH_TYPE_VIDEO);
             }
+            ALOGE("%s[%d]:failed!! rc = %d", __func__, __LINE__, rc);
             return rc;
         }
 

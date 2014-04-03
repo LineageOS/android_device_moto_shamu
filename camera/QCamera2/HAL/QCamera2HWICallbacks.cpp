@@ -594,6 +594,88 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
 }
 
 /*===========================================================================
+ * FUNCTION   : rdi_mode_stream_cb_routine
+ *
+ * DESCRIPTION: helper function to handle RDI frame from preview stream in
+ *              rdi mode case
+ *
+ * PARAMETERS :
+ *   @super_frame : received super buffer
+ *   @stream      : stream object
+ *   @userdata    : user data ptr
+ *
+ * RETURN    : None
+ *
+ * NOTE      : caller passes the ownership of super_frame, it's our
+ *             responsibility to free super_frame once it's done.
+ *==========================================================================*/
+void QCamera2HardwareInterface::rdi_mode_stream_cb_routine(
+  mm_camera_super_buf_t *super_frame,
+  QCameraStream *stream,
+  void * userdata)
+{
+    ALOGD("RDI_DEBUG %s[%d]: Enter", __func__, __LINE__);
+    QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
+    if (pme == NULL ||
+        pme->mCameraHandle == NULL ||
+        pme->mCameraHandle->camera_handle != super_frame->camera_handle){
+        ALOGE("%s: camera obj not valid", __func__);
+        // simply free super frame
+        free(super_frame);
+        return;
+    }
+    mm_camera_buf_def_t *frame = super_frame->bufs[0];
+    if (NULL == frame) {
+        ALOGE("%s: preview frame is NLUL", __func__);
+        free(super_frame);
+        return;
+    }
+
+    if (!pme->needProcessPreviewFrame()) {
+        ALOGE("%s: preview is not running, no need to process", __func__);
+        stream->bufDone(frame->buf_idx);
+        free(super_frame);
+        return;
+    }
+
+    if (pme->needDebugFps()) {
+        pme->debugShowPreviewFPS();
+    }
+
+    QCameraMemory *previewMemObj = (QCameraMemory *)frame->mem_info;
+    camera_memory_t *preview_mem = NULL;
+    if (previewMemObj != NULL) {
+        preview_mem = previewMemObj->getMemory(frame->buf_idx, false);
+    }
+    if (NULL != previewMemObj && NULL != preview_mem) {
+        previewMemObj->cleanCache(frame->buf_idx);
+
+        pme->dumpFrameToFile(stream, frame,
+                             QCAMERA_DUMP_FRM_RAW);
+
+        if (pme->needProcessPreviewFrame() &&
+            pme->mDataCb != NULL &&
+            pme->msgTypeEnabledWithLock(CAMERA_MSG_PREVIEW_FRAME) > 0 ) {
+            qcamera_callback_argm_t cbArg;
+            memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+            cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+            cbArg.msg_type = CAMERA_MSG_PREVIEW_FRAME;
+            cbArg.data = preview_mem;
+            int user_data = frame->buf_idx;
+            cbArg.user_data = ( void * ) user_data;
+            cbArg.cookie = stream;
+            cbArg.release_cb = returnStreamBuffer;
+            pme->m_cbNotifier.notifyCallback(cbArg);
+        } else {
+            stream->bufDone(frame->buf_idx);
+        }
+    }
+    free(super_frame);
+    ALOGD("RDI_DEBUG %s[%d]: Exit", __func__, __LINE__);
+
+}
+
+/*===========================================================================
  * FUNCTION   : postview_stream_cb_routine
  *
  * DESCRIPTION: helper function to handle post frame from postview stream
