@@ -404,7 +404,6 @@ typedef struct {
 /*****************************************************************************
  *                 Code for Domain Socket Based Parameters                   *
  ****************************************************************************/
-
 #define POINTER_OF(PARAM_ID,TABLE_PTR)    \
         (&(TABLE_PTR->entry[PARAM_ID].data))
 
@@ -422,6 +421,12 @@ typedef struct {
 
 #define INCLUDE(PARAM_ID,DATATYPE,COUNT)  \
         DATATYPE member_variable_##PARAM_ID[ COUNT ]
+
+#define POINTER_OF_META(META_ID, TABLE_PTR) \
+        &TABLE_PTR->data.member_variable_##META_ID
+
+#define IS_META_AVAILABLE(META_ID, TABLE_PTR) \
+        TABLE_PTR->is_valid[META_ID]
 
 typedef union {
 /**************************************************************************************
@@ -542,7 +547,7 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_FLASH_BRACKETING,         cam_flash_bracketing_t,      1);
 } parm_type_t;
 
-typedef union {
+typedef struct {
 /**************************************************************************************
  *  ID from (cam_intf_metadata_type_t)                DATATYPE                     COUNT
  **************************************************************************************/
@@ -602,6 +607,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_LENS_OPT_STAB_MODE,           uint8_t,                     1);
     INCLUDE(CAM_INTF_META_LENS_FOCUS_STATE,             uint8_t,                     1);
     INCLUDE(CAM_INTF_META_NOISE_REDUCTION_MODE,         uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_NOISE_REDUCTION_STRENGTH,     uint8_t,                     1);
     INCLUDE(CAM_INTF_META_SCALER_CROP_REGION,           cam_crop_region_t,           1);
     INCLUDE(CAM_INTF_META_SCENE_FLICKER,                uint8_t,                     1);
     INCLUDE(CAM_INTF_META_SENSOR_EXPOSURE_TIME,         int64_t,                     1);
@@ -613,27 +619,17 @@ typedef union {
     INCLUDE(CAM_INTF_META_STATS_HISTOGRAM_MODE,         uint8_t,                     1);
     INCLUDE(CAM_INTF_META_STATS_SHARPNESS_MAP_MODE,     uint8_t,                     1);
     INCLUDE(CAM_INTF_META_STATS_SHARPNESS_MAP,          cam_sharpness_map_t,         3);
+    INCLUDE(CAM_INTF_META_TONEMAP_CURVES,               cam_rgb_tonemap_curves,      1);
     INCLUDE(CAM_INTF_META_LENS_SHADING_MAP,             cam_lens_shading_map_t,      1);
     INCLUDE(CAM_INTF_META_AEC_INFO,                     cam_3a_params_t,             1);
     INCLUDE(CAM_INTF_META_SENSOR_INFO,                  cam_sensor_params_t,         1);
     INCLUDE(CAM_INTF_META_ASD_SCENE_CAPTURE_TYPE,       cam_auto_scene_t,            1);
-    INCLUDE(CAM_INTF_META_PRIVATE_DATA,                 char,                        MAX_METADATA_PRIVATE_PAYLOAD_SIZE);
-} metadata_type_t;
+    INCLUDE(CAM_INTF_PARM_EFFECT,                       uint8_t,                     1);
+    /* Defining as int32_t so that this array is 4 byte aligned */
+    INCLUDE(CAM_INTF_META_PRIVATE_DATA,                 int32_t,                     MAX_METADATA_PRIVATE_PAYLOAD_SIZE);
+} metadata_data_t;
 
 /****************************DO NOT MODIFY BELOW THIS LINE!!!!*********************/
-
-typedef struct {
-    metadata_type_t data;
-    uint8_t next_flagged_entry;
-} metadata_entry_type_t;
-
-typedef struct {
-    uint8_t first_flagged_entry;
-    metadata_entry_type_t entry[CAM_INTF_PARM_MAX];
-    /*Tuning Data */
-    uint8_t is_tuning_params_valid;
-    tuning_params_t tuning_params;
-} metadata_buffer_t;
 
 typedef struct {
     parm_type_t data;
@@ -644,5 +640,25 @@ typedef struct {
     uint8_t first_flagged_entry;
     parm_entry_type_t entry[CAM_INTF_PARM_MAX];
 } parm_buffer_t;
+
+typedef struct {
+    /* Hash table of 'is valid' flags */
+    uint8_t         is_valid[CAM_INTF_PARM_MAX];
+    metadata_data_t data;
+    /*Tuning Data */
+    uint8_t is_tuning_params_valid;
+    tuning_params_t tuning_params;
+} metadata_buffer_t;
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+void *get_pointer_of(cam_intf_parm_type_t meta_id,
+        const metadata_buffer_t* metadata);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif /* __QCAMERA_INTF_H__ */

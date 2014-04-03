@@ -76,10 +76,10 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
         return;
     }
 
-    ALOGD("%s: [ZSL Retro] Frame CB Unlock : %d, is AEC Locked: %d",
+    CDBG_HIGH("%s: [ZSL Retro] Frame CB Unlock : %d, is AEC Locked: %d",
           __func__, recvd_frame->bUnlockAEC, pme->m_bLedAfAecLock);
     if(recvd_frame->bUnlockAEC && pme->m_bLedAfAecLock) {
-       CDBG_HIGH("%s : [ZSL Retro] LED assisted AF Release AEC Lock\n", __func__);
+       ALOGI("%s : [ZSL Retro] LED assisted AF Release AEC Lock\n", __func__);
        pme->mParameters.setAecLock("false");
        pme->mParameters.commitParameters();
        pme->m_bLedAfAecLock = FALSE ;
@@ -118,7 +118,7 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
     *frame = *recvd_frame;
 
     if (recvd_frame->num_bufs > 0) {
-        ALOGD("[KPI Perf] %s: superbuf frame_idx %d", __func__,
+        ALOGI("[KPI Perf] %s: superbuf frame_idx %d", __func__,
             recvd_frame->bufs[0]->frame_idx);
     }
 
@@ -172,15 +172,12 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
         if(pMetaFrame != NULL){
             metadata_buffer_t *pMetaData = (metadata_buffer_t *)pMetaFrame->buffer;
             //send the face detection info
-            uint8_t curr_entry = GET_FIRST_PARAM_ID(pMetaData);
             uint8_t found = 0;
             cam_face_detection_data_t faces_data;
-            while (!(found || curr_entry == CAM_INTF_PARM_MAX)) {
-                if (curr_entry == CAM_INTF_META_FACE_DETECTION) {
-                    faces_data = *((cam_face_detection_data_t *)POINTER_OF(CAM_INTF_META_FACE_DETECTION, pMetaData));
-                    found = 1;
-                }
-                curr_entry = GET_NEXT_PARAM_ID(curr_entry, pMetaData);
+            if (IS_META_AVAILABLE(CAM_INTF_META_FACE_DETECTION, pMetaData)) {
+                faces_data = *((cam_face_detection_data_t *)
+                    POINTER_OF_META(CAM_INTF_META_FACE_DETECTION, pMetaData));
+                found = 1;
             }
             faces_data.fd_type = QCAMERA_FD_SNAPSHOT; //HARD CODE here before MCT can support
             if(!found){
@@ -230,12 +227,12 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
     property_get("persist.camera.zsl_matching", value, "0");
     log_matching = atoi(value) > 0 ? true : false;
     if (log_matching) {
-        ALOGD("%s : ZSL super buffer contains:", __func__);
+        CDBG_HIGH("%s : ZSL super buffer contains:", __func__);
         QCameraStream *pStream = NULL;
         for (int i = 0; i < frame->num_bufs; i++) {
             pStream = pChannel->getStreamByHandle(frame->bufs[i]->stream_id);
             if (pStream != NULL ) {
-                ALOGD("%s: Buffer with V4L index %d frame index %d of type %d Timestamp: %ld %ld ",
+                CDBG_HIGH("%s: Buffer with V4L index %d frame index %d of type %d Timestamp: %ld %ld ",
                         __func__,
                         frame->bufs[i]->buf_idx,
                         frame->bufs[i]->frame_idx,
@@ -649,7 +646,7 @@ void QCamera2HardwareInterface::rdi_mode_stream_cb_routine(
   QCameraStream *stream,
   void * userdata)
 {
-    ALOGD("RDI_DEBUG %s[%d]: Enter", __func__, __LINE__);
+    CDBG_HIGH("RDI_DEBUG %s[%d]: Enter", __func__, __LINE__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -750,13 +747,13 @@ void QCamera2HardwareInterface::rdi_mode_stream_cb_routine(
                 pme->m_cbNotifier.notifyCallback(cbArg);
             }
         } else {
-            ALOGD("%s: No need to process preview frame, return buffer", __func__);
+            CDBG_HIGH("%s: No need to process preview frame, return buffer", __func__);
             stream->bufDone(frame->buf_idx);
         }
     }
 end:
     free(super_frame);
-    ALOGD("RDI_DEBUG %s[%d]: Exit", __func__, __LINE__);
+    CDBG_HIGH("RDI_DEBUG %s[%d]: Exit", __func__, __LINE__);
     return;
 }
 
@@ -1153,206 +1150,182 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
         //Dump Tuning data for video
         pme->dumpMetadataToFile(stream,frame,(char *)"Video");
     }
-    uint8_t curr_entry = GET_FIRST_PARAM_ID(pMetaData);
-    uint8_t next_entry;
-    while (curr_entry != CAM_INTF_PARM_MAX) {
-        switch (curr_entry) {
-            case CAM_INTF_META_HISTOGRAM: {
-                cam_hist_stats_t *stats_data =
-                (cam_hist_stats_t *)POINTER_OF(CAM_INTF_META_HISTOGRAM, pMetaData);
-                // process histogram statistics info
-                qcamera_sm_internal_evt_payload_t *payload =
-                    (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
-                if (NULL != payload) {
-                    memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
-                    payload->evt_type = QCAMERA_INTERNAL_EVT_HISTOGRAM_STATS;
-                    payload->stats_data = *stats_data;
-                    int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
-                    if (rc != NO_ERROR) {
-                        ALOGE("%s: processEvt histogram failed", __func__);
-                        free(payload);
-                        payload = NULL;
+    if (IS_META_AVAILABLE(CAM_INTF_META_HISTOGRAM, pMetaData)) {
+        cam_hist_stats_t *stats_data = (cam_hist_stats_t *)
+            POINTER_OF_META(CAM_INTF_META_HISTOGRAM, pMetaData);
+        // process histogram statistics info
+        qcamera_sm_internal_evt_payload_t *payload =
+            (qcamera_sm_internal_evt_payload_t *)
+                malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+        if (NULL != payload) {
+            memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+            payload->evt_type = QCAMERA_INTERNAL_EVT_HISTOGRAM_STATS;
+            payload->stats_data = *stats_data;
+            int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: processEvt histogram failed", __func__);
+                free(payload);
+                payload = NULL;
 
-                    }
-                } else {
-                    ALOGE("%s: No memory for histogram qcamera_sm_internal_evt_payload_t", __func__);
-                }
-                break;
             }
-            case CAM_INTF_META_FACE_DETECTION: {
-                cam_face_detection_data_t *faces_data =
-                (cam_face_detection_data_t *)POINTER_OF(CAM_INTF_META_FACE_DETECTION, pMetaData);
-                if (faces_data->num_faces_detected > MAX_ROI) {
-                    ALOGE("%s: Invalid number of faces %d",
-                        __func__, faces_data->num_faces_detected);
-                } else {
-                    // process face detection result
-                    if (faces_data->num_faces_detected)
-                        CDBG_HIGH("[KPI Perf] %s: PROFILE_NUMBER_OF_FACES_DETECTED %d",
-                            __func__,faces_data->num_faces_detected);
-                    faces_data->fd_type = QCAMERA_FD_PREVIEW; //HARD CODE here before MCT can support
-                    qcamera_sm_internal_evt_payload_t *payload =
-                        (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
-                    if (NULL != payload) {
-                        memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
-                        payload->evt_type = QCAMERA_INTERNAL_EVT_FACE_DETECT_RESULT;
-                        payload->faces_data = *faces_data;
-                        int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
-                        if (rc != NO_ERROR) {
-                            ALOGE("%s: processEvt face detection failed", __func__);
-                            free(payload);
-                            payload = NULL;
-
-                        }
-                    } else {
-                        ALOGE("%s: No memory for face detect qcamera_sm_internal_evt_payload_t", __func__);
-                    }
-                }
-                break;
-            }
-            case CAM_INTF_META_AUTOFOCUS_DATA: {
-                cam_auto_focus_data_t *focus_data =
-                (cam_auto_focus_data_t *)POINTER_OF(CAM_INTF_META_AUTOFOCUS_DATA, pMetaData);
-                qcamera_sm_internal_evt_payload_t *payload =
-                    (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
-                if (NULL != payload) {
-                    memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
-                    payload->evt_type = QCAMERA_INTERNAL_EVT_FOCUS_UPDATE;
-                    payload->focus_data = *focus_data;
-                    int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
-                    if (rc != NO_ERROR) {
-                        ALOGE("%s: processEvt focus failed", __func__);
-                        free(payload);
-                        payload = NULL;
-
-                    }
-                } else {
-                    ALOGE("%s: No memory for focus qcamera_sm_internal_evt_payload_t", __func__);
-                }
-                break;
-            }
-            case CAM_INTF_META_CROP_DATA: {
-                cam_crop_data_t *crop_data =
-                (cam_crop_data_t *)POINTER_OF(CAM_INTF_META_CROP_DATA, pMetaData);
-                if (crop_data->num_of_streams > MAX_NUM_STREAMS) {
-                    ALOGE("%s: Invalid num_of_streams %d in crop_data", __func__,
-                        crop_data->num_of_streams);
-                } else {
-                    qcamera_sm_internal_evt_payload_t *payload =
-                        (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
-                    if (NULL != payload) {
-                        memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
-                        payload->evt_type = QCAMERA_INTERNAL_EVT_CROP_INFO;
-                        payload->crop_data = *crop_data;
-                        int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
-                        if (rc != NO_ERROR) {
-                            ALOGE("%s: processEvt crop info failed", __func__);
-                            free(payload);
-                            payload = NULL;
-
-                        }
-                    } else {
-                        ALOGE("%s: No memory for crop info qcamera_sm_internal_evt_payload_t", __func__);
-                    }
-                }
-                break;
-            }
-            case CAM_INTF_META_PREP_SNAPSHOT_DONE: {
-                int32_t *prep_snapshot_done_state =
-                (int32_t *)POINTER_OF(CAM_INTF_META_PREP_SNAPSHOT_DONE, pMetaData);
-                qcamera_sm_internal_evt_payload_t *payload =
-                (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
-                if (NULL != payload) {
-                    memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
-                    payload->evt_type = QCAMERA_INTERNAL_EVT_PREP_SNAPSHOT_DONE;
-                    payload->prep_snapshot_state = (cam_prep_snapshot_state_t)*prep_snapshot_done_state;
-                    int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
-                    if (rc != NO_ERROR) {
-                        ALOGE("%s: processEvt prep_snapshot failed", __func__);
-                        free(payload);
-                        payload = NULL;
-
-                    }
-                } else {
-                    ALOGE("%s: No memory for prep_snapshot qcamera_sm_internal_evt_payload_t", __func__);
-                }
-                break;
-            }
-            case CAM_INTF_META_ASD_HDR_SCENE_DATA: {
-                cam_asd_hdr_scene_data_t *hdr_scene_data =
-                (cam_asd_hdr_scene_data_t *)POINTER_OF(CAM_INTF_META_ASD_HDR_SCENE_DATA, pMetaData);
-                CDBG_HIGH("%s: hdr_scene_data: %d %f\n",
-                  __func__,
-                  hdr_scene_data->is_hdr_scene,
-                  hdr_scene_data->hdr_confidence);
-                //Handle this HDR meta data only if capture is not in process
-                if (!pme->m_stateMachine.isCaptureRunning()) {
-                    int32_t rc = pme->processHDRData(*hdr_scene_data);
-                    if (rc != NO_ERROR) {
-                        ALOGE("%s: processHDRData failed", __func__);
-                    }
-                }
-                break;
-            }
-            case CAM_INTF_META_ASD_SCENE_TYPE: {
-                int32_t *scene =
-                (int32_t *)POINTER_OF(CAM_INTF_META_ASD_SCENE_TYPE, pMetaData);
-                qcamera_sm_internal_evt_payload_t *payload =
-                    (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
-                if (NULL != payload) {
-                    memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
-                    payload->evt_type = QCAMERA_INTERNAL_EVT_ASD_UPDATE;
-                    payload->asd_data = (cam_auto_scene_t)*scene;
-                    int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
-                    if (rc != NO_ERROR) {
-                        ALOGE("%s: processEvt asd_update failed", __func__);
-                        free(payload);
-                        payload = NULL;
-
-                    }
-                } else {
-                    ALOGE("%s: No memory for asd_update qcamera_sm_internal_evt_payload_t", __func__);
-                }
-                break;
-            }
-            case CAM_INTF_META_FLASH_MODE: {
-                uint8_t *flash_mode =
-                (uint8_t *)POINTER_OF(CAM_INTF_META_FLASH_MODE, pMetaData);
-                pme->mExifParams.sensor_params.flash_mode = (cam_flash_mode_t)*flash_mode;
-                break;
-            }
-            case CAM_INTF_META_FLASH_STATE: {
-                int32_t *flash_state =
-                    (int32_t *)POINTER_OF(CAM_INTF_META_FLASH_STATE, pMetaData);
-                pme->mExifParams.sensor_params.flash_state = (cam_flash_state_t)*flash_state;
-                break;
-            }
-            case CAM_INTF_META_LENS_APERTURE: {
-                float *aperture_value =
-                    (float *)POINTER_OF(CAM_INTF_META_LENS_APERTURE, pMetaData);
-                pme->mExifParams.sensor_params.aperture_value = *aperture_value;
-                break;
-            }
-            case CAM_INTF_META_AEC_INFO: {
-                cam_3a_params_t* ae_params =
-                    (cam_3a_params_t*)POINTER_OF(CAM_INTF_META_AEC_INFO, pMetaData);
-                pme->mExifParams.cam_3a_params = *ae_params;
-                pme->mFlashNeeded = ae_params->flash_needed;
-                break;
-            }
-            case CAM_INTF_META_SENSOR_INFO: {
-                cam_sensor_params_t* sensor_params =
-                    (cam_sensor_params_t*)POINTER_OF(CAM_INTF_META_SENSOR_INFO, pMetaData);
-                pme->mExifParams.sensor_params = *sensor_params;
-                break;
-            }
-            default:
-                CDBG("%s: This metadata entry is not supported/expected for the HAL implementation, %d",
-                      __func__, curr_entry);
-                break;
+        } else {
+            ALOGE("%s: No memory for histogram qcamera_sm_internal_evt_payload_t", __func__);
         }
-        next_entry = GET_NEXT_PARAM_ID(curr_entry, pMetaData);
-        curr_entry = next_entry;
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_FACE_DETECTION, pMetaData)) {
+        cam_face_detection_data_t *faces_data = (cam_face_detection_data_t *)
+            POINTER_OF_META(CAM_INTF_META_FACE_DETECTION, pMetaData);
+        if (faces_data->num_faces_detected > MAX_ROI) {
+            ALOGE("%s: Invalid number of faces %d",
+                __func__, faces_data->num_faces_detected);
+        } else {
+            // process face detection result
+            if (faces_data->num_faces_detected)
+                ALOGI("[KPI Perf] %s: PROFILE_NUMBER_OF_FACES_DETECTED %d",
+                    __func__,faces_data->num_faces_detected);
+            faces_data->fd_type = QCAMERA_FD_PREVIEW; //HARD CODE here before MCT can support
+            qcamera_sm_internal_evt_payload_t *payload = (qcamera_sm_internal_evt_payload_t *)
+                malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+            if (NULL != payload) {
+                memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+                payload->evt_type = QCAMERA_INTERNAL_EVT_FACE_DETECT_RESULT;
+                payload->faces_data = *faces_data;
+                int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: processEvt face detection failed", __func__);
+                    free(payload);
+                    payload = NULL;
+                }
+            } else {
+                ALOGE("%s: No memory for face detect qcamera_sm_internal_evt_payload_t", __func__);
+            }
+        }
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_AUTOFOCUS_DATA, pMetaData)) {
+        cam_auto_focus_data_t *focus_data = (cam_auto_focus_data_t *)
+            POINTER_OF_META(CAM_INTF_META_AUTOFOCUS_DATA, pMetaData);
+        qcamera_sm_internal_evt_payload_t *payload =
+            (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+        if (NULL != payload) {
+            memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+            payload->evt_type = QCAMERA_INTERNAL_EVT_FOCUS_UPDATE;
+            payload->focus_data = *focus_data;
+            int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: processEvt focus failed", __func__);
+                free(payload);
+                payload = NULL;
+
+            }
+        } else {
+            ALOGE("%s: No memory for focus qcamera_sm_internal_evt_payload_t", __func__);
+        }
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_CROP_DATA, pMetaData)) {
+        cam_crop_data_t *crop_data =
+            (cam_crop_data_t *)POINTER_OF_META(CAM_INTF_META_CROP_DATA, pMetaData);
+        if (crop_data->num_of_streams > MAX_NUM_STREAMS) {
+            ALOGE("%s: Invalid num_of_streams %d in crop_data", __func__,
+                crop_data->num_of_streams);
+        } else {
+            qcamera_sm_internal_evt_payload_t *payload =
+                (qcamera_sm_internal_evt_payload_t *)
+                    malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+            if (NULL != payload) {
+                memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+                payload->evt_type = QCAMERA_INTERNAL_EVT_CROP_INFO;
+                payload->crop_data = *crop_data;
+                int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+                if (rc != NO_ERROR) {
+                    ALOGE("%s: processEvt crop info failed", __func__);
+                    free(payload);
+                    payload = NULL;
+
+                }
+            } else {
+                ALOGE("%s: No memory for prep_snapshot qcamera_sm_internal_evt_payload_t",
+                    __func__);
+            }
+        }
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_PREP_SNAPSHOT_DONE, pMetaData)) {
+        int32_t *prep_snapshot_done_state =
+            (int32_t *)POINTER_OF_META(CAM_INTF_META_PREP_SNAPSHOT_DONE, pMetaData);
+        qcamera_sm_internal_evt_payload_t *payload =
+        (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+        if (NULL != payload) {
+            memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+            payload->evt_type = QCAMERA_INTERNAL_EVT_PREP_SNAPSHOT_DONE;
+            payload->prep_snapshot_state = (cam_prep_snapshot_state_t)*prep_snapshot_done_state;
+            int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: processEvt prep_snapshot failed", __func__);
+                free(payload);
+                payload = NULL;
+
+            }
+        } else {
+            ALOGE("%s: No memory for prep_snapshot qcamera_sm_internal_evt_payload_t", __func__);
+        }
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_ASD_HDR_SCENE_DATA, pMetaData)) {
+        cam_asd_hdr_scene_data_t *hdr_scene_data =
+        (cam_asd_hdr_scene_data_t *)POINTER_OF_META(CAM_INTF_META_ASD_HDR_SCENE_DATA, pMetaData);
+        CDBG_HIGH("%s: hdr_scene_data: %d %f\n", __func__,
+            hdr_scene_data->is_hdr_scene, hdr_scene_data->hdr_confidence);
+        //Handle this HDR meta data only if capture is not in process
+        if (!pme->m_stateMachine.isCaptureRunning()) {
+            int32_t rc = pme->processHDRData(*hdr_scene_data);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: processHDRData failed", __func__);
+            }
+        }
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_ASD_SCENE_TYPE, pMetaData)) {
+        int32_t *scene =
+            (int32_t *)POINTER_OF_META(CAM_INTF_META_ASD_SCENE_TYPE, pMetaData);
+        qcamera_sm_internal_evt_payload_t *payload =
+            (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+        if (NULL != payload) {
+            memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+            payload->evt_type = QCAMERA_INTERNAL_EVT_ASD_UPDATE;
+            payload->asd_data = (cam_auto_scene_t)*scene;
+            int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: processEvt asd_update failed", __func__);
+                free(payload);
+                payload = NULL;
+
+            }
+        } else {
+            ALOGE("%s: No memory for asd_update qcamera_sm_internal_evt_payload_t", __func__);
+        }
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_FLASH_MODE, pMetaData)) {
+        uint8_t *flash_mode =
+            (uint8_t *)POINTER_OF_META(CAM_INTF_META_FLASH_MODE, pMetaData);
+        pme->mExifParams.sensor_params.flash_mode = (cam_flash_mode_t)*flash_mode;
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_FLASH_STATE, pMetaData)) {
+        int32_t *flash_state =
+            (int32_t *)POINTER_OF_META(CAM_INTF_META_FLASH_STATE, pMetaData);
+        pme->mExifParams.sensor_params.flash_state = (cam_flash_state_t)*flash_state;
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_LENS_APERTURE, pMetaData)) {
+        float *aperture_value =
+            (float *)POINTER_OF_META(CAM_INTF_META_LENS_APERTURE, pMetaData);
+        pme->mExifParams.sensor_params.aperture_value = *aperture_value;
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_AEC_INFO, pMetaData)) {
+        cam_3a_params_t* ae_params =
+            (cam_3a_params_t*)POINTER_OF_META(CAM_INTF_META_AEC_INFO, pMetaData);
+        pme->mExifParams.cam_3a_params = *ae_params;
+        pme->mFlashNeeded = ae_params->flash_needed;
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_SENSOR_INFO, pMetaData)) {
+        cam_sensor_params_t* sensor_params = (cam_sensor_params_t*)
+            POINTER_OF_META(CAM_INTF_META_SENSOR_INFO, pMetaData);
+        pme->mExifParams.sensor_params = *sensor_params;
     }
 
     stream->bufDone(frame->buf_idx);
@@ -1874,7 +1847,7 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                 isSnapshotActive = TRUE;
                 numOfSnapshotExpected = pme->mParent->numOfSnapshotsExpected();
                 longShotEnabled = pme->mParent->isLongshotEnabled();
-                ALOGD("%s: Num Snapshots Expected = %d",
+                CDBG_HIGH("%s: Num Snapshots Expected = %d",
                   __func__, numOfSnapshotExpected);
                 numOfSnapshotRcvd = 0;
             }

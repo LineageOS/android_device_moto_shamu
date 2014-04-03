@@ -1771,7 +1771,6 @@ int32_t mm_channel_handle_metadata(
     uint8_t is_crop_1x_found = 0;
     uint32_t snapshot_stream_id = 0;
     uint32_t i;
-    uint8_t curr_entry;
 
     memset(&good_frame_idx_range, 0, sizeof(good_frame_idx_range));
 
@@ -1800,49 +1799,47 @@ int32_t mm_channel_handle_metadata(
         }
         CDBG("%s: E , expected frame id: %d", __func__, queue->expected_frame_id);
 
-        curr_entry = GET_FIRST_PARAM_ID(metadata);
-        while (curr_entry < CAM_INTF_PARM_MAX) {
-           if (curr_entry == CAM_INTF_META_PREP_SNAPSHOT_DONE) {
-              prep_snapshot_done_state =
-                      *((int32_t*)POINTER_OF(CAM_INTF_META_PREP_SNAPSHOT_DONE, metadata));
-              is_prep_snapshot_done_valid = 1;
-              CDBG("%s: prepare snapshot done valid ", __func__);
-           } else if (curr_entry == CAM_INTF_META_GOOD_FRAME_IDX_RANGE){
-              good_frame_idx_range =
-                 *((cam_frame_idx_range_t*)POINTER_OF(CAM_INTF_META_GOOD_FRAME_IDX_RANGE, metadata));
-              is_good_frame_idx_range_valid = 1;
+        if (IS_META_AVAILABLE(CAM_INTF_META_PREP_SNAPSHOT_DONE, metadata)) {
+            prep_snapshot_done_state = *((int32_t*)
+                POINTER_OF_META(CAM_INTF_META_PREP_SNAPSHOT_DONE, metadata));
+            is_prep_snapshot_done_valid = 1;
+            CDBG("%s: prepare snapshot done valid ", __func__);
+        }
+        if (IS_META_AVAILABLE(CAM_INTF_META_GOOD_FRAME_IDX_RANGE, metadata)){
+            good_frame_idx_range = *((cam_frame_idx_range_t*)
+                POINTER_OF_META(CAM_INTF_META_GOOD_FRAME_IDX_RANGE, metadata));
+            is_good_frame_idx_range_valid = 1;
+            CDBG("%s: good_frame_idx_range : min: %d, max: %d , num frames = %d",
+                __func__, good_frame_idx_range.min_frame_idx,
+                good_frame_idx_range.max_frame_idx, good_frame_idx_range.num_led_on_frames);
+        }
+        if (IS_META_AVAILABLE(CAM_INTF_META_CROP_DATA, metadata)) {
+            cam_crop_data_t crop_data = *((cam_crop_data_t *)
+                POINTER_OF_META(CAM_INTF_META_CROP_DATA, metadata));
 
-              CDBG("%s: good_frame_idx_range : min: %d, max: %d , num frames = %d",
-                      __func__, good_frame_idx_range.min_frame_idx,
-                      good_frame_idx_range.max_frame_idx, good_frame_idx_range.num_led_on_frames);
-           } else if (curr_entry == CAM_INTF_META_CROP_DATA) {
-               cam_crop_data_t crop_data = *((cam_crop_data_t *)
-                   POINTER_OF(CAM_INTF_META_CROP_DATA, metadata));
+            for (i=0; i<ARRAY_SIZE(ch_obj->streams); i++) {
+                if (CAM_STREAM_TYPE_SNAPSHOT ==
+                    ch_obj->streams[i].stream_info->stream_type) {
+                    snapshot_stream_id = ch_obj->streams[i].server_stream_id;
+                    break;
+                }
+            }
 
-               for (i=0; i<ARRAY_SIZE(ch_obj->streams); i++) {
-                   if (CAM_STREAM_TYPE_SNAPSHOT ==
-                           ch_obj->streams[i].stream_info->stream_type) {
-                       snapshot_stream_id = ch_obj->streams[i].server_stream_id;
-                       break;
-                   }
-               }
-
-               for (i=0; i<crop_data.num_of_streams; i++) {
-                   if (snapshot_stream_id == crop_data.crop_info[i].stream_id) {
-                       if (!crop_data.crop_info[i].crop.left &&
-                               !crop_data.crop_info[i].crop.top) {
-                           is_crop_1x_found = 1;
-                           break;
-                       }
-                   }
-               }
-           }
-           curr_entry = GET_NEXT_PARAM_ID(curr_entry, metadata);
+            for (i=0; i<crop_data.num_of_streams; i++) {
+                if (snapshot_stream_id == crop_data.crop_info[i].stream_id) {
+                    if (!crop_data.crop_info[i].crop.left &&
+                            !crop_data.crop_info[i].crop.top) {
+                        is_crop_1x_found = 1;
+                        break;
+                    }
+                }
+            }
         }
 
         if (is_prep_snapshot_done_valid &&
                 is_good_frame_idx_range_valid) {
-            CDBG_ERROR("%s: prep_snapshot_done and good_idx_range shouldn't be valid at the same time", __func__);
+            CDBG_ERROR("%s: prep_snapshot_done and good_idx_range shouldn't be "
+                "valid at the same time", __func__);
             rc = -1;
             goto end;
         }
