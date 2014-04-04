@@ -390,6 +390,7 @@ private:
     int32_t configureBracketing();
     int32_t configureAFBracketing();
     int32_t configureFlashBracketing();
+    int32_t configureHDRBracketing();
     int32_t startBracketing(QCameraPicChannel *pChannel);
     int32_t configureOptiZoom();
 

@@ -2080,6 +2080,8 @@ int32_t QCamera2HardwareInterface::configureBracketing()
         rc = configureOptiZoom();
     } else if (mParameters.isChromaFlashEnabled()) {
         rc = configureFlashBracketing();
+    } else if (mParameters.isHDREnabled()) {
+        rc = configureHDRBracketing();
     } else {
         ALOGE("%s: No Bracketing feature enabled!! ",__func__);
         rc = BAD_VALUE;
@@ -2160,6 +2162,65 @@ int32_t QCamera2HardwareInterface::configureFlashBracketing()
 }
 
 /*===========================================================================
+ * FUNCTION   : configureHDRBracketing
+ *
+ * DESCRIPTION: configure Flash Bracketing.
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::configureHDRBracketing()
+{
+    ALOGD("%s: E",__func__);
+    int32_t rc = NO_ERROR;
+
+    // 'values' should be in "idx1,idx2,idx3,..." format
+    uint8_t hdrFrameCount = gCamCaps[mCameraId]->hdr_bracketing_setting.num_frames;
+    ALOGE("%s : HDR values %d, %d frame count: %d",
+          __func__,
+          (int8_t) gCamCaps[mCameraId]->hdr_bracketing_setting.exp_val.values[0],
+          (int8_t) gCamCaps[mCameraId]->hdr_bracketing_setting.exp_val.values[1],
+          hdrFrameCount);
+
+    // Enable AE Bracketing for HDR
+    cam_exp_bracketing_t aeBracket;
+    memset(&aeBracket, 0, sizeof(cam_exp_bracketing_t));
+    aeBracket.mode =
+        gCamCaps[mCameraId]->hdr_bracketing_setting.exp_val.mode;
+    String8 tmp;
+    for ( unsigned int i = 0; i < hdrFrameCount ; i++ ) {
+        tmp.appendFormat("%d",
+            (int8_t) gCamCaps[mCameraId]->hdr_bracketing_setting.exp_val.values[i]);
+        tmp.append(",");
+    }
+    if (mParameters.isHDR1xFrameEnabled()
+        && mParameters.isHDR1xExtraBufferNeeded()) {
+            tmp.appendFormat("%d", 0);
+            tmp.append(",");
+    }
+
+    if( !tmp.isEmpty() &&
+        ( MAX_EXP_BRACKETING_LENGTH > tmp.length() ) ) {
+        //Trim last comma
+        memset(aeBracket.values, '\0', MAX_EXP_BRACKETING_LENGTH);
+        memcpy(aeBracket.values, tmp.string(), tmp.length() - 1);
+    }
+
+    ALOGE("%s : HDR config values %s",
+          __func__,
+          aeBracket.values);
+    rc = mParameters.setHDRAEBracket(aeBracket);
+    if ( NO_ERROR != rc ) {
+        ALOGE("%s: cannot configure HDR bracketing", __func__);
+        return rc;
+    }
+    ALOGD("%s: X",__func__);
+    return rc;
+}
+/*===========================================================================
  * FUNCTION   : configureOptiZoom
  *
  * DESCRIPTION: configure Opti Zoom.
@@ -2222,6 +2283,8 @@ int32_t QCamera2HardwareInterface::startBracketing(
         rc = pChannel->startBracketing(MM_CAMERA_AF_BRACKETING);
     } else if (mParameters.isChromaFlashEnabled()) {
         rc = pChannel->startBracketing(MM_CAMERA_FLASH_BRACKETING);
+    } else if (mParameters.isHDREnabled()) {
+        rc = pChannel->startBracketing(MM_CAMERA_AE_BRACKETING);
     } else {
         ALOGE("%s: No Bracketing feature enabled!",__func__);
         rc = BAD_VALUE;
@@ -2247,6 +2310,7 @@ int QCamera2HardwareInterface::takePicture()
 
     if (mParameters.isUbiFocusEnabled()|
         mParameters.isOptiZoomEnabled()|
+        mParameters.isHDREnabled()|
         mParameters.isChromaFlashEnabled()) {
         rc = configureBracketing();
         if (rc == NO_ERROR) {
@@ -2268,6 +2332,7 @@ int QCamera2HardwareInterface::takePicture()
                 return rc;
             }
             if (mParameters.isUbiFocusEnabled()|
+                mParameters.isHDREnabled()|
                 mParameters.isChromaFlashEnabled()) {
                 rc = startBracketing(pZSLChannel);
                 if (rc != NO_ERROR) {
@@ -2293,50 +2358,6 @@ int QCamera2HardwareInterface::takePicture()
             return UNKNOWN_ERROR;
         }
     } else {
-
-        if ( mParameters.isHDREnabled() ) {
-
-            // 'values' should be in "idx1,idx2,idx3,..." format
-            uint8_t hdrFrameCount = gCamCaps[mCameraId]->hdr_bracketing_setting.num_frames;
-            ALOGE("%s : HDR values %d, %d frame count: %d",
-                  __func__,
-                  (int8_t) gCamCaps[mCameraId]->hdr_bracketing_setting.exp_val.values[0],
-                  (int8_t) gCamCaps[mCameraId]->hdr_bracketing_setting.exp_val.values[1],
-                  hdrFrameCount);
-
-            // Enable AE Bracketing for HDR
-            cam_exp_bracketing_t aeBracket;
-            memset(&aeBracket, 0, sizeof(cam_exp_bracketing_t));
-            aeBracket.mode =
-                gCamCaps[mCameraId]->hdr_bracketing_setting.exp_val.mode;
-            String8 tmp;
-            for ( unsigned int i = 0; i < hdrFrameCount ; i++ ) {
-                tmp.appendFormat("%d",
-                    (int8_t) gCamCaps[mCameraId]->hdr_bracketing_setting.exp_val.values[i]);
-                tmp.append(",");
-            }
-            if (mParameters.isHDR1xFrameEnabled()
-                && mParameters.isHDR1xExtraBufferNeeded()) {
-                    tmp.appendFormat("%d", 0);
-                    tmp.append(",");
-            }
-
-            if( !tmp.isEmpty() &&
-                ( MAX_EXP_BRACKETING_LENGTH > tmp.length() ) ) {
-                //Trim last comma
-                memset(aeBracket.values, '\0', MAX_EXP_BRACKETING_LENGTH);
-                memcpy(aeBracket.values, tmp.string(), tmp.length() - 1);
-            }
-
-            ALOGE("%s : HDR config values %s",
-                  __func__,
-                  aeBracket.values);
-            rc = mParameters.setHDRAEBracket(aeBracket);
-            if ( NO_ERROR != rc ) {
-                ALOGE("%s: cannot configure HDR bracketing", __func__);
-                return rc;
-            }
-        }
 
         // start snapshot
         if (mParameters.isJpegPictureFormat() ||
@@ -5365,6 +5386,7 @@ bool QCamera2HardwareInterface::needReprocess()
 
     if (mParameters.isUbiFocusEnabled() |
         mParameters.isChromaFlashEnabled() |
+        mParameters.isHDREnabled() |
         mParameters.isOptiZoomEnabled()) {
         ALOGD("%s: need reprocess for |UbiFocus=%d|ChramaFlash=%d|OptiZoom=%d|",
                                          __func__,
