@@ -390,7 +390,7 @@ private:
     int32_t configureBracketing();
     int32_t configureAFBracketing();
     int32_t configureFlashBracketing();
-    int32_t startZslBracketing(QCameraPicChannel *pZSLchannel);
+    int32_t startBracketing(QCameraPicChannel *pChannel);
     int32_t configureOptiZoom();
 
     static void copyList(cam_dimension_t* src_list,

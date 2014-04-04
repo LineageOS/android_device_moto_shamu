@@ -2199,28 +2199,28 @@ int32_t QCamera2HardwareInterface::configureOptiZoom()
 }
 
 /*===========================================================================
- * FUNCTION   : startZslBracketing
+ * FUNCTION   : startBracketing
  *
- * DESCRIPTION: starts zsl bracketing based on bracket type(AF/AE/FLASH).
+ * DESCRIPTION: starts bracketing based on bracket type(AF/AE/FLASH).
  *
  * PARAMETERS :
- *   @pZSLchannel : zsl channel.
+ *   @pChannel : channel.
  *   @type    : 3A bracketing type.
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera2HardwareInterface::startZslBracketing(
-    QCameraPicChannel *pZSLchannel)
+int32_t QCamera2HardwareInterface::startBracketing(
+    QCameraPicChannel *pChannel)
 {
-    ALOGD("%s: Start Zsl bracketig",__func__);
+    ALOGD("%s: Start bracketig",__func__);
     int32_t rc = NO_ERROR;
 
     if(mParameters.isUbiFocusEnabled()) {
-        rc = pZSLchannel->startBracketing(MM_CAMERA_AF_BRACKETING);
+        rc = pChannel->startBracketing(MM_CAMERA_AF_BRACKETING);
     } else if (mParameters.isChromaFlashEnabled()) {
-    rc = pZSLchannel->startBracketing(MM_CAMERA_FLASH_BRACKETING);
+        rc = pChannel->startBracketing(MM_CAMERA_FLASH_BRACKETING);
     } else {
         ALOGE("%s: No Bracketing feature enabled!",__func__);
         rc = BAD_VALUE;
@@ -2268,7 +2268,7 @@ int QCamera2HardwareInterface::takePicture()
             }
             if (mParameters.isUbiFocusEnabled()|
                 mParameters.isChromaFlashEnabled()) {
-                rc = startZslBracketing(pZSLChannel);
+                rc = startBracketing(pZSLChannel);
                 if (rc != NO_ERROR) {
                     ALOGE("%s: cannot start zsl bracketing", __func__);
                     return rc;
@@ -2408,6 +2408,18 @@ int QCamera2HardwareInterface::takePicture()
                 mReprocJob = queueDefferedWork(CMD_DEFF_PPROC_START,
                         args);
 
+                QCameraPicChannel *pCapChannel =
+                    (QCameraPicChannel *)m_channels[QCAMERA_CH_TYPE_CAPTURE];
+                if (NULL != pCapChannel) {
+                    if (mParameters.isUbiFocusEnabled()|
+                        mParameters.isChromaFlashEnabled()) {
+                        rc = startBracketing(pCapChannel);
+                        if (rc != NO_ERROR) {
+                            ALOGE("%s: cannot start bracketing", __func__);
+                            return rc;
+                        }
+                    }
+                }
                 if ( mLongshotEnabled ) {
                     rc = longShot();
                     if (NO_ERROR != rc) {
