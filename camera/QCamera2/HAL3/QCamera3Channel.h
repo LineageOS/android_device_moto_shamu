@@ -233,7 +233,6 @@ private:
     uint32_t mMaxBuffers;
 };
 
-
 /* QCamera3PicChannel is for JPEG stream, which contains a YUV stream generated
  * by the hardware, and encoded to a JPEG stream */
 class QCamera3PicChannel : public QCamera3Channel

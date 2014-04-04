@@ -240,7 +240,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
       mMinProcessedFrameDuration(0),
       mMinJpegFrameDuration(0),
       mMinRawFrameDuration(0),
-      mRawDump(0),
+      mRawDump(false),
       m_pPowerModule(NULL),
       mMetaFrameCount(0),
       mCallbacks(callbacks)
@@ -594,6 +594,12 @@ int QCamera3HardwareInterface::configureStreams(
             it++;
         }
     }
+
+    if (mRawChannel) {
+        delete mRawChannel;
+        mRawChannel = NULL;
+    }
+
     if (mMetadataChannel) {
         delete mMetadataChannel;
         mMetadataChannel = NULL;
@@ -616,6 +622,19 @@ int QCamera3HardwareInterface::configureStreams(
         mMetadataChannel = NULL;
         pthread_mutex_unlock(&mMutex);
         return rc;
+    }
+    if (mRawDump) {
+        //Create RAW channel and initialize it
+        mRawChannel = new QCameraRawChannel(mCameraHandle->camera_handle,
+                        mCameraHandle->ops, captureResultCb,
+                        &gCamCapability[mCameraId]->padding_info, this,
+                        &gCamCapability[mCameraId]->raw_dim);
+        if (mRawChannel == NULL) {
+            ALOGE("%s: failed to allocate RAW channel", __func__);
+            rc = -ENOMEM;
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
     }
 
     if (mRawChannel) {
@@ -1446,6 +1465,18 @@ int QCamera3HardwareInterface::processCaptureRequest(
         }
 #endif
 
+        if (mRawDump && mRawChannel) {
+            ALOGD("%s: Initialize RAW Channel", __func__);
+            rc = mRawChannel->initialize();
+            if (rc < 0) {
+                ALOGE("%s: RAW channel initialization failed", __func__);
+                delete mRawChannel;
+                mRawChannel = NULL;
+                pthread_mutex_unlock(&mMutex);
+                return rc;
+            }
+        }
+
         CDBG_HIGH("%s: Start META Channel", __func__);
         mMetadataChannel->start();
 
@@ -1498,6 +1529,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
                                     request->input_buffer,
                                     frameNumber);
     // Acquire all request buffers first
+    streamID.num_streams = 0;
     int blob_request = 0;
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
@@ -1516,13 +1548,15 @@ int QCamera3HardwareInterface::processCaptureRequest(
             return rc;
         }
 
-        streamID.streamID[i]=channel->getStreamID(channel->getStreamTypeMask());
-    }
-    streamID.num_streams=request->num_output_buffers;
-    if (mRawDump && blob_request) {
-        streamID.streamID[streamID.num_streams]=
-            mRawChannel->getStreamID(mRawChannel->getStreamTypeMask());
+        streamID.streamID[streamID.num_streams] =
+            channel->getStreamID(channel->getStreamTypeMask());
         streamID.num_streams++;
+
+        if (mRawDump && output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
+            streamID.streamID[streamID.num_streams] =
+                mRawChannel->getStreamID(mRawChannel->getStreamTypeMask());
+            streamID.num_streams++;
+        }
     }
 
     if(request->input_buffer == NULL) {
