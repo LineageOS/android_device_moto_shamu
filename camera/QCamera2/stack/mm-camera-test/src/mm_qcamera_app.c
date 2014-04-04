@@ -2307,13 +2307,13 @@ int mm_camera_lib_send_command(mm_camera_lib_handle *handle,
 
             width = handle->test_obj.buffer_width;
             height = handle->test_obj.buffer_height;
-            handle->test_obj.buffer_width = camera_cap->raw_dim.width;
-            handle->test_obj.buffer_height = camera_cap->raw_dim.height;
+            handle->test_obj.buffer_width = camera_cap->raw_dim[0].width;
+            handle->test_obj.buffer_height = camera_cap->raw_dim[0].height;
             handle->test_obj.buffer_format = DEFAULT_RAW_FORMAT;
             CDBG_ERROR("%s: MM_CAMERA_LIB_RAW_CAPTURE %dx%d\n",
                        __func__,
-                       camera_cap->raw_dim.width,
-                       camera_cap->raw_dim.height);
+                       camera_cap->raw_dim[0].width,
+                       camera_cap->raw_dim[0].height);
             rc = mm_app_start_capture_raw(&handle->test_obj, 1);
             if (rc != MM_CAMERA_OK) {
                 CDBG_ERROR("%s: mm_app_start_capture() err=%d\n",
