@@ -96,7 +96,6 @@ public:
     int32_t getParameter(cam_stream_parm_buffer_t &param);
     int32_t syncRuntimeParams();
     cam_stream_parm_buffer_t getOutputCrop() { return m_OutputCrop;};
-    cam_stream_parm_buffer_t getBufferInfo() { return m_BufferInfo;};
 
     static void releaseFrameData(void *data, void *user_data);
     int32_t configStream();
@@ -141,7 +140,6 @@ private:
     pthread_t mBufAllocPid;
     mm_camera_map_unmap_ops_tbl_t m_MemOpsTbl;
     cam_stream_parm_buffer_t m_OutputCrop;
-    cam_stream_parm_buffer_t m_BufferInfo;
 
     static int32_t get_bufs(
                      cam_frame_len_offset_t *offset,

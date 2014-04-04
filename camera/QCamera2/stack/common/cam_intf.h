@@ -311,7 +311,6 @@ typedef enum {
     CAM_STREAM_PARAM_TYPE_SET_BUNDLE_INFO = CAM_INTF_PARM_SET_BUNDLE,
     CAM_STREAM_PARAM_TYPE_SET_FLIP = CAM_INTF_PARM_STREAM_FLIP,
     CAM_STREAM_PARAM_TYPE_GET_OUTPUT_CROP = CAM_INTF_PARM_GET_OUTPUT_CROP,
-    CAM_STREAM_PARAM_TYPE_GET_BUFFER_INFO = CAM_INTF_PARM_GET_BUFFER_INFO,
     CAM_STREAM_PARAM_TYPE_MAX
 } cam_stream_param_type_e;
 
@@ -339,7 +338,6 @@ typedef struct {
         cam_bundle_config_t bundleInfo; /* set bundle info*/
         cam_flip_mode_t flipInfo;       /* flip mode */
         cam_crop_data_t outputCrop;     /* output crop for current frame */
-        cam_buffer_data_t buffer;       /* buffer data for current frame */
     };
 } cam_stream_parm_buffer_t;
 

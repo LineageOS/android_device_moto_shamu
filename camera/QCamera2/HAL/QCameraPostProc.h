@@ -154,7 +154,6 @@ private:
     static void releaseJpegData(void *data, void *user_data);
     static void releasePPInputData(void *data, void *user_data);
     static void releaseOngoingPPData(void *data, void *user_data);
-    static void releaseDelayedBufferData(void *data, void *user_data);
 
     static void *dataProcessRoutine(void *data);
     static void *dataSaveRoutine(void *data);
@@ -187,7 +186,6 @@ private:
     QCameraQueue m_ongoingJpegQ;        // ongoing jpeg job queue
     QCameraQueue m_inputRawQ;           // input raw job queue
     QCameraQueue m_inputSaveQ;          // input save job queue
-    QCameraQueue m_delayReleaseBuffers; // delayed buffer release queue
     QCameraCmdThread m_dataProcTh;      // thread for data processing
     QCameraCmdThread m_saveProcTh;      // thread for storing buffers
     uint32_t mSaveFrmCnt;               // save frame counter
@@ -195,7 +193,6 @@ private:
     bool mUseSaveProc;                  // use store thread
     bool mUseJpegBurst;                 // use jpeg burst encoding mode
     bool mJpegMemOpt;
-    bool mHoldBuffers;                  // buffers are held in daemon
     uint32_t   m_JpegOutputMemCount;
     uint8_t mNewJpegSessionNeeded;
 };

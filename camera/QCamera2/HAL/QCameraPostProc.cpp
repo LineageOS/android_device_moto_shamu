@@ -74,12 +74,10 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
       m_inputJpegQ(releaseJpegData, this),
       m_ongoingJpegQ(releaseJpegData, this),
       m_inputRawQ(releaseRawData, this),
-      m_delayReleaseBuffers(releaseDelayedBufferData, this),
       mSaveFrmCnt(0),
       mUseSaveProc(false),
       mUseJpegBurst(false),
       mJpegMemOpt(true),
-      mHoldBuffers(false),
       m_JpegOutputMemCount(0),
       mNewJpegSessionNeeded(true)
 {
@@ -740,15 +738,8 @@ int32_t QCameraPostProcessor::processJpegEvt(qcamera_jpeg_evt_payload_t *evt)
         m_inputSaveQ.enqueue((void *) saveData);
         m_saveProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
     } else {
-
         // Release jpeg job data
-        if (mHoldBuffers) {
-            // Enqueue jib id for delayed release
-            m_delayReleaseBuffers.enqueue(new uint32_t(evt->jobId));
-        } else {
-            m_delayReleaseBuffers.flush();
-            m_ongoingJpegQ.flushNodes(matchJobId, (void*)&evt->jobId);
-        }
+        m_ongoingJpegQ.flushNodes(matchJobId, (void*)&evt->jobId);
 
         ALOGD("[KPI Perf] %s : jpeg job %d", __func__, evt->jobId);
 
@@ -1006,26 +997,6 @@ void QCameraPostProcessor::releaseOngoingPPData(void *data, void *user_data)
             free(pp_job->src_frame);
             pp_job->src_frame = NULL;
         }
-    }
-}
-
-/*===========================================================================
- * FUNCTION   : releaseDelayedBufferData
- *
- * DESCRIPTION: callback function to release delayed buffer data
- *
- * PARAMETERS :
- *   @data      : ptr to onging postprocess job
- *   @user_data : user data ptr (QCameraReprocessor)
- *
- * RETURN     : None
- *==========================================================================*/
-void QCameraPostProcessor::releaseDelayedBufferData(void *data, void *user_data)
-{
-    QCameraPostProcessor *pme = (QCameraPostProcessor *)user_data;
-
-    if (NULL != pme) {
-        pme->m_ongoingJpegQ.flushNodes(matchJobId, data);
     }
 }
 
@@ -1588,17 +1559,6 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         jpg_job.encode_job.dst_index = -1;
     }
 
-    if (reproc_stream) {
-        param = reproc_stream->getBufferInfo();
-        for (int i = 0; i < param.buffer.num_of_streams; i++) {
-            if (param.buffer.info[i].stream_id
-                == reproc_stream->getMyServerID()) {
-                    mHoldBuffers = param.buffer.info[i].hold_buffers;
-                break;
-            }
-        }
-    }
-
     cam_dimension_t src_dim;
     memset(&src_dim, 0, sizeof(cam_dimension_t));
     main_stream->getFrameDimension(src_dim);
@@ -2075,9 +2035,6 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
 
                 // flush input raw Queue
                 pme->m_inputRawQ.flush();
-
-                // flush delayed buffer release queue
-                pme->m_delayReleaseBuffers.flush();
 
                 // signal cmd is completed
                 cam_sem_post(&cmdThread->sync_sem);
