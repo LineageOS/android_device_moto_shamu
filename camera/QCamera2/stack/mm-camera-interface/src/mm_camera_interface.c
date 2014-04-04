@@ -1507,9 +1507,9 @@ uint8_t get_num_of_cameras()
  *              -1 -- failure
  *==========================================================================*/
 static int32_t mm_camera_intf_process_bracketing(uint32_t camera_handle,
-                                                    mm_camera_bracketing_t bracketing_type,
-                                                    uint32_t ch_id,
-                                                    int8_t start_flag)
+    mm_camera_bracketing_t bracketing_type,
+    uint32_t ch_id,
+    int8_t start_flag)
 {
     int32_t rc = -1;
     mm_camera_obj_t * my_obj = NULL;

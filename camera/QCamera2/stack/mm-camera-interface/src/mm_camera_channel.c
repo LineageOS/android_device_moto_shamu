@@ -1902,7 +1902,8 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
 
             if (super_buf->matched) {
                 if(ch_obj->isFlashBracketingEnabled) {
-                   queue->expected_frame_id = queue->expected_frame_id_without_led;
+                   queue->expected_frame_id =
+                       queue->expected_frame_id_without_led;
                    ch_obj->isFlashBracketingEnabled = FALSE;
                 } else {
                    queue->expected_frame_id = buf_info->frame_idx
