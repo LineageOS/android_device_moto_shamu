@@ -4198,7 +4198,7 @@ int32_t QCameraParameters::init(cam_capability_t *capabilities,
 
     //Allocate Set Param Buffer
     m_pParamHeap = new QCameraHeapMemory(QCAMERA_ION_USE_CACHE);
-    rc = m_pParamHeap->allocate(1, PARAM_TABLE_SIZE);
+    rc = m_pParamHeap->allocate(1, sizeof(parm_buffer_t));
     if(rc != OK) {
         rc = NO_MEMORY;
         ALOGE("Failed to allocate SETPARM Heap memory");
@@ -4209,13 +4209,13 @@ int32_t QCameraParameters::init(cam_capability_t *capabilities,
     rc = m_pCamOpsTbl->ops->map_buf(m_pCamOpsTbl->camera_handle,
                              CAM_MAPPING_BUF_TYPE_PARM_BUF,
                              m_pParamHeap->getFd(0),
-                             PARAM_TABLE_SIZE);
+                             sizeof(parm_buffer_t));
     if(rc < 0) {
         ALOGE("%s:failed to map SETPARM buffer",__func__);
         rc = FAILED_TRANSACTION;
         goto TRANS_INIT_ERROR2;
     }
-    m_pParamBuf = (parm_buffer_new_t*) DATA_PTR(m_pParamHeap,0);
+    m_pParamBuf = (parm_buffer_t*) DATA_PTR(m_pParamHeap,0);
 
     initDefaultParameters();
 
@@ -7558,7 +7558,7 @@ int32_t QCameraParameters::updateRAW(cam_dimension_t max_dim)
         ALOGE("%s:Failed to get commit CAM_INTF_PARM_RAW_DIMENSION", __func__);
         return rc;
     }
-    memcpy(&raw_dim,POINTER_OF_PARAM(CAM_INTF_PARM_RAW_DIMENSION,m_pParamBuf),sizeof(cam_dimension_t));
+    memcpy(&raw_dim,POINTER_OF(CAM_INTF_PARM_RAW_DIMENSION,m_pParamBuf),sizeof(cam_dimension_t));
     ALOGE("%s : RAW Dimension = %d X %d",__func__,raw_dim.width,raw_dim.height);
     if (raw_dim.width == 0 || raw_dim.height == 0) {
         ALOGE("%s: Error getting RAW size. Setting to Capability value",__func__);
@@ -7844,16 +7844,12 @@ const char *QCameraParameters::getFrameFmtString(cam_format_t fmt)
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCameraParameters::initBatchUpdate(void *p_table)
+int32_t QCameraParameters::initBatchUpdate(parm_buffer_t *p_table)
 {
-
     m_tempMap.clear();
-    ALOGD("%s:Initializing batch parameter set",__func__);
 
-    parm_buffer_new_t *param_buf = (parm_buffer_new_t *)p_table;
-    memset(param_buf, 0, sizeof(PARAM_TABLE_SIZE));
-    param_buf->num_entry = 0;
-    param_buf->curr_size = 0;
+    memset(p_table, 0, sizeof(parm_buffer_t));
+    p_table->first_flagged_entry = CAM_INTF_PARM_MAX;
     return NO_ERROR;
 }
 
@@ -7872,50 +7868,50 @@ int32_t QCameraParameters::initBatchUpdate(void *p_table)
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCameraParameters::AddSetParmEntryToBatch(void *p_table,
+int32_t QCameraParameters::AddSetParmEntryToBatch(parm_buffer_t *p_table,
                                                   cam_intf_parm_type_t paramType,
                                                   uint32_t paramLength,
                                                   void *paramValue)
 {
-    uint32_t j = 0;
-    parm_buffer_new_t *param_buf = (parm_buffer_new_t *)p_table;
-    uint32_t num_entry = param_buf->num_entry;
-    uint32_t size_req = paramLength + sizeof(parm_entry_type_new_t);
-    uint32_t aligned_size_req = (size_req + 3) & (~3);
-    parm_entry_type_new_t *curr_param = (parm_entry_type_new_t *)&param_buf->entry[0];
+    int position = paramType;
+    int current, next;
 
-    /* first search if the key is already present in the batch list
-     * this is a search penalty but as the batch list is never more
-     * than a few tens of entries at most,it should be ok.
-     * if search performance becomes a bottleneck, we can
-     * think of implementing a hashing mechanism.
-     * but it is still better than the huge memory required for
-     * direct indexing
-     */
-    for (j = 0; j < num_entry; j++) {
-      if (paramType == curr_param->entry_type) {
-        ALOGV("%s:Batch parameter overwrite for param: %d",
-                                                __func__, paramType);
-        break;
-      }
-      curr_param = GET_NEXT_PARAM(curr_param, parm_entry_type_new_t);
+    if (position >= CAM_INTF_PARM_MAX) {
+        ALOGE("%s: Error invalid param type ", __func__);
+        return BAD_VALUE;
+    }
+    /*************************************************************************
+    *                 Code to take care of linking next flags                *
+    *************************************************************************/
+    current = GET_FIRST_PARAM_ID(p_table);
+    if (position == current){
+        //DO NOTHING
+    } else if (position < current){
+        SET_NEXT_PARAM_ID(position, p_table, current);
+        SET_FIRST_PARAM_ID(p_table, position);
+    } else {
+        /* Search for the position in the linked list where we need to slot in*/
+        while ((current < CAM_INTF_PARM_MAX) &&
+            (position > GET_NEXT_PARAM_ID(current, p_table)))
+            current = GET_NEXT_PARAM_ID(current, p_table);
+
+        /*If node already exists no need to alter linking*/
+        if (position != GET_NEXT_PARAM_ID(current, p_table)) {
+            next = GET_NEXT_PARAM_ID(current, p_table);
+            SET_NEXT_PARAM_ID(current, p_table, position);
+            SET_NEXT_PARAM_ID(position, p_table, next);
+        }
     }
 
-    //new param, search not found
-    if (j == num_entry) {
-      curr_param = (parm_entry_type_new_t *)(&param_buf->entry[0] +
-                                                  param_buf->curr_size);
-      param_buf->curr_size += aligned_size_req;
-      param_buf->num_entry++;
+    /*************************************************************************
+    *                   Copy contents into entry                             *
+    *************************************************************************/
+
+    if (paramLength > sizeof(parm_type_t)) {
+        ALOGE("%s:Size of input larger than max entry size",__func__);
+        return BAD_VALUE;
     }
-
-    curr_param->entry_type = paramType;
-    curr_param->size = (int32_t)paramLength;
-    curr_param->aligned_size = aligned_size_req;
-    memcpy(&curr_param->data[0], paramValue, paramLength);
-    ALOGV("%s: num_entry: %d, paramType: %d, paramLength: %d, aligned_size_req: %d",
-            __func__, param_buf->num_entry, paramType, paramLength, aligned_size_req);
-
+    memcpy(POINTER_OF(paramType,p_table), paramValue, paramLength);
     return NO_ERROR;
 }
 
@@ -7932,48 +7928,33 @@ int32_t QCameraParameters::AddSetParmEntryToBatch(void *p_table,
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCameraParameters::AddGetParmEntryToBatch(void *p_table,
+int32_t QCameraParameters::AddGetParmEntryToBatch(parm_buffer_t *p_table,
                                                   cam_intf_parm_type_t paramType)
 {
-    ///in get params, we have no information on the size of the param requested
-    //for, hence we assume the largest size and reserve space for the same
-    uint32_t j = 0;
-    uint32_t paramLength = sizeof(parm_type_t);
-    parm_buffer_new_t *param_buf = (parm_buffer_new_t *)p_table;
-    uint32_t num_entry = param_buf->num_entry;
-    uint32_t size_req = paramLength + sizeof(parm_entry_type_new_t) - sizeof(char);
-    uint32_t aligned_size_req = (size_req + 3) & (~3);
-    parm_entry_type_new_t *curr_param = (parm_entry_type_new_t *)&param_buf->entry[0];
+    int position = paramType;
+    int current, next;
 
-    /* first search if the key is already present in the batch list
-     * this is a search penalty but as the batch list is never more
-     * than a few tens of entries at most,it should be ok.
-     * if search performance becomes a bottleneck, we can
-     * think of implementing a hashing mechanism.
-     * but it is still better than the huge memory required for
-     * direct indexing
-     */
-    for (j = 0; j < num_entry; j++) {
-      if (paramType == curr_param->entry_type) {
-        ALOGV("%s:Batch parameter overwrite for param: %d",
-                                                __func__, paramType);
-        break;
-      }
-      curr_param = GET_NEXT_PARAM(curr_param, parm_entry_type_new_t);
+    /*************************************************************************
+    *                 Code to take care of linking next flags                *
+    *************************************************************************/
+    current = GET_FIRST_PARAM_ID(p_table);
+    if (position == current){
+        //DO NOTHING
+    } else if (position < current){
+        SET_NEXT_PARAM_ID(position, p_table, current);
+        SET_FIRST_PARAM_ID(p_table, position);
+    } else {
+        /* Search for the position in the linked list where we need to slot in*/
+        while (position > GET_NEXT_PARAM_ID(current, p_table))
+            current = GET_NEXT_PARAM_ID(current, p_table);
+
+        /*If node already exists no need to alter linking*/
+        if (position != GET_NEXT_PARAM_ID(current, p_table)) {
+            next=GET_NEXT_PARAM_ID(current, p_table);
+            SET_NEXT_PARAM_ID(current, p_table, position);
+            SET_NEXT_PARAM_ID(position, p_table, next);
+        }
     }
-
-    //new param, search not found
-    if (j == num_entry) {
-      curr_param = (parm_entry_type_new_t *)(&param_buf->entry[0] +
-                                                  param_buf->curr_size);
-      param_buf->curr_size += aligned_size_req;
-      param_buf->num_entry++;
-    }
-
-    curr_param->entry_type = paramType;
-    curr_param->size = (int32_t)paramLength;
-    curr_param->aligned_size = aligned_size_req;
-    ALOGD("%s:num_entry: %d, paramType: %d ",__func__, param_buf->num_entry, paramType);
 
     return NO_ERROR;
 }
@@ -7992,9 +7973,8 @@ int32_t QCameraParameters::AddGetParmEntryToBatch(void *p_table,
 int32_t QCameraParameters::commitSetBatch()
 {
     int32_t rc = NO_ERROR;
-    if (m_pParamBuf->num_entry > 0) {
-        rc = m_pCamOpsTbl->ops->set_parms(m_pCamOpsTbl->camera_handle,
-                                                      (void *)m_pParamBuf);
+    if (m_pParamBuf->first_flagged_entry < CAM_INTF_PARM_MAX) {
+        rc = m_pCamOpsTbl->ops->set_parms(m_pCamOpsTbl->camera_handle, m_pParamBuf);
     }
     if (rc == NO_ERROR) {
         // commit change from temp storage into param map
@@ -8016,9 +7996,8 @@ int32_t QCameraParameters::commitSetBatch()
  *==========================================================================*/
 int32_t QCameraParameters::commitGetBatch()
 {
-    if (m_pParamBuf->num_entry > 0) {
-        return m_pCamOpsTbl->ops->get_parms(m_pCamOpsTbl->camera_handle,
-                                                          (void *)m_pParamBuf);
+    if (m_pParamBuf->first_flagged_entry < CAM_INTF_PARM_MAX) {
+        return m_pCamOpsTbl->ops->get_parms(m_pCamOpsTbl->camera_handle, m_pParamBuf);
     } else {
         return NO_ERROR;
     }

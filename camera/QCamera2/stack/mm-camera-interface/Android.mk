@@ -10,8 +10,7 @@ MM_CAM_FILES := \
         src/mm_camera_channel.c \
         src/mm_camera_stream.c \
         src/mm_camera_thread.c \
-        src/mm_camera_sock.c \
-        src/cam_intf.c
+        src/mm_camera_sock.c
 
 ifeq ($(strip $(TARGET_USES_ION)),true)
     LOCAL_CFLAGS += -DUSE_ION
