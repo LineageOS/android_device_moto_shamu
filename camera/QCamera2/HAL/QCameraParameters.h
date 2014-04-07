@@ -569,6 +569,8 @@ public:
         isChromaFlashEnabled() || isOptiZoomEnabled(); }
     bool isDisplayFrameNeeded() { return m_bDisplayFrame; };
     int32_t setDisplayFrame(bool enabled) {m_bDisplayFrame=enabled; return 0;};
+    bool isAdvCamFeaturesEnabled() {return isUbiFocusEnabled() ||
+        isChromaFlashEnabled() || isOptiZoomEnabled() || isHDREnabled();}
 
 private:
     int32_t setPreviewSize(const QCameraParameters& );
