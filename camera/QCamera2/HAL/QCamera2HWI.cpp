@@ -2329,28 +2329,15 @@ int32_t QCamera2HardwareInterface::configureAEBracketing()
 int32_t QCamera2HardwareInterface::configureOptiZoom()
 {
     int32_t rc = NO_ERROR;
-    //Get current zoom level and zoom threshold value to start opti zoom.
-    uint8_t zoom_level =
-        (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
-    cam_opti_zoom_t *opti_zoom_settings_need =
-        &gCamCaps[mCameraId]->opti_zoom_settings_need;
-    uint8_t zoom_threshold = opti_zoom_settings_need->zoom_threshold;
-    ALOGD("%s: current zoom level =%d & zoom_threshold =%d",
-          __func__, zoom_level,zoom_threshold);
-    if(zoom_level >= zoom_threshold) {
-        //set zoom level to 1x;
-        mParameters.setAndCommitZoom(0);
-        //store current zoom level.
-        mZoomLevel = zoom_level;
-        mParameters.set3ALock(QCameraParameters::VALUE_TRUE);
-        mIs3ALocked = true;
-    } else {
-       //zoom threshold is less than current zoom level.
-       //dont start OptiZoom, current zoom level should
-       //be greater than threshold to start opti zoom.
-       //TODO:
-       return BAD_VALUE;
-    }
+
+    //store current zoom level.
+    mZoomLevel = (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
+
+    //set zoom level to 1x;
+    mParameters.setAndCommitZoom(0);
+
+    mParameters.set3ALock(QCameraParameters::VALUE_TRUE);
+    mIs3ALocked = true;
 
     return rc;
 }
@@ -4405,17 +4392,9 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addReprocChannel(
     }
 
     if(mParameters.isOptiZoomEnabled()) {
-        uint8_t zoom_level =
-            (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
-        uint8_t zoom_threshold =
-            gCamCaps[mCameraId]->opti_zoom_settings_need.zoom_threshold;
-        //Check for threshold value of zoom required for optizoom algo.
-        //if it is above then threshold then only set feature mask, and
-        //pass zoom level.
-        if (zoom_level >= zoom_threshold) {
-           pp_config.feature_mask |= CAM_QCOM_FEATURE_OPTIZOOM;
-           pp_config.zoom_level = zoom_level;
-        }
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_OPTIZOOM;
+        pp_config.zoom_level =
+                (uint8_t) mParameters.getInt(CameraParameters::KEY_ZOOM);
     } else {
         pp_config.feature_mask &= ~CAM_QCOM_FEATURE_OPTIZOOM;
     }
