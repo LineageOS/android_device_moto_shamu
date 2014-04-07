@@ -1596,30 +1596,25 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     }
     if (img_feature_enabled) {
         memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
-        param.type = CAM_STREAM_PARAM_TYPE_GET_IMG_PROP;
 
-        ret = main_stream->getParameter(param);
-        if (ret != NO_ERROR) {
-            ALOGE("%s: stream getParameter for reprocess failed", __func__);
-        } else {
-            imgProp = param.imgProp;
-            main_stream->setCropInfo(imgProp.crop);
-            crop = imgProp.crop;
-            thumb_stream = NULL; /* use thumbnail from main image */
-            if (imgProp.is_raw_image) {
-               camera_memory_t *mem = memObj->getMemory(
-                   main_frame->buf_idx, false);
-               ALOGE("%s:%d] Process raw image %p %d", __func__, __LINE__,
-                   mem, imgProp.size);
-               /* dump image */
-               if (mem && mem->data) {
-                   CAM_DUMP_TO_FILE("/data/local/ubifocus", "DepthMapImage",
-                                    -1, "y",
-                                    (uint8_t *)mem->data,
-                                    imgProp.size);
-               }
-               return NO_ERROR;
-            }
+        param = main_stream->getImgProp();
+        imgProp = param.imgProp;
+        main_stream->setCropInfo(imgProp.crop);
+        crop = imgProp.crop;
+        thumb_stream = NULL; /* use thumbnail from main image */
+        if (imgProp.is_raw_image) {
+           camera_memory_t *mem = memObj->getMemory(
+               main_frame->buf_idx, false);
+           ALOGE("%s:%d] Process raw image %p %d", __func__, __LINE__,
+               mem, imgProp.size);
+           /* dump image */
+           if (mem && mem->data) {
+               CAM_DUMP_TO_FILE("/data/local/ubifocus", "DepthMapImage",
+                                -1, "y",
+                                (uint8_t *)mem->data,
+                                imgProp.size);
+           }
+           return NO_ERROR;
         }
     }
 
@@ -2092,17 +2087,17 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
                         // sync any stream specific parameters here.
                         pme->syncStreamParams(jpeg_job->src_frame, NULL);
 
-                      // add into ongoing jpeg job Q
-                      pme->m_ongoingJpegQ.enqueue((void *)jpeg_job);
-                      ret = pme->encodeData(jpeg_job,
-                              pme->mNewJpegSessionNeeded);
-                      if (NO_ERROR != ret) {
-                        // dequeue the last one
-                        pme->m_ongoingJpegQ.dequeue(false);
-                        pme->releaseJpegJobData(jpeg_job);
-                        free(jpeg_job);
-                        pme->sendEvtNotify(CAMERA_MSG_ERROR, UNKNOWN_ERROR, 0);
-                      }
+                        // add into ongoing jpeg job Q
+                        pme->m_ongoingJpegQ.enqueue((void *)jpeg_job);
+                        ret = pme->encodeData(jpeg_job,
+                                  pme->mNewJpegSessionNeeded);
+                        if (NO_ERROR != ret) {
+                            // dequeue the last one
+                            pme->m_ongoingJpegQ.dequeue(false);
+                            pme->releaseJpegJobData(jpeg_job);
+                            free(jpeg_job);
+                            pme->sendEvtNotify(CAMERA_MSG_ERROR, UNKNOWN_ERROR, 0);
+                        }
                     }
 
 

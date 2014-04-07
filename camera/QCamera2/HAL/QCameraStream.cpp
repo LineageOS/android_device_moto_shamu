@@ -261,6 +261,7 @@ QCameraStream::QCameraStream(QCameraAllocator &allocator,
     memset(&mCropInfo, 0, sizeof(cam_rect_t));
     memset(&m_MemOpsTbl, 0, sizeof(mm_camera_map_unmap_ops_tbl_t));
     memset(&m_OutputCrop, 0, sizeof(cam_stream_parm_buffer_t));
+    memset(&m_ImgProp, 0, sizeof(cam_stream_parm_buffer_t));
     pthread_mutex_init(&mCropLock, NULL);
     pthread_mutex_init(&mParameterLock, NULL);
 }
@@ -579,6 +580,15 @@ int32_t QCameraStream::syncRuntimeParams()
     ret = getParameter(m_OutputCrop);
     if (ret != NO_ERROR) {
         ALOGE("%s: stream getParameter for output crop failed", __func__);
+        return ret;
+    }
+
+    memset(&m_ImgProp, 0, sizeof(cam_stream_parm_buffer_t));
+    m_ImgProp.type = CAM_STREAM_PARAM_TYPE_GET_IMG_PROP;
+
+    ret = getParameter(m_ImgProp);
+    if (ret != NO_ERROR) {
+        ALOGE("%s: stream getParameter for image prop failed", __func__);
         return ret;
     }
 
