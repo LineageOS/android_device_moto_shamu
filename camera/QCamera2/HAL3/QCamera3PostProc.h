@@ -54,6 +54,7 @@ typedef struct {
     mm_camera_super_buf_t *src_reproc_frame; // original source frame for reproc if not NULL
     mm_camera_super_buf_t *aux_frame;// source frame but from different stream
     QCamera3Channel *aux_channel;
+    QCamera3Exif *pJpegExifObj;
 } qcamera_hal3_jpeg_data_t;
 
 typedef struct {
@@ -106,7 +107,9 @@ private:
     mm_jpeg_format_t getJpegImgTypeFromImgFmt(cam_format_t img_fmt);
     int32_t getJpegEncodingConfig(mm_jpeg_encode_params_t& encode_parm,
                                   QCamera3Stream *main_stream,
-                                  QCamera3Stream *thumb_stream);
+                                  const cam_dimension_t &src_dim,
+                                  const cam_dimension_t &dst_dim,
+                                  const cam_dimension_t &thumb_dst_dim);
     int32_t encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_data,
                        uint8_t &needNewSess);
     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
@@ -127,7 +130,6 @@ private:
     uint32_t                   mJpegClientHandle;
     uint32_t                   mJpegSessionId;
 
-    QCamera3Exif *             m_pJpegExifObj;
     int8_t                     m_bThumbnailNeeded;
     QCamera3Memory             *mJpegMem;
     int                        mJpegMemIndex;

@@ -56,7 +56,6 @@ QCamera3PostProcessor::QCamera3PostProcessor(QCamera3PicChannel* ch_ctrl)
       mJpegUserData(NULL),
       mJpegClientHandle(0),
       mJpegSessionId(0),
-      m_pJpegExifObj(NULL),
       m_bThumbnailNeeded(TRUE),
       m_pReprocChannel(NULL),
       m_inputPPQ(releasePPInputData, this),
@@ -80,10 +79,6 @@ QCamera3PostProcessor::QCamera3PostProcessor(QCamera3PicChannel* ch_ctrl)
  *==========================================================================*/
 QCamera3PostProcessor::~QCamera3PostProcessor()
 {
-    if (m_pJpegExifObj != NULL) {
-        delete m_pJpegExifObj;
-        m_pJpegExifObj = NULL;
-    }
     pthread_mutex_destroy(&mReprocJobLock);
 }
 
@@ -244,7 +239,9 @@ int32_t QCamera3PostProcessor::stop()
  *==========================================================================*/
 int32_t QCamera3PostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& encode_parm,
                                                     QCamera3Stream *main_stream,
-                                                    QCamera3Stream *thumb_stream)
+                                                    const cam_dimension_t &src_dim,
+                                                    const cam_dimension_t &dst_dim,
+                                                    const cam_dimension_t &thumb_dst_dim)
 {
     ALOGV("%s : E", __func__);
     int32_t ret = NO_ERROR;
@@ -273,17 +270,6 @@ int32_t QCamera3PostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& en
         encode_parm.quality = 85;
     }
 
-    // get exif data
-    if (m_pJpegExifObj != NULL) {
-        delete m_pJpegExifObj;
-        m_pJpegExifObj = NULL;
-    }
-    m_pJpegExifObj = m_parent->getExifData();
-    if (m_pJpegExifObj != NULL) {
-        encode_parm.exif_info.exif_data = m_pJpegExifObj->getEntries();
-        encode_parm.exif_info.numOfEntries = m_pJpegExifObj->getNumOfEntries();
-    }
-
     cam_frame_len_offset_t main_offset;
     memset(&main_offset, 0, sizeof(cam_frame_len_offset_t));
     main_stream->getFrameOffset(main_offset);
@@ -309,12 +295,9 @@ int32_t QCamera3PostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& en
     }
 
     //Pass input thumbnail buffer info to encoder.
-    //Note: In this version thumb_stream = main_stream
+    //Note: Use main buffer to encode thumbnail
     if (m_bThumbnailNeeded == TRUE) {
-        if (thumb_stream == NULL) {
-            thumb_stream = main_stream;
-        }
-        pStreamMem = thumb_stream->getStreamBufs();
+        pStreamMem = main_stream->getStreamBufs();
         if (pStreamMem == NULL) {
             ALOGE("%s: cannot get stream bufs from thumb stream", __func__);
             ret = BAD_VALUE;
@@ -322,7 +305,7 @@ int32_t QCamera3PostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& en
         }
         cam_frame_len_offset_t thumb_offset;
         memset(&thumb_offset, 0, sizeof(cam_frame_len_offset_t));
-        thumb_stream->getFrameOffset(thumb_offset);
+        main_stream->getFrameOffset(thumb_offset);
         encode_parm.num_tmb_bufs = pStreamMem->getCnt();
         for (int i = 0; i < pStreamMem->getCnt(); i++) {
             if (pStreamMem != NULL) {
@@ -346,14 +329,15 @@ int32_t QCamera3PostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& en
     encode_parm.dest_buf[0].format = MM_JPEG_FMT_YUV;
     encode_parm.dest_buf[0].offset = main_offset;
 
+    encode_parm.main_dim.src_dim = src_dim;
+    encode_parm.main_dim.dst_dim = dst_dim;
+    encode_parm.thumb_dim.src_dim = src_dim;
+    encode_parm.thumb_dim.dst_dim = thumb_dst_dim;
+
     ALOGV("%s : X", __func__);
     return NO_ERROR;
 
 on_error:
-    if (m_pJpegExifObj != NULL) {
-        delete m_pJpegExifObj;
-        m_pJpegExifObj = NULL;
-    }
     ALOGV("%s : X with error %d", __func__, ret);
     return ret;
 }
@@ -709,6 +693,11 @@ void QCamera3PostProcessor::releaseJpegJobData(qcamera_hal3_jpeg_data_t *job)
             job->aux_frame = NULL;
         }
 
+        if (NULL != job->pJpegExifObj) {
+            delete job->pJpegExifObj;
+            job->pJpegExifObj = NULL;
+        }
+
         mJpegMem = NULL;
     }
     ALOGV("%s: X", __func__);
@@ -793,8 +782,6 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
     uint32_t jobId = 0;
     QCamera3Stream *main_stream = NULL;
     mm_camera_buf_def_t *main_frame = NULL;
-    QCamera3Stream *thumb_stream = NULL;
-    mm_camera_buf_def_t *thumb_frame = NULL;
     QCamera3Channel *srcChannel = NULL;
     mm_camera_super_buf_t *recvd_frame = NULL;
     QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)m_parent->mUserData;
@@ -844,11 +831,6 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
                 main_stream = srcStream;
                 main_frame = recvd_frame->bufs[i];
                 break;
-            case CAM_STREAM_TYPE_PREVIEW:
-            case CAM_STREAM_TYPE_POSTVIEW:
-                thumb_stream = srcStream;
-                thumb_frame = recvd_frame->bufs[i];
-                break;
             default:
                 break;
             }
@@ -869,18 +851,22 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
     // clean and invalidate cache ops through mem obj of the frame
     memObj->cleanInvalidateCache(main_frame->buf_idx);
 
-    if (thumb_frame != NULL) {
-        QCamera3Memory *thumb_memObj = (QCamera3Memory *)thumb_frame->mem_info;
-        if (NULL != thumb_memObj) {
-            // clean and invalidate cache ops through mem obj of the frame
-            thumb_memObj->cleanInvalidateCache(thumb_frame->buf_idx);
-        }
-    }
-
     if (mJpegClientHandle <= 0) {
         ALOGE("%s: Error: bug here, mJpegClientHandle is 0", __func__);
         return UNKNOWN_ERROR;
     }
+
+    cam_dimension_t src_dim;
+    cam_dimension_t dst_dim;
+    cam_dimension_t thumb_dst_dim;
+
+    memset(&src_dim, 0, sizeof(cam_dimension_t));
+    memset(&dst_dim, 0, sizeof(cam_dimension_t));
+    memset(&thumb_dst_dim, 0, sizeof(cam_dimension_t));
+
+    main_stream->getFrameDimension(src_dim);
+    srcChannel->getStreamByIndex(0)->getFrameDimension(dst_dim);
+    m_parent->getThumbnailSize(thumb_dst_dim);
 
     ALOGD("%s: Need new session?:%d",__func__, needNewSess);
     if (needNewSess) {
@@ -898,9 +884,11 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
         mm_jpeg_encode_params_t encodeParam;
         memset(&encodeParam, 0, sizeof(mm_jpeg_encode_params_t));
 
-        getJpegEncodingConfig(encodeParam, main_stream, thumb_stream);
+        getJpegEncodingConfig(encodeParam, main_stream,
+                src_dim, dst_dim, thumb_dst_dim);
         ALOGD("%s: #src bufs:%d # tmb bufs:%d #dst_bufs:%d", __func__,
                      encodeParam.num_src_bufs,encodeParam.num_tmb_bufs,encodeParam.num_dst_bufs);
+
         ret = mJpegHandle.create_session(mJpegClientHandle, &encodeParam, &mJpegSessionId);
         if (ret != NO_ERROR) {
             ALOGE("%s: Error creating a new jpeg encoding session, ret = %d", __func__, ret);
@@ -921,46 +909,39 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
     //TBD_later - Zoom event removed in stream
     //main_stream->getCropInfo(crop);
 
-    cam_dimension_t src_dim;
-    memset(&src_dim, 0, sizeof(cam_dimension_t));
-    main_stream->getFrameDimension(src_dim);
-
-    cam_dimension_t dst_dim;
-    memset(&dst_dim, 0, sizeof(cam_dimension_t));
-    srcChannel->getStreamByIndex(0)->getFrameDimension(dst_dim);
-
     // main dim
     jpg_job.encode_job.main_dim.src_dim = src_dim;
     jpg_job.encode_job.main_dim.dst_dim = dst_dim;
     jpg_job.encode_job.main_dim.crop = crop;
 
+    // get exif data
+    QCamera3Exif *pJpegExifObj = m_parent->getExifData();
+    jpeg_job_data->pJpegExifObj = pJpegExifObj;
+    if (pJpegExifObj != NULL) {
+        jpg_job.encode_job.exif_info.exif_data = pJpegExifObj->getEntries();
+        jpg_job.encode_job.exif_info.numOfEntries =
+            pJpegExifObj->getNumOfEntries();
+    }
+
     // thumbnail dim
     ALOGD("%s: Thumbnail needed:%d",__func__, m_bThumbnailNeeded);
     if (m_bThumbnailNeeded == TRUE) {
-        if (thumb_stream == NULL) {
-            // need jpeg thumbnail, but no postview/preview stream exists
-            // we use the main stream/frame to encode thumbnail
-            thumb_stream = main_stream;
-            thumb_frame = main_frame;
-        }
         memset(&crop, 0, sizeof(cam_rect_t));
-        //TBD_later - Zoom event removed in stream
-        //thumb_stream->getCropInfo(crop);
-        m_parent->getThumbnailSize(jpg_job.encode_job.thumb_dim.dst_dim);
+        jpg_job.encode_job.thumb_dim.dst_dim = thumb_dst_dim;
         if (!hal_obj->needRotationReprocess()) {
-           memset(&src_dim, 0, sizeof(cam_dimension_t));
-           thumb_stream->getFrameDimension(src_dim);
            jpg_job.encode_job.rotation = m_parent->getJpegRotation();
            ALOGD("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.rotation);
         } else {
-           //swap the thumbnail destination width and height if it has already been rotated
+           //swap the thumbnail destination width and height if it has
+           //already been rotated
            int temp = jpg_job.encode_job.thumb_dim.dst_dim.width;
-           jpg_job.encode_job.thumb_dim.dst_dim.width = jpg_job.encode_job.thumb_dim.dst_dim.height;
+           jpg_job.encode_job.thumb_dim.dst_dim.width =
+               jpg_job.encode_job.thumb_dim.dst_dim.height;
            jpg_job.encode_job.thumb_dim.dst_dim.height = temp;
         }
         jpg_job.encode_job.thumb_dim.src_dim = src_dim;
         jpg_job.encode_job.thumb_dim.crop = crop;
-        jpg_job.encode_job.thumb_index = thumb_frame->buf_idx;
+        jpg_job.encode_job.thumb_index = main_frame->buf_idx;
     }
     // Find meta data frame. Meta data frame contains additional exif info
     // which will be extracted and filled in by encoder.
@@ -1066,11 +1047,6 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                     pme->mJpegSessionId = 0;
                 }
 
-                // free jpeg exif obj
-                if (pme->m_pJpegExifObj != NULL) {
-                    delete pme->m_pJpegExifObj;
-                    pme->m_pJpegExifObj = NULL;
-                }
                 needNewSess = TRUE;
 
                 // flush ongoing postproc Queue
