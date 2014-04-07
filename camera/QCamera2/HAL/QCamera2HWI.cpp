@@ -2144,6 +2144,7 @@ int32_t QCamera2HardwareInterface::configureBracketing()
     int32_t rc = NO_ERROR;
 
     setOutputImageCount(0);
+    mParameters.setDisplayFrame(FALSE);
     if (mParameters.isUbiFocusEnabled()) {
         rc = configureAFBracketing();
     } else if (mParameters.isOptiZoomEnabled()) {
@@ -2684,6 +2685,7 @@ int QCamera2HardwareInterface::cancelPicture()
     //stop post processor
     m_postprocessor.stop();
 
+    mParameters.setDisplayFrame(TRUE);
     if ( mParameters.isHDREnabled() || mParameters.isAEBracketEnabled()) {
         mParameters.stopAEBracket();
     }
@@ -5822,6 +5824,23 @@ bool QCamera2HardwareInterface::isCaptureShutterEnabled()
     int enableShutter = atoi(prop);
     return enableShutter == 1;
 }
+
+/*===========================================================================
+ * FUNCTION   : needProcessPreviewFrame
+ *
+ * DESCRIPTION: returns whether preview frame need to be displayed
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+bool QCamera2HardwareInterface::needProcessPreviewFrame()
+{
+    return m_stateMachine.isPreviewRunning()
+            && mParameters.isDisplayFrameNeeded();
+};
 
 /*===========================================================================
  * FUNCTION   : prepareHardwareForSnapshot
