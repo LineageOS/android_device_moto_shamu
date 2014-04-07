@@ -405,148 +405,21 @@ typedef struct {
 /*****************************************************************************
  *                 Code for Domain Socket Based Parameters                   *
  ****************************************************************************/
-#define POINTER_OF(PARAM_ID,TABLE_PTR)    \
-        (&(TABLE_PTR->entry[PARAM_ID].data))
-
-#define GET_FIRST_PARAM_ID(TABLE_PTR)     \
-        (TABLE_PTR->first_flagged_entry)
-
-#define SET_FIRST_PARAM_ID(TABLE_PTR,PARAM_ID)     \
-        TABLE_PTR->first_flagged_entry=PARAM_ID
-
-#define GET_NEXT_PARAM_ID(CURRENT_PARAM_ID,TABLE_PTR)    \
-        (TABLE_PTR->entry[CURRENT_PARAM_ID].next_flagged_entry)
-
-#define SET_NEXT_PARAM_ID(CURRENT_PARAM_ID,TABLE_PTR,NEXT_PARAM_ID)    \
-        TABLE_PTR->entry[CURRENT_PARAM_ID].next_flagged_entry=NEXT_PARAM_ID;
-
 #define INCLUDE(PARAM_ID,DATATYPE,COUNT)  \
         DATATYPE member_variable_##PARAM_ID[ COUNT ]
 
 #define POINTER_OF_META(META_ID, TABLE_PTR) \
         &TABLE_PTR->data.member_variable_##META_ID
 
+#define POINTER_OF_PARAM POINTER_OF_META
+
 #define IS_META_AVAILABLE(META_ID, TABLE_PTR) \
         TABLE_PTR->is_valid[META_ID]
 
-typedef union {
-/**************************************************************************************
- *          ID from (cam_intf_parm_type_t)          DATATYPE                     COUNT
- **************************************************************************************/
-    INCLUDE(CAM_INTF_PARM_HAL_VERSION,              int32_t,                     1);
-    /* Shared between HAL1 and HAL3 */
-    INCLUDE(CAM_INTF_PARM_ANTIBANDING,              int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_EXPOSURE_COMPENSATION,    int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_AEC_LOCK,                 int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_AEC_ENABLE,               int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_FPS_RANGE,                cam_fps_range_t,             1);
-    INCLUDE(CAM_INTF_PARM_FOCUS_MODE,               uint8_t,                     1);
-    INCLUDE(CAM_INTF_PARM_AWB_LOCK,                 int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_AWB_ENABLE,               int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_AF_ENABLE,                int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_WHITE_BALANCE,            int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_EFFECT,                   int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_BESTSHOT_MODE,            int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_DIS_ENABLE,               int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_LED_MODE,                 int32_t,                     1);
+#define IS_PARAM_AVAILABLE IS_META_AVAILABLE
 
-    /* HAL1 specific */
-    INCLUDE(CAM_INTF_PARM_QUERY_FLASH4SNAP,         int32_t,                     1); //read only
-    INCLUDE(CAM_INTF_PARM_EXPOSURE,                 int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_SHARPNESS,                int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_CONTRAST,                 int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_SATURATION,               int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_BRIGHTNESS,               int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_ISO,                      int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_ZOOM,                     int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_ROLLOFF,                  int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_MODE,                     int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_AEC_ALGO_TYPE,            int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_FOCUS_ALGO_TYPE,          int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_AEC_ROI,                  cam_set_aec_roi_t,           1);
-    INCLUDE(CAM_INTF_PARM_AF_ROI,                   cam_roi_info_t,              1);
-    INCLUDE(CAM_INTF_PARM_SCE_FACTOR,               int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_FD,                       cam_fd_set_parm_t,           1);
-    INCLUDE(CAM_INTF_PARM_MCE,                      int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_HFR,                      int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_REDEYE_REDUCTION,         int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_WAVELET_DENOISE,          cam_denoise_param_t,         1);
-    INCLUDE(CAM_INTF_PARM_HISTOGRAM,                int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_ASD_ENABLE,               int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_RECORDING_HINT,           int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_HDR,                      cam_hdr_param_t,             1);
-    INCLUDE(CAM_INTF_PARM_FRAMESKIP,                int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_ZSL_MODE,                 int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_HDR_NEED_1X,              int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_LOCK_CAF,                 int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_VIDEO_HDR,                int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_VT,                       int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_GET_CHROMATIX,            tune_chromatix_t,            1);
-    INCLUDE(CAM_INTF_PARM_SET_RELOAD_CHROMATIX,     tune_chromatix_t,            1);
-    INCLUDE(CAM_INTF_PARM_GET_AFTUNE,               tune_autofocus_t,            1);
-    INCLUDE(CAM_INTF_PARM_SET_RELOAD_AFTUNE,        tune_autofocus_t,            1);
-    INCLUDE(CAM_INTF_PARM_SET_AUTOFOCUSTUNING,      tune_actuator_t,             1);
-    INCLUDE(CAM_INTF_PARM_SET_VFE_COMMAND,          tune_cmd_t,                  1);
-    INCLUDE(CAM_INTF_PARM_SET_PP_COMMAND,           tune_cmd_t,                  1);
-    INCLUDE(CAM_INTF_PARM_MAX_DIMENSION,            cam_dimension_t,             1);
-    INCLUDE(CAM_INTF_PARM_RAW_DIMENSION,            cam_dimension_t,             1);
-    INCLUDE(CAM_INTF_PARM_TINTLESS,                 int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_EZTUNE_CMD,               cam_eztune_cmd_data_t,       1);
-    INCLUDE(CAM_INTF_PARAM_LONGSHOT_ENABLE,         int8_t,                      1);
-    INCLUDE(CAM_INTF_PARM_RDI_MODE,                 int32_t,                     1);
-
-    INCLUDE(CAM_INTF_PARM_BURST_NUM,                uint32_t,                    1);
-    INCLUDE(CAM_INTF_PARM_RETRO_BURST_NUM,          uint32_t,                    1);
-    INCLUDE(CAM_INTF_PARM_BURST_LED_ON_PERIOD,      uint32_t,                    1);
-
-    /* HAL3 specific */
-    INCLUDE(CAM_INTF_META_FRAME_NUMBER,             uint32_t,                    1);
-    INCLUDE(CAM_INTF_META_STREAM_INFO,              cam_stream_size_info_t,      1);
-    INCLUDE(CAM_INTF_META_COLOR_CORRECT_MODE,       uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_COLOR_CORRECT_TRANSFORM,  cam_color_correct_matrix_t,  1);
-    INCLUDE(CAM_INTF_META_COLOR_CORRECT_GAINS,      cam_color_correct_gains_t,   1);
-    INCLUDE(CAM_INTF_META_AEC_MODE,                 uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_AEC_ROI,                  cam_area_t,                  5);
-    INCLUDE(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER,   cam_trigger_t,               1);
-    INCLUDE(CAM_INTF_META_AF_ROI,                   cam_area_t,                  5);
-    INCLUDE(CAM_INTF_META_AF_TRIGGER,               cam_trigger_t,               1);
-    INCLUDE(CAM_INTF_META_AWB_REGIONS,              cam_area_t,                  5);
-    INCLUDE(CAM_INTF_META_BLACK_LEVEL_LOCK,         uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_CAPTURE_INTENT,           uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_MODE,                     uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_DEMOSAIC,                 int32_t,                     1);
-    INCLUDE(CAM_INTF_META_EDGE_MODE,                cam_edge_application_t,      1);
-    INCLUDE(CAM_INTF_META_SHARPNESS_STRENGTH,       int32_t,                     1);
-    INCLUDE(CAM_INTF_META_FLASH_POWER,              uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_FLASH_FIRING_TIME,        int64_t,                     1);
-    INCLUDE(CAM_INTF_META_GEOMETRIC_MODE,           uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_GEOMETRIC_STRENGTH,       uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_HOTPIXEL_MODE,            uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_LENS_APERTURE,            float,                       1);
-    INCLUDE(CAM_INTF_META_LENS_FILTERDENSITY,       float,                       1);
-    INCLUDE(CAM_INTF_META_LENS_FOCAL_LENGTH,        float,                       1);
-    INCLUDE(CAM_INTF_META_LENS_FOCUS_DISTANCE,      float,                       1);
-    INCLUDE(CAM_INTF_META_LENS_OPT_STAB_MODE,       uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_LENS_SHADING_MAP_MODE,    uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_NOISE_REDUCTION_MODE,     uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_NOISE_REDUCTION_STRENGTH, int32_t,                     1);
-    INCLUDE(CAM_INTF_META_SCALER_CROP_REGION,       cam_crop_region_t,           1);
-    INCLUDE(CAM_INTF_META_SENSOR_EXPOSURE_TIME,     int64_t,                     1);
-    INCLUDE(CAM_INTF_META_SENSOR_FRAME_DURATION,    int64_t,                     1);
-    INCLUDE(CAM_INTF_META_SENSOR_SENSITIVITY,       int32_t,                     1);
-    INCLUDE(CAM_INTF_META_SHADING_MODE,             uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_SHADING_STRENGTH,         uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_STATS_FACEDETECT_MODE,    uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_STATS_HISTOGRAM_MODE,     uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_STATS_SHARPNESS_MAP_MODE, uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_TONEMAP_CURVES,           cam_rgb_tonemap_curves,      1);
-    INCLUDE(CAM_INTF_META_TONEMAP_MODE,             uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_FLASH_MODE,               uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_STREAM_ID,                cam_stream_ID_t,             1);
-    INCLUDE(CAM_INTF_PARM_STATS_DEBUG_MASK,         uint32_t,                    1);
-    INCLUDE(CAM_INTF_PARM_FOCUS_BRACKETING,         cam_af_bracketing_t,         1);
-    INCLUDE(CAM_INTF_PARM_FLASH_BRACKETING,         cam_flash_bracketing_t,      1);
-} parm_type_t;
+#define SIZE_OF_PARAM(META_ID, TABLE_PTR) \
+         sizeof(TABLE_PTR->data.member_variable_##META_ID)
 
 typedef struct {
 /**************************************************************************************
@@ -629,28 +502,105 @@ typedef struct {
     INCLUDE(CAM_INTF_PARM_EFFECT,                       uint8_t,                     1);
     /* Defining as int32_t so that this array is 4 byte aligned */
     INCLUDE(CAM_INTF_META_PRIVATE_DATA,                 int32_t,                     MAX_METADATA_PRIVATE_PAYLOAD_SIZE);
-} metadata_data_t;
+
+    /* Following are Params only and not metadata currently */
+    INCLUDE(CAM_INTF_PARM_HAL_VERSION,                  int32_t,                     1);
+    /* Shared between HAL1 and HAL3 */
+    INCLUDE(CAM_INTF_PARM_ANTIBANDING,                  int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_EXPOSURE_COMPENSATION,        int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_AEC_LOCK,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_FPS_RANGE,                    cam_fps_range_t,             1);
+    INCLUDE(CAM_INTF_PARM_AWB_LOCK,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_BESTSHOT_MODE,                int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_DIS_ENABLE,                   int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_LED_MODE,                     int32_t,                     1);
+
+    /* HAL1 specific */
+    /* read only */
+    INCLUDE(CAM_INTF_PARM_QUERY_FLASH4SNAP,             int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_EXPOSURE,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_SHARPNESS,                    int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_CONTRAST,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_SATURATION,                   int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_BRIGHTNESS,                   int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_ISO,                          int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_ZOOM,                         int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_ROLLOFF,                      int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_MODE,                         int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_AEC_ALGO_TYPE,                int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_FOCUS_ALGO_TYPE,              int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_AEC_ROI,                      cam_set_aec_roi_t,           1);
+    INCLUDE(CAM_INTF_PARM_AF_ROI,                       cam_roi_info_t,              1);
+    INCLUDE(CAM_INTF_PARM_SCE_FACTOR,                   int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_FD,                           cam_fd_set_parm_t,           1);
+    INCLUDE(CAM_INTF_PARM_MCE,                          int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_HFR,                          int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_REDEYE_REDUCTION,             int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_WAVELET_DENOISE,              cam_denoise_param_t,         1);
+    INCLUDE(CAM_INTF_PARM_HISTOGRAM,                    int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_ASD_ENABLE,                   int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_RECORDING_HINT,               int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_HDR,                          cam_hdr_param_t,             1);
+    INCLUDE(CAM_INTF_PARM_FRAMESKIP,                    int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_ZSL_MODE,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_HDR_NEED_1X,                  int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_LOCK_CAF,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_VIDEO_HDR,                    int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_VT,                           int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_GET_CHROMATIX,                tune_chromatix_t,            1);
+    INCLUDE(CAM_INTF_PARM_SET_RELOAD_CHROMATIX,         tune_chromatix_t,            1);
+    INCLUDE(CAM_INTF_PARM_GET_AFTUNE,                   tune_autofocus_t,            1);
+    INCLUDE(CAM_INTF_PARM_SET_RELOAD_AFTUNE,            tune_autofocus_t,            1);
+    INCLUDE(CAM_INTF_PARM_SET_AUTOFOCUSTUNING,          tune_actuator_t,             1);
+    INCLUDE(CAM_INTF_PARM_SET_VFE_COMMAND,              tune_cmd_t,                  1);
+    INCLUDE(CAM_INTF_PARM_SET_PP_COMMAND,               tune_cmd_t,                  1);
+    INCLUDE(CAM_INTF_PARM_MAX_DIMENSION,                cam_dimension_t,             1);
+    INCLUDE(CAM_INTF_PARM_RAW_DIMENSION,                cam_dimension_t,             1);
+    INCLUDE(CAM_INTF_PARM_TINTLESS,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_EZTUNE_CMD,                   cam_eztune_cmd_data_t,       1);
+    INCLUDE(CAM_INTF_PARM_RDI_MODE,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_BURST_NUM,                    uint32_t,                    1);
+    INCLUDE(CAM_INTF_PARM_RETRO_BURST_NUM,              uint32_t,                    1);
+    INCLUDE(CAM_INTF_PARM_BURST_LED_ON_PERIOD,          uint32_t,                    1);
+
+    /* HAL3 specific */
+    INCLUDE(CAM_INTF_META_STREAM_INFO,                  cam_stream_size_info_t,      1);
+    INCLUDE(CAM_INTF_META_AEC_MODE,                     uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER,       cam_trigger_t,               1);
+    INCLUDE(CAM_INTF_META_AF_TRIGGER,                   cam_trigger_t,               1);
+    INCLUDE(CAM_INTF_META_CAPTURE_INTENT,               uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_DEMOSAIC,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_META_SHARPNESS_STRENGTH,           int32_t,                     1);
+    INCLUDE(CAM_INTF_META_GEOMETRIC_MODE,               uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_GEOMETRIC_STRENGTH,           uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_LENS_SHADING_MAP_MODE,        uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_SHADING_STRENGTH,             uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_TONEMAP_MODE,                 uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_STREAM_ID,                    cam_stream_ID_t,             1);
+    INCLUDE(CAM_INTF_PARM_STATS_DEBUG_MASK,             uint32_t,                    1);
+    INCLUDE(CAM_INTF_PARM_FOCUS_BRACKETING,             cam_af_bracketing_t,         1);
+    INCLUDE(CAM_INTF_PARM_FLASH_BRACKETING,             cam_flash_bracketing_t,      1);
+} parm_data_t;
+
+typedef parm_data_t metadata_data_t;
 
 /****************************DO NOT MODIFY BELOW THIS LINE!!!!*********************/
 
 typedef struct {
-    parm_type_t data;
-    uint8_t next_flagged_entry;
-} parm_entry_type_t;
+    union{
+        /* Hash table of 'is valid' flags */
+        uint8_t         is_valid[CAM_INTF_PARM_MAX];
 
-typedef struct {
-    uint8_t first_flagged_entry;
-    parm_entry_type_t entry[CAM_INTF_PARM_MAX];
-} parm_buffer_t;
-
-typedef struct {
-    /* Hash table of 'is valid' flags */
-    uint8_t         is_valid[CAM_INTF_PARM_MAX];
+        /* Hash table of 'is required' flags for the GET PARAM */
+        uint8_t         is_reqd[CAM_INTF_PARM_MAX];
+    };
     metadata_data_t data;
     /*Tuning Data */
     uint8_t is_tuning_params_valid;
     tuning_params_t tuning_params;
 } metadata_buffer_t;
+
+typedef metadata_buffer_t parm_buffer_t;
 
 #ifdef  __cplusplus
 extern "C" {
@@ -658,6 +608,8 @@ extern "C" {
 
 void *get_pointer_of(cam_intf_parm_type_t meta_id,
         const metadata_buffer_t* metadata);
+
+uint32_t get_size_of(cam_intf_parm_type_t param_id);
 
 #ifdef  __cplusplus
 }

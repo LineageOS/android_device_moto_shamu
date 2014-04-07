@@ -4698,10 +4698,11 @@ int32_t QCameraParameters::setEffect(const char *effect)
         if (value != NAME_NOT_FOUND) {
             CDBG_HIGH("%s: Setting effect %s", __func__, effect);
             updateParamEntry(KEY_EFFECT, effect);
+            uint8_t prmEffect = static_cast<uint8_t>(value);
             return AddSetParmEntryToBatch(m_pParamBuf,
                                           CAM_INTF_PARM_EFFECT,
-                                          sizeof(value),
-                                          &value);
+                                          sizeof(prmEffect),
+                                          &prmEffect);
         }
     }
     ALOGE("Invalid effect value: %s", (effect == NULL) ? "NULL" : effect);
@@ -4755,13 +4756,14 @@ int32_t QCameraParameters::setFocusMode(const char *focusMode)
                                    focusMode);
         if (value != NAME_NOT_FOUND) {
             CDBG_HIGH("%s: Setting focus mode %s", __func__, focusMode);
+            uint8_t fm = (uint8_t)value;
             mFocusMode = (cam_focus_mode_type)value;
 
             updateParamEntry(KEY_FOCUS_MODE, focusMode);
             rc = AddSetParmEntryToBatch(m_pParamBuf,
                                           CAM_INTF_PARM_FOCUS_MODE,
-                                          sizeof(value),
-                                          &value);
+                                          sizeof(fm),
+                                          &fm);
             if (strcmp(focusMode,"infinity")==0){
                 set(QCameraParameters::KEY_FOCUS_DISTANCES, "Infinity,Infinity,Infinity");
             }
@@ -7842,7 +7844,9 @@ int32_t QCameraParameters::updateRAW(cam_dimension_t max_dim)
         ALOGE("%s:Failed to get commit CAM_INTF_PARM_RAW_DIMENSION", __func__);
         return rc;
     }
-    memcpy(&raw_dim,POINTER_OF(CAM_INTF_PARM_RAW_DIMENSION,m_pParamBuf),sizeof(cam_dimension_t));
+    memcpy(&raw_dim,
+            POINTER_OF_PARAM(CAM_INTF_PARM_RAW_DIMENSION,m_pParamBuf),
+            sizeof(cam_dimension_t));
     CDBG_HIGH("%s : RAW Dimension = %d X %d",__func__,raw_dim.width,raw_dim.height);
     if (raw_dim.width == 0 || raw_dim.height == 0) {
         ALOGE("%s: Error getting RAW size. Setting to Capability value",__func__);
@@ -8133,7 +8137,6 @@ int32_t QCameraParameters::initBatchUpdate(parm_buffer_t *p_table)
     m_tempMap.clear();
 
     memset(p_table, 0, sizeof(parm_buffer_t));
-    p_table->first_flagged_entry = CAM_INTF_PARM_MAX;
     return NO_ERROR;
 }
 
@@ -8157,45 +8160,28 @@ int32_t QCameraParameters::AddSetParmEntryToBatch(parm_buffer_t *p_table,
                                                   uint32_t paramLength,
                                                   void *paramValue)
 {
-    int position = paramType;
-    int current, next;
-
-    if (position >= CAM_INTF_PARM_MAX) {
-        ALOGE("%s: Error invalid param type ", __func__);
+    void* dst;
+    if ((NULL == p_table) || (NULL == paramValue) ||
+        (paramType >= CAM_INTF_PARM_MAX)) {
+        ALOGE("%s: Error invalid param. p_table: %p, paramValue: %p, "
+            "paramType: %d", __func__, p_table, paramValue, paramType);
         return BAD_VALUE;
     }
-    /*************************************************************************
-    *                 Code to take care of linking next flags                *
-    *************************************************************************/
-    current = GET_FIRST_PARAM_ID(p_table);
-    if (position == current){
-        //DO NOTHING
-    } else if (position < current){
-        SET_NEXT_PARAM_ID(position, p_table, current);
-        SET_FIRST_PARAM_ID(p_table, position);
-    } else {
-        /* Search for the position in the linked list where we need to slot in*/
-        while ((current < CAM_INTF_PARM_MAX) &&
-            (position > GET_NEXT_PARAM_ID(current, p_table)))
-            current = GET_NEXT_PARAM_ID(current, p_table);
-
-        /*If node already exists no need to alter linking*/
-        if (position != GET_NEXT_PARAM_ID(current, p_table)) {
-            next = GET_NEXT_PARAM_ID(current, p_table);
-            SET_NEXT_PARAM_ID(current, p_table, position);
-            SET_NEXT_PARAM_ID(position, p_table, next);
-        }
-    }
-
     /*************************************************************************
     *                   Copy contents into entry                             *
     *************************************************************************/
-
-    if (paramLength > sizeof(parm_type_t)) {
-        ALOGE("%s:Size of input larger than max entry size",__func__);
+    if (paramLength > get_size_of(paramType)) {
+        ALOGE("%s:Size of input larger than max entry size. paramType: %d "
+            "paramLength: %d sizeof(paramType): %d",
+            __func__, paramType, paramLength, get_size_of(paramType));
         return BAD_VALUE;
     }
-    memcpy(POINTER_OF(paramType,p_table), paramValue, paramLength);
+
+    dst = get_pointer_of(paramType, p_table);
+    if (NULL != dst) {
+        memcpy(dst, paramValue, paramLength);
+        p_table->is_valid[paramType] = 1;
+    }
     return NO_ERROR;
 }
 
@@ -8213,32 +8199,15 @@ int32_t QCameraParameters::AddSetParmEntryToBatch(parm_buffer_t *p_table,
  *              none-zero failure code
  *==========================================================================*/
 int32_t QCameraParameters::AddGetParmEntryToBatch(parm_buffer_t *p_table,
-                                                  cam_intf_parm_type_t paramType)
+                                                cam_intf_parm_type_t paramType)
 {
-    int position = paramType;
-    int current, next;
-
-    /*************************************************************************
-    *                 Code to take care of linking next flags                *
-    *************************************************************************/
-    current = GET_FIRST_PARAM_ID(p_table);
-    if (position == current){
-        //DO NOTHING
-    } else if (position < current){
-        SET_NEXT_PARAM_ID(position, p_table, current);
-        SET_FIRST_PARAM_ID(p_table, position);
-    } else {
-        /* Search for the position in the linked list where we need to slot in*/
-        while (position > GET_NEXT_PARAM_ID(current, p_table))
-            current = GET_NEXT_PARAM_ID(current, p_table);
-
-        /*If node already exists no need to alter linking*/
-        if (position != GET_NEXT_PARAM_ID(current, p_table)) {
-            next=GET_NEXT_PARAM_ID(current, p_table);
-            SET_NEXT_PARAM_ID(current, p_table, position);
-            SET_NEXT_PARAM_ID(position, p_table, next);
-        }
+    if ((p_table == NULL) || (paramType >= CAM_INTF_PARM_MAX)) {
+        ALOGE("%s: Error invalid param. p_table: %p, paramType: %d",
+            __func__, p_table, paramType);
+        return BAD_VALUE;
     }
+    /* Set the is_reqd flag for this param so that backend can fill the value*/
+    p_table->is_reqd[paramType] = 1;
 
     return NO_ERROR;
 }
@@ -8257,7 +8226,15 @@ int32_t QCameraParameters::AddGetParmEntryToBatch(parm_buffer_t *p_table,
 int32_t QCameraParameters::commitSetBatch()
 {
     int32_t rc = NO_ERROR;
-    if (m_pParamBuf->first_flagged_entry < CAM_INTF_PARM_MAX) {
+    int32_t i = 0;
+
+    /* Loop to check if atleast one entry is valid */
+    for(i = 0; i < CAM_INTF_PARM_MAX; i++){
+        if(m_pParamBuf->is_valid[i])
+            break;
+    }
+
+    if (i < CAM_INTF_PARM_MAX) {
         rc = m_pCamOpsTbl->ops->set_parms(m_pCamOpsTbl->camera_handle, m_pParamBuf);
     }
     if (rc == NO_ERROR) {
@@ -8280,11 +8257,21 @@ int32_t QCameraParameters::commitSetBatch()
  *==========================================================================*/
 int32_t QCameraParameters::commitGetBatch()
 {
-    if (m_pParamBuf->first_flagged_entry < CAM_INTF_PARM_MAX) {
+    int32_t rc = NO_ERROR;
+    int32_t i = 0;
+
+    /* Loop to check if atleast one entry is valid */
+    for(i = 0; i < CAM_INTF_PARM_MAX; i++){
+        if(m_pParamBuf->is_valid[i])
+            break;
+    }
+
+    if (i < CAM_INTF_PARM_MAX) {
         return m_pCamOpsTbl->ops->get_parms(m_pCamOpsTbl->camera_handle, m_pParamBuf);
     } else {
         return NO_ERROR;
     }
+    return rc;
 }
 
 /*===========================================================================

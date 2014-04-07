@@ -596,43 +596,17 @@ int add_parm_entry_tobatch(parm_buffer_t *p_table,
                            void *paramValue)
 {
     int rc = MM_CAMERA_OK;
-    int position = paramType;
-    int current, next;
+    void* dst;
 
-    current = GET_FIRST_PARAM_ID(p_table);
-    if (position == current){
-        //DO NOTHING
-    } else if (position < current){
-        if (position < CAM_INTF_PARM_MAX) {
-            SET_NEXT_PARAM_ID(position, p_table, current);
-            SET_FIRST_PARAM_ID(p_table, position);
-        } else {
-            CDBG_ERROR("%s: position = %d. Should be less than %d\n",
-                __func__, position, CAM_INTF_PARM_MAX);
-        }
-    } else {
-        /* Search for the position in the linked list where we need to slot in*/
-        if (current < CAM_INTF_PARM_MAX) {
-            while (position > GET_NEXT_PARAM_ID(current, p_table))
-                current = GET_NEXT_PARAM_ID(current, p_table);
-
-            /*If node already exists no need to alter linking*/
-            if (position != GET_NEXT_PARAM_ID(current, p_table)) {
-                next = GET_NEXT_PARAM_ID(current, p_table);
-                SET_NEXT_PARAM_ID(current, p_table, position);
-                SET_NEXT_PARAM_ID(position, p_table, next);
-            }
-        } else {
-            CDBG_ERROR("%s: current = %d. Should be less than %d\n",
-                __func__, current, CAM_INTF_PARM_MAX);
-        }
-    }
-
-    if (paramLength > sizeof(parm_type_t)) {
+    if (paramLength > get_size_of(paramType)) {
         CDBG_ERROR("%s:Size of input larger than max entry size",__func__);
         return -1;
     }
-    memcpy(POINTER_OF(paramType,p_table), paramValue, paramLength);
+    dst = get_pointer_of(paramType, p_table);
+    if(dst){
+        memcpy(dst, paramValue, paramLength);
+        p_table->is_valid[paramType] = 1;
+    }
     return rc;
 }
 
@@ -643,7 +617,6 @@ int init_batch_update(parm_buffer_t *p_table)
     int32_t hal_version = CAM_HAL_V1;
 
     memset(p_table, 0, sizeof(parm_buffer_t));
-    p_table->first_flagged_entry = CAM_INTF_PARM_MAX;
     rc = add_parm_entry_tobatch(p_table, CAM_INTF_PARM_HAL_VERSION,sizeof(hal_version), &hal_version);
     if (rc != MM_CAMERA_OK) {
         CDBG_ERROR("%s: add_parm_entry_tobatch failed !!", __func__);
@@ -654,7 +627,13 @@ int init_batch_update(parm_buffer_t *p_table)
 int commit_set_batch(mm_camera_test_obj_t *test_obj)
 {
     int rc = MM_CAMERA_OK;
-    if (test_obj->params_buffer->first_flagged_entry < CAM_INTF_PARM_MAX) {
+    int i = 0;
+
+    for(i = 0; i < CAM_INTF_PARM_MAX; i++){
+        if(test_obj->params_buffer->is_valid[i])
+            break;
+    }
+    if (i < CAM_INTF_PARM_MAX) {
         CDBG_HIGH("\n set_param p_buffer =%p\n",test_obj->params_buffer);
         rc = test_obj->cam->ops->set_parms(test_obj->cam->camera_handle, test_obj->params_buffer);
     }
@@ -884,51 +863,21 @@ int AddSetParmEntryToBatch(mm_camera_test_obj_t *test_obj,
                            uint32_t paramLength,
                            void *paramValue)
 {
-    int position = paramType;
-    int current, next;
-
     parm_buffer_t *p_table = ( parm_buffer_t * ) test_obj->parm_buf.mem_info.data;
-    /*************************************************************************
-    *                 Code to take care of linking next flags                *
-    *************************************************************************/
-    current = GET_FIRST_PARAM_ID(p_table);
-    if (position == current){
-        //DO NOTHING
-    } else if (position < current){
-        if (position < CAM_INTF_PARM_MAX) {
-            SET_NEXT_PARAM_ID(position, p_table, current);
-            SET_FIRST_PARAM_ID(p_table, position);
-        } else {
-            CDBG_ERROR("%s: position = %d. Should be less than %d\n",
-                __func__, position, CAM_INTF_PARM_MAX);
-        }
-    } else {
-        if (current < CAM_INTF_PARM_MAX) {
-            /* Search for the position in the linked list where we need to slot in*/
-            while (position > GET_NEXT_PARAM_ID(current, p_table))
-                current = GET_NEXT_PARAM_ID(current, p_table);
-
-            /*If node already exists no need to alter linking*/
-            if (position != GET_NEXT_PARAM_ID(current, p_table)) {
-                next = GET_NEXT_PARAM_ID(current, p_table);
-                SET_NEXT_PARAM_ID(current, p_table, position);
-                SET_NEXT_PARAM_ID(position, p_table, next);
-            }
-        } else {
-            CDBG_ERROR("%s: current = %d. Should be less than %d\n",
-                __func__, current, CAM_INTF_PARM_MAX);
-        }
-    }
-
+    void* dst;
     /*************************************************************************
     *                   Copy contents into entry                             *
     *************************************************************************/
 
-    if (paramLength > sizeof(parm_type_t)) {
+    if (paramLength > get_size_of(paramType)) {
         ALOGE("%s:Size of input larger than max entry size",__func__);
         return MM_CAMERA_E_GENERAL;
     }
-    memcpy(POINTER_OF(paramType,p_table), paramValue, paramLength);
+    dst = get_pointer_of(paramType,p_table);
+    if(dst){
+        memcpy(dst, paramValue, paramLength);
+        p_table->is_valid[paramType] = 1;
+    }
     return MM_CAMERA_OK;
 }
 
@@ -938,7 +887,6 @@ int initBatchUpdate(mm_camera_test_obj_t *test_obj)
 
     parm_buffer_t *parm_buf = ( parm_buffer_t * ) test_obj->parm_buf.mem_info.data;
     memset(parm_buf, 0, sizeof(parm_buffer_t));
-    parm_buf->first_flagged_entry = CAM_INTF_PARM_MAX;
     AddSetParmEntryToBatch(test_obj,
                            CAM_INTF_PARM_HAL_VERSION,
                            sizeof(hal_version),
@@ -952,16 +900,28 @@ int ReadSetParmEntryToBatch(mm_camera_test_obj_t *test_obj,
                            uint32_t paramLength,
                            void *paramValue)
 {
+    void* dst;
     parm_buffer_t *p_table = ( parm_buffer_t * ) test_obj->parm_buf.mem_info.data;
-    memcpy(paramValue, POINTER_OF(paramType,p_table), paramLength);
+    dst = get_pointer_of(paramType,p_table);
+    if (NULL == dst) {
+        ALOGE("%s: dst is NULL for paramType: %d", __func__, paramType);
+        return MM_CAMERA_E_GENERAL;
+    }
+    memcpy(paramValue, dst, paramLength);
     return MM_CAMERA_OK;
 }
 
 int commitSetBatch(mm_camera_test_obj_t *test_obj)
 {
     int rc = MM_CAMERA_OK;
+    int i = 0;
+
     parm_buffer_t *p_table = ( parm_buffer_t * ) test_obj->parm_buf.mem_info.data;
-    if (p_table->first_flagged_entry < CAM_INTF_PARM_MAX) {
+    for(i = 0; i < CAM_INTF_PARM_MAX; i++){
+        if(p_table->is_valid[i])
+            break;
+    }
+    if (i < CAM_INTF_PARM_MAX) {
         rc = test_obj->cam->ops->set_parms(test_obj->cam->camera_handle, p_table);
     }
     return rc;
@@ -971,8 +931,13 @@ int commitSetBatch(mm_camera_test_obj_t *test_obj)
 int commitGetBatch(mm_camera_test_obj_t *test_obj)
 {
     int rc = MM_CAMERA_OK;
+    int i = 0;
     parm_buffer_t *p_table = ( parm_buffer_t * ) test_obj->parm_buf.mem_info.data;
-    if (p_table->first_flagged_entry < CAM_INTF_PARM_MAX) {
+    for(i = 0; i < CAM_INTF_PARM_MAX; i++){
+        if(p_table->is_valid[i])
+            break;
+    }
+    if (i < CAM_INTF_PARM_MAX) {
         rc = test_obj->cam->ops->get_parms(test_obj->cam->camera_handle, p_table);
     }
     return rc;
