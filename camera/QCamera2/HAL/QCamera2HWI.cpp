@@ -2060,6 +2060,47 @@ int QCamera2HardwareInterface::cancelAutoFocus()
 }
 
 /*===========================================================================
+ * FUNCTION   : processUFDumps
+ *
+ * DESCRIPTION: process UF jpeg dumps for refocus support
+ *
+ * PARAMETERS :
+ *   @evt     : payload of jpeg event, including information about jpeg encoding
+ *              status, jpeg size and so on.
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ * NOTE       : none
+ *==========================================================================*/
+bool QCamera2HardwareInterface::processUFDumps(qcamera_jpeg_evt_payload_t *evt)
+{
+   bool ret = true;
+   if (mParameters.isUbiRefocus()) {
+       int index = getOutputImageCount();
+       bool allFocusImage = (index == ((int)mParameters.UfOutputCount()-1));
+       char name[CAM_FN_CNT];
+       if (allFocusImage)  {
+           strncpy(name, "AllFocusImage", CAM_FN_CNT - 1);
+           index = -1;
+       } else {
+           strncpy(name, "0", CAM_FN_CNT - 1);
+       }
+       CAM_DUMP_TO_FILE("/data/local/ubifocus", name, index, "jpg",
+           (uint8_t *)evt->out_data.buf_vaddr,
+           evt->out_data.buf_filled_len);
+       ALOGV("%s:%d] Dump the image %d %d allFocusImage %d", __func__, __LINE__,
+           getOutputImageCount(), index, allFocusImage);
+       setOutputImageCount(index + 1);
+       if (!allFocusImage) {
+           ret = false;
+       }
+   }
+   return ret;
+}
+
+/*===========================================================================
  * FUNCTION   : configureBracketing
  *
  * DESCRIPTION: configure Bracketing.
@@ -2074,7 +2115,9 @@ int32_t QCamera2HardwareInterface::configureBracketing()
 {
     ALOGD("%s: E",__func__);
     int32_t rc = NO_ERROR;
-    if(mParameters.isUbiFocusEnabled()) {
+
+    setOutputImageCount(0);
+    if (mParameters.isUbiFocusEnabled()) {
         rc = configureAFBracketing();
     } else if (mParameters.isOptiZoomEnabled()) {
         rc = configureOptiZoom();
@@ -2103,7 +2146,7 @@ int32_t QCamera2HardwareInterface::configureBracketing()
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera2HardwareInterface::configureAFBracketing()
+int32_t QCamera2HardwareInterface::configureAFBracketing(bool enable)
 {
     ALOGD("%s: E",__func__);
     int32_t rc = NO_ERROR;
@@ -2114,7 +2157,7 @@ int32_t QCamera2HardwareInterface::configureAFBracketing()
     //Enable AF Bracketing.
     cam_af_bracketing_t afBracket;
     memset(&afBracket, 0, sizeof(cam_af_bracketing_t));
-    afBracket.enable = 1;
+    afBracket.enable = enable;
     afBracket.burst_count = af_bracketing_need->burst_count;
 
     for(int8_t i = 0; i < MAX_AF_BRACKETING_VALUES; i++) {
@@ -2127,8 +2170,10 @@ int32_t QCamera2HardwareInterface::configureAFBracketing()
         ALOGE("%s: cannot configure AF bracketing", __func__);
         return rc;
     }
-    mParameters.set3ALock(QCameraParameters::VALUE_TRUE);
-    mIs3ALocked = true;
+    if (enable) {
+        mParameters.set3ALock(QCameraParameters::VALUE_TRUE);
+        mIs3ALocked = true;
+    }
     ALOGD("%s: X",__func__);
     return rc;
 }
@@ -2652,6 +2697,9 @@ int QCamera2HardwareInterface::cancelPicture()
         mParameters.set3ALock(QCameraParameters::VALUE_FALSE);
         mIs3ALocked = false;
     }
+    if (mParameters.isUbiFocusEnabled()) {
+        configureAFBracketing(false);
+    }
     if(mParameters.isOptiZoomEnabled()) {
         ALOGD("%s: Restoring previous zoom value!!",__func__);
         mParameters.setAndCommitZoom(mZoomLevel);
@@ -3146,6 +3194,7 @@ void QCamera2HardwareInterface::jpegEvtHandle(jpeg_job_status_t status,
             if (p_output != NULL) {
                 payload->out_data = *p_output;
             }
+            obj->processUFDumps(payload);
             obj->processEvt(QCAMERA_SM_EVT_JPEG_EVT_NOTIFY, payload);
         }
     } else {

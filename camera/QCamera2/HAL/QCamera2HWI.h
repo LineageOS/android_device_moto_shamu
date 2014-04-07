@@ -377,7 +377,8 @@ private:
     bool isNoDisplayMode() {return mParameters.isNoDisplayMode();};
     bool isZSLMode() {return mParameters.isZSLMode();};
     bool isRdiMode() {return mParameters.isRdiMode();};
-    uint8_t numOfSnapshotsExpected() {return mParameters.getNumOfSnapshots();};
+    uint8_t numOfSnapshotsExpected() {
+        return mParameters.isUbiRefocus() ? 1 : mParameters.getNumOfSnapshots();};
     bool isLongshotEnabled() { return mLongshotEnabled; };
     bool isHFRMode() {return mParameters.isHfrMode();};
     uint8_t getBufNumRequired(cam_stream_type_t stream_type);
@@ -388,12 +389,15 @@ private:
                             uint8_t length,
                             cam_dimension_t size);
     int32_t configureBracketing();
-    int32_t configureAFBracketing();
+    int32_t configureAFBracketing(bool enable = true);
     int32_t configureFlashBracketing();
     int32_t configureHDRBracketing();
     int32_t startBracketing(QCameraPicChannel *pChannel);
     int32_t configureOptiZoom();
     int32_t configureAEBracketing();
+    inline void setOutputImageCount(uint32_t aCount) {mOutputCount = aCount;}
+    inline uint32_t getOutputImageCount() {return mOutputCount;}
+    bool processUFDumps(qcamera_jpeg_evt_payload_t *evt);
 
     static void copyList(cam_dimension_t* src_list,
                    cam_dimension_t* dst_list, uint8_t len);
@@ -568,6 +572,7 @@ private:
     int32_t mPostviewJob;
     int32_t mMetadataJob;
     int32_t mReprocJob;
+    int32_t mOutputCount;
 };
 
 }; // namespace qcamera

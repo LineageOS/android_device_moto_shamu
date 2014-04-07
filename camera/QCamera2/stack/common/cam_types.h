@@ -44,6 +44,34 @@
 #define CEILING4(X)  (((X) + 0x0003) & 0xFFFC)
 #define CEILING2(X)  (((X) + 0x0001) & 0xFFFE)
 
+#define CAM_FN_CNT 255
+/** CAM_DUMP_TO_FILE:
+ *  @filename: file name
+ *  @name:filename
+ *  @index: index of the file
+ *  @extn: file extension
+ *  @p_addr: address of the buffer
+ *  @len: buffer length
+ *
+ *  dump the image to the file
+ **/
+#define CAM_DUMP_TO_FILE(path, name, index, extn, p_addr, len) ({ \
+  int rc = 0; \
+  char filename[CAM_FN_CNT]; \
+  if (index > 0) \
+    snprintf(filename, CAM_FN_CNT-1, "%s/%s%d.%s", path, name, index, extn); \
+  else \
+    snprintf(filename, CAM_FN_CNT-1, "%s/%s.%s", path, name, extn); \
+  FILE *fp = fopen(filename, "w+"); \
+  if (fp) { \
+    rc = fwrite(p_addr, 1, len, fp); \
+    ALOGE("%s:%d] written size %d", __func__, __LINE__, len); \
+    fclose(fp); \
+  } else { \
+    ALOGE("%s:%d] open %s failed", __func__, __LINE__, filename); \
+  } \
+})
+
 #define MAX_ZOOMS_CNT 79
 #define MAX_SIZES_CNT 24
 #define MAX_EXP_BRACKETING_LENGTH 32
@@ -1243,6 +1271,7 @@ typedef enum {
     CAM_INTF_META_STREAM_ID,
     CAM_INTF_PARM_FOCUS_BRACKETING,
     CAM_INTF_PARM_FLASH_BRACKETING,
+    CAM_INTF_PARM_GET_IMG_PROP,
 
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
@@ -1467,6 +1496,7 @@ typedef struct {
     uint8_t enable;
     uint8_t burst_count;
     uint8_t focus_steps[MAX_AF_BRACKETING_VALUES];
+    uint8_t output_count;
 } cam_af_bracketing_t;
 
 typedef struct {
