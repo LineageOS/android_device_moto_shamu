@@ -8721,7 +8721,7 @@ uint8_t QCameraParameters::getNumOfExtraBuffersForImageProc()
             numOfBufs +=
                 m_pCapability->ubifocus_af_bracketing_need.burst_count + 1;
         }
-    } else if (isOptiZoomEnabled()) {
+    } else if (m_bOptiZoomOn) {
         numOfBufs += m_pCapability->opti_zoom_settings_need.burst_count - 1;
     } else if (isChromaFlashEnabled()) {
         numOfBufs += 1; /* flash and non flash */
