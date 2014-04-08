@@ -2854,6 +2854,7 @@ bool QCameraStateMachine::isPreviewRunning()
     case QCAMERA_SM_STATE_VIDEO_PIC_TAKING:
     case QCAMERA_SM_STATE_PREVIEW_PIC_TAKING:
     case QCAMERA_SM_STATE_PREPARE_SNAPSHOT:
+    case QCAMERA_SM_STATE_PREVIEW_READY:
         return true;
     default:
         return false;
