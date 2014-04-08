@@ -4011,33 +4011,39 @@ int32_t QCameraParameters::initDefaultParameters()
     setAEBracket(AE_BRACKET_OFF);
 
     //Set AF Bracketing.
-    if ((m_pCapability->qcom_supported_feature_mask &
-        CAM_QCOM_FEATURE_UBIFOCUS) > 0){
+    for(int i = 0; i < m_pCapability->supported_focus_modes_cnt; i++) {
+        if ((CAM_FOCUS_MODE_AUTO == m_pCapability->supported_focus_modes[i]) &&
+                ((m_pCapability->qcom_supported_feature_mask &
+                        CAM_QCOM_FEATURE_UBIFOCUS) > 0)) {
             String8 afBracketingValues = createValuesStringFromMap(
-                AF_BRACKETING_MODES_MAP,
-                sizeof(AF_BRACKETING_MODES_MAP) / sizeof(QCameraMap));
+                    AF_BRACKETING_MODES_MAP,
+                    sizeof(AF_BRACKETING_MODES_MAP) / sizeof(QCameraMap));
             set(KEY_QC_SUPPORTED_AF_BRACKET_MODES, afBracketingValues);
             setAFBracket(AF_BRACKET_OFF);
+            break;
+         }
     }
 
     //Set Chroma Flash.
-    if ((m_pCapability->qcom_supported_feature_mask &
-        CAM_QCOM_FEATURE_CHROMA_FLASH) > 0){
-          String8 chromaFlashValues = createValuesStringFromMap(
-              CHROMA_FLASH_MODES_MAP,
-              sizeof(CHROMA_FLASH_MODES_MAP) / sizeof(QCameraMap));
-          set(KEY_QC_SUPPORTED_CHROMA_FLASH_MODES, chromaFlashValues);
-          setChromaFlash(CHROMA_FLASH_OFF);
+    if ((m_pCapability->supported_flash_modes_cnt > 0) &&
+            (m_pCapability->qcom_supported_feature_mask &
+            CAM_QCOM_FEATURE_CHROMA_FLASH) > 0) {
+        String8 chromaFlashValues = createValuesStringFromMap(
+                CHROMA_FLASH_MODES_MAP,
+                sizeof(CHROMA_FLASH_MODES_MAP) / sizeof(QCameraMap));
+        set(KEY_QC_SUPPORTED_CHROMA_FLASH_MODES, chromaFlashValues);
+        setChromaFlash(CHROMA_FLASH_OFF);
     }
 
     //Set Opti Zoom.
-    if ((m_pCapability->qcom_supported_feature_mask &
-        CAM_QCOM_FEATURE_OPTIZOOM) > 0){
-            String8 optiZoomValues = createValuesStringFromMap(
+    if (m_pCapability->zoom_supported &&
+            (m_pCapability->qcom_supported_feature_mask &
+            CAM_QCOM_FEATURE_OPTIZOOM) > 0){
+        String8 optiZoomValues = createValuesStringFromMap(
                 OPTI_ZOOM_MODES_MAP,
                 sizeof(OPTI_ZOOM_MODES_MAP) / sizeof(QCameraMap));
-            set(KEY_QC_SUPPORTED_OPTI_ZOOM_MODES, optiZoomValues);
-            setOptiZoom(OPTI_ZOOM_OFF);
+        set(KEY_QC_SUPPORTED_OPTI_ZOOM_MODES, optiZoomValues);
+        setOptiZoom(OPTI_ZOOM_OFF);
     }
 
     // Set Denoise
@@ -5030,8 +5036,9 @@ int32_t QCameraParameters::setFlash(const char *flashStr)
             ALOGD("%s: Setting Flash value %s", __func__, flashStr);
             updateParamEntry(KEY_FLASH_MODE, flashStr);
 
-            // If hdr is enabled, flash mode just need to be stored
-            if (isHDREnabled()) {
+            // If hdr or Chrommma Flash are enabled,
+            // flash mode just need to be stored
+            if (isHDREnabled() || isChromaFlashEnabled()) {
               return NO_ERROR;
             }
 
@@ -6000,11 +6007,15 @@ int32_t QCameraParameters::setChromaFlash(const char *chromaFlashStr)
             m_bChromaFlashOn = (value != 0);
             updateParamEntry(KEY_QC_CHROMA_FLASH, chromaFlashStr);
             //set flash value.
-            value = m_bChromaFlashOn ? CAM_FLASH_MODE_ON: CAM_FLASH_MODE_OFF;
-            return AddSetParmEntryToBatch(m_pParamBuf,
+            if (m_bChromaFlashOn) {
+                value = CAM_FLASH_MODE_ON;
+                return AddSetParmEntryToBatch(m_pParamBuf,
                                    CAM_INTF_PARM_LED_MODE,
                                    sizeof(value),
                                    &value);
+            } else {
+                return enableFlash(true, false);
+            }
         }
     }
 
