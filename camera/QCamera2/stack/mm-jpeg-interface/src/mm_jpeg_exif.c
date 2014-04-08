@@ -330,7 +330,28 @@ int process_sensor_data(cam_sensor_params_t *p_sensor_params,
   if (rc) {
     ALOGE("%s %d]: Error adding flash exif entry", __func__, __LINE__);
   }
+  /* Sensing Method */
+  val_short = p_sensor_params->sensing_method;
+  rc = addExifEntry(exif_info, EXIFTAGID_SENSING_METHOD, EXIF_SHORT,
+    sizeof(val_short)/2, &val_short);
+  if (rc) {
+    ALOGE("%s:%d]: Error adding flash Exif Entry", __func__, __LINE__);
+  }
 
+  /*Focal Length in 35 MM Film */
+  val_short = (short) p_sensor_params->focal_length*p_sensor_params->crop_factor;
+  rc = addExifEntry(exif_info, EXIFTAGID_FOCAL_LENGTH_35MM, EXIF_SHORT, 1, &val_short);
+  if (rc) {
+    ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+  }
+
+  /* F Number */
+  val_rat.num = (uint32_t)(p_sensor_params->f_number * 100);
+  val_rat.denom = 100;
+  rc = addExifEntry(exif_info, EXIFTAGTYPE_F_NUMBER, EXIF_RATIONAL, 1, &val_rat);
+  if (rc) {
+    ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+  }
   return rc;
 }
 
@@ -416,6 +437,48 @@ int process_3a_data(cam_3a_params_t *p_3a_params, QOMX_EXIF_INFO *exif_info)
     ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
   }
 
+  /* Metering Mode   */
+  val_short = (unsigned short) p_3a_params->metering_mode;
+  rc = addExifEntry(exif_info,EXIFTAGID_METERING_MODE, EXIF_SHORT,
+     sizeof(val_short)/2, &val_short);
+  if (rc) {
+     ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+   }
+
+  /*Exposure Program*/
+   val_short = (unsigned short) p_3a_params->exposure_program;
+   rc = addExifEntry(exif_info,EXIFTAGID_EXPOSURE_PROGRAM, EXIF_SHORT,
+      sizeof(val_short)/2, &val_short);
+   if (rc) {
+      ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+    }
+
+   /*Exposure Mode */
+    val_short = (unsigned short) p_3a_params->exposure_mode;
+    rc = addExifEntry(exif_info,EXIFTAGID_EXPOSURE_MODE, EXIF_SHORT,
+       sizeof(val_short)/2, &val_short);
+    if (rc) {
+       ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+     }
+
+    /*Scenetype*/
+     uint8_t val_undef;
+     val_undef = (uint8_t) p_3a_params->scenetype;
+     rc = addExifEntry(exif_info,EXIFTAGID_SCENE_TYPE, EXIF_UNDEFINED,
+        sizeof(val_undef), &val_undef);
+     if (rc) {
+        ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+      }
+
+    /* Brightness Value*/
+     val_srat.num = p_3a_params->brightness*100;
+     val_srat.denom = 100;
+     rc = addExifEntry(exif_info,EXIFTAGID_BRIGHTNESS, EXIF_SRATIONAL,
+                 (sizeof(val_srat)/(8)), &val_srat);
+     if (rc) {
+        ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+     }
+
   return rc;
 }
 
@@ -438,7 +501,10 @@ int process_meta_data(metadata_buffer_t *p_meta, QOMX_EXIF_INFO *exif_info,
 {
   int rc = 0;
   cam_sensor_params_t p_sensor_params;
+  cam_sensor_params_t *sensor_exif_info;
   cam_3a_params_t p_3a_params;
+  cam_3a_params_t *ae_exif_info;
+  cam_auto_scene_t *scene_cap_type;
 
   if (!p_meta) {
     ALOGE("%s %d:Meta data is NULL", __func__, __LINE__);
@@ -456,6 +522,22 @@ int process_meta_data(metadata_buffer_t *p_meta, QOMX_EXIF_INFO *exif_info,
     (cam_wb_mode_type *)POINTER_OF(CAM_INTF_PARM_WHITE_BALANCE, p_meta);
 
   memset(&p_3a_params,  0,  sizeof(cam_3a_params_t));
+
+  ae_exif_info = (cam_3a_params_t *)POINTER_OF(CAM_INTF_META_AEC_INFO, p_meta);
+
+  if(ae_exif_info != NULL){
+    p_3a_params.metering_mode = ae_exif_info->metering_mode;
+    p_3a_params.exposure_program = ae_exif_info->exposure_program;
+    p_3a_params.exposure_mode  = ae_exif_info->exposure_mode;
+    p_3a_params.scenetype      = ae_exif_info->scenetype;
+    p_3a_params.brightness     = ae_exif_info->brightness;
+  } else {
+    p_3a_params.metering_mode =0;
+    p_3a_params.exposure_program = 0;
+    p_3a_params.exposure_mode  = 255;
+    p_3a_params.scenetype      = 1;
+    p_3a_params.brightness     = 0.0;
+  }
   if (NULL != iso) {
     p_3a_params.iso_value= *iso;
   } else {
@@ -486,6 +568,19 @@ int process_meta_data(metadata_buffer_t *p_meta, QOMX_EXIF_INFO *exif_info,
     (uint8_t *) POINTER_OF(CAM_INTF_META_FLASH_STATE, p_meta);
 
   memset(&p_sensor_params, 0, sizeof(cam_sensor_params_t));
+  sensor_exif_info = (cam_sensor_params_t *) POINTER_OF(CAM_INTF_META_SENSOR_INFO, p_meta);
+
+  if(sensor_exif_info != NULL){
+   p_sensor_params.focal_length  =  sensor_exif_info->focal_length;
+   p_sensor_params.f_number  =  sensor_exif_info->f_number;
+   p_sensor_params.sensing_method  =  sensor_exif_info->sensing_method;
+   p_sensor_params.crop_factor  =  sensor_exif_info->crop_factor;
+  } else {
+   p_sensor_params.focal_length  =  0;
+   p_sensor_params.f_number  =  0;
+   p_sensor_params.sensing_method  = 1;
+   p_sensor_params.crop_factor  =  0;
+  }
 
   if (NULL != aperture) {
      p_sensor_params.aperture_value = *aperture;
@@ -509,6 +604,15 @@ int process_meta_data(metadata_buffer_t *p_meta, QOMX_EXIF_INFO *exif_info,
   if (rc) {
       ALOGE("%s %d: Failed to extract sensor params", __func__, __LINE__);
   }
-
+  short val_short;
+  scene_cap_type = (cam_auto_scene_t *) POINTER_OF(CAM_INTF_META_ASD_SCENE_CAPTURE_TYPE, p_meta);
+  if(scene_cap_type != NULL)
+  val_short = (short) *scene_cap_type;
+  else val_short = 0;
+  rc = addExifEntry(exif_info, EXIFTAGID_SCENE_CAPTURE_TYPE, EXIF_SHORT,
+    sizeof(val_short)/2, &val_short);
+  if (rc) {
+    ALOGE("%s:%d]: Error adding ASD Exif Entry", __func__, __LINE__);
+  }
   return rc;
 }
