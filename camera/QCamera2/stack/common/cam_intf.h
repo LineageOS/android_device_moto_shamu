@@ -392,6 +392,8 @@ typedef struct {
 
     uint8_t useAVTimer; /*flag to indicate use of AVTimer for TimeStamps*/
 
+    uint8_t dis_enable;
+
     /* Image Stabilization type */
     cam_is_type_t is_type;
 
