@@ -1076,7 +1076,8 @@ int32_t mm_camera_stop_channel(mm_camera_obj_t *my_obj,
  *==========================================================================*/
 int32_t mm_camera_request_super_buf(mm_camera_obj_t *my_obj,
                                     uint32_t ch_id,
-                                    uint32_t num_buf_requested)
+                                    uint32_t num_buf_requested,
+                                    uint32_t num_retro_buf_requested)
 {
     int32_t rc = -1;
     mm_channel_t * ch_obj =
@@ -1089,7 +1090,7 @@ int32_t mm_camera_request_super_buf(mm_camera_obj_t *my_obj,
         rc = mm_channel_fsm_fn(ch_obj,
                                MM_CHANNEL_EVT_REQUEST_SUPER_BUF,
                                (void*)num_buf_requested,
-                               NULL);
+                               (void*)num_retro_buf_requested);
     } else {
         pthread_mutex_unlock(&my_obj->cam_lock);
     }

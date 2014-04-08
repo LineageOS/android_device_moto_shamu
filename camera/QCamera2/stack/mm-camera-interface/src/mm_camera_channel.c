@@ -63,7 +63,7 @@ int32_t mm_channel_get_bundle_info(mm_channel_t *my_obj,
 int32_t mm_channel_start(mm_channel_t *my_obj);
 int32_t mm_channel_stop(mm_channel_t *my_obj);
 int32_t mm_channel_request_super_buf(mm_channel_t *my_obj,
-                                     uint32_t num_buf_requested);
+                uint32_t num_buf_requested, uint32_t num_reto_buf_requested);
 int32_t mm_channel_cancel_super_buf_request(mm_channel_t *my_obj);
 int32_t mm_channel_flush_super_buf_queue(mm_channel_t *my_obj,
                                          uint32_t frame_idx);
@@ -211,25 +211,24 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
     } else if (MM_CAMERA_CMD_TYPE_REQ_DATA_CB  == cmd_cb->cmd_type) {
         /* skip frames if needed */
         ch_obj->pending_cnt = cmd_cb->u.req_buf.num_buf_requested;
+        ch_obj->pending_retro_cnt = cmd_cb->u.req_buf.num_retro_buf_requested;
+        ch_obj->bWaitForPrepSnapshotDone = 0;
+
+        ALOGV("%s:[ZSL Retro] pending cnt (%d), retro count (%d)",
+              __func__, ch_obj->pending_cnt, ch_obj->pending_retro_cnt);
+        if (!ch_obj->pending_cnt || (ch_obj->pending_retro_cnt > ch_obj->pending_cnt)) {
+          ch_obj->pending_retro_cnt = ch_obj->pending_cnt;
+        }
+        if (ch_obj->pending_retro_cnt > 0) {
+          ALOGV("%s: [ZSL Retro] Resetting need Led Flash!!!",
+              __func__);
+          ch_obj->needLEDFlash = 0;
+        }
+        ch_obj->stopZslSnapshot = 0;
+        ch_obj->unLockAEC = 0;
+
         mm_channel_superbuf_skip(ch_obj, &ch_obj->bundle.superbuf_queue);
 
-        if (ch_obj->pending_cnt > 0
-            && (ch_obj->needLEDFlash == TRUE || ch_obj->need3ABracketing == TRUE)
-            && (ch_obj->manualZSLSnapshot == FALSE)
-            && ch_obj->startZSlSnapshotCalled == FALSE) {
-
-            CDBG_HIGH("%s: need flash, start zsl snapshot", __func__);
-            mm_camera_start_zsl_snapshot(ch_obj->cam_obj);
-            ch_obj->startZSlSnapshotCalled = TRUE;
-            ch_obj->needLEDFlash = FALSE;
-        } else if ((ch_obj->pending_cnt == 0 && ch_obj->startZSlSnapshotCalled == TRUE)
-                && (ch_obj->manualZSLSnapshot == FALSE)) {
-            CDBG_HIGH("%s: got picture cancelled, stop zsl snapshot", __func__);
-            mm_camera_stop_zsl_snapshot(ch_obj->cam_obj);
-            ch_obj->startZSlSnapshotCalled = FALSE;
-            ch_obj->needLEDFlash = FALSE;
-            ch_obj->need3ABracketing = FALSE;
-        }
     } else if (MM_CAMERA_CMD_TYPE_START_ZSL == cmd_cb->cmd_type) {
             ch_obj->manualZSLSnapshot = TRUE;
             mm_camera_start_zsl_snapshot(ch_obj->cam_obj);
@@ -278,26 +277,75 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
     }
     notify_mode = ch_obj->bundle.superbuf_queue.attr.notify_mode;
 
+    if ((ch_obj->pending_cnt > 0)
+        && (ch_obj->needLEDFlash == TRUE || ch_obj->need3ABracketing == TRUE)
+        && (ch_obj->manualZSLSnapshot == FALSE)
+        && ch_obj->startZSlSnapshotCalled == FALSE) {
+
+      CDBG_HIGH("%s: need flash, start zsl snapshot", __func__);
+      mm_camera_start_zsl_snapshot(ch_obj->cam_obj);
+      ch_obj->startZSlSnapshotCalled = TRUE;
+      ch_obj->burstSnapNum = ch_obj->pending_cnt;
+      ch_obj->bWaitForPrepSnapshotDone = 0;
+      ch_obj->needLEDFlash = FALSE;
+    } else if (((ch_obj->pending_cnt == 0) || (ch_obj->stopZslSnapshot == 1))
+            && (ch_obj->manualZSLSnapshot == FALSE)
+            && (ch_obj->startZSlSnapshotCalled == TRUE)) {
+      CDBG_HIGH("%s: Got picture cancelled, stop zsl snapshot", __func__);
+      mm_camera_stop_zsl_snapshot(ch_obj->cam_obj);
+      // Unlock AEC
+      ch_obj->startZSlSnapshotCalled = FALSE;
+      ch_obj->needLEDFlash = FALSE;
+      ch_obj->burstSnapNum = 0;
+      ch_obj->stopZslSnapshot = 0;
+      ch_obj->bWaitForPrepSnapshotDone = 0;
+      ch_obj->unLockAEC = 1;
+      ch_obj->need3ABracketing = FALSE;
+    }
     /* bufdone for overflowed bufs */
     mm_channel_superbuf_bufdone_overflow(ch_obj, &ch_obj->bundle.superbuf_queue);
-    /* dispatch frame if pending_cnt>0 or is in continuous streaming mode */
-    while ( (ch_obj->pending_cnt > 0) ||
-            (MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS == notify_mode) ) {
 
+    CDBG("%s: Super Buffer received, pending_cnt=%d",
+        __func__, ch_obj->pending_cnt);
+    /* dispatch frame if pending_cnt>0 or is in continuous streaming mode */
+
+    CDBG("%s: [ZSL Retro] Out loop pending cnt (%d), retro count (%d)",
+          __func__, ch_obj->pending_cnt, ch_obj->pending_retro_cnt);
+    while (((ch_obj->pending_cnt > 0) ||
+             (MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS == notify_mode)) &&
+             (!ch_obj->bWaitForPrepSnapshotDone)) {
+
+      CDBG("%s: [ZSL Retro] In loop pending cnt (%d), retro count (%d)",
+            __func__, ch_obj->pending_cnt, ch_obj->pending_retro_cnt);
         /* dequeue */
         node = mm_channel_superbuf_dequeue(&ch_obj->bundle.superbuf_queue);
         if (NULL != node) {
+             uint32_t bReady = 0;
             /* decrease pending_cnt */
-            CDBG("%s: Super Buffer received, Call client callback, pending_cnt=%d",
-                 __func__, ch_obj->pending_cnt);
             if (MM_CAMERA_SUPER_BUF_NOTIFY_BURST == notify_mode) {
                 ch_obj->pending_cnt--;
+                if (ch_obj->pending_retro_cnt > 0) {
+                  if (ch_obj->pending_retro_cnt == 1) {
+                    ch_obj->bWaitForPrepSnapshotDone = 1;
+                    // Retro Snaps are done..
+                    bReady = 1;
+                  }
+                  ch_obj->pending_retro_cnt--;
+                }
+                CDBG("%s: [ZSL Retro] Super Buffer received, Call client callback,"
+                    "pending_cnt=%d", __func__, ch_obj->pending_cnt);
 
-                if ((ch_obj->pending_cnt == 0 && ch_obj->startZSlSnapshotCalled == TRUE)
-                        && (ch_obj->manualZSLSnapshot == FALSE)) {
-                    CDBG_HIGH("%s: received all frames requested, stop zsl snapshot", __func__);
+                if (((ch_obj->pending_cnt == 0) ||
+                      (ch_obj->stopZslSnapshot == 1)) &&
+                      (ch_obj->manualZSLSnapshot == FALSE) &&
+                       ch_obj->startZSlSnapshotCalled == TRUE) {
+                    CDBG("%s: [ZSL Retro] Received all frames requested, stop zsl snapshot", __func__);
                     mm_camera_stop_zsl_snapshot(ch_obj->cam_obj);
                     ch_obj->startZSlSnapshotCalled = FALSE;
+                    ch_obj->burstSnapNum = 0;
+                    ch_obj->stopZslSnapshot = 0;
+                    ch_obj->unLockAEC = 1;
+
                 }
             }
             /* dispatch superbuf */
@@ -319,6 +367,13 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
                     }
                     cb_node->u.superbuf.camera_handle = ch_obj->cam_obj->my_hdl;
                     cb_node->u.superbuf.ch_id = ch_obj->my_hdl;
+                    cb_node->u.superbuf.bReadyForPrepareSnapshot = bReady;
+                    if (ch_obj->unLockAEC == 1) {
+                      cb_node->u.superbuf.bUnlockAEC = 1;
+                      ALOGE("%s:[ZSL Retro] Unlocking AEC", __func__);
+                      ch_obj->unLockAEC = 0;
+                    }
+
                     /* enqueue to cb thread */
                     cam_queue_enq(&(ch_obj->cb_thread.cmd_queue), cb_node);
                     /* wake up cb thread */
@@ -574,7 +629,9 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
     case MM_CHANNEL_EVT_REQUEST_SUPER_BUF:
         {
             uint32_t num_buf_requested = (uint32_t)in_val;
-            rc = mm_channel_request_super_buf(my_obj, num_buf_requested);
+            uint32_t num_retro_buf_requested = (uint32_t)out_val;
+            rc = mm_channel_request_super_buf(my_obj,
+              num_buf_requested, num_retro_buf_requested);
         }
         break;
     case MM_CHANNEL_EVT_CANCEL_REQUEST_SUPER_BUF:
@@ -1008,6 +1065,9 @@ int32_t mm_channel_start(mm_channel_t *my_obj)
         my_obj->bundle.superbuf_queue.num_streams = num_streams_to_start;
         my_obj->bundle.superbuf_queue.expected_frame_id = 0;
         my_obj->bundle.superbuf_queue.expected_frame_id_without_led = 0;
+        my_obj->bundle.superbuf_queue.led_off_start_frame_id = 0;
+        my_obj->bundle.superbuf_queue.led_on_start_frame_id = 0;
+        my_obj->bundle.superbuf_queue.led_on_num_frames = 0;
 
         for (i = 0; i < num_streams_to_start; i++) {
             /* set bundled flag to streams */
@@ -1104,6 +1164,7 @@ int32_t mm_channel_start(mm_channel_t *my_obj)
             memset(&my_obj->bundle, 0, sizeof(mm_channel_bundle_t));
         }
     }
+    my_obj->bWaitForPrepSnapshotDone = 0;
 
     return rc;
 }
@@ -1199,12 +1260,14 @@ int32_t mm_channel_stop(mm_channel_t *my_obj)
  * PARAMETERS :
  *   @my_obj       : channel object
  *   @num_buf_requested : number of matched frames needed
+ *   @num_retro_buf_requested : number of retro frames needed
  *
  * RETURN     : int32_t type of status
  *              0  -- success
  *              -1 -- failure
  *==========================================================================*/
-int32_t mm_channel_request_super_buf(mm_channel_t *my_obj, uint32_t num_buf_requested)
+int32_t mm_channel_request_super_buf(mm_channel_t *my_obj,
+               uint32_t num_buf_requested, uint32_t num_retro_buf_requested)
 {
     int32_t rc = 0;
     mm_camera_cmdcb_t* node = NULL;
@@ -1217,6 +1280,7 @@ int32_t mm_channel_request_super_buf(mm_channel_t *my_obj, uint32_t num_buf_requ
         memset(node, 0, sizeof(mm_camera_cmdcb_t));
         node->cmd_type = MM_CAMERA_CMD_TYPE_REQ_DATA_CB;
         node->u.req_buf.num_buf_requested = num_buf_requested;
+        node->u.req_buf.num_retro_buf_requested = num_retro_buf_requested;
 
         /* enqueue to cmd thread */
         cam_queue_enq(&(my_obj->cmd_thread.cmd_queue), node);
@@ -1248,7 +1312,7 @@ int32_t mm_channel_cancel_super_buf_request(mm_channel_t *my_obj)
 {
     int32_t rc = 0;
     /* reset pending_cnt */
-    rc = mm_channel_request_super_buf(my_obj, 0);
+    rc = mm_channel_request_super_buf(my_obj, 0, 0);
     return rc;
 }
 
@@ -1704,17 +1768,24 @@ int32_t mm_channel_handle_metadata(
             rc = -1;
             goto end;
         }
+        CDBG("%s: E , expected frame id: %d", __func__, queue->expected_frame_id);
 
         curr_entry = GET_FIRST_PARAM_ID(metadata);
         while (curr_entry != CAM_INTF_PARM_MAX) {
            if (curr_entry == CAM_INTF_META_PREP_SNAPSHOT_DONE) {
-              prep_snapshot_done_state = *((int32_t*)POINTER_OF(CAM_INTF_META_PREP_SNAPSHOT_DONE, metadata));
+              prep_snapshot_done_state =
+                      *((int32_t*)POINTER_OF(CAM_INTF_META_PREP_SNAPSHOT_DONE, metadata));
               is_prep_snapshot_done_valid = 1;
+              CDBG("%s: prepare snapshot done valid ", __func__);
               break;
            } else if (curr_entry == CAM_INTF_META_GOOD_FRAME_IDX_RANGE){
               good_frame_idx_range =
                  *((cam_frame_idx_range_t*)POINTER_OF(CAM_INTF_META_GOOD_FRAME_IDX_RANGE, metadata));
               is_good_frame_idx_range_valid = 1;
+
+              CDBG("%s: good_frame_idx_range : min: %d, max: %d , num frames = %d",
+                      __func__, good_frame_idx_range.min_frame_idx,
+                      good_frame_idx_range.max_frame_idx, good_frame_idx_range.num_led_on_frames);
               break;
            }
            curr_entry = GET_NEXT_PARAM_ID(curr_entry, metadata);
@@ -1728,14 +1799,16 @@ int32_t mm_channel_handle_metadata(
         }
 
         if (is_prep_snapshot_done_valid) {
+            ch_obj->bWaitForPrepSnapshotDone = 0;
             if (prep_snapshot_done_state == NEED_FUTURE_FRAME) {
                 /* Set expected frame id to a future frame idx, large enough to wait
-                 * for good_frame_idx_range, and small enough to still capture an image */
+                           * for good_frame_idx_range, and small enough to still capture an image */
                 const int max_future_frame_offset = 100;
                 queue->expected_frame_id += max_future_frame_offset;
+                CDBG("%s: [ZSL Retro] NEED_FUTURE_FRAME, expected frame id = %d ",
+                        __func__,  queue->expected_frame_id);
 
                 mm_channel_superbuf_flush(ch_obj, queue);
-
                 ch_obj->needLEDFlash = TRUE;
             } else {
                 ch_obj->needLEDFlash = FALSE;
@@ -1743,12 +1816,33 @@ int32_t mm_channel_handle_metadata(
         } else if (is_good_frame_idx_range_valid) {
             if (good_frame_idx_range.min_frame_idx >
                 queue->expected_frame_id) {
-                CDBG_HIGH("%s: min_frame_idx %d is greater than expected_frame_id %d",
+                CDBG_HIGH("%s: [ZSL Retro] min_frame_idx %d is greater than expected_frame_id %d",
                     __func__, good_frame_idx_range.min_frame_idx,
                     queue->expected_frame_id);
             }
             queue->expected_frame_id =
                 good_frame_idx_range.min_frame_idx;
+             if((ch_obj->needLEDFlash = TRUE) && (ch_obj->burstSnapNum > 1)) {
+                queue->expected_frame_id =
+                good_frame_idx_range.min_frame_idx;
+                queue->led_on_start_frame_id =
+                good_frame_idx_range.min_frame_idx;
+                queue->led_off_start_frame_id =
+                good_frame_idx_range.max_frame_idx;
+                queue->once = 0;
+                queue->led_on_num_frames =
+                  good_frame_idx_range.num_led_on_frames;
+                queue->frame_skip_count = good_frame_idx_range.frame_skip_count;
+                CDBG("%s: [ZSL Retro] Need Flash, expected frame id = %d,"
+                        " led_on start = %d, led off start = %d, led on frames = %d ",
+                        __func__,   queue->expected_frame_id, queue->led_on_start_frame_id,
+                        queue->led_off_start_frame_id, queue->led_on_num_frames);
+            } else {
+                queue->expected_frame_id =
+                good_frame_idx_range.min_frame_idx;
+                CDBG("%s: [ZSL Retro]No flash, expected frame id = %d ",
+                        __func__, queue->expected_frame_id);
+            }
         } else if(ch_obj->need3ABracketing &&
                    !is_good_frame_idx_range_valid) {
                /* Flush unwanted frames */
@@ -1764,6 +1858,7 @@ int32_t mm_channel_handle_metadata(
             /* max frame is without led flash */
             queue->expected_frame_id_without_led =
                 good_frame_idx_range.max_frame_idx;
+
         } else if (is_good_frame_idx_range_valid) {
              if (good_frame_idx_range.min_frame_idx >
                  queue->expected_frame_id) {
@@ -1775,6 +1870,20 @@ int32_t mm_channel_handle_metadata(
                  good_frame_idx_range.min_frame_idx;
              ch_obj->need3ABracketing = FALSE;
         }
+
+       if((ch_obj->burstSnapNum > 1) && (ch_obj->needLEDFlash == TRUE)) {
+         if((buf_info->frame_idx >= queue->led_off_start_frame_id)
+            &&  !queue->once) {
+            CDBG("%s: [ZSL Retro]Burst snap num = %d ",
+            __func__,  ch_obj->burstSnapNum);
+            // Skip frames from LED OFF frame to get a good frame
+            queue->expected_frame_id = queue->led_off_start_frame_id + queue->frame_skip_count;
+            queue->once = 1;
+            ch_obj->stopZslSnapshot = 1;
+            CDBG("%s:[ZSL Retro]Reached max led on frames = %d , expected id = %d",
+            __func__,  buf_info->frame_idx, queue->expected_frame_id);
+         }
+       }
     }
 end:
     return rc;
@@ -1909,6 +2018,10 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
                    queue->expected_frame_id = buf_info->frame_idx
                                               + queue->attr.post_frame_skip;
                 }
+                CDBG("%s: curr = %d, skip = %d , Expected Frame ID: %d",
+                        __func__, buf_info->frame_idx,
+                        queue->attr.post_frame_skip, queue->expected_frame_id);
+
                 queue->match_cnt++;
                 /* Any older unmatched buffer need to be released */
                 if ( last_buf ) {

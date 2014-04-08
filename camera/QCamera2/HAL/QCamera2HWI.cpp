@@ -630,26 +630,75 @@ int QCamera2HardwareInterface::take_picture(struct camera_device *device)
     hw->lockAPI();
     qcamera_api_result_t apiResult;
 
-    /* Prepare snapshot in case LED needs to be flashed */
-    if (hw->mFlashNeeded == 1 || hw->mParameters.isChromaFlashEnabled()) {
+   /** Added support for Retro-active Frames:
+     *  takePicture() is called before preparing Snapshot to indicate the
+     *  mm-camera-channel to pick up legacy frames even
+     *  before LED estimation is triggered.
+     */
+
+    ALOGD("%s: [ZSL Retro]: numRetroSnap %d, isLiveSnap %d, isZSL %d, isHDR %d",
+       __func__, hw->mParameters.getNumOfRetroSnapshots(),
+       hw->isLiveSnapshot(), hw->isZSLMode(), hw->isHDRMode());
+
+    // Check for Retro-active Frames
+    if ((hw->mParameters.getNumOfRetroSnapshots() > 0) &&
+        !hw->isLiveSnapshot() && hw->isZSLMode() &&
+        !hw->isHDRMode() && !hw->isLongshotEnabled()) {
+        // Set Retro Picture Mode
+        hw->setRetroPicture(1);
+        hw->m_bLedAfAecLock = 0;
+        ALOGD("%s: [ZSL Retro] mode", __func__);
+
+        /* Call take Picture for total number of snapshots required.
+             This includes the number of retro frames and normal frames */
+        ret = hw->processAPI(QCAMERA_SM_EVT_TAKE_PICTURE, NULL);
+        if (ret == NO_ERROR) {
+          // Wait for retro frames, before calling prepare snapshot
+          ALOGD("%s:[ZSL Retro] Wait for Retro frames to be done", __func__);
+          hw->waitAPIResult(QCAMERA_SM_EVT_TAKE_PICTURE, &apiResult);
+            ret = apiResult.status;
+        }
+
+
+        // Start Preparing for normal Frames
+        ALOGD("%s: [ZSL Retro]  Start Prepare Snapshot", __func__);
+        /* Prepare snapshot in case LED needs to be flashed */
         ret = hw->processAPI(QCAMERA_SM_EVT_PREPARE_SNAPSHOT, NULL);
         if (ret == NO_ERROR) {
             hw->waitAPIResult(QCAMERA_SM_EVT_PREPARE_SNAPSHOT, &apiResult);
             ret = apiResult.status;
+            ALOGD("%s: [ZSL Retro] Prep Snapshot done", __func__);
         }
     }
+    else {
+        hw->setRetroPicture(0);
+        ALOGD("%s: [ZSL Retro] Normal Pic Taking Mode", __func__);
 
-    /* Regardless what the result value for prepare_snapshot,
-     * go ahead with capture anyway. Just like the way autofocus
-     * is handled in capture case. */
+        ALOGD("%s: [ZSL Retro] Start Prepare Snapshot", __func__);
+        /* Prepare snapshot in case LED needs to be flashed */
+        if (hw->mFlashNeeded == 1 || hw->mParameters.isChromaFlashEnabled()) {
+            // Start Preparing for normal Frames
+            ALOGD("%s: [ZSL Retro]  Start Prepare Snapshot", __func__);
+            /* Prepare snapshot in case LED needs to be flashed */
+            ret = hw->processAPI(QCAMERA_SM_EVT_PREPARE_SNAPSHOT, NULL);
+            if (ret == NO_ERROR) {
+              hw->waitAPIResult(QCAMERA_SM_EVT_PREPARE_SNAPSHOT, &apiResult);
+                ret = apiResult.status;
+                ALOGD("%s: [ZSL Retro] Prep Snapshot done", __func__);
 
-    /* capture */
-    ret = hw->processAPI(QCAMERA_SM_EVT_TAKE_PICTURE, NULL);
-    if (ret == NO_ERROR) {
-        hw->waitAPIResult(QCAMERA_SM_EVT_TAKE_PICTURE, &apiResult);
-        ret = apiResult.status;
+            }
+        }
+        /* Regardless what the result value for prepare_snapshot,
+         * go ahead with capture anyway. Just like the way autofocus
+         * is handled in capture case. */
+        /* capture */
+        ALOGD("%s: [ZSL Retro] Capturing normal frames", __func__);
+        ret = hw->processAPI(QCAMERA_SM_EVT_TAKE_PICTURE, NULL);
+        if (ret == NO_ERROR) {
+          hw->waitAPIResult(QCAMERA_SM_EVT_TAKE_PICTURE, &apiResult);
+            ret = apiResult.status;
+        }
     }
-
     hw->unlockAPI();
     ALOGD("[KPI Perf] %s: X", __func__);
     return ret;
@@ -2439,8 +2488,18 @@ int32_t QCamera2HardwareInterface::startBracketing(
 int QCamera2HardwareInterface::takePicture()
 {
     int rc = NO_ERROR;
-    uint8_t numSnapshots = mParameters.getNumOfSnapshots();
 
+    // Get total number for snapshots (retro + regular)
+    uint8_t numSnapshots = mParameters.getNumOfSnapshots();
+    // Get number of retro-active snapshots
+    uint8_t numRetroSnapshots = mParameters.getNumOfRetroSnapshots();
+    ALOGD("%s: E", __func__);
+
+    // Check if retro-active snapshots are not enabled
+    if (!isRetroPicture() || !mParameters.isZSLMode()) {
+      numRetroSnapshots = 0;
+      ALOGD("%s: [ZSL Retro] Reset retro snaphot count to zero", __func__);
+    }
     if (mParameters.isUbiFocusEnabled() ||
             mParameters.isOptiZoomEnabled() ||
             mParameters.isHDREnabled() ||
@@ -2451,10 +2510,10 @@ int QCamera2HardwareInterface::takePicture()
             numSnapshots = mParameters.getBurstCountForBracketing();
         }
     }
-    ALOGE("%s: numSnapshot = %d",__func__, numSnapshots);
+    ALOGD("%s: [ZSL Retro] numSnapshots = %d, numRetroSnapshots = %d",
+          __func__, numSnapshots, numRetroSnapshots);
 
     getOrientation();
-    ALOGD("%s: E", __func__);
     if (mParameters.isZSLMode()) {
         QCameraPicChannel *pZSLChannel =
             (QCameraPicChannel *)m_channels[QCAMERA_CH_TYPE_ZSL];
@@ -2475,16 +2534,14 @@ int QCamera2HardwareInterface::takePicture()
                     return rc;
                 }
             }
-
             if ( mLongshotEnabled ) {
                 mCameraHandle->ops->start_zsl_snapshot(
                         mCameraHandle->camera_handle,
                         pZSLChannel->getMyHandle());
             }
-            rc = pZSLChannel->takePicture(numSnapshots);
-
+            rc = pZSLChannel->takePicture(numSnapshots, numRetroSnapshots);
             if (rc != NO_ERROR) {
-                ALOGE("%s: cannot take ZSL picture", __func__);
+                ALOGE("%s: cannot take ZSL picture, stop pproc", __func__);
                 m_postprocessor.stop();
                 return rc;
             }
@@ -2673,7 +2730,7 @@ int32_t QCamera2HardwareInterface::longShot()
     }
 
     if (NULL != pChannel) {
-        rc = pChannel->takePicture(numSnapshots);
+        rc = pChannel->takePicture(numSnapshots, 0);
     } else {
         ALOGE(" %s : Capture channel not initialized!", __func__);
         rc = NO_INIT;
@@ -3511,6 +3568,11 @@ int32_t QCamera2HardwareInterface::processPrepSnapshotDoneEvent(
     if (m_channels[QCAMERA_CH_TYPE_ZSL] &&
         prep_snapshot_state == NEED_FUTURE_FRAME) {
         ALOGD("%s: already handled in mm-camera-intf, no ops here", __func__);
+        if (isRetroPicture()) {
+            mParameters.setAecLock("true");
+            mParameters.commitParameters();
+            m_bLedAfAecLock = TRUE;
+        }
     }
     return ret;
 }

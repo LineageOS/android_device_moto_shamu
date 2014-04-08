@@ -877,8 +877,14 @@ typedef struct {
 } cam_color_correct_gains_t;
 
 typedef struct {
+    // If LED is ON and Burst Num > 1, this is first LED ON frame
     uint32_t min_frame_idx;
+    // If LED is ON and Burst Num > 1, this is first LED Off frame after ON
     uint32_t max_frame_idx;
+    // Used only when LED Is ON and burst num > 1
+    uint32_t num_led_on_frames;
+    // Skip count after LED is turned OFF
+    uint32_t frame_skip_count;
 } cam_frame_idx_range_t;
 
 typedef enum {
@@ -1093,6 +1099,9 @@ typedef enum {
     CAM_INTF_PARM_RAW_DIMENSION,
     CAM_INTF_PARM_FRAMESKIP,
     CAM_INTF_PARM_ZSL_MODE,  /* indicating if it's running in ZSL mode */
+    CAM_INTF_PARM_BURST_NUM,
+    CAM_INTF_PARM_RETRO_BURST_NUM,
+    CAM_INTF_PARM_BURST_LED_ON_PERIOD,
     CAM_INTF_PARM_HDR_NEED_1X, /* if HDR needs 1x output */ /* 40 */
     CAM_INTF_PARM_LOCK_CAF,
     CAM_INTF_PARM_VIDEO_HDR,

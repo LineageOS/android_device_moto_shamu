@@ -142,6 +142,7 @@ typedef enum {
     QCAMERA_INTERNAL_EVT_HISTOGRAM_STATS,    // histogram
     QCAMERA_INTERNAL_EVT_CROP_INFO,          // crop info
     QCAMERA_INTERNAL_EVT_ASD_UPDATE,         // asd update result
+    QCAMERA_INTERNAL_EVT_READY_FOR_SNAPSHOT, // Ready for Prepare Snapshot
     QCAMERA_INTERNAL_EVT_MAX
 } qcamera_internal_evt_type_t;
 
@@ -169,6 +170,9 @@ public:
     bool isCaptureRunning(); // check if image capture is running
     bool isNonZSLCaptureRunning(); // check if image capture is running in non ZSL mode
     String8 dump(); //returns the state information in a string
+    bool isPrepSnapStateRunning();
+    bool isRecording();
+
 private:
     typedef enum {
         QCAMERA_SM_STATE_PREVIEW_STOPPED,          // preview is stopped

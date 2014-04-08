@@ -93,6 +93,8 @@ const char QCameraParameters::KEY_QC_ORIENTATION[] = "orientation";
 const char QCameraParameters::KEY_QC_SELECTABLE_ZONE_AF[] = "selectable-zone-af";
 const char QCameraParameters::KEY_QC_CAPTURE_BURST_EXPOSURE[] = "capture-burst-exposures";
 const char QCameraParameters::KEY_QC_NUM_SNAPSHOT_PER_SHUTTER[] = "num-snaps-per-shutter";
+const char QCameraParameters::KEY_QC_NUM_RETRO_BURST_PER_SHUTTER[] = "num-retro-burst-per-shutter";
+const char QCameraParameters::KEY_QC_SNAPSHOT_BURST_LED_ON_PERIOD[] = "zsl-burst-led-on-period";
 const char QCameraParameters::KEY_QC_NO_DISPLAY_MODE[] = "no-display-mode";
 const char QCameraParameters::KEY_QC_RAW_PICUTRE_SIZE[] = "raw-size";
 const char QCameraParameters::KEY_QC_SUPPORTED_SKIN_TONE_ENHANCEMENT_MODES[] = "skinToneEnhancement-values";
@@ -605,6 +607,8 @@ QCameraParameters::QCameraParameters()
       m_bWNROn(false),
       m_bInited(false),
       m_nBurstNum(1),
+      m_nRetroBurstNum(0),
+      m_nBurstLEDOnPeriod(100),
       m_bUpdateEffects(false),
       m_bSceneTransitionAuto(false),
       m_bPreviewFlipChanged(false),
@@ -683,6 +687,8 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_bWNROn(false),
     m_bInited(false),
     m_nBurstNum(1),
+    m_nRetroBurstNum(0),
+    m_nBurstLEDOnPeriod(100),
     m_bPreviewFlipChanged(false),
     m_bVideoFlipChanged(false),
     m_bSnapshotFlipChanged(false),
@@ -1454,6 +1460,83 @@ int32_t QCameraParameters::setJpegThumbnailSize(const QCameraParameters& params)
 
     set(KEY_JPEG_THUMBNAIL_WIDTH, optimalWidth);
     set(KEY_JPEG_THUMBNAIL_HEIGHT, optimalHeight);
+    return NO_ERROR;
+}
+
+/*===========================================================================
+
+ * FUNCTION   : setBurstLEDOnPeriod
+ *
+ * DESCRIPTION: set burst LED on period
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setBurstLEDOnPeriod(const QCameraParameters& params)
+{
+    uint32_t nBurstLEDOnPeriod =
+      params.getInt(KEY_QC_SNAPSHOT_BURST_LED_ON_PERIOD);
+    //Check if the LED ON period is within limits
+    if ((nBurstLEDOnPeriod <= 0) || (nBurstLEDOnPeriod > 800)) {
+        // if burst led on period is not set in parameters,
+        // read from sys prop
+        char prop[PROPERTY_VALUE_MAX];
+        memset(prop, 0, sizeof(prop));
+        property_get("persist.camera.led.on.period", prop, "0");
+        nBurstLEDOnPeriod = atoi(prop);
+        if (nBurstLEDOnPeriod <= 0) {
+            nBurstLEDOnPeriod = 100;
+        }
+    }
+
+    set(KEY_QC_SNAPSHOT_BURST_LED_ON_PERIOD, nBurstLEDOnPeriod);
+    m_nBurstLEDOnPeriod = nBurstLEDOnPeriod;
+    ALOGD("%s: Burst LED on period  %d", __func__, nBurstLEDOnPeriod);
+    return AddSetParmEntryToBatch(m_pParamBuf,
+                                  CAM_INTF_PARM_BURST_LED_ON_PERIOD,
+                                  sizeof(nBurstLEDOnPeriod),
+                                  &nBurstLEDOnPeriod);
+}
+
+
+
+/*===========================================================================
+ * FUNCTION   : setRetroActiveBurstNum
+ *
+ * DESCRIPTION: set retro active burst num
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setRetroActiveBurstNum(
+    const QCameraParameters& params)
+{
+    int32_t nBurstNum = params.getInt(KEY_QC_NUM_RETRO_BURST_PER_SHUTTER);
+    ALOGD("%s:[ZSL Retro] m_nRetroBurstNum = %d", __func__, m_nRetroBurstNum);
+    if (nBurstNum <= 0) {
+        // if burst number is not set in parameters,
+        // read from sys prop
+        char prop[PROPERTY_VALUE_MAX];
+        memset(prop, 0, sizeof(prop));
+        property_get("persist.camera.retro.number", prop, "0");
+        nBurstNum = atoi(prop);
+        if (nBurstNum < 0) {
+            nBurstNum = 0;
+        }
+    }
+
+    set(KEY_QC_NUM_RETRO_BURST_PER_SHUTTER, nBurstNum);
+
+    m_nRetroBurstNum = nBurstNum;
+    ALOGD("%s: [ZSL Retro] m_nRetroBurstNum = %d", __func__, m_nRetroBurstNum);
     return NO_ERROR;
 }
 
@@ -3312,6 +3395,7 @@ int32_t QCameraParameters::setZslAttributes(const QCameraParameters& params)
         memset(prop, 0, sizeof(prop));
         property_get("persist.camera.zsl.interval", prop, "1");
         set(KEY_QC_ZSL_BURST_INTERVAL, prop);
+        ALOGD("%s: [ZSL Retro] burst interval: %s", __func__, prop);
     }
 
     str = params.get(KEY_QC_ZSL_BURST_LOOKBACK);
@@ -3321,6 +3405,7 @@ int32_t QCameraParameters::setZslAttributes(const QCameraParameters& params)
         memset(prop, 0, sizeof(prop));
         property_get("persist.camera.zsl.backlookcnt", prop, "2");
         set(KEY_QC_ZSL_BURST_LOOKBACK, prop);
+        ALOGD("%s: [ZSL Retro] look back count: %s", __func__, prop);
     }
 
     str = params.get(KEY_QC_ZSL_QUEUE_DEPTH);
@@ -3330,6 +3415,7 @@ int32_t QCameraParameters::setZslAttributes(const QCameraParameters& params)
         memset(prop, 0, sizeof(prop));
         property_get("persist.camera.zsl.queuedepth", prop, "2");
         set(KEY_QC_ZSL_QUEUE_DEPTH, prop);
+        ALOGD("%s: [ZSL Retro] queue depth: %s", __func__, prop);
     }
 
     return NO_ERROR;
@@ -3431,11 +3517,14 @@ int32_t QCameraParameters::setBurstNum(const QCameraParameters& params)
         if (nBurstNum <= 0) {
             nBurstNum = 1;
         }
-    } else {
-        set(KEY_QC_SNAPSHOT_BURST_NUM, nBurstNum);
     }
+    set(KEY_QC_SNAPSHOT_BURST_NUM, nBurstNum);
     m_nBurstNum = nBurstNum;
-    return NO_ERROR;
+    ALOGD("%s: [ZSL Retro] m_nBurstNum = %d", __func__, m_nBurstNum);
+    return AddSetParmEntryToBatch(m_pParamBuf,
+                                  CAM_INTF_PARM_BURST_NUM,
+                                  sizeof(nBurstNum),
+                                  &nBurstNum);
 }
 
 /*===========================================================================
@@ -3548,7 +3637,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setZslAttributes(params)))                final_rc = rc;
     if ((rc = setCameraMode(params)))                   final_rc = rc;
     if ((rc = setRecordingHint(params)))                final_rc = rc;
-    if ((rc = setRdiMode(params)))                       final_rc = rc;
+    if ((rc = setRdiMode(params)))                      final_rc = rc;
     if ((rc = setPreviewFrameRate(params)))             final_rc = rc;
     if ((rc = setPreviewFpsRange(params)))              final_rc = rc;
     if ((rc = setAutoExposure(params)))                 final_rc = rc;
@@ -3586,6 +3675,8 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setVideoHDR(params)))                     final_rc = rc;
     if ((rc = setVtEnable(params)))                     final_rc = rc;
     if ((rc = setBurstNum(params)))                     final_rc = rc;
+    if ((rc = setBurstLEDOnPeriod(params)))             final_rc = rc;
+    if ((rc = setRetroActiveBurstNum(params)))          final_rc = rc;
     if ((rc = setSnapshotFDReq(params)))                final_rc = rc;
     if ((rc = setTintlessValue(params)))                final_rc = rc;
 
@@ -4182,6 +4273,9 @@ int32_t QCameraParameters::initDefaultParameters()
 
     // Add support for internal preview restart
     set(KEY_INTERNAL_PERVIEW_RESTART, VALUE_TRUE);
+    // Set default burst number
+    set(KEY_QC_SNAPSHOT_BURST_NUM, 1);
+    set(KEY_QC_NUM_RETRO_BURST_PER_SHUTTER, 0);
 
     int32_t rc = commitParameters();
     if (rc == NO_ERROR) {
@@ -6955,6 +7049,40 @@ uint8_t QCameraParameters::getBurstCountForBracketing()
 }
 
 /*===========================================================================
+ * FUNCTION   : getNumOfRetroSnapshots
+ *
+ * DESCRIPTION: get number of retro active snapshots per shutter
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : number of retro active snapshots per shutter
+ *==========================================================================*/
+uint8_t QCameraParameters::getNumOfRetroSnapshots()
+{
+    int numOfRetroSnapshots = getInt(KEY_QC_NUM_RETRO_BURST_PER_SHUTTER);
+    if (numOfRetroSnapshots < 0) {
+        numOfRetroSnapshots = 0;
+    }
+    ALOGD("%s: [ZSL Retro] : numOfRetroSnaps - %d", __func__, numOfRetroSnapshots);
+    return (uint8_t)numOfRetroSnapshots;
+}
+
+/*===========================================================================
+ * FUNCTION   : getBurstLEDOnPeriod
+ *
+ * DESCRIPTION: get burst LED on period
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : burst LED on period
+ *==========================================================================*/
+int QCameraParameters::getBurstLEDOnPeriod()
+{
+  ALOGD("%s: [ZSL Retro] burst LED ON period: %d", __func__, m_nBurstLEDOnPeriod);
+  return m_nBurstLEDOnPeriod;
+}
+
+/*===========================================================================
  * FUNCTION   : getNumOfExtraHDRInBufsIfNeeded
  *
  * DESCRIPTION: get number of extra input buffers needed by HDR
@@ -7009,6 +7137,7 @@ uint8_t QCameraParameters::getNumOfExtraHDROutBufsIfNeeded()
  *==========================================================================*/
 int QCameraParameters::getBurstNum()
 {
+    ALOGD("%s: m_nBurstNum = %d", __func__, m_nBurstNum);
     return m_nBurstNum;
 }
 
