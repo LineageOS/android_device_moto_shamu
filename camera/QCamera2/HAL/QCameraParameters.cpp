@@ -596,6 +596,7 @@ QCameraParameters::QCameraParameters()
       m_bRecordingHint_new(false),
       m_bHistogramEnabled(false),
       m_nFaceProcMask(0),
+      m_bFaceDetectionOn(0),
       m_bDebugFps(false),
       mFocusMode(CAM_FOCUS_MODE_MAX),
       mPreviewFormat(CAM_FORMAT_YUV_420_NV21),
@@ -3122,6 +3123,9 @@ int32_t QCameraParameters::setRecordingHint(const QCameraParameters& params)
             if(value != NAME_NOT_FOUND){
                 updateParamEntry(KEY_RECORDING_HINT, str);
                 setRecordingHintValue(value);
+                if (getFaceDetectionOption() == true) {
+                    setFaceDetection(value > 0 ? false : true);
+                }
                 return NO_ERROR;
             } else {
                 ALOGE("Invalid recording hint value: %s", str);
@@ -6462,7 +6466,7 @@ void QCameraParameters::getTouchIndexAf(int *x, int *y)
     if (parse_pair(p, &tempX, &tempY, 'x') == 0) {
         *x = tempX;
         *y = tempY;
-	}
+    }
 }
 
 /*===========================================================================
@@ -7456,6 +7460,24 @@ int32_t QCameraParameters::setHistogram(bool enabled)
     ALOGD(" Histogram -> %s", m_bHistogramEnabled ? "Enabled" : "Disabled");
 
     return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : setFaceDetectionOption
+ *
+ * DESCRIPTION: set if face detection is enabled by SendCommand
+ *
+ * PARAMETERS :
+ *   @enabled : bool flag if face detection should be enabled
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+ int32_t QCameraParameters::setFaceDetectionOption(bool enabled)
+{
+    m_bFaceDetectionOn = enabled;
+    return NO_ERROR;
 }
 
 /*===========================================================================

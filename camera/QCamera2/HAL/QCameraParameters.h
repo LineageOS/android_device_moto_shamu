@@ -507,6 +507,8 @@ public:
     bool isFpsDebugEnabled() {return m_bDebugFps;};
     bool isHistogramEnabled() {return m_bHistogramEnabled;};
     bool isFaceDetectionEnabled() {return ((m_nFaceProcMask & CAM_FACE_PROCESS_MASK_DETECTION) != 0);};
+    bool getFaceDetectionOption() { return  m_bFaceDetectionOn;}
+    int32_t setFaceDetectionOption(bool enabled);
     int32_t setHistogram(bool enabled);
     int32_t setFaceDetection(bool enabled);
     int32_t setFrameSkip(enum msm_vfe_frame_skip_pattern pattern);
@@ -753,6 +755,7 @@ private:
     bool m_bRecordingHint_new;
     bool m_bHistogramEnabled;       // if histogram is enabled
     int  m_nFaceProcMask;           // face process mask
+    bool m_bFaceDetectionOn;        //  if face Detection turned on by user
     bool m_bDebugFps;               // if FPS need to be logged
     cam_focus_mode_type mFocusMode;
     cam_format_t mPreviewFormat;

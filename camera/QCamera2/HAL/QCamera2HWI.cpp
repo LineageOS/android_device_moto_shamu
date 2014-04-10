@@ -2942,6 +2942,7 @@ int QCamera2HardwareInterface::sendCommand(int32_t command, int32_t /*arg1*/, in
         break;
     case CAMERA_CMD_START_FACE_DETECTION:
     case CAMERA_CMD_STOP_FACE_DETECTION:
+        mParameters.setFaceDetectionOption(command == CAMERA_CMD_START_FACE_DETECTION? true : false);
         rc = setFaceDetection(command == CAMERA_CMD_START_FACE_DETECTION? true : false);
         break;
     case CAMERA_CMD_HISTOGRAM_SEND_DATA:
