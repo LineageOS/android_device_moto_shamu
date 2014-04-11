@@ -214,6 +214,32 @@ int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
     }
     return rc;
 }
+/*===========================================================================
+ * FUNCTION   : config
+ *
+ * DESCRIPTION: Configure any deffered channel streams
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraChannel::config()
+{
+    int32_t rc = NO_ERROR;
+
+    for (int i = 0; i < m_numStreams; ++i) {
+        if ( mStreams[i]->isDeffered() ) {
+            rc = mStreams[i]->configStream();
+            if (rc != NO_ERROR) {
+                break;
+            }
+        }
+    }
+
+    return rc;
+}
 
 /*===========================================================================
  * FUNCTION   : start
@@ -229,11 +255,6 @@ int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
 int32_t QCameraChannel::start()
 {
     int32_t rc = NO_ERROR;
-
-    for (int i = 0; i < m_numStreams; ++i) {
-        if ( mStreams[i]->isDeffered() )
-            mStreams[i]->configStream();
-    }
 
     if (m_numStreams > 1) {
         // there is more than one stream in the channel
