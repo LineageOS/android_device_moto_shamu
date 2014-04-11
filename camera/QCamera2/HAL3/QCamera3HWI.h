@@ -206,6 +206,7 @@ private:
                             uint32_t frameNumber);
     static void getLogLevel();
 
+    void cleanAndSortStreamInfo();
     int queueReprocMetadata(metadata_buffer_t *metadata);
     void extractJpegMetadata(CameraMetadata& jpegMetadata,
             const camera3_capture_request_t *request);
