@@ -2195,6 +2195,13 @@ QCamera3HardwareInterface::translateFromHalMetadata(
         camMetadata.update(ANDROID_COLOR_CORRECTION_TRANSFORM,
             (camera_metadata_rational_t*)colorCorrectionMatrix->transform_matrix, 3*3);
     }
+    if (IS_META_AVAILABLE(CAM_INTF_META_PROFILE_TONE_CURVE, metadata)) {
+        cam_profile_tone_curve *toneCurve = (cam_profile_tone_curve *)
+                POINTER_OF_META(CAM_INTF_META_PROFILE_TONE_CURVE, metadata);
+        camMetadata.update(ANDROID_SENSOR_PROFILE_TONE_CURVE,
+                (float*)toneCurve->curve.tonemap_points,
+                toneCurve->tonemap_points_cnt * 2);
+    }
     if (IS_META_AVAILABLE(CAM_INTF_META_PRED_COLOR_CORRECT_GAINS, metadata)){
         cam_color_correct_gains_t *predColorCorrectionGains = (cam_color_correct_gains_t*)
             POINTER_OF_META(CAM_INTF_META_PRED_COLOR_CORRECT_GAINS, metadata);
