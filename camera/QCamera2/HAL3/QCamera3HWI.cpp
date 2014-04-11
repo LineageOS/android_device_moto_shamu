@@ -3361,7 +3361,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       available_hot_pixel_map_modes,
                       1);
 
-
     int32_t avail_min_frame_durations_size = gCamCapability[cameraId]->picture_sizes_tbl_cnt *
                                                  sizeof(scalar_formats)/sizeof(int32_t) * 4;
     int64_t avail_min_frame_durations[avail_min_frame_durations_size];

@@ -304,6 +304,9 @@ typedef struct{
     /* opti Zoom info */
     cam_opti_zoom_t      opti_zoom_settings_need;
 
+    cam_rational_type_t forward_matrix[3][3];
+    cam_rational_type_t color_transform[3][3];
+
     uint8_t focus_dist_calibrated;
     uint8_t supported_test_pattern_modes_cnt;
     cam_test_pattern_mode_t supported_test_pattern_modes[MAX_TEST_PATTERN_CNT];
