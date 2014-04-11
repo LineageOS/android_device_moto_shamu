@@ -2287,6 +2287,12 @@ QCamera3HardwareInterface::translateFromHalMetadata(
         camMetadata.update(QCAMERA3_PRIVATEDATA_REPROCESS,
             privateData, MAX_METADATA_PRIVATE_PAYLOAD_SIZE);
     }
+    if (IS_META_AVAILABLE(CAM_INTF_META_NEUTRAL_COL_POINT, metadata)) {
+        cam_neutral_col_point_t *neuColPoint = (cam_neutral_col_point_t*)
+                POINTER_OF_META(CAM_INTF_META_NEUTRAL_COL_POINT, metadata);
+        camMetadata.update(ANDROID_SENSOR_NEUTRAL_COLOR_POINT,
+                (camera_metadata_rational_t*)neuColPoint->neutral_col_point, 3);
+    }
 
     uint8_t hotPixelMode = ANDROID_HOT_PIXEL_MODE_FAST;
     camMetadata.update(ANDROID_HOT_PIXEL_MODE, &hotPixelMode, 1);

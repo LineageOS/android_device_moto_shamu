@@ -333,6 +333,8 @@ void *get_pointer_of(cam_intf_parm_type_t meta_id,
             return POINTER_OF_META(CAM_INTF_META_PROFILE_TONE_CURVE, metadata);
         case CAM_INTF_META_OTP_WB_GRGB:
             return POINTER_OF_META(CAM_INTF_META_OTP_WB_GRGB, metadata);
+        case CAM_INTF_META_NEUTRAL_COL_POINT:
+            return POINTER_OF_META(CAM_INTF_META_NEUTRAL_COL_POINT, metadata);
         default:
             return NULL;
     }
@@ -642,6 +644,8 @@ uint32_t get_size_of(cam_intf_parm_type_t param_id)
             return SIZE_OF_PARAM(CAM_INTF_META_PROFILE_TONE_CURVE, metadata);
         case CAM_INTF_META_OTP_WB_GRGB:
             return SIZE_OF_PARAM(CAM_INTF_META_OTP_WB_GRGB, metadata);
+        case CAM_INTF_META_NEUTRAL_COL_POINT:
+            return SIZE_OF_PARAM(CAM_INTF_META_NEUTRAL_COL_POINT, metadata);
         default:
             return 0;
     }
