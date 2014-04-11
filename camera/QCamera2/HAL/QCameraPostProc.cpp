@@ -1427,7 +1427,7 @@ int32_t QCameraPostProcessor::syncStreamParams(mm_camera_super_buf_t *frame,
         }
     }
 
-    if (NULL != reproc_stream) {
+    if ((NULL != reproc_stream) && (reproc_stream != main_stream)) {
         ret = reproc_stream->syncRuntimeParams();
         if (NO_ERROR != ret) {
             ALOGE("%s : Syncing of reproc stream runtime parameters failed %d",
