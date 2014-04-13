@@ -774,7 +774,8 @@ static int32_t mm_camera_intf_stop_channel(uint32_t camera_handle,
  *==========================================================================*/
 static int32_t mm_camera_intf_request_super_buf(uint32_t camera_handle,
                                                 uint32_t ch_id,
-                                                uint32_t num_buf_requested)
+                                                uint32_t num_buf_requested,
+                                                uint32_t num_retro_buf_requested)
 {
     int32_t rc = -1;
     CDBG("%s :E camera_handler = %d,ch_id = %d",
@@ -787,7 +788,8 @@ static int32_t mm_camera_intf_request_super_buf(uint32_t camera_handle,
     if(my_obj) {
         pthread_mutex_lock(&my_obj->cam_lock);
         pthread_mutex_unlock(&g_intf_lock);
-        rc = mm_camera_request_super_buf(my_obj, ch_id, num_buf_requested);
+        rc = mm_camera_request_super_buf (my_obj, ch_id,
+          num_buf_requested, num_retro_buf_requested);
     } else {
         pthread_mutex_unlock(&g_intf_lock);
     }

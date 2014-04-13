@@ -381,6 +381,10 @@ private:
         return mParameters.isUbiRefocus() ? 1 : mParameters.getNumOfSnapshots();};
     bool isLongshotEnabled() { return mLongshotEnabled; };
     bool isHFRMode() {return mParameters.isHfrMode();};
+    bool isLiveSnapshot() {return m_stateMachine.isRecording();};
+    void setRetroPicture(bool enable) { bRetroPicture = enable; };
+    bool isRetroPicture() {return bRetroPicture; };
+    bool isHDRMode() {return mParameters.isHDREnabled();};
     uint8_t getBufNumRequired(cam_stream_type_t stream_type);
     bool needFDMetadata(qcamera_ch_type_enum_t channel_type);
     int32_t declareSnapshotStreams();
@@ -503,6 +507,10 @@ private:
     // and beforeany focus callback/cancel_focus happens. This flag is not an indication
     // of whether lens is moving or not.
     bool m_bAutoFocusRunning;
+    // Signifies if ZSL Retro Snapshots are enabled
+    bool bRetroPicture;
+    // Signifies AEC locked during zsl snapshots
+    bool m_bLedAfAecLock;
     cam_autofocus_state_t m_currentFocusState;
 
     power_module_t *m_pPowerModule;   // power module

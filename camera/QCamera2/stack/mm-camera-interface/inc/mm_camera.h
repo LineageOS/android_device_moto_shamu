@@ -78,11 +78,13 @@ typedef enum
 typedef struct {
     uint32_t stream_id;
     uint32_t frame_idx;
+    uint32_t flags;
     mm_camera_buf_def_t *buf; /* ref to buf */
 } mm_camera_buf_info_t;
 
 typedef struct {
     uint32_t num_buf_requested;
+    uint32_t num_retro_buf_requested;
 } mm_camera_req_buf_t;
 
 typedef enum {
@@ -325,6 +327,11 @@ typedef struct {
     uint32_t expected_frame_id;
     uint32_t match_cnt;
     uint32_t expected_frame_id_without_led;
+    uint32_t led_on_start_frame_id;
+    uint32_t led_off_start_frame_id;
+    uint32_t led_on_num_frames;
+    uint32_t once;
+    uint32_t frame_skip_count;
 } mm_channel_queue_t;
 
 typedef struct {
@@ -345,6 +352,11 @@ typedef struct mm_channel {
 
     /* num of pending suferbuffers */
     uint32_t pending_cnt;
+    uint32_t pending_retro_cnt;
+    uint32_t bWaitForPrepSnapshotDone;
+    uint32_t unLockAEC;
+    /* num of pending suferbuffers */
+    uint8_t stopZslSnapshot;
 
     /* cmd thread for superbuffer dataCB and async stop*/
     mm_camera_cmd_thread_t cmd_thread;
@@ -369,9 +381,9 @@ typedef struct mm_channel {
     /* control for zsl led */
     uint8_t startZSlSnapshotCalled;
     uint8_t needLEDFlash;
-
     uint8_t need3ABracketing;
     uint8_t isFlashBracketingEnabled;
+    uint32_t burstSnapNum;
 } mm_channel_t;
 
 /* struct to store information about pp cookie*/
@@ -503,7 +515,8 @@ extern int32_t mm_camera_stop_channel(mm_camera_obj_t *my_obj,
                                       uint32_t ch_id);
 extern int32_t mm_camera_request_super_buf(mm_camera_obj_t *my_obj,
                                            uint32_t ch_id,
-                                           uint32_t num_buf_requested);
+                                           uint32_t num_buf_requested,
+                                           uint32_t num_retro_buf_requested);
 extern int32_t mm_camera_cancel_super_buf_request(mm_camera_obj_t *my_obj,
                                                   uint32_t ch_id);
 extern int32_t mm_camera_flush_super_buf_queue(mm_camera_obj_t *my_obj,

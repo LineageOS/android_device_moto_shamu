@@ -174,6 +174,8 @@ public:
     static const char KEY_QC_SUPPORTED_AE_BRACKET_MODES[];
     static const char KEY_QC_CAPTURE_BURST_EXPOSURE[];
     static const char KEY_QC_NUM_SNAPSHOT_PER_SHUTTER[];
+    static const char KEY_QC_NUM_RETRO_BURST_PER_SHUTTER[];
+    static const char KEY_QC_SNAPSHOT_BURST_LED_ON_PERIOD[];
     static const char KEY_QC_SNAPSHOT_BURST_NUM[];
     static const char KEY_QC_NO_DISPLAY_MODE[];
     static const char KEY_QC_RAW_PICUTRE_SIZE[];
@@ -484,9 +486,12 @@ public:
     bool isHfrMode() {return m_bHfrMode;};
     void getHfrFps(cam_fps_range_t &pFpsRange) { pFpsRange = m_hfrFpsRange;};
     uint8_t getNumOfSnapshots();
+    uint8_t getNumOfRetroSnapshots();
     uint8_t getNumOfExtraHDRInBufsIfNeeded();
     uint8_t getNumOfExtraHDROutBufsIfNeeded();
     int getBurstNum();
+    int getBurstLEDOnPeriod();
+    int getRetroActiveBurstNum();
     bool getRecordingHintValue() {return m_bRecordingHint;}; // return local copy of video hint
     int setRecordingHintValue(int32_t value); // set local copy of video hint and send to server
                                               // no change in parameters value
@@ -575,6 +580,7 @@ public:
     int32_t setDisplayFrame(bool enabled) {m_bDisplayFrame=enabled; return 0;};
     bool isAdvCamFeaturesEnabled() {return isUbiFocusEnabled() ||
         isChromaFlashEnabled() || isOptiZoomEnabled() || isHDREnabled();}
+    int32_t setAecLock(const char *aecStr);
 
 private:
     int32_t setPreviewSize(const QCameraParameters& );
@@ -634,6 +640,8 @@ private:
     int32_t setFaceRecognition(const QCameraParameters& );
     int32_t setFlip(const QCameraParameters& );
     int32_t setBurstNum(const QCameraParameters& params);
+    int32_t setRetroActiveBurstNum(const QCameraParameters& params);
+    int32_t setBurstLEDOnPeriod(const QCameraParameters& params);
     int32_t setSnapshotFDReq(const QCameraParameters& );
     int32_t setStatsDebugMask();
     int32_t setTintlessValue(const QCameraParameters& params);
@@ -656,7 +664,6 @@ private:
     int32_t setZoom(int zoom_level);
     int32_t setISOValue(const char *isoValue);
     int32_t setFlash(const char *flashStr);
-    int32_t setAecLock(const char *aecStr);
     int32_t setAwbLock(const char *awbStr);
     int32_t setMCEValue(const char *mceStr);
     int32_t setDISValue(const char *disStr);
@@ -767,6 +774,8 @@ private:
     bool m_bWNROn;
     bool m_bInited;
     int m_nBurstNum;
+    int m_nRetroBurstNum;
+    int m_nBurstLEDOnPeriod;
     cam_exp_bracketing_t m_AEBracketingClient;
     bool m_bUpdateEffects;          // Cause reapplying of effects
     bool m_bSceneTransitionAuto;    // Indicate that scene has changed to Auto

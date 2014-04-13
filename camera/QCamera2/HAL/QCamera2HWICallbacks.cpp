@@ -76,6 +76,37 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
         return;
     }
 
+    ALOGD("%s: [ZSL Retro] Frame CB Unlock : %d, is AEC Locked: %d",
+          __func__, recvd_frame->bUnlockAEC, pme->m_bLedAfAecLock);
+    if(recvd_frame->bUnlockAEC && pme->m_bLedAfAecLock) {
+       ALOGI("%s : [ZSL Retro] LED assisted AF Release AEC Lock\n", __func__);
+       pme->mParameters.setAecLock("false");
+       pme->mParameters.commitParameters();
+       pme->m_bLedAfAecLock = FALSE ;
+    }
+
+    // Check if retro-active frames are completed and camera is
+    // ready to go ahead with LED estimation for regular frames
+    if (recvd_frame->bReadyForPrepareSnapshot) {
+      // Send an event
+      ALOGI("%s: [ZSL Retro] Ready for Prepare Snapshot, signal ", __func__);
+      qcamera_sm_internal_evt_payload_t *payload =
+         (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+      if (NULL != payload) {
+        memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+        payload->evt_type = QCAMERA_INTERNAL_EVT_READY_FOR_SNAPSHOT;
+        int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+        if (rc != NO_ERROR) {
+          ALOGE("%s: processEvt Ready for Snaphot failed", __func__);
+          free(payload);
+          payload = NULL;
+        }
+      } else {
+        ALOGE("%s: No memory for prepare signal event detect"
+              " qcamera_sm_internal_evt_payload_t", __func__);
+      }
+    }
+
     // save a copy for the superbuf
     mm_camera_super_buf_t* frame =
                (mm_camera_super_buf_t *)malloc(sizeof(mm_camera_super_buf_t));
@@ -106,7 +137,6 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
             }
         }
     }
-    //
 
     // DUMP YUV before reprocess if needed
     property_get("persist.camera.zsl_yuv", value, "0");
@@ -1789,6 +1819,8 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                 isSnapshotActive = TRUE;
                 numOfSnapshotExpected = pme->mParent->numOfSnapshotsExpected();
                 longShotEnabled = pme->mParent->isLongshotEnabled();
+                ALOGD("%s: Num Snapshots Expected = %d",
+                  __func__, numOfSnapshotExpected);
                 numOfSnapshotRcvd = 0;
             }
             break;
@@ -1862,8 +1894,12 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                                 if (TRUE == isSnapshotActive && pme->mDataCb ) {
                                     if (!longShotEnabled) {
                                         numOfSnapshotRcvd++;
+                                        ALOGI("%s: [ZSL Retro] Num Snapshots Received = %d", __func__,
+                                                numOfSnapshotRcvd);
                                         if (numOfSnapshotExpected > 0 &&
-                                            numOfSnapshotExpected == numOfSnapshotRcvd) {
+                                           (numOfSnapshotExpected == numOfSnapshotRcvd)) {
+                                            ALOGI("%s: [ZSL Retro] Expected snapshot received = %d",
+                                                    __func__, numOfSnapshotRcvd);
                                             // notify HWI that snapshot is done
                                             pme->mParent->processSyncEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE,
                                                                          NULL);

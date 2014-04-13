@@ -91,6 +91,8 @@ typedef struct {
     uint32_t camera_handle;
     uint32_t ch_id;
     uint8_t num_bufs;
+    uint8_t bUnlockAEC;
+    uint8_t bReadyForPrepareSnapshot;
     mm_camera_buf_def_t* bufs[MAX_STREAM_NUM_IN_BUNDLE];
 } mm_camera_super_buf_t;
 
@@ -595,12 +597,14 @@ typedef struct {
      *    @camera_handle : camer handler
      *    @ch_id : channel handler
      *    @num_buf_requested : number of super buffers requested
+     *    @num_retro_buf_requested : number of retro buffers requested
      *  Return value: 0 -- success
      *                -1 -- failure
      **/
     int32_t (*request_super_buf) (uint32_t camera_handle,
                                   uint32_t ch_id,
-                                  uint32_t num_buf_requested);
+                                  uint32_t num_buf_requested,
+                                  uint32_t num_retro_buf_requested);
 
     /** cancel_super_buf_request: fucntion definition for canceling
      *                     frames dispatched from superbuf queue in
