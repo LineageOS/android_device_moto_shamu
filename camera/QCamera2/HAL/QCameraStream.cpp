@@ -1170,12 +1170,10 @@ void QCameraStream::cond_signal()
 void QCameraStream::cond_wait()
 {
     pthread_mutex_lock(&m_lock);
-    if(wait_for_cond == TRUE){
-        pthread_mutex_unlock(&m_lock);
+    while (wait_for_cond == TRUE) {
         pthread_cond_wait(&m_cond, &m_lock);
-    }else{
-        pthread_mutex_unlock(&m_lock);
     }
+    pthread_mutex_unlock(&m_lock);
 }
 
 /*===========================================================================
