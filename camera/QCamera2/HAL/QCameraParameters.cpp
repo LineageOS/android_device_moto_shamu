@@ -7006,15 +7006,15 @@ uint8_t QCameraParameters::getNumOfSnapshots()
 }
 
 /*===========================================================================
- * FUNCTION   : getBurstCountForBracketing
+ * FUNCTION   : getBurstCountForAdvancedCapture
  *
- * DESCRIPTION: get burst count for AF/AE/Flash bracketing.
+ * DESCRIPTION: get burst count for advanced capture.
  *
  * PARAMETERS : none
  *
- * RETURN     : number of snapshot required for bracketing.
+ * RETURN     : number of snapshot required for advanced capture.
  *==========================================================================*/
-uint8_t QCameraParameters::getBurstCountForBracketing()
+uint8_t QCameraParameters::getBurstCountForAdvancedCapture()
 {
     int burstCount = 0;
     if (isUbiFocusEnabled()) {
@@ -9056,8 +9056,8 @@ String8 QCameraParameters::dump()
     snprintf(s, 128, "isOptiZoomEnabled: %d\n", isOptiZoomEnabled());
     str += s;
 
-    snprintf(s, 128, "getBurstCountForBracketing: %d\n",
-        getBurstCountForBracketing());
+    snprintf(s, 128, "getBurstCountForAdvancedCapture: %d\n",
+        getBurstCountForAdvancedCapture());
     str += s;
 
     return str;

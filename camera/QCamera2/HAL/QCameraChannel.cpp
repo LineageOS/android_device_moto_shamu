@@ -617,20 +617,20 @@ int32_t QCameraPicChannel::cancelPicture()
 }
 
 /*===========================================================================
- * FUNCTION   : startBracketing
+ * FUNCTION   : startAdvancedCapture
  *
- * DESCRIPTION: start bracketing based on bracketing type.
+ * DESCRIPTION: start advanced capture based on advanced capture type.
  *
  * PARAMETERS :
- *   @type : bracketing type.
+ *   @type : advanced capture type.
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCameraPicChannel::startBracketing(mm_camera_bracketing_t type)
+int32_t QCameraPicChannel::startAdvancedCapture(mm_camera_advanced_capture_t type)
 {
-    int32_t rc = m_camOps->process_bracketing(m_camHandle, type,
+    int32_t rc = m_camOps->process_advanced_capture(m_camHandle, type,
                                               m_handle, 1);
     return rc;
 }

@@ -256,6 +256,8 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
                     CDBG_HIGH("%s:%d] need AE bracketing, start zsl snapshot",
                         __func__, __LINE__);
                     ch_obj->need3ABracketing = TRUE;
+                } else {
+                    ch_obj->need3ABracketing = FALSE;
                 }
             }
                 break;
@@ -267,6 +269,21 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
                     CDBG_HIGH("%s:%d] need flash bracketing",
                         __func__, __LINE__);
                     ch_obj->isFlashBracketingEnabled = TRUE;
+                } else {
+                    ch_obj->isFlashBracketingEnabled = FALSE;
+                }
+            }
+                break;
+            case MM_CAMERA_GENERIC_CMD_TYPE_ZOOM_1X: {
+                int8_t start = cmd_cb->u.gen_cmd.payload[0];
+                CDBG_HIGH("%s:%d] MM_CAMERA_GENERIC_CMD_TYPE_ZOOM_1X %d",
+                    __func__, __LINE__, start);
+                if (start) {
+                    CDBG_HIGH("%s:%d] need zoom 1x frame",
+                        __func__, __LINE__);
+                    ch_obj->isZoom1xFrameRequested = TRUE;
+                } else {
+                    ch_obj->isZoom1xFrameRequested = FALSE;
                 }
             }
                 break;
@@ -742,7 +759,17 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
             rc = mm_channel_proc_general_cmd(my_obj, &gen_cmd);
         }
         break;
-    default:
+    case MM_CHANNEL_EVT_ZOOM_1X:
+        {
+            CDBG_HIGH("MM_CHANNEL_EVT_ZOOM_1X");
+            int32_t start_flag = ( int32_t ) in_val;
+            mm_camera_generic_cmd_t gen_cmd;
+            gen_cmd.type = MM_CAMERA_GENERIC_CMD_TYPE_ZOOM_1X;
+            gen_cmd.payload[0] = start_flag;
+            rc = mm_channel_proc_general_cmd(my_obj, &gen_cmd);
+        }
+        break;
+     default:
         CDBG_ERROR("%s: invalid state (%d) for evt (%d), in(%p), out(%p)",
                    __func__, my_obj->state, evt, in_val, out_val);
         break;
@@ -1741,6 +1768,9 @@ int32_t mm_channel_handle_metadata(
     uint8_t is_good_frame_idx_range_valid = 0;
     int32_t prep_snapshot_done_state;
     cam_frame_idx_range_t good_frame_idx_range;
+    uint8_t is_crop_1x_found = 0;
+    uint32_t snapshot_stream_id = 0;
+    uint32_t i;
     good_frame_idx_range.min_frame_idx = 0;
     good_frame_idx_range.max_frame_idx = 0;
     uint8_t curr_entry;
@@ -1787,6 +1817,28 @@ int32_t mm_channel_handle_metadata(
                       __func__, good_frame_idx_range.min_frame_idx,
                       good_frame_idx_range.max_frame_idx, good_frame_idx_range.num_led_on_frames);
               break;
+           } else if (curr_entry == CAM_INTF_META_CROP_DATA) {
+               cam_crop_data_t crop_data = *((cam_crop_data_t *)
+                   POINTER_OF(CAM_INTF_META_CROP_DATA, metadata));
+
+               for (i=0; i<ARRAY_SIZE(ch_obj->streams); i++) {
+                   if (CAM_STREAM_TYPE_SNAPSHOT ==
+                           ch_obj->streams[i].stream_info->stream_type) {
+                       snapshot_stream_id = ch_obj->streams[i].server_stream_id;
+                       break;
+                   }
+               }
+
+               for (i=0; i<crop_data.num_of_streams; i++) {
+                   if (snapshot_stream_id == crop_data.crop_info[i].stream_id) {
+                       if (!crop_data.crop_info[i].crop.left &&
+                               !crop_data.crop_info[i].crop.top) {
+                           is_crop_1x_found = 1;
+                           break;
+                       }
+                   }
+               }
+               break;
            }
            curr_entry = GET_NEXT_PARAM_ID(curr_entry, metadata);
         }
@@ -1795,6 +1847,18 @@ int32_t mm_channel_handle_metadata(
                 is_good_frame_idx_range_valid) {
             CDBG_ERROR("%s: prep_snapshot_done and good_idx_range shouldn't be valid at the same time", __func__);
             rc = -1;
+            goto end;
+        }
+
+        if (ch_obj->isZoom1xFrameRequested) {
+            if (is_crop_1x_found) {
+                ch_obj->isZoom1xFrameRequested = 0;
+                queue->expected_frame_id = buf_info->frame_idx + 1;
+            } else {
+                queue->expected_frame_id += 100;
+                /* Flush unwanted frames */
+                mm_channel_superbuf_flush_matched(ch_obj, queue);
+            }
             goto end;
         }
 

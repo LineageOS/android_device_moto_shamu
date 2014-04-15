@@ -1496,13 +1496,13 @@ uint8_t get_num_of_cameras()
 }
 
 /*===========================================================================
- * FUNCTION   : mm_camera_intf_process_bracketing
+ * FUNCTION   : mm_camera_intf_process_advanced_capture
  *
- * DESCRIPTION: Configures channel 3a bracketing mode
+ * DESCRIPTION: Configures channel advanced capture mode
  *
  * PARAMETERS :
  *   @camera_handle: camera handle
- *   @bracketing_type : bracketing type
+ *   @advanced_capture_type : advanced capture type
  *   @ch_id        : channel handle
  *   @notify_mode  : notification mode
  *
@@ -1510,8 +1510,8 @@ uint8_t get_num_of_cameras()
  *              0  -- success
  *              -1 -- failure
  *==========================================================================*/
-static int32_t mm_camera_intf_process_bracketing(uint32_t camera_handle,
-    mm_camera_bracketing_t bracketing_type,
+static int32_t mm_camera_intf_process_advanced_capture(uint32_t camera_handle,
+    mm_camera_advanced_capture_t advanced_capture_type,
     uint32_t ch_id,
     int8_t start_flag)
 {
@@ -1526,7 +1526,7 @@ static int32_t mm_camera_intf_process_bracketing(uint32_t camera_handle,
     if(my_obj) {
         pthread_mutex_lock(&my_obj->cam_lock);
         pthread_mutex_unlock(&g_intf_lock);
-        rc = mm_camera_channel_bracketing(my_obj, bracketing_type, ch_id, start_flag);
+        rc = mm_camera_channel_advanced_capture(my_obj, advanced_capture_type, ch_id, start_flag);
     } else {
         pthread_mutex_unlock(&g_intf_lock);
     }
@@ -1570,7 +1570,7 @@ static mm_camera_ops_t mm_camera_ops = {
     .cancel_super_buf_request = mm_camera_intf_cancel_super_buf_request,
     .flush_super_buf_queue = mm_camera_intf_flush_super_buf_queue,
     .configure_notify_mode = mm_camera_intf_configure_notify_mode,
-    .process_bracketing = mm_camera_intf_process_bracketing
+    .process_advanced_capture = mm_camera_intf_process_advanced_capture
 };
 
 /*===========================================================================
