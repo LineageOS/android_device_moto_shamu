@@ -4278,7 +4278,7 @@ int32_t QCameraParameters::initDefaultParameters()
     // Add support for internal preview restart
     set(KEY_INTERNAL_PERVIEW_RESTART, VALUE_TRUE);
     // Set default burst number
-    set(KEY_QC_SNAPSHOT_BURST_NUM, 1);
+    set(KEY_QC_SNAPSHOT_BURST_NUM, 0);
     set(KEY_QC_NUM_RETRO_BURST_PER_SHUTTER, 0);
 
     int32_t rc = commitParameters();
