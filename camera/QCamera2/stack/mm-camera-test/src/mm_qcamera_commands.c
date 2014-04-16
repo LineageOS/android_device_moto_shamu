@@ -45,6 +45,7 @@ int tuneserver_initialize_prevtuningp(void * ctrl,
   CDBG("%s  %d\n", __func__, __LINE__);
   if (tctrl->tuning_params.func_tbl->prevcommand_process == NULL) {
       ALOGE("%s  %d\n", __func__, __LINE__);
+      return -1;
   }
 
   result = tctrl->tuning_params.func_tbl->prevcommand_process(

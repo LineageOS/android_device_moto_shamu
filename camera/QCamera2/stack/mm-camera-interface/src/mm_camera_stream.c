@@ -411,6 +411,11 @@ int32_t mm_stream_fsm_inited(mm_stream_t *my_obj,
             break;
         }
 
+        if (NULL == my_obj) {
+            CDBG_ERROR("%s: NULL camera object\n", __func__);
+            rc = -1;
+            break;
+        }
         snprintf(dev_name, sizeof(dev_name), "/dev/%s",
                  mm_camera_util_get_dev_name(my_obj->ch_obj->cam_obj->my_hdl));
 

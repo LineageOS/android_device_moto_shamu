@@ -603,20 +603,31 @@ int add_parm_entry_tobatch(parm_buffer_t *p_table,
     if (position == current){
         //DO NOTHING
     } else if (position < current){
-        SET_NEXT_PARAM_ID(position, p_table, current);
-        SET_FIRST_PARAM_ID(p_table, position);
+        if (position < CAM_INTF_PARM_MAX) {
+            SET_NEXT_PARAM_ID(position, p_table, current);
+            SET_FIRST_PARAM_ID(p_table, position);
+        } else {
+            CDBG_ERROR("%s: position = %d. Should be less than %d\n",
+                __func__, position, CAM_INTF_PARM_MAX);
+        }
     } else {
         /* Search for the position in the linked list where we need to slot in*/
-        while (position > GET_NEXT_PARAM_ID(current, p_table))
-            current = GET_NEXT_PARAM_ID(current, p_table);
+        if (current < CAM_INTF_PARM_MAX) {
+            while (position > GET_NEXT_PARAM_ID(current, p_table))
+                current = GET_NEXT_PARAM_ID(current, p_table);
 
-        /*If node already exists no need to alter linking*/
-        if (position != GET_NEXT_PARAM_ID(current, p_table)) {
-            next = GET_NEXT_PARAM_ID(current, p_table);
-            SET_NEXT_PARAM_ID(current, p_table, position);
-            SET_NEXT_PARAM_ID(position, p_table, next);
+            /*If node already exists no need to alter linking*/
+            if (position != GET_NEXT_PARAM_ID(current, p_table)) {
+                next = GET_NEXT_PARAM_ID(current, p_table);
+                SET_NEXT_PARAM_ID(current, p_table, position);
+                SET_NEXT_PARAM_ID(position, p_table, next);
+            }
+        } else {
+            CDBG_ERROR("%s: current = %d. Should be less than %d\n",
+                __func__, current, CAM_INTF_PARM_MAX);
         }
     }
+
     if (paramLength > sizeof(parm_type_t)) {
         CDBG_ERROR("%s:Size of input larger than max entry size",__func__);
         return -1;
@@ -884,18 +895,28 @@ int AddSetParmEntryToBatch(mm_camera_test_obj_t *test_obj,
     if (position == current){
         //DO NOTHING
     } else if (position < current){
-        SET_NEXT_PARAM_ID(position, p_table, current);
-        SET_FIRST_PARAM_ID(p_table, position);
+        if (position < CAM_INTF_PARM_MAX) {
+            SET_NEXT_PARAM_ID(position, p_table, current);
+            SET_FIRST_PARAM_ID(p_table, position);
+        } else {
+            CDBG_ERROR("%s: position = %d. Should be less than %d\n",
+                __func__, position, CAM_INTF_PARM_MAX);
+        }
     } else {
-        /* Search for the position in the linked list where we need to slot in*/
-        while (position > GET_NEXT_PARAM_ID(current, p_table))
-            current = GET_NEXT_PARAM_ID(current, p_table);
+        if (current < CAM_INTF_PARM_MAX) {
+            /* Search for the position in the linked list where we need to slot in*/
+            while (position > GET_NEXT_PARAM_ID(current, p_table))
+                current = GET_NEXT_PARAM_ID(current, p_table);
 
-        /*If node already exists no need to alter linking*/
-        if (position != GET_NEXT_PARAM_ID(current, p_table)) {
-            next = GET_NEXT_PARAM_ID(current, p_table);
-            SET_NEXT_PARAM_ID(current, p_table, position);
-            SET_NEXT_PARAM_ID(position, p_table, next);
+            /*If node already exists no need to alter linking*/
+            if (position != GET_NEXT_PARAM_ID(current, p_table)) {
+                next = GET_NEXT_PARAM_ID(current, p_table);
+                SET_NEXT_PARAM_ID(current, p_table, position);
+                SET_NEXT_PARAM_ID(position, p_table, next);
+            }
+        } else {
+            CDBG_ERROR("%s: current = %d. Should be less than %d\n",
+                __func__, current, CAM_INTF_PARM_MAX);
         }
     }
 

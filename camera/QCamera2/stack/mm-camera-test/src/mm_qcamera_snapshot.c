@@ -183,6 +183,11 @@ static void mm_app_snapshot_metadata_notify_cb(mm_camera_super_buf_t *bufs,
   cam_auto_focus_data_t *focus_data;
   uint8_t curr_entry;
 
+  if (NULL == bufs || NULL == user_data) {
+    CDBG_ERROR("%s: bufs or user_data are not valid ", __func__);
+    return;
+  }
+
   /* find channel */
   for (i = 0; i < MM_CHANNEL_TYPE_MAX; i++) {
     if (pme->channels[i].ch_id == bufs->ch_id) {

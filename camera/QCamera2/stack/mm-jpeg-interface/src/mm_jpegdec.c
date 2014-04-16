@@ -891,13 +891,12 @@ int32_t mm_jpegdec_destroy_session(mm_jpeg_obj *my_obj,
   uint8_t clnt_idx = 0;
   mm_jpeg_job_q_node_t *node = NULL;
   OMX_BOOL ret = OMX_FALSE;
-  uint32_t session_id = p_session->sessionId;
 
   if (NULL == p_session) {
     CDBG_ERROR("%s:%d] invalid session", __func__, __LINE__);
     return rc;
   }
-
+  uint32_t session_id = p_session->sessionId;
   pthread_mutex_lock(&my_obj->job_lock);
 
   /* abort job if in todo queue */
@@ -944,7 +943,13 @@ int32_t mm_jpegdec_destroy_session(mm_jpeg_obj *my_obj,
  **/
 int32_t mm_jpegdec_destroy_session_by_id(mm_jpeg_obj *my_obj, uint32_t session_id)
 {
+  int32_t rc = 0;
   mm_jpeg_job_session_t *p_session = mm_jpeg_get_session(my_obj, session_id);
+
+  if (NULL == p_session) {
+    CDBG_ERROR("%s:%d] session is not valid", __func__, __LINE__);
+    return rc;
+  }
 
   return mm_jpegdec_destroy_session(my_obj, p_session);
 }

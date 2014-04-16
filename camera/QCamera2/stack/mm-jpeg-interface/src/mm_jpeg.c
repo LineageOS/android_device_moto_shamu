@@ -2156,6 +2156,11 @@ int32_t mm_jpeg_create_session(mm_jpeg_obj *my_obj,
 
   /* init output buf queue */
   p_out_buf_q = (mm_jpeg_queue_t *) malloc(sizeof(*p_out_buf_q));
+  if (NULL == p_out_buf_q) {
+    CDBG_ERROR("%s:%d] Error: Cannot allocate memory\n", __func__, __LINE__);
+    return -1;
+  }
+
   if (NULL == p_session_handle_q) {
     CDBG_ERROR("%s:%d] Error", __func__, __LINE__);
     return -1;
@@ -2735,6 +2740,11 @@ mm_jpeg_job_q_node_t* mm_jpeg_queue_remove_job_by_job_id(
   while(pos != head) {
     node = member_of(pos, mm_jpeg_q_node_t, list);
     data = (mm_jpeg_job_q_node_t *)node->data;
+
+    if(NULL == data) {
+      CDBG_ERROR("%s:%d] Data is NULL", __func__, __LINE__);
+      return NULL;
+    }
 
     if (data->type == MM_JPEG_CMD_TYPE_DECODE_JOB) {
       lq_job_id = data->dec_info.job_id;

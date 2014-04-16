@@ -222,14 +222,16 @@ static void mm_camera_poll_proc_pipe(mm_camera_poll_thread_t *poll_cb)
         poll_cb->poll_fds[poll_cb->num_fds].events = POLLIN|POLLRDNORM|POLLPRI;
         poll_cb->num_fds++;
 
-        if (MM_CAMERA_POLL_TYPE_EVT == poll_cb->poll_type) {
+        if (MM_CAMERA_POLL_TYPE_EVT == poll_cb->poll_type &&
+                poll_cb->num_fds < MAX_STREAM_NUM_IN_BUNDLE) {
             if (poll_cb->poll_entries[0].fd > 0) {
                 /* fd is valid, we update poll_fds */
                 poll_cb->poll_fds[poll_cb->num_fds].fd = poll_cb->poll_entries[0].fd;
                 poll_cb->poll_fds[poll_cb->num_fds].events = POLLIN|POLLRDNORM|POLLPRI;
                 poll_cb->num_fds++;
             }
-        } else if (MM_CAMERA_POLL_TYPE_DATA == poll_cb->poll_type) {
+        } else if (MM_CAMERA_POLL_TYPE_DATA == poll_cb->poll_type &&
+                poll_cb->num_fds <= MAX_STREAM_NUM_IN_BUNDLE) {
             for(i = 0; i < MAX_STREAM_NUM_IN_BUNDLE; i++) {
                 if(poll_cb->poll_entries[i].fd > 0) {
                     /* fd is valid, we update poll_fds to this fd */
@@ -279,6 +281,10 @@ static void *mm_camera_poll_fn(mm_camera_poll_thread_t *poll_cb)
 {
     int rc = 0, i;
 
+    if (NULL == poll_cb) {
+        CDBG_ERROR("%s: poll_cb is NULL!\n", __func__);
+        return NULL;
+    }
     CDBG("%s: poll type = %d, num_fd = %d poll_cb = %p\n",
          __func__, poll_cb->poll_type, poll_cb->num_fds,poll_cb);
     do {

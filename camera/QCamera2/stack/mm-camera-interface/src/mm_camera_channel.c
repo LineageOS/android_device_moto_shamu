@@ -1771,7 +1771,7 @@ int32_t mm_channel_handle_metadata(
         CDBG("%s: E , expected frame id: %d", __func__, queue->expected_frame_id);
 
         curr_entry = GET_FIRST_PARAM_ID(metadata);
-        while (curr_entry != CAM_INTF_PARM_MAX) {
+        while (curr_entry < CAM_INTF_PARM_MAX) {
            if (curr_entry == CAM_INTF_META_PREP_SNAPSHOT_DONE) {
               prep_snapshot_done_state =
                       *((int32_t*)POINTER_OF(CAM_INTF_META_PREP_SNAPSHOT_DONE, metadata));
