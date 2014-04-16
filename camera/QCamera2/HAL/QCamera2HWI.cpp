@@ -5957,7 +5957,7 @@ int32_t QCamera2HardwareInterface::setHistogram(bool histogram_en)
  *==========================================================================*/
 int32_t QCamera2HardwareInterface::setFaceDetection(bool enabled)
 {
-    return mParameters.setFaceDetection(enabled);
+    return mParameters.setFaceDetection(enabled, true);
 }
 
 /*===========================================================================
