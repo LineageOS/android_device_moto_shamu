@@ -324,6 +324,33 @@ private:
     QCamera3HeapMemory *mMemory;
 };
 
+/* QCamera3SupportChannel is for HAL internal consumption only */
+class QCamera3SupportChannel : public QCamera3Channel
+{
+public:
+    QCamera3SupportChannel(uint32_t cam_handle,
+                    mm_camera_ops_t *cam_ops,
+                    cam_padding_info_t *paddingInfo,
+                    uint32_t postprocess_mask,
+                    void *userData);
+    virtual ~QCamera3SupportChannel();
+
+    virtual int32_t initialize();
+
+    virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
+    virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
+                            QCamera3Stream *stream);
+
+    virtual QCamera3Memory *getStreamBufs(uint32_t le);
+    virtual void putStreamBufs();
+    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/)
+            { return NO_ERROR; };
+
+    static cam_dimension_t kDim;
+private:
+    QCamera3HeapMemory *mMemory;
+};
+
 }; // namespace qcamera
 
 #endif /* __QCAMERA_CHANNEL_H__ */
