@@ -1725,13 +1725,13 @@ int32_t mm_camera_util_g_ctrl( int32_t fd, uint32_t id, int32_t *value)
 }
 
 /*===========================================================================
- * FUNCTION   : mm_camera_channel_bracketing
+ * FUNCTION   : mm_camera_channel_advanced_capture
  *
- * DESCRIPTION: sets the channel bracketing
+ * DESCRIPTION: sets the channel advanced capture
  *
  * PARAMETERS :
  *   @my_obj       : camera object
- *   @bracketing_type : bracketing type.
+ *   @advanced_capture_type : advanced capture type.
  *   @ch_id        : channel handle
  *   @start_flag  : flag to indicate start/stop
  *
@@ -1739,8 +1739,8 @@ int32_t mm_camera_util_g_ctrl( int32_t fd, uint32_t id, int32_t *value)
  *              0  -- success
  *              -1 -- failure
  *==========================================================================*/
-int32_t mm_camera_channel_bracketing(mm_camera_obj_t *my_obj,
-                                        mm_camera_bracketing_t bracketing_type,
+int32_t mm_camera_channel_advanced_capture(mm_camera_obj_t *my_obj,
+                                        mm_camera_advanced_capture_t advanced_capture_type,
                                         uint32_t ch_id,
                                         int32_t start_flag)
 {
@@ -1752,7 +1752,7 @@ int32_t mm_camera_channel_bracketing(mm_camera_obj_t *my_obj,
     if (NULL != ch_obj) {
         pthread_mutex_lock(&ch_obj->ch_lock);
         pthread_mutex_unlock(&my_obj->cam_lock);
-        switch (bracketing_type) {
+        switch (advanced_capture_type) {
             case MM_CAMERA_AF_BRACKETING:
                 rc = mm_channel_fsm_fn(ch_obj,
                                        MM_CHANNEL_EVT_AF_BRACKETING,
@@ -1768,6 +1768,12 @@ int32_t mm_camera_channel_bracketing(mm_camera_obj_t *my_obj,
             case MM_CAMERA_FLASH_BRACKETING:
                 rc = mm_channel_fsm_fn(ch_obj,
                                        MM_CHANNEL_EVT_FLASH_BRACKETING,
+                                       (void *)start_flag,
+                                       NULL);
+                break;
+            case MM_CAMERA_ZOOM_1X:
+                rc = mm_channel_fsm_fn(ch_obj,
+                                       MM_CHANNEL_EVT_ZOOM_1X,
                                        (void *)start_flag,
                                        NULL);
                 break;

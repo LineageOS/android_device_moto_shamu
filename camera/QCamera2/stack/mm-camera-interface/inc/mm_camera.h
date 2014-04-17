@@ -56,6 +56,8 @@
 #define FALSE 0
 #endif
 
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+
 struct mm_channel;
 struct mm_stream;
 struct mm_camera_obj;
@@ -91,6 +93,7 @@ typedef enum {
     MM_CAMERA_GENERIC_CMD_TYPE_AE_BRACKETING,
     MM_CAMERA_GENERIC_CMD_TYPE_AF_BRACKETING,
     MM_CAMERA_GENERIC_CMD_TYPE_FLASH_BRACKETING,
+    MM_CAMERA_GENERIC_CMD_TYPE_ZOOM_1X,
 } mm_camera_generic_cmd_type_t;
 
 typedef struct {
@@ -278,6 +281,7 @@ typedef enum {
     MM_CHANNEL_EVT_AF_BRACKETING,
     MM_CHANNEL_EVT_AE_BRACKETING,
     MM_CHANNEL_EVT_FLASH_BRACKETING,
+    MM_CHANNEL_EVT_ZOOM_1X,
 } mm_channel_evt_type_t;
 
 typedef struct {
@@ -383,6 +387,7 @@ typedef struct mm_channel {
     uint8_t needLEDFlash;
     uint8_t need3ABracketing;
     uint8_t isFlashBracketingEnabled;
+    uint8_t isZoom1xFrameRequested;
     uint32_t burstSnapNum;
 } mm_channel_t;
 
@@ -625,8 +630,8 @@ extern int32_t mm_camera_cmd_thread_launch(
 extern int32_t mm_camera_cmd_thread_name(const char* name);
 extern int32_t mm_camera_cmd_thread_release(mm_camera_cmd_thread_t * cmd_thread);
 
-extern int32_t mm_camera_channel_bracketing(mm_camera_obj_t *my_obj,
-                                               mm_camera_bracketing_t bracketingtype,
+extern int32_t mm_camera_channel_advanced_capture(mm_camera_obj_t *my_obj,
+                                               mm_camera_advanced_capture_t advanced_capturetype,
                                                uint32_t ch_id,
                                                int32_t start_flag);
 #endif /* __MM_CAMERA_H__ */

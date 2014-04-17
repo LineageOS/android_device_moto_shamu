@@ -238,19 +238,22 @@ typedef enum {
     MM_CAMERA_SUPER_BUF_PRIORITY_MAX
 } mm_camera_super_buf_priority_t;
 
-/** mm_camera_bracketing_t: enum for bracketing type.
+/** mm_camera_advanced_capture_t: enum for advanced capture type.
 *    @MM_CAMERA_AF_BRACKETING :
 *       to enable AF Bracketig.
 *    @MM_CAMERA_AE_BRACKETING :
 *       to enable AF Bracketing.
 *    @MM_CAMERA_FLASH_BRACKETING :
 *       to enable Flash Bracketing.
+*    @MM_CAMERA_ZOOM_1X :
+*       to enable zoom 1x capture request
 **/
 typedef enum {
    MM_CAMERA_AF_BRACKETING = 0,
    MM_CAMERA_AE_BRACKETING,
-   MM_CAMERA_FLASH_BRACKETING
-} mm_camera_bracketing_t;
+   MM_CAMERA_FLASH_BRACKETING,
+   MM_CAMERA_ZOOM_1X,
+} mm_camera_advanced_capture_t;
 
 /** mm_camera_channel_attr_t: structure for defining channel
 *                             attributes
@@ -642,19 +645,19 @@ typedef struct {
                                       uint32_t ch_id,
                                       mm_camera_super_buf_notify_mode_t notify_mode);
 
-     /** process_bracketing: function definition for start/stop 3a bracketing
+     /** process_advanced_capture: function definition for start/stop advanced capture
      *                    for snapshot.
      *    @camera_handle : camera handle
-     *    @type :  bracketing type.
+     *    @type :  advanced capture type.
      *    @ch_id : channel handler
-     *    @start_flag    : flag indicating if bracketing needs to be done
-     *                     0 -- stop bracketing
-     *                     1 -- start bracketing
+     *    @start_flag    : flag indicating if advanced capture needs to be done
+     *                     0 -- stop advanced capture
+     *                     1 -- start advanced capture
      *  Return value: 0 -- success
      *                -1 -- failure
      **/
-     int32_t (*process_bracketing) (uint32_t camera_handle,
-                                          mm_camera_bracketing_t type,
+     int32_t (*process_advanced_capture) (uint32_t camera_handle,
+                                          mm_camera_advanced_capture_t type,
                                           uint32_t ch_id,
                                           int8_t start_flag);
 } mm_camera_ops_t;

@@ -570,7 +570,7 @@ public:
     int32_t commitFlashBracket(cam_flash_bracketing_t flashBracket);
     int32_t set3ALock(const char *lockStr);
     int32_t setAndCommitZoom(int zoom_level);
-    uint8_t getBurstCountForBracketing();
+    uint8_t getBurstCountForAdvancedCapture();
     int32_t setLongshotEnable(bool enable);
     String8 dump();
     inline bool isUbiRefocus() {return isUbiFocusEnabled() &&
