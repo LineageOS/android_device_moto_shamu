@@ -396,7 +396,8 @@ typedef struct {
 
     /* Image Stabilization type */
     cam_is_type_t is_type;
-
+    /* Signifies Secure stream mode */
+    cam_stream_secure_t is_secure;
 } cam_stream_info_t;
 
 /*****************************************************************************

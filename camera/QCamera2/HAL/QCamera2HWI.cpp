@@ -1297,7 +1297,7 @@ int QCamera2HardwareInterface::initCapabilities(int cameraId,mm_camera_vtbl_t *c
 
     /* Allocate memory for capability buffer */
     capabilityHeap = new QCameraHeapMemory(QCAMERA_ION_USE_CACHE);
-    rc = capabilityHeap->allocate(1, sizeof(cam_capability_t));
+    rc = capabilityHeap->allocate(1, sizeof(cam_capability_t), NON_SECURE);
     if(rc != OK) {
         ALOGE("%s: No memory for cappability", __func__);
         goto allocate_failed;
@@ -1466,7 +1466,7 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
         }
         break;
     case CAM_STREAM_TYPE_RAW:
-        if (isRdiMode()) {
+       if (isRdiMode()) {
             ALOGD("RDI_DEBUG %s[%d]: CAM_STREAM_TYPE_RAW",
               __func__, __LINE__);
             bufferCnt = zslQBuffers + minCircularBufNum;
@@ -1631,7 +1631,14 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(cam_stream_type_t st
     }
 
     if (bufferCnt > 0) {
-        rc = mem->allocate(bufferCnt, size);
+        if (mParameters.isSecureMode() &&
+            (stream_type == CAM_STREAM_TYPE_RAW) &&
+            (mParameters.isRdiMode())) {
+            ALOGD("%s: Allocating %d secure buffers of size %d ", __func__, bufferCnt, size);
+            rc = mem->allocate(bufferCnt, size, SECURE);
+        } else {
+            rc = mem->allocate(bufferCnt, size, NON_SECURE);
+        }
         if (rc < 0) {
             delete mem;
             return NULL;
@@ -1694,7 +1701,7 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
         return NULL;
     }
 
-    rc = streamInfoBuf->allocate(1, sizeof(cam_stream_info_t));
+    rc = streamInfoBuf->allocate(1, sizeof(cam_stream_info_t), NON_SECURE);
     if (rc < 0) {
         ALOGE("allocateStreamInfoBuf: Failed to allocate stream info memory");
         delete streamInfoBuf;
@@ -1709,6 +1716,7 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
     rc = mParameters.getStreamRotation(stream_type, streamInfo->pp_config, streamInfo->dim);
     streamInfo->num_bufs = getBufNumRequired(stream_type);
     streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
+    streamInfo->is_secure = NON_SECURE;
     switch (stream_type) {
     case CAM_STREAM_TYPE_SNAPSHOT:
         if ((mParameters.isZSLMode() && mParameters.getRecordingHintValue() != true) ||
@@ -1738,6 +1746,11 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
             streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
             streamInfo->num_of_burst = mParameters.getNumOfSnapshots();
         }
+        if (mParameters.isSecureMode() && mParameters.isRdiMode()) {
+            streamInfo->is_secure = SECURE;
+        } else {
+            streamInfo->is_secure = NON_SECURE;
+        }
         break;
     case CAM_STREAM_TYPE_POSTVIEW:
         if (mLongshotEnabled) {
@@ -1766,11 +1779,15 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
                 streamInfo->is_type = IS_TYPE_NONE;
             }
         }
+        if (mParameters.isSecureMode()) {
+            streamInfo->is_secure = SECURE;
+        }
         break;
     default:
         break;
     }
 
+    ALOGD("%s: Stream type %d is secure: %d", __func__, stream_type, streamInfo->is_secure);
     if ((!isZSLMode() ||
         (isZSLMode() && (stream_type != CAM_STREAM_TYPE_SNAPSHOT))) &&
         !mParameters.isHDREnabled()) {
@@ -1799,7 +1816,6 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
             streamInfo->pp_config.denoise2d.process_plates = mParameters.getWaveletDenoiseProcessPlate();
         }
     }
-
     return streamInfoBuf;
 }
 
@@ -3097,7 +3113,7 @@ int QCamera2HardwareInterface::registerFaceImage(void *img_ptr,
         return NO_MEMORY;
     }
 
-    rc = imgBuf->allocate(1, config->input_buf_planes.plane_info.frame_len);
+    rc = imgBuf->allocate(1, config->input_buf_planes.plane_info.frame_len, NON_SECURE);
     if (rc < 0) {
         ALOGE("%s: Unable to allocate heap memory for image buf", __func__);
         delete imgBuf;
@@ -5124,6 +5140,35 @@ void QCamera2HardwareInterface::releaseCameraMemory(void *data,
     camera_memory_t *mem = ( camera_memory_t * ) data;
     if ( NULL != mem ) {
         mem->release(mem);
+    }
+}
+
+/*==========================================================================
+ * FUNCTION   : returnRdiStreamBuffer
+ *
+ * DESCRIPTION: Returns RDI stream buffer
+ *
+ * PARAMETERS :
+ *   @data    : buffer to be released
+ *   @cookie  : context data
+ *   @cbStatus: callback status
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void QCamera2HardwareInterface::returnRdiStreamBuffer(void *data, void *cookie,
+    int32_t /*cbStatus*/) {
+
+    QCameraStream *stream = ( QCameraStream * ) cookie;
+    qcamera_rdi_userdata_t *cb_userdata = (qcamera_rdi_userdata_t*) data;
+
+    if (NULL != stream) {
+        ALOGD("%s RDI Buf Done for idx = %d ", __func__, cb_userdata->rdi_buf_idx);
+            stream->bufDone(cb_userdata->rdi_buf_idx);
+    }
+    if (NULL != cb_userdata->rdi_user_data) {
+       ALOGD("%s Releasing RDI Secure Data", __func__);
+       cb_userdata->rdi_user_data->release(cb_userdata->rdi_user_data);
+       cb_userdata->rdi_user_data = NULL;
     }
 }
 
