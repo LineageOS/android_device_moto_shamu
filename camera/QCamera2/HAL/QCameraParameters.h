@@ -519,7 +519,7 @@ public:
     bool getFaceDetectionOption() { return  m_bFaceDetectionOn;}
     int32_t setFaceDetectionOption(bool enabled);
     int32_t setHistogram(bool enabled);
-    int32_t setFaceDetection(bool enabled);
+    int32_t setFaceDetection(bool enabled, bool initCommit);
     int32_t setFrameSkip(enum msm_vfe_frame_skip_pattern pattern);
     qcamera_thermal_mode getThermalMode() {return m_ThermalMode;};
     int32_t updateRecordingHintValue(int32_t value);

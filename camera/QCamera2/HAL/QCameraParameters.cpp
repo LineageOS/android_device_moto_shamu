@@ -3207,7 +3207,7 @@ int32_t QCameraParameters::setRecordingHint(const QCameraParameters& params)
                 updateParamEntry(KEY_RECORDING_HINT, str);
                 setRecordingHintValue(value);
                 if (getFaceDetectionOption() == true) {
-                    setFaceDetection(value > 0 ? false : true);
+                    setFaceDetection(value > 0 ? false : true, false);
                 }
                 return NO_ERROR;
             } else {
@@ -7707,12 +7707,13 @@ int32_t QCameraParameters::setHistogram(bool enabled)
  *
  * PARAMETERS :
  *   @enabled : if face detection is enabled
+ *   @initCommit : if configuration list need to be initialized and commited
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCameraParameters::setFaceDetection(bool enabled)
+int32_t QCameraParameters::setFaceDetection(bool enabled, bool initCommit)
 {
     int faceProcMask = m_nFaceProcMask;
     // set face detection mask
@@ -7738,10 +7739,14 @@ int32_t QCameraParameters::setFaceDetection(bool enabled)
 
     ALOGE("[KPI Perf] %s: PROFILE_FACE_DETECTION_VALUE = %d num_fd = %d",
           __func__, faceProcMask,requested_faces);
-    if(initBatchUpdate(m_pParamBuf) < 0 ) {
-        ALOGE("%s:Failed to initialize group update table", __func__);
-        return BAD_TYPE;
+
+    if (initCommit) {
+        if(initBatchUpdate(m_pParamBuf) < 0 ) {
+            ALOGE("%s:Failed to initialize group update table", __func__);
+            return BAD_TYPE;
+        }
     }
+
     int32_t rc = NO_ERROR;
 
     rc = AddSetParmEntryToBatch(m_pParamBuf,
@@ -7753,10 +7758,12 @@ int32_t QCameraParameters::setFaceDetection(bool enabled)
         return rc;
     }
 
-    rc = commitSetBatch();
-    if (rc != NO_ERROR) {
-        ALOGE("%s:Failed to set face detection parm", __func__);
-        return rc;
+    if (initCommit) {
+        rc = commitSetBatch();
+        if (rc != NO_ERROR) {
+            ALOGE("%s:Failed to set face detection parm", __func__);
+            return rc;
+        }
     }
 
     ALOGD("%s: FaceProcMask -> %d", __func__, m_nFaceProcMask);
