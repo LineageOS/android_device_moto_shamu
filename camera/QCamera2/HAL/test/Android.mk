@@ -1,3 +1,4 @@
+ifneq (,$(findstring $(PLATFORM_VERSION), 4.4 4.4.1 4.4.2))
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -46,4 +47,4 @@ LOCAL_CFLAGS += -Wall -fno-short-enums -O0
 
 include $(BUILD_EXECUTABLE)
 
-
+endif
