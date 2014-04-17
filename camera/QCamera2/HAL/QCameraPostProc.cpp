@@ -271,6 +271,10 @@ int32_t QCameraPostProcessor::start(QCameraChannel *pSrcChannel)
             }
         }
 
+        if (m_parent->mParameters.generateThumbFromMain()) {
+            pThumbStream = NULL;
+        }
+
         if ( NULL != pSnapshotStream ) {
             mm_jpeg_encode_params_t encodeParam;
             memset(&encodeParam, 0, sizeof(mm_jpeg_encode_params_t));
@@ -334,10 +338,6 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
     ALOGV("%s : E", __func__);
     int32_t ret = NO_ERROR;
     uint32_t out_size;
-
-    if (m_parent->mParameters.generateThumbFromMain()) {
-        thumb_stream = NULL;
-    }
 
     char prop[PROPERTY_VALUE_MAX];
     property_get("persist.camera.jpeg_burst", prop, "0");
@@ -1374,6 +1374,11 @@ int32_t QCameraPostProcessor::queryStreams(QCameraStream **main,
         }
     }
 
+    if (m_parent->mParameters.generateThumbFromMain()) {
+        *thumb = NULL;
+        *thumb_image = NULL;
+    }
+
     return NO_ERROR;
 }
 
@@ -1512,11 +1517,6 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     if(NULL == main_frame){
        ALOGE("%s : Main frame is NULL", __func__);
        return BAD_VALUE;
-    }
-
-    if (m_parent->mParameters.generateThumbFromMain()) {
-        thumb_frame = NULL;
-        thumb_stream = NULL;
     }
 
     if(NULL == thumb_frame){
