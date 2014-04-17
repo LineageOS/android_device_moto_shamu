@@ -374,10 +374,10 @@ int32_t QCamera3Stream::stop()
  *==========================================================================*/
 int32_t QCamera3Stream::processDataNotify(mm_camera_super_buf_t *frame)
 {
-    ALOGV("%s: E\n", __func__);
+    CDBG("%s: E\n", __func__);
     mDataQ.enqueue((void *)frame);
     int32_t rc = mProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
-    ALOGV("%s: X\n", __func__);
+    CDBG("%s: X\n", __func__);
     return rc;
 }
 
@@ -396,7 +396,7 @@ int32_t QCamera3Stream::processDataNotify(mm_camera_super_buf_t *frame)
 void QCamera3Stream::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
                                  void *userdata)
 {
-    ALOGV("%s: E\n", __func__);
+    CDBG("%s: E\n", __func__);
     QCamera3Stream* stream = (QCamera3Stream *)userdata;
     if (stream == NULL ||
         recvd_frame == NULL ||
@@ -436,7 +436,7 @@ void *QCamera3Stream::dataProcRoutine(void *data)
     QCameraCmdThread *cmdThread = &pme->mProcTh;
     cmdThread->setName("cam_stream_proc");
 
-    ALOGV("%s: E", __func__);
+    CDBG("%s: E", __func__);
     do {
         do {
             ret = cam_sem_wait(&cmdThread->cmd_sem);
@@ -452,7 +452,7 @@ void *QCamera3Stream::dataProcRoutine(void *data)
         switch (cmd) {
         case CAMERA_CMD_TYPE_DO_NEXT_JOB:
             {
-                ALOGV("%s: Do next job", __func__);
+                CDBG("%s: Do next job", __func__);
                 mm_camera_super_buf_t *frame =
                     (mm_camera_super_buf_t *)pme->mDataQ.dequeue();
                 if (NULL != frame) {
@@ -466,7 +466,7 @@ void *QCamera3Stream::dataProcRoutine(void *data)
             }
             break;
         case CAMERA_CMD_TYPE_EXIT:
-            ALOGD("%s: Exit", __func__);
+            CDBG_HIGH("%s: Exit", __func__);
             /* flush data buf queue */
             pme->mDataQ.flush();
             running = 0;
@@ -475,7 +475,7 @@ void *QCamera3Stream::dataProcRoutine(void *data)
             break;
         }
     } while (running);
-    ALOGV("%s: X", __func__);
+    CDBG("%s: X", __func__);
     return NULL;
 }
 

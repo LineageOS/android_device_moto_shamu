@@ -141,7 +141,7 @@ int32_t QCamera3PostProcessor::deinit()
 
     if(mJpegClientHandle > 0) {
         int rc = mJpegHandle.close(mJpegClientHandle);
-        ALOGD("%s: Jpeg closed, rc = %d, mJpegClientHandle = %x",
+        CDBG_HIGH("%s: Jpeg closed, rc = %d, mJpegClientHandle = %x",
               __func__, rc, mJpegClientHandle);
         mJpegClientHandle = 0;
         memset(&mJpegHandle, 0, sizeof(mJpegHandle));
@@ -185,7 +185,7 @@ int32_t QCamera3PostProcessor::start(QCamera3Memory* mMemory, int index,
         }
         // if reprocess is needed, start reprocess channel
         QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)m_parent->mUserData;
-        ALOGV("%s: Setting input channel as pInputChannel", __func__);
+        CDBG("%s: Setting input channel as pInputChannel", __func__);
         m_pReprocChannel = hal_obj->addOnlineReprocChannel(pInputChannel, m_parent);
         if (m_pReprocChannel == NULL) {
             ALOGE("%s: cannot add reprocess channel", __func__);
@@ -243,7 +243,7 @@ int32_t QCamera3PostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& en
                                                     const cam_dimension_t &dst_dim,
                                                     const cam_dimension_t &thumb_dst_dim)
 {
-    ALOGV("%s : E", __func__);
+    CDBG("%s : E", __func__);
     int32_t ret = NO_ERROR;
 
     encode_parm.jpeg_cb = mJpegCB;
@@ -334,11 +334,11 @@ int32_t QCamera3PostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& en
     encode_parm.thumb_dim.src_dim = src_dim;
     encode_parm.thumb_dim.dst_dim = thumb_dst_dim;
 
-    ALOGV("%s : X", __func__);
+    CDBG("%s : X", __func__);
     return NO_ERROR;
 
 on_error:
-    ALOGV("%s : X with error %d", __func__, ret);
+    CDBG("%s : X with error %d", __func__, ret);
     return ret;
 }
 
@@ -377,14 +377,14 @@ int32_t QCamera3PostProcessor::processAuxiliaryData(mm_camera_buf_def_t *frame,
         // enqueu to post proc input queue
         m_inputPPQ.enqueue((void *)aux_frame);
         if (!(m_inputMetaQ.isEmpty())) {
-           ALOGI("%s: meta queue is not empty, do next job", __func__);
+           CDBG("%s: meta queue is not empty, do next job", __func__);
            m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
         } else {
-           ALOGI("%s: meta queue is empty, not calling do next job", __func__);
+           CDBG("%s: meta queue is empty, not calling do next job", __func__);
         }
         pthread_mutex_unlock(&mReprocJobLock);
     } else {
-       ALOGD("%s: no need offline reprocess, sending to jpeg encoding", __func__);
+       CDBG_HIGH("%s: no need offline reprocess, sending to jpeg encoding", __func__);
        qcamera_hal3_jpeg_data_t *jpeg_job =
            (qcamera_hal3_jpeg_data_t *)malloc(sizeof(qcamera_hal3_jpeg_data_t));
        if (jpeg_job == NULL) {
@@ -426,14 +426,14 @@ int32_t QCamera3PostProcessor::processData(mm_camera_super_buf_t *frame)
         // enqueu to post proc input queue
         m_inputPPQ.enqueue((void *)frame);
         if (!(m_inputMetaQ.isEmpty())) {
-           ALOGV("%s: meta queue is not empty, do next job", __func__);
+           CDBG("%s: meta queue is not empty, do next job", __func__);
            m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
         }
         pthread_mutex_unlock(&mReprocJobLock);
     } else if (m_parent->isRawSnapshot()) {
         processRawData(frame);
     } else {
-        ALOGD("%s: no need offline reprocess, sending to jpeg encoding", __func__);
+        CDBG_HIGH("%s: no need offline reprocess, sending to jpeg encoding", __func__);
         qcamera_hal3_jpeg_data_t *jpeg_job =
             (qcamera_hal3_jpeg_data_t *)malloc(sizeof(qcamera_hal3_jpeg_data_t));
         if (jpeg_job == NULL) {
@@ -471,10 +471,10 @@ int32_t QCamera3PostProcessor::processPPMetadata(mm_camera_super_buf_t *frame)
     // enqueue to metadata input queue
     m_inputMetaQ.enqueue((void *)frame);
     if (!(m_inputPPQ.isEmpty())) {
-       ALOGI("%s: pp queue is not empty, do next job", __func__);
+       CDBG("%s: pp queue is not empty, do next job", __func__);
        m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
     } else {
-       ALOGI("%s: pp queue is empty, not calling do next job", __func__);
+       CDBG("%s: pp queue is empty, not calling do next job", __func__);
     }
     pthread_mutex_unlock(&mReprocJobLock);
     return NO_ERROR;
@@ -670,7 +670,7 @@ void QCamera3PostProcessor::releaseSuperBuf(mm_camera_super_buf_t *super_buf)
  *==========================================================================*/
 void QCamera3PostProcessor::releaseJpegJobData(qcamera_hal3_jpeg_data_t *job)
 {
-    ALOGV("%s: E", __func__);
+    CDBG("%s: E", __func__);
     if (NULL != job) {
         if (NULL != job->src_reproc_frame) {
             free(job->src_reproc_frame);
@@ -700,7 +700,7 @@ void QCamera3PostProcessor::releaseJpegJobData(qcamera_hal3_jpeg_data_t *job)
 
         mJpegMem = NULL;
     }
-    ALOGV("%s: X", __func__);
+    CDBG("%s: X", __func__);
 }
 
 /*===========================================================================
@@ -776,7 +776,7 @@ mm_jpeg_format_t QCamera3PostProcessor::getJpegImgTypeFromImgFmt(cam_format_t im
 int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_data,
                                          uint8_t &needNewSess)
 {
-    ALOGV("%s : E", __func__);
+    CDBG("%s : E", __func__);
     int32_t ret = NO_ERROR;
     mm_jpeg_job_t jpg_job;
     uint32_t jobId = 0;
@@ -868,7 +868,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
     srcChannel->getStreamByIndex(0)->getFrameDimension(dst_dim);
     m_parent->getThumbnailSize(thumb_dst_dim);
 
-    ALOGD("%s: Need new session?:%d",__func__, needNewSess);
+    CDBG_HIGH("%s: Need new session?:%d",__func__, needNewSess);
     if (needNewSess) {
         //creating a new session, so we must destroy the old one
         if ( 0 < mJpegSessionId ) {
@@ -886,7 +886,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
 
         getJpegEncodingConfig(encodeParam, main_stream,
                 src_dim, dst_dim, thumb_dst_dim);
-        ALOGD("%s: #src bufs:%d # tmb bufs:%d #dst_bufs:%d", __func__,
+        CDBG_HIGH("%s: #src bufs:%d # tmb bufs:%d #dst_bufs:%d", __func__,
                      encodeParam.num_src_bufs,encodeParam.num_tmb_bufs,encodeParam.num_dst_bufs);
 
         ret = mJpegHandle.create_session(mJpegClientHandle, &encodeParam, &mJpegSessionId);
@@ -924,13 +924,13 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
     }
 
     // thumbnail dim
-    ALOGD("%s: Thumbnail needed:%d",__func__, m_bThumbnailNeeded);
+    CDBG_HIGH("%s: Thumbnail needed:%d",__func__, m_bThumbnailNeeded);
     if (m_bThumbnailNeeded == TRUE) {
         memset(&crop, 0, sizeof(cam_rect_t));
         jpg_job.encode_job.thumb_dim.dst_dim = thumb_dst_dim;
         if (!hal_obj->needRotationReprocess()) {
            jpg_job.encode_job.rotation = m_parent->getJpegRotation();
-           ALOGD("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.rotation);
+           CDBG_HIGH("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.rotation);
         } else {
            //swap the thumbnail destination width and height if it has
            //already been rotated
@@ -979,7 +979,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
         jpeg_job_data->jobId = jobId;
     }
 
-    ALOGV("%s : X", __func__);
+    CDBG("%s : X", __func__);
     return ret;
 }
 
@@ -1001,7 +1001,7 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
     int ret;
     uint8_t is_active = FALSE;
     uint8_t needNewSess = TRUE;
-    ALOGV("%s: E", __func__);
+    CDBG("%s: E", __func__);
     QCamera3PostProcessor *pme = (QCamera3PostProcessor *)data;
     QCameraCmdThread *cmdThread = &pme->m_dataProcTh;
     cmdThread->setName("cam_data_proc");
@@ -1020,13 +1020,13 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
         camera_cmd_type_t cmd = cmdThread->getCmd();
         switch (cmd) {
         case CAMERA_CMD_TYPE_START_DATA_PROC:
-            ALOGD("%s: start data proc", __func__);
+            CDBG_HIGH("%s: start data proc", __func__);
             is_active = TRUE;
             needNewSess = TRUE;
             break;
         case CAMERA_CMD_TYPE_STOP_DATA_PROC:
             {
-                ALOGD("%s: stop data proc", __func__);
+                CDBG_HIGH("%s: stop data proc", __func__);
                 is_active = FALSE;
 
                 // cancel all ongoing jpeg jobs
@@ -1069,11 +1069,11 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
             break;
         case CAMERA_CMD_TYPE_DO_NEXT_JOB:
             {
-                ALOGD("%s: Do next job, active is %d", __func__, is_active);
+                CDBG_HIGH("%s: Do next job, active is %d", __func__, is_active);
                 if (is_active == TRUE) {
                     // check if there is any ongoing jpeg jobs
                     if (pme->m_ongoingJpegQ.isEmpty()) {
-                       ALOGI("%s: ongoing jpeg queue is empty so doing the jpeg job", __func__);
+                       CDBG("%s: ongoing jpeg queue is empty so doing the jpeg job", __func__);
                         // no ongoing jpeg job, we are fine to send jpeg encoding job
                         qcamera_hal3_jpeg_data_t *jpeg_job =
                             (qcamera_hal3_jpeg_data_t *)pme->m_inputJpegQ.dequeue();
@@ -1091,7 +1091,7 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                             }
                         }
                     }
-                    ALOGD("%s: dequeuing pp frame", __func__);
+                    CDBG_HIGH("%s: dequeuing pp frame", __func__);
                     mm_camera_super_buf_t *pp_frame =
                         (mm_camera_super_buf_t *)pme->m_inputPPQ.dequeue();
                     if (NULL != pp_frame) {
@@ -1169,7 +1169,7 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
             break;
         }
     } while (running);
-    ALOGV("%s: X", __func__);
+    CDBG("%s: X", __func__);
     return NULL;
 }
 
