@@ -911,6 +911,7 @@ OMX_ERRORTYPE mm_jpeg_session_config_thumbnail(mm_jpeg_job_session_t* p_session)
   thumbnail_info.crop_info.nLeft = p_thumb_dim->crop.left;
   thumbnail_info.crop_info.nTop = p_thumb_dim->crop.top;
   thumbnail_info.rotation = p_params->thumb_rotation;
+  thumbnail_info.quality = p_params->thumb_quality;
 
   if ((p_thumb_dim->dst_dim.width > p_thumb_dim->src_dim.width)
     || (p_thumb_dim->dst_dim.height > p_thumb_dim->src_dim.height)) {

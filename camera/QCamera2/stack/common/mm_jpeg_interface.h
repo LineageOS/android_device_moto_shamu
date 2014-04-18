@@ -129,8 +129,18 @@ typedef struct {
 
   /* jpeg quality: range 0~100 */
   uint32_t quality;
+
+  /* jpeg thumbnail quality: range 0~100 */
+  uint32_t thumb_quality;
+
+  /* buf to exif entries, caller needs to
+   * take care of the memory manage with insider ptr */
   QOMX_EXIF_INFO exif_info;
+
+  /*Callback registered to be called after encode*/
   jpeg_encode_callback_t jpeg_cb;
+
+  /*Appdata passed by the user*/
   void* userdata;
 
   /* thumbnail dimension */
