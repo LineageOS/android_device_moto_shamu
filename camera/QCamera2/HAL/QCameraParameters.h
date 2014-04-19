@@ -527,7 +527,7 @@ public:
     bool isHDREnabled();
     bool isAutoHDREnabled();
     int32_t stopAEBracket();
-    int32_t enableFlash(bool enableFlash, bool commitSettings);
+    int32_t updateFlash(bool commitSettings);
     int32_t updateRAW(cam_dimension_t max_dim);
     bool isAVTimerEnabled();
     bool isDISEnabled();
@@ -813,6 +813,10 @@ private:
     bool m_bUbiRefocus;
     bool m_bDisplayFrame;
     bool m_bSecureMode;
+    bool m_bAeBracketingEnabled;
+    int32_t mFlashValue;
+    int32_t mFlashDaemonValue;
+
 };
 
 }; // namespace qcamera
