@@ -972,6 +972,8 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
         jpg_job.encode_job.p_metadata = (metadata_buffer_t *)meta_frame->buffer;
     }
 
+    jpg_job.encode_job.hal_version = CAM_HAL_V3;
+
     //Start jpeg encoding
     ret = mJpegHandle.start_job(&jpg_job, &jobId);
     if (ret == NO_ERROR) {

@@ -192,6 +192,9 @@ typedef struct {
   /*Metadata stream*/
   metadata_buffer_t *p_metadata;
 
+  /*HAL version*/
+  cam_hal_version_t hal_version;
+
   /* buf to exif entries, caller needs to
    * take care of the memory manage with insider ptr */
   QOMX_EXIF_INFO exif_info;
