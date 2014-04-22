@@ -306,12 +306,20 @@ int process_sensor_data(cam_sensor_params_t *p_sensor_params,
 
   CDBG_HIGH("%s:%d] From metadata aperture = %f ", __func__, __LINE__,
     p_sensor_params->aperture_value );
-  if (p_sensor_params->aperture_value > 1.0) {
-    av = (double)2.0 * log(p_sensor_params->aperture_value) / log(2.0);
-    ALOGE("%s:%d] new aperture = %f ", __func__, __LINE__, av);
-    val_rat.num = (uint32_t)(av * 100);
+
+  if (p_sensor_params->aperture_value >= 1.0) {
+    double apex_value;
+    apex_value = (double)2.0 * log(p_sensor_params->aperture_value) / log(2.0);
+    val_rat.num = (uint32_t)(apex_value * 100);
     val_rat.denom = 100;
     rc = addExifEntry(exif_info, EXIFTAGID_APERTURE, EXIF_RATIONAL, 1, &val_rat);
+    if (rc) {
+      ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+    }
+
+    val_rat.num = (uint32_t)(p_sensor_params->aperture_value * 100);
+    val_rat.denom = 100;
+    rc = addExifEntry(exif_info, EXIFTAGID_F_NUMBER, EXIF_RATIONAL, 1, &val_rat);
     if (rc) {
       ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
     }
