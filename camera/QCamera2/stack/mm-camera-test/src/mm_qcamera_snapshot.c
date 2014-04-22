@@ -116,6 +116,12 @@ int encodeData(mm_camera_test_obj_t *test_obj, mm_camera_super_buf_t* recvd_fram
     /* fill in sink img param */
     job.encode_job.dst_index = 0;
 
+    if (test_obj->metadata != NULL) {
+        job.encode_job.p_metadata = test_obj->metadata;
+    } else {
+        CDBG_ERROR("%s: Metadata null, not set for jpeg encoding", __func__);
+    }
+
     rc = test_obj->jpeg_ops.start_job(&job, &test_obj->current_job_id);
     if ( 0 != rc ) {
         free(test_obj->current_job_frames);
@@ -195,14 +201,14 @@ static void mm_app_snapshot_metadata_notify_cb(mm_camera_super_buf_t *bufs,
       break;
     }
   }
-  /* find preview stream */
+  /* find meta stream */
   for (i = 0; i < channel->num_streams; i++) {
     if (channel->streams[i].s_config.stream_info->stream_type == CAM_STREAM_TYPE_METADATA) {
       p_stream = &channel->streams[i];
       break;
     }
   }
-  /* find preview frame */
+  /* find meta frame */
   for (i = 0; i < bufs->num_bufs; i++) {
     if (bufs->bufs[i]->stream_id == p_stream->s_id) {
       frame = bufs->bufs[i];

@@ -264,6 +264,11 @@ static void mm_app_zsl_notify_cb(mm_camera_super_buf_t *bufs,
               break;
           }
       }
+      if (!pme->metadata) {
+          /* App will free the metadata */
+          pme->metadata = malloc(sizeof(metadata_buffer_t));
+      }
+      memcpy(pme->metadata , md_frame->buffer, sizeof(metadata_buffer_t));
     }
     /* find snapshot frame */
     for (i = 0; i < bufs->num_bufs; i++) {
