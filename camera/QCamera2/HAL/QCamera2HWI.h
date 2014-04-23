@@ -375,12 +375,18 @@ private:
     int32_t processASDUpdate(cam_auto_scene_t scene);
     int32_t processJpegNotify(qcamera_jpeg_evt_payload_t *jpeg_job);
     int32_t processHDRData(cam_asd_hdr_scene_data_t hdr_scene);
+    int32_t processSceneData(cam_scene_mode_type scene);
 
     int32_t sendEvtNotify(int32_t msg_type, int32_t ext1, int32_t ext2);
     int32_t sendDataNotify(int32_t msg_type,
                            camera_memory_t *data,
                            uint8_t index,
                            camera_frame_metadata_t *metadata);
+
+    int32_t sendPreviewCallback(QCameraStream *stream,
+            QCameraGrallocMemory *memory, int32_t idx);
+    int32_t selectScene(QCameraChannel *pChannel,
+            mm_camera_super_buf_t *recvd_frame);
 
     int32_t addChannel(qcamera_ch_type_enum_t ch_type);
     int32_t startChannel(qcamera_ch_type_enum_t ch_type);

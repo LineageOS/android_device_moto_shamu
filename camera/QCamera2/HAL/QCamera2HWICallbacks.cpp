@@ -76,6 +76,13 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
         return;
     }
 
+    if(pme->mParameters.isSceneSelectionEnabled() &&
+            !pme->m_stateMachine.isCaptureRunning()) {
+        pme->selectScene(pChannel, recvd_frame);
+        pChannel->bufDone(recvd_frame);
+        return;
+    }
+
     CDBG_HIGH("%s: [ZSL Retro] Frame CB Unlock : %d, is AEC Locked: %d",
           __func__, recvd_frame->bUnlockAEC, pme->m_bLedAfAecLock);
     if(recvd_frame->bUnlockAEC && pme->m_bLedAfAecLock) {
@@ -247,6 +254,96 @@ void QCamera2HardwareInterface::zsl_channel_cb(mm_camera_super_buf_t *recvd_fram
     pme->m_postprocessor.processData(frame);
 
     CDBG_HIGH("[KPI Perf] %s: X", __func__);
+}
+
+/*===========================================================================
+ * FUNCTION   : selectScene
+ *
+ * DESCRIPTION: send a preview callback when a specific selected scene is applied
+ *
+ * PARAMETERS :
+ *   @pChannel: Camera channel
+ *   @frame   : Bundled super buffer
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::selectScene(QCameraChannel *pChannel,
+        mm_camera_super_buf_t *frame)
+{
+    mm_camera_buf_def_t *pMetaFrame = NULL;
+    QCameraStream *pStream = NULL;
+    cam_scene_mode_type *scene = NULL;
+    cam_scene_mode_type selectedScene = CAM_SCENE_MODE_MAX;
+    int32_t rc = NO_ERROR;
+
+    if ((NULL == frame) || (NULL == pChannel)) {
+        ALOGE("%s: Invalid scene select input", __func__);
+        return BAD_VALUE;
+    }
+
+    selectedScene = mParameters.getSelectedScene();
+    if (CAM_SCENE_MODE_MAX == selectedScene) {
+        ALOGV("%s: No selected scene", __func__);
+        return NO_ERROR;
+    }
+
+    for(int i = 0; i < frame->num_bufs; i++){
+        pStream = pChannel->getStreamByHandle(frame->bufs[i]->stream_id);
+        if(pStream != NULL){
+            if(pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)){
+                pMetaFrame = frame->bufs[i];
+                break;
+            }
+        }
+    }
+
+    if (NULL == pMetaFrame) {
+        ALOGE("%s: No metadata buffer found in scene select super buffer", __func__);
+        return NO_INIT;
+    }
+
+    metadata_buffer_t *pMetaData = (metadata_buffer_t *)pMetaFrame->buffer;
+    if (IS_META_AVAILABLE(CAM_INTF_META_CURRENT_SCENE, pMetaData)) {
+        scene = (cam_scene_mode_type *)
+                POINTER_OF_META(CAM_INTF_META_CURRENT_SCENE, pMetaData);
+    }
+
+    if (NULL == scene) {
+        ALOGE("%s: No current scene metadata!", __func__);
+        return NO_INIT;
+    }
+
+    if ((*scene == selectedScene) &&
+            (mDataCb != NULL) &&
+            (msgTypeEnabledWithLock(CAMERA_MSG_PREVIEW_FRAME) > 0)) {
+        mm_camera_buf_def_t *preview_frame = NULL;
+        for(int i = 0; i < frame->num_bufs; i++){
+            pStream = pChannel->getStreamByHandle(frame->bufs[i]->stream_id);
+            if(pStream != NULL){
+                if(pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW)){
+                    preview_frame = frame->bufs[i];
+                    break;
+                }
+            }
+        }
+        if (preview_frame) {
+            QCameraGrallocMemory *memory = (QCameraGrallocMemory *)preview_frame->mem_info;
+            int32_t idx = preview_frame->buf_idx;
+            rc = sendPreviewCallback(pStream, memory, idx);
+            if (NO_ERROR != rc) {
+                ALOGE("%s: Error triggering scene select preview callback", __func__);
+            } else {
+                mParameters.setSelectedScene(CAM_SCENE_MODE_MAX);
+            }
+        } else {
+            ALOGE("%s: No preview buffer found in scene select super buffer", __func__);
+            return NO_INIT;
+        }
+    }
+
+    return rc;
 }
 
 /*===========================================================================
@@ -484,63 +581,100 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
     }
 
     // Handle preview data callback
-    if (pme->mDataCb != NULL && pme->msgTypeEnabledWithLock(CAMERA_MSG_PREVIEW_FRAME) > 0) {
-        camera_memory_t *previewMem = NULL;
-        camera_memory_t *data = NULL;
-        int previewBufSize;
-        cam_dimension_t preview_dim;
-        cam_format_t previewFmt;
-        stream->getFrameDimension(preview_dim);
-        stream->getFormat(previewFmt);
-
-        /* The preview buffer size in the callback should be (width*height*bytes_per_pixel)
-         * As all preview formats we support, use 12 bits per pixel, buffer size = previewWidth * previewHeight * 3/2.
-         * We need to put a check if some other formats are supported in future. */
-        if ((previewFmt == CAM_FORMAT_YUV_420_NV21) ||
-            (previewFmt == CAM_FORMAT_YUV_420_NV12) ||
-            (previewFmt == CAM_FORMAT_YUV_420_YV12)) {
-            if(previewFmt == CAM_FORMAT_YUV_420_YV12) {
-                previewBufSize = ((preview_dim.width+15)/16) * 16 * preview_dim.height +
-                                 ((preview_dim.width/2+15)/16) * 16* preview_dim.height;
-                } else {
-                    previewBufSize = preview_dim.width * preview_dim.height * 3/2;
-                }
-            if(previewBufSize != memory->getSize(idx)) {
-                previewMem = pme->mGetMemory(memory->getFd(idx),
-                           previewBufSize, 1, pme->mCallbackCookie);
-                if (!previewMem || !previewMem->data) {
-                    ALOGE("%s: mGetMemory failed.\n", __func__);
-                } else {
-                    data = previewMem;
-                }
-            } else
-                data = memory->getMemory(idx, false);
-        } else {
-            data = memory->getMemory(idx, false);
-            ALOGE("%s: Invalid preview format, buffer size in preview callback may be wrong.", __func__);
-        }
-        qcamera_callback_argm_t cbArg;
-        memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
-        cbArg.cb_type = QCAMERA_DATA_CALLBACK;
-        cbArg.msg_type = CAMERA_MSG_PREVIEW_FRAME;
-        cbArg.data = data;
-        if ( previewMem ) {
-            cbArg.user_data = previewMem;
-            cbArg.release_cb = releaseCameraMemory;
-        }
-        cbArg.cookie = pme;
-        int32_t rc = pme->m_cbNotifier.notifyCallback(cbArg);
-        if (rc != NO_ERROR) {
-            ALOGE("%s: fail sending notification", __func__);
-            if (previewMem) {
-                previewMem->release(previewMem);
-            }
+    if (pme->mDataCb != NULL &&
+            (pme->msgTypeEnabledWithLock(CAMERA_MSG_PREVIEW_FRAME) > 0) &&
+            (!pme->mParameters.isSceneSelectionEnabled())) {
+        int32_t rc = pme->sendPreviewCallback(stream, memory, idx);
+        if (NO_ERROR != rc) {
+            ALOGE("%s: Preview callback was not sent succesfully", __func__);
         }
     }
 
     free(super_frame);
     CDBG_HIGH("[KPI Perf] %s : END", __func__);
     return;
+}
+
+/*===========================================================================
+ * FUNCTION   : sendPreviewCallback
+ *
+ * DESCRIPTION: helper function for triggering preview callbacks
+ *
+ * PARAMETERS :
+ *   @stream    : stream object
+ *   @memory    : Gralloc memory allocator
+ *   @idx       : buffer index
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera2HardwareInterface::sendPreviewCallback(QCameraStream *stream,
+        QCameraGrallocMemory *memory, int32_t idx)
+{
+    camera_memory_t *previewMem = NULL;
+    camera_memory_t *data = NULL;
+    int previewBufSize;
+    cam_dimension_t preview_dim;
+    cam_format_t previewFmt;
+    int32_t rc = NO_ERROR;
+
+    if ((NULL == stream) || (NULL == memory)) {
+        ALOGE("%s: Invalid preview callback input", __func__);
+        return BAD_VALUE;
+    }
+
+    stream->getFrameDimension(preview_dim);
+    stream->getFormat(previewFmt);
+
+    /* The preview buffer size in the callback should be
+     * (width*height*bytes_per_pixel). As all preview formats we support,
+     * use 12 bits per pixel, buffer size = previewWidth * previewHeight * 3/2.
+     * We need to put a check if some other formats are supported in future. */
+    if ((previewFmt == CAM_FORMAT_YUV_420_NV21) ||
+        (previewFmt == CAM_FORMAT_YUV_420_NV12) ||
+        (previewFmt == CAM_FORMAT_YUV_420_YV12)) {
+        if(previewFmt == CAM_FORMAT_YUV_420_YV12) {
+            previewBufSize = ((preview_dim.width+15)/16) * 16 * preview_dim.height +
+                             ((preview_dim.width/2+15)/16) * 16* preview_dim.height;
+            } else {
+                previewBufSize = preview_dim.width * preview_dim.height * 3/2;
+            }
+        if(previewBufSize != memory->getSize(idx)) {
+            previewMem = mGetMemory(memory->getFd(idx),
+                       previewBufSize, 1, mCallbackCookie);
+            if (!previewMem || !previewMem->data) {
+                ALOGE("%s: mGetMemory failed.\n", __func__);
+                return NO_MEMORY;
+            } else {
+                data = previewMem;
+            }
+        } else
+            data = memory->getMemory(idx, false);
+    } else {
+        data = memory->getMemory(idx, false);
+        ALOGE("%s: Invalid preview format, buffer size in preview callback may be wrong.",
+                __func__);
+    }
+    qcamera_callback_argm_t cbArg;
+    memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
+    cbArg.cb_type = QCAMERA_DATA_CALLBACK;
+    cbArg.msg_type = CAMERA_MSG_PREVIEW_FRAME;
+    cbArg.data = data;
+    if ( previewMem ) {
+        cbArg.user_data = previewMem;
+        cbArg.release_cb = releaseCameraMemory;
+    }
+    cbArg.cookie = this;
+    rc = m_cbNotifier.notifyCallback(cbArg);
+    if (rc != NO_ERROR) {
+        ALOGE("%s: fail sending notification", __func__);
+        if (previewMem) {
+            previewMem->release(previewMem);
+        }
+    }
+
+    return rc;
 }
 
 /*===========================================================================
