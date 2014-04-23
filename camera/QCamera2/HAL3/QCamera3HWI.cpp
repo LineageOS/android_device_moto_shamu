@@ -2032,14 +2032,19 @@ QCamera3HardwareInterface::translateFromHalMetadata(
         camMetadata.update(ANDROID_FLASH_FIRING_TIME, flashFiringTime, 1);
     }
     if (IS_META_AVAILABLE(CAM_INTF_META_FLASH_STATE, metadata)) {
-        uint8_t  *flashState =
-            (uint8_t *)POINTER_OF_META(CAM_INTF_META_FLASH_STATE, metadata);
-        camMetadata.update(ANDROID_FLASH_STATE, flashState, 1);
+        uint8_t  flashState =
+            *((uint8_t *)POINTER_OF_META(CAM_INTF_META_FLASH_STATE, metadata));
+        if (!gCamCapability[mCameraId]->flash_available) {
+            flashState = ANDROID_FLASH_STATE_UNAVAILABLE;
+        }
+        camMetadata.update(ANDROID_FLASH_STATE, &flashState, 1);
     }
     if (IS_META_AVAILABLE(CAM_INTF_META_FLASH_MODE, metadata)){
-        uint8_t *flashMode = (uint8_t*)
-            POINTER_OF_META(CAM_INTF_META_FLASH_MODE, metadata);
-        camMetadata.update(ANDROID_FLASH_MODE, flashMode, 1);
+        uint8_t flashMode = *((uint8_t*)
+            POINTER_OF_META(CAM_INTF_META_FLASH_MODE, metadata));
+        uint8_t fwk_flashMode = lookupFwkName(FLASH_MODES_MAP,
+            sizeof(FLASH_MODES_MAP), flashMode);
+        camMetadata.update(ANDROID_FLASH_MODE, &fwk_flashMode, 1);
     }
     if (IS_META_AVAILABLE(CAM_INTF_META_HOTPIXEL_MODE, metadata)) {
         uint8_t  *hotPixelMode =
