@@ -1115,17 +1115,29 @@ int32_t QCameraReprocessChannel::doReprocessOffline(
                 uint32_t stream_id = frame->bufs[i]->stream_id;
                 QCameraStream *srcStream =
                         m_pSrcChannel->getStreamByHandle(stream_id);
-                cam_metadata_info_t *meta =
-                        (cam_metadata_info_t *)meta_buf->buffer;
-                if ((NULL != meta) && (NULL != srcStream)) {
-
-                    for (int j = 0; j < MAX_NUM_STREAMS; j++) {
-                        if (meta->crop_data.crop_info[j].stream_id ==
-                                        srcStream->getMyServerID()) {
-                            param.reprocess.frame_pp_config.crop.crop_enabled = 1;
-                            param.reprocess.frame_pp_config.crop.input_crop =
-                                    meta->crop_data.crop_info[j].crop;
+                metadata_buffer_t *pMetaData =
+                        (metadata_buffer_t *)meta_buf->buffer;
+                if (NULL != pMetaData) {
+                    uint8_t curr_entry = GET_FIRST_PARAM_ID(pMetaData);
+                    cam_crop_data_t *crop = NULL;
+                    while (!(curr_entry == CAM_INTF_PARM_MAX)) {
+                        if (curr_entry == CAM_INTF_META_CROP_DATA) {
+                            crop = (cam_crop_data_t *)
+                                    POINTER_OF(CAM_INTF_META_CROP_DATA, pMetaData);
                             break;
+                        }
+                        curr_entry = GET_NEXT_PARAM_ID(curr_entry, pMetaData);
+                    }
+
+                    if ((NULL != crop) && (NULL != srcStream)) {
+                        for (int j = 0; j < MAX_NUM_STREAMS; j++) {
+                            if (crop->crop_info[j].stream_id ==
+                                            srcStream->getMyServerID()) {
+                                param.reprocess.frame_pp_config.crop.crop_enabled = 1;
+                                param.reprocess.frame_pp_config.crop.input_crop =
+                                        crop->crop_info[j].crop;
+                                break;
+                            }
                         }
                     }
                 }
