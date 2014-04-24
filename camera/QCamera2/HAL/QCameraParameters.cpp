@@ -644,6 +644,8 @@ QCameraParameters::QCameraParameters()
     // TODO: may move to parameter instead of sysprop
     property_get("persist.debug.sf.showfps", value, "0");
     m_bDebugFps = atoi(value) > 0 ? true : false;
+    m_bReleaseTorchCamera = false;
+    m_pTorch = NULL;
 
     // For thermal mode, it should be set as system property
     // because system property applies to all applications, while
@@ -723,6 +725,8 @@ QCameraParameters::QCameraParameters(const String8 &params)
     memset(&m_LiveSnapshotSize, 0, sizeof(m_LiveSnapshotSize));
     memset(&m_default_fps_range, 0, sizeof(m_default_fps_range));
     memset(&m_hfrFpsRange, 0, sizeof(m_hfrFpsRange));
+    m_pTorch = NULL;
+    m_bReleaseTorchCamera = false;
 }
 
 /*===========================================================================
@@ -4350,13 +4354,15 @@ int32_t QCameraParameters::initDefaultParameters()
  *==========================================================================*/
 int32_t QCameraParameters::init(cam_capability_t *capabilities,
                                 mm_camera_vtbl_t *mmOps,
-                                QCameraAdjustFPS *adjustFPS)
+                                QCameraAdjustFPS *adjustFPS,
+                                QCameraTorchInterface *torch)
 {
     int32_t rc = NO_ERROR;
 
     m_pCapability = capabilities;
     m_pCamOpsTbl = mmOps;
     m_AdjustFPS = adjustFPS;
+    m_pTorch = torch;
 
     //Allocate Set Param Buffer
     m_pParamHeap = new QCameraHeapMemory(QCAMERA_ION_USE_CACHE);
@@ -5182,6 +5188,15 @@ int32_t QCameraParameters::setFlash(const char *flashStr)
                                    flashStr);
         if (value != NAME_NOT_FOUND) {
             CDBG_HIGH("%s: Setting Flash value %s", __func__, flashStr);
+
+            if (NULL != m_pTorch && !m_bRecordingHint_new) {
+                if ( value == CAM_FLASH_MODE_TORCH ) {
+                    m_pTorch->prepareTorchCamera();
+                } else {
+                    m_bReleaseTorchCamera = true;
+                }
+            }
+
             updateParamEntry(KEY_FLASH_MODE, flashStr);
             mFlashValue = value;
             return NO_ERROR;
@@ -8324,6 +8339,11 @@ int32_t QCameraParameters::commitParamChanges()
     if ( m_bSceneTransitionAuto ) {
         m_bUpdateEffects = true;
         m_bSceneTransitionAuto = false;
+    }
+
+    if ( m_bReleaseTorchCamera && ( NULL != m_pTorch) ) {
+        m_pTorch->releaseTorchCamera();
+        m_bReleaseTorchCamera = false;
     }
 
 
