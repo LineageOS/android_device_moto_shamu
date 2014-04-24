@@ -1935,7 +1935,8 @@ int32_t mm_channel_handle_metadata(
              ch_obj->need3ABracketing = FALSE;
         }
 
-       if((ch_obj->burstSnapNum > 1) && (ch_obj->needLEDFlash == TRUE)) {
+       if((ch_obj->burstSnapNum > 1) && (ch_obj->needLEDFlash == TRUE) &&
+               !ch_obj->isFlashBracketingEnabled) {
          if((buf_info->frame_idx >= queue->led_off_start_frame_id)
             &&  !queue->once) {
             CDBG("%s: [ZSL Retro]Burst snap num = %d ",
@@ -2077,7 +2078,10 @@ int32_t mm_channel_superbuf_comp_and_enqueue(
                 if(ch_obj->isFlashBracketingEnabled) {
                    queue->expected_frame_id =
                        queue->expected_frame_id_without_led;
-                   ch_obj->isFlashBracketingEnabled = FALSE;
+                   if (buf_info->frame_idx >=
+                           queue->expected_frame_id_without_led) {
+                       ch_obj->isFlashBracketingEnabled = FALSE;
+                   }
                 } else {
                    queue->expected_frame_id = buf_info->frame_idx
                                               + queue->attr.post_frame_skip;
