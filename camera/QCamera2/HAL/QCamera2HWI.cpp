@@ -5309,10 +5309,14 @@ int QCamera2HardwareInterface::calcThermalLevel(
         break;
     case QCAMERA_THERMAL_SLIGHT_ADJUSTMENT:
         {
-            adjustedRange.min_fps = (minFPS / 2) / 1000.0f;
-            adjustedRange.max_fps = (maxFPS / 2) / 1000.0f;
-            adjustedRange.video_min_fps = (minVideoFps / 2) / 1000.0f;
-            adjustedRange.video_max_fps = (maxVideoFps / 2 ) / 1000.0f;
+            adjustedRange.min_fps = minFPS / 1000.0f;
+            adjustedRange.max_fps = maxFPS / 1000.0f;
+            adjustedRange.min_fps -= 0.1f * adjustedRange.min_fps;
+            adjustedRange.max_fps -= 0.1f * adjustedRange.max_fps;
+            adjustedRange.video_min_fps = minVideoFps / 1000.0f;
+            adjustedRange.video_max_fps = maxVideoFps / 1000.0f;
+            adjustedRange.video_min_fps -= 0.1f * adjustedRange.video_min_fps;
+            adjustedRange.video_max_fps -= 0.1f * adjustedRange.video_max_fps;
             if ( adjustedRange.min_fps < 1 ) {
                 adjustedRange.min_fps = 1;
             }
@@ -5330,10 +5334,14 @@ int QCamera2HardwareInterface::calcThermalLevel(
         break;
     case QCAMERA_THERMAL_BIG_ADJUSTMENT:
         {
-            adjustedRange.min_fps = (minFPS / 4) / 1000.0f;
-            adjustedRange.max_fps = (maxFPS / 4) / 1000.0f;
-            adjustedRange.video_min_fps = (minVideoFps / 4) / 1000.0f;
-            adjustedRange.video_max_fps = (maxVideoFps / 4 ) / 1000.0f;
+            adjustedRange.min_fps = minFPS / 1000.0f;
+            adjustedRange.max_fps = maxFPS / 1000.0f;
+            adjustedRange.min_fps -= 0.2f * adjustedRange.min_fps;
+            adjustedRange.max_fps -= 0.2f * adjustedRange.max_fps;
+            adjustedRange.video_min_fps = minVideoFps / 1000.0f;
+            adjustedRange.video_max_fps = maxVideoFps / 1000.0f;
+            adjustedRange.video_min_fps -= 0.2f * adjustedRange.video_min_fps;
+            adjustedRange.video_max_fps -= 0.2f * adjustedRange.video_max_fps;
             if ( adjustedRange.min_fps < 1 ) {
                 adjustedRange.min_fps = 1;
             }
