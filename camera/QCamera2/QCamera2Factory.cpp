@@ -60,6 +60,7 @@ QCamera2Factory::QCamera2Factory()
     camera_info info;
     int i = 0;
     mHalDescriptors = NULL;
+    mCallbacks = NULL;
     mNumOfCameras = get_num_of_cameras();
     char prop[PROPERTY_VALUE_MAX];
     property_get("persist.camera.HAL3.enabled", prop, "0");
@@ -150,6 +151,22 @@ int QCamera2Factory::get_camera_info(int camera_id, struct camera_info *info)
 }
 
 /*===========================================================================
+ * FUNCTION   : set_callbacks
+ *
+ * DESCRIPTION: static function to set callbacks function to camera module
+ *
+ * PARAMETERS :
+ *   @callbacks : ptr to callback functions
+ *
+ * RETURN     : NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCamera2Factory::set_callbacks(const camera_module_callbacks_t *callbacks)
+{
+    return gQCamera2Factory->setCallbacks(callbacks);
+}
+
+/*===========================================================================
  * FUNCTION   : getNumberOfCameras
  *
  * DESCRIPTION: query number of cameras detected
@@ -208,6 +225,26 @@ int QCamera2Factory::getCameraInfo(int camera_id, struct camera_info *info)
 }
 
 /*===========================================================================
+ * FUNCTION   : setCallbacks
+ *
+ * DESCRIPTION: set callback functions to send asynchronous notifications to
+ *              frameworks.
+ *
+ * PARAMETERS :
+ *   @callbacks : callback function pointer
+ *
+ * RETURN     :
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCamera2Factory::setCallbacks(const camera_module_callbacks_t *callbacks)
+{
+    int rc = NO_ERROR;
+    mCallbacks = callbacks;
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : cameraDeviceOpen
  *
  * DESCRIPTION: open a camera device with its ID
@@ -233,7 +270,8 @@ int QCamera2Factory::cameraDeviceOpen(int camera_id,
     }
 
     if ( mHalDescriptors[camera_id].device_version == CAMERA_DEVICE_API_VERSION_3_0 ) {
-        QCamera3HardwareInterface *hw = new QCamera3HardwareInterface(mHalDescriptors[camera_id].cameraId);
+        QCamera3HardwareInterface *hw = new QCamera3HardwareInterface(mHalDescriptors[camera_id].cameraId,
+                mCallbacks);
         if (!hw) {
             ALOGE("Allocation of hardware interface failed");
             return NO_MEMORY;
