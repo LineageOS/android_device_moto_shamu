@@ -622,6 +622,7 @@ private:
     int32_t mPostviewJob;
     int32_t mMetadataJob;
     int32_t mReprocJob;
+    int32_t mRawdataJob;
     int32_t mOutputCount;
 };
 
