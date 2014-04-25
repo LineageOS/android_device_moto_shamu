@@ -93,8 +93,7 @@ public:
                                 const struct camera3_device *, int type);
     static int process_capture_request(const struct camera3_device *,
                                 camera3_capture_request_t *request);
-    static void get_metadata_vendor_tag_ops(const struct camera3_device *,
-                                               vendor_tag_query_ops_t* ops);
+
     static void dump(const struct camera3_device *, int fd);
     static int flush(const struct camera3_device *);
     static int close_camera_device(struct hw_device_t* device);

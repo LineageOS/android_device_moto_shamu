@@ -43,6 +43,7 @@
 #include "QCamera3Mem.h"
 #include "QCamera3Channel.h"
 #include "QCamera3PostProc.h"
+#include "QCamera3VendorTags.h"
 
 using namespace android;
 
@@ -152,7 +153,7 @@ camera3_device_ops_t QCamera3HardwareInterface::mCameraOps = {
     register_stream_buffers:            QCamera3HardwareInterface::register_stream_buffers,
     construct_default_request_settings: QCamera3HardwareInterface::construct_default_request_settings,
     process_capture_request:            QCamera3HardwareInterface::process_capture_request,
-    get_metadata_vendor_tag_ops:        QCamera3HardwareInterface::get_metadata_vendor_tag_ops,
+    get_metadata_vendor_tag_ops:        NULL,
     dump:                               QCamera3HardwareInterface::dump,
     flush:                              QCamera3HardwareInterface::flush,
     reserved:                           {0},
@@ -4692,34 +4693,6 @@ int QCamera3HardwareInterface::process_capture_request(
     int rc = hw->processCaptureRequest(request);
     CDBG("%s: X", __func__);
     return rc;
-}
-
-/*===========================================================================
- * FUNCTION   : get_metadata_vendor_tag_ops
- *
- * DESCRIPTION:
- *
- * PARAMETERS :
- *
- *
- * RETURN     :
- *==========================================================================*/
-
-void QCamera3HardwareInterface::get_metadata_vendor_tag_ops(
-                const struct camera3_device *device,
-                vendor_tag_query_ops_t* ops)
-{
-    CDBG("%s: E", __func__);
-    QCamera3HardwareInterface *hw =
-        reinterpret_cast<QCamera3HardwareInterface *>(device->priv);
-    if (!hw) {
-        ALOGE("%s: NULL camera device", __func__);
-        return;
-    }
-
-    hw->getMetadataVendorTagOps(ops);
-    CDBG("%s: X", __func__);
-    return;
 }
 
 /*===========================================================================
