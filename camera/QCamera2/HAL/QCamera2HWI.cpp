@@ -2326,14 +2326,14 @@ int32_t QCamera2HardwareInterface::configureAFBracketing(bool enable)
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera2HardwareInterface::configureFlashBracketing()
+int32_t QCamera2HardwareInterface::configureFlashBracketing(bool enable)
 {
     ALOGD("%s: E",__func__);
     int32_t rc = NO_ERROR;
 
     cam_flash_bracketing_t flashBracket;
     memset(&flashBracket, 0, sizeof(cam_flash_bracketing_t));
-    flashBracket.enable = 1;
+    flashBracket.enable = enable;
     //TODO: Hardcoded value.
     flashBracket.burst_count = 2;
     //Send cmd to backend to set Flash Bracketing for chroma flash.
@@ -2844,6 +2844,9 @@ int QCamera2HardwareInterface::cancelPicture()
     }
     if (mParameters.isUbiFocusEnabled()) {
         configureAFBracketing(false);
+    }
+    if (mParameters.isChromaFlashEnabled()) {
+      configureFlashBracketing(false);
     }
     if(mParameters.isOptiZoomEnabled()) {
         ALOGD("%s: Restoring previous zoom value!!",__func__);
