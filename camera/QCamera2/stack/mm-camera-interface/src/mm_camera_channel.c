@@ -1880,7 +1880,7 @@ int32_t mm_channel_handle_metadata(
             }
             queue->expected_frame_id =
                 good_frame_idx_range.min_frame_idx;
-             if((ch_obj->needLEDFlash = TRUE) && (ch_obj->burstSnapNum > 1)) {
+             if((ch_obj->needLEDFlash == TRUE) && (ch_obj->burstSnapNum > 1)) {
                 queue->expected_frame_id =
                 good_frame_idx_range.min_frame_idx;
                 queue->led_on_start_frame_id =
