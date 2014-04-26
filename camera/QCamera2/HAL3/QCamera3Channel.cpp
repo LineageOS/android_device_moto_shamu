@@ -1121,6 +1121,8 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
             obj->m_postprocessor.releaseJpegJobData(job);
             free(job);
         }
+
+
         return;
         // }
     } else {
@@ -1147,7 +1149,7 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
     m_max_pic_dim = hal_obj->calcMaxJpegDim();
     mYuvWidth = stream->width;
     mYuvHeight = stream->height;
-    int32_t rc = m_postprocessor.init(jpegEvtHandle, this);
+    int32_t rc = m_postprocessor.init(&mMemory, jpegEvtHandle, this);
     if (rc != 0) {
         ALOGE("Init Postprocessor failed");
     }
@@ -1245,7 +1247,7 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
     mCurrentBufIndex = index;
 
     // Start postprocessor
-    m_postprocessor.start(&mMemory, this, metadata);
+    m_postprocessor.start(this, metadata);
 
     // Queue jpeg settings
     rc = queueJpegSetting(index, metadata);
@@ -1344,7 +1346,6 @@ int32_t QCamera3PicChannel::registerBuffer(buffer_handle_t *buffer)
             return rc;
         }
     }
-
     rc = mMemory.registerBuffer(buffer);
     if (ALREADY_EXISTS == rc) {
         return NO_ERROR;
@@ -1402,7 +1403,6 @@ void QCamera3PicChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
        return;
     }
     *frame = *super_frame;
-
     m_postprocessor.processData(frame);
     free(super_frame);
     return;

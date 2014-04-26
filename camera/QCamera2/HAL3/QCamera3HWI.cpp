@@ -1307,7 +1307,6 @@ void QCamera3HardwareInterface::handleBufferWithLock(
             mCallbackOps->process_capture_result(mCallbackOps, &result);
             i = mPendingRequestsList.erase(i);
             mPendingRequest--;
-            unblockRequestIfNecessary();
         } else {
             for (List<RequestedBufferInfo>::iterator j = i->buffers.begin();
                 j != i->buffers.end(); j++) {
@@ -1340,32 +1339,8 @@ void QCamera3HardwareInterface::handleBufferWithLock(
  *==========================================================================*/
 void QCamera3HardwareInterface::unblockRequestIfNecessary()
 {
-    bool max_buffers_dequeued = false;
-
-    uint32_t queued_buffers = 0;
-    for(List<stream_info_t*>::iterator it=mStreamInfo.begin();
-        it != mStreamInfo.end(); it++) {
-        queued_buffers = 0;
-        for (List<PendingBufferInfo>::iterator k =
-            mPendingBuffersMap.mPendingBufferList.begin();
-            k != mPendingBuffersMap.mPendingBufferList.end(); k++ ) {
-            if (k->stream == (*it)->stream)
-                queued_buffers++;
-
-            CDBG("%s: Dequeued %d buffers for stream %p", __func__,
-                queued_buffers, (*it)->stream);
-            if (queued_buffers >=(* it)->stream->max_buffers) {
-                CDBG("%s: Wait!!! Max buffers Dequed", __func__);
-                max_buffers_dequeued = true;
-                break;
-            }
-        }
-    }
-
-    if (!max_buffers_dequeued) {
-        // Unblock process_capture_request
-        pthread_cond_signal(&mRequestCond);
-    }
+   // Unblock process_capture_request
+   pthread_cond_signal(&mRequestCond);
 }
 
 /*===========================================================================
@@ -1642,6 +1617,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
       ts.tv_sec += 5;
     }
     //Block on conditional variable
+
     mPendingRequest++;
     while (mPendingRequest >= kMaxInFlight) {
         if (!isValidTimeout) {
