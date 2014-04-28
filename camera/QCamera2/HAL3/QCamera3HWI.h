@@ -285,10 +285,6 @@ private:
     bool mRawDump;
     power_module_t *m_pPowerModule;   // power module
 
-#ifdef HAS_MULTIMEDIA_HINTS
-    bool mHdrHint;
-#endif
-
     uint32_t mMetaFrameCount;
     const camera_module_callbacks_t *mCallbacks;
 
