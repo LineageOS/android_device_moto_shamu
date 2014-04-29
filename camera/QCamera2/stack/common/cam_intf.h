@@ -305,6 +305,8 @@ typedef struct{
     cam_opti_zoom_t      opti_zoom_settings_need;
 
     uint8_t focus_dist_calibrated;
+    cam_illuminat_t reference_illuminant1;
+    cam_illuminat_t reference_illuminant2;
 } cam_capability_t;
 
 typedef enum {

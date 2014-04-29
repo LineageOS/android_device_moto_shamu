@@ -155,6 +155,31 @@ const int32_t available_thumbnail_sizes[] = {0, 0,
                                              512, 288,
                                              512, 384};
 
+
+/* Since there is no mapping for all the options some Android enum are not listed.
+ * Also, the order in this list is important because while mapping from HAL to Android it will
+ * traverse from lower to higher index which means that for HAL values that are map to different
+ * Android values, the traverse logic will select the first one found.
+ */
+const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::REFERENCE_ILLUMINANT_MAP[] = {
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_FLUORESCENT, CAM_AWB_WARM_FLO},
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_DAYLIGHT_FLUORESCENT, CAM_AWB_CUSTOM_DAYLIGHT },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_COOL_WHITE_FLUORESCENT, CAM_AWB_COLD_FLO },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_STANDARD_A, CAM_AWB_A },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_D55, CAM_AWB_NOON },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_D65, CAM_AWB_D65 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_D75, CAM_AWB_D75 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_D50, CAM_AWB_D50 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_ISO_STUDIO_TUNGSTEN, CAM_AWB_CUSTOM_A},
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_DAYLIGHT, CAM_AWB_D50 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_TUNGSTEN, CAM_AWB_A },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_FINE_WEATHER, CAM_AWB_D50 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_CLOUDY_WEATHER, CAM_AWB_D65 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_SHADE, CAM_AWB_D75 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_DAY_WHITE_FLUORESCENT, CAM_AWB_CUSTOM_DAYLIGHT },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_WHITE_FLUORESCENT, CAM_AWB_COLD_FLO},
+};
+
 camera3_device_ops_t QCamera3HardwareInterface::mCameraOps = {
     initialize:                         QCamera3HardwareInterface::initialize,
     configure_streams:                  QCamera3HardwareInterface::configure_streams,
@@ -3232,6 +3257,18 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS,
                       avail_min_frame_durations,
                       avail_min_frame_durations_size);
+
+    uint8_t fwkReferenceIlluminant = lookupFwkName(REFERENCE_ILLUMINANT_MAP,
+        sizeof(REFERENCE_ILLUMINANT_MAP) / sizeof(REFERENCE_ILLUMINANT_MAP[0]),
+        gCamCapability[cameraId]->reference_illuminant1);
+    staticInfo.update(ANDROID_SENSOR_REFERENCE_ILLUMINANT1,
+                      &fwkReferenceIlluminant, 1);
+
+    fwkReferenceIlluminant = lookupFwkName(REFERENCE_ILLUMINANT_MAP,
+        sizeof(REFERENCE_ILLUMINANT_MAP) / sizeof(REFERENCE_ILLUMINANT_MAP[0]),
+        gCamCapability[cameraId]->reference_illuminant2);
+    staticInfo.update(ANDROID_SENSOR_REFERENCE_ILLUMINANT2,
+                      &fwkReferenceIlluminant, 1);
 
     int32_t available_request_keys[] = {ANDROID_COLOR_CORRECTION_MODE,
        ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_COLOR_CORRECTION_GAINS,
