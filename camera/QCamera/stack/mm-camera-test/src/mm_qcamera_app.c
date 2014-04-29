@@ -568,7 +568,7 @@ int mm_stream_alloc_bufs(mm_camera_app_obj_t *pme,
         app_bufs->bufs[i].buf_idx = i;
         app_bufs->alloc[i].len = frame_offset_info->frame_len;
         app_bufs->alloc[i].flags = ION_FLAG_CACHED;
-        app_bufs->alloc[i].heap_mask =
+        app_bufs->alloc[i].heap_id_mask =
         (0x1 << CAMERA_ION_HEAP_ID | 0x1 << ION_IOMMU_HEAP_ID);
         app_bufs->alloc[i].align = 4096;
 

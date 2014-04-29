@@ -346,11 +346,11 @@ int QCameraMemory::allocOneBuffer(QCameraMemInfo &memInfo,
     if (cached) {
         alloc.flags = ION_FLAG_CACHED;
     }
-    alloc.heap_mask = heap_id;
+    alloc.heap_id_mask = heap_id;
     if (secure_mode == SECURE) {
         ALOGD("%s: Allocate secure buffer\n", __func__);
         alloc.flags = ION_SECURE;
-        alloc.heap_mask = ION_HEAP(ION_CP_MM_HEAP_ID);
+        alloc.heap_id_mask = ION_HEAP(ION_CP_MM_HEAP_ID);
         alloc.align = 1024*1024; //1 MB alignment to be able to protect later
         alloc.len = (alloc.len + (1024 * 1024 - 1)) & (~(1024 * 1024 -1));
     }
@@ -649,15 +649,15 @@ void *QCameraHeapMemory::getPtr(int index) const
 int QCameraHeapMemory::allocate(int count, int size, uint32_t isSecure)
 {
     int rc = -1;
-    int heap_mask = 0x1 << ION_IOMMU_HEAP_ID;
+    int heap_id_mask = 0x1 << ION_IOMMU_HEAP_ID;
     if (isSecure == SECURE) {
-        int heap_mask = 0x1 << ION_IOMMU_HEAP_ID;
-        rc = alloc(count, size, heap_mask, SECURE);
+        int heap_id_mask = 0x1 << ION_IOMMU_HEAP_ID;
+        rc = alloc(count, size, heap_id_mask, SECURE);
         if (rc < 0)
             return rc;
 
     } else {
-        rc = alloc(count, size, heap_mask, NON_SECURE);
+        rc = alloc(count, size, heap_id_mask, NON_SECURE);
         if (rc < 0)
             return rc;
 
@@ -699,8 +699,8 @@ int QCameraHeapMemory::allocate(int count, int size, uint32_t isSecure)
  *==========================================================================*/
 int QCameraHeapMemory::allocateMore(int count, int size)
 {
-    int heap_mask = 0x1 << ION_IOMMU_HEAP_ID;
-    int rc = alloc(count, size, heap_mask, NON_SECURE);
+    int heap_id_mask = 0x1 << ION_IOMMU_HEAP_ID;
+    int rc = alloc(count, size, heap_id_mask, NON_SECURE);
     if (rc < 0)
         return rc;
 
@@ -878,8 +878,8 @@ QCameraStreamMemory::~QCameraStreamMemory()
  *==========================================================================*/
 int QCameraStreamMemory::allocate(int count, int size, uint32_t isSecure)
 {
-    int heap_mask = 0x1 << ION_IOMMU_HEAP_ID;
-    int rc = alloc(count, size, heap_mask, isSecure);
+    int heap_id_mask = 0x1 << ION_IOMMU_HEAP_ID;
+    int rc = alloc(count, size, heap_id_mask, isSecure);
     if (rc < 0)
         return rc;
 
@@ -909,8 +909,8 @@ int QCameraStreamMemory::allocate(int count, int size, uint32_t isSecure)
  *==========================================================================*/
 int QCameraStreamMemory::allocateMore(int count, int size)
 {
-    int heap_mask = 0x1 << ION_IOMMU_HEAP_ID;
-    int rc = alloc(count, size, heap_mask, NON_SECURE);
+    int heap_id_mask = 0x1 << ION_IOMMU_HEAP_ID;
+    int rc = alloc(count, size, heap_id_mask, NON_SECURE);
     if (rc < 0)
         return rc;
 
