@@ -1678,8 +1678,14 @@ mm_camera_vtbl_t * camera_open(uint8_t camera_idx)
     cam_obj->vtbl.camera_handle = cam_obj->my_hdl; /* set handler */
     cam_obj->vtbl.ops = &mm_camera_ops;
     pthread_mutex_init(&cam_obj->cam_lock, NULL);
+    /* unlock global interface lock, if not, in dual camera use case,
+      * current open will block operation of another opened camera obj*/
+    pthread_mutex_lock(&cam_obj->cam_lock);
+    pthread_mutex_unlock(&g_intf_lock);
 
     rc = mm_camera_open(cam_obj);
+
+    pthread_mutex_lock(&g_intf_lock);
     if(rc != 0) {
         CDBG_ERROR("%s: mm_camera_open err = %d", __func__, rc);
         pthread_mutex_destroy(&cam_obj->cam_lock);
