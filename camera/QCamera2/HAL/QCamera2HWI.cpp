@@ -5219,35 +5219,6 @@ void QCamera2HardwareInterface::releaseCameraMemory(void *data,
     }
 }
 
-/*==========================================================================
- * FUNCTION   : returnRdiStreamBuffer
- *
- * DESCRIPTION: Returns RDI stream buffer
- *
- * PARAMETERS :
- *   @data    : buffer to be released
- *   @cookie  : context data
- *   @cbStatus: callback status
- *
- * RETURN     : None
- *==========================================================================*/
-void QCamera2HardwareInterface::returnRdiStreamBuffer(void *data, void *cookie,
-    int32_t /*cbStatus*/) {
-
-    QCameraStream *stream = ( QCameraStream * ) cookie;
-    qcamera_rdi_userdata_t *cb_userdata = (qcamera_rdi_userdata_t*) data;
-
-    if (NULL != stream) {
-        ALOGD("%s RDI Buf Done for idx = %d ", __func__, cb_userdata->rdi_buf_idx);
-            stream->bufDone(cb_userdata->rdi_buf_idx);
-    }
-    if (NULL != cb_userdata->rdi_user_data) {
-       ALOGD("%s Releasing RDI Secure Data", __func__);
-       cb_userdata->rdi_user_data->release(cb_userdata->rdi_user_data);
-       cb_userdata->rdi_user_data = NULL;
-    }
-}
-
 /*===========================================================================
  * FUNCTION   : returnStreamBuffer
  *

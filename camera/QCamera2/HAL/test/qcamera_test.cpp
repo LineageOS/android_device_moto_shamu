@@ -795,6 +795,12 @@ void CameraContext::notify(int32_t msgType, int32_t ext1, int32_t ext2)
 {
     printf("Notify cb: %d %d %d\n", msgType, ext1, ext2);
 
+    if (( msgType & CAMERA_MSG_PREVIEW_FRAME) && (ext1 == CAMERA_FRAME_DATA_FD)) {
+        int fd = dup(ext2);
+        printf("notify Preview Frame fd: %d dup fd: %d\n", ext2, fd);
+        close(fd);
+    }
+
     if ( msgType & CAMERA_MSG_FOCUS ) {
         printf("AutoFocus %s \n",
                (ext1) ? "OK" : "FAIL");

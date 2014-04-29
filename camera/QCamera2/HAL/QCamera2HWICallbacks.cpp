@@ -804,82 +804,68 @@ void QCamera2HardwareInterface::rdi_mode_stream_cb_routine(
     }
     // Non-secure Mode
     if (!pme->isSecureMode()) {
-
         QCameraMemory *previewMemObj = (QCameraMemory *)frame->mem_info;
-        camera_memory_t *preview_mem = NULL;
-        if (previewMemObj != NULL) {
-            preview_mem = previewMemObj->getMemory(frame->buf_idx, false);
+        if (NULL == previewMemObj) {
+            ALOGE("%s: previewMemObj is NULL", __func__);
+            stream->bufDone(frame->buf_idx);
+            goto end;
         }
-        if ((NULL != previewMemObj) && (NULL != preview_mem)) {
+
+        camera_memory_t *preview_mem = previewMemObj->getMemory(frame->buf_idx, false);
+        if (NULL != preview_mem) {
             previewMemObj->cleanCache(frame->buf_idx);
             // Dump RAW frame
             pme->dumpFrameToFile(stream, frame, QCAMERA_DUMP_FRM_RAW);
             // Notify Preview callback frame
             if (pme->needProcessPreviewFrame() &&
-            pme->mDataCb != NULL &&
-            pme->msgTypeEnabledWithLock(CAMERA_MSG_PREVIEW_FRAME) > 0) {
+                    pme->mDataCb != NULL &&
+                    pme->msgTypeEnabledWithLock(CAMERA_MSG_PREVIEW_FRAME) > 0) {
                 qcamera_callback_argm_t cbArg;
                 memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
-                cbArg.cb_type = QCAMERA_DATA_CALLBACK;
-                cbArg.msg_type = CAMERA_MSG_PREVIEW_FRAME;
-                cbArg.data = preview_mem;
-                int user_data = frame->buf_idx;
-                cbArg.user_data = (void *)user_data;
-                cbArg.cookie = stream;
+                cbArg.cb_type    = QCAMERA_DATA_CALLBACK;
+                cbArg.msg_type   = CAMERA_MSG_PREVIEW_FRAME;
+                cbArg.data       = preview_mem;
+                int user_data    = frame->buf_idx;
+                cbArg.user_data  = (void *)user_data;
+                cbArg.cookie     = stream;
                 cbArg.release_cb = returnStreamBuffer;
                 pme->m_cbNotifier.notifyCallback(cbArg);
             } else {
+                ALOGE("%s: preview_mem is NULL", __func__);
                 stream->bufDone(frame->buf_idx);
             }
         }
+        else {
+            ALOGE("%s: preview_mem is NULL", __func__);
+            stream->bufDone(frame->buf_idx);
+        }
     } else {
-        camera_memory_t *camera_data =
-                pme->mGetMemory(-1, sizeof(qcamera_secure_fd_data_t), 1, pme->mCallbackCookie);
-
-        if (camera_data == NULL) {
-            ALOGE("%s: camera_data allocation failed", __func__);
+        // Secure Mode
+        // We will do QCAMERA_NOTIFY_CALLBACK and share FD in case of secure mode
+        QCameraMemory *previewMemObj = (QCameraMemory *)frame->mem_info;
+        if (NULL == previewMemObj) {
+            ALOGE("%s: previewMemObj is NULL", __func__);
             stream->bufDone(frame->buf_idx);
             goto end;
         }
 
-        QCameraMemory *previewMemObj = (QCameraMemory *)frame->mem_info;
-        int preview_buff_fd = 0;
-        if (previewMemObj != NULL) {
-            preview_buff_fd = previewMemObj->getFd(frame->buf_idx);
-            ALOGD("%s: preview_buff_fd =%d for index = %d ", __func__, preview_buff_fd, frame->buf_idx);
-            if (camera_data->data != NULL) {
-                memset(camera_data->data, 0, sizeof(qcamera_secure_fd_data_t));
-                // Temp Magic number. May be removed in later versions.
-                ((qcamera_secure_fd_data_t *)camera_data->data)->magic = 0x00FD42FD;
-                ((qcamera_secure_fd_data_t *)camera_data->data)->fd = preview_buff_fd;
-            }
-        }
-
+        int fd = previewMemObj->getFd(frame->buf_idx);
+        ALOGD("%s: Preview frame fd =%d for index = %d ", __func__, fd, frame->buf_idx);
         if (pme->needProcessPreviewFrame() &&
                 pme->mDataCb != NULL &&
                 pme->msgTypeEnabledWithLock(CAMERA_MSG_PREVIEW_FRAME) > 0) {
-            ALOGD("%s: needProcessPreviewFrame\n", __func__);
-
             // Prepare Callback structure
             qcamera_callback_argm_t cbArg;
             memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
-            cbArg.cb_type = QCAMERA_DATA_CALLBACK;
-            cbArg.msg_type = CAMERA_MSG_PREVIEW_FRAME;
-            cbArg.data = camera_data;
-
-            qcamera_rdi_userdata_t cb_userdata;
-            cb_userdata.rdi_user_data = camera_data;
-            cb_userdata.rdi_buf_idx = frame->buf_idx;
-
-            cbArg.user_data = (void *)&cb_userdata;
-            cbArg.cookie = stream;
-            cbArg.release_cb = returnRdiStreamBuffer;
-            if (cbArg.data == NULL) {
-                ALOGE("%s: Data is NULL ignore callback and do buf done", __func__);
-                stream->bufDone(frame->buf_idx);
-            } else {
-                pme->m_cbNotifier.notifyCallback(cbArg);
-            }
+            cbArg.cb_type    = QCAMERA_NOTIFY_CALLBACK;
+            cbArg.msg_type   = CAMERA_MSG_PREVIEW_FRAME;
+            cbArg.ext1       = CAMERA_FRAME_DATA_FD;
+            cbArg.ext2       = fd;
+            int user_data    = frame->buf_idx;
+            cbArg.user_data  = (void *)user_data;
+            cbArg.cookie     = stream;
+            cbArg.release_cb = returnStreamBuffer;
+            pme->m_cbNotifier.notifyCallback(cbArg);
         } else {
             CDBG_HIGH("%s: No need to process preview frame, return buffer", __func__);
             stream->bufDone(frame->buf_idx);

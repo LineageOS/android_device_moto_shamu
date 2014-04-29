@@ -113,19 +113,6 @@ typedef struct {
     int32_t ext2;
 } qcamera_evt_argm_t;
 
-/* Structure to hold secure RDI buffer data */
-typedef struct {
-    // Magic Number to verify the data validity at application side
-    unsigned int magic;
-    // secure buffer fd
-    int fd;
-} qcamera_secure_fd_data_t;
-
-typedef struct {
-    camera_memory_t *rdi_user_data;
-    uint32_t rdi_buf_idx;
-} qcamera_rdi_userdata_t;
-
 #define QCAMERA_DUMP_FRM_PREVIEW    1
 #define QCAMERA_DUMP_FRM_VIDEO      (1<<1)
 #define QCAMERA_DUMP_FRM_SNAPSHOT   (1<<2)
@@ -509,7 +496,6 @@ private:
     static void returnStreamBuffer(void *data,
                                    void *cookie,
                                    int32_t cbStatus);
-    static void returnRdiStreamBuffer(void *data, void *cookie, int32_t cbStatus);
     static int32_t getEffectValue(const char *effect);
     static void getLogLevel();
 private:
