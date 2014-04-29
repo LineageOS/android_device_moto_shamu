@@ -312,9 +312,10 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
                                  MM_CAMERA_POLL_TYPE_EVT);
     mm_camera_evt_sub(my_obj, TRUE);
 
+    /* unlock cam_lock, we need release global intf_lock in camera_open(),
+     * in order not block operation of other Camera in dual camera use case.*/
+    pthread_mutex_unlock(&my_obj->cam_lock);
     CDBG("%s:  end (rc = %d)\n", __func__, rc);
-    /* we do not need to unlock cam_lock here before return
-     * because for open, it's done within intf_lock */
     return rc;
 
 on_error:
@@ -332,8 +333,9 @@ on_error:
         }
     }
 
-    /* we do not need to unlock cam_lock here before return
-     * because for open, it's done within intf_lock */
+    /* unlock cam_lock, we need release global intf_lock in camera_open(),
+     * in order not block operation of other Camera in dual camera use case.*/
+    pthread_mutex_unlock(&my_obj->cam_lock);
     return rc;
 }
 
