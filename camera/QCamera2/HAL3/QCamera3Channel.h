@@ -159,7 +159,6 @@ private:
 
     camera3_stream_t *mCamera3Stream;
     uint32_t mNumBufs;
-    Vector<buffer_handle_t *> mCamera3Buffers;
 
     QCamera3GrallocMemory mMemory;
     // width and height of internal stream may be different than what's
@@ -283,7 +282,6 @@ private:
     jpeg_settings_t* mJpegSettings;
     int32_t mCurrentBufIndex;
     bool m_bWNROn;
-    Vector<buffer_handle_t *> mCamera3Buffers;
 
     QCamera3GrallocMemory mMemory;
     QCamera3HeapMemory *mYuvMemory;
