@@ -2284,6 +2284,12 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                 (camera_metadata_rational_t*)neuColPoint->neutral_col_point, 3);
     }
 
+    if (IS_META_AVAILABLE(CAM_INTF_META_LENS_SHADING_MAP_MODE, metadata)) {
+         uint8_t  shadingMapMode =
+                 *((uint32_t *)POINTER_OF_META(CAM_INTF_META_LENS_SHADING_MAP_MODE, metadata));
+         camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, &shadingMapMode, 1);
+    }
+
     uint8_t hotPixelMode = ANDROID_HOT_PIXEL_MODE_FAST;
     camMetadata.update(ANDROID_HOT_PIXEL_MODE, &hotPixelMode, 1);
 
