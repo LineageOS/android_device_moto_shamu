@@ -2423,6 +2423,14 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION",
             __func__);
     }
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_AEC_LOCK, metadata)) {
+        uint8_t  ae_lock =
+                *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_AEC_LOCK, metadata));
+        camMetadata.update(ANDROID_CONTROL_AE_LOCK,
+                &ae_lock, 1);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_LOCK", __func__);
+    }
+
     resultMetadata = camMetadata.release();
     return resultMetadata;
 }
