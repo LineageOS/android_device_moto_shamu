@@ -2415,6 +2415,14 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         camMetadata.update(ANDROID_CONTROL_MODE, mode, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_MODE", __func__);
     }
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_EXPOSURE_COMPENSATION, metadata)) {
+        int32_t  *expCompensation =
+          (int32_t *)POINTER_OF_META(CAM_INTF_PARM_EXPOSURE_COMPENSATION, metadata);
+        camMetadata.update(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
+                                      expCompensation, 1);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION",
+            __func__);
+    }
     resultMetadata = camMetadata.release();
     return resultMetadata;
 }
