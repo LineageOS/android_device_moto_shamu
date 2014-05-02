@@ -33,10 +33,42 @@ BOARD_KERNEL_CMDLINE := console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 an
 BOARD_MKBOOTIMG_ARGS := --ramdisk_offset BOARD_RAMDISK_OFFSET --tags_offset BOARD_KERNEL_TAGS_OFFSET
 
 
+# Shader cache config options
+# Maximum size of the  GLES Shaders that can be cached for reuse.
+# Increase the size if shaders of size greater than 12KB are used.
+MAX_EGL_CACHE_KEY_SIZE := 12*1024
+
+# Maximum GLES shader cache size for each app to store the compiled shader
+# binaries. Decrease the size if RAM or Flash Storage size is a limitation
+# of the device.
+MAX_EGL_CACHE_SIZE := 2048*1024
+
+BOARD_EGL_CFG := device/moto/shamu/egl.cfg
+
+
+# Wifi related defines
+#WPA_SUPPLICANT_VERSION      := VER_0_8_X
+#BOARD_WLAN_DEVICE           := bcmdhd
+#BOARD_WPA_SUPPLICANT_DRIVER := NL80211
+#BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_$(BOARD_WLAN_DEVICE)
+#BOARD_HOSTAPD_DRIVER        := NL80211
+#BOARD_HOSTAPD_PRIVATE_LIB   := lib_driver_cmd_$(BOARD_WLAN_DEVICE)
+#WIFI_DRIVER_FW_PATH_PARAM   := "/sys/module/bcmdhd/parameters/firmware_path"
+#WIFI_DRIVER_FW_PATH_AP      := "/vendor/firmware/fw_bcmdhd_apsta.bin"
+#WIFI_DRIVER_FW_PATH_STA     := "/vendor/firmware/fw_bcmdhd.bin"
+
+#BOARD_USES_SECURE_SERVICES := true
+
+
 TARGET_NO_RADIOIMAGE := true
 TARGET_BOARD_PLATFORM := msm8084
 TARGET_BOOTLOADER_BOARD_NAME := shamu
 TARGET_NO_RPC := true
+
+USE_OPENGL_RENDERER := true
+VSYNC_EVENT_PHASE_OFFSET_NS := 7500000
+SF_VSYNC_EVENT_PHASE_OFFSET_NS := 5000000
+TARGET_USES_ION := true
 
 TARGET_USERIMAGES_USE_EXT4 := true
 BOARD_BOOTIMAGE_PARTITION_SIZE := 23068672
@@ -53,6 +85,8 @@ TARGET_RECOVERY_FSTAB = device/moto/shamu/fstab.shamu
 
 HAVE_ADRENO_SOURCE:= false
 
+OVERRIDE_RS_DRIVER:= libRSDriver_adreno.so
+TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
 
 
 
