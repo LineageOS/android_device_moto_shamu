@@ -535,7 +535,7 @@ typedef struct {
     INCLUDE(CAM_INTF_PARM_EV_STEP,                      cam_rational_type_t,         1);
     INCLUDE(CAM_INTF_PARM_AEC_LOCK,                     uint32_t,                    1);
     INCLUDE(CAM_INTF_PARM_FPS_RANGE,                    cam_fps_range_t,             1);
-    INCLUDE(CAM_INTF_PARM_AWB_LOCK,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_AWB_LOCK,                     uint32_t,                    1);
     INCLUDE(CAM_INTF_PARM_BESTSHOT_MODE,                int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_DIS_ENABLE,                   int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_LED_MODE,                     int32_t,                     1);

@@ -2325,8 +2325,8 @@ QCamera3HardwareInterface::translateFromHalMetadata(
  *==========================================================================*/
 camera_metadata_t*
 QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
-                                (metadata_buffer_t *metadata) {
-
+                                (metadata_buffer_t *metadata)
+{
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
 
@@ -2430,7 +2430,12 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
                 &ae_lock, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_LOCK", __func__);
     }
-
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_AWB_LOCK, metadata)) {
+        uint8_t awb_lock =
+                *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_AWB_LOCK, metadata));
+        camMetadata.update(ANDROID_CONTROL_AWB_LOCK, &awb_lock, 1);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AWB_LOCK", __func__);
+    }
     resultMetadata = camMetadata.release();
     return resultMetadata;
 }
