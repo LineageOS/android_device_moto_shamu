@@ -7817,6 +7817,11 @@ int32_t QCameraParameters::updateRAW(cam_dimension_t max_dim)
         max_dim = m_pCapability->raw_dim;
     }
 
+    if(initBatchUpdate(m_pParamBuf) < 0 ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return BAD_TYPE;
+    }
+
     rc = AddSetParmEntryToBatch(m_pParamBuf,
                                 CAM_INTF_PARM_MAX_DIMENSION,
                                 sizeof(cam_dimension_t),
@@ -7830,6 +7835,11 @@ int32_t QCameraParameters::updateRAW(cam_dimension_t max_dim)
     if (rc != NO_ERROR) {
         ALOGE("%s:Failed to set lock CAM_INTF_PARM_MAX_DIMENSION parm", __func__);
         return rc;
+    }
+
+    if(initBatchUpdate(m_pParamBuf) < 0 ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return BAD_TYPE;
     }
 
     rc = AddGetParmEntryToBatch(m_pParamBuf,

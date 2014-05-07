@@ -3851,6 +3851,9 @@ int32_t QCamera2HardwareInterface::prepareRawStream(QCameraChannel *curChannel)
     for (int i = 0; i < curChannel->getNumOfStreams();i++) {
         QCameraStream *pStream = curChannel->getStreamByIndex(i);
         if (pStream != NULL) {
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)) {
+                continue;
+            }
             pStream->getFrameDimension(str_dim);
             if (str_dim.width > max_dim.width) {
                 max_dim.width = str_dim.width;
