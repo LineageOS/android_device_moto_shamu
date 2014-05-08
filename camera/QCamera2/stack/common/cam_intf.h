@@ -314,6 +314,9 @@ typedef struct{
 
     cam_illuminat_t reference_illuminant1;
     cam_illuminat_t reference_illuminant2;
+
+    int64_t jpeg_stall_durations[MAX_SIZES_CNT];
+    int64_t raw16_stall_durations[MAX_SIZES_CNT];
     cam_rational_type_t forward_matrix1[3][3];
     cam_rational_type_t forward_matrix2[3][3];
     cam_rational_type_t color_transform1[3][3];
