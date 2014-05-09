@@ -41,6 +41,14 @@ PRODUCT_COPY_FILES += \
     device/moto/shamu/gpio-keys.kl:system/usr/keylayout/gpio-keys.kl
 
 PRODUCT_COPY_FILES += \
+    device/moto/shamu/audio_policy.conf:system/etc/audio_policy.conf \
+    device/moto/shamu/audio_effects.conf:system/etc/audio_effects.conf
+
+PRODUCT_COPY_FILES += \
+    device/moto/shamu/media_profiles.xml:system/etc/media_profiles.xml \
+    device/moto/shamu/media_codecs.xml:system/etc/media_codecs.xml
+
+PRODUCT_COPY_FILES += \
     device/moto/shamu/mixer_paths.xml:system/etc/mixer_paths.xml
 
 PRODUCT_PACKAGES += atmel.fw.apq8084
@@ -99,9 +107,6 @@ PRODUCT_PACKAGES += \
     libqcomvisualizer \
     libqcomvoiceprocessing \
     libqcomvoiceprocessingdescriptors
-
-PRODUCT_COPY_FILES += \
-    device/moto/shamu/audio_effects.conf:system/vendor/etc/audio_effects.conf
 
 PRODUCT_PACKAGES += \
     libqomx_core \
