@@ -1448,7 +1448,8 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
     int maxStreamBuf = minCaptureBuffers + mParameters.getMaxUnmatchedFramesInQueue() +
                        mParameters.getNumOfExtraHDRInBufsIfNeeded() -
                        mParameters.getNumOfExtraHDROutBufsIfNeeded() +
-                       mParameters.getNumOfExtraBuffersForImageProc();
+                       mParameters.getNumOfExtraBuffersForImageProc() +
+                       EXTRA_ZSL_PREVIEW_STREAM_BUF;
 
     int minUndequeCount = 0;
     if (!isNoDisplayMode()) {
