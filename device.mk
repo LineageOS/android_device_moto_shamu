@@ -116,6 +116,12 @@ PRODUCT_PACKAGES += \
     mm-jpeg-interface-test \
     mm-qcamera-app
 
+PRODUCT_PACKAGES += \
+    libion
+
+PRODUCT_PACKAGES += \
+    lights.shamu
+
 # Filesystem management tools
 PRODUCT_PACKAGES += \
     e2fsck
