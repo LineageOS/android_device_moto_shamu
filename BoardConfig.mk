@@ -45,6 +45,7 @@ MAX_EGL_CACHE_SIZE := 2048*1024
 
 BOARD_EGL_CFG := device/moto/shamu/egl.cfg
 
+BOARD_USES_ALSA_AUDIO := true
 
 # Wifi related defines
 #WPA_SUPPLICANT_VERSION      := VER_0_8_X
