@@ -80,7 +80,6 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     gralloc.msm8084 \
-    libgenlock \
     hwcomposer.msm8084 \
     memtrack.msm8084 \
     libqdutils \
