@@ -2416,6 +2416,10 @@ QCamera3HardwareInterface::translateFromHalMetadata(
          camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, &shadingMapMode, 1);
     }
 
+    /* Constant metadata values to be update*/
+    uint8_t vs_mode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF;
+    camMetadata.update(ANDROID_CONTROL_VIDEO_STABILIZATION_MODE, &vs_mode, 1);
+
     uint8_t hotPixelMode = ANDROID_HOT_PIXEL_MODE_FAST;
     camMetadata.update(ANDROID_HOT_PIXEL_MODE, &hotPixelMode, 1);
 
