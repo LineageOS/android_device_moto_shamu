@@ -2645,7 +2645,17 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
              &fwkSceneMode, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_SCENE_MODE", __func__);
     }
-
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_FPS_RANGE, metadata)) {
+        int32_t fps_range[2];
+        cam_fps_range_t * float_range =
+          (cam_fps_range_t *)POINTER_OF_PARAM(CAM_INTF_PARM_FPS_RANGE, metadata);
+        fps_range[0] = (int32_t)float_range->min_fps;
+        fps_range[1] = (int32_t)float_range->max_fps;
+        camMetadata.update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
+                                      fps_range, 2);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_TARGET_FPS_RANGE [%d, %d]",
+            __func__, fps_range[0], fps_range[1]);
+    }
     resultMetadata = camMetadata.release();
     return resultMetadata;
 }
