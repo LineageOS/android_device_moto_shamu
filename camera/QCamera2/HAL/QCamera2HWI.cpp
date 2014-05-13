@@ -1863,7 +1863,8 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
     }
 
     if (!isZSLMode()) {
-        if (gCamCaps[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
+        if ((gCamCaps[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) &&
+                !mParameters.isOptiZoomEnabled()) {
             streamInfo->pp_config.feature_mask |= CAM_QCOM_FEATURE_SHARPNESS;
             streamInfo->pp_config.sharpness = mParameters.getInt(QCameraParameters::KEY_QC_SHARPNESS);
         }
@@ -4567,7 +4568,8 @@ QCameraReprocessChannel *QCamera2HardwareInterface::addReprocChannel(
             effect = mParameters.get(CameraParameters::KEY_EFFECT);
             pp_config.effect = getEffectValue(effect);
         }
-        if (gCamCaps[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
+        if ((gCamCaps[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) &&
+                !mParameters.isOptiZoomEnabled()) {
             pp_config.feature_mask |= CAM_QCOM_FEATURE_SHARPNESS;
             pp_config.sharpness = mParameters.getInt(QCameraParameters::KEY_QC_SHARPNESS);
         }
