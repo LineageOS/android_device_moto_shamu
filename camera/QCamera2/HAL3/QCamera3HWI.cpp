@@ -2416,6 +2416,12 @@ QCamera3HardwareInterface::translateFromHalMetadata(
          camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, &shadingMapMode, 1);
     }
 
+    if (IS_META_AVAILABLE(CAM_INTF_META_CAPTURE_INTENT, metadata)) {
+         uint8_t captureIntent =
+                 *((uint32_t*)POINTER_OF_META(CAM_INTF_META_CAPTURE_INTENT, metadata));
+         camMetadata.update(ANDROID_CONTROL_CAPTURE_INTENT, &captureIntent, 1);
+      }
+
     if (IS_META_AVAILABLE(CAM_INTF_PARM_ANTIBANDING, metadata)) {
         uint8_t hal_ab_mode =
                 *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_ANTIBANDING, metadata));
