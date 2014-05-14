@@ -125,6 +125,17 @@ on boot
 
     chmod 0444 /sys/devices/platform/msm_hsusb/gadget/usb_state
 
+    # Allow QMUX daemon to assign port open wait time
+    chown radio radio /sys/devices/virtual/hsicctl/hsicctl0/modem_wait
+
+    #port-bridge
+    chmod 0660 /dev/smd0
+    chown system system /dev/smd0
+
+    #BT DUN port-bridge
+    chmod 0660 /dev/smd7
+    chown bluetooth bluetooth /dev/smd7
+
     #For bridgemgr daemon to inform the USB driver of the correct transport
     chown radio radio /sys/class/android_usb/f_rmnet_smd_sdio/transport
 
@@ -183,6 +194,10 @@ on boot
     # Set the console loglevel to < KERN_INFO
     # Set the default message loglevel to KERN_INFO
     # write /proc/sys/kernel/printk "6 6 1 7"
+
+    # Modem logging collection
+    mkdir /data/diag_logs 0777 system system
+    chmod 666 /dev/diag
 
 # msm specific files that need to be created on /data
 on post-fs-data
@@ -310,6 +325,10 @@ service irsc_util /system/bin/logwrapper /system/bin/irsc_util "/etc/sec_config"
     user root
     oneshot
 
+service mdm_helper /system/bin/mdm_helper
+    class core
+    onrestart setprop ro.service.mdm_helper_restarted "true"
+
 service rmt_storage /system/bin/rmt_storage
     class core
     user root
@@ -376,7 +395,6 @@ service bridgemgrd /system/bin/bridgemgrd
     class late_start
     user radio
     group radio qcom_diag
-    disabled
 
 service port-bridge /system/bin/port-bridge /dev/smd0 /dev/ttyGS0
     class late_start
@@ -395,11 +413,10 @@ service qmuxd /system/bin/qmuxd
     class main
     user radio
     group radio audio bluetooth gps qcom_diag
-    disabled
 
 service netmgrd /system/bin/netmgrd
     class main
-    disabled
+    group radio
 
 service qti /system/vendor/bin/qti
     class main

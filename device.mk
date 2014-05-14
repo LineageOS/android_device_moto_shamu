@@ -51,6 +51,10 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/moto/shamu/mixer_paths.xml:system/etc/mixer_paths.xml
 
+# For GPS
+PRODUCT_COPY_FILES += \
+    device/moto/shamu/sec_config:system/etc/sec_config
+
 PRODUCT_PACKAGES += atmel.fw.apq8084
 
 PRODUCT_TAGS += dalvik.gc.type-precise
