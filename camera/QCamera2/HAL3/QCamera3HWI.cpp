@@ -2416,6 +2416,16 @@ QCamera3HardwareInterface::translateFromHalMetadata(
          camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, &shadingMapMode, 1);
     }
 
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_ANTIBANDING, metadata)) {
+        uint8_t hal_ab_mode =
+                *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_ANTIBANDING, metadata));
+        uint8_t fwk_ab_mode = (uint8_t)lookupFwkName(ANTIBANDING_MODES_MAP,
+                sizeof(ANTIBANDING_MODES_MAP)/sizeof(ANTIBANDING_MODES_MAP[0]),
+                hal_ab_mode);
+        camMetadata.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE,
+                &fwk_ab_mode, 1);
+    }
+
     /* Constant metadata values to be update*/
     uint8_t vs_mode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF;
     camMetadata.update(ANDROID_CONTROL_VIDEO_STABILIZATION_MODE, &vs_mode, 1);
