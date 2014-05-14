@@ -1471,10 +1471,10 @@ int32_t QCamera3PicChannel::queueJpegSetting(int32_t index, metadata_buffer_t *m
         settings->jpeg_quality = *quality;
     }
 
-    if (IS_PARAM_AVAILABLE(CAM_INTF_META_JPEG_QUALITY, metadata)) {
+    if (IS_PARAM_AVAILABLE(CAM_INTF_META_JPEG_THUMB_QUALITY, metadata)) {
         uint8_t *quality = (uint8_t *)POINTER_OF_PARAM(
-                CAM_INTF_META_JPEG_QUALITY, metadata);
-        settings->jpeg_quality = *quality;
+                CAM_INTF_META_JPEG_THUMB_QUALITY, metadata);
+        settings->jpeg_thumb_quality = *quality;
     }
 
     if (IS_PARAM_AVAILABLE(CAM_INTF_META_JPEG_THUMB_SIZE, metadata)) {

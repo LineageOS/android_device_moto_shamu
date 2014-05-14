@@ -170,9 +170,9 @@ typedef struct {
 *  @scaling_enabled - Flag indicating if thumbnail scaling is
 *  enabled.
 *  @quality - JPEG Q factor value in the range of 1-100. A factor of 1
-*             produces the smallest, worst quality images, and a factor
-*             of 100 produces the largest, best quality images.  A
-*             typical default is 75 for small good quality images.
+ *               produces the smallest, worst quality images, and a factor
+ *               of 100 produces the largest, best quality images.  A
+ *               typical default is 75 for small good quality images.
 *  @crop_info - Includes the crop width, crop height,
 *               horizontal and vertical offsets.
 *  @output_width - Output Width of the the thumbnail. This is
