@@ -199,6 +199,13 @@ on boot
     mkdir /data/diag_logs 0777 system system
     chmod 666 /dev/diag
 
+    write /sys/bus/platform/drivers/xhci_msm_hsic/unbind msm_hsic_host
+    write /sys/module/rmnet_usb/parameters/mux_enabled 1
+    write /sys/module/rmnet_usb/parameters/no_fwd_rmnet_links 8
+    write /sys/module/rmnet_usb/parameters/no_rmnet_insts_per_dev 17
+    write /sys/module/rmnet_usb/parameters/rmnet_data_init 1
+    chown radio radio /sys/devices/virtual/hsicctl/hsicctl0/modem_wait
+
 # msm specific files that need to be created on /data
 on post-fs-data
     # we will remap this as /mnt/sdcard with the sdcard fuse tool
@@ -354,7 +361,7 @@ on property:wc_transport.start_hci=false
 service start_hci_filter /system/bin/wcnss_filter
     class late_start
     user bluetooth
-    group bluetooth qcom_diag
+    group bluetooth
     disabled
 
 on property:bluetooth.hciattach=true
@@ -387,14 +394,19 @@ service bt-sap /system/bin/sapd 15
 service ftmd /system/bin/logwrapper /system/bin/ftmdaemon
     class late_start
     user root
-    group bluetooth net_bt_admin misc net_bt_stack qcom_diag
+    group bluetooth net_bt_admin misc net_bt_stack
     disabled
     oneshot
 
 service bridgemgrd /system/bin/bridgemgrd
     class late_start
     user radio
+<<<<<<< HEAD
     group radio qcom_diag
+=======
+    group radio
+    disabled
+>>>>>>> 78c4742... HSIC configuration for APQ8084/MMDM9625 on shamu
 
 service port-bridge /system/bin/port-bridge /dev/smd0 /dev/ttyGS0
     class late_start
@@ -405,14 +417,19 @@ service port-bridge /system/bin/port-bridge /dev/smd0 /dev/ttyGS0
 service qmiproxy /system/bin/qmiproxy
     class main
     user radio
-    group radio qcom_diag
+    group radio
     disabled
 
 # QMUX must be in multiple groups to support external process connections
 service qmuxd /system/bin/qmuxd
     class main
     user radio
+<<<<<<< HEAD
     group radio audio bluetooth gps qcom_diag
+=======
+    group radio audio bluetooth gps
+    disabled
+>>>>>>> 78c4742... HSIC configuration for APQ8084/MMDM9625 on shamu
 
 service netmgrd /system/bin/netmgrd
     class main
@@ -556,13 +573,13 @@ service gpsone_daemon /system/bin/gpsone_daemon
 service quipc_igsn /system/bin/quipc_igsn
     class late_start
     user gps
-    group inet gps qcom_diag
+    group inet gps
     disabled
 
 service quipc_main /system/bin/quipc_main
     class late_start
     user gps
-    group gps net_admin wifi inet qcom_diag
+    group gps net_admin wifi inet
     disabled
 
 service location_mq /system/bin/location-mq
@@ -586,7 +603,7 @@ service xtwifi_client /system/bin/xtwifi-client
 service lowi-server /system/bin/lowi-server
     class late_start
     user gps
-    group gps net_admin wifi inet qcom_diag
+    group gps net_admin wifi inet
     disabled
 
 
