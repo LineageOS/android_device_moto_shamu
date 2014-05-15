@@ -405,12 +405,7 @@ service ftmd /system/bin/logwrapper /system/bin/ftmdaemon
 service bridgemgrd /system/bin/bridgemgrd
     class late_start
     user radio
-<<<<<<< HEAD
-    group radio qcom_diag
-=======
     group radio
-    disabled
->>>>>>> 78c4742... HSIC configuration for APQ8084/MMDM9625 on shamu
 
 service port-bridge /system/bin/port-bridge /dev/smd0 /dev/ttyGS0
     class late_start
@@ -428,12 +423,7 @@ service qmiproxy /system/bin/qmiproxy
 service qmuxd /system/bin/qmuxd
     class main
     user radio
-<<<<<<< HEAD
-    group radio audio bluetooth gps qcom_diag
-=======
     group radio audio bluetooth gps
-    disabled
->>>>>>> 78c4742... HSIC configuration for APQ8084/MMDM9625 on shamu
 
 service netmgrd /system/bin/netmgrd
     class main
