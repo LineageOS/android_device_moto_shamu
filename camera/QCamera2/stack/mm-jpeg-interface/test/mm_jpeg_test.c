@@ -1,4 +1,4 @@
-/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -74,6 +74,31 @@ typedef struct {
   int main_quality;
   int thumb_quality;
 } jpeg_test_input_t;
+
+/* Static constants */
+/*  default Luma Qtable */
+const uint8_t DEFAULT_QTABLE_0[QUANT_SIZE] = {
+  16, 11, 10, 16, 24, 40, 51, 61,
+  12, 12, 14, 19, 26, 58, 60, 55,
+  14, 13, 16, 24, 40, 57, 69, 56,
+  14, 17, 22, 29, 51, 87, 80, 62,
+  18, 22, 37, 56, 68, 109, 103, 77,
+  24, 35, 55, 64, 81, 104, 113, 92,
+  49, 64, 78, 87, 103, 121, 120, 101,
+  72, 92, 95, 98, 112, 100, 103, 99
+};
+
+/*  default Chroma Qtable */
+const uint8_t DEFAULT_QTABLE_1[QUANT_SIZE] = {
+  17, 18, 24, 47, 99, 99, 99, 99,
+  18, 21, 26, 66, 99, 99, 99, 99,
+  24, 26, 56, 99, 99, 99, 99, 99,
+  47, 66, 99, 99, 99, 99, 99, 99,
+  99, 99, 99, 99, 99, 99, 99, 99,
+  99, 99, 99, 99, 99, 99, 99, 99,
+  99, 99, 99, 99, 99, 99, 99, 99,
+  99, 99, 99, 99, 99, 99, 99, 99
+};
 
 typedef struct {
   char *filename[MAX_NUM_BUFS];
@@ -351,6 +376,19 @@ static int encode_init(jpeg_test_input_t *p_input, mm_jpeg_intf_test_t *p_obj)
 
   p_job_params->exif_info.numOfEntries = 0;
   p_params->burst_mode = burst_mode;
+
+  /* Qtable */
+  p_job_params->qtable[0].eQuantizationTable =
+    OMX_IMAGE_QuantizationTableLuma;
+  p_job_params->qtable[1].eQuantizationTable =
+    OMX_IMAGE_QuantizationTableChroma;
+  p_job_params->qtable_set[0] = 1;
+  p_job_params->qtable_set[1] = 1;
+
+  for (i = 0; i < QUANT_SIZE; i++) {
+    p_job_params->qtable[0].nQuantizationMatrix[i] = DEFAULT_QTABLE_0[i];
+    p_job_params->qtable[1].nQuantizationMatrix[i] = DEFAULT_QTABLE_1[i];
+  }
 
   return 0;
 }

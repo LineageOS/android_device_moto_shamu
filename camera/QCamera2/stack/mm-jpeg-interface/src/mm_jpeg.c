@@ -1264,6 +1264,7 @@ static OMX_ERRORTYPE mm_jpeg_configure_job_params(
   OMX_INDEXTYPE work_buffer_index;
   mm_jpeg_encode_params_t *p_params = &p_session->params;
   mm_jpeg_encode_job_t *p_jobparams = &p_session->encode_job;
+  int i;
 
     /* common config */
   ret = mm_jpeg_session_config_common(p_session);
@@ -1328,6 +1329,18 @@ static OMX_ERRORTYPE mm_jpeg_configure_job_params(
   CDBG_ERROR("%s: config makernote data failed", __func__);
   if (OMX_ErrorNone != ret) {
     return ret;
+  }
+
+  /* set QTable */
+  for (i = 0; i < QTABLE_MAX; i++) {
+    if (p_jobparams->qtable_set[i]) {
+      ret = OMX_SetConfig(p_session->omx_handle,
+        OMX_IndexParamQuantizationTable, &p_jobparams->qtable[i]);
+      if (OMX_ErrorNone != ret) {
+        CDBG_ERROR("%s:%d] set QTable Error", __func__, __LINE__);
+        return ret;
+      }
+    }
   }
 
   return ret;
