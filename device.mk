@@ -121,6 +121,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     lights.shamu
 
+PRODUCT_PACKAGES += \
+    sensors.shamu
+
 # Filesystem management tools
 PRODUCT_PACKAGES += \
     e2fsck
