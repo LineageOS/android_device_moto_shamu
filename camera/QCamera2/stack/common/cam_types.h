@@ -707,7 +707,7 @@ typedef struct {
 typedef struct {
     uint8_t stepsize;
     uint8_t direction;
-    uint8_t num_steps;
+    int32_t num_steps;
     uint8_t ttype;
 } tune_actuator_t;
 
