@@ -83,11 +83,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/moto/shamu/sec_config:system/etc/sec_config
 
-# NFC access control + feature files + configuration
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.nfc.xml:system/etc/permissions/android.hardware.nfc.xml \
-    frameworks/native/data/etc/android.hardware.nfc.hce.xml:system/etc/permissions/android.hardware.nfc.hce.xml
-
 PRODUCT_PACKAGES += atmel.fw.apq8084
 
 PRODUCT_TAGS += dalvik.gc.type-precise
