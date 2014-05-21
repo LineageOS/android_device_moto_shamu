@@ -59,6 +59,12 @@ on fs
     mkdir /fsg 0755 root root
     mount ext4 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3 /fsg ro nosuid nodev barrier=0
 
+    # Enable rmnet data and aggregation
+    setprop persist.rmnet.mux enabled
+    setprop persist.rmnet.data.enable true
+    setprop persist.data.wda.enable true
+    setprop persist.data.df.agg.dl_pkt 10
+    setprop persist.data.df.agg.dl_size 4096
 
 on post-fs-data
     mkdir /data/tombstones 0771 system system
