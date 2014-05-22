@@ -2333,6 +2333,9 @@ int32_t QCamera3ReprocessChannel::doReprocess(mm_camera_super_buf_t *frame,
             memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
             param.type = CAM_STREAM_PARAM_TYPE_DO_REPROCESS;
             param.reprocess.buf_index = frame->bufs[i]->buf_idx;
+            param.reprocess.frame_idx = frame->bufs[i]->frame_idx;
+            param.reprocess.frame_pp_config.uv_upsample =
+                    frame->bufs[i]->is_uv_subsampled;
             if (meta_frame != NULL) {
                param.reprocess.meta_present = 1;
                param.reprocess.meta_stream_handle = m_pMetaChannel->mStreams[0]->getMyServerID();
