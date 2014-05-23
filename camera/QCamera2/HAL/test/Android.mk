@@ -25,6 +25,7 @@ ifneq (1,$(filter 1,$(shell echo "$$(( $(PLATFORM_SDK_VERSION) >= 18 ))" )))
 LOCAL_SHARED_LIBRARIES += \
     libmedia_native \
 
+LOCAL_32_BIT_ONLY := true
 LOCAL_CFLAGS += -DUSE_JB_MR1
 
 endif
@@ -45,6 +46,7 @@ LOCAL_MODULE_TAGS:= tests
 
 LOCAL_CFLAGS += -Wall -fno-short-enums -O0
 
+LOCAL_32_BIT_ONLY := true
 include $(BUILD_EXECUTABLE)
 
 endif
