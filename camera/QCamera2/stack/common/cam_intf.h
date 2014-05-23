@@ -620,6 +620,7 @@ typedef struct {
     INCLUDE(CAM_INTF_META_STATS_SHARPNESS_MAP_MODE,     uint8_t,                     1);
     INCLUDE(CAM_INTF_META_STATS_SHARPNESS_MAP,          cam_sharpness_map_t,         3);
     INCLUDE(CAM_INTF_META_TONEMAP_CURVES,               cam_rgb_tonemap_curves,      1);
+    INCLUDE(CAM_INTF_META_TONEMAP_MODE,                 uint8_t,                     1);
     INCLUDE(CAM_INTF_META_LENS_SHADING_MAP,             cam_lens_shading_map_t,      1);
     INCLUDE(CAM_INTF_META_AEC_INFO,                     cam_3a_params_t,             1);
     INCLUDE(CAM_INTF_META_SENSOR_INFO,                  cam_sensor_params_t,         1);

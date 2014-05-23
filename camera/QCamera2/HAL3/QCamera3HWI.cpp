@@ -2097,7 +2097,6 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
             memset(faceRectangles, 0, sizeof(int32_t) * MAX_ROI * 4);
             memset(faceLandmarks, 0, sizeof(int32_t) * MAX_ROI * 6);
         }
-
         camMetadata.update(ANDROID_STATISTICS_FACE_IDS, faceIds, numFaces);
         camMetadata.update(ANDROID_STATISTICS_FACE_SCORES, faceScores, numFaces);
         camMetadata.update(ANDROID_STATISTICS_FACE_RECTANGLES,
@@ -2268,6 +2267,11 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
        camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_MAP,
                           (float*)lensShadingMap->lens_shading,
                           4*map_width*map_height);
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_TONEMAP_MODE, metadata)) {
+        uint8_t  *toneMapMode =
+            (uint8_t *)POINTER_OF_META(CAM_INTF_META_TONEMAP_MODE, metadata);
+        camMetadata.update(ANDROID_TONEMAP_MODE, toneMapMode, 1);
     }
     if (IS_META_AVAILABLE(CAM_INTF_META_TONEMAP_CURVES, metadata)){
         //Populate CAM_INTF_META_TONEMAP_CURVES
