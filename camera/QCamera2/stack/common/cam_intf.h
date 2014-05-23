@@ -575,7 +575,6 @@ typedef struct {
     INCLUDE(CAM_INTF_META_GEOMETRIC_STRENGTH,           uint8_t,                     1);
     INCLUDE(CAM_INTF_META_LENS_SHADING_MAP_MODE,        uint8_t,                     1);
     INCLUDE(CAM_INTF_META_SHADING_STRENGTH,             uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_TONEMAP_MODE,                 uint8_t,                     1);
     INCLUDE(CAM_INTF_META_STREAM_ID,                    cam_stream_ID_t,             1);
     INCLUDE(CAM_INTF_PARM_STATS_DEBUG_MASK,             uint32_t,                    1);
     INCLUDE(CAM_INTF_PARM_FOCUS_BRACKETING,             cam_af_bracketing_t,         1);
