@@ -272,6 +272,14 @@ int32_t QCamera3Stream::init(cam_stream_type_t streamType,
     mStreamInfo->dim = streamDim;
     mStreamInfo->num_bufs = minNumBuffers;
 
+    rc = mCamOps->map_stream_buf(mCamHandle,
+            mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO,
+            0, -1, mStreamInfoBuf->getFd(0), mStreamInfoBuf->getSize(0));
+    if (rc < 0) {
+        ALOGE("Failed to map stream info buffer");
+        goto err3;
+    }
+
     mNumBufs = minNumBuffers;
     if (reprocess_config != NULL) {
        mStreamInfo->reprocess_config = *reprocess_config;
@@ -281,14 +289,6 @@ int32_t QCamera3Stream::init(cam_stream_type_t streamType,
        ALOGI("%s: num_of_burst is %d", __func__, mStreamInfo->num_of_burst);
     } else {
        mStreamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
-    }
-
-    rc = mCamOps->map_stream_buf(mCamHandle,
-            mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO,
-            0, -1, mStreamInfoBuf->getFd(0), mStreamInfoBuf->getSize(0));
-    if (rc < 0) {
-        ALOGE("Failed to map stream info buffer");
-        goto err3;
     }
 
     // Configure the stream

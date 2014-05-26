@@ -57,7 +57,7 @@ const char *qcamera3_ext_section_names[QCAMERA3_SECTIONS_END -
 };
 
 vendor_tag_info_t qcamera3_privatedata[QCAMERA3_PRIVATEDATA_END - QCAMERA3_PRIVATEDATA_START] = {
-    { "privatedata", TYPE_BYTE }
+    { "privatedata", TYPE_INT32 }
 };
 
 vendor_tag_info_t *qcamera3_tag_info[QCAMERA3_SECTIONS_END -

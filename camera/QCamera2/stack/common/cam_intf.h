@@ -327,6 +327,10 @@ typedef struct {
     uint8_t meta_buf_index;       /* buf index to meta data buffer. only valid if meta_present != 0 */
 
     cam_per_frame_pp_config_t frame_pp_config; /* per frame post-proc configuration */
+
+    /* opaque metadata required for reprocessing */
+    int32_t private_data[MAX_METADATA_PRIVATE_PAYLOAD_SIZE];
+    cam_rect_t crop_rect;
 } cam_reprocess_param;
 
 typedef struct {
@@ -507,6 +511,7 @@ typedef struct {
     /* Shared between HAL1 and HAL3 */
     INCLUDE(CAM_INTF_PARM_ANTIBANDING,                  int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_EXPOSURE_COMPENSATION,        int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_EV_STEP,                      cam_rational_type_t,         1);
     INCLUDE(CAM_INTF_PARM_AEC_LOCK,                     int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_FPS_RANGE,                    cam_fps_range_t,             1);
     INCLUDE(CAM_INTF_PARM_AWB_LOCK,                     int32_t,                     1);
@@ -579,6 +584,13 @@ typedef struct {
     INCLUDE(CAM_INTF_PARM_STATS_DEBUG_MASK,             uint32_t,                    1);
     INCLUDE(CAM_INTF_PARM_FOCUS_BRACKETING,             cam_af_bracketing_t,         1);
     INCLUDE(CAM_INTF_PARM_FLASH_BRACKETING,             cam_flash_bracketing_t,      1);
+    INCLUDE(CAM_INTF_META_JPEG_GPS_COORDINATES,         double,                      3);
+    INCLUDE(CAM_INTF_META_JPEG_GPS_PROC_METHODS,        uint32_t,                    GPS_PROCESSING_METHOD_SIZE_IN_WORD);
+    INCLUDE(CAM_INTF_META_JPEG_GPS_TIMESTAMP,           int64_t,                     1);
+    INCLUDE(CAM_INTF_META_JPEG_ORIENTATION,             int32_t,                     1);
+    INCLUDE(CAM_INTF_META_JPEG_QUALITY,                 uint32_t,                    1);
+    INCLUDE(CAM_INTF_META_JPEG_THUMB_QUALITY,           uint32_t,                    1);
+    INCLUDE(CAM_INTF_META_JPEG_THUMB_SIZE,              cam_dimension_t,             1);
 } parm_data_t;
 
 typedef parm_data_t metadata_data_t;

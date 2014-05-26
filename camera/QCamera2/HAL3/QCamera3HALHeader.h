@@ -46,28 +46,16 @@ class QCamera3Channel;
     } stream_status_t;
 
     typedef struct {
+        int32_t out_buf_index;
         int32_t jpeg_orientation;
         uint8_t jpeg_quality;
         cam_dimension_t thumbnail_size;
-        int32_t sensor_sensitivity;
-        int64_t sensor_exposure_time;
-        float lens_focal_length;
-        int32_t max_jpeg_size;
-        int exposure_compensation;
-        cam_rational_type_t exposure_comp_step;
-        int64_t* gps_timestamp;
-        double* gps_coordinates[3];
-        char gps_processing_method[35];
-        bool is_jpeg_format;
-        uint32_t min_required_pp_mask;
-        int32_t sharpness;
+        uint8_t gps_timestamp_valid;
+        int64_t gps_timestamp;
+        uint8_t gps_coordinates_valid;
+        double gps_coordinates[3];
+        char gps_processing_method[GPS_PROCESSING_METHOD_SIZE];
     } jpeg_settings_t;
-
-    typedef struct {
-        camera3_stream_t *stream;
-        stream_status_t status;
-        QCamera3Channel *channel;
-    } stream_info_t;
 
     typedef struct {
         int32_t iso_speed;
@@ -75,6 +63,5 @@ class QCamera3Channel;
     } metadata_response_t;
 
 };//namespace qcamera
-
 
 #endif

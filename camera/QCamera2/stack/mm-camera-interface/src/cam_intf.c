@@ -177,6 +177,8 @@ void *get_pointer_of(cam_intf_parm_type_t meta_id,
             return POINTER_OF_META(CAM_INTF_PARM_ANTIBANDING, metadata);
         case CAM_INTF_PARM_EXPOSURE_COMPENSATION:
             return POINTER_OF_META(CAM_INTF_PARM_EXPOSURE_COMPENSATION, metadata);
+        case CAM_INTF_PARM_EV_STEP:
+            return POINTER_OF_META(CAM_INTF_PARM_EV_STEP, metadata);
         case CAM_INTF_PARM_AEC_LOCK:
             return POINTER_OF_META(CAM_INTF_PARM_AEC_LOCK, metadata);
         case CAM_INTF_PARM_FPS_RANGE:
@@ -311,6 +313,20 @@ void *get_pointer_of(cam_intf_parm_type_t meta_id,
             return POINTER_OF_META(CAM_INTF_PARM_FOCUS_BRACKETING, metadata);
         case CAM_INTF_PARM_FLASH_BRACKETING:
             return POINTER_OF_META(CAM_INTF_PARM_FLASH_BRACKETING, metadata);
+        case CAM_INTF_META_JPEG_GPS_COORDINATES:
+            return POINTER_OF_META(CAM_INTF_META_JPEG_GPS_COORDINATES, metadata);
+        case CAM_INTF_META_JPEG_GPS_PROC_METHODS:
+            return POINTER_OF_META(CAM_INTF_META_JPEG_GPS_PROC_METHODS, metadata);
+        case CAM_INTF_META_JPEG_GPS_TIMESTAMP:
+            return POINTER_OF_META(CAM_INTF_META_JPEG_GPS_TIMESTAMP, metadata);
+        case CAM_INTF_META_JPEG_ORIENTATION:
+            return POINTER_OF_META(CAM_INTF_META_JPEG_ORIENTATION, metadata);
+        case CAM_INTF_META_JPEG_QUALITY:
+            return POINTER_OF_META(CAM_INTF_META_JPEG_QUALITY, metadata);
+        case CAM_INTF_META_JPEG_THUMB_QUALITY:
+            return POINTER_OF_META(CAM_INTF_META_JPEG_THUMB_QUALITY, metadata);
+        case CAM_INTF_META_JPEG_THUMB_SIZE:
+            return POINTER_OF_META(CAM_INTF_META_JPEG_THUMB_SIZE, metadata);
         default:
             return NULL;
     }
@@ -464,6 +480,8 @@ uint32_t get_size_of(cam_intf_parm_type_t param_id)
             return SIZE_OF_PARAM(CAM_INTF_PARM_ANTIBANDING, metadata);
         case CAM_INTF_PARM_EXPOSURE_COMPENSATION:
             return SIZE_OF_PARAM(CAM_INTF_PARM_EXPOSURE_COMPENSATION, metadata);
+        case CAM_INTF_PARM_EV_STEP:
+            return SIZE_OF_PARAM(CAM_INTF_PARM_EV_STEP, metadata);
         case CAM_INTF_PARM_AEC_LOCK:
             return SIZE_OF_PARAM(CAM_INTF_PARM_AEC_LOCK, metadata);
         case CAM_INTF_PARM_FPS_RANGE:
@@ -598,6 +616,20 @@ uint32_t get_size_of(cam_intf_parm_type_t param_id)
             return SIZE_OF_PARAM(CAM_INTF_PARM_FOCUS_BRACKETING, metadata);
         case CAM_INTF_PARM_FLASH_BRACKETING:
             return SIZE_OF_PARAM(CAM_INTF_PARM_FLASH_BRACKETING, metadata);
+        case CAM_INTF_META_JPEG_GPS_COORDINATES:
+            return SIZE_OF_PARAM(CAM_INTF_META_JPEG_GPS_COORDINATES, metadata);
+        case CAM_INTF_META_JPEG_GPS_PROC_METHODS:
+            return SIZE_OF_PARAM(CAM_INTF_META_JPEG_GPS_PROC_METHODS, metadata);
+        case CAM_INTF_META_JPEG_GPS_TIMESTAMP:
+            return SIZE_OF_PARAM(CAM_INTF_META_JPEG_GPS_TIMESTAMP, metadata);
+        case CAM_INTF_META_JPEG_ORIENTATION:
+            return SIZE_OF_PARAM(CAM_INTF_META_JPEG_ORIENTATION, metadata);
+        case CAM_INTF_META_JPEG_QUALITY:
+            return SIZE_OF_PARAM(CAM_INTF_META_JPEG_QUALITY, metadata);
+        case CAM_INTF_META_JPEG_THUMB_QUALITY:
+            return SIZE_OF_PARAM(CAM_INTF_META_JPEG_THUMB_QUALITY, metadata);
+        case CAM_INTF_META_JPEG_THUMB_SIZE:
+            return SIZE_OF_PARAM(CAM_INTF_META_JPEG_THUMB_SIZE, metadata);
         default:
             return 0;
     }
