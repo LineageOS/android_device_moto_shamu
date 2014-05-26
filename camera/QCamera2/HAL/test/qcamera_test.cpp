@@ -68,6 +68,7 @@
 #include <foundation/ABuffer.h>
 #include <MediaErrors.h>
 #include <gralloc_priv.h>
+#include <math.h>
 
 #include "qcamera_test.h"
 
@@ -1757,6 +1758,7 @@ status_t CameraContext::startPreview()
 
     int ret = NO_ERROR;
     int previewWidth, previewHeight;
+    Size calculatedPreviewSize;
     Size currentPreviewSize = mSupportedPreviewSizes.itemAt(
         mCurrentPreviewSizeIdx);
     Size currentPictureSize = mSupportedPictureSizes.itemAt(
@@ -1785,8 +1787,10 @@ status_t CameraContext::startPreview()
         mPreviewRunning = false;
 
         if ( mRecordingHint ) {
-            previewWidth = currentVideoSize.width;
-            previewHeight = currentVideoSize.height;
+            calculatedPreviewSize =
+                getPreviewSizeFromVideoSizes(currentVideoSize);
+            previewWidth = calculatedPreviewSize.width;
+            previewHeight = calculatedPreviewSize.height;
         } else {
             previewWidth = currentPreviewSize.width;
             previewHeight = currentPreviewSize.height;
@@ -1851,6 +1855,90 @@ status_t CameraContext::startPreview()
     signalFinished();
 
     return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : getPreviewSizeFromVideoSizes
+ *
+ * DESCRIPTION: Get the preview size from video size. Find all resolutions with
+ *              the same aspect ratio and choose the same or the closest
+ *              from them.
+ *
+ * PARAMETERS :
+ *   @currentVideoSize: current video size
+
+ *
+ * RETURN     : PreviewSize
+ *==========================================================================*/
+Size CameraContext::getPreviewSizeFromVideoSizes(Size currentVideoSize)
+{
+
+    Size tmpPreviewSize;
+    Size PreviewSize;
+    Size PreviewSizes[mSupportedPreviewSizes.size()];
+    float tolerance = 0.00001;
+    float videoRatio;
+    float previewRatio;
+    size_t i = 0;
+    size_t j = 0;
+    int delta;
+
+    // Find all the resolutions with the same aspect ratio and choose the
+    // same or the closest resolution from them. Choose the closest resolution
+    // in case same aspect ratio is not found
+    if (currentVideoSize.width * currentVideoSize.height > 0 &&
+            mSupportedPreviewSizes.size() > 0) {
+        videoRatio = (float)currentVideoSize.width /
+            (float)currentVideoSize.height;
+        for (i=0; i<mSupportedPreviewSizes.size(); i++) {
+            tmpPreviewSize = mSupportedPreviewSizes.itemAt(i);
+            previewRatio = (float)tmpPreviewSize.width /
+                (float)tmpPreviewSize.height;
+            if (fabs(videoRatio - previewRatio) < tolerance) {
+                PreviewSizes[j] = tmpPreviewSize;
+                j++;
+            }
+        }
+
+        if ( j > 0 ) {
+            delta = abs((currentVideoSize.width *currentVideoSize.height)-
+                (PreviewSizes[0].width * PreviewSizes[0].height));
+            PreviewSize = PreviewSizes[0];
+            for (i=0; i<j; i++) {
+                if(abs(currentVideoSize.width * currentVideoSize.height) -
+                    (PreviewSizes[i].width * PreviewSizes[i].height) <
+                    delta) {
+                    PreviewSize = PreviewSizes[i];
+                    delta = abs((currentVideoSize.width *
+                        currentVideoSize.height) -
+                        (PreviewSizes[i].width * PreviewSizes[i].height));
+                }
+            }
+        } else {
+            // Choose the closest resolution in case same aspect ratio is
+            // not found
+            tmpPreviewSize = mSupportedPreviewSizes.itemAt(j);
+            PreviewSize = tmpPreviewSize;
+            delta = abs(
+                    (currentVideoSize.width * currentVideoSize.height)-
+                    (tmpPreviewSize.width * tmpPreviewSize.height));
+            for (i=0; i<mSupportedPreviewSizes.size(); i++) {
+                tmpPreviewSize = mSupportedPreviewSizes.itemAt(i);
+                if(abs(
+                        (currentVideoSize.width * currentVideoSize.height)-
+                        (tmpPreviewSize.width * tmpPreviewSize.height)) <
+                        delta) {
+                    PreviewSize = tmpPreviewSize;
+                    delta = abs(
+                            (currentVideoSize.width * currentVideoSize.height)-
+                            (tmpPreviewSize.width * tmpPreviewSize.height));
+                }
+            }
+        }
+    } else {
+        memset(&PreviewSize, 0, sizeof(PreviewSize));
+    }
+    return PreviewSize;
 }
 
 /*===========================================================================
