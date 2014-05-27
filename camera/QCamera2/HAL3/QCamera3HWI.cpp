@@ -4852,13 +4852,13 @@ int QCamera3HardwareInterface::translateToHalMetadata
     }
 
     if (frame_settings.exists(ANDROID_JPEG_GPS_PROCESSING_METHOD)) {
-        char gps_methods[32];
+        char gps_methods[GPS_PROCESSING_METHOD_SIZE];
         const char *gps_methods_src = (const char *)
                 frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).data.u8;
         uint32_t count = frame_settings.find(
                 ANDROID_JPEG_GPS_PROCESSING_METHOD).count;
-        memset(gps_methods, 0, sizeof(gps_methods));
-        strncpy(gps_methods, gps_methods_src, count);
+        memset(gps_methods, '\0', sizeof(gps_methods));
+        strncpy(gps_methods, gps_methods_src, sizeof(gps_methods)-1);
         rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_META_JPEG_GPS_PROC_METHODS, sizeof(gps_methods), gps_methods);
     }
 
