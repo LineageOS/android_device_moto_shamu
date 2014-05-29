@@ -2361,6 +2361,26 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                 testPatternData->mode);
         camMetadata.update(ANDROID_SENSOR_TEST_PATTERN_MODE,
                 &fwk_testPatternMode, 1);
+        int32_t fwk_testPatternData[4];
+        fwk_testPatternData[0] = testPatternData->r;
+        fwk_testPatternData[3] = testPatternData->b;
+        switch (gCamCapability[mCameraId]->color_arrangement) {
+        case CAM_FILTER_ARRANGEMENT_RGGB:
+        case CAM_FILTER_ARRANGEMENT_GRBG:
+            fwk_testPatternData[1] = testPatternData->gr;
+            fwk_testPatternData[2] = testPatternData->gb;
+            break;
+        case CAM_FILTER_ARRANGEMENT_GBRG:
+        case CAM_FILTER_ARRANGEMENT_BGGR:
+            fwk_testPatternData[2] = testPatternData->gr;
+            fwk_testPatternData[1] = testPatternData->gb;
+            break;
+        default:
+            ALOGE("%s: color arrangement %d is not supported", __func__,
+                gCamCapability[mCameraId]->color_arrangement);
+            break;
+        }
+        camMetadata.update(ANDROID_SENSOR_TEST_PATTERN_DATA, fwk_testPatternData, 4);
     }
     if (IS_META_AVAILABLE(CAM_INTF_META_JPEG_GPS_COORDINATES, metadata)) {
         double *gps_coords = (double *)POINTER_OF_META(
@@ -2455,6 +2475,12 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                 hal_ab_mode);
         camMetadata.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE,
                 &fwk_ab_mode, 1);
+    }
+
+    if (IS_META_AVAILABLE(CAM_INTF_META_MODE, metadata)) {
+         uint8_t mode =
+                 *((uint32_t *)POINTER_OF_META(CAM_INTF_META_MODE, metadata));
+         camMetadata.update(ANDROID_CONTROL_MODE, &mode, 1);
     }
 
     /* Constant metadata values to be update*/
@@ -2567,6 +2593,9 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
 {
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
+    uint8_t aeMode = CAM_AE_MODE_MAX;
+    int32_t *flashMode = NULL;
+    int32_t *redeye = NULL;
 
     if (IS_META_AVAILABLE(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER, metadata)) {
         cam_trigger_t *aecTrigger =
@@ -2635,12 +2664,6 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         camMetadata.update(ANDROID_CONTROL_AWB_STATE, whiteBalanceState, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_AWB_STATE", __func__);
     }
-    if (IS_META_AVAILABLE(CAM_INTF_META_MODE, metadata)) {
-        uint8_t *mode = (uint8_t *)
-            POINTER_OF_META(CAM_INTF_META_MODE, metadata);
-        camMetadata.update(ANDROID_CONTROL_MODE, mode, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_MODE", __func__);
-    }
     if (IS_META_AVAILABLE(CAM_INTF_PARM_EXPOSURE_COMPENSATION, metadata)) {
         int32_t  *expCompensation =
           (int32_t *)POINTER_OF_META(CAM_INTF_PARM_EXPOSURE_COMPENSATION, metadata);
@@ -2684,6 +2707,38 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_TARGET_FPS_RANGE [%d, %d]",
             __func__, fps_range[0], fps_range[1]);
     }
+    if (IS_META_AVAILABLE(CAM_INTF_META_AEC_MODE, metadata)) {
+        aeMode = *((uint32_t*) POINTER_OF_META(CAM_INTF_META_AEC_MODE, metadata));
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_LED_MODE, metadata)) {
+        flashMode = (int32_t*)
+                POINTER_OF_PARAM(CAM_INTF_PARM_LED_MODE, metadata);
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_REDEYE_REDUCTION, metadata)) {
+        redeye = (int32_t*)
+                POINTER_OF_PARAM(CAM_INTF_PARM_REDEYE_REDUCTION, metadata);
+    }
+
+    uint8_t fwk_aeMode;
+    if (redeye != NULL && *redeye == 1) {
+        fwk_aeMode = ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE;
+        camMetadata.update(ANDROID_CONTROL_AE_MODE, &fwk_aeMode, 1);
+    } else if (flashMode != NULL &&
+            ((*flashMode == CAM_FLASH_MODE_AUTO)||
+             (*flashMode == CAM_FLASH_MODE_ON))) {
+        fwk_aeMode = (uint8_t)lookupFwkName(AE_FLASH_MODE_MAP,
+                sizeof(AE_FLASH_MODE_MAP)/sizeof(AE_FLASH_MODE_MAP[0]),*flashMode);
+        camMetadata.update(ANDROID_CONTROL_AE_MODE, &fwk_aeMode, 1);
+    } else if (aeMode == CAM_AE_MODE_ON) {
+        fwk_aeMode = ANDROID_CONTROL_AE_MODE_ON;
+        camMetadata.update(ANDROID_CONTROL_AE_MODE, &fwk_aeMode, 1);
+    } else if (aeMode == CAM_AE_MODE_OFF) {
+        fwk_aeMode = ANDROID_CONTROL_AE_MODE_OFF;
+        camMetadata.update(ANDROID_CONTROL_AE_MODE, &fwk_aeMode, 1);
+    } else {
+        ALOGE("%s: Not enough info to deduce ANDROID_CONTROL_AE_MODE redeye:%p, flashMode:%p, aeMode:%p!!!",__func__, redeye, flashMode, aeMode);
+    }
+
     resultMetadata = camMetadata.release();
     return resultMetadata;
 }
