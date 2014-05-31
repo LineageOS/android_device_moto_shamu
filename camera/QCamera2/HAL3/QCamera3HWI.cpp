@@ -3299,7 +3299,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL,
         &supportedHardwareLevel, 1);
 
-    int facingBack = gCamCapability[cameraId]->position == CAM_POSITION_BACK;
+    bool facingBack = gCamCapability[cameraId]->position == CAM_POSITION_BACK;
     /*HAL 3 only*/
     staticInfo.update(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
                     &gCamCapability[cameraId]->min_focus_distance, 1);
@@ -3752,13 +3752,19 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       &partial_result_count,
                        1);
 
-    uint8_t available_capabilities[] =
-        {ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
-         ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR,
-         ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING};
+    uint8_t available_capabilities[] = {
+            ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
+            ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR,
+            ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING,
+            ANDROID_REQUEST_AVAILABLE_CAPABILITIES_DNG };
+    uint8_t available_capabilities_count =
+            sizeof(available_capabilities)/sizeof(available_capabilities[0]);
+    if (!facingBack) {
+        available_capabilities_count--;
+    }
     staticInfo.update(ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
                       available_capabilities,
-                      3);
+                      available_capabilities_count);
 
     int32_t max_input_streams = 0;
     staticInfo.update(ANDROID_REQUEST_MAX_NUM_INPUT_STREAMS,
