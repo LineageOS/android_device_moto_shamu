@@ -971,16 +971,19 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
     vb.length = num_planes;
 
     rc = ioctl(my_obj->fd, VIDIOC_DQBUF, &vb);
-    if (rc < 0) {
-        CDBG_ERROR("%s: VIDIOC_DQBUF ioctl call failed (rc=%d)\n",
-                   __func__, rc);
+    if (0 > rc) {
+        CDBG_ERROR("%s: VIDIOC_DQBUF ioctl call failed on stream type %d (rc=%d): %s",
+            __func__, my_obj->stream_info->stream_type, rc, strerror(errno));
     } else {
         pthread_mutex_lock(&my_obj->buf_lock);
         my_obj->queued_buffer_count--;
-        if(my_obj->queued_buffer_count == 0) {
-            CDBG_HIGH("%s: Stoping poll on stream %p type :%d", __func__, my_obj, my_obj->stream_info->stream_type);
-            mm_camera_poll_thread_del_poll_fd(&my_obj->ch_obj->poll_thread[0], my_obj->my_hdl, mm_camera_async_call);
-            CDBG_HIGH("%s: Stopped poll on stream %p type :%d", __func__, my_obj, my_obj->stream_info->stream_type);
+        if (0 == my_obj->queued_buffer_count) {
+            CDBG_HIGH("%s: Stoping poll on stream %p type: %d", __func__,
+                my_obj, my_obj->stream_info->stream_type);
+            mm_camera_poll_thread_del_poll_fd(&my_obj->ch_obj->poll_thread[0],
+                my_obj->my_hdl, mm_camera_async_call);
+            CDBG_HIGH("%s: Stopped poll on stream %p type: %d", __func__,
+                my_obj, my_obj->stream_info->stream_type);
         }
         pthread_mutex_unlock(&my_obj->buf_lock);
         int8_t idx = vb.index;
@@ -993,23 +996,22 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
         buf_info->buf->frame_idx = vb.sequence;
         buf_info->buf->ts.tv_sec  = vb.timestamp.tv_sec;
         buf_info->buf->ts.tv_nsec = vb.timestamp.tv_usec * 1000;
-        CDBG("%s: VIDIOC_DQBUF buf_index %d, frame_idx %d, stream type %d\n",
-          __func__, vb.index, buf_info->buf->frame_idx, my_obj->stream_info->stream_type);
+        CDBG("%s: VIDIOC_DQBUF buf_index %d, frame_idx %d, stream type %d, rc %d",
+            __func__, vb.index, buf_info->buf->frame_idx,
+            my_obj->stream_info->stream_type, rc);
 
         buf_info->buf->is_uv_subsampled =
-          (vb.reserved == V4L2_PIX_FMT_NV14 || vb.reserved == V4L2_PIX_FMT_NV41);
+            (vb.reserved == V4L2_PIX_FMT_NV14 || vb.reserved == V4L2_PIX_FMT_NV41);
 
         if ( NULL != my_obj->mem_vtbl.clean_invalidate_buf ) {
             rc = my_obj->mem_vtbl.clean_invalidate_buf(idx,
-                                                       my_obj->mem_vtbl.user_data);
-            if ( 0 > rc ) {
+                my_obj->mem_vtbl.user_data);
+            if (0 > rc) {
                 CDBG_ERROR("%s: Clean invalidate cache failed on buffer index: %d",
-                           __func__,
-                           idx);
-                return rc;
+                    __func__, idx);
             }
         } else {
-            CDBG_ERROR(" %s : Clean invalidate cache op not supported\n", __func__);
+            CDBG_ERROR("%s: Clean invalidate cache op not supported", __func__);
         }
     }
 
@@ -1182,24 +1184,42 @@ int32_t mm_stream_qbuf(mm_stream_t *my_obj, mm_camera_buf_def_t *buf)
     }
 
     my_obj->queued_buffer_count++;
-    if(my_obj->queued_buffer_count == 1) {
+    if (1 == my_obj->queued_buffer_count) {
         /* Add fd to data poll thread */
-        CDBG_HIGH("%s: Starting poll on stream %p type :%d", __func__, my_obj,my_obj->stream_info->stream_type);
+        CDBG_HIGH("%s: Starting poll on stream %p type: %d", __func__,
+            my_obj,my_obj->stream_info->stream_type);
         rc = mm_camera_poll_thread_add_poll_fd(&my_obj->ch_obj->poll_thread[0],
-                my_obj->my_hdl,
-                my_obj->fd,
-                mm_stream_data_notify,
-                (void*)my_obj,
-                mm_camera_async_call);
-        CDBG_HIGH("%s: Started poll on stream %p type :%d", __func__, my_obj,my_obj->stream_info->stream_type);
-        if (rc < 0) {
-            CDBG_ERROR("%s: add poll fd error", __func__);
-            return rc;
+            my_obj->my_hdl, my_obj->fd, mm_stream_data_notify, (void*)my_obj,
+            mm_camera_async_call);
+        if (0 > rc) {
+            CDBG_ERROR("%s: Add poll on stream %p type: %d fd error (rc=%d)",
+                __func__, my_obj, my_obj->stream_info->stream_type, rc);
+        } else {
+            CDBG_HIGH("%s: Started poll on stream %p type: %d", __func__,
+                my_obj, my_obj->stream_info->stream_type);
         }
     }
 
     rc = ioctl(my_obj->fd, VIDIOC_QBUF, &buffer);
-    CDBG("%s: qbuf idx:%d, rc:%d", __func__, buffer.index, rc);
+    if (0 > rc) {
+        CDBG_ERROR("%s: VIDIOC_QBUF ioctl call failed on stream type %d (rc=%d): %s",
+            __func__, my_obj->stream_info->stream_type, rc, strerror(errno));
+        my_obj->queued_buffer_count--;
+        if (0 == my_obj->queued_buffer_count) {
+            /* Remove fd from data poll in case of failing
+             * first buffer queuing attempt */
+            CDBG_HIGH("%s: Stoping poll on stream %p type: %d", __func__,
+                my_obj, my_obj->stream_info->stream_type);
+            mm_camera_poll_thread_del_poll_fd(&my_obj->ch_obj->poll_thread[0],
+                my_obj->my_hdl, mm_camera_async_call);
+            CDBG_HIGH("%s: Stopped poll on stream %p type: %d", __func__,
+                my_obj, my_obj->stream_info->stream_type);
+        }
+    } else {
+        CDBG("%s: VIDIOC_QBUF buf_index %d, stream type %d, rc %d", __func__,
+            buffer.index, my_obj->stream_info->stream_type, rc);
+    }
+
     return rc;
 }
 
