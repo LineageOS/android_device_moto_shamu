@@ -1961,7 +1961,7 @@ QCamera3HardwareInterface::translateFromHalMetadata(
     camMetadata.update(ANDROID_REQUEST_ID, &request_id, 1);
 
     if (IS_META_AVAILABLE(CAM_INTF_META_FRAME_NUMBER, metadata)) {
-        int32_t frame_number = *(uint32_t *) POINTER_OF_META(CAM_INTF_META_FRAME_NUMBER, metadata);
+        int64_t frame_number = *(uint32_t *) POINTER_OF_META(CAM_INTF_META_FRAME_NUMBER, metadata);
         camMetadata.update(ANDROID_SYNC_FRAME_NUMBER, &frame_number, 1);
     }
 
