@@ -167,6 +167,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     bdAddrLoader
 
+PRODUCT_PACKAGES += \
+    keystore.msm8084
+
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=196608
 
