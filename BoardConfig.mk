@@ -85,6 +85,8 @@ BOARD_CHARGER_ENABLE_SUSPEND := true
 
 TARGET_RECOVERY_FSTAB = device/moto/shamu/fstab.shamu
 
+TARGET_RELEASETOOLS_EXTENSIONS := device/moto/shamu
+
 HAVE_ADRENO_SOURCE:= false
 
 OVERRIDE_RS_DRIVER:= libRSDriver_adreno.so
