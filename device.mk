@@ -192,7 +192,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # GPS configuration
 PRODUCT_COPY_FILES += \
-    hardware/qcom/gps/etc/gps.conf:system/etc/gps.conf
+    device/moto/shamu/gps.conf:system/etc/gps.conf
 
 # GPS
 PRODUCT_PACKAGES += \
