@@ -56,6 +56,8 @@
 /dev/ttyHS99              0660   bluetooth  net_bt_stack
 /sys/devices/virtual/smdpkt/smdcntl*       open_timeout   0664 radio radio
 
+/dev/vfsspi               0660  system      system
+
 # sensors
 /sys/devices/i2c-12/12-*  pollrate_ms 0664 system system
 /sys/devices/f9925000.i2c/i2c-0/0-* enable          0660     input     system
