@@ -1162,10 +1162,12 @@ void QCamera2HardwareInterface::preview_raw_stream_cb_routine(mm_camera_super_bu
     for ( i= 0 ; i < super_frame->num_bufs ; i++ ) {
         if ( super_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_RAW ) {
             mm_camera_buf_def_t * raw_frame = super_frame->bufs[i];
-            if ( NULL != stream && (dump_raw) ) {
-                pme->dumpFrameToFile(stream, raw_frame, QCAMERA_DUMP_FRM_RAW);
+            if ( NULL != stream) {
+                if(dump_raw) {
+                    pme->dumpFrameToFile(stream, raw_frame, QCAMERA_DUMP_FRM_RAW);
+                }
+                stream->bufDone(super_frame->bufs[i]->buf_idx);
             }
-            stream->bufDone(super_frame->bufs[i]->buf_idx);
             break;
         }
     }
@@ -1215,10 +1217,12 @@ void QCamera2HardwareInterface::snapshot_raw_stream_cb_routine(mm_camera_super_b
     for ( i= 0 ; i < super_frame->num_bufs ; i++ ) {
         if ( super_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_RAW ) {
             mm_camera_buf_def_t * raw_frame = super_frame->bufs[i];
-            if ( NULL != stream && (dump_raw) ) {
-                pme->dumpFrameToFile(stream, raw_frame, QCAMERA_DUMP_FRM_RAW);
+            if ( NULL != stream) {
+                if (dump_raw) {
+                    pme->dumpFrameToFile(stream, raw_frame, QCAMERA_DUMP_FRM_RAW);
+                }
+                stream->bufDone(super_frame->bufs[i]->buf_idx);
             }
-            stream->bufDone(super_frame->bufs[i]->buf_idx);
             break;
         }
     }
@@ -1596,7 +1600,8 @@ void QCamera2HardwareInterface::dumpMetadataToFile(QCameraStream *stream,
             struct tm * timeinfo;
             time (&current_time);
             timeinfo = localtime (&current_time);
-            strftime (timeBuf, sizeof(timeBuf),"/data/%Y%m%d%H%M%S", timeinfo);
+            if (timeinfo != NULL)
+                strftime (timeBuf, sizeof(timeBuf),"/data/%Y%m%d%H%M%S", timeinfo);
             String8 filePath(timeBuf);
             snprintf(buf, sizeof(buf), "%dm_%s_%d.bin",
                                          mDumpFrmCnt,type,frame->frame_idx);
@@ -1664,7 +1669,14 @@ void QCamera2HardwareInterface::dumpFrameToFile(QCameraStream *stream,
     int32_t enabled = atoi(value);
     int frm_num = 0;
     uint32_t skip_mode = 0;
-    int mDumpFrmCnt = stream->mDumpFrame;
+    int mDumpFrmCnt = 0;
+
+    if (NULL == stream) {
+        ALOGE("%s stream object is null", __func__);
+        return;
+    }
+
+    mDumpFrmCnt = stream->mDumpFrame;
 
     if(enabled & QCAMERA_DUMP_FRM_MASK_ALL) {
         if((enabled & dump_type) && stream && frame) {
@@ -1693,6 +1705,7 @@ void QCamera2HardwareInterface::dumpFrameToFile(QCameraStream *stream,
                     time_t current_time;
                     struct tm * timeinfo;
 
+                    memset(timeBuf, 0, sizeof(timeBuf));
 
                     time (&current_time);
                     timeinfo = localtime (&current_time);
@@ -1706,7 +1719,8 @@ void QCamera2HardwareInterface::dumpFrameToFile(QCameraStream *stream,
                     memset(&offset, 0, sizeof(cam_frame_len_offset_t));
                     stream->getFrameOffset(offset);
 
-                    strftime (timeBuf, sizeof(timeBuf),"/data/%Y%m%d%H%M%S", timeinfo);
+                    if (timeinfo != NULL)
+                        strftime (timeBuf, sizeof(timeBuf),"/data/%Y%m%d%H%M%S", timeinfo);
                     String8 filePath(timeBuf);
                     switch (dump_type) {
                     case QCAMERA_DUMP_FRM_PREVIEW:

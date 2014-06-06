@@ -241,14 +241,19 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
     int32_t n_try=MM_CAMERA_DEV_OPEN_TRIES;
     uint8_t sleep_msec=MM_CAMERA_DEV_OPEN_RETRY_SLEEP;
     unsigned int cam_idx = 0;
+    const char *dev_name_value = NULL;
 
     CDBG("%s:  begin\n", __func__);
 
     if (NULL == my_obj) {
         goto on_error;
     }
+    dev_name_value = mm_camera_util_get_dev_name(my_obj->my_hdl);
+    if (NULL == dev_name_value) {
+        goto on_error;
+    }
     snprintf(dev_name, sizeof(dev_name), "/dev/%s",
-             mm_camera_util_get_dev_name(my_obj->my_hdl));
+             dev_name_value);
     sscanf(dev_name, "/dev/video%u", &cam_idx);
     CDBG_HIGH("%s: dev name = %s, cam_idx = %d", __func__, dev_name, cam_idx);
 
@@ -319,6 +324,12 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
     return rc;
 
 on_error:
+
+    if (NULL == dev_name_value) {
+        CDBG_ERROR("%s: Invalid device name\n", __func__);
+        rc = -1;
+    }
+
     if (NULL == my_obj) {
         CDBG_ERROR("%s: Invalid camera object\n", __func__);
         rc = -1;
