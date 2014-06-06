@@ -88,6 +88,8 @@ on boot
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
     chown bluetooth bluetooth /proc/bluetooth/sleep/proto
+    chown bluetooth bluetooth /proc/bluetooth/sleep/lpm
+    chown bluetooth bluetooth /proc/bluetooth/sleep/btwrite
     chown bluetooth bluetooth /sys/module/hci_uart/parameters/ath_lpm
     chown bluetooth bluetooth /sys/module/hci_uart/parameters/ath_btwrite
     chown system system /sys/module/sco/parameters/disable_esco
