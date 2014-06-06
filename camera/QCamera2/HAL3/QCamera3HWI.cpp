@@ -635,6 +635,10 @@ int QCamera3HardwareInterface::configureStreams(
     /* Check whether we have video stream */
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
+        if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL &&
+                newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED && jpegStream){
+            isZsl = true;
+        }
         if (newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED &&
             newStream->usage & private_handle_t::PRIV_FLAGS_VIDEO_ENCODER) {
             isVideo = true;
@@ -650,7 +654,6 @@ int QCamera3HardwareInterface::configureStreams(
         if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL &&
             newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED && jpegStream){
             //for zsl stream the size is active array size
-            isZsl = true;
             stream_config_info.stream_sizes[i].width =
                     gCamCapability[mCameraId]->active_array_size.width;
             stream_config_info.stream_sizes[i].height =
@@ -680,6 +683,12 @@ int QCamera3HardwareInterface::configureStreams(
                   stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_PP_SUPERSET;
               } else {
                   stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_NONE;
+              }
+              if (isZsl) {
+                  stream_config_info.stream_sizes[i].width =
+                          gCamCapability[mCameraId]->active_array_size.width;
+                  stream_config_info.stream_sizes[i].height =
+                          gCamCapability[mCameraId]->active_array_size.height;
               }
               break;
            case HAL_PIXEL_FORMAT_RAW_OPAQUE:
