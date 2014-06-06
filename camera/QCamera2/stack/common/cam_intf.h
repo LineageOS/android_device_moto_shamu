@@ -139,6 +139,8 @@ typedef struct{
     uint8_t supported_picture_fmt_cnt;
     cam_format_t supported_picture_fmts[CAM_FORMAT_MAX];
 
+    uint8_t max_downscale_factor;
+
     /* dimension and supported output format of raw dump from camif */
     cam_dimension_t raw_dim;
     uint8_t supported_raw_fmt_cnt;
