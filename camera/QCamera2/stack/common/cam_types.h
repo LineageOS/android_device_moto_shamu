@@ -779,7 +779,7 @@ typedef enum {
 }qcamera_face_detect_type_t;
 
 typedef struct {
-    int8_t face_id;            /* unique id for face tracking within view unless view changes */
+    int32_t face_id;            /* unique id for face tracking within view unless view changes */
     int8_t score;              /* score of confidence (0, -100) */
     cam_rect_t face_boundary;  /* boundary of face detected */
     cam_coordinate_type_t left_eye_center;  /* coordinate of center of left eye */
