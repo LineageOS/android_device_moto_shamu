@@ -325,6 +325,8 @@ typedef struct{
     cam_rational_type_t calibration_transform2[3][3];
 
     cam_opaque_raw_format_t opaque_raw_fmt;
+
+    uint16_t isCacSupported;
 } cam_capability_t;
 
 typedef enum {

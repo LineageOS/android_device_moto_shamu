@@ -5957,6 +5957,10 @@ QCamera3ReprocessChannel *QCamera3HardwareInterface::addOfflineReprocChannel(
         }
     }
 
+    if (isCACEnabled()) {
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_CAC;
+    }
+
     if (IS_PARAM_AVAILABLE(CAM_INTF_META_JPEG_ORIENTATION, metadata)) {
         int32_t *rotation = (int32_t *)POINTER_OF_PARAM(
                 CAM_INTF_META_JPEG_ORIENTATION, metadata);
@@ -5988,6 +5992,14 @@ QCamera3ReprocessChannel *QCamera3HardwareInterface::addOfflineReprocChannel(
     return pChannel;
 }
 
+
+bool  QCamera3HardwareInterface::isCACEnabled() {
+    char prop[PROPERTY_VALUE_MAX];
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.camera.feature.cac", prop, "0");
+    int enableCAC = atoi(prop);
+    return enableCAC;
+}
 /*===========================================================================
 * FUNCTION   : getLogLevel
 *
