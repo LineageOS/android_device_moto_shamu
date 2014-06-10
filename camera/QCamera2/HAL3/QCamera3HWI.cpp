@@ -1990,20 +1990,6 @@ QCamera3HardwareInterface::translateFromHalMetadata(
             (uint8_t *)POINTER_OF_META(CAM_INTF_META_COLOR_CORRECT_MODE, metadata);
         camMetadata.update(ANDROID_COLOR_CORRECTION_MODE, color_correct_mode, 1);
     }
-    // 3A state is sent in urgent partial result (uses quirk)
-    if ((IS_META_AVAILABLE(CAM_INTF_META_AEC_PRECAPTURE_ID, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AEC_ROI, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AEC_STATE, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_PARM_FOCUS_MODE, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AF_ROI, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AF_STATE, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AF_TRIGGER_ID, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_PARM_WHITE_BALANCE, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AWB_REGIONS, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AWB_STATE, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_MODE, metadata))) {
-           CDBG("%s: 3A metadata do not process", __func__);
-    }
     if (IS_META_AVAILABLE(CAM_INTF_META_EDGE_MODE, metadata)) {
         cam_edge_application_t  *edgeApplication =
             (cam_edge_application_t *)POINTER_OF_META(CAM_INTF_META_EDGE_MODE, metadata);
@@ -2333,12 +2319,16 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
     uint8_t partial_result_tag = ANDROID_QUIRKS_PARTIAL_RESULT_PARTIAL;
     camMetadata.update(ANDROID_QUIRKS_PARTIAL_RESULT, &partial_result_tag, 1);
 
-    if (IS_META_AVAILABLE(CAM_INTF_META_AEC_PRECAPTURE_ID, metadata)) {
-        int32_t  *ae_precapture_id = (int32_t *)
-            POINTER_OF_META(CAM_INTF_META_AEC_PRECAPTURE_ID, metadata);
+    if (IS_META_AVAILABLE(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER, metadata)) {
+        cam_trigger_t *aecTrigger =
+                (cam_trigger_t *)POINTER_OF_META(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER, metadata);
+        camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER,
+                &aecTrigger->trigger, 1);
         camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_ID,
-                                          ae_precapture_id, 1);
+                &aecTrigger->trigger_id, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_PRECAPTURE_ID", __func__);
+        CDBG("%s: urgent Metadata : CAM_INTF_META_AEC_PRECAPTURE_TRIGGER",
+                __func__);
     }
     if (IS_META_AVAILABLE(CAM_INTF_META_AEC_ROI, metadata)) {
         cam_area_t  *hAeRegions = (cam_area_t *)
