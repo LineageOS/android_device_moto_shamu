@@ -12,11 +12,14 @@
 /dev/block/platform/msm_sdcc.1/by-name/boot         /boot           emmc    defaults                                                        defaults
 /dev/block/platform/msm_sdcc.1/by-name/recovery     /recovery       emmc    defaults                                                        defaults
 /dev/block/platform/msm_sdcc.1/by-name/misc         /misc           emmc    defaults                                                        defaults
-/dev/block/platform/msm_sdcc.1/by-name/modem        /radio          emmc    defaults                                                        defaults
+/dev/block/platform/msm_sdcc.1/by-name/modem        /modem          emmc    defaults                                                        defaults
+/dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs1  /mdm1m9kefs1    emmc    defaults                                                        defaults
+/dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs2  /mdm1m9kefs2    emmc    defaults                                                        defaults
+/dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3  /mdm1m9kefs3    emmc    defaults                                                        defaults
 /dev/block/platform/msm_sdcc.1/by-name/sbl1         /sbl1           emmc    defaults                                                        defaults
 /dev/block/platform/msm_sdcc.1/by-name/tz           /tz             emmc    defaults                                                        defaults
 /dev/block/platform/msm_sdcc.1/by-name/rpm          /rpm            emmc    defaults                                                        defaults
 /dev/block/platform/msm_sdcc.1/by-name/sdi          /sdi            emmc    defaults                                                        defaults
 /dev/block/platform/msm_sdcc.1/by-name/aboot        /aboot          emmc    defaults                                                        defaults
-/dev/block/platform/msm_sdcc.1/by-name/imgdata      /imgdata        emmc    defaults                                                        defaults
-
+/dev/block/platform/msm_sdcc.1/by-name/versions     /versions       emmc    defaults                                                        defaults
+/dev/block/platform/msm_sdcc.1/by-name/logo         /logo           emmc    defaults                                                        defaults
