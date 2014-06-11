@@ -63,6 +63,15 @@ class QCamera3Channel;
         int64_t exposure_time;
     } metadata_response_t;
 
+    typedef struct {
+        cam_stream_type_t stream_type;
+        cam_format_t stream_format;
+        cam_dimension_t input_stream_dim;
+        cam_stream_buf_plane_info_t input_stream_plane_info;
+        cam_dimension_t output_stream_dim;
+        cam_padding_info_t *padding;
+        QCamera3Channel *src_channel;
+    } reprocess_config_t;
 };//namespace qcamera
 
 #endif

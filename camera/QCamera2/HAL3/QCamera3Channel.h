@@ -36,6 +36,7 @@
 #include "QCamera3PostProc.h"
 #include "QCamera3HALHeader.h"
 #include "utils/Vector.h"
+#include <utils/List.h>
 
 extern "C" {
 #include <mm_camera_interface.h>
@@ -77,7 +78,7 @@ public:
                 uint32_t /*frameNumber*/){ return 0;};
     virtual int32_t request(buffer_handle_t * /*buffer*/,
                 uint32_t /*frameNumber*/,
-                mm_camera_buf_def_t* /*pInputBuffer*/,
+                camera3_stream_buffer_t* /*pInputBuffer*/,
                 metadata_buffer_t* /*metadata*/){ return 0;};
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream) = 0;
@@ -144,7 +145,6 @@ public:
 
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
-    mm_camera_buf_def_t* getInternalFormatBuffer(buffer_handle_t* buffer);
     virtual int32_t registerBuffer(buffer_handle_t *buffer);
 
 public:
@@ -235,7 +235,7 @@ public:
 
     virtual int32_t request(buffer_handle_t *buffer,
             uint32_t frameNumber,
-            mm_camera_buf_def_t* pInputBuffer,
+            camera3_stream_buffer_t* pInputBuffer,
             metadata_buffer_t* metadata);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
             QCamera3Stream *stream);
@@ -271,13 +271,16 @@ private:
     uint32_t mNumBufs;
     uint32_t mYuvWidth, mYuvHeight;
     int32_t mCurrentBufIndex;
+    cam_stream_type_t mStreamType;
+    cam_format_t mStreamFormat;
     bool m_bWNROn;
 
     QCamera3GrallocMemory mMemory;
     QCamera3HeapMemory *mYuvMemory;
     QCamera3Channel *m_pMetaChannel;
     mm_camera_super_buf_t *mMetaFrame;
-
+    QCamera3GrallocMemory mOfflineMemory;
+    QCamera3HeapMemory mOfflineMetaMemory;
 };
 
 // reprocess channel class
@@ -292,24 +295,24 @@ public:
                             void *userData, void *ch_hdl);
     QCamera3ReprocessChannel();
     virtual ~QCamera3ReprocessChannel();
-    // online reprocess
-    int32_t doReprocess(mm_camera_super_buf_t *frame,
-                        mm_camera_super_buf_t *meta_frame);
+    // offline reprocess
     int32_t doReprocessOffline(mm_camera_super_buf_t *frame,
                         metadata_buffer_t *metadata);
-    // offline reprocess
+    int32_t doReprocessOffline(qcamera_fwk_input_pp_data_t *frame);
     int32_t doReprocess(int buf_fd, uint32_t buf_length, int32_t &ret_val,
                         mm_camera_super_buf_t *meta_buf);
     virtual QCamera3Memory *getStreamBufs(uint32_t len);
     virtual void putStreamBufs();
     virtual int32_t initialize();
+    int32_t unmapOfflineBuffers();
+    virtual int32_t stop();
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream);
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
                                        void* userdata);
     int32_t addReprocStreamsFromSource(cam_pp_feature_config_t &pp_config,
-                                       QCamera3Channel *pSrcChannel,
-                                       QCamera3Channel *pMetaChannel);
+           const reprocess_config_t &src_config,
+           QCamera3Channel *pMetaChannel);
     QCamera3Stream *getStreamBySrcHandle(uint32_t srcHandle);
     QCamera3Stream *getSrcStreamBySrcHandle(uint32_t srcHandle);
     virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/)
@@ -318,6 +321,13 @@ public:
 public:
     void *picChHandle;
 private:
+    typedef struct {
+        QCamera3Stream *stream;
+        cam_mapping_buf_type type;
+        int index;
+    } OfflineBuffer;
+
+    android::List<OfflineBuffer> mOfflineBuffers;
     uint32_t mSrcStreamHandles[MAX_STREAM_NUM_IN_BUNDLE];
     QCamera3Channel *m_pSrcChannel; // ptr to source channel for reprocess
     QCamera3Channel *m_pMetaChannel;

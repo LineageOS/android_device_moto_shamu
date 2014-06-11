@@ -144,7 +144,8 @@ public:
 
     int setFrameParameters(camera3_capture_request_t *request,
             cam_stream_ID_t streamID);
-    int setReprocParameters(camera3_capture_request_t *request);
+    int32_t setReprocParameters(camera3_capture_request_t *request,
+            metadata_buffer_t *reprocParam);
     int translateToHalMetadata(const camera3_capture_request_t *request,
             metadata_buffer_t *parm);
     camera_metadata_t* translateCbUrgentMetadataToResultMetadata (
@@ -156,7 +157,8 @@ public:
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
     void deinitParameters();
-    QCamera3ReprocessChannel *addOfflineReprocChannel(QCamera3Channel *pInputChannel, QCamera3PicChannel *picChHandle, metadata_buffer_t *metadata);
+    QCamera3ReprocessChannel *addOfflineReprocChannel(const reprocess_config_t &config,
+            QCamera3PicChannel *picChHandle, metadata_buffer_t *metadata);
     bool needRotationReprocess();
     bool needReprocess(uint32_t postprocess_mask);
     bool isWNREnabled();
@@ -236,6 +238,7 @@ private:
 
      //First request yet to be processed after configureStreams
     bool mFirstRequest;
+    bool mFlush;
     QCamera3HeapMemory *mParamHeap;
     metadata_buffer_t* mParameters;
     bool m_bWNROn;
@@ -253,7 +256,8 @@ private:
         int blob_request;
         nsecs_t timestamp;
         uint8_t bNotified;
-        int input_buffer_present;
+        camera3_stream_buffer_t *input_buffer;
+        const camera_metadata_t *settings;
         CameraMetadata jpegMetadata;
         uint8_t pipeline_depth;
     } PendingRequestInfo;

@@ -237,6 +237,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
       mRawChannel(NULL),
       mSupportChannel(NULL),
       mFirstRequest(false),
+      mFlush(false),
       mParamHeap(NULL),
       mParameters(NULL),
       mLoopBackResult(NULL),
@@ -817,10 +818,11 @@ int QCamera3HardwareInterface::configureStreams(
     memset(mParameters, 0, sizeof(metadata_buffer_t));
 
     AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
-                sizeof(hal_version), &hal_version);
+            sizeof(hal_version), &hal_version);
 
     AddSetParmEntryToBatch(mParameters, CAM_INTF_META_STREAM_INFO,
-                sizeof(stream_config_info), &stream_config_info);
+            sizeof(cam_stream_size_info_t), &stream_config_info);
+
     int32_t tintless_value = 1;
     AddSetParmEntryToBatch(mParameters,CAM_INTF_PARM_TINTLESS,
                 sizeof(tintless_value), &tintless_value);
@@ -1377,12 +1379,57 @@ void QCamera3HardwareInterface::handleBufferWithLock(
 
         mCallbackOps->process_capture_result(mCallbackOps, &result);
     } else {
-        if (i->input_buffer_present) {
+        if (i->input_buffer) {
+            CameraMetadata settings;
+            camera3_notify_msg_t notify_msg;
+            memset(&notify_msg, 0, sizeof(camera3_notify_msg_t));
+            nsecs_t capture_time = systemTime(CLOCK_MONOTONIC);
+            if(i->settings) {
+                settings = i->settings;
+                if (settings.exists(ANDROID_SENSOR_TIMESTAMP)) {
+                    capture_time = settings.find(ANDROID_SENSOR_TIMESTAMP).data.i64[0];
+                } else {
+                    ALOGE("%s: No timestamp in input settings! Using current one.",
+                            __func__);
+                }
+            } else {
+                ALOGE("%s: Input settings missing!", __func__);
+            }
+
+            notify_msg.type = CAMERA3_MSG_SHUTTER;
+            notify_msg.message.shutter.frame_number = frame_number;
+            notify_msg.message.shutter.timestamp = capture_time;
+            mCallbackOps->notify(mCallbackOps, &notify_msg);
+
+            sp<Fence> releaseFence = new Fence(i->input_buffer->release_fence);
+            int32_t rc = releaseFence->wait(Fence::TIMEOUT_NEVER);
+            if (rc != OK) {
+                ALOGE("%s: input buffer fence wait failed %d", __func__, rc);
+            }
+
             camera3_capture_result result;
-            result.result = NULL;
+            memset(&result, 0, sizeof(camera3_capture_result));
             result.frame_number = frame_number;
+            result.result = settings.release();
+            result.input_buffer = i->input_buffer;
             result.num_output_buffers = 1;
             result.output_buffers = buffer;
+
+            for (List<PendingBufferInfo>::iterator k =
+                    mPendingBuffersMap.mPendingBufferList.begin();
+                    k != mPendingBuffersMap.mPendingBufferList.end(); k++ ) {
+                if (k->buffer == buffer->buffer) {
+                    CDBG("%s: Found Frame buffer, take it out from list",
+                            __func__);
+
+                    mPendingBuffersMap.num_buffers--;
+                    k = mPendingBuffersMap.mPendingBufferList.erase(k);
+                    break;
+                }
+            }
+            CDBG("%s: mPendingBuffersMap.num_buffers = %d",
+                __func__, mPendingBuffersMap.num_buffers);
+
             mCallbackOps->process_capture_result(mCallbackOps, &result);
             i = mPendingRequestsList.erase(i);
             mPendingRequest--;
@@ -1563,6 +1610,15 @@ int QCamera3HardwareInterface::processCaptureRequest(
             pthread_mutex_unlock(&mMutex);
             return rc;
         }
+    } else {
+        sp<Fence> acquireFence = new Fence(request->input_buffer->acquire_fence);
+
+        rc = acquireFence->wait(Fence::TIMEOUT_NEVER);
+        if (rc != OK) {
+            ALOGE("%s: input buffer fence wait failed %d", __func__, rc);
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
     }
 
     /* Update pending request list and pending buffers map */
@@ -1573,7 +1629,8 @@ int QCamera3HardwareInterface::processCaptureRequest(
     pendingRequest.blob_request = blob_request;
     pendingRequest.bNotified = 0;
 
-    pendingRequest.input_buffer_present = (request->input_buffer != NULL)? 1 : 0;
+    pendingRequest.input_buffer = request->input_buffer;
+    pendingRequest.settings = request->settings;
     pendingRequest.pipeline_depth = 0;
     extractJpegMetadata(pendingRequest.jpegMetadata, request);
 
@@ -1599,6 +1656,11 @@ int QCamera3HardwareInterface::processCaptureRequest(
 
     mPendingRequestsList.push_back(pendingRequest);
 
+    if(mFlush) {
+        pthread_mutex_unlock(&mMutex);
+        return NO_ERROR;
+    }
+
     // Notify metadata channel we receive a request
     mMetadataChannel->request(NULL, frameNumber);
 
@@ -1606,7 +1668,6 @@ int QCamera3HardwareInterface::processCaptureRequest(
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
         QCamera3Channel *channel = (QCamera3Channel *)output.stream->priv;
-        mm_camera_buf_def_t *pInputBuffer = NULL;
 
         if (channel == NULL) {
             ALOGE("%s: invalid channel pointer for stream", __func__);
@@ -1622,26 +1683,20 @@ int QCamera3HardwareInterface::processCaptureRequest(
                     request->input_buffer->stream->priv;
                 if(inputChannel == NULL ){
                     ALOGE("%s: failed to get input channel handle", __func__);
-                } else {
-                    pInputBuffer =
-                        inputChannel->getInternalFormatBuffer(
-                                request->input_buffer->buffer);
-                CDBG_HIGH("%s: Input buffer dump",__func__);
-                CDBG_HIGH("Stream id: %d", pInputBuffer->stream_id);
-                CDBG_HIGH("streamtype:%d", pInputBuffer->stream_type);
-                CDBG_HIGH("frame len:%d", pInputBuffer->frame_len);
-                CDBG_HIGH("Handle:%p", request->input_buffer->buffer);
-                }
-                rc = channel->request(output.buffer, frameNumber,
-                            pInputBuffer, mParameters);
-                if (rc < 0) {
-                    ALOGE("%s: Fail to request on picture channel", __func__);
                     pthread_mutex_unlock(&mMutex);
-                    return rc;
+                    return NO_INIT;
                 }
-
-                rc = setReprocParameters(request);
-                if (rc < 0) {
+                metadata_buffer_t reproc_meta;
+                rc = setReprocParameters(request, &reproc_meta);
+                if (NO_ERROR == rc) {
+                    rc = channel->request(output.buffer, frameNumber,
+                            request->input_buffer, &reproc_meta);
+                    if (rc < 0) {
+                        ALOGE("%s: Fail to request on picture channel", __func__);
+                        pthread_mutex_unlock(&mMutex);
+                        return rc;
+                    }
+                } else {
                     ALOGE("%s: fail to set reproc parameters", __func__);
                     pthread_mutex_unlock(&mMutex);
                     return rc;
@@ -1722,9 +1777,9 @@ void QCamera3HardwareInterface::dump(int fd)
     dprintf(fd, "-------+-------------------+-------------+----------+---------------------\n");
     for(List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
         i != mPendingRequestsList.end(); i++) {
-        dprintf(fd, " %5d | %17d | %11d | %8d | %19d \n",
+        dprintf(fd, " %5d | %17d | %11d | %8d | %p \n",
         i->frame_number, i->num_buffers, i->request_id, i->blob_request,
-        i->input_buffer_present);
+        i->input_buffer);
     }
     dprintf(fd, "\nPending buffer map: Number of buffers: %d\n",
                 mPendingBuffersMap.num_buffers);
@@ -1776,6 +1831,9 @@ int QCamera3HardwareInterface::flush()
     FlushMap flushMap;
 
     CDBG("%s: Unblocking Process Capture Request", __func__);
+    pthread_mutex_lock(&mMutex);
+    mFlush = true;
+    pthread_mutex_unlock(&mMutex);
 
     memset(&result, 0, sizeof(camera3_capture_result_t));
 
@@ -1942,8 +2000,10 @@ int QCamera3HardwareInterface::flush()
     mPendingBuffersMap.mPendingBufferList.clear();
     CDBG("%s: Cleared all the pending buffers ", __func__);
 
+    mFlush = false;
     mFirstRequest = true;
     pthread_mutex_unlock(&mMutex);
+
     return 0;
 }
 
@@ -4570,29 +4630,28 @@ int QCamera3HardwareInterface::setFrameParameters(
  * FUNCTION   : setReprocParameters
  *
  * DESCRIPTION: Translate frameworks metadata to HAL metadata structure, and
- *              queue it to picture channel for reprocessing.
+ *              return it.
  *
  * PARAMETERS :
  *   @request   : request that needs to be serviced
  *
  * RETURN     : success: NO_ERROR
- *              failure: non zero failure code
+ *              failure:
  *==========================================================================*/
-int QCamera3HardwareInterface::setReprocParameters(
-        camera3_capture_request_t *request)
+int32_t QCamera3HardwareInterface::setReprocParameters(
+        camera3_capture_request_t *request, metadata_buffer_t *reprocParam)
 {
     /*translate from camera_metadata_t type to parm_type_t*/
     int rc = 0;
-    metadata_buffer_t *reprocParam = NULL;
 
-    if(request->settings != NULL){
+    if (NULL == request->settings){
         ALOGE("%s: Reprocess settings cannot be NULL", __func__);
         return BAD_VALUE;
     }
-    reprocParam = (metadata_buffer_t *)malloc(sizeof(metadata_buffer_t));
-    if (!reprocParam) {
-        ALOGE("%s: Failed to allocate reprocessing metadata buffer", __func__);
-        return NO_MEMORY;
+
+    if (NULL == reprocParam) {
+        ALOGE("%s: Invalid reprocessing metadata buffer", __func__);
+        return BAD_VALUE;
     }
     memset(reprocParam, 0, sizeof(metadata_buffer_t));
 
@@ -4601,22 +4660,18 @@ int QCamera3HardwareInterface::setReprocParameters(
                                 sizeof(request->frame_number), &(request->frame_number));
     if (rc < 0) {
         ALOGE("%s: Failed to set the frame number in the parameters", __func__);
-        return BAD_VALUE;
+        goto FAIL;
     }
-
 
     rc = translateToHalMetadata(request, reprocParam);
     if (rc < 0) {
         ALOGE("%s: Failed to translate reproc request", __func__);
-        delete reprocParam;
-        return rc;
+        goto FAIL;
     }
-    /*queue metadata for reprocessing*/
-    rc = mPictureChannel->queueReprocMetadata(reprocParam);
-    if (rc < 0) {
-        ALOGE("%s: Failed to queue reprocessing metadata", __func__);
-        delete reprocParam;
-    }
+
+    return rc;
+
+FAIL:
 
     return rc;
 }
@@ -4653,7 +4708,7 @@ int QCamera3HardwareInterface::translateToHalMetadata
      */
     if (frame_settings.exists(ANDROID_CONTROL_MODE)) {
         uint8_t metaMode = frame_settings.find(ANDROID_CONTROL_MODE).data.u8[0];
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_MODE,
+        rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_META_MODE,
                 sizeof(metaMode), &metaMode);
         if (metaMode == ANDROID_CONTROL_MODE_USE_SCENE_MODE) {
            uint8_t fwk_sceneMode = frame_settings.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
@@ -5599,22 +5654,20 @@ bool QCamera3HardwareInterface::needReprocess(uint32_t postprocess_mask)
  *              coming from input channel
  *
  * PARAMETERS :
- *   @pInputChannel : ptr to input channel whose frames will be post-processed
+ *   @config  : reprocess configuration
+ *
  *
  * RETURN     : Ptr to the newly created channel obj. NULL if failed.
  *==========================================================================*/
 QCamera3ReprocessChannel *QCamera3HardwareInterface::addOfflineReprocChannel(
-              QCamera3Channel *pInputChannel, QCamera3PicChannel *picChHandle, metadata_buffer_t *metadata)
+        const reprocess_config_t &config, QCamera3PicChannel *picChHandle,
+        metadata_buffer_t *metadata)
 {
     int32_t rc = NO_ERROR;
     QCamera3ReprocessChannel *pChannel = NULL;
-    if (pInputChannel == NULL) {
-        ALOGE("%s: input channel obj is NULL", __func__);
-        return NULL;
-    }
 
     pChannel = new QCamera3ReprocessChannel(mCameraHandle->camera_handle,
-            mCameraHandle->ops, NULL, pInputChannel->mPaddingInfo, CAM_QCOM_FEATURE_NONE, this, picChHandle);
+            mCameraHandle->ops, NULL, config.padding, CAM_QCOM_FEATURE_NONE, this, picChHandle);
     if (NULL == pChannel) {
         ALOGE("%s: no mem for reprocess channel", __func__);
         return NULL;
@@ -5671,8 +5724,8 @@ QCamera3ReprocessChannel *QCamera3HardwareInterface::addOfflineReprocChannel(
 
 
     rc = pChannel->addReprocStreamsFromSource(pp_config,
-                                             pInputChannel,
-                                             mMetadataChannel);
+            config,
+            mMetadataChannel);
 
     if (rc != NO_ERROR) {
         delete pChannel;
