@@ -90,7 +90,7 @@
 #define MAX_AE_STATS_DATA_SIZE  1000
 #define MAX_AWB_STATS_DATA_SIZE 1000
 #define MAX_AF_STATS_DATA_SIZE  1000
-
+#define MAX_ASD_STATS_DATA_SIZE 1000
 
 
 #define TUNING_DATA_VERSION        3
@@ -977,6 +977,10 @@ typedef struct {
 } cam_chromatix_lite_af_stats_t;
 
 typedef struct {
+  uint8_t private_stats_data[MAX_ASD_STATS_DATA_SIZE];
+} cam_chromatix_lite_asd_stats_t;
+
+typedef struct {
     cam_dimension_t stream_sizes[MAX_NUM_STREAMS];
     uint32_t num_streams;
     cam_stream_type_t type[MAX_NUM_STREAMS];
@@ -1131,6 +1135,7 @@ typedef enum {
     CAM_INTF_META_CHROMATIX_LITE_AE,
     CAM_INTF_META_CHROMATIX_LITE_AWB,
     CAM_INTF_META_CHROMATIX_LITE_AF,
+    CAM_INTF_META_CHROMATIX_LITE_ASD,
     CAM_INTF_PARM_GET_CHROMATIX,
     CAM_INTF_PARM_SET_RELOAD_CHROMATIX,
     CAM_INTF_PARM_SET_AUTOFOCUSTUNING,
