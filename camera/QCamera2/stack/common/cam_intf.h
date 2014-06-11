@@ -510,7 +510,7 @@ typedef struct {
     INCLUDE(CAM_INTF_META_SENSOR_EXPOSURE_TIME,         int64_t,                     1);
     INCLUDE(CAM_INTF_META_SENSOR_FRAME_DURATION,        int64_t,                     1);
     INCLUDE(CAM_INTF_META_SENSOR_SENSITIVITY,           int32_t,                     1);
-    INCLUDE(CAM_INTF_META_SENSOR_TIMESTAMP,             struct timeval,              1);
+    INCLUDE(CAM_INTF_META_SENSOR_TIMESTAMP,             int64_t,                     1);
     INCLUDE(CAM_INTF_META_SHADING_MODE,                 uint32_t,                    1);
     INCLUDE(CAM_INTF_META_STATS_FACEDETECT_MODE,        uint32_t,                    1);
     INCLUDE(CAM_INTF_META_STATS_HISTOGRAM_MODE,         uint32_t,                    1);

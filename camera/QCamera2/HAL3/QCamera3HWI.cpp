@@ -1016,10 +1016,8 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
         CAM_INTF_META_PENDING_REQUESTS, metadata);
     uint32_t frame_number = *(uint32_t *)
         POINTER_OF_META(CAM_INTF_META_FRAME_NUMBER, metadata);
-    const struct timeval *tv = (const struct timeval *)
+    nsecs_t capture_time = *(int64_t *)
         POINTER_OF_META(CAM_INTF_META_SENSOR_TIMESTAMP, metadata);
-    nsecs_t capture_time = (nsecs_t)tv->tv_sec * NSEC_PER_SEC +
-        tv->tv_usec * NSEC_PER_USEC;
     cam_frame_dropped_t cam_frame_drop = *(cam_frame_dropped_t *)
         POINTER_OF_META(CAM_INTF_META_FRAME_DROPPED, metadata);
 
