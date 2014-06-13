@@ -2367,10 +2367,14 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         camMetadata.update(ANDROID_CONTROL_AF_STATE, afState, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_AF_STATE", __func__);
     }
-    if (IS_META_AVAILABLE(CAM_INTF_META_AF_TRIGGER_ID, metadata)) {
-        int32_t  *afTriggerId = (int32_t *)
-            POINTER_OF_META(CAM_INTF_META_AF_TRIGGER_ID, metadata);
-        camMetadata.update(ANDROID_CONTROL_AF_TRIGGER_ID, afTriggerId, 1);
+    if (IS_META_AVAILABLE(CAM_INTF_META_AF_TRIGGER, metadata)) {
+        cam_trigger_t *af_trigger =
+                (cam_trigger_t *)POINTER_OF_META(CAM_INTF_META_AF_TRIGGER, metadata);
+        camMetadata.update(ANDROID_CONTROL_AF_TRIGGER,
+                &af_trigger->trigger, 1);
+        CDBG("%s: urgent Metadata : CAM_INTF_META_AF_TRIGGER = %d",
+                __func__, af_trigger->trigger);
+        camMetadata.update(ANDROID_CONTROL_AF_TRIGGER_ID, &af_trigger->trigger_id, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_AF_TRIGGER_ID", __func__);
     }
     if (IS_META_AVAILABLE(CAM_INTF_PARM_WHITE_BALANCE, metadata)) {
@@ -2437,6 +2441,7 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
              &fwkSceneMode, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_SCENE_MODE", __func__);
     }
+
     resultMetadata = camMetadata.release();
     return resultMetadata;
 }

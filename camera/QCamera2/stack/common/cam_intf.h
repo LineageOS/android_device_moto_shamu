@@ -484,7 +484,6 @@ typedef struct {
     INCLUDE(CAM_INTF_PARM_FOCUS_MODE,                   uint32_t,                    1);
     INCLUDE(CAM_INTF_META_AF_ROI,                       cam_area_t,                  1);
     INCLUDE(CAM_INTF_META_AF_STATE,                     uint32_t,                    1);
-    INCLUDE(CAM_INTF_META_AF_TRIGGER_ID,                int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_WHITE_BALANCE,                int32_t,                     1);
     INCLUDE(CAM_INTF_META_AWB_REGIONS,                  cam_area_t,                  1);
     INCLUDE(CAM_INTF_META_AWB_STATE,                    uint32_t,                    1);
