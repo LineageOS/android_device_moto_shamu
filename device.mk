@@ -215,6 +215,12 @@ PRODUCT_PACKAGES += \
     gps.msm8084 \
     flp.msm8084
 
+# NFC packages
+PRODUCT_PACKAGES += \
+    nfc_nci.shamu\
+    NfcNci \
+    Tag
+
 # setup dalvik vm configs.
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 
