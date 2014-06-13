@@ -1,6 +1,10 @@
 import common
 import struct
 
+# The target does not support OTA-flashing
+# the partition table, so blacklist it.
+DEFAULT_BOOTLOADER_OTA_BLACKLIST = [ 'partition' ]
+
 class BadMagicError(Exception):
     __str__ = "bad magic value"
 
@@ -113,8 +117,13 @@ def IncrementalOTA_InstallEnd(info):
 
     if source_bootloader_img == target_bootloader_img:
       print "bootloader unchanged; skipping"
-    else:
+    elif source_bootloader_img == None:
+      print "no bootloader.img in source target_files; installing complete image"
       WriteBootloader(info, target_bootloader_img)
+    else:
+      tf = common.File("bootloader.img", target_bootloader_img)
+      sf = common.File("bootloader.img", source_bootloader_img)
+      WriteIncrementalBootloader(info, tf, sf)
   except KeyError:
     print "no bootloader.img in target target_files; skipping install"
 
@@ -134,10 +143,38 @@ def IncrementalOTA_InstallEnd(info):
     else:
       sf = common.File("radio.img", sf)
 
-      if tf.sha1 == sf.sha1:
+      if tf.size == sf.size and tf.sha1 == sf.sha1:
         print "radio image unchanged; skipping"
       else:
         WriteIncrementalRadio(info, tf, sf)
+
+def WriteIncrementalBootloader(info, target_imagefile, source_imagefile):
+  try:
+    tm = MotobootImage(target_imagefile.data, "bootloader")
+  except BadMagicError:
+    assert False, "bootloader.img bad magic value"
+  try:
+    sm = MotobootImage(source_imagefile.data, "bootloader")
+  except BadMagicError:
+    print "source bootloader image is not a motoboot image. Installing complete image."
+    return WriteBootloader(info, target_imagefile.data)
+
+  # blacklist any partitions that match the source image
+  blacklist = DEFAULT_BOOTLOADER_OTA_BLACKLIST
+  for ti in tm.unpacked_images:
+    if ti not in blacklist:
+      si = sm.GetUnpackedImage(ti.name)
+      if not si:
+        continue
+      if ti.size == si.size and ti.sha1 == si.sha1:
+        print "target bootloader partition image %s matches source; skipping" % ti.name
+        blacklist.append(ti.name)
+
+  # If there are any images to then write them
+  whitelist = [ i.name for i in tm.unpacked_images if i.name not in blacklist ]
+  if len(whitelist):
+    # Install the bootloader, skipping any matching partitions
+    WriteBootloader(info, target_imagefile.data, blacklist)
 
 def WriteIncrementalRadio(info, target_imagefile, source_imagefile):
   try:
@@ -160,6 +197,11 @@ def WriteIncrementalRadio(info, target_imagefile, source_imagefile):
         write_full_modem = False
 
   # Write the full images, skipping modem if so directed.
+  #
+  # NOTE: Some target flex radio images are zero-filled, and must
+  #       be flashed to trigger the flex update "magic".  Do not
+  #       skip installing target partition images that are identical
+  #       to its corresponding source partition image.
   blacklist = []
   if not write_full_modem:
     blacklist.append('modem')
@@ -227,7 +269,7 @@ def WritePartitionImage(info, image, group_name = None):
   info.script.AppendExtra('package_extract_file("%s", "%s");' %
                           (filename, device))
 
-def WriteBootloader(info, bootloader):
+def WriteBootloader(info, bootloader, blacklist = DEFAULT_BOOTLOADER_OTA_BLACKLIST):
   info.script.Print("Writing bootloader...")
 
   try:
@@ -247,7 +289,6 @@ def WriteBootloader(info, bootloader):
 
   # OTA does not support partition changes, so
   # do not bundle the partition image in the OTA package.
-  blacklist = [ 'partition' ]
   WriteMotobootPartitionImages(info, motoboot_image, blacklist)
 
   info.script.AppendExtra(
