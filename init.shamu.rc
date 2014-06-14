@@ -15,6 +15,7 @@
 #
 
 import init.shamu.usb.rc
+import init.shamu.power.rc
 
 on early-init
     mkdir /firmware 0771 system system
