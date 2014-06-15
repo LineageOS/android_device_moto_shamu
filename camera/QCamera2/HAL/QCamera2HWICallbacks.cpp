@@ -859,8 +859,10 @@ void QCamera2HardwareInterface::rdi_mode_stream_cb_routine(
             memset(&cbArg, 0, sizeof(qcamera_callback_argm_t));
             cbArg.cb_type    = QCAMERA_NOTIFY_CALLBACK;
             cbArg.msg_type   = CAMERA_MSG_PREVIEW_FRAME;
+#ifndef VANILLA_HAL
             cbArg.ext1       = CAMERA_FRAME_DATA_FD;
             cbArg.ext2       = fd;
+#endif
             int user_data    = frame->buf_idx;
             cbArg.user_data  = (void *)user_data;
             cbArg.cookie     = stream;
