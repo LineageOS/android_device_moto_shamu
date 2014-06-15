@@ -33,6 +33,7 @@
 #include <cutils/properties.h>
 #include <hardware/camera3.h>
 #include <camera/CameraMetadata.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <utils/Log.h>
@@ -1675,45 +1676,45 @@ int QCamera3HardwareInterface::processCaptureRequest(
 void QCamera3HardwareInterface::dump(int fd)
 {
     pthread_mutex_lock(&mMutex);
-    fdprintf(fd, "\n Camera HAL3 information Begin \n");
+    dprintf(fd, "\n Camera HAL3 information Begin \n");
 
-    fdprintf(fd, "\nNumber of pending requests: %d \n",
+    dprintf(fd, "\nNumber of pending requests: %d \n",
         mPendingRequestsList.size());
-    fdprintf(fd, "-------+-------------------+-------------+----------+---------------------\n");
-    fdprintf(fd, " Frame | Number of Buffers |   Req Id:   | Blob Req | Input buffer present\n");
-    fdprintf(fd, "-------+-------------------+-------------+----------+---------------------\n");
+    dprintf(fd, "-------+-------------------+-------------+----------+---------------------\n");
+    dprintf(fd, " Frame | Number of Buffers |   Req Id:   | Blob Req | Input buffer present\n");
+    dprintf(fd, "-------+-------------------+-------------+----------+---------------------\n");
     for(List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
         i != mPendingRequestsList.end(); i++) {
-        fdprintf(fd, " %5d | %17d | %11d | %8d | %19d \n",
+        dprintf(fd, " %5d | %17d | %11d | %8d | %19d \n",
         i->frame_number, i->num_buffers, i->request_id, i->blob_request,
         i->input_buffer_present);
     }
-    fdprintf(fd, "\nPending buffer map: Number of buffers: %d\n",
+    dprintf(fd, "\nPending buffer map: Number of buffers: %d\n",
                 mPendingBuffersMap.num_buffers);
-    fdprintf(fd, "-------+-------------\n");
-    fdprintf(fd, " Frame | Stream type \n");
-    fdprintf(fd, "-------+-------------\n");
+    dprintf(fd, "-------+-------------\n");
+    dprintf(fd, " Frame | Stream type \n");
+    dprintf(fd, "-------+-------------\n");
     for(List<PendingBufferInfo>::iterator i =
         mPendingBuffersMap.mPendingBufferList.begin();
         i != mPendingBuffersMap.mPendingBufferList.end(); i++) {
-        fdprintf(fd, " %5d | %11d \n",
+        dprintf(fd, " %5d | %11d \n",
             i->frame_number, i->stream->stream_type);
     }
-    fdprintf(fd, "-------+-------------\n");
+    dprintf(fd, "-------+-------------\n");
 
-    fdprintf(fd, "\nPending frame drop list: %d\n",
+    dprintf(fd, "\nPending frame drop list: %d\n",
         mPendingFrameDropList.size());
-    fdprintf(fd, "-------+-----------\n");
-    fdprintf(fd, " Frame | Stream ID \n");
-    fdprintf(fd, "-------+-----------\n");
+    dprintf(fd, "-------+-----------\n");
+    dprintf(fd, " Frame | Stream ID \n");
+    dprintf(fd, "-------+-----------\n");
     for(List<PendingFrameDropInfo>::iterator i = mPendingFrameDropList.begin();
         i != mPendingFrameDropList.end(); i++) {
-        fdprintf(fd, " %5d | %9d \n",
+        dprintf(fd, " %5d | %9d \n",
             i->frame_number, i->stream_ID);
     }
-    fdprintf(fd, "-------+-----------\n");
+    dprintf(fd, "-------+-----------\n");
 
-    fdprintf(fd, "\n Camera HAL3 information End \n");
+    dprintf(fd, "\n Camera HAL3 information End \n");
     pthread_mutex_unlock(&mMutex);
     return;
 }
