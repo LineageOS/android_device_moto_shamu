@@ -1728,6 +1728,11 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     jpg_job.encode_job.hal_version = CAM_HAL_V1;
     jpg_job.encode_job.cam_exif_params = m_parent->mExifParams;
 
+    /* Init the QTable */
+    for (int i = 0; i < QTABLE_MAX; i++) {
+        jpg_job.encode_job.qtable_set[i] = 0;
+    }
+
     CDBG_HIGH("[KPI Perf] %s : PROFILE_JPEG_JOB_START", __func__);
     ret = mJpegHandle.start_job(&jpg_job, &jobId);
     if (ret == NO_ERROR) {

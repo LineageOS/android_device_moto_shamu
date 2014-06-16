@@ -34,6 +34,8 @@
 
 #define MM_JPEG_MAX_PLANES 3
 #define MM_JPEG_MAX_BUF CAM_MAX_NUM_BUFS_PER_STREAM
+#define QUANT_SIZE 64
+#define QTABLE_MAX 2
 
 typedef enum {
   MM_JPEG_FMT_YUV,
@@ -212,6 +214,9 @@ typedef struct {
   /* 3a parameters */
   mm_jpeg_exif_params_t cam_exif_params;
 
+  /* jpeg encoder QTable */
+  uint8_t qtable_set[QTABLE_MAX];
+  OMX_IMAGE_PARAM_QUANTIZATIONTABLETYPE qtable[QTABLE_MAX];
 } mm_jpeg_encode_job_t;
 
 typedef struct {
