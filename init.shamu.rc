@@ -243,6 +243,9 @@ on boot
     mkdir /data/adspd/ 0770 media media
     mkdir /data/adspd/1 0770 media media
 
+# subsystem ramdump collection
+    write /sys/module/subsystem_restart/parameters/enable_ramdumps 1
+
 # msm specific files that need to be created on /data
 on post-fs-data
     # we will remap this as /mnt/sdcard with the sdcard fuse tool
@@ -665,6 +668,9 @@ service wifi-crda /system/bin/sh /system/etc/init.crda.sh
 on property:sys.boot_completed=1
     start qcom-post-boot
 
+on property:ro.debuggable=1
+    start subsystem_ramdump
+
 service atfwd /system/bin/ATFWD-daemon
     class late_start
     user system
@@ -780,6 +786,12 @@ service qseecomd /system/bin/qseecomd
 service mpdecision /system/bin/mpdecision --no_sleep --avg_comp
    user root
    disabled
+
+service subsystem_ramdump /system/bin/subsystem_ramdump
+    class main
+    user root
+    group root
+    disabled
 
 service thermal-engine /system/bin/thermal-engine
    class main
