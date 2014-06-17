@@ -71,6 +71,7 @@ QCamera3Channel::QCamera3Channel(uint32_t cam_handle,
                                mm_camera_ops_t *cam_ops,
                                channel_cb_routine cb_routine,
                                cam_padding_info_t *paddingInfo,
+                               uint32_t postprocess_mask,
                                void *userData)
 {
     m_camHandle = cam_handle;
@@ -85,6 +86,8 @@ QCamera3Channel::QCamera3Channel(uint32_t cam_handle,
     mStreamInfoBuf = NULL;
     mChannelCB = cb_routine;
     mPaddingInfo = paddingInfo;
+
+    mPostProcMask = postprocess_mask;
 }
 
 /*===========================================================================
@@ -110,6 +113,8 @@ QCamera3Channel::QCamera3Channel()
     mStreamInfoBuf = NULL;
     mChannelCB = NULL;
     mPaddingInfo = NULL;
+
+    mPostProcMask = 0;
 }
 
 /*===========================================================================
@@ -188,7 +193,8 @@ int32_t QCamera3Channel::init(mm_camera_channel_attr_t *attr,
 int32_t QCamera3Channel::addStream(cam_stream_type_t streamType,
                                   cam_format_t streamFormat,
                                   cam_dimension_t streamDim,
-                                  uint8_t minStreamBufNum)
+                                  uint8_t minStreamBufNum,
+                                  uint32_t postprocess_mask)
 {
     int32_t rc = NO_ERROR;
 
@@ -213,7 +219,7 @@ int32_t QCamera3Channel::addStream(cam_stream_type_t streamType,
     }
 
     rc = pStream->init(streamType, streamFormat, streamDim, NULL, minStreamBufNum,
-                                                    streamCbRoutine, this);
+                       postprocess_mask, streamCbRoutine, this);
     if (rc == 0) {
         mStreams[m_numStreams] = pStream;
         m_numStreams++;
@@ -470,9 +476,10 @@ QCamera3RegularChannel::QCamera3RegularChannel(uint32_t cam_handle,
                     void *userData,
                     camera3_stream_t *stream,
                     uint32_t width, uint32_t height,
-                    cam_stream_type_t stream_type) :
+                    cam_stream_type_t stream_type,
+                    uint32_t postprocess_mask) :
                         QCamera3Channel(cam_handle, cam_ops, cb_routine,
-                                paddingInfo, userData),
+                                paddingInfo, postprocess_mask, userData),
                         mCamera3Stream(stream),
                         mNumBufs(0),
                         mWidth(width),
@@ -501,9 +508,10 @@ QCamera3RegularChannel::QCamera3RegularChannel(uint32_t cam_handle,
                     cam_padding_info_t *paddingInfo,
                     void *userData,
                     camera3_stream_t *stream,
-                    cam_stream_type_t stream_type) :
+                    cam_stream_type_t stream_type,
+                    uint32_t postprocess_mask) :
                         QCamera3Channel(cam_handle, cam_ops, cb_routine,
-                                paddingInfo, userData),
+                                paddingInfo, postprocess_mask, userData),
                         mCamera3Stream(stream),
                         mNumBufs(0),
                         mWidth(stream->width),
@@ -585,7 +593,8 @@ int32_t QCamera3RegularChannel::initialize()
     rc = QCamera3Channel::addStream(mStreamType,
             streamFormat,
             streamDim,
-            mNumBufs);
+            mNumBufs,
+            mPostProcMask);
 
     return rc;
 }
@@ -785,9 +794,10 @@ QCamera3MetadataChannel::QCamera3MetadataChannel(uint32_t cam_handle,
                     mm_camera_ops_t *cam_ops,
                     channel_cb_routine cb_routine,
                     cam_padding_info_t *paddingInfo,
+                    uint32_t postprocess_mask,
                     void *userData) :
                         QCamera3Channel(cam_handle, cam_ops,
-                                cb_routine, paddingInfo, userData),
+                                cb_routine, paddingInfo, postprocess_mask, userData),
                         mMemory(NULL)
 {
 }
@@ -823,7 +833,7 @@ int32_t QCamera3MetadataChannel::initialize()
     streamDim.width = sizeof(metadata_buffer_t),
     streamDim.height = 1;
     rc = QCamera3Channel::addStream(CAM_STREAM_TYPE_METADATA, CAM_FORMAT_MAX,
-        streamDim, MIN_STREAMING_BUFFER_NUM);
+        streamDim, MIN_STREAMING_BUFFER_NUM, mPostProcMask);
     if (rc < 0) {
         ALOGE("%s: addStream failed", __func__);
     }
@@ -891,9 +901,10 @@ QCameraRawChannel::QCameraRawChannel(uint32_t cam_handle,
                     channel_cb_routine cb_routine,
                     cam_padding_info_t *paddingInfo,
                     void *userData,
-                    cam_dimension_t *raw_dim) :
+                    cam_dimension_t *raw_dim,
+                    uint32_t postprocess_mask) :
                         QCamera3Channel(cam_handle, cam_ops,
-                                cb_routine, paddingInfo, userData),
+                                cb_routine, paddingInfo, postprocess_mask, userData),
                         mMemory(NULL)
 {
 
@@ -940,7 +951,7 @@ int32_t QCameraRawChannel::initialize()
     CDBG_HIGH("%s: mWidth=%d, mHeight=%d", __func__, mWidth, mHeight);
 
     rc = QCamera3Channel::addStream(streamType, streamFormat,
-        streamDim, mMaxBuffers);
+        streamDim, mMaxBuffers, mPostProcMask);
     if (rc < 0) {
         ALOGE("%s: addStream failed", __func__);
     }
@@ -1146,9 +1157,10 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                     channel_cb_routine cb_routine,
                     cam_padding_info_t *paddingInfo,
                     void *userData,
-                    camera3_stream_t *stream) :
+                    camera3_stream_t *stream,
+                    uint32_t postprocess_mask) :
                         QCamera3Channel(cam_handle, cam_ops, cb_routine,
-                        paddingInfo, userData),
+                        paddingInfo, postprocess_mask, userData),
                         m_postprocessor(this),
                         mCamera3Stream(stream),
                         mNumBufs(0),
@@ -1160,7 +1172,8 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
     m_max_pic_dim = hal_obj->calcMaxJpegDim();
     mYuvWidth = stream->width;
     mYuvHeight = stream->height;
-    int32_t rc = m_postprocessor.init(&mMemory, jpegEvtHandle, this);
+    int32_t rc = m_postprocessor.init(&mMemory, jpegEvtHandle, mPostProcMask,
+            this);
     if (rc != 0) {
         ALOGE("Init Postprocessor failed");
     }
@@ -1214,7 +1227,7 @@ int32_t QCamera3PicChannel::initialize()
     int num_buffers = 1;
     mNumBufs = CAM_MAX_NUM_BUFS_PER_STREAM;
     rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,
-            num_buffers);
+            num_buffers, mPostProcMask);
 
     return rc;
 }
@@ -2091,8 +2104,9 @@ QCamera3ReprocessChannel::QCamera3ReprocessChannel(uint32_t cam_handle,
                                                  mm_camera_ops_t *cam_ops,
                                                  channel_cb_routine cb_routine,
                                                  cam_padding_info_t *paddingInfo,
+                                                 uint32_t postprocess_mask,
                                                  void *userData, void *ch_hdl) :
-    QCamera3Channel(cam_handle, cam_ops, cb_routine, paddingInfo, userData),
+    QCamera3Channel(cam_handle, cam_ops, cb_routine, paddingInfo, postprocess_mask, userData),
     picChHandle(ch_hdl),
     m_pSrcChannel(NULL),
     m_pMetaChannel(NULL),
@@ -2535,7 +2549,7 @@ int32_t QCamera3ReprocessChannel::addReprocStreamsFromSource(cam_pp_feature_conf
     }
 
     rc = pStream->init(streamType, streamFormat, streamDim, &reprocess_config,
-                       num_buffers,QCamera3Channel::streamCbRoutine, this);
+                       num_buffers, CAM_QCOM_FEATURE_NONE, QCamera3Channel::streamCbRoutine, this);
 
 
     if (rc == 0) {

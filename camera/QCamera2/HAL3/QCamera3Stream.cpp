@@ -237,6 +237,7 @@ int32_t QCamera3Stream::init(cam_stream_type_t streamType,
                             cam_dimension_t streamDim,
                             cam_stream_reproc_config_t* reprocess_config,
                             uint8_t minNumBuffers,
+                            uint32_t postprocess_mask,
                             hal3_stream_cb_routine stream_cb,
                             void *userdata)
 {
@@ -271,7 +272,9 @@ int32_t QCamera3Stream::init(cam_stream_type_t streamType,
     mStreamInfo->fmt = streamFormat;
     mStreamInfo->dim = streamDim;
     mStreamInfo->num_bufs = minNumBuffers;
-
+    mStreamInfo->pp_config.feature_mask = postprocess_mask;
+    ALOGV("%s: stream_type is %d, feature_mask is %d",
+          __func__, mStreamInfo->stream_type, mStreamInfo->pp_config.feature_mask);
     rc = mCamOps->map_stream_buf(mCamHandle,
             mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO,
             0, -1, mStreamInfoBuf->getFd(0), mStreamInfoBuf->getSize(0));

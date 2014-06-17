@@ -158,7 +158,7 @@ public:
     void deinitParameters();
     QCamera3ReprocessChannel *addOfflineReprocChannel(QCamera3Channel *pInputChannel, QCamera3PicChannel *picChHandle, metadata_buffer_t *metadata);
     bool needRotationReprocess();
-    bool needReprocess();
+    bool needReprocess(uint32_t postprocess_mask);
     bool isWNREnabled();
     cam_denoise_process_type_t getWaveletDenoiseProcessPlate();
 
