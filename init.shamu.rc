@@ -82,6 +82,16 @@ on early-boot
     write /sys/module/subsystem_restart/parameters/enable_debug ${persist.sys.ssr.enable_debug}
     write /sys/kernel/boot_adsp/boot 1
 
+    # Subsytem Restart
+    #venus
+    write /sys/bus/msm_subsys/devices/subsys0/restart_level "related"
+    #adsp
+    write /sys/bus/msm_subsys/devices/subsys1/restart_level "related"
+    #vpu
+    write /sys/bus/msm_subsys/devices/subsys2/restart_level "related"
+    #esoc0 (mdm)
+    write /sys/bus/msm_subsys/devices/subsys3/restart_level "related"
+
 on boot
     insmod /system/lib/modules/adsprpc.ko
     insmod /system/lib/modules/mhi.ko
