@@ -31,6 +31,7 @@
 
 #include <cutils/properties.h>
 #include <hardware/camera.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <utils/Errors.h>
 #include <gralloc_priv.h>
@@ -3273,12 +3274,12 @@ int QCamera2HardwareInterface::release()
  *==========================================================================*/
 int QCamera2HardwareInterface::dump(int fd)
 {
-    fdprintf(fd, "\n Camera HAL information Begin \n");
-    fdprintf(fd, "Camera ID: %d \n", mCameraId);
-    fdprintf(fd, "StoreMetaDataInFrame: %d \n", mStoreMetaDataInFrame);
-    fdprintf(fd, "\n Configuration: %s", mParameters.dump().string());
-    fdprintf(fd, "\n State Information: %s", m_stateMachine.dump().string());
-    fdprintf(fd, "\n Camera HAL information End \n");
+    dprintf(fd, "\n Camera HAL information Begin \n");
+    dprintf(fd, "Camera ID: %d \n", mCameraId);
+    dprintf(fd, "StoreMetaDataInFrame: %d \n", mStoreMetaDataInFrame);
+    dprintf(fd, "\n Configuration: %s", mParameters.dump().string());
+    dprintf(fd, "\n State Information: %s", m_stateMachine.dump().string());
+    dprintf(fd, "\n Camera HAL information End \n");
     return NO_ERROR;
 }
 
