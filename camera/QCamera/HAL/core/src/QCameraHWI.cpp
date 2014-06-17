@@ -2868,7 +2868,7 @@ int QCameraHardwareInterface::allocate_ion_memory(QCameraHalMemInfo_t *mem_info,
     alloc.len = (alloc.len + 4095) & (~4095);
     alloc.align = 4096;
     alloc.flags = ION_FLAG_CACHED;
-    alloc.heap_id_mask = ion_type;
+    alloc.heap_mask = ion_type;
     rc = ioctl(main_ion_fd, ION_IOC_ALLOC, &alloc);
     if (rc < 0) {
         ALOGE("ION allocation failed\n");

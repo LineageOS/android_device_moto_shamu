@@ -338,7 +338,7 @@ int QCamera3HeapMemory::allocOneBuffer(QCamera3MemInfo &memInfo, int heap_id, in
     alloc.len = (alloc.len + 4095) & (~4095);
     alloc.align = 4096;
     alloc.flags = ION_FLAG_CACHED;
-    alloc.heap_id_mask = heap_id;
+    alloc.heap_mask = heap_id;
     rc = ioctl(main_ion_fd, ION_IOC_ALLOC, &alloc);
     if (rc < 0) {
         ALOGE("ION allocation for len %d failed: %s\n", alloc.len,
@@ -435,8 +435,8 @@ void *QCamera3HeapMemory::getPtr(int index) const
  *==========================================================================*/
 int QCamera3HeapMemory::allocate(int count, int size, bool queueAll)
 {
-    int heap_id_mask = 0x1 << ION_IOMMU_HEAP_ID;
-    int rc = alloc(count, size, heap_id_mask);
+    int heap_mask = 0x1 << ION_IOMMU_HEAP_ID;
+    int rc = alloc(count, size, heap_mask);
     if (rc < 0)
         return rc;
 
