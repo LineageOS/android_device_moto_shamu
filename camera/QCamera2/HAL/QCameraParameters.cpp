@@ -127,6 +127,7 @@ const char QCameraParameters::KEY_QC_RDI_MODE[] = "rdi-mode";
 const char QCameraParameters::KEY_QC_SUPPORTED_RDI_MODES[] = "rdi-mode-values";
 const char QCameraParameters::KEY_QC_SECURE_MODE[] = "secure-mode";
 const char QCameraParameters::KEY_QC_SUPPORTED_SECURE_MODES[] = "secure-mode-values";
+const char QCameraParameters::KEY_QC_AUTO_HDR_SUPPORTED[] = "auto-hdr-supported";
 
 // Values for effect settings.
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
@@ -3908,6 +3909,8 @@ int32_t QCameraParameters::initDefaultParameters()
     setFloat(KEY_HORIZONTAL_VIEW_ANGLE, m_pCapability->hor_view_angle);
     setFloat(KEY_VERTICAL_VIEW_ANGLE, m_pCapability->ver_view_angle);
     set(QCameraParameters::KEY_FOCUS_DISTANCES, "Infinity,Infinity,Infinity");
+    set(KEY_QC_AUTO_HDR_SUPPORTED,
+        (m_pCapability->auto_hdr_supported)? VALUE_TRUE : VALUE_FALSE);
     // Set supported preview sizes
     if (m_pCapability->preview_sizes_tbl_cnt > 0 &&
         m_pCapability->preview_sizes_tbl_cnt <= MAX_SIZES_CNT) {
