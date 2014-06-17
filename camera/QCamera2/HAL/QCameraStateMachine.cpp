@@ -1605,10 +1605,12 @@ int32_t QCameraStateMachine::procEvtPicTakingState(qcamera_sm_evt_enum_t evt,
             rc = m_parent->sendCommand(cmd_payload->cmd,
                                        cmd_payload->arg1,
                                        cmd_payload->arg2);
+#ifndef VANILLA_HAL
             if ( CAMERA_CMD_LONGSHOT_OFF == cmd_payload->cmd ) {
                 // move state to previewing state
                 m_state = QCAMERA_SM_STATE_PREVIEWING;
             }
+#endif
             result.status = rc;
             result.request_api = evt;
             result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
@@ -2653,10 +2655,12 @@ int32_t QCameraStateMachine::procEvtPreviewPicTakingState(qcamera_sm_evt_enum_t 
             rc = m_parent->sendCommand(cmd_payload->cmd,
                                        cmd_payload->arg1,
                                        cmd_payload->arg2);
+#ifndef VANILLA_HAL
             if ( CAMERA_CMD_LONGSHOT_OFF == cmd_payload->cmd ) {
                 // move state to previewing state
                 m_state = QCAMERA_SM_STATE_PREVIEWING;
             }
+#endif
             result.status = rc;
             result.request_api = evt;
             result.result_type = QCAMERA_API_RESULT_TYPE_DEF;
