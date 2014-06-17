@@ -3093,9 +3093,15 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             ANDROID_LENS_FACING_BACK : ANDROID_LENS_FACING_FRONT;
     staticInfo.update(ANDROID_LENS_FACING, &lensFacing, 1);
 
+    int32_t available_jpeg_sizes[MAX_SIZES_CNT * 2];
+    uint8_t jpeg_sizes_cnt = filterJpegSizes(available_jpeg_sizes, available_processed_sizes,
+            (gCamCapability[cameraId]->picture_sizes_tbl_cnt) * 2,
+             MAX_SIZES_CNT * 2,
+             gCamCapability[cameraId]->active_array_size,
+             gCamCapability[cameraId]->max_downscale_factor);
     staticInfo.update(ANDROID_SCALER_AVAILABLE_JPEG_SIZES,
-                available_processed_sizes,
-                (gCamCapability[cameraId]->picture_sizes_tbl_cnt * 2));
+                available_jpeg_sizes,
+                jpeg_sizes_cnt);
 
     staticInfo.update(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES,
                       available_thumbnail_sizes,
@@ -3632,6 +3638,42 @@ void QCamera3HardwareInterface::makeOverridesList(cam_scene_mode_overrides_t* ov
         }
         j+=3;
     }
+}
+
+/*===========================================================================
+ * FUNCTION   : filterJpegSizes
+ *
+ * DESCRIPTION: Returns the supported jpeg sizes based on the max dimension that
+ *              could be downscaled to
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : length of jpegSizes array
+ *==========================================================================*/
+
+uint8_t QCamera3HardwareInterface::filterJpegSizes(int32_t* jpegSizes, int32_t* processedSizes,
+                                                   uint8_t processedSizesCnt,
+                                                   uint8_t maxCount,
+                                                   cam_rect_t active_array_size,
+                                                   uint8_t downscale_factor)
+{
+   if (downscale_factor == 0) {
+      downscale_factor = 1;
+   }
+    int32_t min_width = active_array_size.width / downscale_factor;
+    int32_t min_height = active_array_size.height / downscale_factor;
+    uint8_t jpegSizesCnt = 0;
+    if (processedSizesCnt > maxCount) {
+        processedSizesCnt = maxCount;
+    }
+    for (int i = 0; i < processedSizesCnt; i+=2) {
+        if (processedSizes[i] >= min_width && processedSizes[i+1] >= min_height) {
+            jpegSizes[jpegSizesCnt] = processedSizes[i];
+            jpegSizes[jpegSizesCnt+1] = processedSizes[i+1];
+            jpegSizesCnt += 2;
+        }
+    }
+    return jpegSizesCnt;
 }
 
 /*===========================================================================

@@ -120,6 +120,9 @@ public:
                                           int32_t* fpsRangesTable);
     static void makeOverridesList(cam_scene_mode_overrides_t* overridesTable, uint8_t size,
                                    uint8_t* overridesList, uint8_t* supported_indexes, int camera_id);
+    static uint8_t filterJpegSizes(int32_t* jpegSizes, int32_t* processedSizes,
+                                   uint8_t processedSizesCnt, uint8_t maxCount,
+                                   cam_rect_t active_array_size, uint8_t downscale_factor);
     static void convertToRegions(cam_rect_t rect, int32_t* region, int weight);
     static void convertFromRegions(cam_area_t* roi, const camera_metadata_t *settings,
                                    uint32_t tag);
