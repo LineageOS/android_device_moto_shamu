@@ -96,4 +96,6 @@ TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
 
 BOARD_VENDOR_QCOM_GPS_LOC_API_HARDWARE := $(TARGET_BOARD_PLATFORM)
 
+BOARD_HAS_AUDIO_DSP := true
+
 -include vendor/moto/shamu/BoardConfigVendor.mk

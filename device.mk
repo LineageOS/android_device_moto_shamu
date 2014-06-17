@@ -231,6 +231,15 @@ PRODUCT_COPY_FILES += \
 
 $(call inherit-product-if-exists, vendor/broadcom/nfc/Firmware.mk)
 
+# Audio DSP
+PRODUCT_PACKAGES += \
+    aonvr1.bin \
+    aonvr2.bin \
+    adspd \
+    libadspd \
+    libsupermodel \
+    sound_trigger.primary.shamu.so
+
 # setup dalvik vm configs.
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 

@@ -233,6 +233,16 @@ on boot
     write /sys/module/rmnet_usb/parameters/rmnet_data_init 1
     chown radio radio /sys/devices/virtual/hsicctl/hsicctl0/modem_wait
 
+    # Audio DSP permissions
+    chown media media /dev/ttyHS3
+    chown media media /sys/devices/c55_ctrl/gpio_ap_int/edge
+    chown media media /sys/devices/c55_ctrl/gpio_ap_int/value
+    chown media media /sys/devices/c55_ctrl/gpio_c55_int/value
+    chown media media /sys/devices/c55_ctrl/gpio_core/value
+    chown media media /sys/devices/c55_ctrl/gpio_reset/value
+    mkdir /data/adspd/ 0770 media media
+    mkdir /data/adspd/1 0770 media media
+
 # msm specific files that need to be created on /data
 on post-fs-data
     # we will remap this as /mnt/sdcard with the sdcard fuse tool
@@ -622,6 +632,11 @@ service lowi-server /system/bin/lowi-server
     group gps net_admin wifi inet
     disabled
 
+service adspd /system/bin/adspd /dev/ttyHS3
+   class late_start
+   socket adspdsock stream 0666 media media
+   user media
+   group media input
 
 on property:crypto.driver.load=1
      insmod /system/lib/modules/qce.ko
