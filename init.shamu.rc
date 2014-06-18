@@ -725,6 +725,9 @@ service hcidump /system/bin/sh /system/etc/hcidump.sh
     disabled
     oneshot
 
+on charger
+    write /sys/class/leds/lcd-backlight/brightness 100
+
 service charger /charger
     class charger
 
