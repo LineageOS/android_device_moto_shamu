@@ -4923,9 +4923,7 @@ int32_t QCamera2HardwareInterface::preparePreview()
     } else {
         bool recordingHint = mParameters.getRecordingHintValue();
         if(!isRdiMode() && recordingHint) {
-            cam_dimension_t videoSize;
-            mParameters.getVideoSize(&videoSize.width, &videoSize.height);
-            if (!is4k2kResolution(&videoSize)) {
+            if (!mParameters.is4k2kVideoResolution()) {
                rc = addChannel(QCAMERA_CH_TYPE_SNAPSHOT);
                if (rc != NO_ERROR) {
                    return rc;

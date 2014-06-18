@@ -9045,11 +9045,13 @@ bool QCameraParameters::setStreamConfigure(bool isCapture, bool previewAsPostvie
 
     } else if (!isCapture) {
         if (m_bRecordingHint) {
-            stream_config_info.type[stream_config_info.num_streams] =
-                CAM_STREAM_TYPE_SNAPSHOT;
-            getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT,
-                stream_config_info.stream_sizes[stream_config_info.num_streams]);
-            stream_config_info.num_streams++;
+           if (!is4k2kVideoResolution()) {
+               stream_config_info.type[stream_config_info.num_streams] =
+                   CAM_STREAM_TYPE_SNAPSHOT;
+               getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT,
+                   stream_config_info.stream_sizes[stream_config_info.num_streams]);
+               stream_config_info.num_streams++;
+           }
 
             stream_config_info.type[stream_config_info.num_streams] =
                 CAM_STREAM_TYPE_VIDEO;
@@ -9167,6 +9169,27 @@ uint8_t QCameraParameters::getNumOfExtraBuffersForImageProc()
     }
 
     return numOfBufs * getBurstNum();
+}
+
+/*===========================================================================
+ * FUNCTION   : is4k2kVideoResolution
+ *
+ * DESCRIPTION: if resolution is 4k x 2k or true 4k x 2k
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: video resolution is 4k x 2k
+ *              false: video resolution is not 4k x 2k
+ *==========================================================================*/
+bool QCameraParameters::is4k2kVideoResolution()
+{
+   bool enabled = false;
+   cam_dimension_t resolution;
+   getVideoSize(&resolution.width, &resolution.height);
+   if (!(resolution.width < 3840 && resolution.height < 2160)) {
+      enabled = true;
+   }
+   return enabled;
 }
 /*===========================================================================
  * FUNCTION   : dump
