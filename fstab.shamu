@@ -6,7 +6,7 @@
 # Currently we dont have e2fsck compiled. So fs check would failed.
 
 #<src>                                                <mnt_point>  <type>  <mnt_flags and options>                     <fs_mgr_flags>
-/dev/block/platform/msm_sdcc.1/by-name/system         /system      ext4    ro,barrier=1                                wait
+/dev/block/platform/msm_sdcc.1/by-name/system         /system      ext4    ro,barrier=1                                wait,verify
 /dev/block/platform/msm_sdcc.1/by-name/userdata    /data        ext4    rw,discard,nosuid,nodev,noatime,nodiratime,noauto_da_alloc,nobarrier    wait,check,encryptable=footer
 /dev/block/platform/msm_sdcc.1/by-name/cache       /cache       ext4    rw,noatime,nosuid,nodev,barrier=1,data=ordered   wait,check
 /dev/block/platform/msm_sdcc.1/by-name/boot         /boot           emmc    defaults                                                        defaults
