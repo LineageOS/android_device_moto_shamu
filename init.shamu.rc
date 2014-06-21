@@ -88,6 +88,12 @@ on post-fs-data
     mkdir /persist/sensors
     chmod 0775 /persist/sensors
 
+    # Fingerprint sensor
+    mkdir /data/validity 0775 system system
+    mkdir /data/validity/fwext 0775 system system
+    symlink /system/vendor/lib/hw/ValidityPersistentData /data/validity/ValidityPersistentData
+    symlink /system/vendor/lib/hw/6_03f_moto.xefwext /data/validity/fwext/6_03f_moto.xefwext
+
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864
