@@ -156,7 +156,7 @@ PRODUCT_PACKAGES += \
     libqomx_core \
     libmmcamera_interface \
     libmmjpeg_interface \
-    camera.shamu \
+    camera.msm8084 \
     mm-jpeg-interface-test \
     mm-qcamera-app
 
