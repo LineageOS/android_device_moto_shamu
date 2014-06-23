@@ -3650,17 +3650,16 @@ int32_t QCameraParameters::setFlip(const QCameraParameters& params)
 int32_t QCameraParameters::setBurstNum(const QCameraParameters& params)
 {
     int nBurstNum = params.getInt(KEY_QC_SNAPSHOT_BURST_NUM);
+    if (isAdvCamFeaturesEnabled()) {
+        nBurstNum = 1;
+    }
     if (nBurstNum <= 0) {
-        if (!isAdvCamFeaturesEnabled()) {
-            // if burst number is not set in parameters,
-            // read from sys prop
-            char prop[PROPERTY_VALUE_MAX];
-            memset(prop, 0, sizeof(prop));
-            property_get("persist.camera.snapshot.number", prop, "0");
-            nBurstNum = atoi(prop);
-        } else {
-            nBurstNum = 1;
-        }
+        // if burst number is not set in parameters,
+        // read from sys prop
+        char prop[PROPERTY_VALUE_MAX];
+        memset(prop, 0, sizeof(prop));
+        property_get("persist.camera.snapshot.number", prop, "0");
+        nBurstNum = atoi(prop);
         if (nBurstNum <= 0) {
             nBurstNum = 1;
         }
@@ -3823,6 +3822,9 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setFlip(params)))                         final_rc = rc;
     if ((rc = setVideoHDR(params)))                     final_rc = rc;
     if ((rc = setVtEnable(params)))                     final_rc = rc;
+    if ((rc = setAFBracket(params)))                    final_rc = rc;
+    if ((rc = setChromaFlash(params)))                  final_rc = rc;
+    if ((rc = setOptiZoom(params)))                     final_rc = rc;
     if ((rc = setBurstNum(params)))                     final_rc = rc;
     if ((rc = setBurstLEDOnPeriod(params)))             final_rc = rc;
     if ((rc = setRetroActiveBurstNum(params)))          final_rc = rc;
@@ -3835,9 +3837,6 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setJpegThumbnailSize(params)))            final_rc = rc;
     if ((rc = setStatsDebugMask()))                     final_rc = rc;
     if ((rc = setMobicat(params)))                      final_rc = rc;
-    if ((rc = setAFBracket(params)))                    final_rc = rc;
-    if ((rc = setChromaFlash(params)))                  final_rc = rc;
-    if ((rc = setOptiZoom(params)))                     final_rc = rc;
 
     if ((rc = updateFlash(false)))                      final_rc = rc;
 

@@ -605,7 +605,7 @@ public:
     bool isDisplayFrameNeeded() { return m_bDisplayFrame; };
     int32_t setDisplayFrame(bool enabled) {m_bDisplayFrame=enabled; return 0;};
     bool isAdvCamFeaturesEnabled() {return isUbiFocusEnabled() ||
-        isChromaFlashEnabled() || isOptiZoomEnabled() || isHDREnabled();}
+        isChromaFlashEnabled() || m_bOptiZoomOn || isHDREnabled();}
     int32_t setAecLock(const char *aecStr);
     bool is4k2kVideoResolution();
 
