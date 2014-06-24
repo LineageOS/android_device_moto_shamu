@@ -2423,8 +2423,75 @@ QCamera3HardwareInterface::translateFromHalMetadata(
         cam_cds_mode_type_t *cds = (cam_cds_mode_type_t *)
                 POINTER_OF_META(CAM_INTF_PARM_CDS_MODE, metadata);
         int32_t mode = *cds;
-        camMetadata.update(QCAMERA_CDS_MODE,
+        camMetadata.update(QCAMERA3_CDS_MODE,
                 &mode, 1);
+    }
+
+    // Reprocess crop data
+    if (IS_META_AVAILABLE(CAM_INTF_META_CROP_DATA, metadata)) {
+        cam_crop_data_t *crop_data = (cam_crop_data_t *)
+                POINTER_OF_PARAM(CAM_INTF_META_CROP_DATA, metadata);
+        uint8_t cnt = crop_data->num_of_streams;
+        if ((0 < cnt) && (cnt < MAX_NUM_STREAMS)) {
+            int rc = NO_ERROR;
+            int32_t *crop = new int32_t[cnt*4];
+            if (NULL == crop) {
+                rc = NO_MEMORY;
+            }
+
+            int32_t *crop_stream_ids = new int32_t[cnt];
+            if (NULL == crop_stream_ids) {
+                rc = NO_MEMORY;
+            }
+
+            if (NO_ERROR == rc) {
+                int32_t steams_found = 0;
+                for (size_t i = 0; i < cnt; i++) {
+                    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+                        it != mStreamInfo.end(); it++) {
+                        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+                        if (NULL != channel) {
+                            if (crop_data->crop_info[i].stream_id ==
+                                    channel->mStreams[0]->getMyServerID()) {
+                                crop[steams_found*4] = crop_data->crop_info[i].crop.left;
+                                crop[steams_found*4 + 1] = crop_data->crop_info[i].crop.top;
+                                crop[steams_found*4 + 2] = crop_data->crop_info[i].crop.width;
+                                crop[steams_found*4 + 3] = crop_data->crop_info[i].crop.height;
+                                // In a more general case we may want to generate
+                                // unique id depending on width, height, stream, private
+                                // data etc.
+                                crop_stream_ids[steams_found] = (int32_t)(*it)->stream;
+                                steams_found++;
+                                CDBG("%s: Adding reprocess crop data for stream %p %dx%d, %dx%d",
+                                        __func__,
+                                        (*it)->stream,
+                                        crop_data->crop_info[i].crop.left,
+                                        crop_data->crop_info[i].crop.top,
+                                        crop_data->crop_info[i].crop.width,
+                                        crop_data->crop_info[i].crop.height);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                camMetadata.update(QCAMERA3_CROP_COUNT_REPROCESS,
+                        &steams_found, 1);
+                camMetadata.update(QCAMERA3_CROP_REPROCESS,
+                        crop, steams_found*4);
+                camMetadata.update(QCAMERA3_CROP_STREAM_ID_REPROCESS,
+                        crop_stream_ids, steams_found);
+            }
+
+            if (crop) {
+                delete [] crop;
+            }
+            if (crop_stream_ids) {
+                delete [] crop_stream_ids;
+            }
+        } else {
+            ALOGE("%s: No valid crop metadata entries", __func__);
+        }
     }
 
     resultMetadata = camMetadata.release();
@@ -4565,7 +4632,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
         cds_mode = CAM_CDS_MODE_AUTO;
     }
     int32_t mode = cds_mode;
-    settings.update(QCAMERA_CDS_MODE, &mode, 1);
+    settings.update(QCAMERA3_CDS_MODE, &mode, 1);
 
     mDefaultMetadata[type] = settings.release();
 
@@ -4660,18 +4727,61 @@ int32_t QCamera3HardwareInterface::setReprocParameters(
                                 sizeof(request->frame_number), &(request->frame_number));
     if (rc < 0) {
         ALOGE("%s: Failed to set the frame number in the parameters", __func__);
-        goto FAIL;
+        return rc;
     }
 
     rc = translateToHalMetadata(request, reprocParam);
     if (rc < 0) {
         ALOGE("%s: Failed to translate reproc request", __func__);
-        goto FAIL;
+        return rc;
     }
 
-    return rc;
+    CameraMetadata frame_settings;
+    frame_settings = request->settings;
+    if (frame_settings.exists(QCAMERA3_CROP_COUNT_REPROCESS) &&
+            frame_settings.exists(QCAMERA3_CROP_REPROCESS) &&
+            frame_settings.exists(QCAMERA3_CROP_STREAM_ID_REPROCESS)) {
+        int32_t *crop_count =
+                frame_settings.find(QCAMERA3_CROP_COUNT_REPROCESS).data.i32;
+        int32_t *crop_data =
+                frame_settings.find(QCAMERA3_CROP_REPROCESS).data.i32;
+        int32_t *crop_stream_ids =
+                frame_settings.find(QCAMERA3_CROP_STREAM_ID_REPROCESS).data.i32;
+        if ((0 < *crop_count) && (*crop_count < MAX_NUM_STREAMS)) {
+            bool found = false;
+            int32_t i;
+            for (i = 0; i < *crop_count; i++) {
+                if (crop_stream_ids[i] == (int32_t) request->input_buffer->stream) {
+                    found = true;
+                    break;
+                }
+            }
 
-FAIL:
+            if (found) {
+                cam_crop_data_t crop_meta;
+                memset(&crop_meta, 0, sizeof(cam_crop_data_t));
+                crop_meta.num_of_streams = 1;
+                crop_meta.crop_info[0].crop.left   = crop_data[i*4];
+                crop_meta.crop_info[0].crop.top    = crop_data[i*4 + 1];
+                crop_meta.crop_info[0].crop.width  = crop_data[i*4 + 2];
+                crop_meta.crop_info[0].crop.height = crop_data[i*4 + 3];
+                rc = AddSetParmEntryToBatch(reprocParam,
+                        CAM_INTF_META_CROP_DATA,
+                        sizeof(cam_crop_data_t), &crop_meta);
+                CDBG("%s: Found reprocess crop data for stream %p %dx%d, %dx%d",
+                        __func__,
+                        request->input_buffer->stream,
+                        crop_meta.crop_info[0].crop.left,
+                        crop_meta.crop_info[0].crop.top,
+                        crop_meta.crop_info[0].crop.width,
+                        crop_meta.crop_info[0].crop.height);
+            } else {
+                ALOGE("%s: No matching reprocess input stream found!", __func__);
+            }
+        } else {
+            ALOGE("%s: Invalid reprocess crop count %d!", __func__, *crop_count);
+        }
+    }
 
     return rc;
 }
@@ -5230,9 +5340,9 @@ int QCamera3HardwareInterface::translateToHalMetadata
     }
 
     // CDS
-    if (frame_settings.exists(QCAMERA_CDS_MODE)) {
+    if (frame_settings.exists(QCAMERA3_CDS_MODE)) {
         int32_t* cds =
-            frame_settings.find(QCAMERA_CDS_MODE).data.i32;
+            frame_settings.find(QCAMERA3_CDS_MODE).data.i32;
         if ((CAM_CDS_MODE_MAX <= (*cds)) || (0 > (*cds))) {
             ALOGE("%s: Invalid CDS mode %d!", __func__, *cds);
         } else {

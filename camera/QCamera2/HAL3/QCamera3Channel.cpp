@@ -2485,7 +2485,25 @@ int32_t QCamera3ReprocessChannel::unmapOfflineBuffers()
         param.reprocess.meta_buf_index = meta_buf_idx;
 
         // Find crop info for reprocess stream
-        // TODO:
+        metadata_buffer_t *meta = (metadata_buffer_t *) frame->metadata_buffer.buffer;
+        if (IS_META_AVAILABLE(CAM_INTF_META_CROP_DATA, meta)) {
+            cam_crop_data_t *crop_data = (cam_crop_data_t *)
+                    POINTER_OF_PARAM(CAM_INTF_META_CROP_DATA, meta);
+            if (1 == crop_data->num_of_streams) {
+                param.reprocess.crop_rect = crop_data->crop_info[0].crop;
+                CDBG("%s: Found offline reprocess crop %dx%d %dx%d", __func__,
+                        crop_data->crop_info[0].crop.left,
+                        crop_data->crop_info[0].crop.top,
+                        crop_data->crop_info[0].crop.width,
+                        crop_data->crop_info[0].crop.height);
+            } else {
+                ALOGE("%s: Incorrect number of offline crop data entries %d",
+                        __func__,
+                        crop_data->num_of_streams);
+            }
+        } else {
+            ALOGE("%s: Crop data not present", __func__);
+        }
 
         rc = pStream->setParameter(param);
         if (rc != NO_ERROR) {
