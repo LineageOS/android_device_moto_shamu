@@ -2252,6 +2252,34 @@ int32_t QCameraParameters::setStatsDebugMask()
 }
 
 /*===========================================================================
+ * FUNCTION   : setPAAF
+ *
+ * DESCRIPTION: get the value from persist file in Stats module that will
+ *              control the preview assisted AF in the module
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setPAAF()
+{
+    uint32_t paaf = 0;
+    char value[PROPERTY_VALUE_MAX];
+
+    property_get("persist.camera.stats.af.paaf", value, "1");
+    paaf = (uint32_t)atoi(value);
+
+    ALOGE("%s: PAAF is: %s", __func__, paaf ? "ON": "OFF");
+
+    return AddSetParmEntryToBatch(m_pParamBuf,
+                                  CAM_INTF_PARM_STATS_AF_PAAF,
+                                  sizeof(paaf),
+                                  &paaf);
+}
+
+/*===========================================================================
  * FUNCTION   : setSceneDetect
  *
  * DESCRIPTION: set scenen detect value from user setting
@@ -3847,6 +3875,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setLiveSnapshotSize(params)))             final_rc = rc;
     if ((rc = setJpegThumbnailSize(params)))            final_rc = rc;
     if ((rc = setStatsDebugMask()))                     final_rc = rc;
+    if ((rc = setPAAF()))                               final_rc = rc;
     if ((rc = setMobicat(params)))                      final_rc = rc;
 
     if ((rc = updateFlash(false)))                      final_rc = rc;

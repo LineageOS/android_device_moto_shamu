@@ -605,6 +605,7 @@ typedef struct {
     INCLUDE(CAM_INTF_META_TONEMAP_MODE,                 uint32_t,                    1);
     INCLUDE(CAM_INTF_META_STREAM_ID,                    cam_stream_ID_t,             1);
     INCLUDE(CAM_INTF_PARM_STATS_DEBUG_MASK,             uint32_t,                    1);
+    INCLUDE(CAM_INTF_PARM_STATS_AF_PAAF,                uint32_t,                    1);
     INCLUDE(CAM_INTF_PARM_FOCUS_BRACKETING,             cam_af_bracketing_t,         1);
     INCLUDE(CAM_INTF_PARM_FLASH_BRACKETING,             cam_flash_bracketing_t,      1);
     INCLUDE(CAM_INTF_META_JPEG_GPS_COORDINATES,         double,                      3);
