@@ -84,14 +84,16 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/moto/shamu/sec_config:system/etc/sec_config
 
+# Touch firmware updater
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/init.mmi.touch.sh:root/init.mmi.touch.sh
+
 # Add WiFi Firmware
 $(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4356/device-bcm.mk)
 
 # WiFi cal NVRAM file
 PRODUCT_COPY_FILES += \
     device/moto/shamu/bcmdhd.cal:system/etc/wifi/bcmdhd.cal
-
-PRODUCT_PACKAGES += atmel.fw.apq8084
 
 PRODUCT_TAGS += dalvik.gc.type-precise
 
@@ -113,6 +115,8 @@ PRODUCT_PACKAGES := \
     dhcpcd.conf \
     wpa_supplicant \
     wpa_supplicant.conf
+
+PRODUCT_PACKAGES += atmel.fw.apq8084
 
 # Live Wallpapers
 PRODUCT_PACKAGES += \
