@@ -687,7 +687,7 @@ on property:sys.boot_completed=1
     start qcom-post-boot
 
 on property:ro.debuggable=1
-    start subsystem_ramdump
+    start ss_ramdump
 
 service atfwd /system/bin/ATFWD-daemon
     class late_start
@@ -808,7 +808,7 @@ service mpdecision /system/bin/mpdecision --no_sleep --avg_comp
    user root
    disabled
 
-service subsystem_ramdump /system/bin/subsystem_ramdump
+service ss_ramdump /system/bin/subsystem_ramdump
     class main
     user root
     group root
