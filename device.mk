@@ -237,6 +237,9 @@ PRODUCT_PACKAGES += \
     libsupermodel \
     sound_trigger.primary.shamu.so
 
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.sys.usb.config=mtp
+
 # setup dalvik vm configs.
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 
