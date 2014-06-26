@@ -857,3 +857,8 @@ on property:persist.qca1530=no
 
 on property:init.svc.surfaceflinger=stopped
     stop ppd
+
+service mmi-touch-sh /system/bin/logwrapper /system/bin/sh /init.mmi.touch.sh atmel
+    class late_start
+    user root
+    oneshot
