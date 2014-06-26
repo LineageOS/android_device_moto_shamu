@@ -98,4 +98,6 @@ BOARD_VENDOR_QCOM_GPS_LOC_API_HARDWARE := $(TARGET_BOARD_PLATFORM)
 
 BOARD_HAS_AUDIO_DSP := true
 
+USE_DEVICE_SPECIFIC_CAMERA:= true
+
 -include vendor/moto/shamu/BoardConfigVendor.mk
