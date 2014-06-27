@@ -228,7 +228,9 @@ PRODUCT_PACKAGES += \
     libgeofence \
     libgps.utils \
     gps.msm8084 \
-    flp.msm8084
+    flp.msm8084 \
+    liblbs_core \
+    flp.conf
 
 # NFC packages
 PRODUCT_PACKAGES += \
