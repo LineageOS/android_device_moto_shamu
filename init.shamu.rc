@@ -16,6 +16,7 @@
 
 import init.shamu.usb.rc
 import init.shamu.power.rc
+import init.shamu.diag.rc
 
 on early-init
     mkdir /firmware 0771 system system
@@ -240,10 +241,6 @@ on boot
     # Set the console loglevel to < KERN_INFO
     # Set the default message loglevel to KERN_INFO
     # write /proc/sys/kernel/printk "6 6 1 7"
-
-    # Modem logging collection
-    mkdir /data/diag_logs 0777 system system
-    chmod 666 /dev/diag
 
     write /sys/bus/platform/drivers/xhci_msm_hsic/unbind msm_hsic_host
     write /sys/module/rmnet_usb/parameters/mux_enabled 1

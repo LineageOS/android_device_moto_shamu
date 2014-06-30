@@ -251,6 +251,18 @@ PRODUCT_PACKAGES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.usb.config=mtp
 
+# Modem debugger
+ifeq ($(TARGET_BUILD_VARIANT), userdebug)
+PRODUCT_PACKAGES += \
+    QXDMLogger
+
+PRODUCT_COPY_FILES += \
+    device/moto/shamu/init.shamu.diag.rc.userdebug:root/init.shamu.diag.rc
+else
+PRODUCT_COPY_FILES += \
+    device/moto/shamu/init.shamu.diag.rc.user:root/init.shamu.diag.rc
+endif
+
 # setup dalvik vm configs.
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 
