@@ -3090,7 +3090,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_CONTROL_AE_COMPENSATION_STEP,
                       &exposureCompensationStep, 1);
 
-    /*TO DO*/
     uint8_t availableVstabModes[] = {ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF};
     staticInfo.update(ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
                       availableVstabModes, sizeof(availableVstabModes));
@@ -3993,35 +3992,50 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     int32_t defaultRequestID = 0;
     settings.update(ANDROID_REQUEST_ID, &defaultRequestID, 1);
 
+    /* OIS disable */
+    char ois_prop[PROPERTY_VALUE_MAX];
+    memset(ois_prop, 0, sizeof(ois_prop));
+    property_get("persist.camera.ois.disable", ois_prop, "0");
+    uint8_t ois_disable = atoi(ois_prop);
+
     uint8_t controlIntent = 0;
     uint8_t focusMode;
+    uint8_t opt_stab_mode;
+
     switch (type) {
       case CAMERA3_TEMPLATE_PREVIEW:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
         break;
       case CAMERA3_TEMPLATE_STILL_CAPTURE:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
         break;
       case CAMERA3_TEMPLATE_VIDEO_RECORD:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
         break;
       case CAMERA3_TEMPLATE_VIDEO_SNAPSHOT:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
         break;
       case CAMERA3_TEMPLATE_ZERO_SHUTTER_LAG:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
         break;
       case CAMERA3_TEMPLATE_MANUAL:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_MANUAL;
         focusMode = ANDROID_CONTROL_AF_MODE_OFF;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
         break;
       default:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_CUSTOM;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
         break;
     }
     settings.update(ANDROID_CONTROL_CAPTURE_INTENT, &controlIntent, 1);
@@ -4030,6 +4044,15 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
         focusMode = ANDROID_CONTROL_AF_MODE_OFF;
     }
     settings.update(ANDROID_CONTROL_AF_MODE, &focusMode, 1);
+
+    if (gCamCapability[mCameraId]->optical_stab_modes_count == 1 &&
+            gCamCapability[mCameraId]->optical_stab_modes[0] == CAM_OPT_STAB_ON)
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
+    else if ((gCamCapability[mCameraId]->optical_stab_modes_count == 1 &&
+            gCamCapability[mCameraId]->optical_stab_modes[0] == CAM_OPT_STAB_OFF)
+            || ois_disable)
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
+    settings.update(ANDROID_LENS_OPTICAL_STABILIZATION_MODE, &opt_stab_mode, 1);
 
     settings.update(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
             &gCamCapability[mCameraId]->exposure_compensation_default, 1);
@@ -4149,11 +4172,6 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
 
     static const uint8_t vs_mode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF;
     settings.update(ANDROID_CONTROL_VIDEO_STABILIZATION_MODE, &vs_mode, 1);
-
-    uint8_t opt_stab_mode = (gCamCapability[mCameraId]->optical_stab_modes_count == 2)?
-                             ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON :
-                             ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
-    settings.update(ANDROID_LENS_OPTICAL_STABILIZATION_MODE, &opt_stab_mode, 1);
 
     /*focus distance*/
     float focus_distance = 0.0;
