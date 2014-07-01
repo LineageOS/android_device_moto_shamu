@@ -1065,11 +1065,11 @@
     </path>
 
     <path name="speaker-mic">
-        <path name="adc4" />
+        <path name="adc3" />
         <ctl name="ADC1 Volume" value="0" />
         <ctl name="ADC2 Volume" value="0" />
-        <ctl name="ADC3 Volume" value="0" />
-        <ctl name="ADC4 Volume" value="13" />
+        <ctl name="ADC3 Volume" value="13" />
+        <ctl name="ADC4 Volume" value="0" />
         <ctl name="ADC5 Volume" value="0" />
         <ctl name="ADC6 Volume" value="0" />
     </path>
@@ -1168,7 +1168,9 @@
     </path>
 
     <path name="voice-speaker">
-        <path name="speaker" />
+        <ctl name="BOOST_STUB Left Mixer left" value="1" />
+        <ctl name="BOOST Left Ch Select" value="1" />
+        <ctl name="BOOST Output Mixer Left DSP Bypass Left" value="2" />
     </path>
 
     <path name="voice-speaker-mic">
