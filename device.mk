@@ -252,7 +252,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.usb.config=mtp
 
 # Modem debugger
-ifeq ($(TARGET_BUILD_VARIANT), userdebug)
+ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
 PRODUCT_PACKAGES += \
     QXDMLogger
 
