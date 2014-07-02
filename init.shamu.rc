@@ -859,3 +859,11 @@ service mmi-touch-sh /system/bin/logwrapper /system/bin/sh /init.mmi.touch.sh at
     class late_start
     user root
     oneshot
+
+# bugreport is triggered by holding down volume down, volume up and power
+service bugreport /system/bin/dumpstate -d -p -B \
+        -o /data/data/com.android.shell/files/bugreports/bugreport
+    class main
+    disabled
+    oneshot
+    keycodes 114 115 116
