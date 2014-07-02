@@ -1,0 +1,7 @@
+system/vendor/firmware/venus.mdt:qcom
+system/vendor/firmware/venus.b00:qcom
+system/vendor/firmware/venus.b01:qcom
+system/vendor/firmware/venus.b02:qcom
+system/vendor/firmware/venus.b03:qcom
+system/vendor/firmware/venus.b04:qcom
+root/adb_keys:google
