@@ -15,17 +15,6 @@
 on init
     write /sys/class/android_usb/android0/f_rndis/wceis 1
 
-    # Mount Points for External Storage Devices
-    mkdir /storage/usbdisk_1.1.1 0755 system system
-    mkdir /storage/usbdisk_1.0 0755 system system
-    mkdir /storage/usbdisk_1.1 0755 system system
-    mkdir /storage/usbdisk_1.2 0755 system system
-    mkdir /storage/usbdisk_1.3 0755 system system
-    mkdir /storage/usbdisk_1.4 0755 system system
-    mkdir /storage/usbdisk_1.5 0755 system system
-    mkdir /storage/usbdisk_1.6 0755 system system
-    mkdir /storage/usbdisk_1.7 0755 system system
-
 on boot
     write /sys/class/android_usb/android0/iManufacturer ${ro.product.manufacturer}
     write /sys/class/android_usb/android0/iProduct ${ro.product.model}
