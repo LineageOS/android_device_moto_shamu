@@ -1053,6 +1053,7 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
             if (i->frame_number == urgent_frame_number) {
 
                 camera3_capture_result_t result;
+                memset(&result, 0, sizeof(camera3_capture_result_t));
 
                 // Send shutter notify to frameworks
                 notify_msg.type = CAMERA3_MSG_SHUTTER;
@@ -1092,6 +1093,7 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
     for (List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
         i != mPendingRequestsList.end() && i->frame_number <= frame_number;) {
         camera3_capture_result_t result;
+        memset(&result, 0, sizeof(camera3_capture_result_t));
         CDBG("%s: frame_number in the list is %d", __func__, i->frame_number);
 
         // Flush out all entries with less or equal frame numbers.
@@ -1282,6 +1284,7 @@ void QCamera3HardwareInterface::handleBufferWithLock(
             }
         }
         camera3_capture_result_t result;
+        memset(&result, 0, sizeof(camera3_capture_result_t));
         result.result = NULL;
         result.frame_number = frame_number;
         result.num_output_buffers = 1;
@@ -1738,6 +1741,8 @@ int QCamera3HardwareInterface::flush()
     camera3_stream_buffer_t pStream_Buf;
 
     CDBG("%s: Unblocking Process Capture Request", __func__);
+
+    memset(&result, 0, sizeof(camera3_capture_result_t));
 
     // Stop the Streams/Channels
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
