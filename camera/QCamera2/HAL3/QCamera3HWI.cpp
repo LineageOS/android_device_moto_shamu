@@ -796,6 +796,9 @@ int QCamera3HardwareInterface::configureStreams(
 
     AddSetParmEntryToBatch(mParameters, CAM_INTF_META_STREAM_INFO,
                 sizeof(stream_config_info), &stream_config_info);
+    int32_t tintless_value = 1;
+    AddSetParmEntryToBatch(mParameters,CAM_INTF_PARM_TINTLESS,
+                sizeof(tintless_value), &tintless_value);
 
     mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
 
