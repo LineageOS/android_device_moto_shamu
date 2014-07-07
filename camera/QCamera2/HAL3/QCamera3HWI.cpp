@@ -1990,20 +1990,6 @@ QCamera3HardwareInterface::translateFromHalMetadata(
             (uint8_t *)POINTER_OF_META(CAM_INTF_META_COLOR_CORRECT_MODE, metadata);
         camMetadata.update(ANDROID_COLOR_CORRECTION_MODE, color_correct_mode, 1);
     }
-    // 3A state is sent in urgent partial result (uses quirk)
-    if ((IS_META_AVAILABLE(CAM_INTF_META_AEC_PRECAPTURE_ID, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AEC_ROI, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AEC_STATE, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_PARM_FOCUS_MODE, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AF_ROI, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AF_STATE, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AF_TRIGGER_ID, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_PARM_WHITE_BALANCE, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AWB_REGIONS, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_AWB_STATE, metadata)) ||
-        (IS_META_AVAILABLE(CAM_INTF_META_MODE, metadata))) {
-           CDBG("%s: 3A metadata do not process", __func__);
-    }
     if (IS_META_AVAILABLE(CAM_INTF_META_EDGE_MODE, metadata)) {
         cam_edge_application_t  *edgeApplication =
             (cam_edge_application_t *)POINTER_OF_META(CAM_INTF_META_EDGE_MODE, metadata);
@@ -2284,6 +2270,12 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                 (camera_metadata_rational_t*)neuColPoint->neutral_col_point, 3);
     }
 
+    if (IS_META_AVAILABLE(CAM_INTF_META_LENS_SHADING_MAP_MODE, metadata)) {
+         uint8_t  shadingMapMode =
+                 *((uint32_t *)POINTER_OF_META(CAM_INTF_META_LENS_SHADING_MAP_MODE, metadata));
+         camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, &shadingMapMode, 1);
+    }
+
     uint8_t hotPixelMode = ANDROID_HOT_PIXEL_MODE_FAST;
     camMetadata.update(ANDROID_HOT_PIXEL_MODE, &hotPixelMode, 1);
 
@@ -2319,20 +2311,24 @@ QCamera3HardwareInterface::translateFromHalMetadata(
  *==========================================================================*/
 camera_metadata_t*
 QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
-                                (metadata_buffer_t *metadata) {
-
+                                (metadata_buffer_t *metadata)
+{
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
 
     uint8_t partial_result_tag = ANDROID_QUIRKS_PARTIAL_RESULT_PARTIAL;
     camMetadata.update(ANDROID_QUIRKS_PARTIAL_RESULT, &partial_result_tag, 1);
 
-    if (IS_META_AVAILABLE(CAM_INTF_META_AEC_PRECAPTURE_ID, metadata)) {
-        int32_t  *ae_precapture_id = (int32_t *)
-            POINTER_OF_META(CAM_INTF_META_AEC_PRECAPTURE_ID, metadata);
+    if (IS_META_AVAILABLE(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER, metadata)) {
+        cam_trigger_t *aecTrigger =
+                (cam_trigger_t *)POINTER_OF_META(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER, metadata);
+        camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER,
+                &aecTrigger->trigger, 1);
         camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_ID,
-                                          ae_precapture_id, 1);
+                &aecTrigger->trigger_id, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_PRECAPTURE_ID", __func__);
+        CDBG("%s: urgent Metadata : CAM_INTF_META_AEC_PRECAPTURE_TRIGGER",
+                __func__);
     }
     if (IS_META_AVAILABLE(CAM_INTF_META_AEC_ROI, metadata)) {
         cam_area_t  *hAeRegions = (cam_area_t *)
@@ -2371,10 +2367,14 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         camMetadata.update(ANDROID_CONTROL_AF_STATE, afState, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_AF_STATE", __func__);
     }
-    if (IS_META_AVAILABLE(CAM_INTF_META_AF_TRIGGER_ID, metadata)) {
-        int32_t  *afTriggerId = (int32_t *)
-            POINTER_OF_META(CAM_INTF_META_AF_TRIGGER_ID, metadata);
-        camMetadata.update(ANDROID_CONTROL_AF_TRIGGER_ID, afTriggerId, 1);
+    if (IS_META_AVAILABLE(CAM_INTF_META_AF_TRIGGER, metadata)) {
+        cam_trigger_t *af_trigger =
+                (cam_trigger_t *)POINTER_OF_META(CAM_INTF_META_AF_TRIGGER, metadata);
+        camMetadata.update(ANDROID_CONTROL_AF_TRIGGER,
+                &af_trigger->trigger, 1);
+        CDBG("%s: urgent Metadata : CAM_INTF_META_AF_TRIGGER = %d",
+                __func__, af_trigger->trigger);
+        camMetadata.update(ANDROID_CONTROL_AF_TRIGGER_ID, &af_trigger->trigger_id, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_AF_TRIGGER_ID", __func__);
     }
     if (IS_META_AVAILABLE(CAM_INTF_PARM_WHITE_BALANCE, metadata)) {
@@ -2409,6 +2409,39 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         camMetadata.update(ANDROID_CONTROL_MODE, mode, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_MODE", __func__);
     }
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_EXPOSURE_COMPENSATION, metadata)) {
+        int32_t  *expCompensation =
+          (int32_t *)POINTER_OF_META(CAM_INTF_PARM_EXPOSURE_COMPENSATION, metadata);
+        camMetadata.update(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
+                                      expCompensation, 1);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION",
+            __func__);
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_AEC_LOCK, metadata)) {
+        uint8_t  ae_lock =
+                *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_AEC_LOCK, metadata));
+        camMetadata.update(ANDROID_CONTROL_AE_LOCK,
+                &ae_lock, 1);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_LOCK", __func__);
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_AWB_LOCK, metadata)) {
+        uint8_t awb_lock =
+                *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_AWB_LOCK, metadata));
+        camMetadata.update(ANDROID_CONTROL_AWB_LOCK, &awb_lock, 1);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AWB_LOCK", __func__);
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_BESTSHOT_MODE, metadata)) {
+        uint8_t sceneMode =
+                *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_BESTSHOT_MODE, metadata));
+        uint8_t fwkSceneMode =
+            (uint8_t)lookupFwkName(SCENE_MODES_MAP,
+            sizeof(SCENE_MODES_MAP)/
+            sizeof(SCENE_MODES_MAP[0]), sceneMode);
+        camMetadata.update(ANDROID_CONTROL_SCENE_MODE,
+             &fwkSceneMode, 1);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_SCENE_MODE", __func__);
+    }
+
     resultMetadata = camMetadata.release();
     return resultMetadata;
 }
@@ -3057,7 +3090,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_CONTROL_AE_COMPENSATION_STEP,
                       &exposureCompensationStep, 1);
 
-    /*TO DO*/
     uint8_t availableVstabModes[] = {ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF};
     staticInfo.update(ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
                       availableVstabModes, sizeof(availableVstabModes));
@@ -3960,35 +3992,50 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     int32_t defaultRequestID = 0;
     settings.update(ANDROID_REQUEST_ID, &defaultRequestID, 1);
 
+    /* OIS disable */
+    char ois_prop[PROPERTY_VALUE_MAX];
+    memset(ois_prop, 0, sizeof(ois_prop));
+    property_get("persist.camera.ois.disable", ois_prop, "0");
+    uint8_t ois_disable = atoi(ois_prop);
+
     uint8_t controlIntent = 0;
     uint8_t focusMode;
+    uint8_t opt_stab_mode;
+
     switch (type) {
       case CAMERA3_TEMPLATE_PREVIEW:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
         break;
       case CAMERA3_TEMPLATE_STILL_CAPTURE:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
         break;
       case CAMERA3_TEMPLATE_VIDEO_RECORD:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
         break;
       case CAMERA3_TEMPLATE_VIDEO_SNAPSHOT:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
         break;
       case CAMERA3_TEMPLATE_ZERO_SHUTTER_LAG:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
         break;
       case CAMERA3_TEMPLATE_MANUAL:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_MANUAL;
         focusMode = ANDROID_CONTROL_AF_MODE_OFF;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
         break;
       default:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_CUSTOM;
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
         break;
     }
     settings.update(ANDROID_CONTROL_CAPTURE_INTENT, &controlIntent, 1);
@@ -3997,6 +4044,15 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
         focusMode = ANDROID_CONTROL_AF_MODE_OFF;
     }
     settings.update(ANDROID_CONTROL_AF_MODE, &focusMode, 1);
+
+    if (gCamCapability[mCameraId]->optical_stab_modes_count == 1 &&
+            gCamCapability[mCameraId]->optical_stab_modes[0] == CAM_OPT_STAB_ON)
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
+    else if ((gCamCapability[mCameraId]->optical_stab_modes_count == 1 &&
+            gCamCapability[mCameraId]->optical_stab_modes[0] == CAM_OPT_STAB_OFF)
+            || ois_disable)
+        opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
+    settings.update(ANDROID_LENS_OPTICAL_STABILIZATION_MODE, &opt_stab_mode, 1);
 
     settings.update(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
             &gCamCapability[mCameraId]->exposure_compensation_default, 1);
@@ -4116,11 +4172,6 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
 
     static const uint8_t vs_mode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF;
     settings.update(ANDROID_CONTROL_VIDEO_STABILIZATION_MODE, &vs_mode, 1);
-
-    uint8_t opt_stab_mode = (gCamCapability[mCameraId]->optical_stab_modes_count == 2)?
-                             ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON :
-                             ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
-    settings.update(ANDROID_LENS_OPTICAL_STABILIZATION_MODE, &opt_stab_mode, 1);
 
     /*focus distance*/
     float focus_distance = 0.0;

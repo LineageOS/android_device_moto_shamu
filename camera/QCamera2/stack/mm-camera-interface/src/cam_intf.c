@@ -81,8 +81,6 @@ void *get_pointer_of(cam_intf_parm_type_t meta_id,
             return POINTER_OF_META(CAM_INTF_META_PRED_COLOR_CORRECT_TRANSFORM, metadata);
         case CAM_INTF_META_PRED_COLOR_CORRECT_GAINS:
             return POINTER_OF_META(CAM_INTF_META_PRED_COLOR_CORRECT_GAINS, metadata);
-        case CAM_INTF_META_AEC_PRECAPTURE_ID:
-            return POINTER_OF_META(CAM_INTF_META_AEC_PRECAPTURE_ID, metadata);
         case CAM_INTF_META_AEC_ROI:
             return POINTER_OF_META(CAM_INTF_META_AEC_ROI, metadata);
         case CAM_INTF_META_AEC_STATE:
@@ -93,8 +91,6 @@ void *get_pointer_of(cam_intf_parm_type_t meta_id,
             return POINTER_OF_META(CAM_INTF_META_AF_ROI, metadata);
         case CAM_INTF_META_AF_STATE:
             return POINTER_OF_META(CAM_INTF_META_AF_STATE, metadata);
-        case CAM_INTF_META_AF_TRIGGER_ID:
-            return POINTER_OF_META(CAM_INTF_META_AF_TRIGGER_ID, metadata);
         case CAM_INTF_PARM_WHITE_BALANCE:
             return POINTER_OF_META(CAM_INTF_PARM_WHITE_BALANCE, metadata);
         case CAM_INTF_META_AWB_REGIONS:
@@ -394,8 +390,6 @@ uint32_t get_size_of(cam_intf_parm_type_t param_id)
             return SIZE_OF_PARAM(CAM_INTF_META_PRED_COLOR_CORRECT_TRANSFORM, metadata);
         case CAM_INTF_META_PRED_COLOR_CORRECT_GAINS:
             return SIZE_OF_PARAM(CAM_INTF_META_PRED_COLOR_CORRECT_GAINS, metadata);
-        case CAM_INTF_META_AEC_PRECAPTURE_ID:
-            return SIZE_OF_PARAM(CAM_INTF_META_AEC_PRECAPTURE_ID, metadata);
         case CAM_INTF_META_AEC_ROI:
             return SIZE_OF_PARAM(CAM_INTF_META_AEC_ROI, metadata);
         case CAM_INTF_META_AEC_STATE:
@@ -406,8 +400,6 @@ uint32_t get_size_of(cam_intf_parm_type_t param_id)
             return SIZE_OF_PARAM(CAM_INTF_META_AF_ROI, metadata);
         case CAM_INTF_META_AF_STATE:
             return SIZE_OF_PARAM(CAM_INTF_META_AF_STATE, metadata);
-        case CAM_INTF_META_AF_TRIGGER_ID:
-            return SIZE_OF_PARAM(CAM_INTF_META_AF_TRIGGER_ID, metadata);
         case CAM_INTF_PARM_WHITE_BALANCE:
             return SIZE_OF_PARAM(CAM_INTF_PARM_WHITE_BALANCE, metadata);
         case CAM_INTF_META_AWB_REGIONS:

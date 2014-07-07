@@ -607,6 +607,7 @@ public:
     bool isAdvCamFeaturesEnabled() {return isUbiFocusEnabled() ||
         isChromaFlashEnabled() || isOptiZoomEnabled() || isHDREnabled();}
     int32_t setAecLock(const char *aecStr);
+    bool is4k2kVideoResolution();
 
 private:
     int32_t setPreviewSize(const QCameraParameters& );

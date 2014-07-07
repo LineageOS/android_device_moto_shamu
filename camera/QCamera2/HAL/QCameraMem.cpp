@@ -1115,7 +1115,6 @@ int QCameraVideoMemory::allocate(int count, int size, uint32_t isSecure)
         packet->meta_handle = native_handle_create(1, 2); //1 fd, 1 offset and 1 size
         packet->buffer_type = kMetadataBufferTypeCameraSource;
         native_handle_t * nh = const_cast<native_handle_t *>(packet->meta_handle);
-        memset(nh, 0x0, sizeof(native_handle_t));
         nh->data[0] = mMemInfo[i].fd;
         nh->data[1] = 0;
         nh->data[2] = mMemInfo[i].size;

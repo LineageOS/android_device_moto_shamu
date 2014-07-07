@@ -81,11 +81,11 @@
 #define CHROMATIX_SIZE 60000
 #define COMMONCHROMATIX_SIZE 45000
 #define CPPCHROMATIX_SIZE 36000
-#define AFTUNE_SIZE 2500
+#define AFTUNE_SIZE  4608
 #define MAX_SCALE_SIZES_CNT 8
 #define MAX_SAMP_DECISION_CNT     64
 
-#define MAX_ISP_DATA_SIZE 9000
+#define MAX_ISP_DATA_SIZE 11500
 #define MAX_PP_DATA_SIZE 2000
 #define MAX_AE_STATS_DATA_SIZE  1000
 #define MAX_AWB_STATS_DATA_SIZE 1000
@@ -107,8 +107,6 @@
 #define TUNING_CPP_DATA_OFFSET     (TUNING_SENSOR_DATA_MAX + TUNING_VFE_DATA_MAX)
 #define TUNING_CAC_DATA_OFFSET     (TUNING_SENSOR_DATA_MAX + \
                                    TUNING_VFE_DATA_MAX + TUNING_CPP_DATA_MAX)
-#define MAX_ISP_DATA_SIZE 9000
-#define MAX_PP_DATA_SIZE 2000
 #define MAX_STATS_DATA_SIZE 4000
 
 #define MAX_AF_BRACKETING_VALUES 5
@@ -1186,7 +1184,6 @@ typedef enum {
     /* Whether the HAL must trigger precapture metering.*/
     CAM_INTF_META_AEC_PRECAPTURE_TRIGGER,
     /* The ID sent with the latest CAMERA2_TRIGGER_PRECAPTURE_METERING call */
-    CAM_INTF_META_AEC_PRECAPTURE_ID,
     /* Current state of AE algorithm */
     CAM_INTF_META_AEC_STATE,
     /* List of areas to use for focus estimation */
@@ -1195,8 +1192,6 @@ typedef enum {
     CAM_INTF_META_AF_TRIGGER,
     /* Current state of AF algorithm */
     CAM_INTF_META_AF_STATE,
-    /* The ID sent with the latest CAMERA2_TRIGGER_AUTOFOCUS call */
-    CAM_INTF_META_AF_TRIGGER_ID,
     /* List of areas to use for illuminant estimation */
     CAM_INTF_META_AWB_REGIONS,
     /* Current state of AWB algorithm */
@@ -1348,6 +1343,7 @@ typedef enum {
     CAM_EZTUNE_CMD_AEC_FORCE_SNAP_LC,
     CAM_EZTUNE_CMD_AEC_FORCE_SNAP_GAIN,
     CAM_EZTUNE_CMD_AEC_FORCE_SNAP_EXP,
+    CAM_EZTUNE_CMD_AWB_MODE,
 } cam_eztune_cmd_type_t;
 
 typedef struct {
@@ -1358,6 +1354,7 @@ typedef struct {
     int                   awb_enable;
     int                   af_enable;
     cam_ez_force_params_t ez_force_param;
+    int                   awb_mode;
   } u;
 } cam_eztune_cmd_data_t;
 

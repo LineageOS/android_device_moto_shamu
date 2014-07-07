@@ -479,15 +479,13 @@ typedef struct {
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_GAINS,          cam_color_correct_gains_t,   1);
     INCLUDE(CAM_INTF_META_PRED_COLOR_CORRECT_TRANSFORM, cam_color_correct_matrix_t,  1);
     INCLUDE(CAM_INTF_META_PRED_COLOR_CORRECT_GAINS,     cam_color_correct_gains_t,   1);
-    INCLUDE(CAM_INTF_META_AEC_PRECAPTURE_ID,            int32_t,                     1);
-    INCLUDE(CAM_INTF_META_AEC_ROI,                      cam_area_t,                  5);
+    INCLUDE(CAM_INTF_META_AEC_ROI,                      cam_area_t,                  1);
     INCLUDE(CAM_INTF_META_AEC_STATE,                    uint32_t,                    1);
     INCLUDE(CAM_INTF_PARM_FOCUS_MODE,                   uint32_t,                    1);
-    INCLUDE(CAM_INTF_META_AF_ROI,                       cam_area_t,                  5);
+    INCLUDE(CAM_INTF_META_AF_ROI,                       cam_area_t,                  1);
     INCLUDE(CAM_INTF_META_AF_STATE,                     uint32_t,                    1);
-    INCLUDE(CAM_INTF_META_AF_TRIGGER_ID,                int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_WHITE_BALANCE,                int32_t,                     1);
-    INCLUDE(CAM_INTF_META_AWB_REGIONS,                  cam_area_t,                  5);
+    INCLUDE(CAM_INTF_META_AWB_REGIONS,                  cam_area_t,                  1);
     INCLUDE(CAM_INTF_META_AWB_STATE,                    uint32_t,                    1);
     INCLUDE(CAM_INTF_META_BLACK_LEVEL_LOCK,             uint32_t,                    1);
     INCLUDE(CAM_INTF_META_MODE,                         uint32_t,                    1);
@@ -533,10 +531,10 @@ typedef struct {
     INCLUDE(CAM_INTF_PARM_ANTIBANDING,                  int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_EXPOSURE_COMPENSATION,        int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_EV_STEP,                      cam_rational_type_t,         1);
-    INCLUDE(CAM_INTF_PARM_AEC_LOCK,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_AEC_LOCK,                     uint32_t,                    1);
     INCLUDE(CAM_INTF_PARM_FPS_RANGE,                    cam_fps_range_t,             1);
-    INCLUDE(CAM_INTF_PARM_AWB_LOCK,                     int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_BESTSHOT_MODE,                int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_AWB_LOCK,                     uint32_t,                    1);
+    INCLUDE(CAM_INTF_PARM_BESTSHOT_MODE,                uint32_t,                    1);
     INCLUDE(CAM_INTF_PARM_DIS_ENABLE,                   int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_LED_MODE,                     int32_t,                     1);
 

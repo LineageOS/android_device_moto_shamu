@@ -1440,6 +1440,8 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
 {
     int bufferCnt = 0;
     int minCaptureBuffers = mParameters.getNumOfSnapshots();
+    char value[PROPERTY_VALUE_MAX];
+    bool raw_yuv = false;
 
     int zslQBuffers = mParameters.getZSLQueueDepth();
 
@@ -1531,7 +1533,10 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
         }
         break;
     case CAM_STREAM_TYPE_RAW:
-       if (isRdiMode()) {
+        property_get("persist.camera.raw_yuv", value, "0");
+        raw_yuv = atoi(value) > 0 ? true : false;
+
+        if (isRdiMode() || raw_yuv) {
             CDBG_HIGH("RDI_DEBUG %s[%d]: CAM_STREAM_TYPE_RAW",
               __func__, __LINE__);
             bufferCnt = zslQBuffers + minCircularBufNum;
@@ -1788,22 +1793,18 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
             mLongshotEnabled) {
             streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
         } else {
-            property_get("persist.camera.raw_yuv", value, "0");
-            raw_yuv = atoi(value) > 0 ? true : false;
-            if ( raw_yuv ) {
-                streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
-                streamInfo->num_of_burst = 0;
-            } else {
-                streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
-                streamInfo->num_of_burst = mParameters.getNumOfSnapshots()
-                    + mParameters.getNumOfExtraHDRInBufsIfNeeded()
-                    - mParameters.getNumOfExtraHDROutBufsIfNeeded()
-                    + mParameters.getNumOfExtraBuffersForImageProc();
-            }
+            streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
+            streamInfo->num_of_burst = mParameters.getNumOfSnapshots()
+                + mParameters.getNumOfExtraHDRInBufsIfNeeded()
+                - mParameters.getNumOfExtraHDROutBufsIfNeeded()
+                + mParameters.getNumOfExtraBuffersForImageProc();
         }
         break;
     case CAM_STREAM_TYPE_RAW:
-        if (mParameters.isZSLMode() || isRdiMode()) {
+        property_get("persist.camera.raw_yuv", value, "0");
+        raw_yuv = atoi(value) > 0 ? true : false;
+
+        if (mParameters.isZSLMode() || isRdiMode() || raw_yuv) {
             CDBG_HIGH("RDI_DEBUG %s[%d]: CAM_STREAM_TYPE_RAW",
               __func__, __LINE__);
             streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
@@ -4922,9 +4923,7 @@ int32_t QCamera2HardwareInterface::preparePreview()
     } else {
         bool recordingHint = mParameters.getRecordingHintValue();
         if(!isRdiMode() && recordingHint) {
-            cam_dimension_t videoSize;
-            mParameters.getVideoSize(&videoSize.width, &videoSize.height);
-            if (!is4k2kResolution(&videoSize)) {
+            if (!mParameters.is4k2kVideoResolution()) {
                rc = addChannel(QCAMERA_CH_TYPE_SNAPSHOT);
                if (rc != NO_ERROR) {
                    return rc;
