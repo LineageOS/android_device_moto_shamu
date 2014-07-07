@@ -2472,9 +2472,10 @@ int32_t QCamera3ReprocessChannel::addReprocStreamsFromSource(cam_pp_feature_conf
         return NO_MEMORY;
     }
 
-    rc = pStream->init(streamType, streamFormat, streamDim, &reprocess_config,
-                       num_buffers, CAM_QCOM_FEATURE_NONE, QCamera3Channel::streamCbRoutine, this);
-
+    rc = pStream->init(streamType, streamFormat, streamDim,
+                       &reprocess_config, num_buffers,
+                       reprocess_config.pp_feature_config.feature_mask,
+                       QCamera3Channel::streamCbRoutine, this);
 
     if (rc == 0) {
         mStreams[m_numStreams] = pStream;

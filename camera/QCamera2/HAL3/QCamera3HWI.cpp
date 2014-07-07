@@ -630,6 +630,17 @@ int QCamera3HardwareInterface::configureStreams(
         }
     }
 
+    bool isVideo = false;
+
+    /* Check whether we have video stream */
+    for (size_t i = 0; i < streamList->num_streams; i++) {
+        camera3_stream_t *newStream = streamList->streams[i];
+        if (newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED &&
+            newStream->usage & private_handle_t::PRIV_FLAGS_VIDEO_ENCODER) {
+            isVideo = true;
+        }
+    }
+
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
@@ -645,7 +656,7 @@ int QCamera3HardwareInterface::configureStreams(
             stream_config_info.stream_sizes[i].height =
                     gCamCapability[mCameraId]->active_array_size.height;
             stream_config_info.type[i] = CAM_STREAM_TYPE_SNAPSHOT;
-            stream_config_info.postprocess_mask = CAM_QCOM_FEATURE_NONE;
+            stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_NONE;
         } else {
            //for non zsl streams find out the format
            switch (newStream->format) {
@@ -656,16 +667,20 @@ int QCamera3HardwareInterface::configureStreams(
                  } else {
                     stream_config_info.type[i] = CAM_STREAM_TYPE_PREVIEW;
                  }
-                 stream_config_info.postprocess_mask = CAM_QCOM_FEATURE_PP_SUPERSET;
+                 stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_PP_SUPERSET;
               }
               break;
            case HAL_PIXEL_FORMAT_YCbCr_420_888:
               stream_config_info.type[i] = CAM_STREAM_TYPE_CALLBACK;
-              stream_config_info.postprocess_mask = CAM_QCOM_FEATURE_PP_SUPERSET;
+              stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_PP_SUPERSET;
               break;
            case HAL_PIXEL_FORMAT_BLOB:
               stream_config_info.type[i] = CAM_STREAM_TYPE_SNAPSHOT;
-              stream_config_info.postprocess_mask = CAM_QCOM_FEATURE_PP_SUPERSET;
+              if (isVideo) {
+                  stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_PP_SUPERSET;
+              } else {
+                  stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_NONE;
+              }
               break;
            case HAL_PIXEL_FORMAT_RAW_OPAQUE:
            case HAL_PIXEL_FORMAT_RAW16:
@@ -673,7 +688,7 @@ int QCamera3HardwareInterface::configureStreams(
               break;
            default:
               stream_config_info.type[i] = CAM_STREAM_TYPE_DEFAULT;
-              stream_config_info.postprocess_mask = CAM_QCOM_FEATURE_NONE;
+              stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_NONE;
               break;
            }
         }
@@ -716,7 +731,7 @@ int QCamera3HardwareInterface::configureStreams(
                             this,
                             newStream,
                             (cam_stream_type_t) stream_config_info.type[i],
-                            stream_config_info.postprocess_mask);
+                            stream_config_info.postprocess_mask[i]);
                     if (channel == NULL) {
                         ALOGE("%s: allocation of channel failed", __func__);
                         pthread_mutex_unlock(&mMutex);
@@ -746,7 +761,7 @@ int QCamera3HardwareInterface::configureStreams(
                     mPictureChannel = new QCamera3PicChannel(mCameraHandle->camera_handle,
                             mCameraHandle->ops, captureResultCb,
                             &gCamCapability[mCameraId]->padding_info, this, newStream,
-                            stream_config_info.postprocess_mask);
+                            stream_config_info.postprocess_mask[i]);
                     if (mPictureChannel == NULL) {
                         ALOGE("%s: allocation of channel failed", __func__);
                         pthread_mutex_unlock(&mMutex);
@@ -5612,6 +5627,8 @@ QCamera3ReprocessChannel *QCamera3HardwareInterface::addOfflineReprocChannel(
             }
         }
     }
+
+
 
     rc = pChannel->addReprocStreamsFromSource(pp_config,
                                              pInputChannel,
