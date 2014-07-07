@@ -3872,7 +3872,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                    (camera_metadata_rational_t*) gCamCapability[cameraId]->color_transform1,
                       3*3);
 
-    staticInfo.update(ANDROID_SENSOR_COLOR_TRANSFORM1,
+    staticInfo.update(ANDROID_SENSOR_COLOR_TRANSFORM2,
                    (camera_metadata_rational_t*) gCamCapability[cameraId]->color_transform2,
                       3*3);
 
