@@ -64,8 +64,8 @@ QCamera3PostProcessor::QCamera3PostProcessor(QCamera3PicChannel* ch_ctrl)
       m_inputJpegQ(releaseJpegData, this),
       m_ongoingJpegQ(releaseJpegData, this),
       m_inputRawQ(releasePPInputData, this),
-      m_inputMetaQ(releaseMetaData, this),
-      m_jpegSettingsQ(releaseJpegSetting, this)
+      m_inputMetaQ(NULL, this),
+      m_jpegSettingsQ(NULL, this)
 {
     memset(&mJpegHandle, 0, sizeof(mJpegHandle));
     pthread_mutex_init(&mReprocJobLock, NULL);
@@ -694,42 +694,6 @@ void QCamera3PostProcessor::releasePPInputData(void *data, void *user_data)
     if (NULL != pme) {
         pme->releaseSuperBuf((mm_camera_super_buf_t *)data);
     }
-}
-
-/*===========================================================================
- * FUNCTION   : releaseMetaData
- *
- * DESCRIPTION: callback function to release meta data node
- *
- * PARAMETERS :
- *   @data      : ptr to post process input data
- *   @user_data : user data ptr (QCamera3Reprocessor)
- *
- * RETURN     : None
- *==========================================================================*/
-void QCamera3PostProcessor::releaseMetaData(void *data, void * /*user_data*/)
-{
-    metadata_buffer_t *metadata = (metadata_buffer_t *)data;
-    if (metadata != NULL)
-        free(metadata);
-}
-
-/*===========================================================================
- * FUNCTION   : releaseJpegSetting
- *
- * DESCRIPTION: callback function to release meta data node
- *
- * PARAMETERS :
- *   @data      : ptr to post process input data
- *   @user_data : user data ptr (QCamera3Reprocessor)
- *
- * RETURN     : None
- *==========================================================================*/
-void QCamera3PostProcessor::releaseJpegSetting(void *data, void * /*user_data*/)
-{
-    jpeg_settings_t *jpegSetting = (jpeg_settings_t *)data;
-    if (jpegSetting != NULL)
-        free(jpegSetting);
 }
 
 /*===========================================================================

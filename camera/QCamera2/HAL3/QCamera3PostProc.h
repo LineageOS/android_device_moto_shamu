@@ -139,8 +139,6 @@ private:
     static void releaseJpegData(void *data, void *user_data);
     static void releasePPInputData(void *data, void *user_data);
     static void releaseOngoingPPData(void *data, void *user_data);
-    static void releaseMetaData(void *data, void *user_data);
-    static void releaseJpegSetting(void *data, void *user_data);
 
     static void *dataProcessRoutine(void *data);
 
