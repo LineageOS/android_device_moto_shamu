@@ -40,20 +40,24 @@
     <!-- Different CPU speeds as reported in
          /sys/devices/system/cpu/cpu0/cpufreq/stats/time_in_state -->
     <array name="cpu.speeds">
-        <value></value> <!-- 300 MHz CPU speed -->
-        <value></value> <!-- 422.4 MHz CPU speed -->
-        <value></value> <!-- 652.8 MHz CPU speed -->
-        <value></value> <!-- 729.6 MHz CPU speed -->
-        <value></value> <!-- 883.2 MHz CPU speed -->
-        <value></value> <!-- 960.0 MHz CPU speed -->
-        <value></value> <!-- 1036.8 MHz CPU speed -->
-        <value></value> <!-- 1190.4 MHz CPU speed -->
-        <value></value> <!-- 1267.2 MHz CPU speed -->
-        <value></value> <!-- 1497.6 MHz CPU speed -->
-        <value></value> <!-- 1574.0 MHz CPU speed -->
-        <value></value> <!-- 1728.0 MHz CPU speed -->
-        <value></value> <!-- 1958.4 MHz CPU speed -->
-        <value></value> <!-- 2265.6 MHz CPU speed -->
+        <value>300000</value> <!-- 300 MHz CPU speed -->
+        <value>422400</value> <!-- 422.4 MHz CPU speed -->
+        <value>652800</value> <!-- 652.8 MHz CPU speed -->
+        <value>729600</value> <!-- 729.6 MHz CPU speed -->
+        <value>883200</value> <!-- 883.2 MHz CPU speed -->
+        <value>960000</value> <!-- 960.0 MHz CPU speed -->
+        <value>1036800</value> <!-- 1036.8 MHz CPU speed -->
+        <value>1190400</value> <!-- 1190.4 MHz CPU speed -->
+        <value>1267200</value> <!-- 1267.2 MHz CPU speed -->
+        <value>1497600</value> <!-- 1497.6 MHz CPU speed -->
+        <value>1574400</value> <!-- 1574.0 MHz CPU speed -->
+        <value>1728000</value> <!-- 1728.0 MHz CPU speed -->
+        <value>1958400</value> <!-- 1958.4 MHz CPU speed -->
+        <value>2265600</value> <!-- 2265.6 MHz CPU speed -->
+        <value>2457600</value> <!-- 2457.6 MHz CPU speed -->
+        <value>2496000</value> <!-- 2496.0 Mhz CPU speed -->
+        <value>2572800</value> <!-- 2572.8 MHz CPU speed -->
+        <value>2649600</value> <!-- 2649.6 MHz CPU speed -->
     </array>
     <!-- Power consumption when CPU is idle -->
     <item name="cpu.idle"></item>
