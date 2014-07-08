@@ -237,6 +237,10 @@ on boot
     chmod 664 /sys/class/leds/green/brightness
     chmod 664 /sys/class/leds/blue/brightness
 
+    # Vibrator permissions
+    chown system system /sys/vibrator/pwmvalue
+    chmod 0644 /sys/vibrator/pwmvalue
+
 # subsystem ramdump collection
 on property:persist.sys.qc.sub.rdump.on=*
     write /sys/module/subsystem_restart/parameters/enable_ramdumps ${persist.sys.qc.sub.rdump.on}
