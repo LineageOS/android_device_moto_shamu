@@ -11,6 +11,25 @@ do
 done
 shift $(($OPTIND-1))
 
+uppers=ABCDEFP1234567890
+lowers=abcdefp1234567p9
+
+convert_to_pnotation()
+{
+	result=""
+	let i=0
+	while ([ $i -lt ${#1} ]) do
+		sym=${1:$i:1}
+		case $uppers in
+			*$sym*) sym=${uppers%$sym*}; result="${result}${lowers:${#sym}:1}";;
+			*) result="${result}$sym";;
+		esac
+		i=$((i + 1))
+	done
+	echo "$result"
+	unset i result
+}
+
 debug()
 {
 	[ $dbg_on ] && echo "Debug: $*"
@@ -123,6 +142,8 @@ debug "product id: $product_id"
 
 hwrev_id=$(getprop $hwrev_property 2> /dev/null)
 [ -z "$hwrev_id" ] && error_and_leave 2 $hwrev_property
+hwrev_id=${hwrev_id#*x}
+hwrev_id=$(convert_to_pnotation $hwrev_id)
 debug "hw revision: $hwrev_id"
 
 cd $firmware_path
@@ -171,7 +192,7 @@ unset device_property hwrev_property
 unset str_cfg_id_boot str_cfg_id_latest str_cfg_id_new
 unset dec_cfg_id_boot dec_cfg_id_latest
 unset hwrev_id product_id touch_product_id
-unset synaptics_link firmware_path touch_path
+unset touch_driver_link firmware_path touch_path
 unset bl_mode dbg_on hw_mask firmware_file property
 
 return 0
