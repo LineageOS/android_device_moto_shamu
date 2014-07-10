@@ -242,6 +242,8 @@ private:
     QCamera3HeapMemory *mParamHeap;
     metadata_buffer_t* mParameters;
     bool m_bWNROn;
+    bool m_bIsVideo;
+    bool m_bIs4KVideo;
 
     /* Data structure to store pending request */
     typedef struct {

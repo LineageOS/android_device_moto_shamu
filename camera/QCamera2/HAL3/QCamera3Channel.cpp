@@ -56,6 +56,13 @@ static const char ExifUndefinedPrefix[] =
 #define EXIF_ASCII_PREFIX_SIZE           8   //(sizeof(ExifAsciiPrefix))
 #define FOCAL_LENGTH_DECIMAL_PRECISION   100
 
+#define VIDEO_FORMAT    CAM_FORMAT_YUV_420_NV12
+#define SNAPSHOT_FORMAT CAM_FORMAT_YUV_420_NV21
+#define PREVIEW_FORMAT  CAM_FORMAT_YUV_420_NV21
+#define DEFAULT_FORMAT  CAM_FORMAT_YUV_420_NV21
+#define CALLBACK_FORMAT CAM_FORMAT_YUV_420_NV21
+#define RAW_FORMAT      CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GBRG
+
 /*===========================================================================
  * FUNCTION   : QCamera3Channel
  *
@@ -514,21 +521,21 @@ int32_t QCamera3RegularChannel::initialize()
 
     if (mCamera3Stream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
         if (mStreamType ==  CAM_STREAM_TYPE_VIDEO) {
-            streamFormat = CAM_FORMAT_YUV_420_NV12;
+            streamFormat = VIDEO_FORMAT;
         } else if (mStreamType == CAM_STREAM_TYPE_PREVIEW) {
-            streamFormat = CAM_FORMAT_YUV_420_NV21;
+            streamFormat = PREVIEW_FORMAT;
         } else {
             //TODO: Add a new flag in libgralloc for ZSL buffers, and its size needs
             // to be properly aligned and padded.
-            streamFormat = CAM_FORMAT_YUV_420_NV21;
+            streamFormat = DEFAULT_FORMAT;
         }
     } else if(mCamera3Stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
-         streamFormat = CAM_FORMAT_YUV_420_NV21;
+         streamFormat = CALLBACK_FORMAT;
     } else if (mCamera3Stream->format == HAL_PIXEL_FORMAT_RAW_OPAQUE ||
          mCamera3Stream->format == HAL_PIXEL_FORMAT_RAW16) {
          // Bayer pattern doesn't matter here.
          // All CAMIF raw format uses 10bit.
-         streamFormat = CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GBRG;
+         streamFormat = RAW_FORMAT;
     } else {
         //TODO: Fail for other types of streams for now
         ALOGE("%s: format is not IMPLEMENTATION_DEFINED or flexible", __func__);
@@ -1067,7 +1074,8 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                     cam_padding_info_t *paddingInfo,
                     void *userData,
                     camera3_stream_t *stream,
-                    uint32_t postprocess_mask) :
+                    uint32_t postprocess_mask,
+                    bool is4KVideo) :
                         QCamera3Channel(cam_handle, cam_ops, cb_routine,
                         paddingInfo, postprocess_mask, userData),
                         m_postprocessor(this),
@@ -1082,8 +1090,9 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
     m_max_pic_dim = hal_obj->calcMaxJpegDim();
     mYuvWidth = stream->width;
     mYuvHeight = stream->height;
+    // Use same pixelformat for 4K video case
+    mStreamFormat = is4KVideo ? VIDEO_FORMAT : SNAPSHOT_FORMAT;
     mStreamType = CAM_STREAM_TYPE_SNAPSHOT;
-    mStreamFormat = CAM_FORMAT_YUV_420_NV21;
     int32_t rc = m_postprocessor.init(&mMemory, jpegEvtHandle, mPostProcMask,
             this);
     if (rc != 0) {
