@@ -273,3 +273,8 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 
 $(call inherit-product-if-exists, hardware/qcom/msm8x84/msm8x84.mk)
 $(call inherit-product-if-exists, vendor/qcom/gpu/msm8x84/msm8x84-gpu-vendor.mk)
+
+# setup dm-verity configs.
+PRODUCT_VERITY_PARTITION=/dev/block/platform/msm_sdcc.1/by-name/system
+$(call inherit-product, build/target/product/verity.mk)
+
