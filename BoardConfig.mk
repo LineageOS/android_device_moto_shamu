@@ -100,4 +100,6 @@ BOARD_HAS_AUDIO_DSP := true
 
 USE_DEVICE_SPECIFIC_CAMERA:= true
 
+MALLOC_IMPL := dlmalloc
+
 -include vendor/moto/shamu/BoardConfigVendor.mk
