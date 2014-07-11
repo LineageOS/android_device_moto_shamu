@@ -253,7 +253,7 @@ PRODUCT_PACKAGES += \
     libsupermodel \
     sound_trigger.primary.shamu.so
 
-PRODUCT_PROPERTY_OVERRIDES += \
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     persist.sys.usb.config=mtp
 
 # Modem debugger
