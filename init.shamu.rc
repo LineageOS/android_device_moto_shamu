@@ -843,6 +843,12 @@ service qcamerasvr /system/bin/mm-qcamera-daemon
     user camera
     group camera system inet input graphics
 
+service bdAddrLoader /system/bin/bdAddrLoader -p ro.boot.btmacaddr -s -x
+    class main
+    user bluetooth
+    group system bluetooth
+    oneshot
+
 on property:vold.decrypt=trigger_reset_main
     stop gnss-svcd
 
