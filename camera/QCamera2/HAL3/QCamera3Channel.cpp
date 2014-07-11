@@ -532,6 +532,7 @@ int32_t QCamera3RegularChannel::initialize()
     } else if(mCamera3Stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
          streamFormat = CALLBACK_FORMAT;
     } else if (mCamera3Stream->format == HAL_PIXEL_FORMAT_RAW_OPAQUE ||
+         mCamera3Stream->format == HAL_PIXEL_FORMAT_RAW10 ||
          mCamera3Stream->format == HAL_PIXEL_FORMAT_RAW16) {
          // Bayer pattern doesn't matter here.
          // All CAMIF raw format uses 10bit.
