@@ -206,6 +206,7 @@ private:
                             uint32_t frameNumber);
     static void getLogLevel();
 
+    void cleanAndSortStreamInfo();
     int queueReprocMetadata(metadata_buffer_t *metadata);
     void extractJpegMetadata(CameraMetadata& jpegMetadata,
             const camera3_capture_request_t *request);
@@ -230,7 +231,8 @@ private:
     camera3_stream_t *mInputStream;
     QCamera3MetadataChannel *mMetadataChannel;
     QCamera3PicChannel *mPictureChannel;
-    QCameraRawChannel *mRawChannel;
+    QCamera3RawChannel *mRawChannel;
+    QCamera3SupportChannel *mSupportChannel;
 
      //First request yet to be processed after configureStreams
     bool mFirstRequest;
@@ -293,7 +295,6 @@ private:
     int64_t mMinProcessedFrameDuration;
     int64_t mMinJpegFrameDuration;
     int64_t mMinRawFrameDuration;
-    bool mRawDump;
     power_module_t *m_pPowerModule;   // power module
 
     uint32_t mMetaFrameCount;

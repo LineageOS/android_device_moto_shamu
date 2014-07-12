@@ -72,30 +72,6 @@ int32_t mm_stream_reg_buf(mm_stream_t * my_obj);
 int32_t mm_stream_buf_done(mm_stream_t * my_obj,
                            mm_camera_buf_def_t *frame);
 int32_t mm_stream_calc_offset(mm_stream_t *my_obj);
-int32_t mm_stream_calc_offset_preview(cam_format_t fmt,
-                                      cam_dimension_t *dim,
-                                      cam_stream_buf_plane_info_t *buf_planes);
-int32_t mm_stream_calc_offset_post_view(cam_format_t fmt,
-                                      cam_dimension_t *dim,
-                                      cam_stream_buf_plane_info_t *buf_planes);
-
-int32_t mm_stream_calc_offset_snapshot(cam_format_t fmt,
-                                       cam_dimension_t *dim,
-                                       cam_padding_info_t *padding,
-                                       cam_stream_buf_plane_info_t *buf_planes);
-int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
-                                  cam_dimension_t *dim,
-                                  cam_padding_info_t *padding,
-                                  cam_stream_buf_plane_info_t *buf_planes);
-int32_t mm_stream_calc_offset_video(cam_dimension_t *dim,
-                                    cam_stream_buf_plane_info_t *buf_planes);
-int32_t mm_stream_calc_offset_metadata(cam_dimension_t *dim,
-                                       cam_padding_info_t *padding,
-                                       cam_stream_buf_plane_info_t *buf_planes);
-int32_t mm_stream_calc_offset_postproc(cam_stream_info_t *stream_info,
-                                       cam_padding_info_t *padding,
-                                       cam_stream_buf_plane_info_t *plns);
-
 
 /* state machine function declare */
 int32_t mm_stream_fsm_inited(mm_stream_t * my_obj,
@@ -2378,11 +2354,11 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
     case CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_10BPP_RGGB:
     case CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_10BPP_BGGR:
         /* Every 12 pixels occupy 16 bytes */
-        stride = (dim->width + 11)/12 * 12;
+        stride = (dim->width + 11)/12 * 16;
         buf_planes->plane_info.num_planes = 1;
         buf_planes->plane_info.mp[0].offset = 0;
         buf_planes->plane_info.mp[0].len =
-            PAD_TO_SIZE(stride * scanline * 8 / 6, padding->plane_padding);
+            PAD_TO_SIZE(stride * scanline, padding->plane_padding);
         buf_planes->plane_info.frame_len =
             PAD_TO_SIZE(buf_planes->plane_info.mp[0].len, CAM_PAD_TO_4K);
         buf_planes->plane_info.mp[0].offset_x =0;
@@ -2401,11 +2377,11 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
     case CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_12BPP_RGGB:
     case CAM_FORMAT_BAYER_IDEAL_RAW_QCOM_12BPP_BGGR:
         /* Every 10 pixels occupy 16 bytes */
-        stride = (dim->width + 9)/10 * 10;
+        stride = (dim->width + 9)/10 * 16;
         buf_planes->plane_info.num_planes = 1;
         buf_planes->plane_info.mp[0].offset = 0;
         buf_planes->plane_info.mp[0].len =
-            PAD_TO_SIZE(stride * scanline * 8 / 5, padding->plane_padding);
+            PAD_TO_SIZE(stride * scanline, padding->plane_padding);
         buf_planes->plane_info.frame_len =
             PAD_TO_SIZE(buf_planes->plane_info.mp[0].len, CAM_PAD_TO_4K);
         buf_planes->plane_info.mp[0].offset_x =0;
@@ -2424,7 +2400,8 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
     case CAM_FORMAT_BAYER_IDEAL_RAW_MIPI_10BPP_RGGB:
     case CAM_FORMAT_BAYER_IDEAL_RAW_MIPI_10BPP_BGGR:
         /* Every 64 pixels occupy 80 bytes */
-        stride = PAD_TO_SIZE(dim->width * 5 / 4, CAM_PAD_TO_8);
+        stride = PAD_TO_SIZE(
+                PAD_TO_SIZE(dim->width, CAM_PAD_TO_4)*5/4, CAM_PAD_TO_16);
         buf_planes->plane_info.num_planes = 1;
         buf_planes->plane_info.mp[0].offset = 0;
         buf_planes->plane_info.mp[0].len =
@@ -2447,11 +2424,11 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
     case CAM_FORMAT_BAYER_IDEAL_RAW_MIPI_12BPP_RGGB:
     case CAM_FORMAT_BAYER_IDEAL_RAW_MIPI_12BPP_BGGR:
         /* Every 32 pixels occupy 48 bytes */
-        stride = PAD_TO_SIZE(dim->width, CAM_PAD_TO_32);
+        stride = PAD_TO_SIZE(PAD_TO_SIZE(dim->width, 2)*3/2, CAM_PAD_TO_16);
         buf_planes->plane_info.num_planes = 1;
         buf_planes->plane_info.mp[0].offset = 0;
         buf_planes->plane_info.mp[0].len =
-            PAD_TO_SIZE(stride * scanline * 3 / 2, padding->plane_padding);
+            PAD_TO_SIZE(stride * scanline, padding->plane_padding);
         buf_planes->plane_info.frame_len =
             PAD_TO_SIZE(buf_planes->plane_info.mp[0].len, CAM_PAD_TO_4K);
         buf_planes->plane_info.mp[0].offset_x =0;
@@ -2474,11 +2451,11 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
     case CAM_FORMAT_BAYER_IDEAL_RAW_PLAIN16_12BPP_RGGB:
     case CAM_FORMAT_BAYER_IDEAL_RAW_PLAIN16_12BPP_BGGR:
         /* Every 8 pixels occupy 16 bytes */
-        stride = PAD_TO_SIZE(dim->width, CAM_PAD_TO_8);
+        stride = PAD_TO_SIZE(dim->width, CAM_PAD_TO_8) * 2;
         buf_planes->plane_info.num_planes = 1;
         buf_planes->plane_info.mp[0].offset = 0;
         buf_planes->plane_info.mp[0].len =
-            PAD_TO_SIZE(stride * scanline * 2, padding->plane_padding);
+            PAD_TO_SIZE(stride * scanline, padding->plane_padding);
         buf_planes->plane_info.frame_len =
             PAD_TO_SIZE(buf_planes->plane_info.mp[0].len, CAM_PAD_TO_4K);
         buf_planes->plane_info.mp[0].offset_x =0;

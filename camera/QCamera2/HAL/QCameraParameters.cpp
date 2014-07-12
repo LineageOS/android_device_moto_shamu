@@ -4032,10 +4032,10 @@ int32_t QCameraParameters::initDefaultParameters()
     // Set raw image size
     char raw_size_str[32];
     snprintf(raw_size_str, sizeof(raw_size_str), "%dx%d",
-             m_pCapability->raw_dim.width, m_pCapability->raw_dim.height);
+             m_pCapability->raw_dim[0].width, m_pCapability->raw_dim[0].height);
     set(KEY_QC_RAW_PICUTRE_SIZE, raw_size_str);
     CDBG("%s: KEY_QC_RAW_PICUTRE_SIZE: w: %d, h: %d ", __func__,
-       m_pCapability->raw_dim.width, m_pCapability->raw_dim.height);
+       m_pCapability->raw_dim[0].width, m_pCapability->raw_dim[0].height);
 
     //set default jpeg quality and thumbnail quality
     set(KEY_JPEG_QUALITY, 85);
@@ -7990,7 +7990,7 @@ int32_t QCameraParameters::updateRAW(cam_dimension_t max_dim)
     cam_dimension_t raw_dim;
 
     if (max_dim.width == 0 || max_dim.height == 0) {
-        max_dim = m_pCapability->raw_dim;
+        max_dim = m_pCapability->raw_dim[0];
     }
 
     if(initBatchUpdate(m_pParamBuf) < 0 ) {
@@ -8036,7 +8036,7 @@ int32_t QCameraParameters::updateRAW(cam_dimension_t max_dim)
     CDBG_HIGH("%s : RAW Dimension = %d X %d",__func__,raw_dim.width,raw_dim.height);
     if (raw_dim.width == 0 || raw_dim.height == 0) {
         ALOGE("%s: Error getting RAW size. Setting to Capability value",__func__);
-        raw_dim = m_pCapability->raw_dim;
+        raw_dim = m_pCapability->raw_dim[0];
     }
     setRawSize(raw_dim);
     return rc;
