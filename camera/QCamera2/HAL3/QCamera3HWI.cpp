@@ -2555,6 +2555,62 @@ QCamera3HardwareInterface::translateFromHalMetadata(
         camMetadata.update(QCAMERA3_PRIVATEDATA_REPROCESS,
                 privateData, MAX_METADATA_PRIVATE_PAYLOAD_SIZE);
     }
+    if (metadata->is_tuning_params_valid) {
+        uint8_t tuning_meta_data_blob[sizeof(tuning_params_t)];
+        uint8_t *data = (uint8_t*)&tuning_meta_data_blob[0];
+        metadata->tuning_params.tuning_data_version = TUNING_DATA_VERSION;
+
+
+        memcpy(data, ((uint8_t*)&metadata->tuning_params.tuning_data_version),
+                sizeof(uint32_t));
+        data += sizeof(uint32_t);
+
+        memcpy(data, ((uint8_t*)&metadata->tuning_params.tuning_sensor_data_size),
+                sizeof(uint32_t));
+        CDBG("tuning_sensor_data_size %d",(int)(*(int *)data));
+        data += sizeof(uint32_t);
+
+        memcpy(data, ((uint8_t *)&metadata->tuning_params.tuning_vfe_data_size),
+                sizeof(uint32_t));
+        CDBG("tuning_vfe_data_size %d",(int)(*(int *)data));
+        data += sizeof(uint32_t);
+
+        memcpy(data, ((uint8_t *)&metadata->tuning_params.tuning_cpp_data_size),
+                sizeof(uint32_t));
+        CDBG("tuning_cpp_data_size %d",(int)(*(int *)data));
+        data += sizeof(uint32_t);
+
+        memcpy(data, ((uint8_t *)&metadata->tuning_params.tuning_cac_data_size),
+                sizeof(uint32_t));
+        CDBG("tuning_cac_data_size %d",(int)(*(int *)data));
+        data += sizeof(uint32_t);
+
+        metadata->tuning_params.tuning_mod3_data_size = 0;
+        memcpy(data, ((uint8_t *)&metadata->tuning_params.tuning_mod3_data_size),
+                sizeof(uint32_t));
+        CDBG("tuning_mod3_data_size %d",(int)(*(int *)data));
+        data += sizeof(uint32_t);
+
+        memcpy(data, ((uint8_t *)&metadata->tuning_params.data),
+                metadata->tuning_params.tuning_sensor_data_size);
+        data += metadata->tuning_params.tuning_sensor_data_size;
+
+        memcpy(data, ((uint8_t *)&metadata->tuning_params.data[TUNING_VFE_DATA_OFFSET]),
+                metadata->tuning_params.tuning_vfe_data_size);
+        data += metadata->tuning_params.tuning_vfe_data_size;
+
+        memcpy(data, ((uint8_t *)&metadata->tuning_params.data[TUNING_CPP_DATA_OFFSET]),
+                metadata->tuning_params.tuning_cpp_data_size);
+        data += metadata->tuning_params.tuning_cpp_data_size;
+
+
+        memcpy(data, ((uint8_t *)&metadata->tuning_params.data[TUNING_CAC_DATA_OFFSET]),
+                metadata->tuning_params.tuning_cac_data_size);
+        data += metadata->tuning_params.tuning_cac_data_size;
+
+        camMetadata.update(QCAMERA3_TUNING_META_DATA_BLOB,
+            (int32_t*)tuning_meta_data_blob, (data-tuning_meta_data_blob)/sizeof(uint32_t));
+    }
     if (IS_META_AVAILABLE(CAM_INTF_META_NEUTRAL_COL_POINT, metadata)) {
         cam_neutral_col_point_t *neuColPoint = (cam_neutral_col_point_t*)
                 POINTER_OF_META(CAM_INTF_META_NEUTRAL_COL_POINT, metadata);
