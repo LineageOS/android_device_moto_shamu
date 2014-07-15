@@ -334,9 +334,6 @@ private:
     static const QCameraMap TEST_PATTERN_MAP[];
     static const QCameraMap REFERENCE_ILLUMINANT_MAP[];
     static const QCameraPropMap CDS_MAP[];
-
-    static pthread_mutex_t mCameraSessionLock;
-    static unsigned int mCameraSessionActive;
 };
 
 }; // namespace qcamera

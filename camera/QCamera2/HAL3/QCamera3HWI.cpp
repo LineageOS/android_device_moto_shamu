@@ -66,10 +66,6 @@ cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 const camera_metadata_t *gStaticMetadata[MM_CAMERA_MAX_NUM_SENSORS];
 volatile uint32_t gCamHal3LogLevel = 1;
 
-pthread_mutex_t QCamera3HardwareInterface::mCameraSessionLock =
-    PTHREAD_MUTEX_INITIALIZER;
-unsigned int QCamera3HardwareInterface::mCameraSessionActive = 0;
-
 const QCamera3HardwareInterface::QCameraPropMap QCamera3HardwareInterface::CDS_MAP [] = {
     {"On",  CAM_CDS_MODE_ON},
     {"Off", CAM_CDS_MODE_OFF},
@@ -387,13 +383,6 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
 int QCamera3HardwareInterface::openCamera(struct hw_device_t **hw_device)
 {
     int rc = 0;
-    pthread_mutex_lock(&mCameraSessionLock);
-    if (mCameraSessionActive) {
-        ALOGE("%s: multiple simultaneous camera instance not supported", __func__);
-        pthread_mutex_unlock(&mCameraSessionLock);
-        return -EUSERS;
-    }
-
     if (mCameraOpened) {
         *hw_device = NULL;
         return PERMISSION_DENIED;
@@ -402,7 +391,6 @@ int QCamera3HardwareInterface::openCamera(struct hw_device_t **hw_device)
     rc = openCamera();
     if (rc == 0) {
         *hw_device = &mCameraDevice.common;
-        mCameraSessionActive = 1;
     } else
         *hw_device = NULL;
 
@@ -416,7 +404,6 @@ int QCamera3HardwareInterface::openCamera(struct hw_device_t **hw_device)
         }
     }
 #endif
-    pthread_mutex_unlock(&mCameraSessionLock);
     return rc;
 }
 
@@ -6169,9 +6156,6 @@ int QCamera3HardwareInterface::close_camera_device(struct hw_device_t* device)
     }
     delete hw;
 
-    pthread_mutex_lock(&mCameraSessionLock);
-    mCameraSessionActive = 0;
-    pthread_mutex_unlock(&mCameraSessionLock);
     CDBG("%s: X", __func__);
     return ret;
 }
