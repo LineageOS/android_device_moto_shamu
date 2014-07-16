@@ -1164,8 +1164,8 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
         reproc_cfg.input_stream_dim.height = mYuvHeight;
         reproc_cfg.src_channel = this;
     }
-    reproc_cfg.output_stream_dim.width = mYuvWidth;
-    reproc_cfg.output_stream_dim.height = mYuvHeight;
+    reproc_cfg.output_stream_dim.width = mCamera3Stream->width;
+    reproc_cfg.output_stream_dim.height = mCamera3Stream->height;
     reproc_cfg.stream_type = mStreamType;
     reproc_cfg.stream_format = mStreamFormat;
     rc = mm_stream_calc_offset_snapshot(mStreamFormat, &reproc_cfg.input_stream_dim,
