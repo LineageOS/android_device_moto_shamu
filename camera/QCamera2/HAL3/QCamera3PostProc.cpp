@@ -798,6 +798,7 @@ int32_t QCamera3PostProcessor::releaseOfflineBuffers()
  *==========================================================================*/
 void QCamera3PostProcessor::releaseJpegJobData(qcamera_hal3_jpeg_data_t *job)
 {
+    int32_t rc = NO_ERROR;
     CDBG("%s: E", __func__);
     if (NULL != job) {
         if (NULL != job->src_reproc_frame) {
@@ -806,6 +807,11 @@ void QCamera3PostProcessor::releaseJpegJobData(qcamera_hal3_jpeg_data_t *job)
         }
 
         if (NULL != job->src_frame) {
+            if (NULL != m_pReprocChannel) {
+                rc = m_pReprocChannel->bufDone(job->src_frame);
+                if (NO_ERROR != rc)
+                    ALOGE("%s: bufDone error: %d", __func__, rc);
+            }
             free(job->src_frame);
             job->src_frame = NULL;
         }
