@@ -999,6 +999,7 @@
     </path>
 
     <path name="speaker">
+        <ctl name="QUAT_MI2S_RX Channels" value="Two" />
         <!-- Disable earpiece mode -->
         <ctl name="BOOST earpiece mode" value="Off" />
         <!-- Disable bypass mode -->
