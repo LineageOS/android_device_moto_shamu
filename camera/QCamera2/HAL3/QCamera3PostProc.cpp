@@ -839,6 +839,8 @@ void QCamera3PostProcessor::releaseJpegJobData(qcamera_hal3_jpeg_data_t *job)
             job->jpeg_settings = NULL;
         }
     }
+    /* Additional trigger to process any pending jobs in the input queue */
+    m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
     CDBG("%s: X", __func__);
 }
 
@@ -1109,6 +1111,9 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
     metadata = jpeg_job_data->metadata;
     jpeg_settings = jpeg_job_data->jpeg_settings;
 
+    CDBG("%s: encoding bufIndex: %u", __func__,
+        jpeg_job_data->src_frame->bufs[0]->buf_idx);
+
     QCamera3Channel *pChannel = NULL;
     // first check picture channel
     if (m_parent != NULL &&
@@ -1370,6 +1375,9 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
         case CAMERA_CMD_TYPE_DO_NEXT_JOB:
             {
                 CDBG_HIGH("%s: Do next job, active is %d", __func__, is_active);
+                /* needNewSess is set to TRUE as postproc is not re-STARTed
+                 * anymore for every captureRequest */
+                needNewSess = TRUE;
                 if (is_active == TRUE) {
                     // check if there is any ongoing jpeg jobs
                     if (pme->m_ongoingJpegQ.isEmpty()) {
@@ -1438,11 +1446,13 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                     }
 
                     CDBG_HIGH("%s: dequeuing pp frame", __func__);
-                    mm_camera_super_buf_t *pp_frame =
-                        (mm_camera_super_buf_t *)pme->m_inputPPQ.dequeue();
-                    meta_buffer =
-                        (metadata_buffer_t *)pme->m_inputMetaQ.dequeue();
-                    if (NULL != pp_frame && NULL != meta_buffer) {
+                    pthread_mutex_lock(&pme->mReprocJobLock);
+                    if(!pme->m_inputPPQ.isEmpty() && !pme->m_inputMetaQ.isEmpty()) {
+                        mm_camera_super_buf_t *pp_frame =
+                            (mm_camera_super_buf_t *)pme->m_inputPPQ.dequeue();
+                        meta_buffer =
+                            (metadata_buffer_t *)pme->m_inputMetaQ.dequeue();
+                        pthread_mutex_unlock(&pme->mReprocJobLock);
                         qcamera_hal3_pp_data_t *pp_job =
                             (qcamera_hal3_pp_data_t *)malloc(sizeof(qcamera_hal3_pp_data_t));
                         if (pp_job != NULL) {
@@ -1478,6 +1488,8 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                                 free(pp_frame);
                             }
                         }
+                    } else {
+                        pthread_mutex_unlock(&pme->mReprocJobLock);
                     }
                 } else {
                     // not active, simply return buf and do no op

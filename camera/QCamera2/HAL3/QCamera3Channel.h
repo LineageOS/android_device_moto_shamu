@@ -274,6 +274,7 @@ private:
     cam_stream_type_t mStreamType;
     cam_format_t mStreamFormat;
     bool m_bWNROn;
+    bool mPostProcStarted;
 
     QCamera3GrallocMemory mMemory;
     QCamera3HeapMemory *mYuvMemory;
