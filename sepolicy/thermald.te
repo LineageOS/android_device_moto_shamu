@@ -1,0 +1,9 @@
+# Temperature sensor daemon (root process)
+type thermald, domain;
+type thermald_exec, exec_type, file_type;
+
+# STOPSHIP: Permissive is not allowed. CTS violation!
+permissive thermald;
+
+# Started by init
+init_daemon_domain(thermald)
