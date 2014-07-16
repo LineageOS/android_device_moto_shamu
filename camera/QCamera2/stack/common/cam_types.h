@@ -1273,6 +1273,9 @@ typedef enum {
     CAM_INTF_META_SENSOR_SENSITIVITY,
     /* Time at start of exposure of first row */
     CAM_INTF_META_SENSOR_TIMESTAMP,
+    /* Duration b/w start of first row exposure and the start of last
+       row exposure in nanoseconds */
+    CAM_INTF_META_SENSOR_ROLLING_SHUTTER_SKEW,
     /* SHADING */
     /* Quality of lens shading correction applied to the image data */
     CAM_INTF_META_SHADING_MODE,

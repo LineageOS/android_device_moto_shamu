@@ -2255,6 +2255,14 @@ QCamera3HardwareInterface::translateFromHalMetadata(
         CDBG("%s: sensorFameDuration = %lld", __func__, *sensorFameDuration);
         camMetadata.update(ANDROID_SENSOR_FRAME_DURATION, sensorFameDuration, 1);
     }
+    if (IS_META_AVAILABLE(CAM_INTF_META_SENSOR_ROLLING_SHUTTER_SKEW, metadata)){
+        int64_t  *sensorRollingShutterSkew =
+            (int64_t *)POINTER_OF_META(CAM_INTF_META_SENSOR_ROLLING_SHUTTER_SKEW,
+                metadata);
+        CDBG("%s: sensorRollingShutterSkew = %lld", __func__, *sensorRollingShutterSkew);
+        camMetadata.update(ANDROID_SENSOR_ROLLING_SHUTTER_SKEW,
+                sensorRollingShutterSkew, 1);
+    }
     if (IS_META_AVAILABLE(CAM_INTF_META_SENSOR_SENSITIVITY, metadata)){
         int32_t  *sensorSensitivity =
             (int32_t *)POINTER_OF_META(CAM_INTF_META_SENSOR_SENSITIVITY, metadata);
