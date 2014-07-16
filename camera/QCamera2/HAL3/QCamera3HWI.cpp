@@ -2287,7 +2287,14 @@ QCamera3HardwareInterface::translateFromHalMetadata(
         //Populate CAM_INTF_META_TONEMAP_CURVES
         /* ch0 = G, ch 1 = B, ch 2 = R*/
         cam_rgb_tonemap_curves *tonemap = (cam_rgb_tonemap_curves *)
-        POINTER_OF_META(CAM_INTF_META_TONEMAP_CURVES, metadata);
+                POINTER_OF_META(CAM_INTF_META_TONEMAP_CURVES, metadata);
+        if (tonemap->tonemap_points_cnt > CAM_MAX_TONEMAP_CURVE_SIZE) {
+            ALOGE("%s: Fatal: tonemap_points_cnt %d exceeds max value of %d",
+                    __func__, tonemap->tonemap_points_cnt,
+                    CAM_MAX_TONEMAP_CURVE_SIZE);
+            tonemap->tonemap_points_cnt = CAM_MAX_TONEMAP_CURVE_SIZE;
+        }
+
         camMetadata.update(ANDROID_TONEMAP_CURVE_GREEN,
                         (float*)tonemap->curves[0].tonemap_points,
                         tonemap->tonemap_points_cnt * 2);
@@ -2314,6 +2321,12 @@ QCamera3HardwareInterface::translateFromHalMetadata(
     if (IS_META_AVAILABLE(CAM_INTF_META_PROFILE_TONE_CURVE, metadata)) {
         cam_profile_tone_curve *toneCurve = (cam_profile_tone_curve *)
                 POINTER_OF_META(CAM_INTF_META_PROFILE_TONE_CURVE, metadata);
+        if (toneCurve->tonemap_points_cnt > CAM_MAX_TONEMAP_CURVE_SIZE) {
+            ALOGE("%s: Fatal: tonemap_points_cnt %d exceeds max value of %d",
+                    __func__, toneCurve->tonemap_points_cnt,
+                    CAM_MAX_TONEMAP_CURVE_SIZE);
+            toneCurve->tonemap_points_cnt = CAM_MAX_TONEMAP_CURVE_SIZE;
+        }
         camMetadata.update(ANDROID_SENSOR_PROFILE_TONE_CURVE,
                 (float*)toneCurve->curve.tonemap_points,
                 toneCurve->tonemap_points_cnt * 2);
@@ -5340,6 +5353,12 @@ int QCamera3HardwareInterface::translateToHalMetadata
         frame_settings.exists(ANDROID_TONEMAP_CURVE_RED)) {
         cam_rgb_tonemap_curves tonemapCurves;
         tonemapCurves.tonemap_points_cnt = frame_settings.find(ANDROID_TONEMAP_CURVE_GREEN).count/2;
+        if (tonemapCurves.tonemap_points_cnt > CAM_MAX_TONEMAP_CURVE_SIZE) {
+            ALOGE("%s: Fatal: tonemap_points_cnt %d exceeds max value of %d",
+                    __func__, tonemapCurves.tonemap_points_cnt,
+                    CAM_MAX_TONEMAP_CURVE_SIZE);
+            tonemapCurves.tonemap_points_cnt = CAM_MAX_TONEMAP_CURVE_SIZE;
+        }
 
         /* ch0 = G*/
         int point = 0;

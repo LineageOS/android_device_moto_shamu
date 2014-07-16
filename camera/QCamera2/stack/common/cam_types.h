@@ -1416,7 +1416,7 @@ typedef struct {
 #define CAM_MAX_MAP_WIDTH         6
 #define CAM_MAX_SHADING_MAP_WIDTH 17
 #define CAM_MAX_SHADING_MAP_HEIGHT 13
-#define CAM_MAX_TONEMAP_CURVE_SIZE    128
+#define CAM_MAX_TONEMAP_CURVE_SIZE    512
 
 typedef struct {
     /* A 1D array of pairs of floats.
