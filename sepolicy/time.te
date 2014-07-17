@@ -1,0 +1,8 @@
+type time, domain;
+type time_exec, exec_type, file_type;
+
+# STOPSHIP: Permissive is not allowed. CTS violation!
+permissive time;
+
+# Started by init
+init_daemon_domain(time)

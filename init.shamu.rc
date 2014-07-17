@@ -55,8 +55,9 @@ on fs
     wait /dev/block/platform/msm_sdcc.1/by-name/persist
     mount ext4 /dev/block/platform/msm_sdcc.1/by-name/persist /persist nosuid nodev barrier=1
 
+    # TODO: dacashman - currently in both fstab and here, only show once?
     wait /dev/block/platform/msm_sdcc.1/by-name/modem
-    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/modem /firmware ro barrier=1
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/modem /firmware ro barrier=1 context=u:object_r:firmware_file:s0
 
     mkdir /fsg 0755 root root
     mount ext4 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3 /fsg ro nosuid nodev barrier=0
@@ -383,7 +384,7 @@ service cnd /system/bin/cnd
     class late_start
     socket cnd stream 660 root inet
 
-service irsc_util /system/bin/logwrapper /system/bin/irsc_util "/etc/sec_config"
+service irsc_util /system/bin/irsc_util "/etc/sec_config"
     class main
     user root
     oneshot
@@ -447,7 +448,7 @@ service bt-sap /system/bin/sapd 15
     disabled
     oneshot
 
-service ftmd /system/bin/logwrapper /system/bin/ftmdaemon
+service ftmd /system/bin/ftmdaemon
     class late_start
     user root
     group bluetooth net_bt_admin misc net_bt_stack
@@ -795,6 +796,7 @@ service qrngd /system/bin/qrngd -f
    class main
    user root
    group root
+   disabled
 
 service qseecomd /system/bin/qseecomd
    class core
@@ -861,7 +863,7 @@ on property:persist.qca1530=no
 on property:init.svc.surfaceflinger=stopped
     stop ppd
 
-service mmi-touch-sh /system/bin/logwrapper /system/bin/sh /init.mmi.touch.sh atmel
+service mmi-touch-sh /system/bin/sh /init.mmi.touch.sh atmel
     class late_start
     user root
     oneshot

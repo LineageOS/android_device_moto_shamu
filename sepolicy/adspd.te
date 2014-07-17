@@ -1,0 +1,7 @@
+type adspd, domain;
+type adspd_exec, file_type, exec_type;
+
+init_daemon_domain(adspd)
+
+# STOPSHIP: Permissive is not allowed. CTS violation!
+permissive adspd;

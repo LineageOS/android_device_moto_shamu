@@ -89,6 +89,26 @@ TARGET_RECOVERY_FSTAB = device/moto/shamu/fstab.shamu
 
 TARGET_RELEASETOOLS_EXTENSIONS := device/moto/shamu
 
+BOARD_SEPOLICY_DIRS += \
+       device/moto/shamu/sepolicy
+
+BOARD_SEPOLICY_UNION += \
+        adspd.te \
+        bridge.te \
+        camera.te \
+        device.te \
+        domain.te \
+        file_contexts \
+        file.te \
+        kickstart.te \
+        mdm_helper.te \
+        netmgrd.te \
+        qmux.te \
+        sensors.te \
+        thermald.te \
+        time.te \
+        ueventd.te
+
 HAVE_ADRENO_SOURCE:= false
 
 OVERRIDE_RS_DRIVER:= libRSDriver_adreno.so

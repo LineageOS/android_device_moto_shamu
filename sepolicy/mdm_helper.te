@@ -1,0 +1,7 @@
+type mdm_helper, domain;
+type mdm_helper_exec, file_type, exec_type;
+
+init_daemon_domain(mdm_helper)
+
+# STOPSHIP: Permissive is not allowed. CTS violation!
+permissive mdm_helper;
