@@ -2749,7 +2749,7 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         fwk_aeMode = ANDROID_CONTROL_AE_MODE_OFF;
         camMetadata.update(ANDROID_CONTROL_AE_MODE, &fwk_aeMode, 1);
     } else {
-        ALOGE("%s: Not enough info to deduce ANDROID_CONTROL_AE_MODE redeye:%p, flashMode:%p, aeMode:%p!!!",__func__, redeye, flashMode, aeMode);
+        ALOGE("%s: Not enough info to deduce ANDROID_CONTROL_AE_MODE redeye:%p, flashMode:%p, aeMode:%d!!!",__func__, redeye, flashMode, aeMode);
     }
 
     resultMetadata = camMetadata.release();
