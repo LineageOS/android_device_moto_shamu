@@ -197,6 +197,7 @@ private:
     int validateCaptureRequest(camera3_capture_request_t *request);
 
     void deriveMinFrameDuration();
+    int32_t handlePendingReprocResults(uint32_t frame_number);
     int64_t getMinFrameDuration(const camera3_capture_request_t *request);
     void handleMetadataWithLock(mm_camera_super_buf_t *metadata_buf);
     void handleBufferWithLock(camera3_stream_buffer_t *buffer,
@@ -286,8 +287,15 @@ private:
         List<PendingBufferInfo> mPendingBufferList;
     } PendingBuffersMap;
 
+    typedef struct {
+        camera3_notify_msg_t notify_msg;
+        camera3_stream_buffer_t buffer;
+        uint32_t frame_number;
+    } PendingReprocessResult;
+
     typedef KeyedVector<uint32_t, Vector<PendingBufferInfo> > FlushMap;
 
+    List<PendingReprocessResult> mPendingReprocessResultList;
     List<PendingRequestInfo> mPendingRequestsList;
     List<PendingFrameDropInfo> mPendingFrameDropList;
     PendingBuffersMap mPendingBuffersMap;
