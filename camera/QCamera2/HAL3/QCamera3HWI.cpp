@@ -3772,7 +3772,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
             ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR,
             ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING,
-            ANDROID_REQUEST_AVAILABLE_CAPABILITIES_DNG };
+            ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW };
     uint8_t available_capabilities_count =
             sizeof(available_capabilities)/sizeof(available_capabilities[0]);
     if (!facingBack) {
