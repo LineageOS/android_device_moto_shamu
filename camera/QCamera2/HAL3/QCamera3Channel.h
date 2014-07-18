@@ -276,6 +276,8 @@ private:
     cam_format_t mStreamFormat;
     bool m_bWNROn;
     bool mPostProcStarted;
+    bool mInputBufferConfig;   // Set when the picture channel is configured
+                               // for processing input(framework) buffers
 
     QCamera3GrallocMemory mMemory;
     QCamera3HeapMemory *mYuvMemory;

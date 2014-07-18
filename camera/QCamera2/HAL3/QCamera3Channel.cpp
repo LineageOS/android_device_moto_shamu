@@ -1083,6 +1083,7 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                         mNumBufs(0),
                         mCurrentBufIndex(-1),
                         mPostProcStarted(false),
+                        mInputBufferConfig(false),
                         mYuvMemory(NULL),
                         mMetaFrame(NULL)
 {
@@ -1213,9 +1214,14 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
     mCurrentBufIndex = index;
 
     // Start postprocessor
-    if(!mPostProcStarted) {
+    // This component needs to be re-configured
+    // once we switch from input(framework) buffer
+    // reprocess to standard capture!
+    bool restartNeeded = ((!mInputBufferConfig) != (NULL != pInputBuffer));
+    if((!mPostProcStarted) || restartNeeded) {
         m_postprocessor.start(reproc_cfg, metadata);
         mPostProcStarted = true;
+        mInputBufferConfig = (NULL == pInputBuffer);
     }
 
     // Queue jpeg settings
