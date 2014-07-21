@@ -209,6 +209,13 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.telephony.default_network=10 \
     telephony.lteOnCdmaDevice=1
 
+# SIM based FSG loading
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.radio.customer_id="" \
+    persist.radio.fsg_reload_on=1 \
+    persist.radio.siminfo_cache_max=3 \
+    persist.radio.efs_img_left=0
+
 # Camera configuration
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     camera.disable_zsl_mode=0
