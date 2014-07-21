@@ -64,7 +64,7 @@ QCamera3PostProcessor::QCamera3PostProcessor(QCamera3PicChannel* ch_ctrl)
       m_inputJpegQ(releaseJpegData, this),
       m_ongoingJpegQ(releaseJpegData, this),
       m_inputRawQ(releasePPInputData, this),
-      m_inputMetaQ(NULL, this),
+      m_inputMetaQ(releaseMetadata, this),
       m_jpegSettingsQ(NULL, this)
 {
     memset(&mJpegHandle, 0, sizeof(mJpegHandle));
@@ -532,7 +532,7 @@ int32_t QCamera3PostProcessor::processData(qcamera_fwk_input_pp_data_t *frame)
  *              none-zero failure code
  *
  *==========================================================================*/
-int32_t QCamera3PostProcessor::processPPMetadata(metadata_buffer_t *reproc_meta)
+int32_t QCamera3PostProcessor::processPPMetadata(mm_camera_super_buf_t *reproc_meta)
 {
    pthread_mutex_lock(&mReprocJobLock);
     // enqueue to metadata input queue
@@ -636,6 +636,7 @@ int32_t QCamera3PostProcessor::processPPData(mm_camera_super_buf_t *frame)
                 (metadata_buffer_t *) job->fwk_src_frame->metadata_buffer.buffer;
         jpeg_job->fwk_src_buffer = job->fwk_src_frame;
     }
+    jpeg_job->src_metadata = job->src_metadata;
     jpeg_job->jpeg_settings = jpeg_settings;
 
     // free pp job buf
@@ -697,6 +698,25 @@ void QCamera3PostProcessor::releasePPInputData(void *data, void *user_data)
 }
 
 /*===========================================================================
+ * FUNCTION   : releaseMetaData
+ *
+ * DESCRIPTION: callback function to release metadata camera buffer
+ *
+ * PARAMETERS :
+ *   @data      : ptr to post process input data
+ *   @user_data : user data ptr (QCamera3Reprocessor)
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void QCamera3PostProcessor::releaseMetadata(void *data, void *user_data)
+{
+    QCamera3PostProcessor *pme = (QCamera3PostProcessor *)user_data;
+    if (NULL != pme) {
+        pme->m_parent->metadataBufDone((mm_camera_super_buf_t *)data);
+    }
+}
+
+/*===========================================================================
  * FUNCTION   : releaseJpegData
  *
  * DESCRIPTION: callback function to release jpeg job node
@@ -734,9 +754,17 @@ void QCamera3PostProcessor::releaseOngoingPPData(void *data, void *user_data)
         if (NULL != pp_job->src_frame) {
             pme->releaseSuperBuf(pp_job->src_frame);
             free(pp_job->src_frame);
-            free(pp_job->metadata);
+            if (NULL != pp_job->src_metadata) {
+                pme->m_parent->metadataBufDone(pp_job->src_metadata);
+                free(pp_job->src_metadata);
+            }
             pp_job->src_frame = NULL;
             pp_job->metadata = NULL;
+        }
+
+        if (NULL != pp_job->fwk_src_frame) {
+            free(pp_job->fwk_src_frame);
+            pp_job->fwk_src_frame = NULL;
         }
     }
 }
@@ -819,9 +847,10 @@ void QCamera3PostProcessor::releaseJpegJobData(qcamera_hal3_jpeg_data_t *job)
         if (NULL != job->fwk_src_buffer) {
             free(job->fwk_src_buffer);
             job->fwk_src_buffer = NULL;
-        } else if (NULL != job->metadata) {
-            free(job->metadata);
-            job->metadata = NULL;
+        } else if (NULL != job->src_metadata) {
+            m_parent->metadataBufDone(job->src_metadata);
+            free(job->src_metadata);
+            job->src_metadata = NULL;
         }
 
         if (NULL != job->fwk_frame) {
@@ -1302,7 +1331,7 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
     int ret;
     uint8_t is_active = FALSE;
     uint8_t needNewSess = TRUE;
-    metadata_buffer_t *meta_buffer = NULL;
+    mm_camera_super_buf_t *meta_buffer = NULL;
     CDBG("%s: E", __func__);
     QCamera3PostProcessor *pme = (QCamera3PostProcessor *)data;
     QCameraCmdThread *cmdThread = &pme->m_dataProcTh;
@@ -1415,6 +1444,10 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                             if (pp_job != NULL) {
                                 memset(pp_job, 0, sizeof(qcamera_hal3_pp_data_t));
                                 if (pme->m_pReprocChannel != NULL) {
+                                    if (NO_ERROR !=
+                                            pme->m_pReprocChannel->extractCrop(fwk_frame)) {
+                                        ALOGE("%s: Failed to extract output crop", __func__);
+                                    }
                                     // add into ongoing PP job Q
                                     pp_job->fwk_src_frame = fwk_frame;
                                     pme->m_ongoingPPQ.enqueue((void *)pp_job);
@@ -1451,21 +1484,31 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                         mm_camera_super_buf_t *pp_frame =
                             (mm_camera_super_buf_t *)pme->m_inputPPQ.dequeue();
                         meta_buffer =
-                            (metadata_buffer_t *)pme->m_inputMetaQ.dequeue();
+                            (mm_camera_super_buf_t *)pme->m_inputMetaQ.dequeue();
                         pthread_mutex_unlock(&pme->mReprocJobLock);
                         qcamera_hal3_pp_data_t *pp_job =
                             (qcamera_hal3_pp_data_t *)malloc(sizeof(qcamera_hal3_pp_data_t));
                         if (pp_job != NULL) {
                             memset(pp_job, 0, sizeof(qcamera_hal3_pp_data_t));
                             pp_job->src_frame = pp_frame;
-                            pp_job->metadata = meta_buffer;
+                            pp_job->src_metadata = meta_buffer;
+                            pp_job->metadata =
+                                    (metadata_buffer_t *)meta_buffer->bufs[0]->buffer;
                             pme->m_ongoingPPQ.enqueue((void *)pp_job);
                             if (pme->m_pReprocChannel != NULL) {
-                                // add into ongoing PP job Q
-                                ret = pme->m_pReprocChannel->doReprocessOffline(pp_frame, meta_buffer);
-                                if (NO_ERROR != ret) {
-                                    // remove from ongoing PP job Q
-                                    pme->m_ongoingPPQ.dequeue(false);
+                                qcamera_fwk_input_pp_data_t fwk_frame;
+                                memset(&fwk_frame, 0, sizeof(qcamera_fwk_input_pp_data_t));
+                                ret = pme->m_pReprocChannel->extractFrameAndCrop(
+                                        pp_frame, meta_buffer->bufs[0],
+                                        pp_job->metadata, fwk_frame);
+                                if (NO_ERROR == ret) {
+                                    // add into ongoing PP job Q
+                                    ret = pme->m_pReprocChannel->doReprocessOffline(
+                                            &fwk_frame);
+                                    if (NO_ERROR != ret) {
+                                        // remove from ongoing PP job Q
+                                        pme->m_ongoingPPQ.dequeue(false);
+                                    }
                                 }
                             } else {
                                 CDBG_HIGH("%s: No reprocess. Calling processPPData directly",
@@ -1486,6 +1529,11 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                             if (pp_frame != NULL) {
                                 pme->releaseSuperBuf(pp_frame);
                                 free(pp_frame);
+                            }
+                            //free metadata
+                            if (NULL != meta_buffer) {
+                                pme->m_parent->metadataBufDone(meta_buffer);
+                                free(meta_buffer);
                             }
                         }
                     } else {
@@ -1509,9 +1557,11 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                         pme->releaseSuperBuf(super_buf);
                         free(super_buf);
                     }
-                    metadata_buffer_t *metadata = (metadata_buffer_t *)pme->m_inputMetaQ.dequeue();
-                    if (metadata != NULL)
+                    mm_camera_super_buf_t *metadata = (mm_camera_super_buf_t *)pme->m_inputMetaQ.dequeue();
+                    if (metadata != NULL) {
+                        pme->m_parent->metadataBufDone(metadata);
                         free(metadata);
+                    }
                     qcamera_fwk_input_pp_data_t *fwk_frame =
                             (qcamera_fwk_input_pp_data_t *) pme->m_inputFWKPPQ.dequeue();
                     if (NULL != fwk_frame) {

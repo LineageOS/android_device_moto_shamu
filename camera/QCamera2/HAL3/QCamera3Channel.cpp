@@ -991,15 +991,6 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
 
     QCamera3PicChannel *obj = (QCamera3PicChannel *)userdata;
     if (obj) {
-
-        //Release any cached metabuffer information
-        if (obj->mMetaFrame != NULL && obj->m_pMetaChannel != NULL) {
-            ((QCamera3MetadataChannel*)(obj->m_pMetaChannel))->bufDone(obj->mMetaFrame);
-            obj->mMetaFrame = NULL;
-            obj->m_pMetaChannel = NULL;
-        } else {
-            ALOGE("%s: Meta frame was NULL", __func__);
-        }
         //Construct payload for process_capture_result. Call mChannelCb
 
         qcamera_hal3_jpeg_data_t *job = obj->m_postprocessor.findJpegJobByJobId(jobId);
@@ -1008,6 +999,7 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
             ALOGE("%s: Error in jobId: (%d) with status: %d", __func__, jobId, status);
             resultStatus = CAMERA3_BUFFER_STATUS_ERROR;
         }
+
         bufIdx = job->jpeg_settings->out_buf_index;
         CDBG("%s: jpeg out_buf_index: %d", __func__, bufIdx);
 
@@ -1055,8 +1047,8 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
             if ((NULL != job->fwk_frame) || (NULL != job->fwk_src_buffer)) {
                 obj->mOfflineMetaMemory.deallocate();
                 obj->mOfflineMemory.unregisterBuffers();
-                obj->m_postprocessor.releaseOfflineBuffers();
             }
+            obj->m_postprocessor.releaseOfflineBuffers();
             obj->m_postprocessor.releaseJpegJobData(job);
             free(job);
         }
@@ -1075,7 +1067,8 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                     void *userData,
                     camera3_stream_t *stream,
                     uint32_t postprocess_mask,
-                    bool is4KVideo) :
+                    bool is4KVideo,
+                    QCamera3Channel *metadataChannel) :
                         QCamera3Channel(cam_handle, cam_ops, cb_routine,
                         paddingInfo, postprocess_mask, userData),
                         m_postprocessor(this),
@@ -1085,6 +1078,7 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                         mPostProcStarted(false),
                         mInputBufferConfig(false),
                         mYuvMemory(NULL),
+                        m_pMetaChannel(metadataChannel),
                         mMetaFrame(NULL)
 {
     QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)mUserData;
@@ -1108,6 +1102,13 @@ QCamera3PicChannel::~QCamera3PicChannel()
     if (rc != 0) {
         ALOGE("De-init Postprocessor failed");
     }
+
+   if (0 < mOfflineMetaMemory.getCnt()) {
+       mOfflineMetaMemory.deallocate();
+   }
+   if (0 < mOfflineMemory.getCnt()) {
+       mOfflineMemory.unregisterBuffers();
+   }
 }
 
 int32_t QCamera3PicChannel::initialize()
@@ -1230,6 +1231,13 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
     if (pInputBuffer == NULL)
         mStreams[0]->bufDone(index);
     else {
+        if (0 < mOfflineMetaMemory.getCnt()) {
+            mOfflineMetaMemory.deallocate();
+        }
+        if (0 < mOfflineMemory.getCnt()) {
+            mOfflineMemory.unregisterBuffers();
+        }
+
         int input_index = mOfflineMemory.getMatchBufIndex((void*)pInputBuffer->buffer);
         if(input_index < 0) {
             rc = mOfflineMemory.registerBuffer(pInputBuffer->buffer);
@@ -1292,6 +1300,32 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
 
         m_postprocessor.processData(src_frame);
     }
+    return rc;
+}
+
+
+/*===========================================================================
+ * FUNCTION : metadataBufDone
+ *
+ * DESCRIPTION: Buffer done method for a metadata buffer
+ *
+ * PARAMETERS :
+ * @recvd_frame : received metadata frame
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3PicChannel::metadataBufDone(mm_camera_super_buf_t *recvd_frame)
+{
+    int32_t rc = NO_ERROR;;
+    if ((NULL == m_pMetaChannel) || (NULL == recvd_frame)) {
+        ALOGE("%s: Metadata channel or metadata buffer invalid", __func__);
+        return BAD_VALUE;
+    }
+
+    rc = ((QCamera3MetadataChannel*)m_pMetaChannel)->bufDone(recvd_frame);
+
     return rc;
 }
 
@@ -1460,7 +1494,7 @@ void QCamera3PicChannel::putStreamBufs()
     mYuvMemory = NULL;
 }
 
-int32_t QCamera3PicChannel::queueReprocMetadata(metadata_buffer_t *metadata)
+int32_t QCamera3PicChannel::queueReprocMetadata(mm_camera_super_buf_t *metadata)
 {
     return m_postprocessor.processPPMetadata(metadata);
 }
@@ -2324,67 +2358,6 @@ QCamera3Stream * QCamera3ReprocessChannel::getSrcStreamBySrcHandle(uint32_t srcH
     return pStream;
 }
 
-int32_t QCamera3ReprocessChannel::doReprocessOffline(mm_camera_super_buf_t *frame,
-        metadata_buffer_t *metadata)
-{
-    int32_t rc = 0;
-    CDBG("%s: E", __func__);
-    if (m_numStreams < 1) {
-        ALOGE("%s: No reprocess stream is created", __func__);
-        return -1;
-    }
-    if (m_pSrcChannel == NULL) {
-        ALOGE("%s: No source channel for reprocess", __func__);
-        return -1;
-    }
-
-    uint32_t buf_idx = 0;
-    for (int i = 0; i < frame->num_bufs; i++) {
-        QCamera3Stream *pStream = getStreamBySrcHandle(frame->bufs[i]->stream_id);
-        QCamera3Stream *pSrcStream = getSrcStreamBySrcHandle(frame->bufs[i]->stream_id);
-        if (pStream != NULL && pSrcStream != NULL) {
-
-            rc = mStreams[i]->mapBuf(
-                    CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF,
-                    frame->bufs[i]->buf_idx, -1,
-                    frame->bufs[i]->fd, frame->bufs[i]->frame_len);
-
-            if (rc == NO_ERROR) {
-                cam_stream_parm_buffer_t param;
-                memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
-                param.type = CAM_STREAM_PARAM_TYPE_DO_REPROCESS;
-                param.reprocess.buf_index = frame->bufs[i]->buf_idx;
-
-                param.reprocess.meta_present = 1;
-                char* private_data = (char *)POINTER_OF_PARAM(
-                        CAM_INTF_META_PRIVATE_DATA, metadata);
-                memcpy(param.reprocess.private_data, private_data,
-                        MAX_METADATA_PRIVATE_PAYLOAD_SIZE);
-
-                // Find crop info for reprocess stream
-                cam_crop_data_t *crop_data = (cam_crop_data_t *)
-                        POINTER_OF_PARAM(CAM_INTF_META_CROP_DATA, metadata);
-                for (int j = 0; j < crop_data->num_of_streams; j++) {
-                    if (crop_data->crop_info[j].stream_id ==
-                           pSrcStream->getMyServerID()) {
-                        param.reprocess.crop_rect  =
-                                crop_data->crop_info[j].crop;
-                        break;
-                    }
-                }
-                CDBG("%s: reprocess.buf_index: %u", __func__,
-                    (uint32_t)param.reprocess.buf_index);
-                rc = pStream->setParameter(param);
-                if (rc != NO_ERROR) {
-                    ALOGE("%s: stream setParameter for reprocess failed", __func__);
-                    break;
-                }
-            }
-        }
-    }
-    return rc;
-}
-
 /*===========================================================================
  * FUNCTION   : stop
  *
@@ -2438,6 +2411,116 @@ int32_t QCamera3ReprocessChannel::unmapOfflineBuffers()
     }
 
     return rc;
+}
+
+
+/*===========================================================================
+ * FUNCTION   : extractFrameAndCrop
+ *
+ * DESCRIPTION: Extract output crop and frame data if present
+ *
+ * PARAMETERS :
+ *   @frame     : input frame from source stream
+ *   meta_buffer: metadata buffer
+ *   @metadata  : corresponding metadata
+ *   @fwk_frame :
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3ReprocessChannel::extractFrameAndCrop(mm_camera_super_buf_t *frame,
+        mm_camera_buf_def_t *meta_buffer, metadata_buffer_t *metadata, qcamera_fwk_input_pp_data_t &fwk_frame)
+{
+    if ((NULL == meta_buffer) || (NULL == frame) || (NULL == metadata)) {
+        return BAD_VALUE;
+    }
+
+    for (int i = 0; i < frame->num_bufs; i++) {
+
+        QCamera3Stream *pStream = getStreamBySrcHandle(frame->bufs[i]->stream_id);
+        QCamera3Stream *pSrcStream = getSrcStreamBySrcHandle(frame->bufs[i]->stream_id);
+
+            if (pStream != NULL && pSrcStream != NULL) {
+                // Find crop info for reprocess stream
+                cam_crop_data_t *crop_data = (cam_crop_data_t *)
+                        POINTER_OF_PARAM(CAM_INTF_META_CROP_DATA, metadata);
+                if (NULL != crop_data) {
+                    for (int j = 0; j < crop_data->num_of_streams; j++) {
+                        if (crop_data->crop_info[j].stream_id ==
+                               pSrcStream->getMyServerID()) {
+                            fwk_frame.reproc_config.output_crop =
+                                    crop_data->crop_info[j].crop;
+                            CDBG("%s: Found reprocess crop %dx%d %dx%d", __func__,
+                                    crop_data->crop_info[0].crop.left,
+                                    crop_data->crop_info[0].crop.top,
+                                    crop_data->crop_info[0].crop.width,
+                                    crop_data->crop_info[0].crop.height);
+                            break;
+                        }
+                    }
+                    fwk_frame.input_buffer = *frame->bufs[i];
+                    fwk_frame.metadata_buffer = *meta_buffer;
+                    break;
+                } else {
+                    continue;
+                }
+            } else {
+                ALOGE("%s: Source/Re-process streams are invalid", __func__);
+                return BAD_VALUE;
+        }
+    }
+
+    return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : extractCrop
+ *
+ * DESCRIPTION: Extract framework output crop if present
+ *
+ * PARAMETERS :
+ *   @frame     : input frame for reprocessing
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3ReprocessChannel::extractCrop(qcamera_fwk_input_pp_data_t *frame)
+{
+    if (NULL == frame) {
+        ALOGE("%s: Incorrect input frame", __func__);
+        return BAD_VALUE;
+    }
+
+    if (NULL == frame->metadata_buffer.buffer) {
+        ALOGE("%s: No metadata available", __func__);
+        return BAD_VALUE;
+    }
+
+    // Find crop info for reprocess stream
+    metadata_buffer_t *meta = (metadata_buffer_t *) frame->metadata_buffer.buffer;
+    if (IS_META_AVAILABLE(CAM_INTF_META_CROP_DATA, meta)) {
+        cam_crop_data_t *crop_data = (cam_crop_data_t *)
+                POINTER_OF_PARAM(CAM_INTF_META_CROP_DATA, meta);
+        if (1 == crop_data->num_of_streams) {
+            frame->reproc_config.output_crop = crop_data->crop_info[0].crop;
+            CDBG("%s: Found offline reprocess crop %dx%d %dx%d", __func__,
+                    crop_data->crop_info[0].crop.left,
+                    crop_data->crop_info[0].crop.top,
+                    crop_data->crop_info[0].crop.width,
+                    crop_data->crop_info[0].crop.height);
+        } else {
+            ALOGE("%s: Incorrect number of offline crop data entries %d",
+                    __func__,
+                    crop_data->num_of_streams);
+            return BAD_VALUE;
+        }
+    } else {
+        CDBG_HIGH("%s: Crop data not present", __func__);
+    }
+
+    return NO_ERROR;
 }
 
 /*===========================================================================
@@ -2515,28 +2598,9 @@ int32_t QCamera3ReprocessChannel::unmapOfflineBuffers()
         param.reprocess.buf_index = buf_idx;
         param.reprocess.meta_present = 1;
         param.reprocess.meta_buf_index = meta_buf_idx;
-
-        // Find crop info for reprocess stream
-        metadata_buffer_t *meta = (metadata_buffer_t *) frame->metadata_buffer.buffer;
-        if (IS_META_AVAILABLE(CAM_INTF_META_CROP_DATA, meta)) {
-            cam_crop_data_t *crop_data = (cam_crop_data_t *)
-                    POINTER_OF_PARAM(CAM_INTF_META_CROP_DATA, meta);
-            if (1 == crop_data->num_of_streams) {
-                param.reprocess.crop_rect = crop_data->crop_info[0].crop;
-                CDBG("%s: Found offline reprocess crop %dx%d %dx%d", __func__,
-                        crop_data->crop_info[0].crop.left,
-                        crop_data->crop_info[0].crop.top,
-                        crop_data->crop_info[0].crop.width,
-                        crop_data->crop_info[0].crop.height);
-            } else {
-                ALOGE("%s: Incorrect number of offline crop data entries %d",
-                        __func__,
-                        crop_data->num_of_streams);
-            }
-        } else {
-            ALOGE("%s: Crop data not present", __func__);
-        }
-
+        param.reprocess.frame_pp_config.crop.input_crop =
+                        frame->reproc_config.output_crop;
+        param.reprocess.frame_pp_config.crop.crop_enabled = 1;
         rc = pStream->setParameter(param);
         if (rc != NO_ERROR) {
             ALOGE("%s: stream setParameter for reprocess failed", __func__);

@@ -65,6 +65,7 @@ typedef struct {
     qcamera_fwk_input_pp_data_t *fwk_src_buffer; // original framework source frame for reproc
     QCamera3Exif *pJpegExifObj;
     metadata_buffer_t *metadata;
+    mm_camera_super_buf_t *src_metadata;
     jpeg_settings_t *jpeg_settings;
 } qcamera_hal3_jpeg_data_t;
 
@@ -73,6 +74,7 @@ typedef struct {
     mm_camera_super_buf_t *src_frame;// source frame (need to be returned back to kernel after done)
     qcamera_fwk_input_pp_data_t *fwk_src_frame;// source frame
     metadata_buffer_t *metadata;
+    mm_camera_super_buf_t *src_metadata;
 } qcamera_hal3_pp_data_t;
 
 #define MAX_HAL3_EXIF_TABLE_ENTRIES 22
@@ -112,7 +114,7 @@ public:
     int32_t processData(mm_camera_super_buf_t *frame);
     int32_t processRawData(mm_camera_super_buf_t *frame);
     int32_t processPPData(mm_camera_super_buf_t *frame);
-    int32_t processPPMetadata(metadata_buffer_t *reproc_meta);
+    int32_t processPPMetadata(mm_camera_super_buf_t *reproc_meta);
     int32_t processJpegSettingData(jpeg_settings_t *jpeg_settings);
     qcamera_hal3_jpeg_data_t *findJpegJobByJobId(uint32_t jobId);
     void releaseJpegJobData(qcamera_hal3_jpeg_data_t *job);
@@ -138,6 +140,7 @@ private:
 
     static void releaseJpegData(void *data, void *user_data);
     static void releasePPInputData(void *data, void *user_data);
+    static void releaseMetadata(void *data, void *user_data);
     static void releaseOngoingPPData(void *data, void *user_data);
 
     static void *dataProcessRoutine(void *data);

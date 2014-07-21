@@ -229,7 +229,8 @@ public:
             void *userData,
             camera3_stream_t *stream,
             uint32_t postprocess_mask,
-            bool is4KVideo);
+            bool is4KVideo,
+            QCamera3Channel *metadataChannel);
     ~QCamera3PicChannel();
 
     virtual int32_t initialize();
@@ -246,6 +247,7 @@ public:
 
     bool isWNREnabled() {return m_bWNROn;};
     bool needOnlineRotation();
+    int32_t metadataBufDone(mm_camera_super_buf_t *recvd_frame);
     QCamera3Exif *getExifData(metadata_buffer_t *metadata,
             jpeg_settings_t *jpeg_settings);
     void overrideYuvSize(uint32_t width, uint32_t height);
@@ -257,7 +259,7 @@ public:
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
             void *userdata);
     virtual int32_t registerBuffer(buffer_handle_t *buffer);
-    int32_t queueReprocMetadata(metadata_buffer_t *metadata);
+    int32_t queueReprocMetadata(mm_camera_super_buf_t *metadata);
 
 private:
     int32_t queueJpegSetting(int32_t out_buf_index, metadata_buffer_t *metadata);
@@ -300,11 +302,14 @@ public:
     QCamera3ReprocessChannel();
     virtual ~QCamera3ReprocessChannel();
     // offline reprocess
-    int32_t doReprocessOffline(mm_camera_super_buf_t *frame,
-                        metadata_buffer_t *metadata);
     int32_t doReprocessOffline(qcamera_fwk_input_pp_data_t *frame);
     int32_t doReprocess(int buf_fd, uint32_t buf_length, int32_t &ret_val,
                         mm_camera_super_buf_t *meta_buf);
+    int32_t extractFrameAndCrop(mm_camera_super_buf_t *frame,
+            mm_camera_buf_def_t *meta_buffer,
+            metadata_buffer_t *metadata,
+            qcamera_fwk_input_pp_data_t &fwk_frame);
+    int32_t extractCrop(qcamera_fwk_input_pp_data_t *frame);
     virtual QCamera3Memory *getStreamBufs(uint32_t len);
     virtual void putStreamBufs();
     virtual int32_t initialize();
