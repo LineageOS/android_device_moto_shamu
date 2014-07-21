@@ -216,6 +216,9 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     persist.camera.HAL3.enabled=1
 
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    persist.camera.ois.disable=1
+
 # GPS configuration
 PRODUCT_COPY_FILES += \
     device/moto/shamu/gps.conf:system/etc/gps.conf
