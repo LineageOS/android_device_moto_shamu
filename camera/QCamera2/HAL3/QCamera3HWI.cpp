@@ -57,6 +57,7 @@ namespace qcamera {
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 
 #define EMPTY_PIPELINE_DELAY 2
+#define PARTIAL_RESULT_COUNT 2
 
 #define VIDEO_4K_WIDTH  3840
 #define VIDEO_4K_HEIGHT 2160
@@ -1441,7 +1442,7 @@ void QCamera3HardwareInterface::handleBufferWithLock(
             result.input_buffer = i->input_buffer;
             result.num_output_buffers = 1;
             result.output_buffers = buffer;
-            result.partial_result = 0;
+            result.partial_result = PARTIAL_RESULT_COUNT;
 
             for (List<PendingBufferInfo>::iterator k =
                     mPendingBuffersMap.mPendingBufferList.begin();
@@ -3793,7 +3794,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       &max_pipeline_depth,
                       1);
 
-    int32_t partial_result_count = 2;
+    int32_t partial_result_count = PARTIAL_RESULT_COUNT;
     staticInfo.update(ANDROID_REQUEST_PARTIAL_RESULT_COUNT,
                       &partial_result_count,
                        1);
@@ -4967,12 +4968,15 @@ int QCamera3HardwareInterface::translateToHalMetadata
         rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_META_MODE,
                 sizeof(metaMode), &metaMode);
         if (metaMode == ANDROID_CONTROL_MODE_USE_SCENE_MODE) {
-           uint8_t fwk_sceneMode = frame_settings.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
-           uint8_t sceneMode = lookupHalName(SCENE_MODES_MAP,
-                                             sizeof(SCENE_MODES_MAP)/sizeof(SCENE_MODES_MAP[0]),
-                                             fwk_sceneMode);
-           rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_PARM_BESTSHOT_MODE,
-                sizeof(sceneMode), &sceneMode);
+           camera_metadata_entry entry = frame_settings.find(ANDROID_CONTROL_SCENE_MODE);
+           if (0 < entry.count) {
+               uint8_t fwk_sceneMode = entry.data.u8[0];
+               uint8_t sceneMode = lookupHalName(SCENE_MODES_MAP,
+                                                 sizeof(SCENE_MODES_MAP)/sizeof(SCENE_MODES_MAP[0]),
+                                                 fwk_sceneMode);
+               rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_PARM_BESTSHOT_MODE,
+                    sizeof(sceneMode), &sceneMode);
+           }
         } else if (metaMode == ANDROID_CONTROL_MODE_OFF) {
            uint8_t sceneMode = CAM_SCENE_MODE_OFF;
            rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_PARM_BESTSHOT_MODE,
