@@ -1,0 +1,2 @@
+# Grant access to Qualcomm MSM Interface (QMI) audio sockets to mediaserver
+qmux_socket(mediaserver)

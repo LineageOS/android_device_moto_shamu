@@ -4,3 +4,6 @@ type bridge_exec, exec_type, file_type;
 
 # Started by init
 init_daemon_domain(bridge)
+
+# Talk to qmuxd (qmux_radio)
+qmux_socket(bridge)

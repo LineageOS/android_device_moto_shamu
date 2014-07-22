@@ -1,3 +1,4 @@
+# Modem helper service. Spawns kickstart.
 type mdm_helper, domain;
 type mdm_helper_exec, file_type, exec_type;
 
@@ -5,3 +6,16 @@ init_daemon_domain(mdm_helper)
 
 # STOPSHIP: Permissive is not allowed. CTS violation!
 permissive mdm_helper;
+
+# Spawn /system/bin/efsks and /system/bin/ks
+allow mdm_helper mdm_helper_exec:file { open execute_no_trans getattr };
+
+# Access USB host ks bridge drivers
+allow mdm_helper mdm_helper_device:chr_file rw_file_perms;
+
+# Read and write for EFS
+allow mdm_helper efs_block_device:blk_file rw_file_perms;
+
+# Let qcks access /dev/mdm node (modem driver)??
+allow mdm_helper radio_device:chr_file r_file_perms;
+allow mdm_helper modem_block_device:blk_file r_file_perms;

@@ -55,10 +55,6 @@ on fs
     wait /dev/block/platform/msm_sdcc.1/by-name/persist
     mount ext4 /dev/block/platform/msm_sdcc.1/by-name/persist /persist nosuid nodev barrier=1
 
-    # TODO: dacashman - currently in both fstab and here, only show once?
-    wait /dev/block/platform/msm_sdcc.1/by-name/modem
-    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/modem /firmware ro barrier=1 context=u:object_r:firmware_file:s0
-
     mkdir /fsg 0755 root root
     mount ext4 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3 /fsg ro nosuid nodev barrier=0
 

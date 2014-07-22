@@ -100,11 +100,14 @@ BOARD_SEPOLICY_UNION += \
         domain.te \
         file_contexts \
         file.te \
-        kickstart.te \
         mdm_helper.te \
+        mediaserver.te \
         netmgrd.te \
         qmux.te \
         sensors.te \
+        system_server.te \
+        tee.te \
+        te_macros \
         thermald.te \
         time.te \
         ueventd.te
