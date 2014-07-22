@@ -162,6 +162,7 @@ public:
     bool needRotationReprocess();
     bool needReprocess(uint32_t postprocess_mask);
     bool isWNREnabled();
+    bool isCACEnabled();
     cam_denoise_process_type_t getWaveletDenoiseProcessPlate();
 
     void captureResultCb(mm_camera_super_buf_t *metadata,
@@ -242,6 +243,8 @@ private:
     QCamera3HeapMemory *mParamHeap;
     metadata_buffer_t* mParameters;
     bool m_bWNROn;
+    bool m_bIsVideo;
+    bool m_bIs4KVideo;
 
     /* Data structure to store pending request */
     typedef struct {

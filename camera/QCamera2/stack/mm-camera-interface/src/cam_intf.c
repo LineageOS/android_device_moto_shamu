@@ -59,6 +59,8 @@ void *get_pointer_of(cam_intf_parm_type_t meta_id,
             return POINTER_OF_META(CAM_INTF_META_CHROMATIX_LITE_AWB, metadata);
         case CAM_INTF_META_CHROMATIX_LITE_AF:
             return POINTER_OF_META(CAM_INTF_META_CHROMATIX_LITE_AF, metadata);
+        case CAM_INTF_META_CHROMATIX_LITE_ASD:
+            return POINTER_OF_META(CAM_INTF_META_CHROMATIX_LITE_ASD, metadata);
         case CAM_INTF_META_FRAME_NUMBER_VALID:
             return POINTER_OF_META(CAM_INTF_META_FRAME_NUMBER_VALID, metadata);
         case CAM_INTF_META_URGENT_FRAME_NUMBER_VALID:
@@ -305,6 +307,8 @@ void *get_pointer_of(cam_intf_parm_type_t meta_id,
             return POINTER_OF_META(CAM_INTF_META_STREAM_ID, metadata);
         case CAM_INTF_PARM_STATS_DEBUG_MASK:
             return POINTER_OF_META(CAM_INTF_PARM_STATS_DEBUG_MASK, metadata);
+        case CAM_INTF_PARM_STATS_AF_PAAF:
+            return POINTER_OF_META(CAM_INTF_PARM_STATS_AF_PAAF, metadata);
         case CAM_INTF_PARM_FOCUS_BRACKETING:
             return POINTER_OF_META(CAM_INTF_PARM_FOCUS_BRACKETING, metadata);
         case CAM_INTF_PARM_FLASH_BRACKETING:
@@ -368,6 +372,8 @@ uint32_t get_size_of(cam_intf_parm_type_t param_id)
             return SIZE_OF_PARAM(CAM_INTF_META_CHROMATIX_LITE_AWB, metadata);
         case CAM_INTF_META_CHROMATIX_LITE_AF:
             return SIZE_OF_PARAM(CAM_INTF_META_CHROMATIX_LITE_AF, metadata);
+        case CAM_INTF_META_CHROMATIX_LITE_ASD:
+            return SIZE_OF_PARAM(CAM_INTF_META_CHROMATIX_LITE_ASD, metadata);
         case CAM_INTF_META_FRAME_NUMBER_VALID:
             return SIZE_OF_PARAM(CAM_INTF_META_FRAME_NUMBER_VALID, metadata);
         case CAM_INTF_META_URGENT_FRAME_NUMBER_VALID:
@@ -614,6 +620,8 @@ uint32_t get_size_of(cam_intf_parm_type_t param_id)
             return SIZE_OF_PARAM(CAM_INTF_META_STREAM_ID, metadata);
         case CAM_INTF_PARM_STATS_DEBUG_MASK:
             return SIZE_OF_PARAM(CAM_INTF_PARM_STATS_DEBUG_MASK, metadata);
+        case CAM_INTF_PARM_STATS_AF_PAAF:
+            return SIZE_OF_PARAM(CAM_INTF_PARM_STATS_AF_PAAF, metadata);
         case CAM_INTF_PARM_FOCUS_BRACKETING:
             return SIZE_OF_PARAM(CAM_INTF_PARM_FOCUS_BRACKETING, metadata);
         case CAM_INTF_PARM_FLASH_BRACKETING:

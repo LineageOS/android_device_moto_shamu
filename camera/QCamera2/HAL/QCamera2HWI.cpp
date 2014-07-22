@@ -1582,8 +1582,7 @@ uint8_t QCamera2HardwareInterface::getBufNumRequired(cam_stream_type_t stream_ty
     case CAM_STREAM_TYPE_OFFLINE_PROC:
         {
             bufferCnt = minCaptureBuffers;
-            if ((mLongshotEnabled) ||
-                    ( bufferCnt > CAMERA_LONGSHOT_STAGES ) ) {
+            if (mLongshotEnabled) {
                 bufferCnt = CAMERA_LONGSHOT_STAGES;
             }
         }

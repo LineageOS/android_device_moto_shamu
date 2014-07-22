@@ -228,7 +228,8 @@ public:
             cam_padding_info_t *paddingInfo,
             void *userData,
             camera3_stream_t *stream,
-            uint32_t postprocess_mask);
+            uint32_t postprocess_mask,
+            bool is4KVideo);
     ~QCamera3PicChannel();
 
     virtual int32_t initialize();

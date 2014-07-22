@@ -58,6 +58,9 @@ namespace qcamera {
 
 #define EMPTY_PIPELINE_DELAY 2
 
+#define VIDEO_4K_WIDTH  3840
+#define VIDEO_4K_HEIGHT 2160
+
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 const camera_metadata_t *gStaticMetadata[MM_CAMERA_MAX_NUM_SENSORS];
 volatile uint32_t gCamHal3LogLevel = 1;
@@ -240,6 +243,8 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
       mFlush(false),
       mParamHeap(NULL),
       mParameters(NULL),
+      m_bIsVideo(false),
+      m_bIs4KVideo(false),
       mLoopBackResult(NULL),
       mMinProcessedFrameDuration(0),
       mMinJpegFrameDuration(0),
@@ -631,18 +636,28 @@ int QCamera3HardwareInterface::configureStreams(
         }
     }
 
-    bool isVideo = false;
 
     /* Check whether we have video stream */
+    m_bIs4KVideo = false;
+    m_bIsVideo = false;
+    size_t videoWidth = 0;
+    size_t videoHeight = 0;
+    /* Check whether we have zsl stream or 4k video case */
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
         if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL &&
                 newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED && jpegStream){
             isZsl = true;
         }
-        if (newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED &&
-            newStream->usage & private_handle_t::PRIV_FLAGS_VIDEO_ENCODER) {
-            isVideo = true;
+        if ((HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED == newStream->format) &&
+                (newStream->usage & private_handle_t::PRIV_FLAGS_VIDEO_ENCODER)) {
+            m_bIsVideo = true;
+            if ((VIDEO_4K_WIDTH <= newStream->width) &&
+                    (VIDEO_4K_HEIGHT <= newStream->height)) {
+                videoWidth = newStream->width;
+                videoHeight = newStream->height;
+                m_bIs4KVideo = true;
+            }
         }
     }
 
@@ -680,7 +695,7 @@ int QCamera3HardwareInterface::configureStreams(
               break;
            case HAL_PIXEL_FORMAT_BLOB:
               stream_config_info.type[i] = CAM_STREAM_TYPE_SNAPSHOT;
-              if (isVideo && !isZsl) {
+              if (m_bIsVideo && !isZsl) {
                   stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_PP_SUPERSET;
               } else {
                   stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_NONE;
@@ -690,6 +705,9 @@ int QCamera3HardwareInterface::configureStreams(
                           gCamCapability[mCameraId]->active_array_size.width;
                   stream_config_info.stream_sizes[i].height =
                           gCamCapability[mCameraId]->active_array_size.height;
+              } else if (m_bIs4KVideo) {
+                  stream_config_info.stream_sizes[i].width = videoWidth;
+                  stream_config_info.stream_sizes[i].height = videoHeight;
               }
               break;
            case HAL_PIXEL_FORMAT_RAW_OPAQUE:
@@ -771,7 +789,8 @@ int QCamera3HardwareInterface::configureStreams(
                     mPictureChannel = new QCamera3PicChannel(mCameraHandle->camera_handle,
                             mCameraHandle->ops, captureResultCb,
                             &gCamCapability[mCameraId]->padding_info, this, newStream,
-                            stream_config_info.postprocess_mask[i]);
+                            stream_config_info.postprocess_mask[i],
+                            m_bIs4KVideo);
                     if (mPictureChannel == NULL) {
                         ALOGE("%s: allocation of channel failed", __func__);
                         pthread_mutex_unlock(&mMutex);
@@ -799,10 +818,13 @@ int QCamera3HardwareInterface::configureStreams(
         }
     }
 
-    if (isZsl)
+    if (isZsl) {
         mPictureChannel->overrideYuvSize(
                 gCamCapability[mCameraId]->active_array_size.width,
                 gCamCapability[mCameraId]->active_array_size.height);
+    } else if (m_bIs4KVideo) {
+        mPictureChannel->overrideYuvSize(videoWidth, videoHeight);
+    }
 
     int32_t hal_version = CAM_HAL_V3;
     stream_config_info.num_streams = streamList->num_streams;
@@ -891,23 +913,23 @@ int QCamera3HardwareInterface::validateCaptureRequest(
         QCamera3Channel *channel =
             static_cast<QCamera3Channel*>(b->stream->priv);
         if (channel == NULL) {
-            ALOGE("%s: Request %d: Buffer %d: Unconfigured stream!",
-                    __func__, frameNumber, idx);
+            ALOGE("%s: Request %d: Buffer %ld: Unconfigured stream!",
+                    __func__, frameNumber, (long)idx);
             return BAD_VALUE;
         }
         if (b->status != CAMERA3_BUFFER_STATUS_OK) {
-            ALOGE("%s: Request %d: Buffer %d: Status not OK!",
-                    __func__, frameNumber, idx);
+            ALOGE("%s: Request %d: Buffer %ld: Status not OK!",
+                    __func__, frameNumber, (long)idx);
             return BAD_VALUE;
         }
         if (b->release_fence != -1) {
-            ALOGE("%s: Request %d: Buffer %d: Has a release fence!",
-                    __func__, frameNumber, idx);
+            ALOGE("%s: Request %d: Buffer %ld: Has a release fence!",
+                    __func__, frameNumber, (long)idx);
             return BAD_VALUE;
         }
         if (b->buffer == NULL) {
-            ALOGE("%s: Request %d: Buffer %d: NULL buffer handle!",
-                    __func__, frameNumber, idx);
+            ALOGE("%s: Request %d: Buffer %ld: NULL buffer handle!",
+                    __func__, frameNumber, (long)idx);
             return BAD_VALUE;
         }
     }
@@ -918,23 +940,23 @@ int QCamera3HardwareInterface::validateCaptureRequest(
         QCamera3Channel *channel =
                 static_cast<QCamera3Channel*>(b->stream->priv);
         if (channel == NULL) {
-            ALOGE("%s: Request %d: Buffer %d: Unconfigured stream!",
-                    __func__, frameNumber, idx);
+            ALOGE("%s: Request %d: Buffer %ld: Unconfigured stream!",
+                    __func__, frameNumber, (long)idx);
             return BAD_VALUE;
         }
         if (b->status != CAMERA3_BUFFER_STATUS_OK) {
-            ALOGE("%s: Request %d: Buffer %d: Status not OK!",
-                    __func__, frameNumber, idx);
+            ALOGE("%s: Request %d: Buffer %ld: Status not OK!",
+                    __func__, frameNumber, (long)idx);
             return BAD_VALUE;
         }
         if (b->release_fence != -1) {
-            ALOGE("%s: Request %d: Buffer %d: Has a release fence!",
-                    __func__, frameNumber, idx);
+            ALOGE("%s: Request %d: Buffer %ld: Has a release fence!",
+                    __func__, frameNumber, (long)idx);
             return BAD_VALUE;
         }
         if (b->buffer == NULL) {
-            ALOGE("%s: Request %d: Buffer %d: NULL buffer handle!",
-                    __func__, frameNumber, idx);
+            ALOGE("%s: Request %d: Buffer %ld: NULL buffer handle!",
+                    __func__, frameNumber, (long)idx);
             return BAD_VALUE;
         }
         idx++;
@@ -2232,6 +2254,14 @@ QCamera3HardwareInterface::translateFromHalMetadata(
             (int64_t *)POINTER_OF_META(CAM_INTF_META_SENSOR_FRAME_DURATION, metadata);
         CDBG("%s: sensorFameDuration = %lld", __func__, *sensorFameDuration);
         camMetadata.update(ANDROID_SENSOR_FRAME_DURATION, sensorFameDuration, 1);
+    }
+    if (IS_META_AVAILABLE(CAM_INTF_META_SENSOR_ROLLING_SHUTTER_SKEW, metadata)){
+        int64_t  *sensorRollingShutterSkew =
+            (int64_t *)POINTER_OF_META(CAM_INTF_META_SENSOR_ROLLING_SHUTTER_SKEW,
+                metadata);
+        CDBG("%s: sensorRollingShutterSkew = %lld", __func__, *sensorRollingShutterSkew);
+        camMetadata.update(ANDROID_SENSOR_ROLLING_SHUTTER_SKEW,
+                sensorRollingShutterSkew, 1);
     }
     if (IS_META_AVAILABLE(CAM_INTF_META_SENSOR_SENSITIVITY, metadata)){
         int32_t  *sensorSensitivity =
@@ -5935,6 +5965,10 @@ QCamera3ReprocessChannel *QCamera3HardwareInterface::addOfflineReprocChannel(
         }
     }
 
+    if (isCACEnabled()) {
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_CAC;
+    }
+
     if (IS_PARAM_AVAILABLE(CAM_INTF_META_JPEG_ORIENTATION, metadata)) {
         int32_t *rotation = (int32_t *)POINTER_OF_PARAM(
                 CAM_INTF_META_JPEG_ORIENTATION, metadata);
@@ -5966,6 +6000,14 @@ QCamera3ReprocessChannel *QCamera3HardwareInterface::addOfflineReprocChannel(
     return pChannel;
 }
 
+
+bool  QCamera3HardwareInterface::isCACEnabled() {
+    char prop[PROPERTY_VALUE_MAX];
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.camera.feature.cac", prop, "0");
+    int enableCAC = atoi(prop);
+    return enableCAC;
+}
 /*===========================================================================
 * FUNCTION   : getLogLevel
 *

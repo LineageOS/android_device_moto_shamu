@@ -90,7 +90,7 @@
 #define MAX_AE_STATS_DATA_SIZE  1000
 #define MAX_AWB_STATS_DATA_SIZE 1000
 #define MAX_AF_STATS_DATA_SIZE  1000
-
+#define MAX_ASD_STATS_DATA_SIZE 1000
 
 
 #define TUNING_DATA_VERSION        3
@@ -707,7 +707,7 @@ typedef struct {
 typedef struct {
     uint8_t stepsize;
     uint8_t direction;
-    uint8_t num_steps;
+    int32_t num_steps;
     uint8_t ttype;
 } tune_actuator_t;
 
@@ -779,7 +779,7 @@ typedef enum {
 }qcamera_face_detect_type_t;
 
 typedef struct {
-    int8_t face_id;            /* unique id for face tracking within view unless view changes */
+    int32_t face_id;            /* unique id for face tracking within view unless view changes */
     int8_t score;              /* score of confidence (0, -100) */
     cam_rect_t face_boundary;  /* boundary of face detected */
     cam_coordinate_type_t left_eye_center;  /* coordinate of center of left eye */
@@ -977,6 +977,10 @@ typedef struct {
 } cam_chromatix_lite_af_stats_t;
 
 typedef struct {
+  uint8_t private_stats_data[MAX_ASD_STATS_DATA_SIZE];
+} cam_chromatix_lite_asd_stats_t;
+
+typedef struct {
     cam_dimension_t stream_sizes[MAX_NUM_STREAMS];
     uint32_t num_streams;
     cam_stream_type_t type[MAX_NUM_STREAMS];
@@ -1099,6 +1103,7 @@ typedef enum {
     CAM_INTF_PARM_HFR,
     CAM_INTF_PARM_REDEYE_REDUCTION,
     CAM_INTF_PARM_WAVELET_DENOISE,
+    CAM_INTF_PARM_TEMPORAL_DENOISE,
     CAM_INTF_PARM_HISTOGRAM,
     CAM_INTF_PARM_ASD_ENABLE,
     CAM_INTF_PARM_RECORDING_HINT,
@@ -1131,6 +1136,7 @@ typedef enum {
     CAM_INTF_META_CHROMATIX_LITE_AE,
     CAM_INTF_META_CHROMATIX_LITE_AWB,
     CAM_INTF_META_CHROMATIX_LITE_AF,
+    CAM_INTF_META_CHROMATIX_LITE_ASD,
     CAM_INTF_PARM_GET_CHROMATIX,
     CAM_INTF_PARM_SET_RELOAD_CHROMATIX,
     CAM_INTF_PARM_SET_AUTOFOCUSTUNING,
@@ -1267,6 +1273,9 @@ typedef enum {
     CAM_INTF_META_SENSOR_SENSITIVITY,
     /* Time at start of exposure of first row */
     CAM_INTF_META_SENSOR_TIMESTAMP,
+    /* Duration b/w start of first row exposure and the start of last
+       row exposure in nanoseconds */
+    CAM_INTF_META_SENSOR_ROLLING_SHUTTER_SKEW,
     /* SHADING */
     /* Quality of lens shading correction applied to the image data */
     CAM_INTF_META_SHADING_MODE,
@@ -1298,6 +1307,7 @@ typedef enum {
     CAM_INTF_META_LENS_SHADING_MAP,
     CAM_INTF_META_PRIVATE_DATA,
     CAM_INTF_PARM_STATS_DEBUG_MASK,
+    CAM_INTF_PARM_STATS_AF_PAAF,
     /* Indicates streams ID of all the requested buffers */
     CAM_INTF_META_STREAM_ID,
     CAM_INTF_PARM_FOCUS_BRACKETING,
