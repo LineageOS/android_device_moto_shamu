@@ -10,3 +10,5 @@ init_daemon_domain(netmgrd)
 
 # Uses network sockets.
 net_domain(netmgrd)
+
+allow netmgrd shared_log_device:chr_file rw_file_perms;

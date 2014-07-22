@@ -7,3 +7,12 @@ init_daemon_domain(camera)
 
 # STOPSHIP: Permissive is not allowed. CTS violation!
 permissive camera;
+
+# Interact with other media devices
+allow camera camera_device:dir search;
+allow camera { gpu_device video_device camera_device }:chr_file rw_file_perms;
+allow camera { surfaceflinger mediaserver }:fd use;
+
+# Connect to sensor socket (/dev/sensor/sensor_ctl_socket)
+unix_socket_connect(camera, sensors, sensors)
+allow camera sensors_socket:sock_file read;
