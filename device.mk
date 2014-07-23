@@ -281,6 +281,9 @@ PRODUCT_COPY_FILES += \
     device/moto/shamu/init.shamu.diag.rc.user:root/init.shamu.diag.rc
 endif
 
+# Enable for volte call
+AUDIO_FEATURE_ENABLED_MULTI_VOICE_SESSIONS := true
+
 # setup dalvik vm configs.
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 
