@@ -1115,7 +1115,7 @@ int32_t QCamera3HardwareInterface::handlePendingReprocResults(uint32_t frame_num
                     result.output_buffers =  &j->buffer;
                     result.input_buffer = k->input_buffer;
                     result.result = k->settings;
-                    result.partial_result = 1;
+                    result.partial_result = PARTIAL_RESULT_COUNT;
                     mCallbackOps->process_capture_result(mCallbackOps, &result);
 
                     mPendingRequestsList.erase(k);
