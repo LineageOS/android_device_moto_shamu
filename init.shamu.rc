@@ -102,12 +102,16 @@ on early-boot
     # Subsytem Restart
     #venus
     write /sys/bus/msm_subsys/devices/subsys0/restart_level "related"
+    write /sys/bus/msm_subsys/devices/subsys0/recovery_policy "skip_restart"
     #adsp
     write /sys/bus/msm_subsys/devices/subsys1/restart_level "related"
+    write /sys/bus/msm_subsys/devices/subsys1/recovery_policy "skip_restart"
     #vpu
     write /sys/bus/msm_subsys/devices/subsys2/restart_level "related"
+    write /sys/bus/msm_subsys/devices/subsys2/recovery_policy "skip_restart"
     #esoc0 (mdm)
     write /sys/bus/msm_subsys/devices/subsys3/restart_level "related"
+    write /sys/bus/msm_subsys/devices/subsys3/recovery_policy "skip_restart"
 
 on boot
     insmod /system/lib/modules/adsprpc.ko
