@@ -240,7 +240,7 @@ PRODUCT_PACKAGES += \
 
 # NFC packages
 PRODUCT_PACKAGES += \
-    nfc_nci.shamu\
+    nfc_nci.bcm2079x.default \
     NfcNci \
     Tag
 
