@@ -151,7 +151,7 @@
 
         <EncoderProfile quality="2160p" fileFormat="mp4" duration="30">
             <Video codec="h264"
-                   bitRate="17000000"
+                   bitRate="42000000"
                    width="3840"
                    height="2160"
                    frameRate="30" />
@@ -228,7 +228,7 @@
 
         <EncoderProfile quality="timelapse2160p" fileFormat="mp4" duration="30">
             <Video codec="h264"
-                   bitRate="17000000"
+                   bitRate="42000000"
                    width="3840"
                    height="2160"
                    frameRate="30" />
@@ -376,7 +376,7 @@
          or query the capabilities of the codec at all if it is disabled
     -->
     <VideoEncoderCap name="h264" enabled="true"
-        minBitRate="64000" maxBitRate="40000000"
+        minBitRate="64000" maxBitRate="100000000"
         minFrameWidth="176" maxFrameWidth="3840"
         minFrameHeight="144" maxFrameHeight="2160"
         minFrameRate="15" maxFrameRate="30" />
