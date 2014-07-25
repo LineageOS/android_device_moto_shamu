@@ -1168,6 +1168,10 @@
         <path name="handset" />
     </path>
 
+    <path name="voice-hac-handset">
+        <path name="voice-handset" />
+    </path>
+
     <path name="voice-speaker">
         <ctl name="BOOST_STUB Left Mixer left" value="1" />
         <ctl name="BOOST Left Ch Select" value="1" />
