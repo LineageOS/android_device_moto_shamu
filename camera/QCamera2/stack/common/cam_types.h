@@ -1598,6 +1598,16 @@ typedef enum {
     CAM_FLASH_ON
 } cam_flash_value_t;
 
+typedef enum {
+    CAM_SENSOR_RAW,
+    CAM_SENSOR_YUV
+} cam_sensor_t;
+
+typedef struct {
+    cam_sensor_t sens_type;
+    cam_format_t native_format;
+} cam_sensor_type_t;
+
 typedef struct {
     /* reprocess feature mask */
     uint32_t feature_mask;

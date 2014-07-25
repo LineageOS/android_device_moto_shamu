@@ -4125,7 +4125,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW };
     uint8_t available_capabilities_count =
             sizeof(available_capabilities)/sizeof(available_capabilities[0]);
-    if (!facingBack) {
+    if (CAM_SENSOR_YUV == gCamCapability[cameraId]->sensor_type.sens_type) {
         available_capabilities_count--;
     }
     staticInfo.update(ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
@@ -5069,6 +5069,9 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
 
     /* lens shading map mode */
     uint8_t shadingmap_mode = ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF;
+    if (CAM_SENSOR_RAW == gCamCapability[mCameraId]->sensor_type.sens_type) {
+        shadingmap_mode = ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_ON;
+    }
     settings.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, &shadingmap_mode, 1);
 
     //special defaults for manual template
