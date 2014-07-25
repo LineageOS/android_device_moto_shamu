@@ -3524,6 +3524,13 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_STATISTICS_INFO_MAX_FACE_COUNT,
                       (int32_t*)&maxFaces, 1);
 
+    uint8_t timestampSource = ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN;
+    if (gCamCapability[cameraId]->isTimestampCalibrated) {
+        timestampSource = ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME;
+    }
+    staticInfo.update(ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE,
+            &timestampSource, 1);
+
     staticInfo.update(ANDROID_STATISTICS_INFO_HISTOGRAM_BUCKET_COUNT,
                       &gCamCapability[cameraId]->histogram_size, 1);
 
@@ -4104,6 +4111,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
        ANDROID_CONTROL_AF_AVAILABLE_MODES, ANDROID_CONTROL_AVAILABLE_EFFECTS,
        ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_CORRECTION_MODES,
        ANDROID_SCALER_CROPPING_TYPE,
+       ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE,
        ANDROID_CONTROL_AVAILABLE_SCENE_MODES,
        ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
        ANDROID_CONTROL_AWB_AVAILABLE_MODES, ANDROID_CONTROL_MAX_REGIONS,
