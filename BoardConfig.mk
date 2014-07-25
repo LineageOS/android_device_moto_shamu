@@ -104,6 +104,7 @@ BOARD_SEPOLICY_UNION += \
         mediaserver.te \
         netmgrd.te \
         qmux.te \
+        rild.te \
         sensors.te \
         system_server.te \
         tee.te \

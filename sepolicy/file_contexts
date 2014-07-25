@@ -1,3 +1,5 @@
+/data/misc/radio(/.*)?         u:object_r:radio_data_file:s0
+
 # Audio DSP devices
 /dev/ttyHS3                    u:object_r:adspd_device:s0
 
