@@ -129,6 +129,15 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FOCUS_MOD
     { ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO,   CAM_FOCUS_MODE_CONTINOUS_VIDEO }
 };
 
+const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::COLOR_ABERRATION_MAP[] = {
+    { ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE_OFF,
+            CAM_COLOR_CORRECTION_ABERRATION_OFF },
+    { ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE_FAST,
+            CAM_COLOR_CORRECTION_ABERRATION_FAST },
+    { ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE_HIGH_QUALITY,
+            CAM_COLOR_CORRECTION_ABERRATION_HIGH_QUALITY },
+};
+
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::ANTIBANDING_MODES_MAP[] = {
     { ANDROID_CONTROL_AE_ANTIBANDING_MODE_OFF,  CAM_ANTIBANDING_MODE_OFF },
     { ANDROID_CONTROL_AE_ANTIBANDING_MODE_50HZ, CAM_ANTIBANDING_MODE_50HZ },
@@ -2690,6 +2699,22 @@ QCamera3HardwareInterface::translateFromHalMetadata(
         }
     }
 
+    if (IS_PARAM_AVAILABLE(CAM_INTF_PARM_CAC, metadata)) {
+        cam_aberration_mode_t  *cacMode = (cam_aberration_mode_t *)
+                POINTER_OF_PARAM(CAM_INTF_PARM_CAC, metadata);
+        int32_t cac = lookupFwkName(COLOR_ABERRATION_MAP,
+                sizeof(COLOR_ABERRATION_MAP)/sizeof(COLOR_ABERRATION_MAP[0]),
+                *cacMode);
+        if (NAME_NOT_FOUND != cac) {
+            uint8_t val = (uint8_t) cac;
+            camMetadata.update(ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE,
+                    &val,
+                    1);
+        } else {
+            ALOGE("%s: Invalid CAC camera parameter: %d", __func__, *cacMode);
+        }
+    }
+
     resultMetadata = camMetadata.release();
     return resultMetadata;
 }
@@ -3751,6 +3776,32 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_antibanding_modes,
                       size);
 
+    uint8_t avail_abberation_modes[CAM_COLOR_CORRECTION_ABERRATION_MAX];
+    size = 0;
+    if (0 == gCamCapability[cameraId]->aberration_modes_count) {
+        avail_abberation_modes[0] =
+                ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE_OFF;
+        size++;
+    } else {
+        for (size_t i = 0; i < gCamCapability[cameraId]->aberration_modes_count; i++) {
+            int32_t val = lookupFwkName(COLOR_ABERRATION_MAP,
+                    sizeof(COLOR_ABERRATION_MAP)/sizeof(COLOR_ABERRATION_MAP[0]),
+                    gCamCapability[cameraId]->aberration_modes[i]);
+            if (val != NAME_NOT_FOUND) {
+                avail_abberation_modes[size] = (uint8_t)val;
+                size++;
+            } else {
+                ALOGE("%s: Invalid CAC mode %d", __func__,
+                        gCamCapability[cameraId]->aberration_modes[i]);
+                break;
+            }
+        }
+
+    }
+    staticInfo.update(ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_CORRECTION_MODES,
+            avail_abberation_modes,
+            size);
+
     uint8_t avail_af_modes[CAM_FOCUS_MODE_MAX];
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_focus_modes_cnt; i++) {
@@ -4051,6 +4102,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
        ANDROID_CONTROL_AE_AVAILABLE_MODES, ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
        ANDROID_CONTROL_AE_COMPENSATION_RANGE, ANDROID_CONTROL_AE_COMPENSATION_STEP,
        ANDROID_CONTROL_AF_AVAILABLE_MODES, ANDROID_CONTROL_AVAILABLE_EFFECTS,
+       ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_CORRECTION_MODES,
        ANDROID_CONTROL_AVAILABLE_SCENE_MODES,
        ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
        ANDROID_CONTROL_AWB_AVAILABLE_MODES, ANDROID_CONTROL_MAX_REGIONS,
@@ -5098,6 +5150,22 @@ int QCamera3HardwareInterface::translateToHalMetadata
                 fwk_whiteLevel);
         rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_PARM_WHITE_BALANCE,
                 sizeof(whiteLevel), &whiteLevel);
+    }
+
+    if (frame_settings.exists(ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE)) {
+        uint8_t fwk_cacMode =
+                frame_settings.find(
+                        ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE).data.u8[0];
+        int8_t val = lookupHalName(COLOR_ABERRATION_MAP,
+                sizeof(COLOR_ABERRATION_MAP)/sizeof(COLOR_ABERRATION_MAP[0]),
+                fwk_cacMode);
+        if (NAME_NOT_FOUND != val) {
+            cam_aberration_mode_t cacMode = (cam_aberration_mode_t) val;
+            rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_PARM_CAC,
+                    sizeof(cacMode), &cacMode);
+        } else {
+            ALOGE("%s: Invalid framework CAC mode: %d", __func__, fwk_cacMode);
+        }
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AF_MODE)) {

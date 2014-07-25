@@ -326,6 +326,9 @@ typedef struct{
     cam_opaque_raw_format_t opaque_raw_fmt;
 
     uint16_t isCacSupported;
+
+    cam_aberration_mode_t aberration_modes[CAM_COLOR_CORRECTION_ABERRATION_MAX];
+    uint32_t aberration_modes_count;
 } cam_capability_t;
 
 typedef enum {
@@ -618,6 +621,7 @@ typedef struct {
     INCLUDE(CAM_INTF_META_TEST_PATTERN_DATA,            cam_test_pattern_data_t,     1);
     INCLUDE(CAM_INTF_META_PROFILE_TONE_CURVE,           cam_profile_tone_curve,      1);
     INCLUDE(CAM_INTF_META_OTP_WB_GRGB,                  float,                       1);
+    INCLUDE(CAM_INTF_PARM_CAC,                          cam_aberration_mode_t,       1);
     INCLUDE(CAM_INTF_META_NEUTRAL_COL_POINT,            cam_neutral_col_point_t,     1);
 } parm_data_t;
 

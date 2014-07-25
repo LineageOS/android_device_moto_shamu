@@ -322,6 +322,7 @@ private:
     static const QCameraMap WHITE_BALANCE_MODES_MAP[];
     static const QCameraMap SCENE_MODES_MAP[];
     static const QCameraMap FOCUS_MODES_MAP[];
+    static const QCameraMap COLOR_ABERRATION_MAP[];
     static const QCameraMap ANTIBANDING_MODES_MAP[];
     static const QCameraMap AE_FLASH_MODE_MAP[];
     static const QCameraMap FLASH_MODES_MAP[];
