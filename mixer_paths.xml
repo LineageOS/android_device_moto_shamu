@@ -722,6 +722,10 @@
 		<ctl name="COMP1 Switch" value="1" />
 	</path>
 
+	<path name="line">
+		<path name="headphones" />
+	</path>
+
 	<path name="headset-mic">
 		<path name="adc2" />
 		<ctl name="ADC1 Volume" value="0" />
@@ -753,6 +757,10 @@
 	</path>
 
 	<path name="voice-headphones">
+		<path name="headphones" />
+	</path>
+
+	<path name="voice-line">
 		<path name="headphones" />
 	</path>
 
