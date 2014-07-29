@@ -1514,7 +1514,7 @@ void QCamera3HardwareInterface::handleBufferWithLock(
                 camera3_capture_result result;
                 memset(&result, 0, sizeof(camera3_capture_result));
                 result.frame_number = frame_number;
-                result.result = settings.release();
+                result.result = i->settings;
                 result.input_buffer = i->input_buffer;
                 result.num_output_buffers = 1;
                 result.output_buffers = buffer;
