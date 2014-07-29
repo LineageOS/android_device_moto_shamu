@@ -98,7 +98,6 @@ BOARD_SEPOLICY_UNION += \
         camera.te \
         device.te \
         domain.te \
-        file_contexts \
         file.te \
         mdm_helper.te \
         mediaserver.te \
@@ -111,7 +110,9 @@ BOARD_SEPOLICY_UNION += \
         te_macros \
         thermald.te \
         time.te \
-        ueventd.te
+        ueventd.te \
+        file_contexts \
+        service_contexts
 
 HAVE_ADRENO_SOURCE:= false
 
