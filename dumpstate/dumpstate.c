@@ -23,5 +23,8 @@ void dumpstate_board()
     dump_file("Interrupts", "/proc/interrupts");
     dump_file("Power Management Stats", "/proc/msm_pm_stats");
     dump_file("RPM Stats", "/d/rpm_stats");
+    dump_file("SMB135x Config Regs", "/d/smb135x/config_registers");
+    dump_file("SMB135x IRQ Count", "/d/smb135x/irq_count");
+    dump_file("SMB135x Status Regs", "/d/smb135x/status_registers");
     run_command("Subsystem Tombstone list", 5, SU_PATH, "root", "ls", "-l", "/data/tombstones/ramdump", NULL);
 };
