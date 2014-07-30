@@ -1361,10 +1361,12 @@ uint8_t get_num_of_cameras()
 
     CDBG("%s : E", __func__);
 
-    property_get("vold.decrypt", prop, "0");
-    int decrypt = atoi(prop);
-    if (decrypt == 1)
-     return 0;
+    int decrypt = property_get("vold.decrypt", prop, NULL);
+    if (0 < decrypt) {
+        if(strncmp(prop, "trigger_restart_min_framework", decrypt) == 0) {
+            return 0;
+        }
+    }
 
     /* lock the mutex */
     pthread_mutex_lock(&g_intf_lock);
