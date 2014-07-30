@@ -1,8 +1,14 @@
 /data/cam_socket[23]          u:object_r:camera_socket:s0
 /data/misc/radio(/.*)?         u:object_r:radio_data_file:s0
 
+# Bluetooth
+/dev/ttyHS0                    u:object_r:hci_attach_dev:s0
+
 # Audio DSP devices
 /dev/ttyHS3                    u:object_r:adspd_device:s0
+
+#Serial console
+/dev/ttyHSL0                   u:object_r:tty_device:s0
 
 # STOPSHIP b/16455932
 /dev/vfsspi                    u:object_r:fingerprint_device:s0
