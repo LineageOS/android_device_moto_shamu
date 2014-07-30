@@ -2,3 +2,5 @@ allow tee drm_block_device:blk_file rw_file_perms;
 
 # tee starts as root, and drops privileges
 allow tee self:capability { setuid setgid };
+
+allow tee block_device:dir search;
