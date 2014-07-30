@@ -868,7 +868,7 @@ QCamera3RawChannel::QCamera3RawChannel(uint32_t cam_handle,
                         mIsRaw16(raw_16)
 {
     char prop[PROPERTY_VALUE_MAX];
-    property_get("persist.camera.raw.dump", prop, "0");
+    property_get("persist.camera.raw.debug.dump", prop, "0");
     mRawDump = atoi(prop);
 }
 
@@ -957,6 +957,230 @@ void QCamera3RawChannel::convertToRaw16(mm_camera_buf_def_t *frame)
     }
 }
 
+/*************************************************************************************/
+// RAW Dump Channel related functions
+
+int QCamera3RawDumpChannel::kMaxBuffers = 3;
+/*===========================================================================
+ * FUNCTION   : QCamera3RawDumpChannel
+ *
+ * DESCRIPTION: Constructor for RawDumpChannel
+ *
+ * PARAMETERS :
+ *   @cam_handle    : Handle for Camera
+ *   @cam_ops       : Function pointer table
+ *   @rawDumpSize   : Dimensions for the Raw stream
+ *   @paddinginfo   : Padding information for stream
+ *   @userData      : Cookie for parent
+ *   @pp mask       : PP feature mask for this stream
+ *
+ * RETURN           : NA
+ *==========================================================================*/
+QCamera3RawDumpChannel::QCamera3RawDumpChannel(uint32_t cam_handle,
+                    mm_camera_ops_t *cam_ops,
+                    cam_dimension_t rawDumpSize,
+                    cam_padding_info_t *paddingInfo,
+                    void *userData,
+                    uint32_t postprocess_mask) :
+                        QCamera3Channel(cam_handle, cam_ops, NULL,
+                                paddingInfo, postprocess_mask, userData),
+                        mDim(rawDumpSize),
+                        mMemory(NULL)
+{
+    char prop[PROPERTY_VALUE_MAX];
+    property_get("persist.camera.raw.dump", prop, "0");
+    mRawDump = atoi(prop);
+}
+
+/*===========================================================================
+ * FUNCTION   : QCamera3RawDumpChannel
+ *
+ * DESCRIPTION: Destructor for RawDumpChannel
+ *
+ * PARAMETERS :
+ *
+ * RETURN           : NA
+ *==========================================================================*/
+
+QCamera3RawDumpChannel::~QCamera3RawDumpChannel()
+{
+}
+
+/*===========================================================================
+ * FUNCTION   : dumpRawSnapshot
+ *
+ * DESCRIPTION: Helper function to dump Raw frames
+ *
+ * PARAMETERS :
+ *  @frame      : stream buf frame to be dumped
+ *
+ *  RETURN      : NA
+ *==========================================================================*/
+void QCamera3RawDumpChannel::dumpRawSnapshot(mm_camera_buf_def_t *frame)
+{
+    QCamera3Stream *stream = getStreamByIndex(0);
+    char buf[128];
+    struct timeval tv;
+    struct tm *timeinfo;
+
+    cam_dimension_t dim;
+    memset(&dim, 0, sizeof(dim));
+    stream->getFrameDimension(dim);
+
+    cam_frame_len_offset_t offset;
+    memset(&offset, 0, sizeof(cam_frame_len_offset_t));
+    stream->getFrameOffset(offset);
+
+    gettimeofday(&tv, NULL);
+    timeinfo = localtime(&tv.tv_sec);
+
+    memset(buf, 0, sizeof(buf));
+    snprintf(buf, sizeof(buf),
+                 "/data/%04d-%02d-%02d-%02d-%02d-%02d-%06ld_%d_%dx%d.raw",
+                 timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
+                 timeinfo->tm_mday, timeinfo->tm_hour,
+                 timeinfo->tm_min, timeinfo->tm_sec,tv.tv_usec,
+                 frame->frame_idx, dim.width, dim.height);
+
+    int file_fd = open(buf, O_RDWR| O_CREAT, 0777);
+    if (file_fd >= 0) {
+        int written_len = write(file_fd, frame->buffer, offset.frame_len);
+        CDBG("%s: written number of bytes %d", __func__, written_len);
+        close(file_fd);
+    } else {
+        ALOGE("%s: failed to open file to dump image", __func__);
+    }
+}
+
+/*===========================================================================
+ * FUNCTION   : streamCbRoutine
+ *
+ * DESCRIPTION: Callback routine invoked for each frame generated for
+ *              Rawdump channel
+ *
+ * PARAMETERS :
+ *   @super_frame  : stream buf frame generated
+ *   @stream       : Underlying Stream object cookie
+ *
+ * RETURN          : NA
+ *==========================================================================*/
+void QCamera3RawDumpChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
+                                                QCamera3Stream *stream)
+{
+    CDBG("%s: E",__func__);
+    if (super_frame == NULL || super_frame->num_bufs != 1) {
+        ALOGE("%s: super_frame is not valid", __func__);
+        return;
+    }
+
+    if (mRawDump)
+        dumpRawSnapshot(super_frame->bufs[0]);
+
+    bufDone(super_frame);
+    free(super_frame);
+}
+
+/*===========================================================================
+ * FUNCTION   : getStreamBufs
+ *
+ * DESCRIPTION: Callback function provided to interface to get buffers.
+ *
+ * PARAMETERS :
+ *   @len       : Length of each buffer to be allocated
+ *
+ * RETURN     : NULL on buffer allocation failure
+ *              QCamera3Memory object on sucess
+ *==========================================================================*/
+QCamera3Memory* QCamera3RawDumpChannel::getStreamBufs(uint32_t len)
+{
+    int rc;
+    mMemory = new QCamera3HeapMemory();
+
+    if (!mMemory) {
+        ALOGE("%s: unable to create heap memory", __func__);
+        return NULL;
+    }
+    rc = mMemory->allocate(kMaxBuffers, len, true);
+    if (rc < 0) {
+        ALOGE("%s: unable to allocate heap memory", __func__);
+        delete mMemory;
+        mMemory = NULL;
+        return NULL;
+    }
+    return mMemory;
+}
+
+/*===========================================================================
+ * FUNCTION   : putStreamBufs
+ *
+ * DESCRIPTION: Callback function provided to interface to return buffers.
+ *              Although no handles are actually returned, implicitl assumption
+ *              that interface will no longer use buffers and channel can
+ *              deallocated if necessary.
+ *
+ * PARAMETERS : NA
+ *
+ * RETURN     : NA
+ *==========================================================================*/
+void QCamera3RawDumpChannel::putStreamBufs()
+{
+    mMemory->deallocate();
+    delete mMemory;
+    mMemory = NULL;
+}
+
+/*===========================================================================
+ * FUNCTION : request
+ *
+ * DESCRIPTION: Request function used as trigger
+ *
+ * PARAMETERS :
+ * @recvd_frame : buffer- this will be NULL since this is internal channel
+ * @frameNumber : Undefined again since this is internal stream
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3RawDumpChannel::request(buffer_handle_t * /*buffer*/,
+                                                uint32_t /*frameNumber*/)
+{
+    if (!m_bIsActive) {
+        return QCamera3Channel::start();
+    }
+    else
+        return 0;
+}
+
+/*===========================================================================
+ * FUNCTION : intialize
+ *
+ * DESCRIPTION: Initializes channel params and creates underlying stream
+ *
+ * PARAMETERS : NA
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3RawDumpChannel::initialize()
+{
+    int32_t rc;
+
+    rc = init(NULL, NULL);
+    if (rc < 0) {
+        ALOGE("%s: init failed", __func__);
+        return rc;
+    }
+
+    rc = QCamera3Channel::addStream(CAM_STREAM_TYPE_RAW,
+        CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GBRG, mDim, kMaxBuffers,
+        mPostProcMask);
+    if (rc < 0) {
+        ALOGE("%s: addStream failed", __func__);
+    }
+    return rc;
+}
 /*************************************************************************************/
 
 /*===========================================================================

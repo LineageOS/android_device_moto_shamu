@@ -217,6 +217,39 @@ private:
     void convertToRaw16(mm_camera_buf_def_t *frame);
 };
 
+/*
+ * QCamera3RawDumpChannel is for internal use only for Raw dump
+ */
+
+class QCamera3RawDumpChannel : public QCamera3Channel
+{
+public:
+    QCamera3RawDumpChannel(uint32_t cam_handle,
+                    mm_camera_ops_t *cam_ops,
+                    cam_dimension_t rawDumpSize,
+                    cam_padding_info_t *paddingInfo,
+                    void *userData,
+                    uint32_t postprocess_mask);
+    virtual ~QCamera3RawDumpChannel();
+    virtual int32_t initialize();
+    virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
+                            QCamera3Stream *stream);
+    virtual QCamera3Memory *getStreamBufs(uint32_t le);
+    virtual void putStreamBufs();
+    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/)
+            { return NO_ERROR; };
+    virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
+    void dumpRawSnapshot(mm_camera_buf_def_t *frame);
+
+public:
+    static int kMaxBuffers;
+    cam_dimension_t mDim;
+
+private:
+    bool mRawDump;
+    QCamera3HeapMemory *mMemory;
+};
+
 /* QCamera3PicChannel is for JPEG stream, which contains a YUV stream generated
  * by the hardware, and encoded to a JPEG stream */
 class QCamera3PicChannel : public QCamera3Channel

@@ -249,6 +249,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
       mPictureChannel(NULL),
       mRawChannel(NULL),
       mSupportChannel(NULL),
+      mRawDumpChannel(NULL),
       mFirstRequest(false),
       mFlush(false),
       mParamHeap(NULL),
@@ -287,6 +288,12 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
         ALOGE("%s: %s module not found", __func__, POWER_HARDWARE_MODULE_ID);
     }
 #endif
+
+    char prop[PROPERTY_VALUE_MAX];
+    property_get("persist.camera.raw.dump", prop, "0");
+    mEnableRawDump = atoi(prop);
+    if (mEnableRawDump)
+        CDBG("%s: Raw dump from Camera HAL enabled", __func__);
 }
 
 /*===========================================================================
@@ -302,6 +309,11 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
 {
     CDBG("%s: E", __func__);
     /* We need to stop all streams before deleting any stream */
+
+
+    if (mRawDumpChannel) {
+        mRawDumpChannel->stop();
+    }
 
     // NOTE: 'camera3_stream_t *' objects are already freed at
     //        this stage by the framework
@@ -327,6 +339,10 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
         mSupportChannel = NULL;
     }
 
+    if (mRawDumpChannel) {
+        delete mRawDumpChannel;
+        mRawDumpChannel = NULL;
+    }
     mPictureChannel = NULL;
 
     /* Clean up all channels */
@@ -540,6 +556,13 @@ int QCamera3HardwareInterface::configureStreams(
         channel->stop();
         (*it)->status = INVALID;
     }
+
+    if (mRawDumpChannel) {
+        mRawDumpChannel->stop();
+        delete mRawDumpChannel;
+        mRawDumpChannel = NULL;
+    }
+
     if (mMetadataChannel) {
         /* If content of mStreamInfo is not 0, there is metadata stream */
         mMetadataChannel->stop();
@@ -673,6 +696,7 @@ int QCamera3HardwareInterface::configureStreams(
         }
     }
 
+    bool isRawStreamRequested = false;
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
@@ -726,6 +750,7 @@ int QCamera3HardwareInterface::configureStreams(
            case HAL_PIXEL_FORMAT_RAW16:
            case HAL_PIXEL_FORMAT_RAW10:
               stream_config_info.type[i] = CAM_STREAM_TYPE_RAW;
+              isRawStreamRequested = true;
               break;
            default:
               stream_config_info.type[i] = CAM_STREAM_TYPE_DEFAULT;
@@ -840,6 +865,23 @@ int QCamera3HardwareInterface::configureStreams(
         mPictureChannel->overrideYuvSize(videoWidth, videoHeight);
     }
 
+    //RAW DUMP channel
+    if (mEnableRawDump && isRawStreamRequested == false){
+        cam_dimension_t rawDumpSize;
+        rawDumpSize = getMaxRawSize(mCameraId);
+        mRawDumpChannel = new QCamera3RawDumpChannel(mCameraHandle->camera_handle,
+                                  mCameraHandle->ops,
+                                  rawDumpSize,
+                                  &gCamCapability[mCameraId]->padding_info,
+                                  this, CAM_QCOM_FEATURE_NONE);
+        if (!mRawDumpChannel) {
+            ALOGE("%s: Raw Dump channel cannot be created", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return -ENOMEM;
+        }
+    }
+
+
     int32_t hal_version = CAM_HAL_V3;
     stream_config_info.num_streams = streamList->num_streams;
     if (mSupportChannel) {
@@ -847,6 +889,16 @@ int QCamera3HardwareInterface::configureStreams(
                 QCamera3SupportChannel::kDim;
         stream_config_info.type[stream_config_info.num_streams] =
                 CAM_STREAM_TYPE_CALLBACK;
+        stream_config_info.num_streams++;
+    }
+
+    if (mRawDumpChannel) {
+        cam_dimension_t rawSize;
+        rawSize = getMaxRawSize(mCameraId);
+        stream_config_info.stream_sizes[stream_config_info.num_streams] =
+                rawSize;
+        stream_config_info.type[stream_config_info.num_streams] =
+                CAM_STREAM_TYPE_RAW;
         stream_config_info.num_streams++;
     }
 
@@ -1664,12 +1716,45 @@ int QCamera3HardwareInterface::processCaptureRequest(
                 return rc;
             }
         }
+
+        if (mRawDumpChannel) {
+            rc = mRawDumpChannel->initialize();
+            if (rc != NO_ERROR) {
+                ALOGE("%s: Error: Raw Dump Channel init failed", __func__);
+                if (mSupportChannel)
+                    mSupportChannel->stop();
+                mMetadataChannel->stop();
+                pthread_mutex_unlock(&mMutex);
+                return rc;
+            }
+        }
         //Then start them.
         for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
             it != mStreamInfo.end(); it++) {
             QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
             CDBG_HIGH("%s: Start Regular Channel mask=%d", __func__, channel->getStreamTypeMask());
             channel->start();
+        }
+
+        if (mRawDumpChannel) {
+            CDBG("%s: Starting raw dump stream",__func__);
+            rc = mRawDumpChannel->start();
+            if (rc != NO_ERROR) {
+                ALOGE("%s: Error Starting Raw Dump Channel", __func__);
+                for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+                      it != mStreamInfo.end(); it++) {
+                    QCamera3Channel *channel =
+                        (QCamera3Channel *)(*it)->stream->priv;
+                    ALOGE("%s: Stopping Regular Channel mask=%d", __func__,
+                        channel->getStreamTypeMask());
+                    channel->stop();
+                }
+                if (mSupportChannel)
+                    mSupportChannel->stop();
+                mMetadataChannel->stop();
+                pthread_mutex_unlock(&mMutex);
+                return rc;
+            }
         }
     }
 
@@ -1716,6 +1801,15 @@ int QCamera3HardwareInterface::processCaptureRequest(
 
         streamID.streamID[streamID.num_streams] =
             channel->getStreamID(channel->getStreamTypeMask());
+        streamID.num_streams++;
+
+
+    }
+
+    if (blob_request && mRawDumpChannel) {
+        CDBG("%s: Trigger Raw based on blob request if Raw dump is enabled", __func__);
+        streamID.streamID[streamID.num_streams] =
+            mRawDumpChannel->getStreamID(mRawDumpChannel->getStreamTypeMask());
         streamID.num_streams++;
     }
 
@@ -1964,6 +2058,9 @@ int QCamera3HardwareInterface::flush()
 
     if (mSupportChannel) {
         mSupportChannel->stop();
+    }
+    if (mRawDumpChannel) {
+        mRawDumpChannel->stop();
     }
     if (mMetadataChannel) {
         /* If content of mStreamInfo is not 0, there is metadata stream */
@@ -3451,6 +3548,31 @@ int QCamera3HardwareInterface::calcMaxJpegSize(uint8_t camera_id)
     max_jpeg_size = max_jpeg_size * 3/2 + sizeof(camera3_jpeg_blob_t);
     return max_jpeg_size;
 }
+
+/*===========================================================================
+ * FUNCTION   : getMaxRawSize
+ *
+ * DESCRIPTION: Fetches maximum raw size supported by the cameraId
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : Largest supported Raw Dimension
+ *==========================================================================*/
+cam_dimension_t QCamera3HardwareInterface::getMaxRawSize(uint8_t camera_id)
+{
+    int max_width = 0;
+    cam_dimension_t maxRawSize;
+
+    memset(&maxRawSize, 0, sizeof(cam_dimension_t));
+    for (int i = 0; i < gCamCapability[camera_id]->supported_raw_dim_cnt; i++) {
+        if (max_width < gCamCapability[camera_id]->raw_dim[i].width) {
+            max_width = gCamCapability[camera_id]->raw_dim[i].width;
+            maxRawSize = gCamCapability[camera_id]->raw_dim[i];
+        }
+    }
+    return maxRawSize;
+}
+
 
 /*===========================================================================
  * FUNCTION   : calcMaxJpegDim
