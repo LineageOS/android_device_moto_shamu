@@ -1,5 +1,6 @@
-/data/cam_socket[23]          u:object_r:camera_socket:s0
+/data/cam_socket[23]           u:object_r:camera_socket:s0
 /data/misc/radio(/.*)?         u:object_r:radio_data_file:s0
+/data/nfc(/.*)?                u:object_r:nfc_data_file:s0
 
 # Bluetooth
 /dev/ttyHS0                    u:object_r:hci_attach_dev:s0
