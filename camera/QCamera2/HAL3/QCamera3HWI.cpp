@@ -2303,6 +2303,60 @@ QCamera3HardwareInterface::translateFromHalMetadata(
         camMetadata.update(ANDROID_SYNC_FRAME_NUMBER, &frame_number, 1);
     }
 
+
+    if (IS_META_AVAILABLE(CAM_INTF_META_AWB_REGIONS, metadata)) {
+        /*awb regions*/
+        cam_area_t  *hAwbRegions = (cam_area_t *)
+            POINTER_OF_META(CAM_INTF_META_AWB_REGIONS, metadata);
+        int32_t awbRegions[5];
+        convertToRegions(hAwbRegions->rect, awbRegions,hAwbRegions->weight);
+        camMetadata.update(ANDROID_CONTROL_AWB_REGIONS, awbRegions, 5);
+    }
+
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_FPS_RANGE, metadata)) {
+        int32_t fps_range[2];
+        cam_fps_range_t * float_range =
+          (cam_fps_range_t *)POINTER_OF_PARAM(CAM_INTF_PARM_FPS_RANGE, metadata);
+        fps_range[0] = (int32_t)float_range->min_fps;
+        fps_range[1] = (int32_t)float_range->max_fps;
+        camMetadata.update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
+                                      fps_range, 2);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_TARGET_FPS_RANGE [%d, %d]",
+            __func__, fps_range[0], fps_range[1]);
+    }
+
+
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_EXPOSURE_COMPENSATION, metadata)) {
+        int32_t  *expCompensation =
+          (int32_t *)POINTER_OF_META(CAM_INTF_PARM_EXPOSURE_COMPENSATION, metadata);
+        camMetadata.update(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
+                                      expCompensation, 1);
+    }
+
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_BESTSHOT_MODE, metadata)) {
+        uint8_t sceneMode =
+                *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_BESTSHOT_MODE, metadata));
+        uint8_t fwkSceneMode =
+            (uint8_t)lookupFwkName(SCENE_MODES_MAP,
+            sizeof(SCENE_MODES_MAP)/
+            sizeof(SCENE_MODES_MAP[0]), sceneMode);
+        camMetadata.update(ANDROID_CONTROL_SCENE_MODE,
+             &fwkSceneMode, 1);
+    }
+
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_AEC_LOCK, metadata)) {
+        uint8_t  ae_lock =
+                *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_AEC_LOCK, metadata));
+        camMetadata.update(ANDROID_CONTROL_AE_LOCK,
+                &ae_lock, 1);
+    }
+
+    if (IS_META_AVAILABLE(CAM_INTF_PARM_AWB_LOCK, metadata)) {
+        uint8_t awb_lock =
+                *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_AWB_LOCK, metadata));
+        camMetadata.update(ANDROID_CONTROL_AWB_LOCK, &awb_lock, 1);
+    }
+
     if (IS_META_AVAILABLE(CAM_INTF_META_FACE_DETECTION, metadata)){
         cam_face_detection_data_t *faceDetectionInfo =
             (cam_face_detection_data_t *)POINTER_OF_META(CAM_INTF_META_FACE_DETECTION, metadata);
@@ -2401,10 +2455,7 @@ QCamera3HardwareInterface::translateFromHalMetadata(
             (float *)POINTER_OF_META(CAM_INTF_META_LENS_FOCUS_RANGE, metadata);
         camMetadata.update(ANDROID_LENS_FOCUS_RANGE , focusRange, 2);
     }
-    if (IS_META_AVAILABLE(CAM_INTF_META_LENS_STATE, metadata)) {
-        uint8_t *lensState = (uint8_t *)POINTER_OF_META(CAM_INTF_META_LENS_STATE, metadata);
-        camMetadata.update(ANDROID_LENS_STATE , lensState, 1);
-    }
+
     if (IS_META_AVAILABLE(CAM_INTF_META_LENS_OPT_STAB_MODE, metadata)) {
         uint8_t  *opticalStab =
             (uint8_t *)POINTER_OF_META(CAM_INTF_META_LENS_OPT_STAB_MODE, metadata);
@@ -2899,6 +2950,27 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
     int32_t *flashMode = NULL;
     int32_t *redeye = NULL;
 
+    if (IS_META_AVAILABLE(CAM_INTF_META_AEC_STATE, metadata)) {
+        uint8_t *ae_state = (uint8_t *)
+            POINTER_OF_META(CAM_INTF_META_AEC_STATE, metadata);
+        camMetadata.update(ANDROID_CONTROL_AE_STATE, ae_state, 1);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_STATE", __func__);
+    }
+
+    if (IS_META_AVAILABLE(CAM_INTF_META_AF_STATE, metadata)) {
+        uint8_t  *afState = (uint8_t *)
+            POINTER_OF_META(CAM_INTF_META_AF_STATE, metadata);
+        camMetadata.update(ANDROID_CONTROL_AF_STATE, afState, 1);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AF_STATE", __func__);
+    }
+
+    if (IS_META_AVAILABLE(CAM_INTF_META_AWB_STATE, metadata)) {
+        uint8_t  *whiteBalanceState = (uint8_t *)
+            POINTER_OF_META(CAM_INTF_META_AWB_STATE, metadata);
+        camMetadata.update(ANDROID_CONTROL_AWB_STATE, whiteBalanceState, 1);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AWB_STATE", __func__);
+    }
+
     if (IS_META_AVAILABLE(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER, metadata)) {
         cam_trigger_t *aecTrigger =
                 (cam_trigger_t *)POINTER_OF_META(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER, metadata);
@@ -2906,40 +2978,24 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
                 &aecTrigger->trigger, 1);
         camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_ID,
                 &aecTrigger->trigger_id, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_PRECAPTURE_ID", __func__);
-        CDBG("%s: urgent Metadata : CAM_INTF_META_AEC_PRECAPTURE_TRIGGER",
-                __func__);
     }
-    if (IS_META_AVAILABLE(CAM_INTF_META_AEC_STATE, metadata)) {
-        uint8_t *ae_state = (uint8_t *)
-            POINTER_OF_META(CAM_INTF_META_AEC_STATE, metadata);
-        camMetadata.update(ANDROID_CONTROL_AE_STATE, ae_state, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_STATE", __func__);
-    }
+
     if (IS_META_AVAILABLE(CAM_INTF_PARM_FOCUS_MODE, metadata)) {
         uint8_t  *focusMode = (uint8_t *)
             POINTER_OF_META(CAM_INTF_PARM_FOCUS_MODE, metadata);
         uint8_t fwkAfMode = (uint8_t)lookupFwkName(FOCUS_MODES_MAP,
             sizeof(FOCUS_MODES_MAP)/sizeof(FOCUS_MODES_MAP[0]), *focusMode);
         camMetadata.update(ANDROID_CONTROL_AF_MODE, &fwkAfMode, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AF_MODE", __func__);
     }
-    if (IS_META_AVAILABLE(CAM_INTF_META_AF_STATE, metadata)) {
-        uint8_t  *afState = (uint8_t *)
-            POINTER_OF_META(CAM_INTF_META_AF_STATE, metadata);
-        camMetadata.update(ANDROID_CONTROL_AF_STATE, afState, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AF_STATE", __func__);
-    }
+
     if (IS_META_AVAILABLE(CAM_INTF_META_AF_TRIGGER, metadata)) {
         cam_trigger_t *af_trigger =
                 (cam_trigger_t *)POINTER_OF_META(CAM_INTF_META_AF_TRIGGER, metadata);
         camMetadata.update(ANDROID_CONTROL_AF_TRIGGER,
                 &af_trigger->trigger, 1);
-        CDBG("%s: urgent Metadata : CAM_INTF_META_AF_TRIGGER = %d",
-                __func__, af_trigger->trigger);
         camMetadata.update(ANDROID_CONTROL_AF_TRIGGER_ID, &af_trigger->trigger_id, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AF_TRIGGER_ID", __func__);
     }
+
     if (IS_META_AVAILABLE(CAM_INTF_PARM_WHITE_BALANCE, metadata)) {
         uint8_t  *whiteBalance = (uint8_t *)
             POINTER_OF_META(CAM_INTF_PARM_WHITE_BALANCE, metadata);
@@ -2949,66 +3005,8 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
                 sizeof(WHITE_BALANCE_MODES_MAP[0]), *whiteBalance);
         camMetadata.update(ANDROID_CONTROL_AWB_MODE,
             &fwkWhiteBalanceMode, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AWB_MODE", __func__);
     }
-    if (IS_META_AVAILABLE(CAM_INTF_META_AWB_REGIONS, metadata)) {
-        /*awb regions*/
-        cam_area_t  *hAwbRegions = (cam_area_t *)
-            POINTER_OF_META(CAM_INTF_META_AWB_REGIONS, metadata);
-        int32_t awbRegions[5];
-        convertToRegions(hAwbRegions->rect, awbRegions,hAwbRegions->weight);
-        camMetadata.update(ANDROID_CONTROL_AWB_REGIONS, awbRegions, 5);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AWB_REGIONS", __func__);
-    }
-    if (IS_META_AVAILABLE(CAM_INTF_META_AWB_STATE, metadata)) {
-        uint8_t  *whiteBalanceState = (uint8_t *)
-            POINTER_OF_META(CAM_INTF_META_AWB_STATE, metadata);
-        camMetadata.update(ANDROID_CONTROL_AWB_STATE, whiteBalanceState, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AWB_STATE", __func__);
-    }
-    if (IS_META_AVAILABLE(CAM_INTF_PARM_EXPOSURE_COMPENSATION, metadata)) {
-        int32_t  *expCompensation =
-          (int32_t *)POINTER_OF_META(CAM_INTF_PARM_EXPOSURE_COMPENSATION, metadata);
-        camMetadata.update(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
-                                      expCompensation, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION",
-            __func__);
-    }
-    if (IS_META_AVAILABLE(CAM_INTF_PARM_AEC_LOCK, metadata)) {
-        uint8_t  ae_lock =
-                *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_AEC_LOCK, metadata));
-        camMetadata.update(ANDROID_CONTROL_AE_LOCK,
-                &ae_lock, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_LOCK", __func__);
-    }
-    if (IS_META_AVAILABLE(CAM_INTF_PARM_AWB_LOCK, metadata)) {
-        uint8_t awb_lock =
-                *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_AWB_LOCK, metadata));
-        camMetadata.update(ANDROID_CONTROL_AWB_LOCK, &awb_lock, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AWB_LOCK", __func__);
-    }
-    if (IS_META_AVAILABLE(CAM_INTF_PARM_BESTSHOT_MODE, metadata)) {
-        uint8_t sceneMode =
-                *((uint32_t *)POINTER_OF_META(CAM_INTF_PARM_BESTSHOT_MODE, metadata));
-        uint8_t fwkSceneMode =
-            (uint8_t)lookupFwkName(SCENE_MODES_MAP,
-            sizeof(SCENE_MODES_MAP)/
-            sizeof(SCENE_MODES_MAP[0]), sceneMode);
-        camMetadata.update(ANDROID_CONTROL_SCENE_MODE,
-             &fwkSceneMode, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_SCENE_MODE", __func__);
-    }
-    if (IS_META_AVAILABLE(CAM_INTF_PARM_FPS_RANGE, metadata)) {
-        int32_t fps_range[2];
-        cam_fps_range_t * float_range =
-          (cam_fps_range_t *)POINTER_OF_PARAM(CAM_INTF_PARM_FPS_RANGE, metadata);
-        fps_range[0] = (int32_t)float_range->min_fps;
-        fps_range[1] = (int32_t)float_range->max_fps;
-        camMetadata.update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
-                                      fps_range, 2);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AE_TARGET_FPS_RANGE [%d, %d]",
-            __func__, fps_range[0], fps_range[1]);
-    }
+
     if (IS_META_AVAILABLE(CAM_INTF_META_AEC_MODE, metadata)) {
         aeMode = *((uint32_t*) POINTER_OF_META(CAM_INTF_META_AEC_MODE, metadata));
     }
@@ -3038,7 +3036,13 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         fwk_aeMode = ANDROID_CONTROL_AE_MODE_OFF;
         camMetadata.update(ANDROID_CONTROL_AE_MODE, &fwk_aeMode, 1);
     } else {
-        ALOGE("%s: Not enough info to deduce ANDROID_CONTROL_AE_MODE redeye:%p, flashMode:%p, aeMode:%d!!!",__func__, redeye, flashMode, aeMode);
+        ALOGE("%s: Not enough info to deduce ANDROID_CONTROL_AE_MODE redeye:%p, flashMode:%p, aeMode:%d!!!",__func__,
+              redeye, flashMode, aeMode);
+    }
+
+    if (IS_META_AVAILABLE(CAM_INTF_META_LENS_STATE, metadata)) {
+        uint8_t *lensState = (uint8_t *)POINTER_OF_META(CAM_INTF_META_LENS_STATE, metadata);
+        camMetadata.update(ANDROID_LENS_STATE , lensState, 1);
     }
 
     resultMetadata = camMetadata.release();
