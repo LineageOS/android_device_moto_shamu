@@ -1074,39 +1074,39 @@ typedef enum {
     CAM_INTF_PARM_EV_STEP,
     CAM_INTF_PARM_AEC_LOCK,
     CAM_INTF_PARM_FPS_RANGE,
-    CAM_INTF_PARM_AWB_LOCK,
+    CAM_INTF_PARM_AWB_LOCK, /* 10 */
     CAM_INTF_PARM_EFFECT,
     CAM_INTF_PARM_BESTSHOT_MODE,
     CAM_INTF_PARM_DIS_ENABLE,
     CAM_INTF_PARM_LED_MODE,
-    CAM_INTF_META_HISTOGRAM, /* 10 */
+    CAM_INTF_META_HISTOGRAM,
     CAM_INTF_META_FACE_DETECTION,
 
     /* specific to HAl1 */
     CAM_INTF_META_AUTOFOCUS_DATA,
     CAM_INTF_PARM_QUERY_FLASH4SNAP,
     CAM_INTF_PARM_EXPOSURE,
-    CAM_INTF_PARM_SHARPNESS,
+    CAM_INTF_PARM_SHARPNESS, /* 20 */
     CAM_INTF_PARM_CONTRAST,
     CAM_INTF_PARM_SATURATION,
     CAM_INTF_PARM_BRIGHTNESS,
     CAM_INTF_PARM_ISO,
-    CAM_INTF_PARM_ZOOM, /* 20 */
+    CAM_INTF_PARM_ZOOM,
     CAM_INTF_PARM_ROLLOFF,
     CAM_INTF_PARM_MODE,             /* camera mode */
     CAM_INTF_PARM_AEC_ALGO_TYPE,    /* auto exposure algorithm */
     CAM_INTF_PARM_FOCUS_ALGO_TYPE,  /* focus algorithm */
-    CAM_INTF_PARM_AEC_ROI,
+    CAM_INTF_PARM_AEC_ROI, /* 30 */
     CAM_INTF_PARM_AF_ROI,
     CAM_INTF_PARM_SCE_FACTOR,
     CAM_INTF_PARM_FD,
-    CAM_INTF_PARM_MCE, /* 30 */
+    CAM_INTF_PARM_MCE,
     CAM_INTF_PARM_HFR,
     CAM_INTF_PARM_REDEYE_REDUCTION,
     CAM_INTF_PARM_WAVELET_DENOISE,
     CAM_INTF_PARM_TEMPORAL_DENOISE,
     CAM_INTF_PARM_HISTOGRAM,
-    CAM_INTF_PARM_ASD_ENABLE,
+    CAM_INTF_PARM_ASD_ENABLE, /* 40 */
     CAM_INTF_PARM_RECORDING_HINT,
     CAM_INTF_PARM_HDR,
     CAM_INTF_PARM_MAX_DIMENSION,
@@ -1116,7 +1116,7 @@ typedef enum {
     CAM_INTF_PARM_BURST_NUM,
     CAM_INTF_PARM_RETRO_BURST_NUM,
     CAM_INTF_PARM_BURST_LED_ON_PERIOD,
-    CAM_INTF_PARM_HDR_NEED_1X, /* if HDR needs 1x output */ /* 40 */
+    CAM_INTF_PARM_HDR_NEED_1X, /* if HDR needs 1x output */ /* 50 */
     CAM_INTF_PARM_LOCK_CAF,
     CAM_INTF_PARM_VIDEO_HDR,
     CAM_INTF_PARM_SENSOR_HDR,
@@ -1126,7 +1126,7 @@ typedef enum {
     CAM_INTF_META_CROP_DATA,
     CAM_INTF_META_PREP_SNAPSHOT_DONE,
     CAM_INTF_META_GOOD_FRAME_IDX_RANGE,
-    CAM_INTF_META_ASD_HDR_SCENE_DATA,
+    CAM_INTF_META_ASD_HDR_SCENE_DATA, /* 60 */
     CAM_INTF_META_ASD_SCENE_TYPE,
     CAM_INTF_META_CURRENT_SCENE,
     CAM_INTF_META_AEC_INFO,
@@ -1136,7 +1136,7 @@ typedef enum {
     CAM_INTF_META_CHROMATIX_LITE_PP,
     CAM_INTF_META_CHROMATIX_LITE_AE,
     CAM_INTF_META_CHROMATIX_LITE_AWB,
-    CAM_INTF_META_CHROMATIX_LITE_AF,
+    CAM_INTF_META_CHROMATIX_LITE_AF, /* 70 */
     CAM_INTF_META_CHROMATIX_LITE_ASD,
     CAM_INTF_PARM_GET_CHROMATIX,
     CAM_INTF_PARM_SET_RELOAD_CHROMATIX,
@@ -1146,7 +1146,7 @@ typedef enum {
     CAM_INTF_PARM_SET_VFE_COMMAND,
     CAM_INTF_PARM_SET_PP_COMMAND,
     CAM_INTF_PARM_TINTLESS,
-    CAM_INTF_PARM_LONGSHOT_ENABLE,
+    CAM_INTF_PARM_LONGSHOT_ENABLE, /* 80 */
     CAM_INTF_PARM_RDI_MODE,
     CAM_INTF_PARM_CDS_MODE,
 
@@ -1164,14 +1164,14 @@ typedef enum {
     /* Whether the urgent metadata maps to a valid frame number */
     CAM_INTF_META_URGENT_FRAME_NUMBER_VALID,
     /* Whether the stream buffer corresponding this frame is dropped or not */
-    CAM_INTF_META_FRAME_DROPPED,
+    CAM_INTF_META_FRAME_DROPPED, /* 90 */
     /* Number of pending requests yet to be processed */
     CAM_INTF_META_PENDING_REQUESTS,
     /* COLOR CORRECTION.*/
     CAM_INTF_META_COLOR_CORRECT_MODE,
     /* A transform matrix to chromatically adapt pixels in the CIE XYZ (1931)
      * color space from the scene illuminant to the sRGB-standard D65-illuminant. */
-    CAM_INTF_META_COLOR_CORRECT_TRANSFORM, /* 50 */
+    CAM_INTF_META_COLOR_CORRECT_TRANSFORM,
     /*Color channel gains in the Bayer raw domain in the order [RGeGoB]*/
     CAM_INTF_META_COLOR_CORRECT_GAINS,
     /*The best fit color transform matrix calculated by the stats*/
@@ -1188,7 +1188,7 @@ typedef enum {
     /*Number of streams and size of streams in current configuration*/
     CAM_INTF_META_STREAM_INFO,
     /* List of areas to use for metering */
-    CAM_INTF_META_AEC_ROI,
+    CAM_INTF_META_AEC_ROI, /* 100 */
     /* Whether the HAL must trigger precapture metering.*/
     CAM_INTF_META_AEC_PRECAPTURE_TRIGGER,
     /* The ID sent with the latest CAMERA2_TRIGGER_PRECAPTURE_METERING call */
@@ -1211,7 +1211,7 @@ typedef enum {
     CAM_INTF_META_CAPTURE_INTENT,
     /* DEMOSAIC */
     /* Controls the quality of the demosaicing processing */
-    CAM_INTF_META_DEMOSAIC,
+    CAM_INTF_META_DEMOSAIC, /* 110 */
     /* EDGE */
     /* Operation mode for edge enhancement */
     CAM_INTF_META_EDGE_MODE,
@@ -1237,7 +1237,7 @@ typedef enum {
     /* Size of the lens aperture */
     CAM_INTF_META_LENS_APERTURE,
     /* State of lens neutral density filter(s) */
-    CAM_INTF_META_LENS_FILTERDENSITY,
+    CAM_INTF_META_LENS_FILTERDENSITY, /* 120 */
     /* Lens optical zoom setting */
     CAM_INTF_META_LENS_FOCAL_LENGTH,
     /* Distance to plane of sharpest focus, measured from frontmost surface
@@ -1262,7 +1262,7 @@ typedef enum {
      * pixel array */
     CAM_INTF_META_SCALER_CROP_REGION,
     /* The estimated scene illumination lighting frequency */
-    CAM_INTF_META_SCENE_FLICKER,
+    CAM_INTF_META_SCENE_FLICKER, /* 130 */
     /* SENSOR */
     /* Duration each pixel is exposed to light, in nanoseconds */
     CAM_INTF_META_SENSOR_EXPOSURE_TIME,
@@ -1289,7 +1289,7 @@ typedef enum {
     /* Operating mode for histogram generation */
     CAM_INTF_META_STATS_HISTOGRAM_MODE,
     /* Operating mode for sharpness map generation */
-    CAM_INTF_META_STATS_SHARPNESS_MAP_MODE,
+    CAM_INTF_META_STATS_SHARPNESS_MAP_MODE, /* 140 */
     /* A 3-channel sharpness map, based on the raw sensor data,
      * If only a monochrome sharpness map is supported, all channels
      * should have the same data
@@ -1311,7 +1311,7 @@ typedef enum {
     CAM_INTF_PARM_STATS_AF_PAAF,
     /* Indicates streams ID of all the requested buffers */
     CAM_INTF_META_STREAM_ID,
-    CAM_INTF_PARM_FOCUS_BRACKETING,
+    CAM_INTF_PARM_FOCUS_BRACKETING, /* 150 */
     CAM_INTF_PARM_FLASH_BRACKETING,
     CAM_INTF_PARM_GET_IMG_PROP,
     CAM_INTF_META_JPEG_GPS_COORDINATES,
@@ -1322,7 +1322,7 @@ typedef enum {
     CAM_INTF_META_JPEG_THUMB_QUALITY,
     CAM_INTF_META_JPEG_THUMB_SIZE,
 
-    CAM_INTF_META_TEST_PATTERN_DATA,
+    CAM_INTF_META_TEST_PATTERN_DATA, /* 160 */
     /* DNG file support */
     CAM_INTF_META_PROFILE_TONE_CURVE,
     CAM_INTF_META_NEUTRAL_COL_POINT,
