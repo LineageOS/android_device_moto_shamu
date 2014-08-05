@@ -307,3 +307,7 @@ $(call inherit-product-if-exists, vendor/qcom/gpu/msm8x84/msm8x84-gpu-vendor.mk)
 PRODUCT_VERITY_PARTITION=/dev/block/platform/msm_sdcc.1/by-name/system
 $(call inherit-product, build/target/product/verity.mk)
 
+# setup scheduler tunable
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    ro.qualcomm.perf.cores_online=2
+
