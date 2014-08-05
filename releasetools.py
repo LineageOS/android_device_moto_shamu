@@ -219,7 +219,7 @@ def WriteIncrementalModemPartition(info, target_modem_image, source_modem_image)
   if d is None or len(d) > tf.size * common.OPTIONS.patch_threshold:
     # computing difference failed, or difference is nearly as
     # big as the target:  simply send the target.
-    WritePartitionImage(info, tf, "radio", "modem")
+    WritePartitionImage(info, tf, "radio")
   else:
     common.ZipWriteStr(info.output_zip, patchfile_name, d)
     info.script.Print("Patching modem image...")
