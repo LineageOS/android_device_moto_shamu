@@ -749,7 +749,15 @@
 	</path>
 
 	<path name="voice-speaker">
-		<path name="speaker" />
+		<!-- Disable earpiece mode -->
+		<ctl name="BOOST earpiece mode" value="Off" />
+		<!-- Enable Mixer to power up Left IC -->
+		<ctl name="BOOST_STUB Left Mixer left" value="1" />
+		<ctl name="BOOST_STUB Right Mixer right" value="0" />
+		<!-- select (l + r)/2 -->
+		<ctl name="BOOST Left Ch Select" value="3" />
+		<!-- enable dsp -->
+		<ctl name="BOOST Output Mixer Left DSP Bypass Left" value="2" />
 	</path>
 
 	<path name="voice-speaker-mic">
