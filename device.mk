@@ -243,7 +243,9 @@ PRODUCT_PACKAGES += \
     gps.msm8084 \
     flp.msm8084 \
     liblbs_core \
-    flp.conf
+    flp.conf \
+    gsiff_daemon \
+    sap.conf
 
 # NFC packages
 PRODUCT_PACKAGES += \
