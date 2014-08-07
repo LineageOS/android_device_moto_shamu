@@ -90,6 +90,9 @@ TARGET_RECOVERY_FSTAB = device/moto/shamu/fstab.shamu
 
 TARGET_RELEASETOOLS_EXTENSIONS := device/moto/shamu
 
+# Support Native Layer RF cutback
+BOARD_USES_CUTBACK_IN_RILD := true
+
 BOARD_SEPOLICY_DIRS += \
        device/moto/shamu/sepolicy
 

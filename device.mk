@@ -118,6 +118,10 @@ PRODUCT_PACKAGES := \
 
 PRODUCT_PACKAGES += atmel.fw.apq8084
 
+# OEM Package for RIL
+PRODUCT_PACKAGES += \
+    qmi_motext_hook
+
 # Live Wallpapers
 PRODUCT_PACKAGES += \
     LiveWallpapersPicker \
