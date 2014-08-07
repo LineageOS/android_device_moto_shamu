@@ -5,3 +5,5 @@ type camera_socket, file_type;
 type qmuxd_socket, file_type;
 type sensors_socket, file_type;
 type thermald_socket, file_type;
+
+type sysfs_rmnet, fs_type, sysfs_type;
