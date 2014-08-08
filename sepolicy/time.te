@@ -1,9 +1,6 @@
 type time, domain;
 type time_exec, exec_type, file_type;
 
-# STOPSHIP: Permissive is not allowed. CTS violation!
-permissive time;
-
 # Started by init
 init_daemon_domain(time)
 
@@ -12,3 +9,6 @@ allow time alarm_device:chr_file rw_file_perms;
 
 # Is r_file_perms sufficient for /dev/rtc0 ?
 allow time rtc:chr_file r_file_perms;
+
+allow time self:socket *;
+allow time self:capability { setuid setgid };
