@@ -95,6 +95,7 @@ BOARD_SEPOLICY_DIRS += \
 
 BOARD_SEPOLICY_UNION += \
         adspd.te \
+        bluetooth.te \
         bootanim.te \
         bridge.te \
         camera.te \
