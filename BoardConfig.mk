@@ -109,6 +109,7 @@ BOARD_SEPOLICY_UNION += \
         netmgrd.te \
         platform_app.te \
         qmux.te \
+        radio.te \
         rild.te \
         sensors.te \
         surfaceflinger.te \
