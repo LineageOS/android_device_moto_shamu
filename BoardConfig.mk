@@ -107,6 +107,7 @@ BOARD_SEPOLICY_UNION += \
         mdm_helper.te \
         mediaserver.te \
         netmgrd.te \
+        platform_app.te \
         qmux.te \
         rild.te \
         sensors.te \
