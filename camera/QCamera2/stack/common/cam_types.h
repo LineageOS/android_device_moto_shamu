@@ -271,6 +271,7 @@ typedef enum {
     CAM_STREAM_TYPE_METADATA,      /* meta data */
     CAM_STREAM_TYPE_RAW,           /* raw dump from camif */
     CAM_STREAM_TYPE_OFFLINE_PROC,  /* offline process */
+    CAM_STREAM_TYPE_PARM,         /* mct internal stream */
     CAM_STREAM_TYPE_MAX,
 } cam_stream_type_t;
 
