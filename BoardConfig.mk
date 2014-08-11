@@ -117,6 +117,7 @@ BOARD_SEPOLICY_UNION += \
         ueventd.te \
         zygote.te \
         file_contexts \
+        genfs_contexts \
         service_contexts
 
 HAVE_ADRENO_SOURCE:= false

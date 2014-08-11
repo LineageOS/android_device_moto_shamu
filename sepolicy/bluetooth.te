@@ -1,3 +1,6 @@
+# STOPSHIP no domains may ship in permissive mode
+permissive bluetooth;
+
 # Write to /sys/class/rfkill/rfkill0/state
 # TODO: label it sysfs_bluetooth_writable instead
 allow bluetooth sysfs:file rw_file_perms;
