@@ -483,7 +483,6 @@ typedef struct {
     INCLUDE(CAM_INTF_META_FRAME_NUMBER_VALID,           int32_t,                     1);
     INCLUDE(CAM_INTF_META_URGENT_FRAME_NUMBER_VALID,    int32_t,                     1);
     INCLUDE(CAM_INTF_META_FRAME_DROPPED,                cam_frame_dropped_t,         1);
-    INCLUDE(CAM_INTF_META_PENDING_REQUESTS,             uint32_t,                    1);
     INCLUDE(CAM_INTF_META_FRAME_NUMBER,                 uint32_t,                    1);
     INCLUDE(CAM_INTF_META_URGENT_FRAME_NUMBER,          uint32_t,                    1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_MODE,           uint32_t,                    1);

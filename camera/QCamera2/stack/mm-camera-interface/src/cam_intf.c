@@ -67,8 +67,6 @@ void *get_pointer_of(cam_intf_parm_type_t meta_id,
             return POINTER_OF_META(CAM_INTF_META_URGENT_FRAME_NUMBER_VALID, metadata);
         case CAM_INTF_META_FRAME_DROPPED:
             return POINTER_OF_META(CAM_INTF_META_FRAME_DROPPED, metadata);
-        case CAM_INTF_META_PENDING_REQUESTS:
-            return POINTER_OF_META(CAM_INTF_META_PENDING_REQUESTS, metadata);
         case CAM_INTF_META_FRAME_NUMBER:
             return POINTER_OF_META(CAM_INTF_META_FRAME_NUMBER, metadata);
         case CAM_INTF_META_URGENT_FRAME_NUMBER:
@@ -382,8 +380,6 @@ uint32_t get_size_of(cam_intf_parm_type_t param_id)
             return SIZE_OF_PARAM(CAM_INTF_META_URGENT_FRAME_NUMBER_VALID, metadata);
         case CAM_INTF_META_FRAME_DROPPED:
             return SIZE_OF_PARAM(CAM_INTF_META_FRAME_DROPPED, metadata);
-        case CAM_INTF_META_PENDING_REQUESTS:
-            return SIZE_OF_PARAM(CAM_INTF_META_PENDING_REQUESTS, metadata);
         case CAM_INTF_META_FRAME_NUMBER:
             return SIZE_OF_PARAM(CAM_INTF_META_FRAME_NUMBER, metadata);
         case CAM_INTF_META_URGENT_FRAME_NUMBER:

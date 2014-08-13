@@ -1166,8 +1166,6 @@ typedef enum {
     CAM_INTF_META_URGENT_FRAME_NUMBER_VALID,
     /* Whether the stream buffer corresponding this frame is dropped or not */
     CAM_INTF_META_FRAME_DROPPED, /* 90 */
-    /* Number of pending requests yet to be processed */
-    CAM_INTF_META_PENDING_REQUESTS,
     /* COLOR CORRECTION.*/
     CAM_INTF_META_COLOR_CORRECT_MODE,
     /* A transform matrix to chromatically adapt pixels in the CIE XYZ (1931)
@@ -1189,9 +1187,9 @@ typedef enum {
     /*Number of streams and size of streams in current configuration*/
     CAM_INTF_META_STREAM_INFO,
     /* List of areas to use for metering */
-    CAM_INTF_META_AEC_ROI, /* 100 */
+    CAM_INTF_META_AEC_ROI,
     /* Whether the HAL must trigger precapture metering.*/
-    CAM_INTF_META_AEC_PRECAPTURE_TRIGGER,
+    CAM_INTF_META_AEC_PRECAPTURE_TRIGGER, /* 100 */
     /* The ID sent with the latest CAMERA2_TRIGGER_PRECAPTURE_METERING call */
     /* Current state of AE algorithm */
     CAM_INTF_META_AEC_STATE,
@@ -1212,10 +1210,10 @@ typedef enum {
     CAM_INTF_META_CAPTURE_INTENT,
     /* DEMOSAIC */
     /* Controls the quality of the demosaicing processing */
-    CAM_INTF_META_DEMOSAIC, /* 110 */
+    CAM_INTF_META_DEMOSAIC,
     /* EDGE */
     /* Operation mode for edge enhancement */
-    CAM_INTF_META_EDGE_MODE,
+    CAM_INTF_META_EDGE_MODE, /* 110 */
     /* Control the amount of edge enhancement applied to the images.*/
     /* 1-10; 10 is maximum sharpening */
     CAM_INTF_META_SHARPNESS_STRENGTH,
@@ -1238,9 +1236,9 @@ typedef enum {
     /* Size of the lens aperture */
     CAM_INTF_META_LENS_APERTURE,
     /* State of lens neutral density filter(s) */
-    CAM_INTF_META_LENS_FILTERDENSITY, /* 120 */
+    CAM_INTF_META_LENS_FILTERDENSITY,
     /* Lens optical zoom setting */
-    CAM_INTF_META_LENS_FOCAL_LENGTH,
+    CAM_INTF_META_LENS_FOCAL_LENGTH, /* 120 */
     /* Distance to plane of sharpest focus, measured from frontmost surface
      * of the lens */
     CAM_INTF_META_LENS_FOCUS_DISTANCE,
@@ -1263,10 +1261,10 @@ typedef enum {
      * pixel array */
     CAM_INTF_META_SCALER_CROP_REGION,
     /* The estimated scene illumination lighting frequency */
-    CAM_INTF_META_SCENE_FLICKER, /* 130 */
+    CAM_INTF_META_SCENE_FLICKER,
     /* SENSOR */
     /* Duration each pixel is exposed to light, in nanoseconds */
-    CAM_INTF_META_SENSOR_EXPOSURE_TIME,
+    CAM_INTF_META_SENSOR_EXPOSURE_TIME, /* 130 */
     /* Duration from start of frame exposure to start of next frame exposure,
      * in nanoseconds */
     CAM_INTF_META_SENSOR_FRAME_DURATION,
@@ -1290,12 +1288,12 @@ typedef enum {
     /* Operating mode for histogram generation */
     CAM_INTF_META_STATS_HISTOGRAM_MODE,
     /* Operating mode for sharpness map generation */
-    CAM_INTF_META_STATS_SHARPNESS_MAP_MODE, /* 140 */
+    CAM_INTF_META_STATS_SHARPNESS_MAP_MODE,
     /* A 3-channel sharpness map, based on the raw sensor data,
      * If only a monochrome sharpness map is supported, all channels
      * should have the same data
      */
-    CAM_INTF_META_STATS_SHARPNESS_MAP,
+    CAM_INTF_META_STATS_SHARPNESS_MAP, /* 140 */
 
     /* TONEMAP */
     /* Tone map mode */
@@ -1312,8 +1310,8 @@ typedef enum {
     CAM_INTF_PARM_STATS_AF_PAAF,
     /* Indicates streams ID of all the requested buffers */
     CAM_INTF_META_STREAM_ID,
-    CAM_INTF_PARM_FOCUS_BRACKETING, /* 150 */
-    CAM_INTF_PARM_FLASH_BRACKETING,
+    CAM_INTF_PARM_FOCUS_BRACKETING,
+    CAM_INTF_PARM_FLASH_BRACKETING, /* 150 */
     CAM_INTF_PARM_GET_IMG_PROP,
     CAM_INTF_META_JPEG_GPS_COORDINATES,
     CAM_INTF_META_JPEG_GPS_PROC_METHODS,
@@ -1323,9 +1321,9 @@ typedef enum {
     CAM_INTF_META_JPEG_THUMB_QUALITY,
     CAM_INTF_META_JPEG_THUMB_SIZE,
 
-    CAM_INTF_META_TEST_PATTERN_DATA, /* 160 */
+    CAM_INTF_META_TEST_PATTERN_DATA,
     /* DNG file support */
-    CAM_INTF_META_PROFILE_TONE_CURVE,
+    CAM_INTF_META_PROFILE_TONE_CURVE, /* 160 */
     CAM_INTF_META_NEUTRAL_COL_POINT,
 
     /* OTP : WB gr/gb */
