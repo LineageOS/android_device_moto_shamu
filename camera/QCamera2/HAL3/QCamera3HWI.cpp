@@ -4002,9 +4002,21 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             avail_abberation_modes,
             size);
 
+    char cafProp[PROPERTY_VALUE_MAX];
+    memset(cafProp, 0, sizeof(cafProp));
+    property_get("persist.camera.caf.disable", cafProp, "0");
+    uint8_t cafDisabled = atoi(cafProp);
+
     uint8_t avail_af_modes[CAM_FOCUS_MODE_MAX];
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_focus_modes_cnt; i++) {
+        if (cafDisabled &&
+            ((gCamCapability[cameraId]->supported_focus_modes[i]
+              == CAM_FOCUS_MODE_CONTINOUS_PICTURE) ||
+             (gCamCapability[cameraId]->supported_focus_modes[i]
+              == CAM_FOCUS_MODE_CONTINOUS_VIDEO)))
+            continue;
+
         int32_t val = lookupFwkName(FOCUS_MODES_MAP,
                                 sizeof(FOCUS_MODES_MAP)/sizeof(FOCUS_MODES_MAP[0]),
                                 gCamCapability[cameraId]->supported_focus_modes[i]);
@@ -4835,6 +4847,12 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     property_get("persist.camera.ois.disable", ois_prop, "0");
     uint8_t ois_disable = atoi(ois_prop);
 
+    /* Force video to use OIS */
+    char videoOisProp[PROPERTY_VALUE_MAX];
+    memset(videoOisProp, 0, sizeof(videoOisProp));
+    property_get("persist.camera.ois.video", videoOisProp, "0");
+    uint8_t forceVideoOis = atoi(videoOisProp);
+
     uint8_t controlIntent = 0;
     uint8_t focusMode;
     uint8_t opt_stab_mode;
@@ -4854,11 +4872,15 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
         opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
+        if (forceVideoOis)
+            opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
         break;
       case CAMERA3_TEMPLATE_VIDEO_SNAPSHOT:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
         opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
+        if (forceVideoOis)
+            opt_stab_mode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
         break;
       case CAMERA3_TEMPLATE_ZERO_SHUTTER_LAG:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG;
