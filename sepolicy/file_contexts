@@ -86,6 +86,7 @@
 /system/bin/sensors\.qcom       u:object_r:sensors_exec:s0
 /system/bin/thermal-engine      u:object_r:thermald_exec:s0
 /system/bin/time_daemon         u:object_r:time_exec:s0
+/system/bin/tcmd_mini           u:object_r:tcmd_exec:s0
 
 # Bluetooth
 /sys/class/rfkill/rfkill0/state u:object_r:sysfs_bluetooth_writable:s0
