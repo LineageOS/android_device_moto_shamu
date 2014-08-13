@@ -5424,6 +5424,8 @@ int QCamera3HardwareInterface::translateToHalMetadata
             frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[0];
         fps_range.max_fps =
             frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[1];
+        fps_range.video_min_fps = fps_range.min_fps;
+        fps_range.video_max_fps = fps_range.max_fps;
         rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_PARM_FPS_RANGE,
                 sizeof(fps_range), &fps_range);
     }
