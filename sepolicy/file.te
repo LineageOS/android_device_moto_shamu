@@ -9,3 +9,4 @@ type thermald_socket, file_type;
 type sysfs_rmnet, fs_type, sysfs_type;
 
 type diag_logs, file_type, data_file_type;
+type sysfs_smdcntl_open_timeout, fs_type, sysfs_type;
