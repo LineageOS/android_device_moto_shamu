@@ -228,7 +228,7 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     persist.camera.HAL3.enabled=1
 
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
-    persist.camera.ois.disable=1
+    persist.camera.ois.disable=0
 
 # GPS configuration
 PRODUCT_COPY_FILES += \
