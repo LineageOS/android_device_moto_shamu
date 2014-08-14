@@ -8,3 +8,6 @@ allow mediaserver self:socket create_socket_perms;
 binder_call(mediaserver, rild)
 
 unix_socket_send(mediaserver, camera, camera)
+
+# TODO b/17015082
+allow mediaserver shell_data_file:dir search;
