@@ -3,4 +3,8 @@ allow tee drm_block_device:blk_file rw_file_perms;
 # tee starts as root, and drops privileges
 allow tee self:capability { setuid setgid };
 
+# Need to directly minipulate certain block devices
+# for anti-rollback protection
 allow tee block_device:dir search;
+allow tee self:capability sys_rawio;
+allow tee drm_block_device:blk_file rw_file_perms;
