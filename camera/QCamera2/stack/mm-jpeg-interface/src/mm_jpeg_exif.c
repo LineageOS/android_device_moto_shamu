@@ -308,9 +308,7 @@ int process_sensor_data(cam_sensor_params_t *p_sensor_params,
     p_sensor_params->aperture_value );
 
   if (p_sensor_params->aperture_value >= 1.0) {
-    double apex_value;
-    apex_value = (double)2.0 * log(p_sensor_params->aperture_value) / log(2.0);
-    val_rat.num = (uint32_t)(apex_value * 100);
+    val_rat.num = (uint32_t)(p_sensor_params->aperture_value * 100);
     val_rat.denom = 100;
     rc = addExifEntry(exif_info, EXIFTAGID_APERTURE, EXIF_RATIONAL, 1, &val_rat);
     if (rc) {
@@ -353,13 +351,6 @@ int process_sensor_data(cam_sensor_params_t *p_sensor_params,
     ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
   }
 
-  /* F Number */
-  val_rat.num = (uint32_t)(p_sensor_params->f_number * 100);
-  val_rat.denom = 100;
-  rc = addExifEntry(exif_info, EXIFTAGTYPE_F_NUMBER, EXIF_RATIONAL, 1, &val_rat);
-  if (rc) {
-    ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
-  }
   return rc;
 }
 
@@ -607,5 +598,17 @@ int process_meta_data(metadata_buffer_t *p_meta, QOMX_EXIF_INFO *exif_info,
   if (rc) {
     ALOGE("%s:%d]: Error adding ASD Exif Entry", __func__, __LINE__);
   }
+
+  /* set orientation to ORIENTATION_UNDEFINED */
+  int16_t orientation = 0;
+  rc = addExifEntry(exif_info, EXIFTAGID_ORIENTATION,
+                    EXIF_SHORT,
+                    1,
+                    (void *)&orientation);
+  if (rc) {
+    ALOGE("%s:%d]: Error adding Exif Entry Orientation",
+      __func__, __LINE__);
+  }
+
   return rc;
 }
