@@ -11,3 +11,5 @@ type time_data_file, file_type, data_file_type;
 
 type sysfs_rmnet, fs_type, sysfs_type;
 type sysfs_smdcntl_open_timeout, fs_type, sysfs_type;
+
+type persist_file, file_type;

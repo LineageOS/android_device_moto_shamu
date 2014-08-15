@@ -95,3 +95,6 @@
 
 # Sysfs files used by qmuxd
 /sys/devices/virtual/smdpkt/smdcntl([0-9])+/open_timeout u:object_r:sysfs_smdcntl_open_timeout:s0
+
+# Persist partition
+/persist/(/.*)?                 u:object_r:persist_file:s0

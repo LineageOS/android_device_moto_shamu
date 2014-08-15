@@ -53,7 +53,7 @@ on fs
     # results in failure to launch late-start class.
 
     wait /dev/block/platform/msm_sdcc.1/by-name/persist
-    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/persist /persist nosuid nodev barrier=1
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/persist /persist nosuid nodev barrier=1 defcontext=u:object_r:persist_file:s0
 
     mkdir /fsg 0755 root root
     mount ext4 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3 /fsg ro nosuid nodev barrier=0
@@ -91,6 +91,8 @@ on post-fs-data
     mkdir /data/validity/fwext 0775 system system
     symlink /system/vendor/lib/hw/ValidityPersistentData /data/validity/ValidityPersistentData
     symlink /system/vendor/lib/hw/6_03f_moto.xefwext /data/validity/fwext/6_03f_moto.xefwext
+
+    mkdir /persist/mdm 0770 radio radio
 
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
