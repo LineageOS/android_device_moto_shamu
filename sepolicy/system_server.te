@@ -5,3 +5,4 @@ qmux_socket(system_server)
 allow system_server fingerprint_device:chr_file rw_file_perms;
 
 unix_socket_connect(system_server, sensors, sensors)
+allow system_server sensors_socket:sock_file r_file_perms;
