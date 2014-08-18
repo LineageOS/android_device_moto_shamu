@@ -2,13 +2,34 @@
 type netmgrd, domain;
 type netmgrd_exec, exec_type, file_type;
 
-# STOPSHIP: Permissive is not allowed. CTS violation!
-permissive netmgrd;
+# Uses network sockets.
+net_domain(netmgrd)
+
+# Talk to qmuxd (qmux_radio)
+qmux_socket(netmgrd)
+
+# Runs commands via sh.
+allow netmgrd shell_exec:file rx_file_perms;
+
+# Starts as (root,radio) changes to (radio,radio)
+allow netmgrd self:capability { setuid setgid net_admin net_raw };
+
+# Triggers a sys_module denial, but kernel does not have CONFIG_MODULES set
+dontaudit netmgrd self:capability sys_module;
 
 # Started by init
 init_daemon_domain(netmgrd)
 
-# Uses network sockets.
-net_domain(netmgrd)
-
 allow netmgrd shared_log_device:chr_file rw_file_perms;
+
+# Access to /proc/sys/net/*
+allow netmgrd proc_net:file write;
+
+# Runs /system/bin/toolbox
+allow netmgrd system_file:file rx_file_perms;
+
+allow netmgrd self:netlink_socket create_socket_perms;
+allow netmgrd self:netlink_xfrm_socket create_socket_perms;
+
+# b/17065650
+allow netmgrd self:socket {create ioctl};
