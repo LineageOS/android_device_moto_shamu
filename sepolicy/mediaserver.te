@@ -9,7 +9,7 @@ binder_call(mediaserver, rild)
 
 unix_socket_send(mediaserver, camera, camera)
 
-allow mediaserver adspd_socket:sock_file write;
+unix_socket_connect(mediaserver, adspd, adspd)
 
 # TODO b/17015082
 allow mediaserver shell_data_file:dir search;

@@ -14,9 +14,6 @@ allow netmgrd shell_exec:file rx_file_perms;
 # Starts as (root,radio) changes to (radio,radio)
 allow netmgrd self:capability { setuid setgid net_admin net_raw };
 
-# Triggers a sys_module denial, but kernel does not have CONFIG_MODULES set
-dontaudit netmgrd self:capability sys_module;
-
 # Started by init
 init_daemon_domain(netmgrd)
 
@@ -33,3 +30,6 @@ allow netmgrd self:netlink_xfrm_socket create_socket_perms;
 
 # b/17065650
 allow netmgrd self:socket {create ioctl};
+
+# CONFIG_MODULES not set in shamu_defconfig
+dontaudit netmgrd self:capability sys_module;
