@@ -214,7 +214,8 @@ private:
     bool mIsRaw16;
 
     void dumpRawSnapshot(mm_camera_buf_def_t *frame);
-    void convertToRaw16(mm_camera_buf_def_t *frame);
+    void convertLegacyToRaw16(mm_camera_buf_def_t *frame);
+    void convertMipiToRaw16(mm_camera_buf_def_t *frame);
 };
 
 /*

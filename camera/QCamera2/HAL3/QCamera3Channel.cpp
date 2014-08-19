@@ -884,8 +884,12 @@ void QCamera3RawChannel::streamCbRoutine(
     if (mRawDump)
         dumpRawSnapshot(super_frame->bufs[0]);
 
-    if (mIsRaw16)
-        convertToRaw16(super_frame->bufs[0]);
+    if (mIsRaw16) {
+        if (RAW_FORMAT == CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GBRG)
+            convertMipiToRaw16(super_frame->bufs[0]);
+        else
+            convertLegacyToRaw16(super_frame->bufs[0]);
+    }
 
     //Make sure cache coherence because extra processing is done
     mMemory.cleanInvalidateCache(super_frame->bufs[0]->buf_idx);
@@ -906,11 +910,11 @@ void QCamera3RawChannel::dumpRawSnapshot(mm_camera_buf_def_t *frame)
    cam_frame_len_offset_t offset;
    memset(&offset, 0, sizeof(cam_frame_len_offset_t));
    stream->getFrameOffset(offset);
-   snprintf(buf, sizeof(buf), "/data/r_%d_%dx%d.raw",
+   snprintf(buf, sizeof(buf), "/data/local/tmp/r_%d_%dx%d.raw",
             frame->frame_idx, dim.width, dim.height);
 
-   int file_fd = open(buf, O_RDWR| O_CREAT, 0777);
-   if (file_fd) {
+   int file_fd = open(buf, O_RDWR| O_CREAT, 0644);
+   if (file_fd >= 0) {
       int written_len = write(file_fd, frame->buffer, offset.frame_len);
       ALOGE("%s: written number of bytes %d", __func__, written_len);
       close(file_fd);
@@ -920,7 +924,7 @@ void QCamera3RawChannel::dumpRawSnapshot(mm_camera_buf_def_t *frame)
 
 }
 
-void QCamera3RawChannel::convertToRaw16(mm_camera_buf_def_t *frame)
+void QCamera3RawChannel::convertLegacyToRaw16(mm_camera_buf_def_t *frame)
 {
     // Convert image buffer from Opaque raw format to RAW16 format
     // 10bit Opaque raw is stored in the format of:
@@ -956,6 +960,46 @@ void QCamera3RawChannel::convertToRaw16(mm_camera_buf_def_t *frame)
         }
     }
 }
+
+void QCamera3RawChannel::convertMipiToRaw16(mm_camera_buf_def_t *frame)
+{
+    // Convert image buffer from mipi10 raw format to RAW16 format
+    // mipi10 opaque raw is stored in the format of:
+    // P3(1:0) P2(1:0) P1(1:0) P0(1:0) P3(9:2) P2(9:2) P1(9:2) P0(9:2)
+    // 4 pixels occupy 5 bytes, no padding needed
+
+    QCamera3Stream *stream = getStreamByIndex(0);
+    cam_dimension_t dim;
+    memset(&dim, 0, sizeof(dim));
+    stream->getFrameDimension(dim);
+
+    cam_frame_len_offset_t offset;
+    memset(&offset, 0, sizeof(cam_frame_len_offset_t));
+    stream->getFrameOffset(offset);
+
+    uint32_t raw16_stride = (dim.width + 15) & ~15;
+    uint16_t* raw16_buffer = (uint16_t *)frame->buffer;
+
+    // In-place format conversion.
+    // Raw16 format always occupy more memory than opaque raw10.
+    // Convert to Raw16 by iterating through all pixels from bottom-right
+    // to top-left of the image.
+    // One special notes:
+    // 1. Cross-platform raw16's stride is 16 pixels.
+    // 2. mipi raw10's stride is 4 pixels, and aligned to 16 bytes.
+    for (int y = dim.height-1; y >= 0; y--) {
+        uint8_t* row_start = (uint8_t *)frame->buffer +
+            y * offset.mp[0].stride;
+        for (int x = dim.width-1;  x >= 0; x--) {
+            uint8_t upper_8bit = row_start[5*(x/4)+x%4];
+            uint8_t lower_2bit = ((row_start[5*(x/4)+4] >> (x%4)) & 0x3);
+            uint16_t raw16_pixel = (((uint16_t)upper_8bit)<<2 | lower_2bit);
+            raw16_buffer[y*raw16_stride+x] = raw16_pixel;
+        }
+    }
+
+}
+
 
 /*************************************************************************************/
 // RAW Dump Channel related functions

@@ -816,7 +816,8 @@ int QCamera3HardwareInterface::configureStreams(
                             mCameraHandle->camera_handle,
                             mCameraHandle->ops, captureResultCb,
                             &gCamCapability[mCameraId]->padding_info,
-                            this, newStream, (newStream->format == HAL_PIXEL_FORMAT_RAW16));
+                            this, newStream, CAM_QCOM_FEATURE_NONE,
+                            (newStream->format == HAL_PIXEL_FORMAT_RAW16));
                     if (mRawChannel == NULL) {
                         ALOGE("%s: allocation of raw channel failed", __func__);
                         pthread_mutex_unlock(&mMutex);
