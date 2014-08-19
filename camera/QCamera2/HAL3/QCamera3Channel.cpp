@@ -2456,11 +2456,13 @@ QCamera3ReprocessChannel::QCamera3ReprocessChannel(uint32_t cam_handle,
                                                  void *userData, void *ch_hdl) :
     QCamera3Channel(cam_handle, cam_ops, cb_routine, paddingInfo, postprocess_mask, userData),
     picChHandle(ch_hdl),
+    mOfflineBuffersIndex(-1),
     m_pSrcChannel(NULL),
     m_pMetaChannel(NULL),
     mMemory(NULL)
 {
     memset(mSrcStreamHandles, 0, sizeof(mSrcStreamHandles));
+    mOfflineMetaIndex = QCamera3HardwareInterface::kMaxInFlight -1;
 }
 
 
@@ -2685,7 +2687,7 @@ QCamera3Stream * QCamera3ReprocessChannel::getSrcStreamBySrcHandle(uint32_t srcH
  *==========================================================================*/
 int32_t QCamera3ReprocessChannel::stop()
 {
-    unmapOfflineBuffers();
+    unmapOfflineBuffers(true);
 
     return QCamera3Channel::stop();
 }
@@ -2701,29 +2703,58 @@ int32_t QCamera3ReprocessChannel::stop()
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera3ReprocessChannel::unmapOfflineBuffers()
+int32_t QCamera3ReprocessChannel::unmapOfflineBuffers(bool all)
 {
     int rc = NO_ERROR;
-
     if (!mOfflineBuffers.empty()) {
         QCamera3Stream *stream = NULL;
-                    List<OfflineBuffer>::iterator it = mOfflineBuffers.begin();
-
-        for( ; it != mOfflineBuffers.end(); it++) {
-            stream = (*it).stream;
-            if (NULL != stream) {
-                rc = stream->unmapBuf((*it).type,
-                                         (*it).index,
-                                         -1);
-                if (NO_ERROR != rc) {
-                    ALOGE("%s: Error during offline buffer unmap %d",
-                          __func__, rc);
-                }
-            }
+        List<OfflineBuffer>::iterator it = mOfflineBuffers.begin();
+        for (; it != mOfflineBuffers.end(); it++) {
+           stream = (*it).stream;
+           if (NULL != stream) {
+               rc = stream->unmapBuf((*it).type,
+                                     (*it).index,
+                                        -1);
+               if (NO_ERROR != rc) {
+                   ALOGE("%s: Error during offline buffer unmap %d",
+                         __func__, rc);
+               }
+               CDBG("%s: Unmapped buffer with index %d", __func__, (*it).index);
+           }
+           if (!all) {
+               mOfflineBuffers.erase(it);
+               break;
+           }
         }
-        mOfflineBuffers.clear();
+        if (all) {
+           mOfflineBuffers.clear();
+        }
     }
 
+    if (!mOfflineMetaBuffers.empty()) {
+        QCamera3Stream *stream = NULL;
+        List<OfflineBuffer>::iterator it = mOfflineMetaBuffers.begin();
+        for (; it != mOfflineBuffers.end(); it++) {
+           stream = (*it).stream;
+           if (NULL != stream) {
+               rc = stream->unmapBuf((*it).type,
+                                     (*it).index,
+                                        -1);
+               if (NO_ERROR != rc) {
+                   ALOGE("%s: Error during offline buffer unmap %d",
+                         __func__, rc);
+               }
+               CDBG("%s: Unmapped meta buffer with index %d", __func__, (*it).index);
+           }
+           if (!all) {
+               mOfflineMetaBuffers.erase(it);
+               break;
+           }
+        }
+        if (all) {
+           mOfflineMetaBuffers.clear();
+        }
+    }
     return rc;
 }
 
@@ -2879,9 +2910,13 @@ int32_t QCamera3ReprocessChannel::extractCrop(qcamera_fwk_input_pp_data_t *frame
         return NO_INIT;
     }
 
-    uint32_t buf_idx = 0;
     QCamera3Stream *pStream = mStreams[0];
-
+    int32_t max_idx = QCamera3HardwareInterface::kMaxInFlight -1;
+    //loop back the indices if max burst count reached
+    if (mOfflineBuffersIndex == max_idx) {
+       mOfflineBuffersIndex = -1;
+    }
+    uint32_t buf_idx = mOfflineBuffersIndex + 1;
     rc = pStream->mapBuf(
             CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF,
             buf_idx, -1,
@@ -2891,9 +2926,17 @@ int32_t QCamera3ReprocessChannel::extractCrop(qcamera_fwk_input_pp_data_t *frame
         mappedBuffer.stream = pStream;
         mappedBuffer.type = CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF;
         mOfflineBuffers.push_back(mappedBuffer);
+        mOfflineBuffersIndex = buf_idx;
+        CDBG("%s: Mapped buffer with index %d", __func__, mOfflineBuffersIndex);
     }
 
-    uint32_t meta_buf_idx = 1;
+    max_idx = QCamera3HardwareInterface::kMaxInFlight +
+              QCamera3HardwareInterface::kMaxInFlight - 1;
+    //loop back the indices if max burst count reached
+    if (mOfflineMetaIndex == max_idx) {
+       mOfflineMetaIndex = QCamera3HardwareInterface::kMaxInFlight -1;
+    }
+    uint32_t meta_buf_idx = mOfflineMetaIndex + 1;
     rc |= pStream->mapBuf(
             CAM_MAPPING_BUF_TYPE_OFFLINE_META_BUF,
             meta_buf_idx, -1,
@@ -2902,7 +2945,9 @@ int32_t QCamera3ReprocessChannel::extractCrop(qcamera_fwk_input_pp_data_t *frame
         mappedBuffer.index = meta_buf_idx;
         mappedBuffer.stream = pStream;
         mappedBuffer.type = CAM_MAPPING_BUF_TYPE_OFFLINE_META_BUF;
-        mOfflineBuffers.push_back(mappedBuffer);
+        mOfflineMetaBuffers.push_back(mappedBuffer);
+        mOfflineMetaIndex = meta_buf_idx;
+        CDBG("%s: Mapped meta buffer with index %d", __func__, mOfflineMetaIndex);
     }
 
     if (rc == NO_ERROR) {
@@ -2910,6 +2955,7 @@ int32_t QCamera3ReprocessChannel::extractCrop(qcamera_fwk_input_pp_data_t *frame
         memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
         param.type = CAM_STREAM_PARAM_TYPE_DO_REPROCESS;
         param.reprocess.buf_index = buf_idx;
+        param.reprocess.frame_idx = frame->input_buffer.frame_idx;
         param.reprocess.meta_present = 1;
         param.reprocess.meta_buf_index = meta_buf_idx;
         param.reprocess.frame_pp_config.crop.input_crop =
