@@ -305,3 +305,5 @@ $(call inherit-product, build/target/product/verity.mk)
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     ro.qualcomm.perf.cores_online=2
 
+PRODUCT_PACKAGES += \
+    power.shamu
