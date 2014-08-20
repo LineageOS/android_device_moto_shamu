@@ -305,7 +305,8 @@ public:
 
 private:
     camera3_stream_t *mCamera3Stream;
-    uint32_t mNumBufs;
+    uint32_t mNumBufsRegistered;
+    uint32_t mNumSnapshotBufs;
     uint32_t mYuvWidth, mYuvHeight;
     int32_t mCurrentBufIndex;
     cam_stream_type_t mStreamType;
@@ -321,6 +322,10 @@ private:
     mm_camera_super_buf_t *mMetaFrame;
     QCamera3GrallocMemory mOfflineMemory;
     QCamera3HeapMemory mOfflineMetaMemory;
+
+    // Keep a list of free buffers
+    Mutex mFreeBuffersLock;
+    List<uint32_t> mFreeBufferList;
 };
 
 // reprocess channel class

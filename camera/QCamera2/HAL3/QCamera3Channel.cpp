@@ -1308,6 +1308,31 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
         result.acquire_fence = -1;
         result.release_fence = -1;
 
+        // Release any snapshot buffers before calling
+        // the user callback. The callback can potentially
+        // unblock pending requests to snapshot stream.
+        if (NULL != job) {
+            int32_t snapshotIdx = -1;
+            if (job->src_reproc_frame) {
+                if (obj->mStreams[0]->getMyHandle() ==
+                        job->src_reproc_frame->bufs[0]->stream_id) {
+                    snapshotIdx = job->src_reproc_frame->bufs[0]->buf_idx;
+                } else {
+                    ALOGE("%s: Snapshot stream id %d and source frame %d don't match!",
+                            __func__, obj->mStreams[0]->getMyHandle(),
+                            job->src_reproc_frame->bufs[0]->stream_id);
+                }
+            } else {
+                CDBG("%s: Source reproc frame is missing", __func__);
+            }
+            if (0 <= snapshotIdx) {
+                Mutex::Autolock lock(obj->mFreeBuffersLock);
+                obj->mFreeBufferList.push_back(snapshotIdx);
+            } else {
+                CDBG("%s: Snapshot buffer not found!", __func__);
+            }
+        }
+
         CDBG("%s: Issue Callback", __func__);
         obj->mChannelCB(NULL, &result, resultFrameNumber, obj->mUserData);
 
@@ -1342,7 +1367,8 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                         paddingInfo, postprocess_mask, userData),
                         m_postprocessor(this),
                         mCamera3Stream(stream),
-                        mNumBufs(0),
+                        mNumBufsRegistered(CAM_MAX_NUM_BUFS_PER_STREAM),
+                        mNumSnapshotBufs(0),
                         mCurrentBufIndex(-1),
                         mPostProcStarted(false),
                         mInputBufferConfig(false),
@@ -1416,9 +1442,15 @@ int32_t QCamera3PicChannel::initialize()
     streamDim.width = mYuvWidth;
     streamDim.height = mYuvHeight;
 
-    mNumBufs = CAM_MAX_NUM_BUFS_PER_STREAM;
+    mNumSnapshotBufs = mCamera3Stream->max_buffers;
     rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,
             (uint8_t)mCamera3Stream->max_buffers, mPostProcMask);
+
+    Mutex::Autolock lock(mFreeBuffersLock);
+    mFreeBufferList.clear();
+    for (uint32_t i = 0; i < mCamera3Stream->max_buffers; i++) {
+        mFreeBufferList.push_back(i);
+    }
 
     return rc;
 }
@@ -1497,9 +1529,18 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
     // Queue jpeg settings
     rc = queueJpegSetting(index, metadata);
 
-    if (pInputBuffer == NULL)
-        mStreams[0]->bufDone(index);
-    else {
+    if (pInputBuffer == NULL) {
+        Mutex::Autolock lock(mFreeBuffersLock);
+        if (!mFreeBufferList.empty()) {
+            List<uint32_t>::iterator it = mFreeBufferList.begin();
+            uint32_t freeBuffer = *it;
+            mStreams[0]->bufDone(freeBuffer);
+            mFreeBufferList.erase(it);
+        } else {
+            ALOGE("%s: No snapshot buffers available!", __func__);
+            rc = NOT_ENOUGH_DATA;
+        }
+    } else {
         if (0 < mOfflineMetaMemory.getCnt()) {
             mOfflineMetaMemory.deallocate();
         }
@@ -1655,7 +1696,7 @@ int32_t QCamera3PicChannel::registerBuffer(buffer_handle_t *buffer)
 {
     int rc = 0;
 
-    if ((uint32_t)mMemory.getCnt() > (mNumBufs - 1)) {
+    if ((uint32_t)mMemory.getCnt() > (mNumBufsRegistered - 1)) {
         ALOGE("%s: Trying to register more buffers than initially requested",
                 __func__);
         return BAD_VALUE;
@@ -1710,9 +1751,11 @@ void QCamera3PicChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
     frameIndex = (uint8_t)super_frame->bufs[0]->buf_idx;
     CDBG("%s: recvd buf_idx: %u for further processing",
         __func__, (uint32_t)frameIndex);
-    if(frameIndex >= mNumBufs) {
+    if(frameIndex >= mNumSnapshotBufs) {
          ALOGE("%s: Error, Invalid index for buffer",__func__);
          if(stream) {
+             Mutex::Autolock lock(mFreeBuffersLock);
+             mFreeBufferList.push_back(frameIndex);
              stream->bufDone(frameIndex);
          }
          return;
@@ -1723,6 +1766,8 @@ void QCamera3PicChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
        ALOGE("%s: Error allocating memory to save received_frame structure.",
                                                                     __func__);
        if(stream) {
+           Mutex::Autolock lock(mFreeBuffersLock);
+           mFreeBufferList.push_back(frameIndex);
            stream->bufDone(frameIndex);
        }
        return;
