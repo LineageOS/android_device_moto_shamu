@@ -6278,6 +6278,7 @@ bool QCamera3HardwareInterface::needReprocess(uint32_t postprocess_mask)
             return true;
         } else {
             CDBG_HIGH("%s: already post processed frame", __func__);
+            return false;
         }
     }
     return needRotationReprocess();
