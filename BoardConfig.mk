@@ -126,6 +126,7 @@ BOARD_SEPOLICY_UNION += \
         surfaceflinger.te \
         system_app.te \
         system_server.te \
+        tcmd.te \
         tee.te \
         te_macros \
         thermald.te \

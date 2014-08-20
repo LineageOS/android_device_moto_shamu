@@ -396,6 +396,12 @@ service rmt_storage /system/bin/rmt_storage
     user root
     disabled
 
+service tcmd /system/bin/tcmd_mini
+    class core
+    user radio
+    group radio net_raw net_admin
+    disabled
+
 on property:ro.boot.emmc=true
     start rmt_storage
 

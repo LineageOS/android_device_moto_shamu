@@ -33,26 +33,6 @@ on fs
     mount functionfs adb /dev/usb-ffs/adb uid=2000,gid=2000
     write /sys/class/android_usb/android0/f_ffs/aliases adb
 
-on property:tcmd.ctrl_adb=1
-    stop mmi-usb-sh
-    setprop usb.mmi-usb-sh.action tcmd.ctrl_adb
-    start mmi-usb-sh
-
-on property:tcmd.ctrl_adb=0
-    stop mmi-usb-sh
-    setprop usb.mmi-usb-sh.action tcmd.ctrl_adb
-    start mmi-usb-sh
-
-on property:tcmd.ctrl_diag=1
-    stop mmi-usb-sh
-    setprop usb.mmi-usb-sh.action tcmd.ctrl_diag
-    start mmi-usb-sh
-
-on property:tcmd.ctrl_diag=0
-    stop mmi-usb-sh
-    setprop usb.mmi-usb-sh.action tcmd.ctrl_diag
-    start mmi-usb-sh
-
 # USB compositions
 on property:sys.usb.config=diag,serial_smd,serial_tty,rmnet_bam,mass_storage,adb
     start tcmd
@@ -87,7 +67,6 @@ on property:sys.usb.config=rndis
     setprop sys.usb.state ${sys.usb.config}
 
 on property:sys.usb.config=rndis,adb
-    start tcmd
     write /sys/class/android_usb/android0/enable 0
     write /sys/class/android_usb/android0/idVendor 22B8
     write /sys/class/android_usb/android0/idProduct 2EB2
@@ -108,7 +87,6 @@ on property:sys.usb.config=mtp
     setprop sys.usb.state ${sys.usb.config}
 
 on property:sys.usb.config=mtp,adb
-    start tcmd
     write /sys/class/android_usb/android0/enable 0
     write /sys/class/android_usb/android0/bDeviceClass 0
     write /sys/class/android_usb/android0/bDeviceSubClass 0
