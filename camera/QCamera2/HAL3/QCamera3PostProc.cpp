@@ -804,7 +804,7 @@ int32_t QCamera3PostProcessor::releaseOfflineBuffers()
     int32_t rc = NO_ERROR;
 
     if(NULL != m_pReprocChannel) {
-        rc = m_pReprocChannel->unmapOfflineBuffers();
+        rc = m_pReprocChannel->unmapOfflineBuffers(false);
     }
 
     return rc;

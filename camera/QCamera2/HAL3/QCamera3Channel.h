@@ -352,7 +352,7 @@ public:
     virtual QCamera3Memory *getStreamBufs(uint32_t len);
     virtual void putStreamBufs();
     virtual int32_t initialize();
-    int32_t unmapOfflineBuffers();
+    int32_t unmapOfflineBuffers(bool all);
     virtual int32_t stop();
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream);
@@ -376,6 +376,9 @@ private:
     } OfflineBuffer;
 
     android::List<OfflineBuffer> mOfflineBuffers;
+    android::List<OfflineBuffer> mOfflineMetaBuffers;
+    int32_t mOfflineBuffersIndex;
+    int32_t mOfflineMetaIndex;
     uint32_t mSrcStreamHandles[MAX_STREAM_NUM_IN_BUNDLE];
     QCamera3Channel *m_pSrcChannel; // ptr to source channel for reprocess
     QCamera3Channel *m_pMetaChannel;
