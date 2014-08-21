@@ -58,6 +58,7 @@ namespace qcamera {
 
 #define EMPTY_PIPELINE_DELAY 2
 #define PARTIAL_RESULT_COUNT 2
+#define FRAME_SKIP_DELAY     1
 
 #define VIDEO_4K_WIDTH  3840
 #define VIDEO_4K_HEIGHT 2160
@@ -4130,7 +4131,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_testpattern_modes,
                       size);
 
-    uint8_t max_pipeline_depth = kMaxInFlight + EMPTY_PIPELINE_DELAY;
+    uint8_t max_pipeline_depth = kMaxInFlight + EMPTY_PIPELINE_DELAY + FRAME_SKIP_DELAY;
     staticInfo.update(ANDROID_REQUEST_PIPELINE_MAX_DEPTH,
                       &max_pipeline_depth,
                       1);
