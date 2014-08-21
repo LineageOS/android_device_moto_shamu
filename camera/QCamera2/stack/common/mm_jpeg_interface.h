@@ -160,6 +160,9 @@ typedef struct {
   /* enable encoder burst mode */
   int8_t burst_mode;
 
+  /*jpeg orientation information*/
+  int jpeg_orientation;
+
   /* get memory function ptr */
   int (*get_memory)( omx_jpeg_ouput_buf_t *p_out_buf);
 } mm_jpeg_encode_params_t;
