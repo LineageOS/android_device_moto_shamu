@@ -24,7 +24,7 @@
 /dev/efs_hsic_bridge           u:object_r:mdm_helper_device:s0
 /dev/ks_hsic_bridge            u:object_r:mdm_helper_device:s0
 /dev/block/mmcblk0p2[1-2]      u:object_r:modem_block_device:s0
-/dev/block/mmcblk0p2[7-9]      u:object_r:efs_block_device:s0
+/dev/block/mmcblk0p2[79]       u:object_r:efs_block_device:s0
 /dev/block/mmcblk0p30          u:object_r:efs_block_device:s0
 
 # Used by keystore to access trustzone
