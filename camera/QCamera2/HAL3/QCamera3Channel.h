@@ -344,9 +344,9 @@ public:
     int32_t doReprocessOffline(qcamera_fwk_input_pp_data_t *frame);
     int32_t doReprocess(int buf_fd, uint32_t buf_length, int32_t &ret_val,
                         mm_camera_super_buf_t *meta_buf);
-    int32_t extractFrameAndCrop(mm_camera_super_buf_t *frame,
+    int32_t extractFrameCropAndRotation(mm_camera_super_buf_t *frame,
             mm_camera_buf_def_t *meta_buffer,
-            metadata_buffer_t *metadata,
+            jpeg_settings_t *jpeg_settings,
             qcamera_fwk_input_pp_data_t &fwk_frame);
     int32_t extractCrop(qcamera_fwk_input_pp_data_t *frame);
     virtual QCamera3Memory *getStreamBufs(uint32_t len);

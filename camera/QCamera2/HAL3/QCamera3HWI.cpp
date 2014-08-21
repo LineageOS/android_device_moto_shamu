@@ -6322,48 +6322,7 @@ QCamera3ReprocessChannel *QCamera3HardwareInterface::addOfflineReprocChannel(
     cam_pp_feature_config_t pp_config;
     memset(&pp_config, 0, sizeof(cam_pp_feature_config_t));
 
-    if (IS_PARAM_AVAILABLE(CAM_INTF_META_EDGE_MODE, metadata)) {
-        cam_edge_application_t *edge = (cam_edge_application_t *)
-                POINTER_OF_PARAM(CAM_INTF_META_EDGE_MODE, metadata);
-        if (edge->edge_mode != CAM_EDGE_MODE_OFF) {
-            pp_config.feature_mask |= CAM_QCOM_FEATURE_SHARPNESS;
-            pp_config.sharpness = edge->sharpness;
-        }
-    }
-
-    if (IS_PARAM_AVAILABLE(CAM_INTF_META_NOISE_REDUCTION_MODE, metadata)) {
-        uint8_t *noise_mode = (uint8_t *)POINTER_OF_PARAM(
-                CAM_INTF_META_NOISE_REDUCTION_MODE, metadata);
-        if (*noise_mode != CAM_NOISE_REDUCTION_MODE_OFF) {
-            pp_config.feature_mask |= CAM_QCOM_FEATURE_DENOISE2D;
-            pp_config.denoise2d.denoise_enable = 1;
-            pp_config.denoise2d.process_plates = getWaveletDenoiseProcessPlate();
-        }
-    }
-
-    if (isCACEnabled()) {
-        pp_config.feature_mask |= CAM_QCOM_FEATURE_CAC;
-    }
-
-    if (IS_PARAM_AVAILABLE(CAM_INTF_META_JPEG_ORIENTATION, metadata)) {
-        int32_t *rotation = (int32_t *)POINTER_OF_PARAM(
-                CAM_INTF_META_JPEG_ORIENTATION, metadata);
-
-        if (needRotationReprocess()) {
-            pp_config.feature_mask |= CAM_QCOM_FEATURE_ROTATION;
-            if (*rotation == 0) {
-                pp_config.rotation = ROTATE_0;
-            } else if (*rotation == 90) {
-                pp_config.rotation = ROTATE_90;
-            } else if (*rotation == 180) {
-                pp_config.rotation = ROTATE_180;
-            } else if (*rotation == 270) {
-                pp_config.rotation = ROTATE_270;
-            }
-        }
-    }
-
-
+    pp_config.feature_mask |= CAM_QCOM_FEATURE_PP_SUPERSET;
 
     rc = pChannel->addReprocStreamsFromSource(pp_config,
             config,

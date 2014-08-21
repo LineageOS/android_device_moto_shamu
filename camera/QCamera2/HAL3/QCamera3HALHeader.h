@@ -72,6 +72,7 @@ class QCamera3Channel;
         cam_padding_info_t *padding;
         QCamera3Channel *src_channel;
         cam_rect_t output_crop;
+        cam_rotation_t rotation;
     } reprocess_config_t;
 };//namespace qcamera
 

@@ -74,6 +74,7 @@ typedef struct {
     mm_camera_super_buf_t *src_frame;// source frame (need to be returned back to kernel after done)
     qcamera_fwk_input_pp_data_t *fwk_src_frame;// source frame
     metadata_buffer_t *metadata;
+    jpeg_settings_t *jpeg_settings;
     mm_camera_super_buf_t *src_metadata;
 } qcamera_hal3_pp_data_t;
 
@@ -164,8 +165,8 @@ private:
     QCameraQueue m_inputJpegQ;          // input jpeg job queue
     QCameraQueue m_ongoingJpegQ;        // ongoing jpeg job queue
     QCameraQueue m_inputRawQ;           // input raw job queue
-    QCameraQueue m_inputMetaQ;          //input meta queue
-    QCameraQueue m_jpegSettingsQ;        // input jpet setting queue
+    QCameraQueue m_inputMetaQ;          // input meta queue
+    QCameraQueue m_jpegSettingsQ;       // input jpeg setting queue
     QCameraCmdThread m_dataProcTh;      // thread for data processing
 
     pthread_mutex_t mReprocJobLock;
