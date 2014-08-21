@@ -126,11 +126,11 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FOCUS_MOD
 };
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::COLOR_ABERRATION_MAP[] = {
-    { ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE_OFF,
+    { ANDROID_COLOR_CORRECTION_ABERRATION_MODE_OFF,
             CAM_COLOR_CORRECTION_ABERRATION_OFF },
-    { ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE_FAST,
+    { ANDROID_COLOR_CORRECTION_ABERRATION_MODE_FAST,
             CAM_COLOR_CORRECTION_ABERRATION_FAST },
-    { ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE_HIGH_QUALITY,
+    { ANDROID_COLOR_CORRECTION_ABERRATION_MODE_HIGH_QUALITY,
             CAM_COLOR_CORRECTION_ABERRATION_HIGH_QUALITY },
 };
 
@@ -2920,7 +2920,7 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                 *cacMode);
         if (NAME_NOT_FOUND != cac) {
             uint8_t val = (uint8_t) cac;
-            camMetadata.update(ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE,
+            camMetadata.update(ANDROID_COLOR_CORRECTION_ABERRATION_MODE,
                     &val,
                     1);
         } else {
@@ -3984,7 +3984,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     size = 0;
     if (0 == gCamCapability[cameraId]->aberration_modes_count) {
         avail_abberation_modes[0] =
-                ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE_OFF;
+                ANDROID_COLOR_CORRECTION_ABERRATION_MODE_OFF;
         size++;
     } else {
         for (size_t i = 0; i < gCamCapability[cameraId]->aberration_modes_count; i++) {
@@ -4002,7 +4002,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
         }
 
     }
-    staticInfo.update(ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_CORRECTION_MODES,
+    staticInfo.update(ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES,
             avail_abberation_modes,
             size);
 
@@ -4317,7 +4317,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
        ANDROID_CONTROL_AE_AVAILABLE_MODES, ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
        ANDROID_CONTROL_AE_COMPENSATION_RANGE, ANDROID_CONTROL_AE_COMPENSATION_STEP,
        ANDROID_CONTROL_AF_AVAILABLE_MODES, ANDROID_CONTROL_AVAILABLE_EFFECTS,
-       ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_CORRECTION_MODES,
+       ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES,
        ANDROID_SCALER_CROPPING_TYPE,
        ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE,
        ANDROID_SYNC_MAX_LATENCY,
@@ -5382,10 +5382,10 @@ int QCamera3HardwareInterface::translateToHalMetadata
                 sizeof(whiteLevel), &whiteLevel);
     }
 
-    if (frame_settings.exists(ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE)) {
+    if (frame_settings.exists(ANDROID_COLOR_CORRECTION_ABERRATION_MODE)) {
         uint8_t fwk_cacMode =
                 frame_settings.find(
-                        ANDROID_COLOR_CORRECTION_ABERRATION_CORRECTION_MODE).data.u8[0];
+                        ANDROID_COLOR_CORRECTION_ABERRATION_MODE).data.u8[0];
         int8_t val = lookupHalName(COLOR_ABERRATION_MAP,
                 sizeof(COLOR_ABERRATION_MAP)/sizeof(COLOR_ABERRATION_MAP[0]),
                 fwk_cacMode);
