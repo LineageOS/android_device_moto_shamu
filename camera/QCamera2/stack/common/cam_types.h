@@ -1650,6 +1650,7 @@ typedef struct {
 
     /* input source type */
     cam_stream_type_t input_type;
+
 } cam_pp_offline_src_config_t;
 
 /* reprocess stream input configuration */
@@ -1676,11 +1677,13 @@ typedef struct {
 } cam_trigger_t;
 
 typedef struct {
-    cam_denoise_param_t denoise;
+    cam_denoise_param_t denoise2d;
     cam_crop_param_t crop;
     uint32_t flip;     /* 0 means no flip */
     uint32_t uv_upsample; /* 0 means no chroma upsampling */
     int32_t sharpness; /* 0 means no sharpness */
+    int32_t effect;
+    cam_rotation_t rotation;
 } cam_per_frame_pp_config_t;
 
 typedef enum {

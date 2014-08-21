@@ -1464,10 +1464,18 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
 
     int32_t rc = NO_ERROR;
     int index;
+    //extract rotation information
 
     reprocess_config_t reproc_cfg;
     memset(&reproc_cfg, 0, sizeof(reprocess_config_t));
     reproc_cfg.padding = mPaddingInfo;
+    //to ensure a big enough buffer size set the height and width
+    //padding to max(height padding, width padding)
+    if (reproc_cfg.padding->height_padding > reproc_cfg.padding->width_padding) {
+       reproc_cfg.padding->width_padding = reproc_cfg.padding->height_padding;
+    } else {
+       reproc_cfg.padding->height_padding = reproc_cfg.padding->width_padding;
+    }
     if (NULL != pInputBuffer) {
         reproc_cfg.input_stream_dim.width = pInputBuffer->stream->width;
         reproc_cfg.input_stream_dim.height = pInputBuffer->stream->height;
@@ -1485,6 +1493,19 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
     if (rc != 0) {
         ALOGE("%s: Snapshot stream plane info calculation failed!", __func__);
         return rc;
+    }
+    if (IS_PARAM_AVAILABLE(CAM_INTF_META_JPEG_ORIENTATION, metadata)) {
+          int32_t *rotation = (int32_t *)POINTER_OF_PARAM(
+            CAM_INTF_META_JPEG_ORIENTATION, metadata);
+          if (*rotation == 0) {
+             reproc_cfg.rotation = ROTATE_0;
+          } else if (*rotation == 90) {
+             reproc_cfg.rotation = ROTATE_90;
+          } else if (*rotation == 180) {
+             reproc_cfg.rotation = ROTATE_180;
+          } else if (*rotation == 270) {
+             reproc_cfg.rotation = ROTATE_270;
+          }
     }
 
     // Picture stream has already been started before any request comes in
@@ -2760,9 +2781,9 @@ int32_t QCamera3ReprocessChannel::unmapOfflineBuffers(bool all)
 
 
 /*===========================================================================
- * FUNCTION   : extractFrameAndCrop
+ * FUNCTION   : extractFrameAndRotation
  *
- * DESCRIPTION: Extract output crop and frame data if present
+ * DESCRIPTION: Extract output rotation and frame data if present
  *
  * PARAMETERS :
  *   @frame     : input frame from source stream
@@ -2774,45 +2795,59 @@ int32_t QCamera3ReprocessChannel::unmapOfflineBuffers(bool all)
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera3ReprocessChannel::extractFrameAndCrop(mm_camera_super_buf_t *frame,
-        mm_camera_buf_def_t *meta_buffer, metadata_buffer_t *metadata, qcamera_fwk_input_pp_data_t &fwk_frame)
+int32_t QCamera3ReprocessChannel::extractFrameCropAndRotation(mm_camera_super_buf_t *frame,
+        mm_camera_buf_def_t *meta_buffer, jpeg_settings_t *jpeg_settings,
+        qcamera_fwk_input_pp_data_t &fwk_frame)
 {
-    if ((NULL == meta_buffer) || (NULL == frame) || (NULL == metadata)) {
+    if ((NULL == meta_buffer) || (NULL == frame) || (NULL == jpeg_settings)) {
+        return BAD_VALUE;
+    }
+
+    metadata_buffer_t *meta = (metadata_buffer_t *)meta_buffer->buffer;
+    if (NULL == meta) {
         return BAD_VALUE;
     }
 
     for (int i = 0; i < frame->num_bufs; i++) {
-
         QCamera3Stream *pStream = getStreamBySrcHandle(frame->bufs[i]->stream_id);
         QCamera3Stream *pSrcStream = getSrcStreamBySrcHandle(frame->bufs[i]->stream_id);
 
-            if (pStream != NULL && pSrcStream != NULL) {
-                // Find crop info for reprocess stream
-                cam_crop_data_t *crop_data = (cam_crop_data_t *)
-                        POINTER_OF_PARAM(CAM_INTF_META_CROP_DATA, metadata);
-                if (NULL != crop_data) {
-                    for (int j = 0; j < crop_data->num_of_streams; j++) {
-                        if (crop_data->crop_info[j].stream_id ==
-                               pSrcStream->getMyServerID()) {
-                            fwk_frame.reproc_config.output_crop =
-                                    crop_data->crop_info[j].crop;
-                            CDBG("%s: Found reprocess crop %dx%d %dx%d", __func__,
-                                    crop_data->crop_info[0].crop.left,
-                                    crop_data->crop_info[0].crop.top,
-                                    crop_data->crop_info[0].crop.width,
-                                    crop_data->crop_info[0].crop.height);
-                            break;
-                        }
-                    }
-                    fwk_frame.input_buffer = *frame->bufs[i];
-                    fwk_frame.metadata_buffer = *meta_buffer;
-                    break;
-                } else {
-                    continue;
+        if (pStream != NULL && pSrcStream != NULL) {
+            // Find rotation info for reprocess stream
+            if (jpeg_settings->jpeg_orientation == 0) {
+               fwk_frame.reproc_config.rotation = ROTATE_0;
+            } else if (jpeg_settings->jpeg_orientation == 90) {
+               fwk_frame.reproc_config.rotation = ROTATE_90;
+            } else if (jpeg_settings->jpeg_orientation == 180) {
+               fwk_frame.reproc_config.rotation = ROTATE_180;
+            } else if (jpeg_settings->jpeg_orientation == 270) {
+               fwk_frame.reproc_config.rotation = ROTATE_270;
+            }
+
+            // Find crop info for reprocess stream
+            cam_crop_data_t *crop_data = (cam_crop_data_t *)
+                POINTER_OF_PARAM(CAM_INTF_META_CROP_DATA, meta);
+            if (NULL != crop_data) {
+                for (int j = 0; j < crop_data->num_of_streams; j++) {
+                    if (crop_data->crop_info[j].stream_id ==
+                        pSrcStream->getMyServerID()) {
+                        fwk_frame.reproc_config.output_crop =
+                            crop_data->crop_info[0].crop;
+                        CDBG("%s: Found offline reprocess crop %dx%d %dx%d",
+                              __func__,
+                              crop_data->crop_info[0].crop.left,
+                              crop_data->crop_info[0].crop.top,
+                              crop_data->crop_info[0].crop.width,
+                              crop_data->crop_info[0].crop.height);
+                     }
                 }
-            } else {
-                ALOGE("%s: Source/Re-process streams are invalid", __func__);
-                return BAD_VALUE;
+            }
+            fwk_frame.input_buffer = *frame->bufs[i];
+            fwk_frame.metadata_buffer = *meta_buffer;
+            break;
+        } else {
+            ALOGE("%s: Source/Re-process streams are invalid", __func__);
+            return BAD_VALUE;
         }
     }
 
@@ -2917,6 +2952,7 @@ int32_t QCamera3ReprocessChannel::extractCrop(qcamera_fwk_input_pp_data_t *frame
        mOfflineBuffersIndex = -1;
     }
     uint32_t buf_idx = mOfflineBuffersIndex + 1;
+
     rc = pStream->mapBuf(
             CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF,
             buf_idx, -1,
@@ -2937,6 +2973,7 @@ int32_t QCamera3ReprocessChannel::extractCrop(qcamera_fwk_input_pp_data_t *frame
        mOfflineMetaIndex = QCamera3HardwareInterface::kMaxInFlight -1;
     }
     uint32_t meta_buf_idx = mOfflineMetaIndex + 1;
+
     rc |= pStream->mapBuf(
             CAM_MAPPING_BUF_TYPE_OFFLINE_META_BUF,
             meta_buf_idx, -1,
@@ -2958,8 +2995,8 @@ int32_t QCamera3ReprocessChannel::extractCrop(qcamera_fwk_input_pp_data_t *frame
         param.reprocess.frame_idx = frame->input_buffer.frame_idx;
         param.reprocess.meta_present = 1;
         param.reprocess.meta_buf_index = meta_buf_idx;
-        param.reprocess.frame_pp_config.crop.input_crop =
-                        frame->reproc_config.output_crop;
+        param.reprocess.frame_pp_config.rotation = frame->reproc_config.rotation;
+        param.reprocess.frame_pp_config.crop.input_crop = frame->reproc_config.output_crop;
         param.reprocess.frame_pp_config.crop.crop_enabled = 1;
         rc = pStream->setParameter(param);
         if (rc != NO_ERROR) {
@@ -3049,6 +3086,7 @@ int32_t QCamera3ReprocessChannel::addReprocStreamsFromSource(cam_pp_feature_conf
     int32_t rc = 0;
     cam_stream_reproc_config_t reprocess_config;
     cam_stream_type_t streamType;
+
     /* There can be kMaxInFlight number of requests that could get queued up.
      * Hence allocating same number of reprocess channel's output buffers */
     int num_buffers = QCamera3HardwareInterface::kMaxInFlight;
@@ -3074,19 +3112,6 @@ int32_t QCamera3ReprocessChannel::addReprocStreamsFromSource(cam_pp_feature_conf
     reprocess_config.offline.input_type = src_config.stream_type;
 
     reprocess_config.pp_feature_config = pp_config;
-
-
-    // pp feature config
-    if (pp_config.feature_mask & CAM_QCOM_FEATURE_ROTATION) {
-        if (pp_config.rotation == ROTATE_90 ||
-            pp_config.rotation == ROTATE_270) {
-            // rotated by 90 or 270, need to switch width and height
-            int32_t temp = streamDim.height;
-            streamDim.height = streamDim.width;
-            streamDim.width = temp;
-        }
-    }
-
     QCamera3Stream *pStream = new QCamera3Stream(m_camHandle,
             m_handle,
             m_camOps,

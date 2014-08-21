@@ -748,10 +748,17 @@ OMX_ERRORTYPE mm_jpeg_session_config_ports(mm_jpeg_job_session_t* p_session)
     p_params->main_dim.src_dim.width;
   p_session->inputPort.format.image.nFrameHeight =
     p_params->main_dim.src_dim.height;
-  p_session->inputPort.format.image.nStride =
-    p_src_buf->offset.mp[0].stride;
-  p_session->inputPort.format.image.nSliceHeight =
-    p_src_buf->offset.mp[0].scanline;
+  if (p_params->jpeg_orientation == 180 || p_params->jpeg_orientation == 0) {
+     p_session->inputPort.format.image.nStride =
+       p_src_buf->offset.mp[0].stride;
+     p_session->inputPort.format.image.nSliceHeight =
+       p_src_buf->offset.mp[0].scanline;
+  } else {
+     p_session->inputPort.format.image.nStride =
+       p_src_buf->offset.mp[0].scanline;
+     p_session->inputPort.format.image.nSliceHeight =
+       p_src_buf->offset.mp[0].stride;
+  }
   p_session->inputPort.format.image.eColorFormat =
     map_jpeg_format(p_params->color_format);
   p_session->inputPort.nBufferSize =
@@ -771,10 +778,18 @@ OMX_ERRORTYPE mm_jpeg_session_config_ports(mm_jpeg_job_session_t* p_session)
       p_params->thumb_dim.src_dim.width;
     p_session->inputTmbPort.format.image.nFrameHeight =
       p_params->thumb_dim.src_dim.height;
-    p_session->inputTmbPort.format.image.nStride =
-      p_tmb_buf->offset.mp[0].stride;
-    p_session->inputTmbPort.format.image.nSliceHeight =
-      p_tmb_buf->offset.mp[0].scanline;
+    if (p_params->rotation == 0 || p_params->rotation == 180) {
+       p_session->inputTmbPort.format.image.nStride =
+         p_tmb_buf->offset.mp[0].stride;
+       p_session->inputTmbPort.format.image.nSliceHeight =
+         p_tmb_buf->offset.mp[0].scanline;
+    } else {
+       p_session->inputTmbPort.format.image.nStride =
+         p_tmb_buf->offset.mp[0].scanline;
+       p_session->inputTmbPort.format.image.nSliceHeight =
+         p_tmb_buf->offset.mp[0].stride;
+
+    }
     p_session->inputTmbPort.format.image.eColorFormat =
       map_jpeg_format(p_params->thumb_color_format);
     p_session->inputTmbPort.nBufferSize =
