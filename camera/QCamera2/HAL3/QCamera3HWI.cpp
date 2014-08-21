@@ -864,7 +864,7 @@ int QCamera3HardwareInterface::configureStreams(
         mPictureChannel->overrideYuvSize(
                 gCamCapability[mCameraId]->active_array_size.width,
                 gCamCapability[mCameraId]->active_array_size.height);
-    } else if (m_bIs4KVideo) {
+    } else if (mPictureChannel && m_bIs4KVideo) {
         mPictureChannel->overrideYuvSize(videoWidth, videoHeight);
     }
 
