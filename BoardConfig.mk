@@ -108,14 +108,18 @@ BOARD_SEPOLICY_DIRS += \
 BOARD_SEPOLICY_UNION += \
         adspd.te \
         bluetooth.te \
+        bluetooth_loader.te \
         bootanim.te \
         bridge.te \
         camera.te \
         device.te \
         domain.te \
         file.te \
+        gsiffd.te \
+        irsc_util.te \
         mdm_helper.te \
         mediaserver.te \
+        mpdecision.te \
         netd.te \
         netmgrd.te \
         platform_app.te \
@@ -123,6 +127,7 @@ BOARD_SEPOLICY_UNION += \
         radio.te \
         rild.te \
         sensors.te \
+        ss_ramdump.te \
         surfaceflinger.te \
         system_app.te \
         system_server.te \
