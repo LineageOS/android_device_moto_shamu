@@ -7,6 +7,7 @@
 /dev/v4l-subdev*          0660   system     camera
 /dev/rtc0                 0660   system     system
 /dev/diag                 0660   radio      radio
+/dev/ttydiag2             0660   radio      radio
 /dev/mdm                  0660   system     radio
 /dev/ttyUSB0              0660   system     system
 /dev/msm_acdb             0660   system     audio
