@@ -744,7 +744,7 @@ void QCamera3RegularChannel::putStreamBufs()
     mMemory.unregisterBuffers();
 }
 
-int QCamera3RegularChannel::kMaxBuffers = 7;
+int QCamera3RegularChannel::kMaxBuffers = 5;
 
 QCamera3MetadataChannel::QCamera3MetadataChannel(uint32_t cam_handle,
                     mm_camera_ops_t *cam_ops,
@@ -852,7 +852,7 @@ void QCamera3MetadataChannel::putStreamBufs()
 }
 /*************************************************************************************/
 // RAW Channel related functions
-int QCamera3RawChannel::kMaxBuffers = 7;
+int QCamera3RawChannel::kMaxBuffers = 5;
 
 QCamera3RawChannel::QCamera3RawChannel(uint32_t cam_handle,
                     mm_camera_ops_t *cam_ops,
