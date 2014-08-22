@@ -307,3 +307,6 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 
 PRODUCT_PACKAGES += \
     power.shamu
+
+PRODUCT_PROPERTY_OVERRIDES += \
+   ro.frp.pst=/dev/block/platform/msm_sdcc.1/by-name/frp
