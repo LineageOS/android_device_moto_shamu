@@ -187,9 +187,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     keystore.msm8084
 
-PRODUCT_PACKAGES += \
-    qrngd
-
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=196608
 
