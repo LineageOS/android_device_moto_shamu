@@ -1136,6 +1136,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
     metadata_buffer_t *metadata = NULL;
     jpeg_settings_t *jpeg_settings = NULL;
     QCamera3HardwareInterface* hal_obj = NULL;
+    bool reprocess_done = false;
 
     hal_obj = (QCamera3HardwareInterface*)m_parent->mUserData;
     recvd_frame = jpeg_job_data->src_frame;
@@ -1211,6 +1212,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
     memset(&dst_dim, 0, sizeof(cam_dimension_t));
     srcChannel->getStreamByIndex(0)->getFrameDimension(dst_dim);
 
+    reprocess_done = hal_obj->needReprocess(mPostProcMask);
     CDBG_HIGH("%s: Need new session?:%d",__func__, needNewSess);
     if (needNewSess) {
         //creating a new session, so we must destroy the old one
@@ -1226,8 +1228,9 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
         // create jpeg encoding session
         mm_jpeg_encode_params_t encodeParam;
         memset(&encodeParam, 0, sizeof(mm_jpeg_encode_params_t));
-        if (jpeg_settings->jpeg_orientation == 90 ||
-            jpeg_settings->jpeg_orientation == 270) {
+        if (reprocess_done &&
+            (jpeg_settings->jpeg_orientation == 90 ||
+            jpeg_settings->jpeg_orientation == 270)) {
            //swap src width and height due to rotation
            encodeParam.main_dim.src_dim.width = src_dim.height;
            encodeParam.main_dim.src_dim.height = src_dim.width;
@@ -1239,7 +1242,9 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
         }
         encodeParam.main_dim.dst_dim = dst_dim;
         encodeParam.thumb_dim.dst_dim = jpeg_settings->thumbnail_size;
-
+        if (!reprocess_done) {
+           encodeParam.rotation = jpeg_settings->jpeg_orientation;
+        }
         getJpegEncodeConfig(encodeParam, main_stream, jpeg_settings);
         CDBG_HIGH("%s: #src bufs:%d # tmb bufs:%d #dst_bufs:%d", __func__,
                      encodeParam.num_src_bufs,encodeParam.num_tmb_bufs,encodeParam.num_dst_bufs);
@@ -1258,6 +1263,13 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
     jpg_job.encode_job.session_id = mJpegSessionId;
     jpg_job.encode_job.src_index = main_frame->buf_idx;
     jpg_job.encode_job.dst_index = 0;
+
+    if (!reprocess_done) {
+        jpg_job.encode_job.rotation =
+                jpeg_settings->jpeg_orientation;
+        CDBG("%s: %d: jpeg rotation is set to %d", __func__, __LINE__,
+                jpg_job.encode_job.rotation);
+    }
 
     cam_rect_t crop;
     memset(&crop, 0, sizeof(cam_rect_t));
@@ -1285,13 +1297,9 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
         jpg_job.encode_job.thumb_dim.dst_dim =
                 jpeg_settings->thumbnail_size;
 
-        if (!hal_obj->needRotationReprocess()) {
-            jpg_job.encode_job.rotation =
-                    jpeg_settings->jpeg_orientation;
-            CDBG_HIGH("%s: jpeg rotation is set to %d", __func__,
-                    jpg_job.encode_job.rotation);
-        } else if (jpeg_settings->jpeg_orientation  == 90 ||
-                jpeg_settings->jpeg_orientation == 270) {
+      if (reprocess_done &&
+          (jpeg_settings->jpeg_orientation  == 90 ||
+           jpeg_settings->jpeg_orientation == 270)) {
             //swap the thumbnail destination width and height if it has
             //already been rotated
             int temp = jpg_job.encode_job.thumb_dim.dst_dim.width;
