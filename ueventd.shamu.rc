@@ -74,3 +74,5 @@
 /dev/stm401_as            0660   compass    compass
 /dev/stm401_ms            0660   compass    compass
 /dev/subsys_esoc*         0640   system     radio
+
+/dev/block/platform/msm_sdcc.1/by-name/frp 0600 system system
