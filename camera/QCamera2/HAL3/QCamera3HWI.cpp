@@ -3107,71 +3107,60 @@ void QCamera3HardwareInterface::dumpMetadataToFile(tuning_params_t &meta,
     //
 
     if(enabled){
-        frm_num = ((enabled & 0xffff0000) >> 16);
-        if(frm_num == 0) {
-            frm_num = 10; //default 10 frames
-        }
-        if(frm_num > 256) {
-            frm_num = 256; //256 buffers cycle around
-        }
-        if((frm_num == 256) && (dumpFrameCount >= frm_num)) {
-            // reset frame count if cycling
-            dumpFrameCount = 0;
-        }
-        CDBG("DumpFrmCnt = %d, frm_num = %d",dumpFrameCount, frm_num);
-        if (dumpFrameCount < frm_num) {
-            char timeBuf[FILENAME_MAX];
-            char buf[FILENAME_MAX];
-            memset(buf, 0, sizeof(buf));
-            memset(timeBuf, 0, sizeof(timeBuf));
-            time_t current_time;
-            struct tm * timeinfo;
-            time (&current_time);
-            timeinfo = localtime (&current_time);
-            strftime (timeBuf, sizeof(timeBuf),"/data/%Y%m%d%H%M%S", timeinfo);
-            String8 filePath(timeBuf);
-            snprintf(buf,
-                     sizeof(buf),
-                     "%dm_%s_%d.bin",
-                     dumpFrameCount,
-                     type,
-                     frameNumber);
-            filePath.append(buf);
-            int file_fd = open(filePath.string(), O_RDWR | O_CREAT, 0777);
-            if (file_fd > 0) {
-                int written_len = 0;
-                meta.tuning_data_version = TUNING_DATA_VERSION;
-                void *data = (void *)((uint8_t *)&meta.tuning_data_version);
-                written_len += write(file_fd, data, sizeof(uint32_t));
-                data = (void *)((uint8_t *)&meta.tuning_sensor_data_size);
-                CDBG("tuning_sensor_data_size %d",(int)(*(int *)data));
-                written_len += write(file_fd, data, sizeof(uint32_t));
-                data = (void *)((uint8_t *)&meta.tuning_vfe_data_size);
-                CDBG("tuning_vfe_data_size %d",(int)(*(int *)data));
-                written_len += write(file_fd, data, sizeof(uint32_t));
-                data = (void *)((uint8_t *)&meta.tuning_cpp_data_size);
-                CDBG("tuning_cpp_data_size %d",(int)(*(int *)data));
-                written_len += write(file_fd, data, sizeof(uint32_t));
-                data = (void *)((uint8_t *)&meta.tuning_cac_data_size);
-                CDBG("tuning_cac_data_size %d",(int)(*(int *)data));
-                written_len += write(file_fd, data, sizeof(uint32_t));
-                int total_size = meta.tuning_sensor_data_size;
-                data = (void *)((uint8_t *)&meta.data);
-                written_len += write(file_fd, data, total_size);
-                total_size = meta.tuning_vfe_data_size;
-                data = (void *)((uint8_t *)&meta.data[TUNING_VFE_DATA_OFFSET]);
-                written_len += write(file_fd, data, total_size);
-                total_size = meta.tuning_cpp_data_size;
-                data = (void *)((uint8_t *)&meta.data[TUNING_CPP_DATA_OFFSET]);
-                written_len += write(file_fd, data, total_size);
-                total_size = meta.tuning_cac_data_size;
-                data = (void *)((uint8_t *)&meta.data[TUNING_CAC_DATA_OFFSET]);
-                written_len += write(file_fd, data, total_size);
-                close(file_fd);
-            }else {
-                ALOGE("%s: fail t open file for image dumping", __func__);
-            }
-            dumpFrameCount++;
+        char timeBuf[FILENAME_MAX];
+        char buf[FILENAME_MAX];
+        memset(buf, 0, sizeof(buf));
+        memset(timeBuf, 0, sizeof(timeBuf));
+        time_t current_time;
+        struct tm * timeinfo;
+        time (&current_time);
+        timeinfo = localtime (&current_time);
+        strftime (timeBuf, sizeof(timeBuf),"/data/%Y%m%d%H%M%S", timeinfo);
+        String8 filePath(timeBuf);
+        snprintf(buf,
+                sizeof(buf),
+                "%dm_%s_%d.bin",
+                dumpFrameCount,
+                type,
+                frameNumber);
+        filePath.append(buf);
+        int file_fd = open(filePath.string(), O_RDWR | O_CREAT, 0777);
+        if (file_fd >= 0) {
+            int written_len = 0;
+            meta.tuning_data_version = TUNING_DATA_VERSION;
+            void *data = (void *)((uint8_t *)&meta.tuning_data_version);
+            written_len += write(file_fd, data, sizeof(uint32_t));
+            data = (void *)((uint8_t *)&meta.tuning_sensor_data_size);
+            CDBG("tuning_sensor_data_size %d",(int)(*(int *)data));
+            written_len += write(file_fd, data, sizeof(uint32_t));
+            data = (void *)((uint8_t *)&meta.tuning_vfe_data_size);
+            CDBG("tuning_vfe_data_size %d",(int)(*(int *)data));
+            written_len += write(file_fd, data, sizeof(uint32_t));
+            data = (void *)((uint8_t *)&meta.tuning_cpp_data_size);
+            CDBG("tuning_cpp_data_size %d",(int)(*(int *)data));
+            written_len += write(file_fd, data, sizeof(uint32_t));
+            data = (void *)((uint8_t *)&meta.tuning_cac_data_size);
+            CDBG("tuning_cac_data_size %d",(int)(*(int *)data));
+            written_len += write(file_fd, data, sizeof(uint32_t));
+            meta.tuning_mod3_data_size = 0;
+            data = (void *)((uint8_t *)&meta.tuning_mod3_data_size);
+            CDBG("tuning_mod3_data_size %d",(int)(*(int *)data));
+            written_len += write(file_fd, data, sizeof(uint32_t));
+            int total_size = meta.tuning_sensor_data_size;
+            data = (void *)((uint8_t *)&meta.data);
+            written_len += write(file_fd, data, total_size);
+            total_size = meta.tuning_vfe_data_size;
+            data = (void *)((uint8_t *)&meta.data[TUNING_VFE_DATA_OFFSET]);
+            written_len += write(file_fd, data, total_size);
+            total_size = meta.tuning_cpp_data_size;
+            data = (void *)((uint8_t *)&meta.data[TUNING_CPP_DATA_OFFSET]);
+            written_len += write(file_fd, data, total_size);
+            total_size = meta.tuning_cac_data_size;
+            data = (void *)((uint8_t *)&meta.data[TUNING_CAC_DATA_OFFSET]);
+            written_len += write(file_fd, data, total_size);
+            close(file_fd);
+        }else {
+            ALOGE("%s: fail to open file for metadata dumping", __func__);
         }
     }
 }
