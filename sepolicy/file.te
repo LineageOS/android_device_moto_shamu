@@ -4,6 +4,7 @@ type fsg_file, fs_type, contextmount_type;
 
 type adspd_socket, file_type;
 type camera_socket, file_type;
+type mpdecision_socket, file_type;
 type qmuxd_socket, file_type;
 type sensors_socket, file_type;
 type thermald_socket, file_type;
@@ -18,3 +19,9 @@ type persist_file, file_type;
 type persist_data_file, file_type;
 type persist_drm_file, file_type;
 type persist_sensors_file, file_type;
+
+#Define the files written during the operation of mpdecision    56
+type sysfs_mpdecision, fs_type, sysfs_type;
+type sysfs_rqstats, fs_type, sysfs_type;
+type sysfs_cpu_online, fs_type, sysfs_type;
+type sysfs_cpuboost, fs_type, sysfs_type;
