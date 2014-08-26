@@ -29,7 +29,7 @@ allow netmgrd self:netlink_socket create_socket_perms;
 allow netmgrd self:netlink_xfrm_socket create_socket_perms;
 
 # b/17065650
-allow netmgrd self:socket {create ioctl};
+allow netmgrd self:socket {create ioctl read};
 
 # CONFIG_MODULES not set in shamu_defconfig
 dontaudit netmgrd self:capability sys_module;
