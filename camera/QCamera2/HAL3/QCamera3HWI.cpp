@@ -670,11 +670,12 @@ int QCamera3HardwareInterface::configureStreams(
         return rc;
     }
 
-    /* Create dummy stream if there is one single raw stream */
+    /* Create dummy stream if there is one single raw or jpeg stream */
     if (streamList->num_streams == 1 &&
             (streamList->streams[0]->format == HAL_PIXEL_FORMAT_RAW_OPAQUE ||
             streamList->streams[0]->format == HAL_PIXEL_FORMAT_RAW10 ||
-            streamList->streams[0]->format == HAL_PIXEL_FORMAT_RAW16)) {
+            streamList->streams[0]->format == HAL_PIXEL_FORMAT_RAW16 ||
+            streamList->streams[0]->format == HAL_PIXEL_FORMAT_BLOB)) {
         mSupportChannel = new QCamera3SupportChannel(
                 mCameraHandle->camera_handle,
                 mCameraHandle->ops,
