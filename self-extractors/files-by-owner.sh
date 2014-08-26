@@ -58,9 +58,6 @@ echo -n Nvidia >> $target_owner/staging/device-partial.mk
 qcom)
 echo -n Qualcomm >> $target_owner/staging/device-partial.mk
 ;;
-synaptics)
-echo -n Synaptics >> $target_owner/staging/device-partial.mk
-;;
 esac
 echo " blob(s) necessary for Shamu hardware" >> $target_owner/staging/device-partial.mk
 echo "PRODUCT_COPY_FILES := \\" >> $target_owner/staging/device-partial.mk

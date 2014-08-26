@@ -46,7 +46,7 @@ system/lib/librmnetctl.so:qcom
 system/lib/libtinycompress.so:qcom
 system/lib/soundfx/libqcomvisualizer.so:qcom
 system/lib/soundfx/libqcomvoiceprocessing.so:qcom
-system/lib/sound_trigger.primary.shamu.so:qcom
+system/lib/hw/sound_trigger.primary.shamu.so:qcom
 system/vendor/firmware/a420_pfp.fw:qcom
 system/vendor/firmware/a420_pm4.fw:qcom
 system/vendor/firmware/adsp.b00:qcom
@@ -63,7 +63,7 @@ system/vendor/firmware/adsp.b11:qcom
 system/vendor/firmware/adsp.b12:qcom
 system/vendor/firmware/adsp.mdt:qcom
 system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat:atmel
-system/vendor/firmware/atmel-a432-14080101-0102aa-shamu.tdat:atmel
+system/vendor/firmware/atmel-a432-14081501-0102aa-shamu.tdat:atmel
 system/vendor/firmware/bcm20795_firmware.ncd:broadcom
 system/vendor/firmware/bcm4354A2.hcd:broadcom
 system/vendor/firmware/keymaster/keymaster.b00:qcom
@@ -104,7 +104,6 @@ system/vendor/lib/egl/libEGL_adreno.so:qcom
 system/vendor/lib/egl/libGLESv1_CM_adreno.so:qcom
 system/vendor/lib/egl/libGLESv2_adreno.so:qcom
 system/vendor/lib/egl/libq3dtools_adreno.so:qcom
-system/vendor/lib/hw/6_03f_moto.xefwext:synaptics
 system/vendor/lib/hw/sensors.msm8084.so:qcom
 system/vendor/lib/libacdbloader.so:qcom
 system/vendor/lib/libacdbrtac.so:qcom

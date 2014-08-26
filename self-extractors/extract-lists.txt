@@ -1,7 +1,7 @@
   atmel)
     TO_EXTRACT="\
             system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat \
-            system/vendor/firmware/atmel-a432-14080101-0102aa-shamu.tdat \
+            system/vendor/firmware/atmel-a432-14081501-0102aa-shamu.tdat \
             "
     ;;
   broadcom)
@@ -80,7 +80,7 @@
             system/lib/libtinycompress.so \
             system/lib/soundfx/libqcomvisualizer.so \
             system/lib/soundfx/libqcomvoiceprocessing.so \
-            system/lib/sound_trigger.primary.shamu.so \
+            system/lib/hw/sound_trigger.primary.shamu.so \
             system/vendor/firmware/a420_pfp.fw \
             system/vendor/firmware/a420_pm4.fw \
             system/vendor/firmware/adsp.b00 \
@@ -280,11 +280,5 @@
             system/vendor/lib/libtime_genoff.so \
             system/vendor/lib/libTimeService.so \
             system/vendor/lib/libxml.so \
-            "
-    ;;
-  synaptics)
-    TO_EXTRACT="\
-            system/vendor/lib/hw/6_03f_moto.xefwext \
-            system/vendor/lib/hw/ValidityPersistentData \
             "
     ;;
