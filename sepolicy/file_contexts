@@ -47,8 +47,9 @@
 
 /dev/sensors                    u:object_r:sensors_device:s0
 
+
 /dev/socket/adspdsock           u:object_r:adspd_socket:s0
-/dev/socket/sensor_ctl_socket          u:object_r:sensors_socket:s0
+/dev/socket/sensor_ctl_socket   u:object_r:sensors_socket:s0
 
 # Shared memory log
 /dev/smem_log                   u:object_r:shared_log_device:s0
@@ -75,6 +76,10 @@
 /dev/socket/qmux_radio(/.*)?           u:object_r:qmuxd_socket:s0
 
 /dev/v4l-subdev[0-9]*           u:object_r:video_device:s0
+
+# Persist firmware filesystem
+/persist(/.*)?                  u:object_r:persist_file:s0
+/persist/sensors(/.*)?          u:object_r:persist_sensors_file:s0
 
 #/system binaries
 /system/bin/adspd               u:object_r:adspd_exec:s0
