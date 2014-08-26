@@ -19,6 +19,7 @@
 void dumpstate_board()
 {
     dump_file("TZ ramoops annotation", "/sys/fs/pstore/annotate-ramoops");
+    dump_file("Recent panic log", "/sys/fs/pstore/dmesg-ramoops-0");
     dump_file("cpuinfo", "/proc/cpuinfo");
     dump_file("Interrupts", "/proc/interrupts");
     dump_file("Power Management Stats", "/proc/msm_pm_stats");
