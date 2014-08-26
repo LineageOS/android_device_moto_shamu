@@ -211,23 +211,11 @@ def WriteIncrementalModemPartition(info, target_modem_image, source_modem_image)
   tf = target_modem_image
   sf = source_modem_image
 
-  patchfile_name = "radio.modem.img.p"
+  b = common.BlockDifference("modem", common.DataImage(tf.data),
+                             common.DataImage(sf.data))
 
-  diff = common.Difference(tf, sf, diff_program="bsdiff")
-  common.ComputeDifferences([diff])
-  _, _, d = diff.GetPatch()
-  if d is None or len(d) > tf.size * common.OPTIONS.patch_threshold:
-    # computing difference failed, or difference is nearly as
-    # big as the target:  simply send the target.
-    WritePartitionImage(info, tf, "radio")
-  else:
-    common.ZipWriteStr(info.output_zip, patchfile_name, d)
-    info.script.Print("Patching modem image...")
-    radio_type, radio_device = common.GetTypeAndDevice(
-      "/modem", info.info_dict)
-    info.script.ApplyPatch("%s:%s:%d:%s:%d:%s" % (radio_type, radio_device,
-                           sf.size, sf.sha1, tf.size, tf.sha1),
-                           "-", tf.size, tf.sha1, sf.sha1, patchfile_name)
+  b.WriteScript(info.script, info.output_zip)
+
 
 def WriteRadio(info, radio_img):
   info.script.Print("Writing radio...")
