@@ -122,7 +122,6 @@
 /system/vendor/lib/egl/libq3dtools_adreno.so
 /system/vendor/lib/hw/6_03f_moto.xefwext
 /system/vendor/lib/hw/sensors.msm8084.so
-/system/vendor/lib/hw/ValidityPersistentData
 /system/vendor/lib/libacdbloader.so
 /system/vendor/lib/libacdbrtac.so
 /system/vendor/lib/libactuator_lc898122_camcorder.so
