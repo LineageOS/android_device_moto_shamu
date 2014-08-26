@@ -11,5 +11,12 @@ permissive tcmd;
 net_domain(tcmd)
 
 # Set property.
-#unix_socket_connect(tcmd, property, init)
-#allow tcmd radio_prop:property_service set;
+unix_socket_connect(tcmd, property, init)
+
+# Uses /dev/ttydiag2
+userdebug_or_eng(`
+  allow tcmd diag_device:chr_file rw_file_perms;
+')
+
+# Uses raw socket
+allow tcmd self:capability net_raw;
