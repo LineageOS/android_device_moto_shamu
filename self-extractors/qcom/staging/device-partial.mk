@@ -54,7 +54,7 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/shamu/proprietary/libtinycompress.so:system/lib/libtinycompress.so:qcom \
     vendor/qcom/shamu/proprietary/libqcomvisualizer.so:system/lib/soundfx/libqcomvisualizer.so:qcom \
     vendor/qcom/shamu/proprietary/libqcomvoiceprocessing.so:system/lib/soundfx/libqcomvoiceprocessing.so:qcom \
-    vendor/qcom/shamu/proprietary/sound_trigger.primary.shamu.so:system/lib/sound_trigger.primary.shamu.so:qcom \
+    vendor/qcom/shamu/proprietary/sound_trigger.primary.shamu.so:system/lib/hw/sound_trigger.primary.shamu.so:qcom \
     vendor/qcom/shamu/proprietary/a420_pfp.fw:system/vendor/firmware/a420_pfp.fw:qcom \
     vendor/qcom/shamu/proprietary/a420_pm4.fw:system/vendor/firmware/a420_pm4.fw:qcom \
     vendor/qcom/shamu/proprietary/adsp.b00:system/vendor/firmware/adsp.b00:qcom \
