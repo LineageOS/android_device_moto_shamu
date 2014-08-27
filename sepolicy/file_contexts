@@ -23,9 +23,16 @@
 # Mdm_Helper devices
 /dev/efs_hsic_bridge           u:object_r:mdm_helper_device:s0
 /dev/ks_hsic_bridge            u:object_r:mdm_helper_device:s0
-/dev/block/mmcblk0p2[1-2]      u:object_r:modem_block_device:s0
-/dev/block/mmcblk0p2[79]       u:object_r:efs_block_device:s0
-/dev/block/mmcblk0p30          u:object_r:efs_block_device:s0
+
+# mdm1hob, mdm1dhob
+/dev/block/platform/msm_sdcc.1/by-name/mdm1hob   u:object_r:modem_block_device:s0
+/dev/block/platform/msm_sdcc.1/by-name/mdm1dhob  u:object_r:modem_block_device:s0
+
+# efs1, efs2, efs3 (/fsg), efsc
+/dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs1  u:object_r:efs_block_device:s0
+/dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs2  u:object_r:efs_block_device:s0
+/dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3  u:object_r:efs_block_device:s0
+/dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefsc  u:object_r:efs_block_device:s0
 
 # Used by keystore to access trustzone
 /dev/qseecom                   u:object_r:tee_device:s0
