@@ -170,9 +170,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     lights.shamu
 
-PRODUCT_PACKAGES += \
-    stm401
-
 # Filesystem management tools
 PRODUCT_PACKAGES += \
     e2fsck
