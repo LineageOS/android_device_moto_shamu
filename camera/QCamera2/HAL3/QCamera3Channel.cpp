@@ -1313,23 +1313,28 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
         // unblock pending requests to snapshot stream.
         if (NULL != job) {
             int32_t snapshotIdx = -1;
-            if (job->src_reproc_frame) {
+            mm_camera_super_buf_t* src_frame = NULL;
+
+            if (job->src_reproc_frame)
+                src_frame = job->src_reproc_frame;
+            else
+                src_frame = job->src_frame;
+
+            if (src_frame) {
                 if (obj->mStreams[0]->getMyHandle() ==
-                        job->src_reproc_frame->bufs[0]->stream_id) {
-                    snapshotIdx = job->src_reproc_frame->bufs[0]->buf_idx;
+                        src_frame->bufs[0]->stream_id) {
+                    snapshotIdx = src_frame->bufs[0]->buf_idx;
                 } else {
                     ALOGE("%s: Snapshot stream id %d and source frame %d don't match!",
                             __func__, obj->mStreams[0]->getMyHandle(),
-                            job->src_reproc_frame->bufs[0]->stream_id);
+                            src_frame->bufs[0]->stream_id);
                 }
-            } else {
-                CDBG("%s: Source reproc frame is missing", __func__);
             }
             if (0 <= snapshotIdx) {
                 Mutex::Autolock lock(obj->mFreeBuffersLock);
                 obj->mFreeBufferList.push_back(snapshotIdx);
             } else {
-                CDBG("%s: Snapshot buffer not found!", __func__);
+                ALOGE("%s: Snapshot buffer not found!", __func__);
             }
         }
 
