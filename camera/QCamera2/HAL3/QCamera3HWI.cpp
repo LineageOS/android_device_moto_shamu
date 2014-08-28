@@ -3713,7 +3713,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       (int32_t*)&maxFaces, 1);
 
     uint8_t timestampSource = ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN;
-    if (gCamCapability[cameraId]->isTimestampCalibrated) {
+    if (0 && gCamCapability[cameraId]->isTimestampCalibrated) {
         timestampSource = ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME;
     }
     staticInfo.update(ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE,
