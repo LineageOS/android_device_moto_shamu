@@ -2456,16 +2456,6 @@ QCamera3HardwareInterface::translateFromHalMetadata(
             (float *)POINTER_OF_META(CAM_INTF_META_LENS_FOCAL_LENGTH, metadata);
         camMetadata.update(ANDROID_LENS_FOCAL_LENGTH, focalLength, 1);
     }
-    if (IS_META_AVAILABLE(CAM_INTF_META_LENS_FOCUS_DISTANCE, metadata)) {
-        float  *focusDistance =
-            (float *)POINTER_OF_META(CAM_INTF_META_LENS_FOCUS_DISTANCE, metadata);
-        camMetadata.update(ANDROID_LENS_FOCUS_DISTANCE , focusDistance, 1);
-    }
-    if (IS_META_AVAILABLE(CAM_INTF_META_LENS_FOCUS_RANGE, metadata)) {
-        float  *focusRange =
-            (float *)POINTER_OF_META(CAM_INTF_META_LENS_FOCUS_RANGE, metadata);
-        camMetadata.update(ANDROID_LENS_FOCUS_RANGE , focusRange, 2);
-    }
 
     if (IS_META_AVAILABLE(CAM_INTF_META_LENS_OPT_STAB_MODE, metadata)) {
         uint8_t  *opticalStab =
@@ -2967,6 +2957,18 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
             POINTER_OF_META(CAM_INTF_META_AF_STATE, metadata);
         camMetadata.update(ANDROID_CONTROL_AF_STATE, afState, 1);
         CDBG("%s: urgent Metadata : ANDROID_CONTROL_AF_STATE", __func__);
+    }
+
+    if (IS_META_AVAILABLE(CAM_INTF_META_LENS_FOCUS_DISTANCE, metadata)) {
+        float  *focusDistance =
+            (float *)POINTER_OF_META(CAM_INTF_META_LENS_FOCUS_DISTANCE, metadata);
+        camMetadata.update(ANDROID_LENS_FOCUS_DISTANCE , focusDistance, 1);
+    }
+
+    if (IS_META_AVAILABLE(CAM_INTF_META_LENS_FOCUS_RANGE, metadata)) {
+        float  *focusRange =
+            (float *)POINTER_OF_META(CAM_INTF_META_LENS_FOCUS_RANGE, metadata);
+        camMetadata.update(ANDROID_LENS_FOCUS_RANGE , focusRange, 2);
     }
 
     if (IS_META_AVAILABLE(CAM_INTF_META_AWB_STATE, metadata)) {
