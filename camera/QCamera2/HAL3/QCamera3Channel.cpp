@@ -95,6 +95,10 @@ QCamera3Channel::QCamera3Channel(uint32_t cam_handle,
     mPaddingInfo = paddingInfo;
 
     mPostProcMask = postprocess_mask;
+
+    char prop[PROPERTY_VALUE_MAX];
+    property_get("persist.camera.yuv.dump", prop, "0");
+    mYUVDump = atoi(prop);
 }
 
 /*===========================================================================
@@ -434,6 +438,43 @@ void QCamera3Channel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
         return;
     }
     channel->streamCbRoutine(super_frame, stream);
+}
+
+/*===========================================================================
+ * FUNCTION   : dumpYUV
+ *
+ * DESCRIPTION: function to dump the YUV data from ISP/pproc
+ *
+ * PARAMETERS :
+ *   @frame   : frame to be dumped
+ *   @dim     : dimension of the stream
+ *   @offset  : offset of the data
+ *   @name    : 1 if it is ISP output/pproc input, 2 if it is pproc output
+ *
+ * RETURN  :
+ *==========================================================================*/
+void QCamera3Channel::dumpYUV(mm_camera_buf_def_t *frame, cam_dimension_t dim,
+                              cam_frame_len_offset_t offset, uint8_t name)
+{
+   char buf[64];
+   memset(buf, 0, sizeof(buf));
+   static int counter = 0;
+   /* Note that the image dimension will be the unrotated stream dimension.
+    * If you feel that the image would have been rotated during reprocess
+    * then swap the dimensions while opening the file
+    * */
+   snprintf(buf, sizeof(buf), "/data/local/tmp/%d_%d_%d_%dx%d.yuv",
+            name, counter, frame->frame_idx, dim.width, dim.height);
+   counter++;
+   int file_fd = open(buf, O_RDWR| O_CREAT, 0644);
+   if (file_fd >= 0) {
+      int written_len = write(file_fd, frame->buffer, offset.frame_len);
+      ALOGE("%s: written number of bytes %d", __func__, written_len);
+      close(file_fd);
+   } else {
+      ALOGE("%s: failed to open file to dump image", __func__);
+   }
+
 }
 
 /*===========================================================================
@@ -1604,7 +1645,10 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
             free(src_frame);
             return rc;
         }
-
+        if (mYUVDump) {
+           dumpYUV(&src_frame->input_buffer, reproc_cfg.input_stream_dim,
+                   reproc_cfg.input_stream_plane_info.plane_info, 1);
+        }
         cam_dimension_t dim = {sizeof(metadata_buffer_t), 1};
         cam_stream_buf_plane_info_t meta_planes;
         rc = mm_stream_calc_offset_metadata(&dim, mPaddingInfo, &meta_planes);
@@ -1799,6 +1843,17 @@ void QCamera3PicChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
        return;
     }
     *frame = *super_frame;
+
+    if(mYUVDump) {
+        cam_dimension_t dim;
+        memset(&dim, 0, sizeof(dim));
+        stream->getFrameDimension(dim);
+        cam_frame_len_offset_t offset;
+        memset(&offset, 0, sizeof(cam_frame_len_offset_t));
+        stream->getFrameOffset(offset);
+        dumpYUV(frame->bufs[0], dim, offset, 1);
+    }
+
     m_postprocessor.processData(frame);
     free(super_frame);
     return;
@@ -2569,6 +2624,15 @@ void QCamera3ReprocessChannel::streamCbRoutine(mm_camera_super_buf_t *super_fram
     CDBG("%s: bufIndex: %u recvd from post proc",
         __func__, (uint32_t)frameIndex);
     *frame = *super_frame;
+    if(mYUVDump) {
+        cam_dimension_t dim;
+        memset(&dim, 0, sizeof(dim));
+        stream->getFrameDimension(dim);
+        cam_frame_len_offset_t offset;
+        memset(&offset, 0, sizeof(cam_frame_len_offset_t));
+        stream->getFrameOffset(offset);
+        dumpYUV(frame->bufs[0], dim, offset, 2);
+    }
     obj->m_postprocessor.processPPData(frame);
     free(super_frame);
     return;

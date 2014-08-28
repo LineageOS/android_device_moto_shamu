@@ -94,6 +94,9 @@ public:
 
     static void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                 QCamera3Stream *stream, void *userdata);
+    void dumpYUV(mm_camera_buf_def_t *frame, cam_dimension_t dim,
+                 cam_frame_len_offset_t offset, uint8_t name);
+
     void *mUserData;
     cam_padding_info_t *mPaddingInfo;
     QCamera3Stream *mStreams[MAX_STREAM_NUM_IN_BUNDLE];
@@ -118,6 +121,7 @@ protected:
     channel_cb_routine mChannelCB;
     //cam_padding_info_t *mPaddingInfo;
     uint32_t mPostProcMask;
+    uint8_t mYUVDump;
 };
 
 /* QCamera3RegularChannel is used to handle all streams that are directly
