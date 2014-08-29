@@ -1,4 +1,7 @@
 # Sample variables file for BCM94356 WLBGA iPA, eLNA+switch board with PCIe for production package
+# History:
+#      1. July 24 2014 - updated pa parameters by BRCM
+#      2. August 22 2014 - updated pa parameters by MOTO (John Ballen)
 # Following fields WILL be written into OTP
 
 # Following fields WILL NOT be written in OTP  
@@ -73,25 +76,15 @@ extpagain5g=2
 tempthresh=120
 tempoffset=255
 rawtempsense=0x1ff
-#pa2ga0=-98,6012,-652
-#pa2ga1=-37,6488,-663
-#pa5ga0=-74,5929,-633,-74,5928,-631,-57,5987,-615,-37,6048,-613
-#pa5ga1=18,6630,-645,-8,6498,-665,47,6774,-637,26,6741,-651
-#pa2ga0=-169,6154,-729
-#pa2ga1=-149,6457,-741
-#pa2ga0=-134,6229,-696_used 
-#pa2ga1=-150,6023,-688_used
-pa2ga0=-135,6154,-693
-pa2ga1=-133,6240,-702
-pa2gccka0=-128,6716,-762
-pa2gccka1=-124,6801,-767
-#pa5ga0=-163,6233,-728,-162,6270,-730,-170,6227,-730,-169,6213,-729_used
-#pa5ga1=-171,6217,-734,-178,6130,-730,-176,6202,-734,-177,6175,-733_used
-pa5ga0=-176,6230,-750,-167,6386,-758,-180,6285,-754,-182,6269,-759
-pa5ga1=-197,5998,-740,-190,6158,-754,-200,6029,-742,-175,6414,-763
+pa2ga0=-152,5791,-672
+pa2ga1=-135,6043,-685
+pa2gccka0=-167,6004,-717
+pa2gccka1=-171,6024,-725
+pa5ga0=-228,5211,-665,-229,5136,-656,-219,5440,-690,-225,5321,-677
+pa5ga1=-190,6045,-742,-172,6243,-743,-204,5889,-726,-208,5853,-727
 subband5gver=0x4
-pdoffsetcckma0=0x0
-pdoffsetcckma1=0x0
+pdoffsetcckma0=0x3333
+pdoffsetcckma1=0x3333
 pdoffset40ma0=0x0000
 pdoffset80ma0=0x0000
 pdoffset40ma1=0x0000
@@ -107,7 +100,7 @@ mcsbw402gpo=0xa9855422
 dot11agofdmhrbw202gpo=0x5542
 ofdmlrbw202gpo=0x0022
 mcsbw205glpo=0xa9866663
-mcsbw405glpo=0xa9866663
+mcsbw405glpo=0xb9966664
 mcsbw805glpo=0xbb866665
 mcsbw205gmpo=0xd9866663
 mcsbw405gmpo=0xa9866663
