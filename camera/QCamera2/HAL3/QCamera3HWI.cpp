@@ -3339,10 +3339,24 @@ bool QCamera3HardwareInterface::resetIfNeededROI(cam_area_t* roi,
     int32_t roi_y_max = roi->rect.height + roi->rect.top;
     int32_t crop_x_max = scalerCropRegion->width + scalerCropRegion->left;
     int32_t crop_y_max = scalerCropRegion->height + scalerCropRegion->top;
+
+    /* According to spec weight = 0 is used to indicate roi needs to be disabled
+     * without having this check the calculations below to validate if the roi
+     * is inside scalar crop region will fail resulting in the roi not being
+     * reset causing algorithm to continue to use stale roi window
+     */
+    if (roi->weight == 0) {
+        return true;
+    }
+
     if ((roi_x_max < scalerCropRegion->left) ||
+        // right edge of roi window is left of scalar crop's left edge
         (roi_y_max < scalerCropRegion->top)  ||
+        // bottom edge of roi window is above scalar crop's top edge
         (roi->rect.left > crop_x_max) ||
+        // left edge of roi window is beyond(right) of scalar crop's right edge
         (roi->rect.top > crop_y_max)){
+        // top edge of roi windo is above scalar crop's top edge
         return false;
     }
     if (roi->rect.left < scalerCropRegion->left) {
