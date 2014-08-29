@@ -152,12 +152,11 @@
 	<ctl name="MultiMedia1 Mixer AFE_PCM_TX" value="0" />
 	<ctl name="AFE_PCM_RX Audio Mixer MultiMedia5" value="0" />
 	<!-- usb headset end -->
-
+	<ctl name="BOOST ENABLE Spkr Left Prot" value="0" />
 	<ctl name="BOOST_STUB Right Mixer right" value="0" />
 	<ctl name="BOOST_STUB Left Mixer left" value="0" />
 	<ctl name="BOOST earpiece mode" value="Off" />
 	<ctl name="QUAT_MI2S_RX Channels" value="One" />
-	<ctl name="BOOST Output Mixer Left DSP Bypass Left" value="2" />
 	<ctl name="BOOST Left Ch Select" value="1" />
 	<ctl name="BOOST Right Ch Select" value="2" />
 
@@ -642,8 +641,6 @@
 		<ctl name="QUAT_MI2S_RX Channels" value="Two" />
 		<!-- Disable earpiece mode -->
 		<ctl name="BOOST earpiece mode" value="Off" />
-		<!-- Disable bypass mode -->
-		<ctl name="BOOST Output Mixer Left DSP Bypass Left" value="2" />
 		<!-- Select Left channel on Left IC bypass mode -->
 		<ctl name="BOOST Left Ch Select" value="1" />
 		<!-- Select Right channel on Right IC bypass mode -->
@@ -656,8 +653,6 @@
 	<path name="speaker-reverse">
 		<!-- Disable earpiece mode -->
 		<ctl name="BOOST earpiece mode" value="Off" />
-		<!-- Disable bypass mode -->
-		<ctl name="BOOST Output Mixer Left DSP Bypass Left" value="2" />
 		<!-- Select Left channel on Left IC bypass mode -->
 		<ctl name="BOOST Left Ch Select" value="2" />
 		<!-- Select Right channel on Right IC bypass mode -->
@@ -690,7 +685,7 @@
 		<!-- select (l + r)/2 -->
 		<ctl name="BOOST Left Ch Select" value="3" />
 		<!-- bypass dsp -->
-		<ctl name="BOOST Output Mixer Left DSP Bypass Left" value="0" />
+		<ctl name="BOOST ENABLE Spkr Left Prot" value="1" />
 	</path>
 
 	<path name="handset-mic">
@@ -756,8 +751,6 @@
 		<ctl name="BOOST_STUB Right Mixer right" value="0" />
 		<!-- select (l + r)/2 -->
 		<ctl name="BOOST Left Ch Select" value="3" />
-		<!-- enable dsp -->
-		<ctl name="BOOST Output Mixer Left DSP Bypass Left" value="2" />
 	</path>
 
 	<path name="voice-speaker-mic">
