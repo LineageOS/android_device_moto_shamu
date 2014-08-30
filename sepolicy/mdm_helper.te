@@ -2,10 +2,10 @@
 type mdm_helper, domain;
 type mdm_helper_exec, file_type, exec_type;
 
-init_daemon_domain(mdm_helper)
-
-# STOPSHIP: Permissive is not allowed. CTS violation!
+# STOPSHIP - move into enforcing; CTS requirement
 permissive mdm_helper;
+
+init_daemon_domain(mdm_helper)
 
 # Spawn /system/bin/efsks and /system/bin/ks
 allow mdm_helper mdm_helper_exec:file { open execute_no_trans getattr };
@@ -15,6 +15,7 @@ allow mdm_helper mdm_helper_device:chr_file rw_file_perms;
 
 # Read and write for EFS
 allow mdm_helper efs_block_device:blk_file rw_file_perms;
+allow mdm_helper block_device:dir { getattr write search };
 
 # Let qcks access /dev/mdm node (modem driver)??
 allow mdm_helper radio_device:chr_file r_file_perms;
@@ -22,3 +23,5 @@ allow mdm_helper modem_block_device:blk_file r_file_perms;
 
 allow mdm_helper persist_file:dir rw_dir_perms;
 allow mdm_helper persist_file:file create_file_perms;
+
+wakelock_use(mdm_helper)
