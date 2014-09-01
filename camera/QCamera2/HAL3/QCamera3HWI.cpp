@@ -222,7 +222,7 @@ camera3_device_ops_t QCamera3HardwareInterface::mCameraOps = {
     reserved:                           {0},
 };
 
-int QCamera3HardwareInterface::kMaxInFlight = 5;
+int QCamera3HardwareInterface::kMaxInFlight = 4;
 
 /*===========================================================================
  * FUNCTION   : QCamera3HardwareInterface
