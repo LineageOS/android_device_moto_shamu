@@ -96,6 +96,7 @@
 /system/bin/bridgemgrd          u:object_r:bridge_exec:s0
 /system/vendor/bin/gsiff_daemon u:object_r:gsiffd_exec:s0
 /system/bin/irsc_util           u:object_r:irsc_util_exec:s0
+/system/bin/ks                  u:object_r:mdm_helper_exec:s0
 /system/bin/mdm_helper          u:object_r:mdm_helper_exec:s0
 /system/bin/mm-qcamera-daemon   u:object_r:camera_exec:s0
 /system/bin/mpdecision          u:object_r:mpdecision_exec:s0
