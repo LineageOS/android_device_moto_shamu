@@ -54,8 +54,9 @@
 
 /dev/sensors                    u:object_r:sensors_device:s0
 
+
 /dev/socket/adspdsock           u:object_r:adspd_socket:s0
-/dev/socket/sensor_ctl_socket          u:object_r:sensors_socket:s0
+/dev/socket/sensor_ctl_socket   u:object_r:sensors_socket:s0
 
 # Shared memory log
 /dev/smem_log                   u:object_r:shared_log_device:s0
