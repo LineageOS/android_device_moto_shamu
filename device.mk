@@ -39,7 +39,8 @@ PRODUCT_COPY_FILES += \
 
 # Input device files for shamu
 PRODUCT_COPY_FILES += \
-    device/moto/shamu/gpio-keys.kl:system/usr/keylayout/gpio-keys.kl
+    device/moto/shamu/gpio-keys.kl:system/usr/keylayout/gpio-keys.kl \
+    device/moto/shamu/apq8084-taiko-tfa9890_stereo_co_Headset_Jack.kl:system/usr/keylayout/apq8084-taiko-tfa9890_stereo_co_Headset_Jack.kl
 
 PRODUCT_COPY_FILES += \
     device/moto/shamu/audio_policy.conf:system/etc/audio_policy.conf \
