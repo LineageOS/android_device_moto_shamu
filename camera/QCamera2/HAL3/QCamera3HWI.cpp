@@ -687,18 +687,7 @@ int QCamera3HardwareInterface::configureStreams(
             pthread_mutex_unlock(&mMutex);
             return -ENOMEM;
         }
-
-        rc = mSupportChannel->initialize();
-        if (rc < 0) {
-            ALOGE("%s: dummy channel initialization failed", __func__);
-            delete mSupportChannel;
-            mSupportChannel = NULL;
-            delete mMetadataChannel;
-            mMetadataChannel = NULL;
-            pthread_mutex_unlock(&mMutex);
-            return rc;
-        }
-    }
+   }
 
     bool isRawStreamRequested = false;
     /* Allocate channel objects for the requested streams */
@@ -887,7 +876,6 @@ int QCamera3HardwareInterface::configureStreams(
     }
 
 
-    int32_t hal_version = CAM_HAL_V3;
     stream_config_info.num_streams = streamList->num_streams;
     if (mSupportChannel) {
         stream_config_info.stream_sizes[stream_config_info.num_streams] =
@@ -908,6 +896,7 @@ int QCamera3HardwareInterface::configureStreams(
     }
 
     // settings/parameters don't carry over for new configureStreams
+    int32_t hal_version = CAM_HAL_V3;
     memset(mParameters, 0, sizeof(metadata_buffer_t));
 
     AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
@@ -1702,8 +1691,16 @@ int QCamera3HardwareInterface::processCaptureRequest(
         CDBG_HIGH("%s: Start META Channel", __func__);
         mMetadataChannel->start();
 
-        if (mSupportChannel)
+        if (mSupportChannel) {
+            rc = mSupportChannel->initialize();
+            if (rc < 0) {
+                ALOGE("%s: Support channel initialization failed", __func__);
+                mMetadataChannel->stop();
+                pthread_mutex_unlock(&mMutex);
+                return rc;
+            }
             mSupportChannel->start();
+        }
 
         //First initialize all streams
         for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
