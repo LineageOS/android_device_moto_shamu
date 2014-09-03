@@ -147,6 +147,9 @@ on boot
     mkdir /dev/socket/qmux_gps 0770 gps gps
     chmod 2770 /dev/socket/qmux_gps
 
+    mkdir /dev/socket/mpdecision 2775 root system
+    chmod 2775 /dev/socket/mpdecision
+
     setprop wifi.interface wlan0
 
     #readable symlinks for video nodes

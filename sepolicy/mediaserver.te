@@ -5,6 +5,9 @@ qmux_socket(mediaserver)
 # TODO: Investigate the specific type of socket.
 allow mediaserver self:socket create_socket_perms;
 
+allow mediaserver mpdecision_socket:dir r_dir_perms;
+unix_socket_send(mediaserver, mpdecision, mpdecision)
+
 binder_call(mediaserver, rild)
 
 unix_socket_send(mediaserver, camera, camera)
