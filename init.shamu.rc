@@ -101,7 +101,8 @@ on early-boot
     write /sys/bus/msm_subsys/devices/subsys0/restart_level "related"
     write /sys/bus/msm_subsys/devices/subsys0/recovery_policy "skip_restart"
     #adsp
-    write /sys/bus/msm_subsys/devices/subsys1/restart_level "system"
+    write /sys/bus/msm_subsys/devices/subsys1/restart_level "related"
+    write /sys/bus/msm_subsys/devices/subsys1/recovery_policy "skip_restart"
     #vpu
     write /sys/bus/msm_subsys/devices/subsys2/restart_level "related"
     write /sys/bus/msm_subsys/devices/subsys2/recovery_policy "skip_restart"
