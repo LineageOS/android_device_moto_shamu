@@ -1543,6 +1543,11 @@ typedef enum {
     ROTATE_270 = 1<<3,
 } cam_rotation_t;
 
+typedef struct {
+   cam_rotation_t rotation;
+   uint32_t streamId;
+} cam_rotation_info_t;
+
 typedef enum {
     FLIP_H = 1<<0,
     FLIP_V = 1<<1,
