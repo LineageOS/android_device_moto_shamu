@@ -31,7 +31,6 @@ on init
 
     # Set permissions for persist partition
     mkdir /persist 0771 system system
-    mkdir /firmware 0771 system system
 
     export EXTERNAL_STORAGE /storage/emulated/legacy
     export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
