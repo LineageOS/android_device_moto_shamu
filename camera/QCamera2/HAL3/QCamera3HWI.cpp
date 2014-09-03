@@ -1782,6 +1782,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     // Acquire all request buffers first
     streamID.num_streams = 0;
     int blob_request = 0;
+    uint32_t snapshotStreamId = 0;
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
         QCamera3Channel *channel = (QCamera3Channel *)output.stream->priv;
@@ -1790,6 +1791,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
         if (output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
             //Call function to store local copy of jpeg data for encode params.
             blob_request = 1;
+            snapshotStreamId = channel->getStreamID(channel->getStreamTypeMask());
         }
 
         rc = acquireFence->wait(Fence::TIMEOUT_NEVER);
@@ -1814,7 +1816,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     }
 
     if(request->input_buffer == NULL) {
-       rc = setFrameParameters(request, streamID);
+       rc = setFrameParameters(request, streamID, snapshotStreamId);
         if (rc < 0) {
             ALOGE("%s: fail to set frame parameters", __func__);
             pthread_mutex_unlock(&mMutex);
@@ -1905,7 +1907,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
                     return NO_INIT;
                 }
                 metadata_buffer_t reproc_meta;
-                rc = setReprocParameters(request, &reproc_meta);
+                rc = setReprocParameters(request, &reproc_meta, snapshotStreamId);
                 if (NO_ERROR == rc) {
                     rc = channel->request(output.buffer, frameNumber,
                             request->input_buffer, &reproc_meta);
@@ -5171,7 +5173,8 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
  *==========================================================================*/
 int QCamera3HardwareInterface::setFrameParameters(
                     camera3_capture_request_t *request,
-                    cam_stream_ID_t streamID)
+                    cam_stream_ID_t streamID,
+                    uint32_t snapshotStreamId)
 {
     /*translate from camera_metadata_t type to parm_type_t*/
     int rc = 0;
@@ -5203,7 +5206,7 @@ int QCamera3HardwareInterface::setFrameParameters(
     }
 
     if(request->settings != NULL){
-        rc = translateToHalMetadata(request, mParameters);
+        rc = translateToHalMetadata(request, mParameters, snapshotStreamId);
     }
 
     return rc;
@@ -5222,7 +5225,8 @@ int QCamera3HardwareInterface::setFrameParameters(
  *              failure:
  *==========================================================================*/
 int32_t QCamera3HardwareInterface::setReprocParameters(
-        camera3_capture_request_t *request, metadata_buffer_t *reprocParam)
+        camera3_capture_request_t *request, metadata_buffer_t *reprocParam,
+        uint32_t snapshotStreamId)
 {
     /*translate from camera_metadata_t type to parm_type_t*/
     int rc = 0;
@@ -5246,7 +5250,7 @@ int32_t QCamera3HardwareInterface::setReprocParameters(
         return rc;
     }
 
-    rc = translateToHalMetadata(request, reprocParam);
+    rc = translateToHalMetadata(request, reprocParam, snapshotStreamId);
     if (rc < 0) {
         ALOGE("%s: Failed to translate reproc request", __func__);
         return rc;
@@ -5317,7 +5321,8 @@ int32_t QCamera3HardwareInterface::setReprocParameters(
  *==========================================================================*/
 int QCamera3HardwareInterface::translateToHalMetadata
                                   (const camera3_capture_request_t *request,
-                                   metadata_buffer_t *hal_metadata)
+                                   metadata_buffer_t *hal_metadata,
+                                   uint32_t snapshotStreamId)
 {
     int rc = 0;
     CameraMetadata frame_settings;
@@ -5956,7 +5961,19 @@ int QCamera3HardwareInterface::translateToHalMetadata
     if (frame_settings.exists(ANDROID_JPEG_ORIENTATION)) {
         int32_t orientation =
             frame_settings.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
+        cam_rotation_info_t rotation_info;
+        if (orientation == 0) {
+           rotation_info.rotation = ROTATE_0;
+        } else if (orientation == 90) {
+           rotation_info.rotation = ROTATE_90;
+        } else if (orientation == 180) {
+           rotation_info.rotation = ROTATE_180;
+        } else if (orientation == 270) {
+           rotation_info.rotation = ROTATE_270;
+        }
+        rotation_info.streamId = snapshotStreamId;
         rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_META_JPEG_ORIENTATION, sizeof(orientation), &orientation);
+        rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_PARM_ROTATION, sizeof(rotation_info), &rotation_info);
     }
 
     if (frame_settings.exists(ANDROID_JPEG_QUALITY)) {
@@ -6296,6 +6313,26 @@ bool QCamera3HardwareInterface::needReprocess(uint32_t postprocess_mask)
         }
     }
     return needRotationReprocess();
+}
+
+/*===========================================================================
+ * FUNCTION   : needJpegRotation
+ *
+ * DESCRIPTION: if rotation from jpeg is needed
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
+bool QCamera3HardwareInterface::needJpegRotation()
+{
+   /*If the pp does not have the ability to do rotation, enable jpeg rotation*/
+    if (!(gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION)) {
+       CDBG("%s: Need Jpeg to do the rotation", __func__);
+       return true;
+    }
+    return false;
 }
 
 /*===========================================================================
