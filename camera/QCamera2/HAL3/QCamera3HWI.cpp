@@ -2897,7 +2897,10 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                 delete [] crop_stream_ids;
             }
         } else {
-            ALOGE("%s: No valid crop metadata entries", __func__);
+            // mm-qcamera-daemon only posts crop_data for streams
+            // not linked to pproc. So no valid crop metadata is not
+            // necessarily an error case.
+            CDBG("%s: No valid crop metadata entries", __func__);
         }
     }
 
