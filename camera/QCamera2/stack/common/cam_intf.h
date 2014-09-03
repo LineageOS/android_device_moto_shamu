@@ -336,6 +336,9 @@ typedef struct{
     /* Can the sensor timestamp be compared to
      * timestamps from other sub-systems (gyro, accelerometer etc.) */
     uint8_t isTimestampCalibrated;
+
+    /* Max size supported by ISP viewfinder path */
+    cam_dimension_t max_viewfinder_size;
 } cam_capability_t;
 
 typedef enum {
