@@ -57,6 +57,7 @@
 
 /dev/socket/adspdsock           u:object_r:adspd_socket:s0
 /dev/socket/sensor_ctl_socket   u:object_r:sensors_socket:s0
+/dev/socket/mpdecision(/.*)?    u:object_r:mpdecision_socket:s0
 
 # Shared memory log
 /dev/smem_log                   u:object_r:shared_log_device:s0
@@ -119,3 +120,8 @@
 
 # Sysfs files used by qmuxd
 /sys/devices/virtual/smdpkt/smdcntl([0-9])+/open_timeout u:object_r:sysfs_smdcntl_open_timeout:s0
+
+# Context for mpdecision
+/sys/module/msm_thermal/core_control/cpus_offlined              u:object_r:sysfs_mpdecision:s0
+/sys/devices/system/cpu/cpu0/rq-stats(/.*)?                     u:object_r:sysfs_rqstats:s0
+/sys/module/cpu_boost/parameters(/.*)?                          u:object_r:sysfs_cpuboost:s0
