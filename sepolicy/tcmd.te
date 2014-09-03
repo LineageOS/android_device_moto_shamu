@@ -4,9 +4,6 @@ type tcmd_exec, exec_type, file_type;
 
 init_daemon_domain(tcmd)
 
-#STOPSHIP: Finish the policy.  Permissive not allowed.
-permissive tcmd;
-
 # Uses network sockets.
 net_domain(tcmd)
 
