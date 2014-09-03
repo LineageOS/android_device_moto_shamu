@@ -785,7 +785,7 @@ void QCamera3RegularChannel::putStreamBufs()
     mMemory.unregisterBuffers();
 }
 
-int QCamera3RegularChannel::kMaxBuffers = 5;
+int QCamera3RegularChannel::kMaxBuffers = MAX_INFLIGHT_REQUESTS;
 
 QCamera3MetadataChannel::QCamera3MetadataChannel(uint32_t cam_handle,
                     mm_camera_ops_t *cam_ops,
@@ -893,7 +893,7 @@ void QCamera3MetadataChannel::putStreamBufs()
 }
 /*************************************************************************************/
 // RAW Channel related functions
-int QCamera3RawChannel::kMaxBuffers = 5;
+int QCamera3RawChannel::kMaxBuffers = MAX_INFLIGHT_REQUESTS;
 
 QCamera3RawChannel::QCamera3RawChannel(uint32_t cam_handle,
                     mm_camera_ops_t *cam_ops,
@@ -2507,9 +2507,9 @@ QCamera3Exif *QCamera3PicChannel::getExifData(metadata_buffer_t *metadata,
     return exif;
 }
 
-/* There can be kMaxInFlight number of requests that could get queued up. Hence
+/* There can be MAX_INFLIGHT_REQUESTS number of requests that could get queued up. Hence
  allocating same number of picture channel buffers */
-int QCamera3PicChannel::kMaxBuffers = QCamera3HardwareInterface::kMaxInFlight;
+int QCamera3PicChannel::kMaxBuffers = MAX_INFLIGHT_REQUESTS;
 
 void QCamera3PicChannel::overrideYuvSize(uint32_t width, uint32_t height)
 {
@@ -2543,7 +2543,7 @@ QCamera3ReprocessChannel::QCamera3ReprocessChannel(uint32_t cam_handle,
     mMemory(NULL)
 {
     memset(mSrcStreamHandles, 0, sizeof(mSrcStreamHandles));
-    mOfflineMetaIndex = QCamera3HardwareInterface::kMaxInFlight -1;
+    mOfflineMetaIndex = MAX_INFLIGHT_REQUESTS -1;
 }
 
 
@@ -2673,9 +2673,9 @@ QCamera3Memory* QCamera3ReprocessChannel::getStreamBufs(uint32_t len)
     }
 
     //Queue YUV buffers in the beginning mQueueAll = true
-    /* There can be kMaxInFlight number of requests that could get queued up.
+    /* There can be MAX_INFLIGHT_REQUESTS number of requests that could get queued up.
      * Hence allocating same number of reprocess channel's output buffers */
-    rc = mMemory->allocate(QCamera3HardwareInterface::kMaxInFlight, len, true);
+    rc = mMemory->allocate(MAX_INFLIGHT_REQUESTS, len, true);
     if (rc < 0) {
         ALOGE("%s: unable to allocate reproc memory", __func__);
         delete mMemory;
@@ -3015,7 +3015,7 @@ int32_t QCamera3ReprocessChannel::extractCrop(qcamera_fwk_input_pp_data_t *frame
     }
 
     QCamera3Stream *pStream = mStreams[0];
-    int32_t max_idx = QCamera3HardwareInterface::kMaxInFlight -1;
+    int32_t max_idx = MAX_INFLIGHT_REQUESTS-1;
     //loop back the indices if max burst count reached
     if (mOfflineBuffersIndex == max_idx) {
        mOfflineBuffersIndex = -1;
@@ -3035,11 +3035,10 @@ int32_t QCamera3ReprocessChannel::extractCrop(qcamera_fwk_input_pp_data_t *frame
         CDBG("%s: Mapped buffer with index %d", __func__, mOfflineBuffersIndex);
     }
 
-    max_idx = QCamera3HardwareInterface::kMaxInFlight +
-              QCamera3HardwareInterface::kMaxInFlight - 1;
+    max_idx = MAX_INFLIGHT_REQUESTS*2 - 1;
     //loop back the indices if max burst count reached
     if (mOfflineMetaIndex == max_idx) {
-       mOfflineMetaIndex = QCamera3HardwareInterface::kMaxInFlight -1;
+       mOfflineMetaIndex = MAX_INFLIGHT_REQUESTS-1;
     }
     uint32_t meta_buf_idx = mOfflineMetaIndex + 1;
 
@@ -3156,9 +3155,9 @@ int32_t QCamera3ReprocessChannel::addReprocStreamsFromSource(cam_pp_feature_conf
     cam_stream_reproc_config_t reprocess_config;
     cam_stream_type_t streamType;
 
-    /* There can be kMaxInFlight number of requests that could get queued up.
+    /* There can be MAX_INFLIGHT_REQUESTS number of requests that could get queued up.
      * Hence allocating same number of reprocess channel's output buffers */
-    int num_buffers = QCamera3HardwareInterface::kMaxInFlight;
+    int num_buffers = MAX_INFLIGHT_REQUESTS;
     cam_dimension_t streamDim = src_config.output_stream_dim;
 
     if (NULL != src_config.src_channel) {
