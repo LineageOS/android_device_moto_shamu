@@ -1,9 +1,6 @@
 type bluetooth_loader, domain;
 type bluetooth_loader_exec, exec_type, file_type;
 
-# STOPSHIP - CTS violation
-permissive bluetooth_loader;
-
 # Started by init
 init_daemon_domain(bluetooth_loader)
 
