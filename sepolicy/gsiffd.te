@@ -1,9 +1,6 @@
 type gsiffd, domain;
 type gsiffd_exec, exec_type, file_type;
 
-# STOPSHIP - CTS violation
-permissive gsiffd;
-
 # Started by init
 init_daemon_domain(gsiffd)
 
