@@ -7,6 +7,9 @@ permissive mdm_helper;
 
 init_daemon_domain(mdm_helper)
 
+# access /sys/power/wakelock
+allow mdm_helper self:capability dac_override;
+
 # Spawn /system/bin/efsks and /system/bin/ks
 allow mdm_helper mdm_helper_exec:file { open execute_no_trans getattr };
 
@@ -19,9 +22,24 @@ allow mdm_helper block_device:dir { getattr write search };
 
 # Let qcks access /dev/mdm node (modem driver)??
 allow mdm_helper radio_device:chr_file r_file_perms;
-allow mdm_helper modem_block_device:blk_file r_file_perms;
+allow mdm_helper modem_block_device:blk_file rw_file_perms;
+
+allow mdm_helper firmware_file:dir r_dir_perms;
+allow mdm_helper firmware_file:file r_file_perms;
+
+allow mdm_helper fsg_file:file r_file_perms;
 
 allow mdm_helper persist_file:dir rw_dir_perms;
 allow mdm_helper persist_file:file create_file_perms;
+
+# Runs commands via sh.
+allow mdm_helper shell_exec:file rx_file_perms;
+
+allow mdm_helper sysfs_xhci_msm_hsic:dir r_dir_perms;
+allow mdm_helper sysfs_xhci_msm_hsic:file rw_file_perms;
+allow mdm_helper sysfs_msm_hsic_host:file write;
+
+# host_ready not labeled correctly
+allow mdm_helper sysfs:file write;
 
 wakelock_use(mdm_helper)

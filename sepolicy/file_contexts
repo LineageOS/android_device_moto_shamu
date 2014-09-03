@@ -125,3 +125,6 @@
 /sys/module/msm_thermal/core_control/cpus_offlined              u:object_r:sysfs_mpdecision:s0
 /sys/devices/system/cpu/cpu0/rq-stats(/.*)?                     u:object_r:sysfs_rqstats:s0
 /sys/module/cpu_boost/parameters(/.*)?                          u:object_r:sysfs_cpuboost:s0
+
+/sys/bus/platform/drivers/xhci_msm_hsic(/.*)?            u:object_r:sysfs_xhci_msm_hsic:s0
+/sys/devices/msm_hsic_host/host_ready                    u:object_r:sysfs_msm_hsic_host:s0
