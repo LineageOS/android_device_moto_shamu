@@ -63,6 +63,10 @@ namespace qcamera {
 #define VIDEO_4K_WIDTH  3840
 #define VIDEO_4K_HEIGHT 2160
 
+#define MAX_RAW_STREAMS        1
+#define MAX_STALLING_STREAMS   1
+#define MAX_PROCESSED_STREAMS  3
+
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 const camera_metadata_t *gStaticMetadata[MM_CAMERA_MAX_NUM_SENSORS];
 volatile uint32_t gCamHal3LogLevel = 1;
@@ -535,41 +539,6 @@ int QCamera3HardwareInterface::configureStreams(
         return BAD_VALUE;
     }
 
-    pthread_mutex_lock(&mMutex);
-
-    /* Check whether we have video stream */
-    m_bIs4KVideo = false;
-    m_bIsVideo = false;
-    bool isZsl = false;
-    size_t videoWidth = 0;
-    size_t videoHeight = 0;
-    /* Check whether we have zsl stream or 4k video case */
-    for (size_t i = 0; i < streamList->num_streams; i++) {
-        camera3_stream_t *newStream = streamList->streams[i];
-        if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL &&
-                newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED){
-            isZsl = true;
-        }
-        if ((HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED == newStream->format) &&
-                (newStream->usage & private_handle_t::PRIV_FLAGS_VIDEO_ENCODER)) {
-            m_bIsVideo = true;
-            if ((VIDEO_4K_WIDTH <= newStream->width) &&
-                    (VIDEO_4K_HEIGHT <= newStream->height)) {
-                videoWidth = newStream->width;
-                videoHeight = newStream->height;
-                m_bIs4KVideo = true;
-            }
-        }
-    }
-
-    if (isZsl && m_bIsVideo) {
-        ALOGE("%s: Currently invalid configuration ZSL&Video!", __func__);
-        pthread_mutex_unlock(&mMutex);
-        return -EINVAL;
-    }
-
-    pthread_mutex_unlock(&mMutex);
-
     /* first invalidate all the steams in the mStreamList
      * if they appear again, they will be validated */
     for (List<stream_info_t*>::iterator it = mStreamInfo.begin();
@@ -593,6 +562,87 @@ int QCamera3HardwareInterface::configureStreams(
     }
 
     pthread_mutex_lock(&mMutex);
+
+    /* Check whether we have video stream */
+    m_bIs4KVideo = false;
+    m_bIsVideo = false;
+    bool isZsl = false;
+    size_t videoWidth = 0;
+    size_t videoHeight = 0;
+    size_t rawStreamCnt = 0;
+    size_t stallStreamCnt = 0;
+    size_t processedStreamCnt = 0;
+    // Number of streams on ISP encoder path
+    size_t numStreamsOnEncoder = 0;
+    cam_dimension_t maxViewfinderSize;
+    maxViewfinderSize = gCamCapability[mCameraId]->max_viewfinder_size;
+
+    for (size_t i = 0; i < streamList->num_streams; i++) {
+        camera3_stream_t *newStream = streamList->streams[i];
+        if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL &&
+                newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED){
+            isZsl = true;
+        }
+        if ((HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED == newStream->format) &&
+                (newStream->usage & private_handle_t::PRIV_FLAGS_VIDEO_ENCODER)) {
+            m_bIsVideo = true;
+            if ((VIDEO_4K_WIDTH <= newStream->width) &&
+                    (VIDEO_4K_HEIGHT <= newStream->height)) {
+                videoWidth = newStream->width;
+                videoHeight = newStream->height;
+                m_bIs4KVideo = true;
+            }
+        }
+        if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL ||
+                newStream->stream_type == CAMERA3_STREAM_OUTPUT) {
+            switch (newStream->format) {
+            case HAL_PIXEL_FORMAT_BLOB:
+                stallStreamCnt++;
+                if (newStream->width > (uint32_t)maxViewfinderSize.width ||
+                        newStream->height > (uint32_t)maxViewfinderSize.height)
+                    numStreamsOnEncoder++;
+                break;
+            case HAL_PIXEL_FORMAT_RAW10:
+            case HAL_PIXEL_FORMAT_RAW_OPAQUE:
+            case HAL_PIXEL_FORMAT_RAW16:
+                rawStreamCnt++;
+                break;
+            case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
+            case HAL_PIXEL_FORMAT_YCbCr_420_888:
+            default:
+                processedStreamCnt++;
+                if (newStream->width > (uint32_t)maxViewfinderSize.width ||
+                        newStream->height > (uint32_t)maxViewfinderSize.height)
+                    numStreamsOnEncoder++;
+                break;
+            }
+
+        }
+    }
+
+    /* Check if num_streams is sane */
+    if (stallStreamCnt > MAX_STALLING_STREAMS ||
+            rawStreamCnt > MAX_RAW_STREAMS ||
+            processedStreamCnt > MAX_PROCESSED_STREAMS) {
+        ALOGE("%s: Invalid stream configu: stall: %d, raw: %d, processed %d",
+                __func__, stallStreamCnt, rawStreamCnt, processedStreamCnt);
+        pthread_mutex_unlock(&mMutex);
+        return -EINVAL;
+    }
+    /* Check whether we have zsl stream or 4k video case */
+    if (isZsl && m_bIsVideo) {
+        ALOGE("%s: Currently invalid configuration ZSL&Video!", __func__);
+        pthread_mutex_unlock(&mMutex);
+        return -EINVAL;
+    }
+    /* Check if stream sizes are sane */
+    if (numStreamsOnEncoder > 2) {
+        ALOGE("%s: Number of streams on ISP encoder path exceeds limits of 2",
+                __func__);
+        pthread_mutex_unlock(&mMutex);
+        return -EINVAL;
+    }
+
     camera3_stream_t *inputStream = NULL;
     camera3_stream_t *jpegStream = NULL;
     cam_stream_size_info_t stream_config_info;
@@ -2956,7 +3006,7 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         uint8_t  *afState = (uint8_t *)
             POINTER_OF_META(CAM_INTF_META_AF_STATE, metadata);
         camMetadata.update(ANDROID_CONTROL_AF_STATE, afState, 1);
-        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AF_STATE", __func__);
+        CDBG("%s: urgent Metadata : ANDROID_CONTROL_AF_STATE %d", __func__, *afState);
     }
 
     if (IS_META_AVAILABLE(CAM_INTF_META_LENS_FOCUS_DISTANCE, metadata)) {
@@ -4107,7 +4157,10 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       &sensor_orientation,
                       1);
 
-    int32_t max_output_streams[3] = {1, 3, 1};
+    int32_t max_output_streams[3] = {
+            MAX_STALLING_STREAMS,
+            MAX_PROCESSED_STREAMS,
+            MAX_RAW_STREAMS};
     staticInfo.update(ANDROID_REQUEST_MAX_NUM_OUTPUT_STREAMS,
                       max_output_streams,
                       3);
