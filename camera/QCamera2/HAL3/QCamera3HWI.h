@@ -222,8 +222,6 @@ public:
     bool needOnlineRotation();
     int getJpegQuality();
     QCamera3Exif *getExifData();
-public:
-    static int kMaxInFlight;
 private:
     camera3_device_t   mCameraDevice;
     uint8_t            mCameraId;

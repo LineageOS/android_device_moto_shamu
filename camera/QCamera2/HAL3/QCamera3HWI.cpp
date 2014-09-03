@@ -222,8 +222,6 @@ camera3_device_ops_t QCamera3HardwareInterface::mCameraOps = {
     reserved:                           {0},
 };
 
-int QCamera3HardwareInterface::kMaxInFlight = 4;
-
 /*===========================================================================
  * FUNCTION   : QCamera3HardwareInterface
  *
@@ -1954,7 +1952,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     //Block on conditional variable
 
     mPendingRequest++;
-    while (mPendingRequest >= kMaxInFlight) {
+    while (mPendingRequest >= MAX_INFLIGHT_REQUESTS) {
         if (!isValidTimeout) {
             CDBG("%s: Blocking on conditional wait", __func__);
             pthread_cond_wait(&mRequestCond, &mMutex);
@@ -4144,7 +4142,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_testpattern_modes,
                       size);
 
-    uint8_t max_pipeline_depth = kMaxInFlight + EMPTY_PIPELINE_DELAY + FRAME_SKIP_DELAY;
+    uint8_t max_pipeline_depth = MAX_INFLIGHT_REQUESTS + EMPTY_PIPELINE_DELAY + FRAME_SKIP_DELAY;
     staticInfo.update(ANDROID_REQUEST_PIPELINE_MAX_DEPTH,
                       &max_pipeline_depth,
                       1);
