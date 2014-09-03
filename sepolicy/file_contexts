@@ -3,6 +3,8 @@
 /data/misc/radio(/.*)?         u:object_r:radio_data_file:s0
 /data/nfc(/.*)?                u:object_r:nfc_data_file:s0
 /data/time(/.*)?               u:object_r:time_data_file:s0
+/data/misc/location/gsiff(/.*)? u:object_r:gsiffd_data_file:s0
+/data/misc/location/quipc(/.*)? u:object_r:quipc_data_file:s0
 
 # Bluetooth
 /dev/ttyHS0                    u:object_r:hci_attach_dev:s0
