@@ -249,6 +249,7 @@ private:
     bool m_bWNROn;
     bool m_bIsVideo;
     bool m_bIs4KVideo;
+    uint8_t mEisEnable;
 
     /* Data structure to store pending request */
     typedef struct {
