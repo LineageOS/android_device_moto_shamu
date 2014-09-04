@@ -508,6 +508,121 @@ err1:
 }
 
 /*===========================================================================
+ * FUNCTION   : validateStreamDimensions
+ *
+ * DESCRIPTION: Check if the configuration requested are those advertised
+ *
+ * PARAMETERS :
+ *   @stream_list : streams to be configured
+ *
+ * RETURN     :
+ *
+ *==========================================================================*/
+int QCamera3HardwareInterface::validateStreamDimensions(
+        camera3_stream_configuration_t *streamList)
+{
+    int rc = NO_ERROR;
+    int32_t available_processed_sizes[MAX_SIZES_CNT * 2];
+    int32_t available_jpeg_sizes[MAX_SIZES_CNT * 2];
+    uint8_t jpeg_sizes_cnt = 0;
+
+    /*
+    * Loop through all streams requested in configuration
+    * Check if unsupported sizes have been requested on any of them
+    */
+    for (size_t j = 0; j < streamList->num_streams; j++){
+        bool sizeFound = false;
+        camera3_stream_t *newStream = streamList->streams[j];
+
+        /*
+        * Sizes are different for each type of stream format check against
+        * appropriate table.
+        */
+        switch (newStream->format) {
+        case ANDROID_SCALER_AVAILABLE_FORMATS_RAW16:
+        case ANDROID_SCALER_AVAILABLE_FORMATS_RAW_OPAQUE:
+        case HAL_PIXEL_FORMAT_RAW10:
+            for (int i = 0;
+                    i < gCamCapability[mCameraId]->supported_raw_dim_cnt; i++){
+                if (gCamCapability[mCameraId]->raw_dim[i].width
+                        == (int32_t) newStream->width
+                    && gCamCapability[mCameraId]->raw_dim[i].height
+                        == (int32_t) newStream->height) {
+                    sizeFound = true;
+                    break;
+                }
+            }
+            break;
+        case HAL_PIXEL_FORMAT_BLOB:
+            /* Generate JPEG sizes table */
+            makeTable(gCamCapability[mCameraId]->picture_sizes_tbl,
+                    gCamCapability[mCameraId]->picture_sizes_tbl_cnt,
+                    available_processed_sizes);
+            jpeg_sizes_cnt = filterJpegSizes(
+                    available_jpeg_sizes,
+                    available_processed_sizes,
+                    (gCamCapability[mCameraId]->picture_sizes_tbl_cnt) * 2,
+                    MAX_SIZES_CNT * 2,
+                    gCamCapability[mCameraId]->active_array_size,
+                    gCamCapability[mCameraId]->max_downscale_factor);
+
+            /* Verify set size against generated sizes table */
+            for (int i = 0;i < jpeg_sizes_cnt/2; i++) {
+                if ((int32_t)(newStream->width) == available_jpeg_sizes[i*2] &&
+                    (int32_t)(newStream->height) == available_jpeg_sizes[i*2+1]) {
+                    sizeFound = true;
+                    break;
+                }
+            }
+            break;
+
+
+        case HAL_PIXEL_FORMAT_YCbCr_420_888:
+        case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
+        default:
+            /* ZSL stream will be full active array size validate that*/
+            if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL) {
+                if ((int32_t)(newStream->width) ==
+                    gCamCapability[mCameraId]->active_array_size.width
+                    && (int32_t)(newStream->height)  ==
+                    gCamCapability[mCameraId]->active_array_size.height) {
+                    sizeFound = true;
+                }
+                /* We could potentially break here to enforce ZSL stream
+                 * set from frameworks always has full active array size
+                 * but it is not clear from spec if framework will always
+                 * follow that, also we have logic to override to full array
+                 * size, so keeping this logic lenient at the moment.
+                 */
+            }
+
+            /* Non ZSL stream still need to conform to advertised sizes*/
+            for (int i = 0;
+                i < gCamCapability[mCameraId]->picture_sizes_tbl_cnt;i++){
+                if ((int32_t)(newStream->width) ==
+                        gCamCapability[mCameraId]->picture_sizes_tbl[i].width
+                    && (int32_t)(newStream->height) ==
+                        gCamCapability[mCameraId]->picture_sizes_tbl[i].height){
+                    sizeFound = true;
+                break;
+                }
+            }
+            break;
+        } /* End of switch(newStream->format) */
+
+        /* We error out even if a single stream has unsupported size set */
+        if (!sizeFound) {
+            ALOGE("%s: Error: Unsupported size of  %d x %d requested for stream"
+                  "type:%d", __func__, newStream->width, newStream->height,
+                  newStream->format);
+            rc = -EINVAL;
+            break;
+        }
+    } /* End of for each stream */
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : configureStreams
  *
  * DESCRIPTION: Reset HAL camera device processing pipeline and set up new input
@@ -643,6 +758,13 @@ int QCamera3HardwareInterface::configureStreams(
                 __func__);
         pthread_mutex_unlock(&mMutex);
         return -EINVAL;
+    }
+
+    rc = validateStreamDimensions(streamList);
+    if (rc != NO_ERROR) {
+        ALOGE("%s: Invalid stream configuration requested!", __func__);
+        pthread_mutex_unlock(&mMutex);
+        return rc;
     }
 
     camera3_stream_t *inputStream = NULL;
@@ -3844,7 +3966,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       scalar_formats,
                       scalar_formats_count);
 
-    int32_t available_processed_sizes[CAM_FORMAT_MAX * 2];
+    int32_t available_processed_sizes[MAX_SIZES_CNT * 2];
     makeTable(gCamCapability[cameraId]->picture_sizes_tbl,
               gCamCapability[cameraId]->picture_sizes_tbl_cnt,
               available_processed_sizes);
@@ -3852,7 +3974,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                 available_processed_sizes,
                 (gCamCapability[cameraId]->picture_sizes_tbl_cnt) * 2);
 
-    int32_t available_raw_sizes[CAM_FORMAT_MAX * 2];
+    int32_t available_raw_sizes[MAX_SIZES_CNT * 2];
     makeTable(gCamCapability[cameraId]->raw_dim,
               gCamCapability[cameraId]->supported_raw_dim_cnt,
               available_raw_sizes);
