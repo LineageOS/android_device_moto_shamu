@@ -24,5 +24,8 @@ allow thermald thermald_socket:sock_file create_file_perms;
 
 allow thermald self:socket create_socket_perms;
 
+# Writes to /sys/module/msm_thermal/core_control/cpus_offlined
+allow thermald sysfs_mpdecision:file rw_file_perms;
+
 # TODO specify specific labels for /sys/ files
 allow thermald sysfs:file write;
