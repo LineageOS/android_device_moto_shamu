@@ -74,6 +74,7 @@ class QCamera3Channel;
         cam_rect_t output_crop;
         cam_rotation_t rotation;
     } reprocess_config_t;
+
 };//namespace qcamera
 
 #endif
