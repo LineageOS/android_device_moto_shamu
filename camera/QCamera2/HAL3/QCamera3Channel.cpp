@@ -79,6 +79,7 @@ QCamera3Channel::QCamera3Channel(uint32_t cam_handle,
                                channel_cb_routine cb_routine,
                                cam_padding_info_t *paddingInfo,
                                uint32_t postprocess_mask,
+                               cam_is_type_t is_type,
                                void *userData)
 {
     m_camHandle = cam_handle;
@@ -99,6 +100,7 @@ QCamera3Channel::QCamera3Channel(uint32_t cam_handle,
     char prop[PROPERTY_VALUE_MAX];
     property_get("persist.camera.yuv.dump", prop, "0");
     mYUVDump = atoi(prop);
+    mIsType = is_type;
 }
 
 /*===========================================================================
@@ -205,7 +207,8 @@ int32_t QCamera3Channel::addStream(cam_stream_type_t streamType,
                                   cam_format_t streamFormat,
                                   cam_dimension_t streamDim,
                                   uint8_t minStreamBufNum,
-                                  uint32_t postprocess_mask)
+                                  uint32_t postprocessMask,
+                                  cam_is_type_t isType)
 {
     int32_t rc = NO_ERROR;
 
@@ -230,7 +233,7 @@ int32_t QCamera3Channel::addStream(cam_stream_type_t streamType,
     }
 
     rc = pStream->init(streamType, streamFormat, streamDim, NULL, minStreamBufNum,
-                       postprocess_mask, streamCbRoutine, this);
+                       postprocessMask, isType, streamCbRoutine, this);
     if (rc == 0) {
         mStreams[m_numStreams] = pStream;
         m_numStreams++;
@@ -498,9 +501,10 @@ QCamera3RegularChannel::QCamera3RegularChannel(uint32_t cam_handle,
                     void *userData,
                     camera3_stream_t *stream,
                     cam_stream_type_t stream_type,
-                    uint32_t postprocess_mask) :
+                    uint32_t postprocess_mask,
+                    cam_is_type_t is_type) :
                         QCamera3Channel(cam_handle, cam_ops, cb_routine,
-                                paddingInfo, postprocess_mask, userData),
+                                paddingInfo, postprocess_mask, is_type, userData),
                         mCamera3Stream(stream),
                         mNumBufs(0),
                         mStreamType(stream_type)
@@ -591,7 +595,8 @@ int32_t QCamera3RegularChannel::initialize()
             streamFormat,
             streamDim,
             mNumBufs,
-            mPostProcMask);
+            mPostProcMask,
+            mIsType);
 
     return rc;
 }
@@ -792,9 +797,10 @@ QCamera3MetadataChannel::QCamera3MetadataChannel(uint32_t cam_handle,
                     channel_cb_routine cb_routine,
                     cam_padding_info_t *paddingInfo,
                     uint32_t postprocess_mask,
+                    cam_is_type_t is_type,
                     void *userData) :
                         QCamera3Channel(cam_handle, cam_ops,
-                                cb_routine, paddingInfo, postprocess_mask, userData),
+                                cb_routine, paddingInfo, postprocess_mask, is_type, userData),
                         mMemory(NULL)
 {
 }
@@ -830,7 +836,7 @@ int32_t QCamera3MetadataChannel::initialize()
     streamDim.width = sizeof(metadata_buffer_t),
     streamDim.height = 1;
     rc = QCamera3Channel::addStream(CAM_STREAM_TYPE_METADATA, CAM_FORMAT_MAX,
-        streamDim, MIN_STREAMING_BUFFER_NUM, mPostProcMask);
+        streamDim, MIN_STREAMING_BUFFER_NUM, mPostProcMask, mIsType);
     if (rc < 0) {
         ALOGE("%s: addStream failed", __func__);
     }
@@ -902,10 +908,11 @@ QCamera3RawChannel::QCamera3RawChannel(uint32_t cam_handle,
                     void *userData,
                     camera3_stream_t *stream,
                     uint32_t postprocess_mask,
+                    cam_is_type_t is_type,
                     bool raw_16) :
                         QCamera3RegularChannel(cam_handle, cam_ops,
                                 cb_routine, paddingInfo, userData, stream,
-                                CAM_STREAM_TYPE_RAW, postprocess_mask),
+                                CAM_STREAM_TYPE_RAW, postprocess_mask, is_type),
                         mIsRaw16(raw_16)
 {
     char prop[PROPERTY_VALUE_MAX];
@@ -1066,9 +1073,10 @@ QCamera3RawDumpChannel::QCamera3RawDumpChannel(uint32_t cam_handle,
                     cam_dimension_t rawDumpSize,
                     cam_padding_info_t *paddingInfo,
                     void *userData,
-                    uint32_t postprocess_mask) :
+                    uint32_t postprocess_mask,
+                    cam_is_type_t is_type) :
                         QCamera3Channel(cam_handle, cam_ops, NULL,
-                                paddingInfo, postprocess_mask, userData),
+                                paddingInfo, postprocess_mask, is_type, userData),
                         mDim(rawDumpSize),
                         mMemory(NULL)
 {
@@ -1260,7 +1268,7 @@ int32_t QCamera3RawDumpChannel::initialize()
 
     rc = QCamera3Channel::addStream(CAM_STREAM_TYPE_RAW,
         CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GBRG, mDim, kMaxBuffers,
-        mPostProcMask);
+        mPostProcMask, mIsType);
     if (rc < 0) {
         ALOGE("%s: addStream failed", __func__);
     }
@@ -1408,9 +1416,10 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                     camera3_stream_t *stream,
                     uint32_t postprocess_mask,
                     bool is4KVideo,
+                    cam_is_type_t is_type,
                     QCamera3Channel *metadataChannel) :
                         QCamera3Channel(cam_handle, cam_ops, cb_routine,
-                        paddingInfo, postprocess_mask, userData),
+                        paddingInfo, postprocess_mask, is_type, userData),
                         m_postprocessor(this),
                         mCamera3Stream(stream),
                         mNumBufsRegistered(CAM_MAX_NUM_BUFS_PER_STREAM),
@@ -1490,7 +1499,7 @@ int32_t QCamera3PicChannel::initialize()
 
     mNumSnapshotBufs = mCamera3Stream->max_buffers;
     rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,
-            (uint8_t)mCamera3Stream->max_buffers, mPostProcMask);
+            (uint8_t)mCamera3Stream->max_buffers, mPostProcMask, mIsType);
 
     Mutex::Autolock lock(mFreeBuffersLock);
     mFreeBufferList.clear();
@@ -2534,8 +2543,10 @@ QCamera3ReprocessChannel::QCamera3ReprocessChannel(uint32_t cam_handle,
                                                  channel_cb_routine cb_routine,
                                                  cam_padding_info_t *paddingInfo,
                                                  uint32_t postprocess_mask,
+                                                 cam_is_type_t is_type,
                                                  void *userData, void *ch_hdl) :
-    QCamera3Channel(cam_handle, cam_ops, cb_routine, paddingInfo, postprocess_mask, userData),
+    QCamera3Channel(cam_handle, cam_ops, cb_routine, paddingInfo, postprocess_mask, is_type,
+                    userData),
     picChHandle(ch_hdl),
     mOfflineBuffersIndex(-1),
     m_pSrcChannel(NULL),
@@ -3148,7 +3159,7 @@ int32_t QCamera3ReprocessChannel::doReprocess(int buf_fd,
  *              none-zero failure code
  *==========================================================================*/
 int32_t QCamera3ReprocessChannel::addReprocStreamsFromSource(cam_pp_feature_config_t &pp_config,
-        const reprocess_config_t &src_config ,
+        const reprocess_config_t &src_config , cam_is_type_t is_type,
         QCamera3Channel *pMetaChannel)
 {
     int32_t rc = 0;
@@ -3194,6 +3205,7 @@ int32_t QCamera3ReprocessChannel::addReprocStreamsFromSource(cam_pp_feature_conf
             streamDim, &reprocess_config,
             num_buffers,
             reprocess_config.pp_feature_config.feature_mask,
+            is_type,
             QCamera3Channel::streamCbRoutine, this);
 
     if (rc == 0) {
@@ -3220,9 +3232,10 @@ QCamera3SupportChannel::QCamera3SupportChannel(uint32_t cam_handle,
                     mm_camera_ops_t *cam_ops,
                     cam_padding_info_t *paddingInfo,
                     uint32_t postprocess_mask,
+                    cam_is_type_t is_type,
                     void *userData) :
                         QCamera3Channel(cam_handle, cam_ops,
-                                NULL, paddingInfo, postprocess_mask, userData),
+                                NULL, paddingInfo, postprocess_mask, is_type, userData),
                         mMemory(NULL)
 {
 }
@@ -3257,7 +3270,7 @@ int32_t QCamera3SupportChannel::initialize()
     // Hardcode to VGA size for now
     rc = QCamera3Channel::addStream(CAM_STREAM_TYPE_CALLBACK,
         CAM_FORMAT_YUV_420_NV21, kDim, MIN_STREAMING_BUFFER_NUM,
-        mPostProcMask);
+        mPostProcMask, mIsType);
     if (rc < 0) {
         ALOGE("%s: addStream failed", __func__);
     }
