@@ -35,7 +35,7 @@
         x="1"
         y="0"
         packageName="com.google.android.apps.messaging"
-        className="com.android.mms.ui.ConversationList"
+        className="com.google.android.apps.messaging.ui.ConversationListActivity"
     />
 
     <favorite
