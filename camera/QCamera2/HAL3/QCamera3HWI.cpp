@@ -704,10 +704,11 @@ int QCamera3HardwareInterface::configureStreams(
     /* get eis information for stream configuration */
     cam_is_type_t is_type;
     char is_type_value[PROPERTY_VALUE_MAX];
-    property_get("camera.is_type", is_type_value, "0");
+    property_get("camera.is_type", is_type_value, "4");
     is_type = static_cast<cam_is_type_t>(atoi(is_type_value));
-    //for camera use case, and 4k video, no eis
-    if (!m_bIsVideo || m_bIs4KVideo) {
+    //for camera use case, front camcorder and 4k video, no eis
+    if (gCamCapability[mCameraId]->position != CAM_POSITION_BACK ||
+        !m_bIsVideo || m_bIs4KVideo) {
         is_type = IS_TYPE_NONE;
     }
 
@@ -974,7 +975,8 @@ int QCamera3HardwareInterface::configureStreams(
 
     //If EIS is enabled, turn it on for video
     int32_t vsMode;
-    if (mEisEnable && m_bIsVideo && !m_bIs4KVideo){
+    if (gCamCapability[mCameraId]->position == CAM_POSITION_BACK &&
+        mEisEnable && m_bIsVideo && !m_bIs4KVideo){
        vsMode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_ON;
     } else {
        vsMode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF;
@@ -4952,7 +4954,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     /* OIS/EIS disable */
     char eis_prop[PROPERTY_VALUE_MAX];
     memset(eis_prop, 0, sizeof(eis_prop));
-    property_get("camera.eis.enable", eis_prop, "0");
+    property_get("camera.eis.enable", eis_prop, "1");
     mEisEnable = atoi(eis_prop);
 
     /* Force video to use OIS */
