@@ -108,6 +108,8 @@ public:
     QCamera3HardwareInterface(int cameraId,
             const camera_module_callbacks_t *callbacks);
     virtual ~QCamera3HardwareInterface();
+    static void camEvtHandle(uint32_t camera_handle, mm_camera_event_t *evt,
+                                          void *user_data);
     int openCamera(struct hw_device_t **hw_device);
     int getMetadata(int type);
     camera_metadata_t* translateCapabilityToMetadata(int type);
