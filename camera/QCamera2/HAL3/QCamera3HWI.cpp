@@ -691,14 +691,24 @@ int QCamera3HardwareInterface::configureStreams(
     // Number of streams on ISP encoder path
     size_t numStreamsOnEncoder = 0;
     cam_dimension_t maxViewfinderSize;
+    bool bJpegExceeds4K = false;
     maxViewfinderSize = gCamCapability[mCameraId]->max_viewfinder_size;
 
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
+        CDBG_HIGH("%s: stream[%d] type = %d, format = %d, width = %d, height = %d",
+                __func__, i, newStream->stream_type, newStream->format,
+                newStream->width, newStream->height);
         if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL &&
                 newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED){
             isZsl = true;
         }
+        if (newStream->format == HAL_PIXEL_FORMAT_BLOB) {
+            if (newStream->width > VIDEO_4K_WIDTH ||
+                    newStream->height > VIDEO_4K_HEIGHT)
+                bJpegExceeds4K = true;
+        }
+
         if ((HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED == newStream->format) &&
                 (newStream->usage & private_handle_t::PRIV_FLAGS_VIDEO_ENCODER)) {
             m_bIsVideo = true;
@@ -755,6 +765,13 @@ int QCamera3HardwareInterface::configureStreams(
     /* Check if stream sizes are sane */
     if (numStreamsOnEncoder > 2) {
         ALOGE("%s: Number of streams on ISP encoder path exceeds limits of 2",
+                __func__);
+        pthread_mutex_unlock(&mMutex);
+        return -EINVAL;
+    }
+    /* Check if BLOB size is greater than 4k in 4k recording case */
+    if (m_bIs4KVideo && bJpegExceeds4K) {
+        ALOGE("%s: HAL doesn't support Blob size greater than 4k in 4k recording",
                 __func__);
         pthread_mutex_unlock(&mMutex);
         return -EINVAL;
