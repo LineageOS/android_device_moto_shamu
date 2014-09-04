@@ -374,6 +374,46 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
 }
 
 /*===========================================================================
+ * FUNCTION   : camEvtHandle
+ *
+ * DESCRIPTION: Function registered to mm-camera-interface to handle events
+ *
+ * PARAMETERS :
+ *   @camera_handle : interface layer camera handle
+ *   @evt           : ptr to event
+ *   @user_data     : user data ptr
+ *
+ * RETURN     : none
+ *==========================================================================*/
+void QCamera3HardwareInterface::camEvtHandle(uint32_t /*camera_handle*/,
+                                          mm_camera_event_t *evt,
+                                          void *user_data)
+{
+    QCamera3HardwareInterface *obj = (QCamera3HardwareInterface *)user_data;
+    camera3_notify_msg_t notify_msg;
+    if (obj && evt) {
+        switch(evt->server_event_type) {
+            case CAM_EVENT_TYPE_DAEMON_DIED:
+                ALOGE("%s: Fatal, camera daemon died", __func__);
+                memset(&notify_msg, 0, sizeof(camera3_notify_msg_t));
+                notify_msg.type = CAMERA3_MSG_ERROR;
+                notify_msg.message.error.error_code = CAMERA3_MSG_ERROR_DEVICE;
+                notify_msg.message.error.error_stream = NULL;
+                notify_msg.message.error.frame_number = 0;
+                obj->mCallbackOps->notify(obj->mCallbackOps, &notify_msg);
+                break;
+
+            default:
+                CDBG_HIGH("%s: Warning: Unhandled event %d", __func__,
+                        evt->server_event_type);
+                break;
+        }
+    } else {
+        ALOGE("%s: NULL user_data/evt", __func__);
+    }
+}
+
+/*===========================================================================
  * FUNCTION   : openCamera
  *
  * DESCRIPTION: open camera
@@ -425,6 +465,8 @@ int QCamera3HardwareInterface::openCamera(struct hw_device_t **hw_device)
  *==========================================================================*/
 int QCamera3HardwareInterface::openCamera()
 {
+    int rc = 0;
+
     if (mCameraHandle) {
         ALOGE("Failure: Camera already opened");
         return ALREADY_EXISTS;
@@ -436,6 +478,15 @@ int QCamera3HardwareInterface::openCamera()
     }
 
     mCameraOpened = true;
+
+    rc = mCameraHandle->ops->register_event_notify(mCameraHandle->camera_handle,
+            camEvtHandle, (void *)this);
+
+    if (rc < 0) {
+        ALOGE("%s: Error, failed to register event callback", __func__);
+        /* Not closing camera here since it is already handled in destructor */
+        return FAILED_TRANSACTION;
+    }
 
     return NO_ERROR;
 }
