@@ -4423,10 +4423,9 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     uint8_t available_capabilities[MAX_AVAILABLE_CAPABILITIES];
     uint8_t available_capabilities_count = 0;
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE;
-
+    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR;
+    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING;
     if (facingBack) {
-        available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR;
-        available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING;
         available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW;
     }
     staticInfo.update(ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
@@ -4537,6 +4536,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
 
     int32_t available_request_keys[] = {ANDROID_COLOR_CORRECTION_MODE,
        ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_COLOR_CORRECTION_GAINS,
+       ANDROID_COLOR_CORRECTION_ABERRATION_MODE,
        ANDROID_CONTROL_AE_ANTIBANDING_MODE, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
        ANDROID_CONTROL_AE_LOCK, ANDROID_CONTROL_AE_MODE,
        ANDROID_CONTROL_AE_REGIONS, ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
