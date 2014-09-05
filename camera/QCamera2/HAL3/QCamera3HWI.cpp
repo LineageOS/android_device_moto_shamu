@@ -1478,6 +1478,7 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
         POINTER_OF_META(CAM_INTF_META_SENSOR_TIMESTAMP, metadata);
     cam_frame_dropped_t cam_frame_drop = *(cam_frame_dropped_t *)
         POINTER_OF_META(CAM_INTF_META_FRAME_DROPPED, metadata);
+    camera3_notify_msg_t notify_msg;
 
     int32_t urgent_frame_number_valid = *(int32_t *)
         POINTER_OF_META(CAM_INTF_META_URGENT_FRAME_NUMBER_VALID, metadata);
@@ -1492,37 +1493,23 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
         //using partial results
         for (List<PendingRequestInfo>::iterator i =
             mPendingRequestsList.begin(); i != mPendingRequestsList.end(); i++) {
-            camera3_notify_msg_t notify_msg;
             CDBG("%s: Iterator Frame = %d urgent frame = %d",
                 __func__, i->frame_number, urgent_frame_number);
 
             if (i->frame_number < urgent_frame_number &&
-                i->bNotified == 0) {
-                notify_msg.type = CAMERA3_MSG_SHUTTER;
-                notify_msg.message.shutter.frame_number = i->frame_number;
-                notify_msg.message.shutter.timestamp = capture_time -
-                    (urgent_frame_number - i->frame_number) * NSEC_PER_33MSEC;
-                mCallbackOps->notify(mCallbackOps, &notify_msg);
-                i->timestamp = notify_msg.message.shutter.timestamp;
-                i->bNotified = 1;
-                CDBG("%s: Support notification !!!! notify frame_number = %d, capture_time = %lld",
-                    __func__, i->frame_number, notify_msg.message.shutter.timestamp);
+                i->partial_result_cnt == 0) {
+                ALOGE("%s: Error: HAL missed urgent metadata for frame number %d",
+                    __func__, i->frame_number);
             }
 
-            if (i->frame_number == urgent_frame_number) {
+            if (i->frame_number == urgent_frame_number &&
+                     i->bUrgentReceived == 0) {
 
                 camera3_capture_result_t result;
                 memset(&result, 0, sizeof(camera3_capture_result_t));
 
-                // Send shutter notify to frameworks
-                notify_msg.type = CAMERA3_MSG_SHUTTER;
-                notify_msg.message.shutter.frame_number = i->frame_number;
-                notify_msg.message.shutter.timestamp = capture_time;
-                mCallbackOps->notify(mCallbackOps, &notify_msg);
-
-                i->timestamp = capture_time;
-                i->bNotified = 1;
                 i->partial_result_cnt++;
+                i->bUrgentReceived = 1;
                 // Extract 3A metadata
                 result.result =
                     translateCbUrgentMetadataToResultMetadata(metadata);
@@ -1596,6 +1583,16 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
         // Send empty metadata with already filled buffers for dropped metadata
         // and send valid metadata with already filled buffers for current metadata
         if (i->frame_number < frame_number) {
+            camera3_notify_msg_t notify_msg;
+            notify_msg.type = CAMERA3_MSG_SHUTTER;
+            notify_msg.message.shutter.frame_number = i->frame_number;
+            notify_msg.message.shutter.timestamp = capture_time -
+                    (urgent_frame_number - i->frame_number) * NSEC_PER_33MSEC;
+            mCallbackOps->notify(mCallbackOps, &notify_msg);
+            i->timestamp = notify_msg.message.shutter.timestamp;
+            CDBG("%s: Support notification !!!! notify frame_number = %d, capture_time = %lld",
+                    __func__, i->frame_number, notify_msg.message.shutter.timestamp);
+
             CameraMetadata dummyMetadata;
             dummyMetadata.update(ANDROID_SENSOR_TIMESTAMP,
                     &i->timestamp, 1);
@@ -1603,6 +1600,15 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
                     &(i->request_id), 1);
             result.result = dummyMetadata.release();
         } else {
+
+            // Send shutter notify to frameworks
+            notify_msg.type = CAMERA3_MSG_SHUTTER;
+            notify_msg.message.shutter.frame_number = i->frame_number;
+            notify_msg.message.shutter.timestamp = capture_time;
+            mCallbackOps->notify(mCallbackOps, &notify_msg);
+
+            i->timestamp = capture_time;
+
             result.result = translateFromHalMetadata(metadata,
                     i->timestamp, i->request_id, i->jpegMetadata, i->pipeline_depth,
                     i->capture_intent);
@@ -2105,7 +2111,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     pendingRequest.num_buffers = request->num_output_buffers;
     pendingRequest.request_id = request_id;
     pendingRequest.blob_request = blob_request;
-    pendingRequest.bNotified = 0;
+    pendingRequest.bUrgentReceived = 0;
 
     pendingRequest.input_buffer = request->input_buffer;
     pendingRequest.settings = request->settings;
