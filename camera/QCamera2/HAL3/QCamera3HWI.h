@@ -264,8 +264,8 @@ private:
         int32_t request_id;
         List<RequestedBufferInfo> buffers;
         int blob_request;
+        uint8_t bUrgentReceived;
         nsecs_t timestamp;
-        uint8_t bNotified;
         camera3_stream_buffer_t *input_buffer;
         const camera_metadata_t *settings;
         CameraMetadata jpegMetadata;
