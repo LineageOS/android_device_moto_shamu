@@ -2580,15 +2580,6 @@ QCamera3HardwareInterface::translateFromHalMetadata(
     }
 
 
-    if (IS_META_AVAILABLE(CAM_INTF_META_AWB_REGIONS, metadata)) {
-        /*awb regions*/
-        cam_area_t  *hAwbRegions = (cam_area_t *)
-            POINTER_OF_META(CAM_INTF_META_AWB_REGIONS, metadata);
-        int32_t awbRegions[5];
-        convertToRegions(hAwbRegions->rect, awbRegions,hAwbRegions->weight);
-        camMetadata.update(ANDROID_CONTROL_AWB_REGIONS, awbRegions, 5);
-    }
-
     if (IS_META_AVAILABLE(CAM_INTF_PARM_FPS_RANGE, metadata)) {
         int32_t fps_range[2];
         cam_fps_range_t * float_range =
@@ -4551,7 +4542,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
        ANDROID_CONTROL_AE_REGIONS, ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
        ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER, ANDROID_CONTROL_AF_MODE,
        ANDROID_CONTROL_AF_REGIONS, ANDROID_CONTROL_AF_TRIGGER,
-       ANDROID_CONTROL_AWB_LOCK, ANDROID_CONTROL_AWB_MODE, ANDROID_CONTROL_AWB_REGIONS,
+       ANDROID_CONTROL_AWB_LOCK, ANDROID_CONTROL_AWB_MODE,
        ANDROID_CONTROL_CAPTURE_INTENT, ANDROID_CONTROL_EFFECT_MODE, ANDROID_CONTROL_MODE,
        ANDROID_CONTROL_SCENE_MODE, ANDROID_CONTROL_VIDEO_STABILIZATION_MODE,
        ANDROID_DEMOSAIC_MODE, ANDROID_EDGE_MODE, ANDROID_EDGE_STRENGTH,
@@ -4579,7 +4570,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     int32_t available_result_keys[] = {ANDROID_COLOR_CORRECTION_TRANSFORM,
        ANDROID_COLOR_CORRECTION_GAINS, ANDROID_CONTROL_AE_MODE, ANDROID_CONTROL_AE_REGIONS,
        ANDROID_CONTROL_AE_STATE, ANDROID_CONTROL_AF_MODE, ANDROID_CONTROL_AF_REGIONS,
-       ANDROID_CONTROL_AF_STATE, ANDROID_CONTROL_AWB_MODE, ANDROID_CONTROL_AWB_REGIONS,
+       ANDROID_CONTROL_AF_STATE, ANDROID_CONTROL_AWB_MODE,
        ANDROID_CONTROL_AWB_STATE, ANDROID_CONTROL_MODE, ANDROID_EDGE_MODE,
        ANDROID_FLASH_FIRING_POWER, ANDROID_FLASH_FIRING_TIME, ANDROID_FLASH_MODE,
        ANDROID_FLASH_STATE, ANDROID_JPEG_GPS_COORDINATES, ANDROID_JPEG_GPS_PROCESSING_METHOD,
@@ -6149,19 +6140,6 @@ int QCamera3HardwareInterface::translateToHalMetadata
         }
         if (reset) {
             rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_META_AF_ROI,
-                    sizeof(roi), &roi);
-        }
-    }
-
-    if (frame_settings.exists(ANDROID_CONTROL_AWB_REGIONS)) {
-        cam_area_t roi;
-        bool reset = true;
-        convertFromRegions(&roi, request->settings, ANDROID_CONTROL_AWB_REGIONS);
-        if (scalerCropSet) {
-            reset = resetIfNeededROI(&roi, &scalerCropRegion);
-        }
-        if (reset) {
-            rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_META_AWB_REGIONS,
                     sizeof(roi), &roi);
         }
     }
