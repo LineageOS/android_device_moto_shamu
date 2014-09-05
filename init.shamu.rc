@@ -738,6 +738,8 @@ service hcidump /system/bin/sh /system/etc/hcidump.sh
 
 on charger
     write /sys/class/leds/lcd-backlight/brightness 100
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/system /system ro barrier=1
+    start thermal-engine
 
 service charger /charger
     class charger
