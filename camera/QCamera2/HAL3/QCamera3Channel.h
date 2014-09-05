@@ -70,7 +70,7 @@ public:
                       uint32_t postprocessMask,
                       cam_is_type_t isType);
     virtual int32_t start();
-    int32_t stop();
+    virtual int32_t stop();
     int32_t bufDone(mm_camera_super_buf_t *recvd_frame);
 
     uint32_t getStreamTypeMask();
@@ -280,7 +280,7 @@ public:
     ~QCamera3PicChannel();
 
     virtual int32_t initialize();
-
+    virtual int32_t stop();
     virtual int32_t request(buffer_handle_t *buffer,
             uint32_t frameNumber,
             camera3_stream_buffer_t* pInputBuffer,
