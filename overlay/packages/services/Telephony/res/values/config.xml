@@ -25,6 +25,4 @@
     <bool name="config_enabled_lte" translatable="false">true</bool>
     <!-- Flag indicating if hac is enabled -->
     <bool name="hac_enabled">true</bool>
-    <!-- Display enhanced 4G LTE mode menu if true -->
-    <bool name="config_enhanced_4g_lte_mode_enable" translatable="false">true</bool>
 </resources>
