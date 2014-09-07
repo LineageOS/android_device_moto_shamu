@@ -138,6 +138,7 @@ BOARD_SEPOLICY_UNION += \
         thermald.te \
         time.te \
         ueventd.te \
+        untrusted_app.te \
         zygote.te \
         file_contexts \
         genfs_contexts \
