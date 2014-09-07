@@ -2,9 +2,6 @@
 type sensors, domain;
 type sensors_exec, exec_type, file_type;
 
-# STOPSHIP - CTS violation
-permissive sensors;
-
 # Started by init
 init_daemon_domain(sensors)
 
