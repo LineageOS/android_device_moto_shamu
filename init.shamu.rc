@@ -319,12 +319,6 @@ service usbhub_init /system/bin/usbhub_init
    disabled
    oneshot
 
-service qcomsysd /system/bin/qcom-system-daemon
-    class main
-
-on property:persist.radio.atfwd.start=false
-    stop atfwd
-
 on property:ro.board.platform=msm7630_fusion
     start usbhub_init
 
@@ -335,41 +329,16 @@ on property:bluetooth.isEnabled=true
     start btwlancoex
     write /sys/class/bluetooth/hci0/idle_timeout 7000
 
-on property:bluetooth.sap.status=running
-    start bt-sap
-
-on property:bluetooth.sap.status=stopped
-    stop bt-sap
-
-on property:bluetooth.dun.status=running
-    start bt-dun
-
-on property:bluetooth.dun.status=stopped
-    stop bt-dun
-
 on property:ro.bluetooth.ftm_enabled=true
     start ftmd
 
 on property:persist.env.fastdorm.enabled=true
     setprop persist.radio.data_no_toggle 1
 
-service cnd /system/bin/cnd
-    class late_start
-    socket cnd stream 660 root inet
-
 service irsc_util /system/bin/irsc_util "/etc/sec_config"
     class main
     user root
     oneshot
-
-service mdm_helper /system/bin/mdm_helper
-    class core
-    onrestart setprop ro.service.mdm_helper_restarted "true"
-
-service rmt_storage /system/bin/rmt_storage
-    class core
-    user root
-    disabled
 
 service tcmd /system/bin/tcmd_mini
     class core
@@ -377,79 +346,14 @@ service tcmd /system/bin/tcmd_mini
     group radio net_raw net_admin
     disabled
 
-on property:ro.boot.emmc=true
-    start rmt_storage
-
-service rfs_access /system/bin/rfs_access
-   class core
-   user system
-   group system net_raw
-
-on property:ro.boot.emmc=true
-    start rfs_access
-
-on property:wc_transport.start_hci=true
-    start start_hci_filter
-
-on property:wc_transport.start_hci=false
-    stop start_hci_filter
-
-service start_hci_filter /system/bin/wcnss_filter
-    class late_start
-    user bluetooth
-    group bluetooth
-    disabled
-
-on property:bluetooth.hciattach=true
-    start hciattach
-
-on property:bluetooth.hciattach=false
-    setprop bluetooth.status off
-
-service hciattach_ath3k /system/bin/sh /system/etc/init.ath3k.bt.sh
-     class late_start
-     user bluetooth
-     group system bluetooth net_bt_admin misc
-     disabled
-     oneshot
-
-service bt-dun /system/bin/dun-server /dev/smd7 /dev/rfcomm0
-    class late_start
-    user bluetooth
-    group bluetooth net_bt_admin inet
-    disabled
-    oneshot
-
-service bt-sap /system/bin/sapd 15
-    user bluetooth
-    group bluetooth net_bt_admin
-    class late_start
-    disabled
-    oneshot
-
-service ftmd /system/bin/ftmdaemon
-    class late_start
-    user root
-    group bluetooth net_bt_admin misc net_bt_stack
-    disabled
-    oneshot
+service mdm_helper /system/bin/mdm_helper
+    class core
+    onrestart setprop ro.service.mdm_helper_restarted "true"
 
 service bridgemgrd /system/bin/bridgemgrd
     class late_start
     user radio
     group radio
-
-service port-bridge /system/bin/port-bridge /dev/smd0 /dev/ttyGS0
-    class late_start
-    user system
-    group system inet
-    disabled
-
-service qmiproxy /system/bin/qmiproxy
-    class main
-    user radio
-    group radio
-    disabled
 
 # QMUX must be in multiple groups to support external process connections
 service qmuxd /system/bin/qmuxd
@@ -460,10 +364,6 @@ service qmuxd /system/bin/qmuxd
 service netmgrd /system/bin/netmgrd
     class main
     group radio
-
-service qti /system/vendor/bin/qti
-    class main
-    disabled
 
 service sensors /system/bin/sensors.qcom
     class main
@@ -478,24 +378,6 @@ on property:ro.use_data_netmgrd=false
 # but only if ro.data.large_tcp_window_size property is set.
 on property:ro.data.large_tcp_window_size=true
     write /proc/sys/net/ipv4/tcp_adv_win_scale  2
-
-service amp_init /system/bin/amploader -i
-    class late_start
-    user root
-    disabled
-    oneshot
-
-service amp_load /system/bin/amploader -l 7000
-    class late_start
-    user root
-    disabled
-    oneshot
-
-service amp_unload /system/bin/amploader -u
-    class late_start
-    user root
-    disabled
-    oneshot
 
 service p2p_supplicant /system/bin/wpa_supplicant \
     -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
@@ -546,18 +428,6 @@ service iprenew_p2p /system/bin/dhcpcd -n
     disabled
     oneshot
 
-service ptt_socket_app /system/bin/ptt_socket_app -d
-    class main
-    user root
-    group root
-    oneshot
-
-service ptt_ffbm /system/bin/ptt_socket_app -f -d
-    user root
-    group root
-    disabled
-    oneshot
-
 service dhcpcd_bt-pan /system/bin/dhcpcd -BKLG
     class late_start
     disabled
@@ -598,48 +468,6 @@ service iprenew_eth0 /system/bin/dhcpcd -n
     disabled
     oneshot
 
-service gpsone_daemon /system/bin/gpsone_daemon
-    class late_start
-    user gps
-    group gps inet net_raw
-    disabled
-
-service quipc_igsn /system/bin/quipc_igsn
-    class late_start
-    user gps
-    group inet gps
-    disabled
-
-service quipc_main /system/bin/quipc_main
-    class late_start
-    user gps
-    group gps net_admin wifi inet
-    disabled
-
-service location_mq /system/bin/location-mq
-    class late_start
-    user gps
-    group gps
-    disabled
-
-service xtwifi_inet /system/bin/xtwifi-inet-agent
-    class late_start
-    user gps
-    group inet gps
-    disabled
-
-service xtwifi_client /system/bin/xtwifi-client
-    class late_start
-    user gps
-    group net_admin wifi inet gps
-    disabled
-
-service lowi-server /system/bin/lowi-server
-    class late_start
-    user gps
-    group gps net_admin wifi inet
-    disabled
-
 service adspd /system/bin/adspd /dev/ttyHS3
    class late_start
    socket adspdsock stream 0666 media media
@@ -652,89 +480,19 @@ service gsiff_daemon /system/vendor/bin/gsiff_daemon
     user gps
     group gps net_raw
 
-on property:crypto.driver.load=1
-     insmod /system/lib/modules/qce.ko
-     insmod /system/lib/modules/qcedev.ko
-
-service drmdiag /system/bin/drmdiagapp
-    class late_start
-     user root
-     disabled
-     oneshot
-
-on property:drmdiag.load=1
-    start drmdiag
-
-on property:drmdiag.load=0
-    stop drmdiag
-
-
-service wifi-crda /system/bin/sh /system/etc/init.crda.sh
-   class late_start
-   user root
-   disabled
-   oneshot
-
-
 on property:sys.boot_completed=1
     start qcom-post-boot
 
 on property:ro.debuggable=1
     start ss_ramdump
 
-service atfwd /system/bin/ATFWD-daemon
-    class late_start
-    user system
-    group system radio
-
-service hostapd /system/bin/hostapd -dd /data/misc/wifi/hostapd.conf
-    class late_start
-    user root
-    group root
-    oneshot
-    disabled
-
-service ds_fmc_appd /system/bin/ds_fmc_appd -p "rmnet0" -D
-    class late_start
-    group radio wifi inet
-    disabled
-    oneshot
-
-on property:persist.data.ds_fmc_app.mode=1
-    start ds_fmc_appd
-
-service ims_regmanager /system/bin/exe-ims-regmanagerprocessnative
-    class late_start
-    group net_bt_admin inet radio wifi
-    disabled
-
-on property:persist.ims.regmanager.mode=1
-    start ims_regmanager
-
 on property:ro.data.large_tcp_window_size=true
     # Adjust socket buffer to enlarge TCP receive window for high bandwidth (e.g. DO-RevB)
     write /proc/sys/net/ipv4/tcp_adv_win_scale  2
 
-service battery_monitor /system/bin/battery_monitor
-    user system
-    group system
-    disabled
-
-service profiler_daemon /system/bin/profiler_daemon
-    class late_start
-    user root
-    group root
-    disabled
-
 # virtual sdcard daemon running as media_rw (1023)
 service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emulated
     class late_start
-
-service hcidump /system/bin/sh /system/etc/hcidump.sh
-    user bluetooth
-    group bluetooth system net_bt_admin net_admin
-    disabled
-    oneshot
 
 on charger
     write /sys/class/leds/lcd-backlight/brightness 100
@@ -745,56 +503,12 @@ service charger /charger
     class charger
     seclabel u:r:healthd:s0
 
-service ssr_diag /system/bin/ssr_diag
-    class late_start
-    user system
-    group system
-
-# Define fastmmi
-service fastmmi /system/bin/mmi
-    user root
-    group root
-    disabled
-
-on ffbm
-    start fastmmisrv
-
-service hvdcp /system/bin/hvdcp
-    class core
-    user root
-    disabled
-
-on property:persist.usb.hvdcp.detect=true
-    start hvdcp
-
-on property:persist.usb.hvdcp.detect=false
-    stop hvdcp
-
-service charger_monitor /system/bin/charger_monitor
-    user system
-    group system
-    disabled
-
-service qlogd /system/xbin/qlogd
-    class main
-    disabled
-on property:persist.sys.qlogd=1
-    start qlogd
-on property:persist.sys.qlogd=0
-    stop qlogd
-
 # Allow usb charging to be disabled peristently
 on property:persist.usb.chgdisabled=1
     write /sys/class/power_supply/battery/charging_enabled 0
 
 on property:persist.usb.chgdisabled=0
     write /sys/class/power_supply/battery/charging_enabled 1
-
-service qrngd /system/bin/qrngd -f
-   class main
-   user root
-   group root
-   disabled
 
 service qseecomd /system/bin/qseecomd
    class core
@@ -816,27 +530,13 @@ service thermal-engine /system/bin/thermal-engine
    user root
    group root
 
-service security-check1 /sbin/security_boot_check system
-    class core
-    oneshot
-
-service security-check2 /sbin/security_boot_check recovery
-    class core
-    oneshot
-
 service time_daemon /system/bin/time_daemon
    class late_start
    user root
    group root
 
-service audiod /system/bin/audiod
-   class late_start
-   user system
-   group system
-
 on property:init.svc.bootanim=stopped
     start usf-post-boot
-
 
 service qcamerasvr /system/bin/mm-qcamera-daemon
     class late_start
