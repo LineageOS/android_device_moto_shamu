@@ -5,7 +5,8 @@ binder_service(rild)
 # Grant access to Qualcomm MSM Interface (QMI) radio sockets to RILD
 qmux_socket(rild)
 
-allow rild persist_file:dir rw_dir_perms;
-allow rild persist_file:file create_file_perms;
+allow rild persist_file:dir search;
+allow rild persist_modem_file:dir rw_dir_perms;
+allow rild persist_modem_file:file create_file_perms;
 
 allow rild time:unix_stream_socket connectto;
