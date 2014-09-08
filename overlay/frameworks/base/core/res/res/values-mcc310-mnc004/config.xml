@@ -26,4 +26,10 @@
     <!-- MMS user agent prolfile url -->
     <string name="config_mms_user_agent_profile_url" translatable="false">http://uaprof.vtext.com/mot/xt1103/xt1103.xml</string>
 
+    <!-- Values for GPS configuration (Verizon) -->
+    <string-array translatable="false" name="config_gpsParameters">
+        <item>CAPABILITIES=0x31</item>
+        <item>LPP_PROFILE=3</item>
+        <item>GPS_LOCK=3</item>
+    </string-array>
 </resources>

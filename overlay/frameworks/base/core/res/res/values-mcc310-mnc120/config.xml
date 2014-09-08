@@ -24,4 +24,10 @@
     <!-- Sometimes, PDU has garbages. So, need to use valid index -->
     <integer name="config_valid_wappush_index">4</integer>
 
+    <!-- Values for GPS configuration (Sprint) -->
+    <string-array translatable="false" name="config_gpsParameters">
+        <item>CAPABILITIES=0x31</item>
+        <item>GPS_LOCK=3</item>
+        <item>LPP_PROFILE=2</item>
+    </string-array>
 </resources>
