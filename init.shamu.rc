@@ -89,6 +89,10 @@ on post-fs-data
 
     mkdir /persist/mdm 0770 radio radio
 
+    #Subsystem RAM-dumps
+    mkdir /data/ss-ram-dumps 0750 radio log
+    mkdir /data/ss-ram-dumps/bp-dumps 0750 radio log
+
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864
@@ -340,15 +344,17 @@ service irsc_util /system/bin/irsc_util "/etc/sec_config"
     user root
     oneshot
 
+service mdm_helper /system/bin/mdm_helper
+    user root
+    group root system radio
+    class core
+    onrestart setprop ro.service.mdm_helper_restarted "true"
+
 service tcmd /system/bin/tcmd_mini
     class core
     user radio
     group radio net_raw net_admin
     disabled
-
-service mdm_helper /system/bin/mdm_helper
-    class core
-    onrestart setprop ro.service.mdm_helper_restarted "true"
 
 service bridgemgrd /system/bin/bridgemgrd
     class late_start
