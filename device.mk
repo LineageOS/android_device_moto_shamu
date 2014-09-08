@@ -269,6 +269,10 @@ ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
 PRODUCT_PACKAGES += \
     QXDMLogger
 
+# Disable modem ramdumps
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.sys.qc.sub.rdump.on=0
+
 PRODUCT_COPY_FILES += \
     device/moto/shamu/init.shamu.diag.rc.userdebug:root/init.shamu.diag.rc
 else
