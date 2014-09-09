@@ -77,8 +77,6 @@ on post-fs-data
     #Create directory used by sensor subsystem(dsps)
     mkdir /data/system/sensors
     chmod 0775 /data/system/sensors
-    write /data/system/sensors/settings 1
-    chmod 0660 /data/system/sensors/settings
 
     # AKM setting data
     mkdir /data/misc/sensors
@@ -315,16 +313,6 @@ on post-fs-data
     # NFC local data and nfcee xml storage
     mkdir /data/nfc 0770 nfc nfc
     mkdir /data/nfc/param 0770 nfc nfc
-
-# Export GPIO56 for fusion targets to enable/disable hub
-service usbhub_init /system/bin/usbhub_init
-   class late_start
-   user root
-   disabled
-   oneshot
-
-on property:ro.board.platform=msm7630_fusion
-    start usbhub_init
 
 on property:init.svc.wpa_supplicant=stopped
     stop dhcpcd
