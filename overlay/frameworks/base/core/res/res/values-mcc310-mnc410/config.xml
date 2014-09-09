@@ -24,7 +24,7 @@
          If no value is found for the rat-name in use, the system default will be applied.
     -->
     <string-array name="config_mobile_tcp_buffers">
-        <item>umts:4094,87380,110208,4096,16384,110208</item>
+        <item>umts:131072,262144,1452032,4096,16384,399360</item>
         <item>hspa:131072,262144,1452032,4096,16384,399360</item>
         <item>hsdpa:131072,262144,1452032,4096,16384,399360</item>
         <item>hsupa:131072,262144,1452032,4096,16384,399360</item>
