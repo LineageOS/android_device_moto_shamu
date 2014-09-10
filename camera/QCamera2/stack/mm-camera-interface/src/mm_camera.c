@@ -160,6 +160,10 @@ static void mm_camera_event_notify(void* user_data)
         if (rc >= 0 && ev.id == MSM_CAMERA_MSM_NOTIFY) {
             msm_evt = (struct msm_v4l2_event_data *)ev.u.data;
             switch (msm_evt->command) {
+            case CAM_EVENT_TYPE_DAEMON_PULL_REQ:
+                evt.server_event_type = CAM_EVENT_TYPE_DAEMON_PULL_REQ;
+                mm_camera_enqueue_evt(my_obj, &evt);
+                break;
             case CAM_EVENT_TYPE_MAP_UNMAP_DONE:
                 pthread_mutex_lock(&my_obj->evt_lock);
                 my_obj->evt_rcvd.server_event_type = msm_evt->command;
