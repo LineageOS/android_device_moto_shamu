@@ -26,4 +26,10 @@
     <!-- MMS user agent prolfile url -->
     <string name="config_mms_user_agent_profile_url" translatable="false">http://uaprof.motorola.com/phoneconfig/motoxt1103/Profile/motoxt1103.rdf</string>
 
+    <!-- Values for GPS configuration (US Cellular) -->
+    <string-array translatable="false" name="config_gpsParameters">
+        <item>CAPABILITEIS=0x31</item>
+        <item>GPS_LOCK=3</item>
+        <item>LPP_PROFILE=2</item>
+    </string-array>
 </resources>
