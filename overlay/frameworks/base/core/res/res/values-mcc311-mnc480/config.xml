@@ -32,4 +32,8 @@
         <item>GPS_LOCK=3</item>
         <item>LPP_PROFILE=3</item>
     </string-array>
+
+    <string-array translatable="false" name="config_default_vm_number">
+        <item>*86</item>
+    </string-array>
 </resources>
