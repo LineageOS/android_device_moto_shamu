@@ -780,8 +780,12 @@
 
 	<path name="speaker-and-headphones">
 		<path name="headphones" />
-		<ctl name="RX7 MIX1 INP1" value="RX1" />
-		<ctl name="COMP0 Switch" value="1" />
+		<ctl name="QUAT_MI2S_RX Channels" value="Two" />
+		<ctl name="BOOST earpiece mode" value="Off" />
+		<ctl name="BOOST Left Ch Select" value="3" />
+		<ctl name="BOOST Right Ch Select" value="3" />
+		<ctl name="BOOST_STUB Right Mixer right" value="1" />
+		<ctl name="BOOST_STUB Left Mixer left" value="1" />
 	</path>
 
 	<path name="voice-rec-mic">
