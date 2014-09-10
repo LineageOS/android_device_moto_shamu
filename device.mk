@@ -151,6 +151,9 @@ PRODUCT_PACKAGES += \
     audio.r_submix.default \
     libaudio-resampler
 
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.audio.monitorRotation=true
+
 # Audio effects
 PRODUCT_PACKAGES += \
     libqcomvisualizer \
