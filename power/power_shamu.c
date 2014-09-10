@@ -35,7 +35,6 @@
 #include <hardware/hardware.h>
 #include <hardware/power.h>
 
-#define TOUCH_INTERACTIVE_PATH "/sys/bus/i2c/devices/1-004a/tsp"
 #define STATE_ON "state=1"
 #define STATE_OFF "state=0"
 #define STATE_HDR_ON "state=2"
@@ -58,30 +57,6 @@ static void socket_init()
         client_addr.sun_family = AF_UNIX;
         snprintf(client_addr.sun_path, UNIX_PATH_MAX, BOOST_SOCKET);
     }
-}
-
-static int sysfs_write(const char *path, char *s)
-{
-    char buf[80];
-    int len;
-    int fd = open(path, O_WRONLY);
-
-    if (fd < 0) {
-        strerror_r(errno, buf, sizeof(buf));
-        ALOGE("Error opening %s: %s\n", path, buf);
-        return -1;
-    }
-
-    len = write(fd, s, strlen(s));
-    if (len < 0) {
-        strerror_r(errno, buf, sizeof(buf));
-        ALOGE("Error writing to %s: %s\n", path, buf);
-        close(fd);
-        return -1;
-    }
-
-    close(fd);
-    return 0;
 }
 
 static void power_init(__attribute__((unused)) struct power_module *module)
@@ -266,8 +241,6 @@ static void process_low_power_hint(void* data)
 
 static void power_set_interactive(__attribute__((unused)) struct power_module *module, int on)
 {
-    sysfs_write(TOUCH_INTERACTIVE_PATH, on ? "AUTO" : "ON");
-
     if (last_state == -1) {
         last_state = on;
     } else {
