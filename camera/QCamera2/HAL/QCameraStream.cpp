@@ -537,6 +537,7 @@ int32_t QCameraStream::calcOffset(cam_stream_info_t *streamInfo)
 int32_t QCameraStream::start()
 {
     int32_t rc = 0;
+    mDataQ.init();
     rc = mProcTh.launch(dataProcRoutine, this);
     if (rc == NO_ERROR) {
         m_bActive = true;
@@ -663,8 +664,7 @@ int32_t QCameraStream::processZoomDone(preview_stream_ops_t *previewWindow,
 int32_t QCameraStream::processDataNotify(mm_camera_super_buf_t *frame)
 {
     CDBG("%s:\n", __func__);
-    if (m_bActive) {
-        mDataQ.enqueue((void *)frame);
+    if (mDataQ.enqueue((void *)frame)) {
         return mProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
     } else {
         CDBG_HIGH("%s: Stream thread is not active, no ops here", __func__);

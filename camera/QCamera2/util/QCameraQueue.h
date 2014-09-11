@@ -44,8 +44,11 @@ public:
     QCameraQueue();
     QCameraQueue(release_data_fn data_rel_fn, void *user_data);
     virtual ~QCameraQueue();
+    void init();
     bool enqueue(void *data);
     bool enqueueWithPriority(void *data);
+    /* This call will put queue into uninitialized state.
+     * Need to call init() in order to use the queue again */
     void flush();
     void flushNodes(match_fn match);
     void flushNodes(match_fn_data match, void *spec_data);
@@ -59,6 +62,7 @@ private:
 
     camera_q_node m_head; // dummy head
     int m_size;
+    bool m_active;
     pthread_mutex_t m_lock;
     release_data_fn m_dataFn;
     void * m_userData;
