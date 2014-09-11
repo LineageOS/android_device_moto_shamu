@@ -2549,7 +2549,24 @@ int QCamera3HardwareInterface::flush()
     CDBG("%s: Cleared all the pending buffers ", __func__);
 
     mFlush = false;
-    mFirstRequest = true;
+
+    // Start the Streams/Channels
+    if (mMetadataChannel) {
+        /* If content of mStreamInfo is not 0, there is metadata stream */
+        mMetadataChannel->start();
+    }
+    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+        it != mStreamInfo.end(); it++) {
+        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+        channel->start();
+    }
+    if (mSupportChannel) {
+        mSupportChannel->start();
+    }
+    if (mRawDumpChannel) {
+        mRawDumpChannel->start();
+    }
+
     pthread_mutex_unlock(&mMutex);
 
     return 0;

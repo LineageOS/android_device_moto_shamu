@@ -1910,6 +1910,7 @@ void *QCameraPostProcessor::dataSaveRoutine(void *data)
         case CAMERA_CMD_TYPE_START_DATA_PROC:
             CDBG_HIGH("%s: start data proc", __func__);
             is_active = TRUE;
+            pme->m_inputSaveQ.init();
             break;
         case CAMERA_CMD_TYPE_STOP_DATA_PROC:
             {
@@ -2041,6 +2042,12 @@ void *QCameraPostProcessor::dataProcessRoutine(void *data)
         case CAMERA_CMD_TYPE_START_DATA_PROC:
             CDBG_HIGH("%s: start data proc", __func__);
             is_active = TRUE;
+
+            pme->m_ongoingPPQ.init();
+            pme->m_inputJpegQ.init();
+            pme->m_inputPPQ.init();
+            pme->m_inputRawQ.init();
+
             pme->m_saveProcTh.sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC,
                                       FALSE,
                                       FALSE);
