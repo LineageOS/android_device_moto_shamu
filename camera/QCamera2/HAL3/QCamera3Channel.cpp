@@ -27,6 +27,7 @@
 *
 */
 
+#define ATRACE_TAG ATRACE_TAG_CAMERA
 #define LOG_TAG "QCamera3Channel"
 //#define LOG_NDEBUG 0
 #include <fcntl.h>
@@ -39,6 +40,7 @@
 #include <gralloc_priv.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>
+#include <utils/Trace.h>
 #include <cutils/properties.h>
 #include "QCamera3Channel.h"
 #include "QCamera3HWI.h"
@@ -256,6 +258,7 @@ int32_t QCamera3Channel::addStream(cam_stream_type_t streamType,
  *==========================================================================*/
 int32_t QCamera3Channel::start()
 {
+    ATRACE_CALL();
     int32_t rc = NO_ERROR;
 
     if (m_numStreams > 1) {
@@ -297,6 +300,7 @@ int32_t QCamera3Channel::start()
  *==========================================================================*/
 int32_t QCamera3Channel::stop()
 {
+    ATRACE_CALL();
     int32_t rc = NO_ERROR;
     if(!m_bIsActive) {
         ALOGE("%s: Attempt to stop inactive channel",__func__);
@@ -542,6 +546,7 @@ int32_t QCamera3RawChannel::initialize()
 }
 int32_t QCamera3RegularChannel::initialize()
 {
+    ATRACE_CALL();
     int32_t rc = NO_ERROR;
     cam_format_t streamFormat;
     cam_dimension_t streamDim;
@@ -614,6 +619,7 @@ int32_t QCamera3RegularChannel::initialize()
 *==========================================================================*/
 int32_t QCamera3RegularChannel::start()
 {
+    ATRACE_CALL();
     int32_t rc = NO_ERROR;
 
     if (0 < mMemory.getCnt()) {
@@ -636,6 +642,7 @@ int32_t QCamera3RegularChannel::start()
  *==========================================================================*/
 int32_t QCamera3RegularChannel::request(buffer_handle_t *buffer, uint32_t frameNumber)
 {
+    ATRACE_CALL();
     //FIX ME: Return buffer back in case of failures below.
 
     int32_t rc = NO_ERROR;
@@ -703,6 +710,7 @@ int32_t QCamera3RegularChannel::request(buffer_handle_t *buffer, uint32_t frameN
  *==========================================================================*/
 int32_t QCamera3RegularChannel::registerBuffer(buffer_handle_t *buffer)
 {
+    ATRACE_CALL();
     int rc = 0;
 
     if ((uint32_t)mMemory.getCnt() > (mNumBufs - 1)) {
@@ -735,6 +743,7 @@ void QCamera3RegularChannel::streamCbRoutine(
                             mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream)
 {
+    ATRACE_CALL();
     //FIXME Q Buf back in case of error?
     uint8_t frameIndex;
     buffer_handle_t *resultBuffer;
@@ -819,6 +828,7 @@ QCamera3MetadataChannel::~QCamera3MetadataChannel()
 
 int32_t QCamera3MetadataChannel::initialize()
 {
+    ATRACE_CALL();
     int32_t rc;
     cam_dimension_t streamDim;
 
@@ -857,6 +867,7 @@ void QCamera3MetadataChannel::streamCbRoutine(
                         mm_camera_super_buf_t *super_frame,
                         QCamera3Stream * /*stream*/)
 {
+    ATRACE_CALL();
     uint32_t requestNumber = 0;
     if (super_frame == NULL || super_frame->num_bufs != 1) {
         ALOGE("%s: super_frame is not valid", __func__);
@@ -928,6 +939,7 @@ void QCamera3RawChannel::streamCbRoutine(
                         mm_camera_super_buf_t *super_frame,
                         QCamera3Stream * stream)
 {
+    ATRACE_CALL();
     /* Move this back down once verified */
     if (mRawDump)
         dumpRawSnapshot(super_frame->bufs[0]);
@@ -1298,6 +1310,7 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
                                               mm_jpeg_output_t *p_output,
                                               void *userdata)
 {
+    ATRACE_CALL();
     buffer_handle_t *resultBuffer, *jpegBufferHandle;
     int32_t resultFrameNumber;
     int resultStatus = CAMERA3_BUFFER_STATUS_OK;
@@ -1541,6 +1554,7 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
         camera3_stream_buffer_t *pInputBuffer,
         metadata_buffer_t *metadata)
 {
+    ATRACE_CALL();
     //FIX ME: Return buffer back in case of failures below.
 
     int32_t rc = NO_ERROR;
@@ -1760,6 +1774,7 @@ int32_t QCamera3PicChannel::metadataBufDone(mm_camera_super_buf_t *recvd_frame)
 void QCamera3PicChannel::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
                                  void *userdata)
 {
+    ATRACE_CALL();
     CDBG("%s: E\n", __func__);
     QCamera3PicChannel *channel = (QCamera3PicChannel *)userdata;
 
@@ -1831,6 +1846,7 @@ int32_t QCamera3PicChannel::registerBuffer(buffer_handle_t *buffer)
 void QCamera3PicChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream)
 {
+    ATRACE_CALL();
     //TODO
     //Used only for getting YUV. Jpeg callback will be sent back from channel
     //directly to HWI. Refer to func jpegEvtHandle
