@@ -662,6 +662,14 @@
 		<ctl name="BOOST_STUB Left Mixer left" value="1" />
 	</path>
 
+	<path name="speaker-safe">
+		<!-- Bottom speaker only for Shamu -->
+		<!-- Select mono channel on Right IC -->
+		<ctl name="BOOST Right Ch Select" value="3" />
+		<!-- Enable Mixers to power up Right IC only -->
+		<ctl name="BOOST_STUB Right Mixer right" value="1" />
+	</path>
+
 	<path name="speaker-mic">
 		<path name="adc3" />
 		<ctl name="ADC1 Volume" value="0" />
