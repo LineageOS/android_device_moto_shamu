@@ -757,6 +757,8 @@ int QCamera3HardwareInterface::configureStreams(
     size_t numStreamsOnEncoder = 0;
     cam_dimension_t maxViewfinderSize;
     bool bJpegExceeds4K = false;
+    bool bUseCommonFeatureMask = false;
+    uint32_t commonFeatureMask = 0;
     maxViewfinderSize = gCamCapability[mCameraId]->max_viewfinder_size;
 
     for (size_t i = 0; i < streamList->num_streams; i++) {
@@ -791,8 +793,10 @@ int QCamera3HardwareInterface::configureStreams(
             case HAL_PIXEL_FORMAT_BLOB:
                 stallStreamCnt++;
                 if (newStream->width > (uint32_t)maxViewfinderSize.width ||
-                        newStream->height > (uint32_t)maxViewfinderSize.height)
+                        newStream->height > (uint32_t)maxViewfinderSize.height) {
+                    commonFeatureMask |= CAM_QCOM_FEATURE_NONE;
                     numStreamsOnEncoder++;
+                }
                 break;
             case HAL_PIXEL_FORMAT_RAW10:
             case HAL_PIXEL_FORMAT_RAW_OPAQUE:
@@ -800,12 +804,25 @@ int QCamera3HardwareInterface::configureStreams(
                 rawStreamCnt++;
                 break;
             case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
+                processedStreamCnt++;
+                if (newStream->width > (uint32_t)maxViewfinderSize.width ||
+                        newStream->height > (uint32_t)maxViewfinderSize.height) {
+                    if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL) {
+                        commonFeatureMask |= CAM_QCOM_FEATURE_NONE;
+                    } else {
+                        commonFeatureMask |= CAM_QCOM_FEATURE_PP_SUPERSET;
+                    }
+                    numStreamsOnEncoder++;
+                }
+                break;
             case HAL_PIXEL_FORMAT_YCbCr_420_888:
             default:
                 processedStreamCnt++;
                 if (newStream->width > (uint32_t)maxViewfinderSize.width ||
-                        newStream->height > (uint32_t)maxViewfinderSize.height)
+                        newStream->height > (uint32_t)maxViewfinderSize.height) {
+                    commonFeatureMask |= CAM_QCOM_FEATURE_PP_SUPERSET;
                     numStreamsOnEncoder++;
+                }
                 break;
             }
 
@@ -833,6 +850,10 @@ int QCamera3HardwareInterface::configureStreams(
                 __func__);
         pthread_mutex_unlock(&mMutex);
         return -EINVAL;
+    } else if (1 < numStreamsOnEncoder){
+        bUseCommonFeatureMask = true;
+        CDBG_HIGH("%s: Multiple streams above max viewfinder size, common mask needed",
+                __func__);
     }
     /* Check if BLOB size is greater than 4k in 4k recording case */
     if (m_bIs4KVideo && bJpegExceeds4K) {
@@ -993,7 +1014,13 @@ int QCamera3HardwareInterface::configureStreams(
               if (m_bIsVideo && !isZsl) {
                   stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_PP_SUPERSET;
               } else {
-                  stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_NONE;
+                  if (bUseCommonFeatureMask &&
+                          (newStream->width > (uint32_t)maxViewfinderSize.width ||
+                                  newStream->height > (uint32_t)maxViewfinderSize.height)) {
+                      stream_config_info.postprocess_mask[i] = commonFeatureMask;
+                  } else {
+                      stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_NONE;
+                  }
               }
               if (isZsl) {
                   stream_config_info.stream_sizes[i].width =
