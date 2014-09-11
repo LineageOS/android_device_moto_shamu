@@ -26,12 +26,14 @@
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+#define ATRACE_TAG ATRACE_TAG_CAMERA
 
 #define LOG_TAG "QCamera3PostProc"
 //#define LOG_NDEBUG 0
 
 #include <stdlib.h>
 #include <utils/Errors.h>
+#include <utils/Trace.h>
 
 #include "QCamera3PostProc.h"
 #include "QCamera3HWI.h"
@@ -103,6 +105,7 @@ int32_t QCamera3PostProcessor::init(QCamera3Memory* mMemory,
                                     uint32_t postprocess_mask,
                                     void *user_data)
 {
+    ATRACE_CALL();
     mJpegCB = jpeg_cb;
     mJpegUserData = user_data;
     mm_dimension max_size;
@@ -828,6 +831,7 @@ int32_t QCamera3PostProcessor::releaseOfflineBuffers()
  *==========================================================================*/
 void QCamera3PostProcessor::releaseJpegJobData(qcamera_hal3_jpeg_data_t *job)
 {
+    ATRACE_CALL();
     int32_t rc = NO_ERROR;
     CDBG("%s: E", __func__);
     if (NULL != job) {
@@ -1125,6 +1129,7 @@ int32_t QCamera3PostProcessor::encodeFWKData(qcamera_hal3_jpeg_data_t *jpeg_job_
 int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_data,
                           uint8_t &needNewSess)
 {
+    ATRACE_CALL();
     CDBG("%s : E", __func__);
     int32_t ret = NO_ERROR;
     mm_jpeg_job_t jpg_job;
