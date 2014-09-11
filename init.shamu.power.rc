@@ -10,7 +10,6 @@ on charger
     write /sys/module/msm_pm/modes/cpu0/standalone_power_collapse/suspend_enabled 1
     write /sys/module/msm_pm/modes/cpu0/standalone_power_collapse/idle_enabled 1
     write /sys/module/msm_pm/modes/cpu0/retention/idle_enabled 1
-    write /sys/class/devfreq/qcom,cpubw.28/governor cpubw_hwmon
 
 on boot
     # Shamu boots with performance governor.
@@ -75,7 +74,6 @@ on property:dev.bootcomplete=1
     write /sys/module/msm_pm/modes/cpu2/retention/idle_enabled 1
     write /sys/module/msm_pm/modes/cpu3/retention/idle_enabled 1
     write /sys/module/msm_thermal/core_control/enabled 0
-    write /sys/class/devfreq/qcom,cpubw.28/governor cpubw_hwmon
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor interactive
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor interactive
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor interactive
