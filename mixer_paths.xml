@@ -651,6 +651,7 @@
 	</path>
 
 	<path name="speaker-reverse">
+		<ctl name="QUAT_MI2S_RX Channels" value="Two" />
 		<!-- Disable earpiece mode -->
 		<ctl name="BOOST earpiece mode" value="Off" />
 		<!-- Select Left channel on Left IC bypass mode -->
