@@ -60,7 +60,7 @@ namespace qcamera {
 
 #define EMPTY_PIPELINE_DELAY 2
 #define PARTIAL_RESULT_COUNT 2
-#define FRAME_SKIP_DELAY     1
+#define FRAME_SKIP_DELAY     0
 
 #define VIDEO_4K_WIDTH  3840
 #define VIDEO_4K_HEIGHT 2160
