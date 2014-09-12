@@ -4625,16 +4625,16 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                    (camera_metadata_rational_t*) gCamCapability[cameraId]->calibration_transform2,
                       3*3);
 
-    int32_t available_request_keys[] = {ANDROID_COLOR_CORRECTION_MODE,
+    int32_t request_keys_basic[] = {ANDROID_COLOR_CORRECTION_MODE,
        ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_COLOR_CORRECTION_GAINS,
        ANDROID_COLOR_CORRECTION_ABERRATION_MODE,
        ANDROID_CONTROL_AE_ANTIBANDING_MODE, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
        ANDROID_CONTROL_AE_LOCK, ANDROID_CONTROL_AE_MODE,
        ANDROID_CONTROL_AE_REGIONS, ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
        ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER, ANDROID_CONTROL_AF_MODE,
-       ANDROID_CONTROL_AF_REGIONS, ANDROID_CONTROL_AF_TRIGGER,
-       ANDROID_CONTROL_AWB_LOCK, ANDROID_CONTROL_AWB_MODE,
-       ANDROID_CONTROL_CAPTURE_INTENT, ANDROID_CONTROL_EFFECT_MODE, ANDROID_CONTROL_MODE,
+       ANDROID_CONTROL_AF_TRIGGER, ANDROID_CONTROL_AWB_LOCK,
+       ANDROID_CONTROL_AWB_MODE, ANDROID_CONTROL_CAPTURE_INTENT,
+       ANDROID_CONTROL_EFFECT_MODE, ANDROID_CONTROL_MODE,
        ANDROID_CONTROL_SCENE_MODE, ANDROID_CONTROL_VIDEO_STABILIZATION_MODE,
        ANDROID_DEMOSAIC_MODE, ANDROID_EDGE_MODE, ANDROID_EDGE_STRENGTH,
        ANDROID_FLASH_FIRING_POWER, ANDROID_FLASH_FIRING_TIME, ANDROID_FLASH_MODE,
@@ -4655,12 +4655,25 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
        ANDROID_TONEMAP_CURVE_GREEN, ANDROID_TONEMAP_CURVE_RED, ANDROID_TONEMAP_MODE,
        ANDROID_BLACK_LEVEL_LOCK };
 
+    size_t request_keys_cnt =
+            sizeof(request_keys_basic)/sizeof(request_keys_basic[0]);
+    //NOTE: Please increase available_request_keys array size before
+    //adding any new entries.
+    int32_t available_request_keys[request_keys_cnt+1];
+    memcpy(available_request_keys, request_keys_basic,
+            sizeof(request_keys_basic));
+    if (gCamCapability[cameraId]->supported_focus_modes_cnt > 1) {
+        available_request_keys[request_keys_cnt++] =
+                ANDROID_CONTROL_AF_REGIONS;
+    }
+    //NOTE: Please increase available_request_keys array size before
+    //adding any new entries.
     staticInfo.update(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS,
-                      available_request_keys,
-                      sizeof(available_request_keys)/sizeof(int32_t));
-    int32_t available_result_keys[] = {ANDROID_COLOR_CORRECTION_TRANSFORM,
+                      available_request_keys, request_keys_cnt);
+
+    int32_t result_keys_basic[] = {ANDROID_COLOR_CORRECTION_TRANSFORM,
        ANDROID_COLOR_CORRECTION_GAINS, ANDROID_CONTROL_AE_MODE, ANDROID_CONTROL_AE_REGIONS,
-       ANDROID_CONTROL_AE_STATE, ANDROID_CONTROL_AF_MODE, ANDROID_CONTROL_AF_REGIONS,
+       ANDROID_CONTROL_AE_STATE, ANDROID_CONTROL_AF_MODE,
        ANDROID_CONTROL_AF_STATE, ANDROID_CONTROL_AWB_MODE,
        ANDROID_CONTROL_AWB_STATE, ANDROID_CONTROL_MODE, ANDROID_EDGE_MODE,
        ANDROID_FLASH_FIRING_POWER, ANDROID_FLASH_FIRING_TIME, ANDROID_FLASH_MODE,
@@ -4681,9 +4694,22 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
        ANDROID_STATISTICS_SCENE_FLICKER, ANDROID_STATISTICS_FACE_IDS,
        ANDROID_STATISTICS_FACE_LANDMARKS, ANDROID_STATISTICS_FACE_RECTANGLES,
        ANDROID_STATISTICS_FACE_SCORES};
+    size_t result_keys_cnt =
+            sizeof(result_keys_basic)/sizeof(result_keys_basic[0]);
+    //NOTE: Please increase available_result_keys array size before
+    //adding any new entries.
+    int32_t available_result_keys[result_keys_cnt+1];
+    memcpy(available_result_keys, result_keys_basic,
+            sizeof(result_keys_basic));
+    if (gCamCapability[cameraId]->supported_focus_modes_cnt > 1) {
+        available_result_keys[result_keys_cnt++] =
+                ANDROID_CONTROL_AF_REGIONS;
+    }
+    //NOTE: Please increase available_result_keys array size before
+    //adding any new entries.
+
     staticInfo.update(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS,
-                      available_result_keys,
-                      sizeof(available_result_keys)/sizeof(int32_t));
+                      available_result_keys, result_keys_cnt);
 
     int32_t available_characteristics_keys[] = {ANDROID_CONTROL_AE_AVAILABLE_ANTIBANDING_MODES,
        ANDROID_CONTROL_AE_AVAILABLE_MODES, ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
