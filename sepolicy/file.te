@@ -8,6 +8,8 @@ type mpdecision_socket, file_type;
 type qmuxd_socket, file_type;
 type sensors_socket, file_type;
 type thermald_socket, file_type;
+# Socket node needed by ims_data daemon
+type ims_socket, file_type;
 
 type diag_logs, file_type, data_file_type;
 type ram_dump_logs, file_type, data_file_type;
