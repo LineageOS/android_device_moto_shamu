@@ -143,6 +143,8 @@
 	<ctl name="SPK DRV Volume" value="8" />
 	<ctl name="AIF1_CAP Mixer SLIM TX7" value="0" />
 	<ctl name="AIF1_CAP Mixer SLIM TX8" value="0"/>
+	<ctl name="AIF2_CAP Mixer SLIM TX9" value="0" />
+	<ctl name="AIF2_CAP Mixer SLIM TX10" value="0" />
 	<ctl name="AIF3_CAP Mixer SLIM TX3" value="0" />
 	<ctl name="AIF3_CAP Mixer SLIM TX5" value="0" />
 	<ctl name="CLASS_H_DSM MUX" value="ZERO" />
@@ -603,36 +605,46 @@
 	<!-- These are actual sound device specific mixer settings -->
 	<path name="adc1">
 		<ctl name="AIF1_CAP Mixer SLIM TX7" value="1"/>
+		<ctl name="AIF2_CAP Mixer SLIM TX9" value="1" />
 		<ctl name="SLIM_0_TX Channels" value="One" />
 		<ctl name="SLIM TX7 MUX" value="DEC6" />
+		<ctl name="SLIM TX9 MUX" value="DEC6" />
 		<ctl name="DEC6 MUX" value="ADC1" />
 	</path>
 
 	<path name="adc2">
 		<ctl name="AIF1_CAP Mixer SLIM TX7" value="1"/>
+		<ctl name="AIF2_CAP Mixer SLIM TX9" value="1" />
 		<ctl name="SLIM_0_TX Channels" value="One" />
 		<ctl name="SLIM TX7 MUX" value="DEC5" />
+		<ctl name="SLIM TX9 MUX" value="DEC5" />
 		<ctl name="DEC5 MUX" value="ADC2" />
 	</path>
 
 	<path name="adc3">
 		<ctl name="AIF1_CAP Mixer SLIM TX7" value="1" />
+		<ctl name="AIF2_CAP Mixer SLIM TX9" value="1" />
 		<ctl name="SLIM_0_TX Channels" value="One" />
 		<ctl name="SLIM TX7 MUX" value="DEC4" />
+		<ctl name="SLIM TX9 MUX" value="DEC4" />
 		<ctl name="DEC4 MUX" value="ADC3" />
 	</path>
 
 	<path name="adc4">
 		<ctl name="AIF1_CAP Mixer SLIM TX7" value="1" />
+		<ctl name="AIF2_CAP Mixer SLIM TX9" value="1" />
 		<ctl name="SLIM_0_TX Channels" value="One" />
 		<ctl name="SLIM TX7 MUX" value="DEC3" />
+		<ctl name="SLIM TX9 MUX" value="DEC3" />
 		<ctl name="DEC3 MUX" value="ADC4" />
 	</path>
 
 	<path name="adc5">
 		<ctl name="AIF1_CAP Mixer SLIM TX7" value="1"/>
+		<ctl name="AIF2_CAP Mixer SLIM TX9" value="1" />
 		<ctl name="SLIM_0_TX Channels" value="One" />
 		<ctl name="SLIM TX7 MUX" value="DEC2" />
+		<ctl name="SLIM TX9 MUX" value="DEC2" />
 		<ctl name="DEC2 MUX" value="ADC5" />
 		<ctl name="IIR1 INP1 MUX" value="DEC2" />
 	</path>
@@ -816,9 +828,13 @@
 	<path name="voice-dmic-ef">
 		<ctl name="AIF1_CAP Mixer SLIM TX7" value="1" />
 		<ctl name="AIF1_CAP Mixer SLIM TX8" value="1" />
+		<ctl name="AIF2_CAP Mixer SLIM TX9" value="1" />
+		<ctl name="AIF2_CAP Mixer SLIM TX10" value="1" />
 		<ctl name="SLIM_0_TX Channels" value="Two" />
 		<ctl name="SLIM TX7 MUX" value="DEC4" />
 		<ctl name="SLIM TX8 MUX" value="DEC3" />
+		<ctl name="SLIM TX9 MUX" value="DEC4" />
+		<ctl name="SLIM TX10 MUX" value="DEC3" />
 		<ctl name="DEC4 MUX" value="ADC3" />
 		<ctl name="DEC3 MUX" value="ADC4" />
 		<ctl name="ADC1 Volume" value="0" />
