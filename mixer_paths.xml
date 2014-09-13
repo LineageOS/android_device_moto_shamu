@@ -76,6 +76,7 @@
 	<ctl name="MultiMedia1 Mixer SLIM_0_TX" value="0" />
 	<ctl name="MultiMedia1 Mixer SLIM_4_TX" value="0" />
 	<ctl name="MultiMedia1 Mixer AUX_PCM_UL_TX" value="0" />
+	<ctl name="MultiMedia5 Mixer AUX_PCM_UL_TX" value="0" />
 	<ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia1" value="0" />
 	<ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia2" value="0" />
 	<ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia3" value="0" />
@@ -412,6 +413,20 @@
 		<ctl name="AUX PCM SampleRate" value="16000" />
 		<ctl name="SLIM_1 SampleRate" value="16000" />
 		<path name="audio-record bt-sco" />
+	</path>
+
+	<path name="low-latency-record">
+		<ctl name="MultiMedia5 Mixer SLIM_0_TX" value="1" />
+	</path>
+
+	<path name="low-latency-record bt-sco">
+		<ctl name="MultiMedia5 Mixer AUX_PCM_UL_TX" value="1" />
+	</path>
+
+	<path name="low-latency-record bt-sco-wb">
+		<ctl name="AUX PCM SampleRate" value="16000" />
+		<ctl name="SLIM_1 SampleRate" value="16000" />
+		<path name="low-latency-record bt-sco" />
 	</path>
 
 	<path name="voice-call">
