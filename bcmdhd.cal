@@ -147,6 +147,7 @@ swctrlmapext_2g=0x00000000,0x00000000,0x00000000,0x000000,0x000
 ltecxmux=0x534201
 btc_mode=1
 cckdigfilttype=1
+cck_onecore_tx = 1
 phy4350_ss_opt=1
 #PCIe Header Values
 #pciehdr_00=0x380f
