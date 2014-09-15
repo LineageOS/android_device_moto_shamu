@@ -16,4 +16,5 @@
 PRODUCT_COPY_FILES := \
     vendor/broadcom/shamu/proprietary/bcm20795_firmware.ncd:system/vendor/firmware/bcm20795_firmware.ncd:broadcom \
     vendor/broadcom/shamu/proprietary/bcm4354A2.hcd:system/vendor/firmware/bcm4354A2.hcd:broadcom \
+    vendor/broadcom/shamu/proprietary/wlutil:system/xbin/wlutil:broadcom \
 
