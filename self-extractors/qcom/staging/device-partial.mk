@@ -14,21 +14,40 @@
 
 # Qualcomm blob(s) necessary for Shamu hardware
 PRODUCT_COPY_FILES := \
-    vendor/qcom/shamu/proprietary/adspd:system/bin/adspd:qcom \
     vendor/qcom/shamu/proprietary/bridgemgrd:system/bin/bridgemgrd:qcom \
     vendor/qcom/shamu/proprietary/diag_klog:system/bin/diag_klog:qcom \
     vendor/qcom/shamu/proprietary/diag_mdlog:system/bin/diag_mdlog:qcom \
+    vendor/qcom/shamu/proprietary/diag_qshrink4_daemon:system/bin/diag_qshrink4_daemon:qcom \
     vendor/qcom/shamu/proprietary/irsc_util:system/bin/irsc_util:qcom \
     vendor/qcom/shamu/proprietary/ks:system/bin/ks:qcom \
     vendor/qcom/shamu/proprietary/mdm_helper:system/bin/mdm_helper:qcom \
     vendor/qcom/shamu/proprietary/mm-qcamera-daemon:system/bin/mm-qcamera-daemon:qcom \
+    vendor/qcom/shamu/proprietary/mpdecision:system/bin/mpdecision:qcom \
     vendor/qcom/shamu/proprietary/netmgrd:system/bin/netmgrd:qcom \
+    vendor/qcom/shamu/proprietary/PktRspTest:system/bin/PktRspTest:qcom \
     vendor/qcom/shamu/proprietary/port-bridge:system/bin/port-bridge:qcom \
+    vendor/qcom/shamu/proprietary/qmi_ping_clnt_test_0000:system/bin/qmi-framework-tests/qmi_ping_clnt_test_0000:qcom \
+    vendor/qcom/shamu/proprietary/qmi_ping_clnt_test_0001:system/bin/qmi-framework-tests/qmi_ping_clnt_test_0001:qcom \
+    vendor/qcom/shamu/proprietary/qmi_ping_clnt_test_1000:system/bin/qmi-framework-tests/qmi_ping_clnt_test_1000:qcom \
+    vendor/qcom/shamu/proprietary/qmi_ping_clnt_test_1001:system/bin/qmi-framework-tests/qmi_ping_clnt_test_1001:qcom \
+    vendor/qcom/shamu/proprietary/qmi_ping_clnt_test_2000:system/bin/qmi-framework-tests/qmi_ping_clnt_test_2000:qcom \
+    vendor/qcom/shamu/proprietary/qmi_ping_svc:system/bin/qmi-framework-tests/qmi_ping_svc:qcom \
+    vendor/qcom/shamu/proprietary/qmi_ping_test:system/bin/qmi-framework-tests/qmi_ping_test:qcom \
+    vendor/qcom/shamu/proprietary/qmi_test_service_clnt_test_0000:system/bin/qmi-framework-tests/qmi_test_service_clnt_test_0000:qcom \
+    vendor/qcom/shamu/proprietary/qmi_test_service_clnt_test_0001:system/bin/qmi-framework-tests/qmi_test_service_clnt_test_0001:qcom \
+    vendor/qcom/shamu/proprietary/qmi_test_service_clnt_test_1000:system/bin/qmi-framework-tests/qmi_test_service_clnt_test_1000:qcom \
+    vendor/qcom/shamu/proprietary/qmi_test_service_clnt_test_1001:system/bin/qmi-framework-tests/qmi_test_service_clnt_test_1001:qcom \
+    vendor/qcom/shamu/proprietary/qmi_test_service_clnt_test_2000:system/bin/qmi-framework-tests/qmi_test_service_clnt_test_2000:qcom \
+    vendor/qcom/shamu/proprietary/qmi_test_service_test:system/bin/qmi-framework-tests/qmi_test_service_test:qcom \
+    vendor/qcom/shamu/proprietary/qmi_motext_hook:system/bin/qmi_motext_hook:qcom \
+    vendor/qcom/shamu/proprietary/qmi_simple_ril_test:system/bin/qmi_simple_ril_test:qcom \
     vendor/qcom/shamu/proprietary/qmuxd:system/bin/qmuxd:qcom \
     vendor/qcom/shamu/proprietary/qseecomd:system/bin/qseecomd:qcom \
     vendor/qcom/shamu/proprietary/radish:system/bin/radish:qcom \
+    vendor/qcom/shamu/proprietary/rundiag:system/bin/rundiag:qcom \
     vendor/qcom/shamu/proprietary/sensors.qcom:system/bin/sensors.qcom:qcom \
     vendor/qcom/shamu/proprietary/subsystem_ramdump:system/bin/subsystem_ramdump:qcom \
+    vendor/qcom/shamu/proprietary/test_diag:system/bin/test_diag:qcom \
     vendor/qcom/shamu/proprietary/thermal-engine:system/bin/thermal-engine:qcom \
     vendor/qcom/shamu/proprietary/time_daemon:system/bin/time_daemon:qcom \
     vendor/qcom/shamu/proprietary/usbhub:system/bin/usbhub:qcom \
@@ -41,10 +60,15 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/shamu/proprietary/cpp_firmware_v1_6_0.fw:system/etc/firmware/cpp_firmware_v1_6_0.fw:qcom \
     vendor/qcom/shamu/proprietary/cpp_firmware_v1_8_0.fw:system/etc/firmware/cpp_firmware_v1_8_0.fw:qcom \
     vendor/qcom/shamu/proprietary/flp.conf:system/etc/flp.conf:qcom \
+    vendor/qcom/shamu/proprietary/qmi_fw.conf:system/etc/qmi_fw.conf:qcom \
+    vendor/qcom/shamu/proprietary/sap.conf:system/etc/sap.conf:qcom \
     vendor/qcom/shamu/proprietary/sensor_def_qcomdev.conf:system/etc/sensors/sensor_def_qcomdev.conf:qcom \
+    vendor/qcom/shamu/proprietary/thermal-engine-shamu.conf:system/etc/thermal-engine-shamu.conf:qcom \
     vendor/qcom/shamu/proprietary/audio.primary.msm8084.so:system/lib/hw/audio.primary.msm8084.so:qcom \
     vendor/qcom/shamu/proprietary/gps.msm8084.so:system/lib/hw/gps.msm8084.so:qcom \
+    vendor/qcom/shamu/proprietary/sound_trigger.primary.shamu.so:system/lib/hw/sound_trigger.primary.shamu.so:qcom \
     vendor/qcom/shamu/proprietary/libaudioroute.so:system/lib/libaudioroute.so:qcom \
+    vendor/qcom/shamu/proprietary/libdetectmodem.so:system/lib/libdetectmodem.so:qcom \
     vendor/qcom/shamu/proprietary/libgps.utils.so:system/lib/libgps.utils.so:qcom \
     vendor/qcom/shamu/proprietary/libloc_core.so:system/lib/libloc_core.so:qcom \
     vendor/qcom/shamu/proprietary/libloc_eng.so:system/lib/libloc_eng.so:qcom \
@@ -54,7 +78,8 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/shamu/proprietary/libtinycompress.so:system/lib/libtinycompress.so:qcom \
     vendor/qcom/shamu/proprietary/libqcomvisualizer.so:system/lib/soundfx/libqcomvisualizer.so:qcom \
     vendor/qcom/shamu/proprietary/libqcomvoiceprocessing.so:system/lib/soundfx/libqcomvoiceprocessing.so:qcom \
-    vendor/qcom/shamu/proprietary/sound_trigger.primary.shamu.so:system/lib/hw/sound_trigger.primary.shamu.so:qcom \
+    vendor/qcom/shamu/proprietary/libspeakerbundle.so:system/lib/soundfx/libspeakerbundle.so:qcom \
+    vendor/qcom/shamu/proprietary/gsiff_daemon:system/vendor/bin/gsiff_daemon:qcom \
     vendor/qcom/shamu/proprietary/a420_pfp.fw:system/vendor/firmware/a420_pfp.fw:qcom \
     vendor/qcom/shamu/proprietary/a420_pm4.fw:system/vendor/firmware/a420_pm4.fw:qcom \
     vendor/qcom/shamu/proprietary/adsp.b00:system/vendor/firmware/adsp.b00:qcom \
@@ -92,6 +117,8 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/shamu/proprietary/libGLESv1_CM_adreno.so:system/vendor/lib/egl/libGLESv1_CM_adreno.so:qcom \
     vendor/qcom/shamu/proprietary/libGLESv2_adreno.so:system/vendor/lib/egl/libGLESv2_adreno.so:qcom \
     vendor/qcom/shamu/proprietary/libq3dtools_adreno.so:system/vendor/lib/egl/libq3dtools_adreno.so:qcom \
+    vendor/qcom/shamu/proprietary/activity_recognition.msm8084.so:system/vendor/lib/hw/activity_recognition.msm8084.so:qcom \
+    vendor/qcom/shamu/proprietary/flp.msm8084.so:system/vendor/lib/hw/flp.msm8084.so:qcom \
     vendor/qcom/shamu/proprietary/sensors.msm8084.so:system/vendor/lib/hw/sensors.msm8084.so:qcom \
     vendor/qcom/shamu/proprietary/libacdbloader.so:system/vendor/lib/libacdbloader.so:qcom \
     vendor/qcom/shamu/proprietary/libacdbrtac.so:system/vendor/lib/libacdbrtac.so:qcom \
@@ -110,6 +137,7 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/shamu/proprietary/libchromatix_ar0261_common.so:system/vendor/lib/libchromatix_ar0261_common.so:qcom \
     vendor/qcom/shamu/proprietary/libchromatix_ar0261_cpp.so:system/vendor/lib/libchromatix_ar0261_cpp.so:qcom \
     vendor/qcom/shamu/proprietary/libchromatix_ar0261_default_video.so:system/vendor/lib/libchromatix_ar0261_default_video.so:qcom \
+    vendor/qcom/shamu/proprietary/libchromatix_ar0261_liveshot.so:system/vendor/lib/libchromatix_ar0261_liveshot.so:qcom \
     vendor/qcom/shamu/proprietary/libchromatix_ar0261_preview.so:system/vendor/lib/libchromatix_ar0261_preview.so:qcom \
     vendor/qcom/shamu/proprietary/libchromatix_ar0261_snapshot.so:system/vendor/lib/libchromatix_ar0261_snapshot.so:qcom \
     vendor/qcom/shamu/proprietary/libchromatix_imx132_common.so:system/vendor/lib/libchromatix_imx132_common.so:qcom \
@@ -169,7 +197,9 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/shamu/proprietary/libmmcamera2_stats_modules.so:system/vendor/lib/libmmcamera2_stats_modules.so:qcom \
     vendor/qcom/shamu/proprietary/libmmcamera2_vpe_module.so:system/vendor/lib/libmmcamera2_vpe_module.so:qcom \
     vendor/qcom/shamu/proprietary/libmmcamera2_wnr_module.so:system/vendor/lib/libmmcamera2_wnr_module.so:qcom \
+    vendor/qcom/shamu/proprietary/libmmcamera_ar0261_eeprom.so:system/vendor/lib/libmmcamera_ar0261_eeprom.so:qcom \
     vendor/qcom/shamu/proprietary/libmmcamera_ar0261.so:system/vendor/lib/libmmcamera_ar0261.so:qcom \
+    vendor/qcom/shamu/proprietary/libmmcamera_cac2_lib.so:system/vendor/lib/libmmcamera_cac2_lib.so:qcom \
     vendor/qcom/shamu/proprietary/libmmcamera_faceproc.so:system/vendor/lib/libmmcamera_faceproc.so:qcom \
     vendor/qcom/shamu/proprietary/libmmcamera_imglib.so:system/vendor/lib/libmmcamera_imglib.so:qcom \
     vendor/qcom/shamu/proprietary/libmmcamera_imx132.so:system/vendor/lib/libmmcamera_imx132.so:qcom \
@@ -218,6 +248,7 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/shamu/proprietary/libmmcamera_isp_sce40.so:system/vendor/lib/libmmcamera_isp_sce40.so:qcom \
     vendor/qcom/shamu/proprietary/libmmcamera_isp_sub_module.so:system/vendor/lib/libmmcamera_isp_sub_module.so:qcom \
     vendor/qcom/shamu/proprietary/libmmcamera_isp_wb40.so:system/vendor/lib/libmmcamera_isp_wb40.so:qcom \
+    vendor/qcom/shamu/proprietary/libmmcamera_onsemi_cat24c16_eeprom.so:system/vendor/lib/libmmcamera_onsemi_cat24c16_eeprom.so:qcom \
     vendor/qcom/shamu/proprietary/libmmcamera_tintless_algo.so:system/vendor/lib/libmmcamera_tintless_algo.so:qcom \
     vendor/qcom/shamu/proprietary/libmmcamera_tintless_bg_pca_algo.so:system/vendor/lib/libmmcamera_tintless_bg_pca_algo.so:qcom \
     vendor/qcom/shamu/proprietary/libmmcamera_vpu_module.so:system/vendor/lib/libmmcamera_vpu_module.so:qcom \
@@ -229,6 +260,7 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/shamu/proprietary/liboemcamera.so:system/vendor/lib/liboemcamera.so:qcom \
     vendor/qcom/shamu/proprietary/liboemcrypto.so:system/vendor/lib/liboemcrypto.so:qcom \
     vendor/qcom/shamu/proprietary/libois_lc898122.so:system/vendor/lib/libois_lc898122.so:qcom \
+    vendor/qcom/shamu/proprietary/libqcci_legacy.so:system/vendor/lib/libqcci_legacy.so:qcom \
     vendor/qcom/shamu/proprietary/libqdi.so:system/vendor/lib/libqdi.so:qcom \
     vendor/qcom/shamu/proprietary/libqdp.so:system/vendor/lib/libqdp.so:qcom \
     vendor/qcom/shamu/proprietary/libqmi_cci.so:system/vendor/lib/libqmi_cci.so:qcom \
