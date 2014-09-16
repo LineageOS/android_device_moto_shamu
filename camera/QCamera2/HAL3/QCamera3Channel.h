@@ -58,7 +58,6 @@ public:
                    channel_cb_routine cb_routine,
                    cam_padding_info_t *paddingInfo,
                    uint32_t postprocess_mask,
-                   cam_is_type_t is_type,
                    void *userData);
     QCamera3Channel();
     virtual ~QCamera3Channel();
@@ -75,7 +74,7 @@ public:
 
     uint32_t getStreamTypeMask();
     uint32_t getStreamID(uint32_t streamMask);
-    virtual int32_t initialize() = 0;
+    virtual int32_t initialize(cam_is_type_t isType) = 0;
     virtual int32_t request(buffer_handle_t * /*buffer*/,
                 uint32_t /*frameNumber*/){ return 0;};
     virtual int32_t request(buffer_handle_t * /*buffer*/,
@@ -85,7 +84,7 @@ public:
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream) = 0;
 
-    virtual int32_t registerBuffer(buffer_handle_t *buffer) = 0;
+    virtual int32_t registerBuffer(buffer_handle_t *buffer, cam_is_type_t isType) = 0;
     virtual QCamera3Memory *getStreamBufs(uint32_t len) = 0;
     virtual void putStreamBufs() = 0;
 
@@ -140,20 +139,19 @@ public:
                     void *userData,
                     camera3_stream_t *stream,
                     cam_stream_type_t stream_type,
-                    uint32_t postprocess_mask,
-                    cam_is_type_t is_type);
+                    uint32_t postprocess_mask);
 
     virtual ~QCamera3RegularChannel();
 
     virtual int32_t start();
-    virtual int32_t initialize();
+    virtual int32_t initialize(cam_is_type_t isType);
     virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                                             QCamera3Stream *stream);
 
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
-    virtual int32_t registerBuffer(buffer_handle_t *buffer);
+    virtual int32_t registerBuffer(buffer_handle_t *buffer, cam_is_type_t isType);
 
 public:
     static int kMaxBuffers;
@@ -176,11 +174,10 @@ public:
                     channel_cb_routine cb_routine,
                     cam_padding_info_t *paddingInfo,
                     uint32_t postprocess_mask,
-                    cam_is_type_t is_type,
                     void *userData);
     virtual ~QCamera3MetadataChannel();
 
-    virtual int32_t initialize();
+    virtual int32_t initialize(cam_is_type_t isType);
 
     virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
@@ -188,7 +185,7 @@ public:
 
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
-    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/)
+    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/, cam_is_type_t /*isType*/)
             { return NO_ERROR; };
 
 private:
@@ -207,11 +204,10 @@ public:
                     void *userData,
                     camera3_stream_t *stream,
                     uint32_t postprocess_mask,
-                    cam_is_type_t is_type,
                     bool raw_16 = false);
     virtual ~QCamera3RawChannel();
 
-    virtual int32_t initialize();
+    virtual int32_t initialize(cam_is_type_t isType);
 
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream);
@@ -240,15 +236,14 @@ public:
                     cam_dimension_t rawDumpSize,
                     cam_padding_info_t *paddingInfo,
                     void *userData,
-                    uint32_t postprocess_mask,
-                    cam_is_type_t is_type);
+                    uint32_t postprocess_mask);
     virtual ~QCamera3RawDumpChannel();
-    virtual int32_t initialize();
+    virtual int32_t initialize(cam_is_type_t isType);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream);
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
-    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/)
+    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/, cam_is_type_t /*isType*/)
             { return NO_ERROR; };
     virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
     void dumpRawSnapshot(mm_camera_buf_def_t *frame);
@@ -275,11 +270,10 @@ public:
             camera3_stream_t *stream,
             uint32_t postprocess_mask,
             bool is4KVideo,
-            cam_is_type_t is_type,
             QCamera3Channel *metadataChannel);
     ~QCamera3PicChannel();
 
-    virtual int32_t initialize();
+    virtual int32_t initialize(cam_is_type_t isType);
     virtual int32_t stop();
     virtual int32_t request(buffer_handle_t *buffer,
             uint32_t frameNumber,
@@ -304,7 +298,7 @@ public:
             void *userdata);
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
             void *userdata);
-    virtual int32_t registerBuffer(buffer_handle_t *buffer);
+    virtual int32_t registerBuffer(buffer_handle_t *buffer, cam_is_type_t isType);
     int32_t queueReprocMetadata(mm_camera_super_buf_t *metadata);
 
 private:
@@ -349,7 +343,6 @@ public:
                             channel_cb_routine cb_routine,
                             cam_padding_info_t *paddingInfo,
                             uint32_t postprocess_mask,
-                            cam_is_type_t is_type,
                             void *userData, void *ch_hdl);
     QCamera3ReprocessChannel();
     virtual ~QCamera3ReprocessChannel();
@@ -364,7 +357,7 @@ public:
     int32_t extractCrop(qcamera_fwk_input_pp_data_t *frame);
     virtual QCamera3Memory *getStreamBufs(uint32_t len);
     virtual void putStreamBufs();
-    virtual int32_t initialize();
+    virtual int32_t initialize(cam_is_type_t isType);
     int32_t unmapOfflineBuffers(bool all);
     virtual int32_t stop();
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
@@ -377,7 +370,7 @@ public:
            QCamera3Channel *pMetaChannel);
     QCamera3Stream *getStreamBySrcHandle(uint32_t srcHandle);
     QCamera3Stream *getSrcStreamBySrcHandle(uint32_t srcHandle);
-    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/)
+    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/, cam_is_type_t /*isType*/)
             { return NO_ERROR; };
 
 public:
@@ -407,11 +400,10 @@ public:
                     mm_camera_ops_t *cam_ops,
                     cam_padding_info_t *paddingInfo,
                     uint32_t postprocess_mask,
-                    cam_is_type_t is_type,
                     void *userData);
     virtual ~QCamera3SupportChannel();
 
-    virtual int32_t initialize();
+    virtual int32_t initialize(cam_is_type_t isType);
 
     virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
@@ -419,7 +411,7 @@ public:
 
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
-    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/)
+    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/, cam_is_type_t /*isType*/)
             { return NO_ERROR; };
 
     static cam_dimension_t kDim;
