@@ -396,7 +396,7 @@ int32_t mm_stream_fsm_inited(mm_stream_t *my_obj,
                  mm_camera_util_get_dev_name(my_obj->ch_obj->cam_obj->my_hdl));
 
         my_obj->fd = open(dev_name, O_RDWR | O_NONBLOCK);
-        if (my_obj->fd <= 0) {
+        if (my_obj->fd < 0) {
             CDBG_ERROR("%s: open dev returned %d\n", __func__, my_obj->fd);
             rc = -1;
             break;
@@ -409,7 +409,7 @@ int32_t mm_stream_fsm_inited(mm_stream_t *my_obj,
             /* failed setting ext_mode
              * close fd */
             close(my_obj->fd);
-            my_obj->fd = 0;
+            my_obj->fd = -1;
             break;
         }
         break;
@@ -828,7 +828,7 @@ int32_t mm_stream_release(mm_stream_t *my_obj)
          __func__, my_obj->my_hdl, my_obj->fd, my_obj->state);
 
     /* close fd */
-    if(my_obj->fd > 0)
+    if(my_obj->fd >= 0)
     {
         close(my_obj->fd);
     }
@@ -839,6 +839,7 @@ int32_t mm_stream_release(mm_stream_t *my_obj)
 
     /* reset stream obj */
     memset(my_obj, 0, sizeof(mm_stream_t));
+    my_obj->fd = -1;
 
     return 0;
 }
