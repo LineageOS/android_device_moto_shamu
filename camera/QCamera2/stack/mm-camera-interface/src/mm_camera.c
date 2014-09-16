@@ -256,7 +256,7 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
         n_try--;
         my_obj->ctrl_fd = open(dev_name, O_RDWR | O_NONBLOCK);
         CDBG("%s:  ctrl_fd = %d, errno == %d", __func__, my_obj->ctrl_fd, errno);
-        if((my_obj->ctrl_fd > 0) || (errno != EIO) || (n_try <= 0 )) {
+        if((my_obj->ctrl_fd >= 0) || (errno != EIO) || (n_try <= 0 )) {
             CDBG_HIGH("%s:  opened, break out while loop", __func__);
             break;
         }
@@ -265,7 +265,7 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
         usleep(sleep_msec * 1000);
     }while (n_try > 0);
 
-    if (my_obj->ctrl_fd <= 0) {
+    if (my_obj->ctrl_fd < 0) {
         CDBG_ERROR("%s: cannot open control fd of '%s' (%s)\n",
                  __func__, dev_name, strerror(errno));
         rc = -1;
@@ -278,7 +278,7 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
         n_try--;
         my_obj->ds_fd = mm_camera_socket_create(cam_idx, MM_CAMERA_SOCK_TYPE_UDP);
         CDBG("%s:  ds_fd = %d, errno = %d", __func__, my_obj->ds_fd, errno);
-        if((my_obj->ds_fd > 0) || (n_try <= 0 )) {
+        if((my_obj->ds_fd >= 0) || (n_try <= 0 )) {
             CDBG("%s:  opened, break out while loop", __func__);
             break;
         }
@@ -287,7 +287,7 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
         usleep(sleep_msec * 1000);
     } while (n_try > 0);
 
-    if (my_obj->ds_fd <= 0) {
+    if (my_obj->ds_fd < 0) {
         CDBG_ERROR("%s: cannot open domain socket fd of '%s'(%s)\n",
                  __func__, dev_name, strerror(errno));
         rc = -1;
@@ -321,13 +321,13 @@ on_error:
         CDBG_ERROR("%s: Invalid camera object\n", __func__);
         rc = -1;
     } else {
-        if (my_obj->ctrl_fd > 0) {
+        if (my_obj->ctrl_fd >= 0) {
             close(my_obj->ctrl_fd);
-            my_obj->ctrl_fd = 0;
+            my_obj->ctrl_fd = -1;
         }
-        if (my_obj->ds_fd > 0) {
+        if (my_obj->ds_fd >= 0) {
             mm_camera_socket_close(my_obj->ds_fd);
-            my_obj->ds_fd = 0;
+            my_obj->ds_fd = -1;
         }
     }
 
@@ -361,13 +361,13 @@ int32_t mm_camera_close(mm_camera_obj_t *my_obj)
     CDBG("%s : Close evt cmd Thread in Cam Close",__func__);
     mm_camera_cmd_thread_release(&my_obj->evt_thread);
 
-    if(my_obj->ctrl_fd > 0) {
+    if(my_obj->ctrl_fd >= 0) {
         close(my_obj->ctrl_fd);
-        my_obj->ctrl_fd = 0;
+        my_obj->ctrl_fd = -1;
     }
-    if(my_obj->ds_fd > 0) {
+    if(my_obj->ds_fd >= 0) {
         mm_camera_socket_close(my_obj->ds_fd);
-        my_obj->ds_fd = 0;
+        my_obj->ds_fd = -1;
     }
     pthread_mutex_destroy(&my_obj->msg_lock);
 
