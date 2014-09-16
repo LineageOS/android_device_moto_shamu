@@ -668,6 +668,11 @@ typedef enum {
 } cam_is_type_t;
 
 typedef enum {
+   DIS_DISABLE,
+   DIS_ENABLE
+} cam_dis_mode_t;
+
+typedef enum {
   NON_SECURE,
   SECURE
 } cam_stream_secure_t;
