@@ -15,5 +15,5 @@
 # Atmel blob(s) necessary for Shamu hardware
 PRODUCT_COPY_FILES := \
     vendor/atmel/shamu/proprietary/atmel-a432-14061601-0102aa-shamu-p1.tdat:system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat:atmel \
-    vendor/atmel/shamu/proprietary/atmel-a432-14081501-0102aa-shamu.tdat:system/vendor/firmware/atmel-a432-14081501-0102aa-shamu.tdat:atmel \
+    vendor/atmel/shamu/proprietary/atmel-a432-14090401-0103aa-shamu.tdat:system/vendor/firmware/atmel-a432-14090401-0103aa-shamu.tdat:atmel \
 
