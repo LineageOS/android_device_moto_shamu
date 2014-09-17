@@ -93,7 +93,7 @@ int mm_camera_socket_create(int cam_id, mm_camera_sock_type_t sock_type)
  *==========================================================================*/
 void mm_camera_socket_close(int fd)
 {
-    if (fd > 0) {
+    if (fd >= 0) {
       close(fd);
     }
 }
