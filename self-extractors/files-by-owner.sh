@@ -40,9 +40,6 @@ cat > $target_owner/staging/device-partial.mk << EOF
 EOF
 echo -n "# " >> $target_owner/staging/device-partial.mk
 case $target_owner in
-atmel)
-echo -n Atmel >> $target_owner/staging/device-partial.mk
-;;
 broadcom)
 echo -n Broadcom >> $target_owner/staging/device-partial.mk
 ;;

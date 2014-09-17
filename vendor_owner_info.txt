@@ -116,8 +116,8 @@ system/vendor/firmware/adsp.b10:qcom
 system/vendor/firmware/adsp.b11:qcom
 system/vendor/firmware/adsp.b12:qcom
 system/vendor/firmware/adsp.mdt:qcom
-system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat:atmel
-system/vendor/firmware/atmel-a432-14090401-0103aa-shamu.tdat:atmel
+system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat:moto
+system/vendor/firmware/atmel-a432-14090401-0103aa-shamu.tdat:moto
 system/vendor/firmware/bcm20795_firmware.ncd:broadcom
 system/vendor/firmware/bcm4354A2.hcd:broadcom
 system/vendor/firmware/keymaster/keymaster.b00:qcom
