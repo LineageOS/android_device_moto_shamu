@@ -14,7 +14,6 @@
 
 LOCAL_STEM := shamu/device-partial.mk
 
-$(call inherit-product-if-exists, vendor/atmel/$(LOCAL_STEM))
 $(call inherit-product-if-exists, vendor/broadcom/$(LOCAL_STEM))
 $(call inherit-product-if-exists, vendor/moto/$(LOCAL_STEM))
 $(call inherit-product-if-exists, vendor/qcom/$(LOCAL_STEM))

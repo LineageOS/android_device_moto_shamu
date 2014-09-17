@@ -1,9 +1,3 @@
-  atmel)
-    TO_EXTRACT="\
-            system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat \
-            system/vendor/firmware/atmel-a432-14090401-0103aa-shamu.tdat \
-            "
-    ;;
   broadcom)
     TO_EXTRACT="\
             system/vendor/firmware/bcm20795_firmware.ncd \
@@ -50,6 +44,8 @@
             system/lib/librecoglib.so \
             system/lib/libsupermodel.so \
             system/vendor/firmware/acdb.mbn \
+            system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat \
+            system/vendor/firmware/atmel-a432-14090401-0103aa-shamu.tdat \
             system/vendor/firmware/left.boost.config \
             system/vendor/firmware/left.boost.eq \
             system/vendor/firmware/left.boost_music_table.preset \
