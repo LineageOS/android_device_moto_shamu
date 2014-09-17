@@ -51,6 +51,8 @@ PRODUCT_COPY_FILES := \
     vendor/moto/shamu/proprietary/librecoglib.so:system/lib/librecoglib.so:moto \
     vendor/moto/shamu/proprietary/libsupermodel.so:system/lib/libsupermodel.so:moto \
     vendor/moto/shamu/proprietary/acdb.mbn:system/vendor/firmware/acdb.mbn:moto \
+    vendor/moto/shamu/proprietary/atmel-a432-14061601-0102aa-shamu-p1.tdat:system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat:moto \
+    vendor/moto/shamu/proprietary/atmel-a432-14090401-0103aa-shamu.tdat:system/vendor/firmware/atmel-a432-14090401-0103aa-shamu.tdat:moto \
     vendor/moto/shamu/proprietary/left.boost.config:system/vendor/firmware/left.boost.config:moto \
     vendor/moto/shamu/proprietary/left.boost.eq:system/vendor/firmware/left.boost.eq:moto \
     vendor/moto/shamu/proprietary/left.boost_music_table.preset:system/vendor/firmware/left.boost_music_table.preset:moto \
