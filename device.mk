@@ -223,7 +223,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.fsg_reload_on=1 \
 
 PRODUCT_PROPERTY_OVERRIDES += \
-    persist.radio.wait_srvcs_time=60
+    persist.radio.wait_srvcs_time=60 \
 
 # Camera configuration
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
