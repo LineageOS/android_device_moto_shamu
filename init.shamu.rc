@@ -567,3 +567,20 @@ service bugreport /system/bin/dumpstate -d -p -B \
     disabled
     oneshot
     keycodes 114 115 116
+
+service mdm_helper_proxy /system/bin/mdm_helper_proxy
+    class core
+    user system
+    group system
+    disabled
+
+# Stop mdm_helper_proxy in case of shutdown
+on property:sys.shutdown.requested=*
+    stop mdm_helper_proxy
+
+# Start mdm_helper_proxy after RIL.
+on property:ro.mdm_helper_proxy_req=true
+    start mdm_helper_proxy
+
+on property:init.svc.ril-daemon=running
+    setprop ro.mdm_helper_proxy_req true
