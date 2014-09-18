@@ -236,8 +236,6 @@ on boot
     chown media media /sys/devices/c55_ctrl/gpio_c55_int/value
     chown media media /sys/devices/c55_ctrl/gpio_core/value
     chown media media /sys/devices/c55_ctrl/gpio_reset/value
-    mkdir /data/adspd/ 0770 media media
-    mkdir /data/adspd/1 0770 media media
 
 # subsystem ramdump collection
     write /sys/module/subsystem_restart/parameters/enable_ramdumps 1
@@ -317,6 +315,10 @@ on post-fs-data
     # NFC local data and nfcee xml storage
     mkdir /data/nfc 0770 nfc nfc
     mkdir /data/nfc/param 0770 nfc nfc
+
+    # Audio DSP permissions
+    mkdir /data/adspd 0770 media media
+    mkdir /data/adspd/1 0770 media media
 
 on property:init.svc.wpa_supplicant=stopped
     stop dhcpcd
