@@ -4711,12 +4711,16 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             sizeof(result_keys_basic)/sizeof(result_keys_basic[0]);
     //NOTE: Please increase available_result_keys array size before
     //adding any new entries.
-    int32_t available_result_keys[result_keys_cnt+1];
+    int32_t available_result_keys[result_keys_cnt+3];
     memcpy(available_result_keys, result_keys_basic,
             sizeof(result_keys_basic));
     if (gCamCapability[cameraId]->supported_focus_modes_cnt > 1) {
         available_result_keys[result_keys_cnt++] =
                 ANDROID_CONTROL_AF_REGIONS;
+    }
+    if (facingBack) {
+       available_result_keys[result_keys_cnt++] = ANDROID_SENSOR_NOISE_PROFILE;
+       available_result_keys[result_keys_cnt++] = ANDROID_SENSOR_GREEN_SPLIT;
     }
     //NOTE: Please increase available_result_keys array size before
     //adding any new entries.
