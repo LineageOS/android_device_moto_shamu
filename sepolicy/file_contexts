@@ -50,6 +50,7 @@
 
 # tee devices
 /dev/block/mmcblk0rpmb          u:object_r:drm_block_device:s0
+/dev/block/mmcblk0p34           u:object_r:drm_block_device:s0
 
 # Used by keystore to access trustzone
 /dev/qseecom                   u:object_r:tee_device:s0
