@@ -1972,16 +1972,11 @@ int QCamera3HardwareInterface::processCaptureRequest(
 
         //If EIS is enabled, turn it on for video
         //for camera use case, front camcorder and 4k video, no eis
-        bool setEis = gCamCapability[mCameraId]->position == CAM_POSITION_BACK &&
+        bool setEis = mEisEnable && (gCamCapability[mCameraId]->position == CAM_POSITION_BACK &&
             (mCaptureIntent ==  CAMERA3_TEMPLATE_VIDEO_RECORD ||
-             mCaptureIntent == CAMERA3_TEMPLATE_VIDEO_SNAPSHOT);
-
+             mCaptureIntent == CAMERA3_TEMPLATE_VIDEO_SNAPSHOT));
         int32_t vsMode;
-        if (setEis){
-           vsMode = DIS_ENABLE;
-        } else {
-           vsMode = DIS_DISABLE;
-        }
+        vsMode = (setEis)? DIS_ENABLE: DIS_DISABLE;
         rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_PARM_DIS_ENABLE,
                 sizeof(vsMode), &vsMode);
@@ -5304,13 +5299,13 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     /* OIS/EIS disable */
     char eis_prop[PROPERTY_VALUE_MAX];
     memset(eis_prop, 0, sizeof(eis_prop));
-    property_get("camera.eis.enable", eis_prop, "1");
+    property_get("camera.eis.enable", eis_prop, "0");
     mEisEnable = atoi(eis_prop);
 
     /* Force video to use OIS */
     char videoOisProp[PROPERTY_VALUE_MAX];
     memset(videoOisProp, 0, sizeof(videoOisProp));
-    property_get("persist.camera.ois.video", videoOisProp, "0");
+    property_get("persist.camera.ois.video", videoOisProp, "1");
     uint8_t forceVideoOis = atoi(videoOisProp);
 
     uint8_t controlIntent = 0;
