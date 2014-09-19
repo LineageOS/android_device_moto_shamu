@@ -28,8 +28,8 @@
 
     <!-- Values for GPS configuration (US Cellular) -->
     <string-array translatable="false" name="config_gpsParameters">
-        <item>CAPABILITEIS=0x31</item>
         <item>GPS_LOCK=3</item>
         <item>LPP_PROFILE=2</item>
+        <item>SUPL_MODE=0</item>
     </string-array>
 </resources>

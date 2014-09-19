@@ -26,9 +26,9 @@
 
     <!-- Values for GPS configuration (Sprint) -->
     <string-array translatable="false" name="config_gpsParameters">
-        <item>CAPABILITIES=0x31</item>
         <item>GPS_LOCK=3</item>
         <item>LPP_PROFILE=2</item>
+        <item>SUPL_MODE=0</item>
     </string-array>
 
     <!-- The VoiceMail default value is displayed to my own number if it is true -->
