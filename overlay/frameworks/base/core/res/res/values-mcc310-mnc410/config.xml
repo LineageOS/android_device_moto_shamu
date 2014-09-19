@@ -37,9 +37,10 @@
 
     <!-- Values for GPS configuration (AT&T) -->
     <string-array translatable="false" name="config_gpsParameters">
-        <item>CAPABILITIES=0x33</item>
         <item>GPS_LOCK=1</item>
         <item>LPP_PROFILE=3</item>
+        <item>SUPL_HOST=NONE</item>
+        <item>SUPL_MODE=1</item>
     </string-array>
 
     <!-- If Voice Radio Technology is RIL_RADIO_TECHNOLOGY_LTE:14 this is the Values
