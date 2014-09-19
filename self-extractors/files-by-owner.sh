@@ -43,14 +43,8 @@ case $target_owner in
 broadcom)
 echo -n Broadcom >> $target_owner/staging/device-partial.mk
 ;;
-htc)
-echo -n HTC >> $target_owner/staging/device-partial.mk
-;;
 moto)
 echo -n Motorola >> $target_owner/staging/device-partial.mk
-;;
-nvidia)
-echo -n Nvidia >> $target_owner/staging/device-partial.mk
 ;;
 qcom)
 echo -n Qualcomm >> $target_owner/staging/device-partial.mk
