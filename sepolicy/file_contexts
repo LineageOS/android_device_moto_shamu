@@ -113,6 +113,7 @@
 /system/bin/irsc_util           u:object_r:irsc_util_exec:s0
 /system/bin/ks                  u:object_r:mdm_helper_exec:s0
 /system/bin/mdm_helper          u:object_r:mdm_helper_exec:s0
+/system/bin/mdm_helper_proxy    u:object_r:mdm_helper_exec:s0
 /system/bin/mm-qcamera-daemon   u:object_r:camera_exec:s0
 /system/bin/mpdecision          u:object_r:mpdecision_exec:s0
 /system/bin/netmgrd             u:object_r:netmgrd_exec:s0
