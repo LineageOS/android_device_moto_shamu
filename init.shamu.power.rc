@@ -10,6 +10,7 @@ on charger
     write /sys/module/msm_pm/modes/cpu0/standalone_power_collapse/suspend_enabled 1
     write /sys/module/msm_pm/modes/cpu0/standalone_power_collapse/idle_enabled 1
     write /sys/module/msm_pm/modes/cpu0/retention/idle_enabled 1
+    start mpdecision
 
 on boot
     # Shamu boots with performance governor.
@@ -92,3 +93,4 @@ on property:dev.bootcomplete=1
     write /sys/module/cpu_boost/parameters/input_boost_freq 1497600
     write /sys/module/cpu_boost/parameters/input_boost_ms 40
     write /dev/cpuctl/apps/cpu.notify_on_migrate 1
+    start mpdecision
