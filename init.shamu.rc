@@ -364,7 +364,7 @@ service netmgrd /system/bin/netmgrd
     group radio
 
 service sensors /system/bin/sensors.qcom
-    class main
+    class core
     user root
     group root
 
