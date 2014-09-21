@@ -240,7 +240,8 @@ on boot
     mkdir /data/adspd/1 0770 media media
 
 # subsystem ramdump collection
-    write /sys/module/subsystem_restart/parameters/enable_ramdumps 1
+on property:persist.sys.qc.sub.rdump.on=*
+    write /sys/module/subsystem_restart/parameters/enable_ramdumps ${persist.sys.qc.sub.rdump.on}
 
 # msm specific files that need to be created on /data
 on post-fs-data
