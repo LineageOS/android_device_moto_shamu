@@ -2,6 +2,7 @@
 # History:
 #      1. July 24 2014 - updated pa parameters by BRCM
 #      2. August 22 2014 - updated pa parameters by MOTO (John Ballen)
+#      3. September 19 2014 - use GPIO instead of PCIe to wake up the host (Andrey Gostev)
 # Following fields WILL be written into OTP
 
 # Following fields WILL NOT be written in OTP  
@@ -148,6 +149,7 @@ ltecxmux=0x534201
 btc_mode=1
 cckdigfilttype=1
 cck_onecore_tx = 1
+host_wake_opt=0
 phy4350_ss_opt=1
 #PCIe Header Values
 #pciehdr_00=0x380f
