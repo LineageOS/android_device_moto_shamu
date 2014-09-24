@@ -973,11 +973,9 @@ int QCamera3HardwareInterface::configureStreams(
         stream_config_info.stream_sizes[i].height = newStream->height;
         if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL &&
             newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED && jpegStream){
-            //for zsl stream the size is active array size
-            stream_config_info.stream_sizes[i].width =
-                    gCamCapability[mCameraId]->active_array_size.width;
-            stream_config_info.stream_sizes[i].height =
-                    gCamCapability[mCameraId]->active_array_size.height;
+            //for zsl stream the size is jpeg stream size
+            stream_config_info.stream_sizes[i].width = jpegStream->width;
+            stream_config_info.stream_sizes[i].height = jpegStream->height;
             stream_config_info.type[i] = CAM_STREAM_TYPE_SNAPSHOT;
             stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_NONE;
         } else {
@@ -1010,12 +1008,7 @@ int QCamera3HardwareInterface::configureStreams(
                       stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_NONE;
                   }
               }
-              if (isZsl) {
-                  stream_config_info.stream_sizes[i].width =
-                          gCamCapability[mCameraId]->active_array_size.width;
-                  stream_config_info.stream_sizes[i].height =
-                          gCamCapability[mCameraId]->active_array_size.height;
-              } else if (m_bIs4KVideo) {
+              if (m_bIs4KVideo) {
                   stream_config_info.stream_sizes[i].width = videoWidth;
                   stream_config_info.stream_sizes[i].height = videoHeight;
               }
@@ -1058,8 +1051,26 @@ int QCamera3HardwareInterface::configureStreams(
                 break;
             }
 
-            if (newStream->stream_type == CAMERA3_STREAM_OUTPUT ||
-                    newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL) {
+            if (newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED &&
+                    newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL &&
+                    jpegStream) {
+                QCamera3Channel *channel = NULL;
+                newStream->max_buffers = QCamera3RegularChannel::kMaxBuffers;
+                channel = new QCamera3RegularChannel(mCameraHandle->camera_handle,
+                        mCameraHandle->ops, captureResultCb,
+                        &gCamCapability[mCameraId]->padding_info,
+                        this,
+                        newStream,
+                        (cam_stream_type_t) stream_config_info.type[i],
+                        stream_config_info.postprocess_mask[i],
+                        jpegStream->width, jpegStream->height);
+                    if (channel == NULL) {
+                        ALOGE("%s: allocation of channel failed", __func__);
+                        pthread_mutex_unlock(&mMutex);
+                        return -ENOMEM;
+                    }
+                    newStream->priv = channel;
+            } else if (newStream->stream_type == CAMERA3_STREAM_OUTPUT) {
                 QCamera3Channel *channel = NULL;
                 switch (newStream->format) {
                 case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
@@ -1132,11 +1143,7 @@ int QCamera3HardwareInterface::configureStreams(
         }
     }
 
-    if (isZsl) {
-        mPictureChannel->overrideYuvSize(
-                gCamCapability[mCameraId]->active_array_size.width,
-                gCamCapability[mCameraId]->active_array_size.height);
-    } else if (mPictureChannel && m_bIs4KVideo) {
+    if (mPictureChannel && m_bIs4KVideo) {
         mPictureChannel->overrideYuvSize(videoWidth, videoHeight);
     }
 
