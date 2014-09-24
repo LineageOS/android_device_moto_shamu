@@ -1301,6 +1301,11 @@ int QCamera3HardwareInterface::validateCaptureRequest(
                     __func__, frameNumber, (long)idx);
             return BAD_VALUE;
         }
+        if (*(b->buffer) == NULL) {
+            ALOGE("%s: Request %d: Buffer %ld: NULL private handle!",
+                    __func__, frameNumber, (long)idx);
+            return BAD_VALUE;
+        }
         idx++;
         b = request->output_buffers + idx;
     } while (idx < (ssize_t)request->num_output_buffers);
