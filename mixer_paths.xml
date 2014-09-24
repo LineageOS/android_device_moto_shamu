@@ -290,6 +290,8 @@
 	<!-- afe-proxy -->
 	<ctl name="AFE_PCM_RX Audio Mixer MultiMedia4" value="0" />
 	<!-- afe-proxy end-->
+	<!-- set the port id which has none topology used on products which has AOV-->
+	<ctl name="Port None Topology" value="PRI_MI2S_TX" />
 
 <!-- These are audio route (FE to BE) specific mixer settings -->
 	<!-- BT SCO samplerate -->
