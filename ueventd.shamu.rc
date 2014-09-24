@@ -57,6 +57,9 @@
 /dev/ttyHS99              0660   bluetooth  net_bt_stack
 /sys/devices/virtual/smdpkt/smdcntl*       open_timeout   0664 radio radio
 
+#SAR device
+/sys/devices/mmi_sar_ctrl.*                         sar_wifi       0220    radio    radio
+
 /dev/subsys_esoc*         0640   system     radio
 
 /dev/block/platform/msm_sdcc.1/by-name/frp 0600 system system
