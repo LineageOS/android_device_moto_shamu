@@ -49,4 +49,7 @@
         <item>7</item>
         <item>9</item>
     </integer-array>
+
+    <!-- Default network policy warning threshold, in megabytes. -->
+    <integer name="config_networkPolicyDefaultWarning">51200</integer>
 </resources>
