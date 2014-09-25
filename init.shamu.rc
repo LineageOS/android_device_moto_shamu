@@ -243,6 +243,10 @@ on boot
 on property:persist.sys.qc.sub.rdump.on=*
     write /sys/module/subsystem_restart/parameters/enable_ramdumps ${persist.sys.qc.sub.rdump.on}
 
+# permissions for CapSense firmware update
+    chown radio radio /sys/devices/cycapsense_prog.1/cycapsense_fw
+    chmod 0220 /sys/devices/cycapsense_prog.1/cycapsense_fw
+
 # msm specific files that need to be created on /data
 on post-fs-data
     # we will remap this as /mnt/sdcard with the sdcard fuse tool
