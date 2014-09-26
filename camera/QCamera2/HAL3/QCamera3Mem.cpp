@@ -35,6 +35,7 @@
 #include <utils/Log.h>
 #include <utils/Errors.h>
 #include <gralloc_priv.h>
+#include <qdMetaData.h>
 #include "QCamera3Mem.h"
 #include "QCamera3HWI.h"
 
@@ -596,16 +597,19 @@ QCamera3GrallocMemory::~QCamera3GrallocMemory()
  *
  * PARAMETERS :
  *   @buffers : buffer_handle_t pointer
+ *   @type :    cam_stream_type_t
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int QCamera3GrallocMemory::registerBuffer(buffer_handle_t *buffer)
+int QCamera3GrallocMemory::registerBuffer(buffer_handle_t *buffer,
+        cam_stream_type_t type)
 {
     status_t ret = NO_ERROR;
     struct ion_fd_data ion_info_fd;
     void *vaddr = NULL;
+    int32_t colorSpace = ITU_R_601;
     CDBG(" %s : E ", __FUNCTION__);
 
     memset(&ion_info_fd, 0, sizeof(ion_info_fd));
@@ -624,6 +628,21 @@ int QCamera3GrallocMemory::registerBuffer(buffer_handle_t *buffer)
     mBufferHandle[mBufferCount] = buffer;
     mPrivateHandle[mBufferCount] =
         (struct private_handle_t *)(*mBufferHandle[mBufferCount]);
+
+    switch (type) {
+    case CAM_STREAM_TYPE_PREVIEW:
+    case CAM_STREAM_TYPE_POSTVIEW:
+    case CAM_STREAM_TYPE_SNAPSHOT:
+    case CAM_STREAM_TYPE_VIDEO:
+        colorSpace = ITU_R_601;
+        break;
+    default:
+        colorSpace = ITU_R_601;
+        break;
+    }
+    ALOGE("%s: setting colorSpace to %d for stream type %d", __func__, colorSpace, type);
+    setMetaData(mPrivateHandle[mBufferCount], UPDATE_COLOR_SPACE, &colorSpace);
+
     mMemInfo[mBufferCount].main_ion_fd = open("/dev/ion", O_RDONLY);
     if (mMemInfo[mBufferCount].main_ion_fd < 0) {
         ALOGE("%s: failed: could not open ion device", __func__);
