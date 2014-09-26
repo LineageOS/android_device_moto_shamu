@@ -6,6 +6,7 @@
 /data/misc/location/gsiff(/.*)? u:object_r:gsiffd_data_file:s0
 /data/misc/location/quipc(/.*)? u:object_r:quipc_data_file:s0
 /data/ss-ram-dumps(/.*)?       u:object_r:ram_dump_logs:s0
+/data/adspd(/.*)?              u:object_r:adspd_data_file:s0
 
 # TODO move out of /data/system
 /data/system/dropbox-add(/.*)? u:object_r:dropbox_data_file:s0
