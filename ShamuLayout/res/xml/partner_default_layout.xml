@@ -92,9 +92,10 @@
 	                className="com.android.calendar.AllInOneActivity"
 	                />
 
+
 			<favorite
-		            packageName="com.google.android.apps.plus"
-				    className="com.google.android.apps.plus.phone.ConversationListActivity"
+		            packageName="com.google.android.apps.photos"
+				    className="com.google.android.apps.photos.home.HomeActivity"
 					/>
 
 			<favorite
@@ -129,12 +130,12 @@
 	                />
 
 			<favorite
-			packageName="com.google.android.apps.docs.editors.sheets"
+					packageName="com.google.android.apps.docs.editors.sheets"
 			        className="com.google.android.apps.docs.app.NewMainProxyActivity"
 			        />
 
 			<favorite
-			packageName="com.google.android.apps.docs.editors.slides"
+					packageName="com.google.android.apps.docs.editors.slides"
 			        className="com.google.android.apps.docs.app.NewMainProxyActivity"
 			        />
 
