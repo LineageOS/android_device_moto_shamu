@@ -437,22 +437,22 @@
 		<ctl name="Voice Stub Tx Mixer STUB_1_TX_HL" value="1" />
 	</path>
 
-	<path name="voice-call speaker">
+	<path name="voice-call handset">
 		<ctl name="SLIM_1 SampleRate" value="48000" />
 		<ctl name="SLIM_1_TX Channels" value="One" />
 		<ctl name="Voice Stub Tx Mixer SLIM_1_TX" value="1" />
 		<ctl name="QUAT_MI2S_RX_Voice Mixer Voice Stub" value="1" />
 		<ctl name="QUAT_MI2S_RX Port Mixer SLIM_1_TX" value="1" />
-		<ctl name="SLIM_3_RX Channels" value="One" />
-		<ctl name="SLIMBUS_3_RX_Voice Mixer Voice Stub" value="1" />
-		<ctl name="Voice Stub Tx Mixer QUAT_MI2S_TX" value="1" />
-		<ctl name="SLIMBUS_3_RX Port Mixer QUAT_MI2S_TX" value="1" />
 		<ctl name="Voice Stub Tx Mixer STUB_TX_HL" value="1" />
 		<ctl name="Voice Stub Tx Mixer STUB_1_TX_HL" value="1" />
 	</path>
 
-	<path name="voice-call handset">
-		<path name="voice-call speaker" />
+	<path name="voice-call speaker">
+		<path name="voice-call handset" />
+		<ctl name="SLIM_3_RX Channels" value="One" />
+		<ctl name="SLIMBUS_3_RX_Voice Mixer Voice Stub" value="1" />
+		<ctl name="Voice Stub Tx Mixer QUAT_MI2S_TX" value="1" />
+		<ctl name="SLIMBUS_3_RX Port Mixer QUAT_MI2S_TX" value="1" />
 	</path>
 
 	<path name="voice-call bt-sco">
