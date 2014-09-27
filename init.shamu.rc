@@ -476,7 +476,7 @@ service iprenew_eth0 /system/bin/dhcpcd -n
 
 service adspd /system/bin/adspd /dev/ttyHS3
    class late_start
-   socket adspdsock stream 0660 media media
+   socket adspdsock stream 0666 media media
    user media
    group media input
 
