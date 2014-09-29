@@ -208,6 +208,14 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.apm_sim_not_pwdn=1
 
+#Disable QC Oem Hook
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.radio.oem_socket=false
+
+#Support for graceful UICC Vltg supply deact
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.qcril_uim_vcc_feature=1
+
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.telephony.default_cdma_sub=0
 
