@@ -16,6 +16,7 @@ type gsiffd_data_file, data_file_type, file_type;
 type quipc_data_file, data_file_type, file_type;
 type dropbox_data_file, file_type, data_file_type;
 type adspd_data_file, file_type, data_file_type;
+type audio_cutback_data_file, file_type, data_file_type;
 
 type sysfs_rmnet, fs_type, sysfs_type;
 type sysfs_smdcntl_open_timeout, fs_type, sysfs_type;
@@ -34,3 +35,4 @@ type sysfs_rqstats, fs_type, sysfs_type;
 type sysfs_cpu_online, fs_type, sysfs_type;
 type sysfs_cpuboost, fs_type, sysfs_type;
 type sysfs_capsense_update, fs_type, sysfs_type;
+type sysfs_sar_wifi, fs_type, sysfs_type;
