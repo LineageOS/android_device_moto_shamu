@@ -98,6 +98,10 @@ $(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4356
 PRODUCT_COPY_FILES += \
     device/moto/shamu/bcmdhd.cal:system/etc/wifi/bcmdhd.cal
 
+# For SPN display
+PRODUCT_COPY_FILES += \
+    device/moto/shamu/spn-conf.xml:system/etc/spn-conf.xml
+
 PRODUCT_TAGS += dalvik.gc.type-precise
 
 # This device is 560dpi.  However the platform doesn't
