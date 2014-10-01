@@ -7,6 +7,7 @@
 /data/misc/location/quipc(/.*)? u:object_r:quipc_data_file:s0
 /data/ss-ram-dumps(/.*)?       u:object_r:ram_dump_logs:s0
 /data/adspd(/.*)?              u:object_r:adspd_data_file:s0
+/data/misc/audio_cutback(/.*)? u:object_r:audio_cutback_data_file:s0
 
 # TODO move out of /data/system
 /data/system/dropbox-add(/.*)? u:object_r:dropbox_data_file:s0
@@ -144,4 +145,5 @@
 /sys/bus/platform/drivers/xhci_msm_hsic(/.*)?            u:object_r:sysfs_xhci_msm_hsic:s0
 /sys/devices/msm_hsic_host/host_ready                    u:object_r:sysfs_msm_hsic_host:s0
 
-/sys/devices/cycapsense_prog\.1/cycapsense_fw             u:object_r:sysfs_capsense_update:s0
+/sys/devices/cycapsense_prog.1/cycapsense_fw             u:object_r:sysfs_capsense_update:s0
+/sys/devices/mmi_sar_ctrl.[0-9]*/sar_wifi                u:object_r:sysfs_sar_wifi:s0
