@@ -37,6 +37,7 @@
         <item>GPS_LOCK=1</item>
         <item>LPP_PROFILE=2</item>
         <item>SUPL_MODE=1</item>
+        <item>SUPL_ES=0</item>
     </string-array>
 
 
