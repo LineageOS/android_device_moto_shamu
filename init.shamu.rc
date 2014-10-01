@@ -97,6 +97,9 @@ on post-fs-data
     mkdir /data/ss-ram-dumps 0750 radio log
     mkdir /data/ss-ram-dumps/bp-dumps 0750 radio log
 
+    # rild files
+    mkdir /data/misc/audio_cutback 0770 radio audio
+
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864
