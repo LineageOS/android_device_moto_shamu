@@ -46,14 +46,11 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/shamu/proprietary/radish:system/bin/radish:qcom \
     vendor/qcom/shamu/proprietary/rundiag:system/bin/rundiag:qcom \
     vendor/qcom/shamu/proprietary/sensors.qcom:system/bin/sensors.qcom:qcom \
-    vendor/qcom/shamu/proprietary/subsystem_ramdump:system/bin/subsystem_ramdump:qcom \
     vendor/qcom/shamu/proprietary/test_diag:system/bin/test_diag:qcom \
     vendor/qcom/shamu/proprietary/thermal-engine:system/bin/thermal-engine:qcom \
     vendor/qcom/shamu/proprietary/time_daemon:system/bin/time_daemon:qcom \
     vendor/qcom/shamu/proprietary/usbhub:system/bin/usbhub:qcom \
     vendor/qcom/shamu/proprietary/usbhub_init:system/bin/usbhub_init:qcom \
-    vendor/qcom/shamu/proprietary/aonvr1.bin:system/etc/firmware/aonvr1.bin:qcom \
-    vendor/qcom/shamu/proprietary/aonvr2.bin:system/etc/firmware/aonvr2.bin:qcom \
     vendor/qcom/shamu/proprietary/cpp_firmware_v1_1_1.fw:system/etc/firmware/cpp_firmware_v1_1_1.fw:qcom \
     vendor/qcom/shamu/proprietary/cpp_firmware_v1_1_6.fw:system/etc/firmware/cpp_firmware_v1_1_6.fw:qcom \
     vendor/qcom/shamu/proprietary/cpp_firmware_v1_2_0.fw:system/etc/firmware/cpp_firmware_v1_2_0.fw:qcom \
@@ -95,6 +92,8 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/shamu/proprietary/adsp.b11:system/vendor/firmware/adsp.b11:qcom \
     vendor/qcom/shamu/proprietary/adsp.b12:system/vendor/firmware/adsp.b12:qcom \
     vendor/qcom/shamu/proprietary/adsp.mdt:system/vendor/firmware/adsp.mdt:qcom \
+    vendor/qcom/shamu/proprietary/aonvr1.bin:system/vendor/firmware/aonvr1.bin:qcom \
+    vendor/qcom/shamu/proprietary/aonvr2.bin:system/vendor/firmware/aonvr2.bin:qcom \
     vendor/qcom/shamu/proprietary/keymaster.b00:system/vendor/firmware/keymaster/keymaster.b00:qcom \
     vendor/qcom/shamu/proprietary/keymaster.b01:system/vendor/firmware/keymaster/keymaster.b01:qcom \
     vendor/qcom/shamu/proprietary/keymaster.b02:system/vendor/firmware/keymaster/keymaster.b02:qcom \
