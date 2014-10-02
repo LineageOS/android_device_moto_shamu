@@ -3,3 +3,6 @@ qmux_socket(radio)
 
 # Grant access to qmux socket that is created by rild
 allow radio rild_qmuxd_socket:sock_file rw_file_perms;
+
+# Grant access to ims socket that is created by ims_qmid, ims_datad
+allow radio ims_socket:sock_file write;
