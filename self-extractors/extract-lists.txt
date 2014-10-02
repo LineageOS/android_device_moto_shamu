@@ -30,7 +30,6 @@
             system/etc/firmware/vpu.b12 \
             system/etc/firmware/vpu.mbn \
             system/etc/firmware/vpu.mdt \
-            system/etc/firmware/VRGain.bin \
             system/etc/General_cal.acdb \
             system/etc/Global_cal.acdb \
             system/etc/Handset_cal.acdb \
@@ -45,23 +44,26 @@
             system/lib/libsupermodel.so \
             system/vendor/firmware/acdb.mbn \
             system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat \
-            system/vendor/firmware/atmel-a432-14090401-0103aa-shamu.tdat \
-            system/vendor/firmware/left.boost.config \
-            system/vendor/firmware/left.boost.eq \
+            system/vendor/firmware/atmel-a432-14092505-0103aa-shamu.tdat \
+            system/vendor/firmware/left.boost.music.eq \
             system/vendor/firmware/left.boost_music_table.preset \
             system/vendor/firmware/left.boost_n1b12.patch \
             system/vendor/firmware/left.boost_n1c2.patch \
+            system/vendor/firmware/left.boost.ringtone.eq \
             system/vendor/firmware/left.boost_ringtone_table.preset \
             system/vendor/firmware/left.boost.speaker \
+            system/vendor/firmware/left.boost.voice.eq \
             system/vendor/firmware/left.boost_voice_table.preset \
-            system/vendor/firmware/right.boost.config \
-            system/vendor/firmware/right.boost.eq \
+            system/vendor/firmware/right.boost.music.eq \
             system/vendor/firmware/right.boost_music_table.preset \
             system/vendor/firmware/right.boost_n1b12.patch \
             system/vendor/firmware/right.boost_n1c2.patch \
+            system/vendor/firmware/right.boost.ringtone.eq \
             system/vendor/firmware/right.boost_ringtone_table.preset \
             system/vendor/firmware/right.boost.speaker \
+            system/vendor/firmware/right.boost.voice.eq \
             system/vendor/firmware/right.boost_voice_table.preset \
+            system/vendor/firmware/VRGain.bin \
             system/vendor/lib/libmdmcutback.so \
             system/vendor/lib/libmotext_inf.so \
             system/vendor/lib/libqmimotext.so \
@@ -136,14 +138,11 @@
             system/bin/radish \
             system/bin/rundiag \
             system/bin/sensors.qcom \
-            system/bin/subsystem_ramdump \
             system/bin/test_diag \
             system/bin/thermal-engine \
             system/bin/time_daemon \
             system/bin/usbhub \
             system/bin/usbhub_init \
-            system/etc/firmware/aonvr1.bin \
-            system/etc/firmware/aonvr2.bin \
             system/etc/firmware/cpp_firmware_v1_1_1.fw \
             system/etc/firmware/cpp_firmware_v1_1_6.fw \
             system/etc/firmware/cpp_firmware_v1_2_0.fw \
@@ -185,6 +184,8 @@
             system/vendor/firmware/adsp.b11 \
             system/vendor/firmware/adsp.b12 \
             system/vendor/firmware/adsp.mdt \
+            system/vendor/firmware/aonvr1.bin \
+            system/vendor/firmware/aonvr2.bin \
             system/vendor/firmware/keymaster/keymaster.b00 \
             system/vendor/firmware/keymaster/keymaster.b01 \
             system/vendor/firmware/keymaster/keymaster.b02 \
