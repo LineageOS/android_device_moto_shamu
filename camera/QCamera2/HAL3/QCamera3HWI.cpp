@@ -997,7 +997,7 @@ int QCamera3HardwareInterface::configureStreams(
               break;
            case HAL_PIXEL_FORMAT_BLOB:
               stream_config_info.type[i] = CAM_STREAM_TYPE_SNAPSHOT;
-              if (m_bIsVideo && !isZsl) {
+              if (m_bIs4KVideo && !isZsl) {
                   stream_config_info.postprocess_mask[i] = CAM_QCOM_FEATURE_PP_SUPERSET;
               } else {
                   if (bUseCommonFeatureMask &&
