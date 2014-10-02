@@ -35,7 +35,6 @@
 #include <utils/Log.h>
 #include <utils/Errors.h>
 #include <gralloc_priv.h>
-#include <qdMetaData.h>
 #include "QCamera3Mem.h"
 #include "QCamera3HWI.h"
 
@@ -568,7 +567,8 @@ int QCamera3HeapMemory::getMatchBufIndex(void * /*object*/)
  * RETURN     : none
  *==========================================================================*/
 QCamera3GrallocMemory::QCamera3GrallocMemory()
-        : QCamera3Memory()
+        : QCamera3Memory(),
+          mColorSpace(ITU_R_601)
 {
     for (int i = 0; i < MM_CAMERA_MAX_NUM_FRAMES; i ++) {
         mBufferHandle[i] = NULL;
@@ -597,19 +597,16 @@ QCamera3GrallocMemory::~QCamera3GrallocMemory()
  *
  * PARAMETERS :
  *   @buffers : buffer_handle_t pointer
- *   @type :    cam_stream_type_t
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int QCamera3GrallocMemory::registerBuffer(buffer_handle_t *buffer,
-        cam_stream_type_t type)
+int QCamera3GrallocMemory::registerBuffer(buffer_handle_t *buffer)
 {
     status_t ret = NO_ERROR;
     struct ion_fd_data ion_info_fd;
     void *vaddr = NULL;
-    int32_t colorSpace = ITU_R_601;
     CDBG(" %s : E ", __FUNCTION__);
 
     memset(&ion_info_fd, 0, sizeof(ion_info_fd));
@@ -629,19 +626,7 @@ int QCamera3GrallocMemory::registerBuffer(buffer_handle_t *buffer,
     mPrivateHandle[mBufferCount] =
         (struct private_handle_t *)(*mBufferHandle[mBufferCount]);
 
-    switch (type) {
-    case CAM_STREAM_TYPE_PREVIEW:
-    case CAM_STREAM_TYPE_POSTVIEW:
-    case CAM_STREAM_TYPE_SNAPSHOT:
-    case CAM_STREAM_TYPE_VIDEO:
-        colorSpace = ITU_R_601;
-        break;
-    default:
-        colorSpace = ITU_R_601;
-        break;
-    }
-    ALOGE("%s: setting colorSpace to %d for stream type %d", __func__, colorSpace, type);
-    setMetaData(mPrivateHandle[mBufferCount], UPDATE_COLOR_SPACE, &colorSpace);
+    setMetaData(mPrivateHandle[mBufferCount], UPDATE_COLOR_SPACE, &mColorSpace);
 
     mMemInfo[mBufferCount].main_ion_fd = open("/dev/ion", O_RDONLY);
     if (mMemInfo[mBufferCount].main_ion_fd < 0) {
@@ -869,6 +854,37 @@ void *QCamera3GrallocMemory::getBufferHandle(int index)
         return NULL;
     }
     return mBufferHandle[index];
+}
+
+/*===========================================================================
+ * FUNCTION   : setColorSpace
+ *
+ * DESCRIPTION: Set color space based on capture intent
+ *
+ * PARAMETERS :
+ *   @intent   : capture intent
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR -- successs
+ *              non-zero failure ccde
+ *==========================================================================*/
+int32_t QCamera3GrallocMemory::setColorSpace(uint8_t intent)
+{
+    int32_t rc = NO_ERROR;
+
+    switch (intent) {
+    case ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD:
+    case ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT:
+        mColorSpace = ITU_R_709;
+        break;
+    default:
+        mColorSpace = ITU_R_601;
+        break;
+    }
+    ALOGI("%s: setting colorSpace to %d for capture intent %d",
+            __func__, mColorSpace, intent);
+
+    return rc;
 }
 
 }; //namespace qcamera
