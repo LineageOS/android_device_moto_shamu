@@ -296,7 +296,7 @@ PRODUCT_COPY_FILES += \
 endif
 
 # Enable for volte call
-AUDIO_FEATURE_ENABLED_MULTI_VOICE_SESSIONS := true
+AUDIO_FEATURE_ENABLED_MULTI_VOICE_SESSIONS := false
 
 PRODUCT_PROPERTY_OVERRIDES += \
    ro.hwui.texture_cache_size=72 \
