@@ -292,6 +292,8 @@
 	<!-- afe-proxy end-->
 	<!-- set the port id which has none topology used on products which has AOV-->
 	<ctl name="Port None Topology" value="PRI_MI2S_TX" />
+	<!-- EC_REF -->
+	<ctl name="AUDIO_REF_EC_UL1 MUX" value="None" />
 
 <!-- These are audio route (FE to BE) specific mixer settings -->
 	<!-- BT SCO samplerate -->
@@ -339,6 +341,18 @@
 
 	<path name="deep-buffer-playback afe-proxy">
 		<ctl name="AFE_PCM_RX Audio Mixer MultiMedia1" value="1" />
+	</path>
+
+	<path name="echo-reference">
+		<ctl name="AUDIO_REF_EC_UL1 MUX" value="SLIM_RX" />
+	</path>
+
+	<path name="echo-reference speaker">
+		<ctl name="AUDIO_REF_EC_UL1 MUX" value="QUAT_MI2S_TX" />
+	</path>
+
+	<path name="echo-reference handset">
+		<path name="echo-reference speaker" />
 	</path>
 
 	<path name="low-latency-playback">
