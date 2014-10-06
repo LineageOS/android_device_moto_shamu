@@ -11,6 +11,8 @@ do
 done
 shift $(($OPTIND-1))
 
+scriptname=${0##*/}
+
 uppers=ABCDEFP1234567890
 lowers=abcdefp1234567p9
 
@@ -35,17 +37,25 @@ debug()
 	[ $dbg_on ] && echo "Debug: $*"
 }
 
+notice()
+{
+	echo "$*"
+	echo "$scriptname: $*" > /dev/kmsg
+}
+
 error_and_leave()
 {
-	err_code=$1
+	local err_msg
+	local err_code=$1
 	case $err_code in
-		1)  echo "Error: No response from touch IC";;
-		2)  echo "Error: Cannot read property $1";;
-		3)  echo "Error: No matching firmware file found";;
-		4)  echo "Error: Touch IC is in bootloader mode";;
-		5)  echo "Error: Touch provides no reflash interface";;
-		6)  echo "Error: Touch driver is not running";;
+		1)  err_msg="Error: No response from touch IC";;
+		2)  err_msg="Error: Cannot read property $1";;
+		3)  err_msg="Error: No matching firmware file found";;
+		4)  err_msg="Error: Touch IC is in bootloader mode";;
+		5)  err_msg="Error: Touch provides no reflash interface";;
+		6)  err_msg="Error: Touch driver is not running";;
 	esac
+	notice "$err_msg"
 	exit $err_code
 }
 
@@ -181,11 +191,11 @@ then
 	str_cfg_id_new=${property#*-}
 	debug "firmware config ids: expected $str_cfg_id_latest, current $str_cfg_id_new"
 
-	echo "Touch firmware config id at boot time $str_cfg_id_boot"
-	echo "Touch firmware config id in the file $str_cfg_id_latest"
-	echo "Touch firmware config id currently programmed $str_cfg_id_new"
+	notice "Touch firmware config id at boot time $str_cfg_id_boot"
+	notice "Touch firmware config id in the file $str_cfg_id_latest"
+	notice "Touch firmware config id currently programmed $str_cfg_id_new"
 else
-	echo "Touch firmware is up to date"
+	notice "Touch firmware is up to date"
 fi
 
 unset device_property hwrev_property
