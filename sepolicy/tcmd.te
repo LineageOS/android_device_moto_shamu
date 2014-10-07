@@ -18,3 +18,7 @@ allow tcmd diag_device:chr_file rw_file_perms;
 
 # Uses raw socket
 allow tcmd self:capability net_raw;
+
+# To allow read telephony.db
+allow tcmd radio_data_file:dir r_dir_perms;
+allow tcmd radio_data_file:file r_file_perms;
