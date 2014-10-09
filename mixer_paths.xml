@@ -443,6 +443,12 @@
 		<path name="low-latency-record bt-sco" />
 	</path>
 
+	<path name="afe-proxy-playback afe-proxy">
+	</path>
+
+	<path name="afe-proxy-record afe-proxy">
+	</path>
+
 	<path name="voice-call">
 		<ctl name="STUB_RX Mixer Voice Stub" value="1" />
 		<ctl name="Voice Stub Tx Mixer STUB_TX_HL" value="1" />
@@ -486,6 +492,20 @@
 		<path name="voice-call bt-sco" />
 	</path>
 
+    <path name="voice-call afe-proxy">
+        <ctl name="SLIM_1 SampleRate" value="48000" />
+        <ctl name="SLIM_1_TX Channels" value="Two" />
+        <ctl name="SLIM_3_RX Channels" value="Two" />
+        <ctl name="Voice Stub Tx Mixer AFE_PCM_TX" value="1" />
+        <ctl name="SLIMBUS_1_RX Mixer Voice Stub" value="1" />
+        <ctl name="Voice Stub Tx Mixer SLIM_1_TX" value="1" />
+        <ctl name="AFE_PCM_RX_Voice Mixer Voice Stub" value="1" />
+        <ctl name="SLIMBUS_1_RX Port Mixer AFE_PCM_TX" value="1" />
+        <ctl name="AFE_PCM_RX Port Mixer SLIM_1_TX" value="1" />
+        <ctl name="SLIMBUS_3_RX_Voice Mixer Voice Stub" value="1" />
+        <ctl name="SLIMBUS_3_RX Port Mixer AFE_PCM_RX" value="1" />
+    </path>
+
 	<path name="voice2-call">
 		<ctl name="STUB_RX Mixer Voice2 Stub" value="1" />
 		<ctl name="Voice2 Stub Tx Mixer STUB_TX_HL" value="1" />
@@ -510,6 +530,20 @@
 		<ctl name="SLIM_1 SampleRate" value="16000" />
 		<path name="voice2-call bt-sco" />
 	</path>
+
+    <path name="voice2-call afe-proxy">
+        <ctl name="SLIM_1 SampleRate" value="48000" />
+        <ctl name="SLIM_1_TX Channels" value="Two" />
+        <ctl name="SLIM_3_RX Channels" value="Two" />
+        <ctl name="Voice2 Stub Tx Mixer AFE_PCM_TX" value="1" />
+        <ctl name="SLIMBUS_1_RX Mixer Voice2 Stub" value="1" />
+        <ctl name="Voice2 Stub Tx Mixer SLIM_1_TX" value="1" />
+        <ctl name="AFE_PCM_RX_Voice Mixer Voice2 Stub" value="1" />
+        <ctl name="SLIMBUS_1_RX Port Mixer AFE_PCM_TX" value="1" />
+        <ctl name="AFE_PCM_RX Port Mixer SLIM_1_TX" value="1" />
+        <ctl name="SLIMBUS_3_RX_Voice Mixer Voice2 Stub" value="1" />
+        <ctl name="SLIMBUS_3_RX Port Mixer AFE_PCM_RX" value="1" />
+    </path>
 
 	<path name="volte-call">
 		<ctl name="STUB_RX Mixer VoLTE Stub" value="1" />
@@ -553,6 +587,20 @@
 	<path name="volte-call handset">
 		<path name="volte-call speaker" />
 	</path>
+
+    <path name="volte-call afe-proxy">
+        <ctl name="SLIM_1 SampleRate" value="48000" />
+        <ctl name="SLIM_1_TX Channels" value="Two" />
+        <ctl name="SLIM_3_RX Channels" value="Two" />
+        <ctl name="VoLTE Stub Tx Mixer AFE_PCM_TX" value="1" />
+        <ctl name="SLIMBUS_1_RX Mixer VoLTE Stub" value="1" />
+        <ctl name="VoLTE Stub Tx Mixer SLIM_1_TX" value="1" />
+        <ctl name="AFE_PCM_RX_Voice Mixer VoLTE Stub" value="1" />
+        <ctl name="SLIMBUS_1_RX Port Mixer AFE_PCM_TX" value="1" />
+        <ctl name="AFE_PCM_RX Port Mixer SLIM_1_TX" value="1" />
+        <ctl name="SLIMBUS_3_RX_Voice Mixer VoLTE Stub" value="1" />
+        <ctl name="SLIMBUS_3_RX Port Mixer AFE_PCM_RX" value="1" />
+    </path>
 
 	<path name="incall-rec-uplink">
 		<ctl name="MultiMedia1 Mixer SLIM_6_TX" value="1" />
@@ -940,5 +988,11 @@
 	<path name="voice-tty-vco-handset-mic">
 		<path name="handset-mic" />
 	</path>
+
+    <path name="voice-rx">
+    </path>
+
+    <path name="voice-tx">
+    </path>
 
 </mixer>
