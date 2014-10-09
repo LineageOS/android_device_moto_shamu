@@ -252,10 +252,10 @@
     <bool translatable="false" name="config_wifi_batched_scan_supported">true</bool>
 
     <!-- MMS user agent string -->
-    <string name="config_mms_user_agent" translatable="false">motoxt1103</string>
+    <string name="config_mms_user_agent" translatable="false">nexus6</string>
 
     <!-- MMS user agent prolfile url -->
-    <string name="config_mms_user_agent_profile_url" translatable="false">http://uaprof.motorola.com/phoneconfig/motoxt1103/Profile/motoxt1103.rdf</string>
+    <string name="config_mms_user_agent_profile_url" translatable="false">http://uaprof.motorola.com/phoneconfig/nexus6/Profile/nexus6.rdf</string>
 
     <!--  Maximum number of supported users -->
     <integer name="config_multiuserMaximumUsers">4</integer>
