@@ -158,7 +158,8 @@ PRODUCT_PACKAGES += \
     libaudio-resampler
 
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.audio.monitorRotation=true
+    ro.audio.monitorRotation=true \
+    ro.audio.media_deep_buffer=1
 
 # Audio effects
 PRODUCT_PACKAGES += \
