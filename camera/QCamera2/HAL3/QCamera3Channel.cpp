@@ -2927,7 +2927,7 @@ int32_t QCamera3ReprocessChannel::unmapOfflineBuffers(bool all)
     if (!mOfflineMetaBuffers.empty()) {
         QCamera3Stream *stream = NULL;
         List<OfflineBuffer>::iterator it = mOfflineMetaBuffers.begin();
-        for (; it != mOfflineBuffers.end(); it++) {
+        for (; it != mOfflineMetaBuffers.end(); it++) {
            stream = (*it).stream;
            if (NULL != stream) {
                rc = stream->unmapBuf((*it).type,
