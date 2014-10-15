@@ -28,6 +28,7 @@ type persist_data_file, file_type;
 type persist_drm_file, file_type;
 type persist_sensors_file, file_type;
 type persist_modem_file, file_type;
+type persist_hiddenmenu_file, file_type;
 
 #Define the files written during the operation of mpdecision    56
 type sysfs_mpdecision, fs_type, sysfs_type;
