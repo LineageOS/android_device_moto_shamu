@@ -5500,7 +5500,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     scaler_crop_region[3] = gCamCapability[mCameraId]->active_array_size.height;
     settings.update(ANDROID_SCALER_CROP_REGION, scaler_crop_region, 4);
 
-    static const uint8_t antibanding_mode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_60HZ;
+    static const uint8_t antibanding_mode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_AUTO;
     settings.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE, &antibanding_mode, 1);
 
     /*focus distance*/
