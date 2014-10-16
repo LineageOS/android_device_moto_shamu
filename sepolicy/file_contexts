@@ -110,6 +110,7 @@
 /persist/data/sfs(/.*)?         u:object_r:persist_drm_file:s0
 /persist/sensors(/.*)?          u:object_r:persist_sensors_file:s0
 /persist/mdm(/.*)?              u:object_r:persist_modem_file:s0
+/persist/public/hiddenmenu(/.*)? u:object_r:persist_hiddenmenu_file:s0
 
 #/system binaries
 /system/bin/adspd               u:object_r:adspd_exec:s0

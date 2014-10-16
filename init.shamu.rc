@@ -58,6 +58,9 @@ on fs
     mkdir /persist/data 0700 system system
     mkdir /persist/data/sfs 0700 system system
     mkdir /persist/data/tz 0700 system system
+    mkdir /persist/public 0755 system radio
+    mkdir /persist/public/hiddenmenu 0775 system radio
+    mkdir /persist/public/hiddenmenu/data 0775 system radio
 
     wait /dev/block/platform/msm_sdcc.1/by-name/oem
     mount ext4 /dev/block/platform/msm_sdcc.1/by-name/oem /oem ro nosuid nodev context=u:object_r:oemfs:s0
