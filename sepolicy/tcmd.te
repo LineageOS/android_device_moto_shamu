@@ -22,3 +22,8 @@ allow tcmd self:capability net_raw;
 # To allow read telephony.db
 allow tcmd radio_data_file:dir r_dir_perms;
 allow tcmd radio_data_file:file r_file_perms;
+
+# To allow read/write /persist
+allow tcmd persist_file:dir search;
+allow tcmd persist_hiddenmenu_file:dir rw_dir_perms;
+allow tcmd persist_hiddenmenu_file:file create_file_perms;
