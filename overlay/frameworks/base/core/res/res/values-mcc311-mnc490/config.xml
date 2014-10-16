@@ -57,4 +57,11 @@
 
     <!-- Default network policy warning threshold, in megabytes. -->
     <integer name="config_networkPolicyDefaultWarning">51200</integer>
+
+    <!-- Entitlement APP provisioning for Tethering -->
+    <string-array translatable="false" name="config_mobile_hotspot_provision_app">
+        <item>com.motorola.entitlement</item>
+        <item>com.motorola.entitlement.EntitlementDialogActivity</item>
+    </string-array>
+
 </resources>
