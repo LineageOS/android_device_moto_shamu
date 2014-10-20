@@ -51,7 +51,7 @@ PRODUCT_COPY_FILES := \
     vendor/moto/shamu/proprietary/libsupermodel.so:system/lib/libsupermodel.so:moto \
     vendor/moto/shamu/proprietary/acdb.mbn:system/vendor/firmware/acdb.mbn:moto \
     vendor/moto/shamu/proprietary/atmel-a432-14061601-0102aa-shamu-p1.tdat:system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat:moto \
-    vendor/moto/shamu/proprietary/atmel-a432-14092505-0103aa-shamu.tdat:system/vendor/firmware/atmel-a432-14092505-0103aa-shamu.tdat:moto \
+    vendor/moto/shamu/proprietary/atmel-a432-14101503-0103aa-shamu.tdat:system/vendor/firmware/atmel-a432-14101503-0103aa-shamu.tdat:moto \
     vendor/moto/shamu/proprietary/left.boost.music.eq:system/vendor/firmware/left.boost.music.eq:moto \
     vendor/moto/shamu/proprietary/left.boost_music_table.preset:system/vendor/firmware/left.boost_music_table.preset:moto \
     vendor/moto/shamu/proprietary/left.boost_n1b12.patch:system/vendor/firmware/left.boost_n1b12.patch:moto \
