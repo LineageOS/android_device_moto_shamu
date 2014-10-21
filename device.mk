@@ -214,7 +214,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
     rild.libpath=/system/vendor/lib/libril-qc-qmi-1.so
 
 PRODUCT_PROPERTY_OVERRIDES += \
-    persist.radio.apm_sim_not_pwdn=1
+    persist.radio.apm_sim_not_pwdn=1 \
+    persist.radio.no_wait_for_card=1
 
 #Disable QC Oem Hook
 PRODUCT_PROPERTY_OVERRIDES += \
