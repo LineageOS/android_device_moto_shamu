@@ -20,12 +20,6 @@
 <!-- These resources are around just to allow their values to be customized
      for different hardware and product builds. -->
 <resources>
-    <!-- MMS user agent string -->
-    <string name="config_mms_user_agent" translatable="false">moto-xt1103/Android</string>
-
-    <!-- MMS user agent prolfile url -->
-    <string name="config_mms_user_agent_profile_url" translatable="false">http://uaprof.motorola.com/phoneconfig/motoxt1103/Profile/motoxt1103.rdf</string>
-
     <!-- Values for GPS configuration (US Cellular) -->
     <string-array translatable="false" name="config_gpsParameters">
         <item>SUPL_HOST=supl.google.com</item>
