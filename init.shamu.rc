@@ -530,6 +530,7 @@ on charger
 
 service charger /charger
     class charger
+    group log
     seclabel u:r:healthd:s0
 
 # Allow usb charging to be disabled peristently
