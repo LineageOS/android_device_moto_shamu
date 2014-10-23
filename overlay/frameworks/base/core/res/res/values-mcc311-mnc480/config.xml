@@ -20,11 +20,8 @@
 <!-- These resources are around just to allow their values to be customized
      for different hardware and product builds. -->
 <resources>
-    <!-- MMS user agent string -->
-    <string name="config_mms_user_agent" translatable="false">motoxt1103</string>
-
     <!-- MMS user agent prolfile url -->
-    <string name="config_mms_user_agent_profile_url" translatable="false">http://uaprof.vtext.com/mot/xt1103/xt1103.xml</string>
+    <string name="config_mms_user_agent_profile_url" translatable="false">http://uaprof.vtext.com/mot/nexus6/nexus6.xml</string>
 
     <!-- Values for GPS configuration (Verizon) -->
     <string-array translatable="false" name="config_gpsParameters">
