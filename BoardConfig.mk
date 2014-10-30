@@ -42,6 +42,10 @@ MAX_EGL_CACHE_KEY_SIZE := 12*1024
 # of the device.
 MAX_EGL_CACHE_SIZE := 2048*1024
 
+# Maximum dimension (width or height) of a virtual display that will be
+# handled by the hardware composer
+MAX_VIRTUAL_DISPLAY_DIMENSION := 2048
+
 BOARD_EGL_CFG := device/moto/shamu/egl.cfg
 
 BOARD_USES_ALSA_AUDIO := true
