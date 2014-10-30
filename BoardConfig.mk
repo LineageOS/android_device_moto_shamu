@@ -109,6 +109,7 @@ BOARD_SEPOLICY_DIRS += \
 
 BOARD_SEPOLICY_UNION += \
         adspd.te \
+        atfwd.te \
         bluetooth.te \
         bluetooth_loader.te \
         bootanim.te \
@@ -129,6 +130,7 @@ BOARD_SEPOLICY_UNION += \
         radio.te \
         rild.te \
         sensors.te \
+        service.te \
         ss_ramdump.te \
         surfaceflinger.te \
         system_app.te \
