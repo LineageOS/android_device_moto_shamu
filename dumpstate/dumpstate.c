@@ -29,5 +29,7 @@ void dumpstate_board()
     dump_file("SMB135x Status Regs", "/d/smb135x/status_registers");
     dump_file("Battery Statistics", "/sys/class/power_supply/battery/uevent");
     dump_file("PCIe IPC Logging", "/d/ipc_logging/pcie0/log");
+    dump_file("HSIC IPC Control Logging", "/d/xhci_msm_hsic_dbg/show_ctrl_events");
+    dump_file("HSIC IPC Data Logging", "/d/xhci_msm_hsic_dbg/show_data_events");
     run_command("Subsystem Tombstone list", 5, SU_PATH, "root", "ls", "-l", "/data/tombstones/ramdump", NULL);
 };
