@@ -41,3 +41,7 @@ allow netmgrd net_radio_prop:property_service set;
 
 # Permission to run netd commands
 allow netmgrd netd_socket:sock_file write;
+
+#Allow access to files associated with netd
+allow netmgrd net_data_file:dir r_dir_perms;
+
