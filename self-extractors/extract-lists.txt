@@ -44,7 +44,7 @@
             system/lib/libsupermodel.so \
             system/vendor/firmware/acdb.mbn \
             system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat \
-            system/vendor/firmware/atmel-a432-14101503-0103aa-shamu.tdat \
+            system/vendor/firmware/atmel-a432-14103001-0103aa-shamu.tdat \
             system/vendor/firmware/left.boost.music.eq \
             system/vendor/firmware/left.boost_music_table.preset \
             system/vendor/firmware/left.boost_n1b12.patch \
