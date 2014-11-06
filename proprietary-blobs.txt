@@ -131,7 +131,7 @@
 /system/vendor/firmware/aonvr1.bin
 /system/vendor/firmware/aonvr2.bin
 /system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat
-/system/vendor/firmware/atmel-a432-14101503-0103aa-shamu.tdat
+/system/vendor/firmware/atmel-a432-14103001-0103aa-shamu.tdat
 /system/vendor/firmware/bcm20795_firmware.ncd
 /system/vendor/firmware/bcm4354A2.hcd
 /system/vendor/firmware/keymaster/keymaster.b00
