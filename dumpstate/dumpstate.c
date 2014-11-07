@@ -31,5 +31,10 @@ void dumpstate_board()
     dump_file("PCIe IPC Logging", "/d/ipc_logging/pcie0/log");
     dump_file("HSIC IPC Control Logging", "/d/xhci_msm_hsic_dbg/show_ctrl_events");
     dump_file("HSIC IPC Data Logging", "/d/xhci_msm_hsic_dbg/show_data_events");
+    dump_file("ION kmalloc heap", "/d/ion/heaps/kmalloc");
+    dump_file("ION multimedia heap", "/d/ion/heaps/mm");
+    dump_file("ION peripheral-image-loader heap", "/d/ion/heaps/pil_1");
+    dump_file("ION secure-comm heap", "/d/ion/heaps/qsecom");
+    dump_file("ION system heap", "/d/ion/heaps/system");
     run_command("Subsystem Tombstone list", 5, SU_PATH, "root", "ls", "-l", "/data/tombstones/ramdump", NULL);
 };
