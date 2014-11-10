@@ -39,8 +39,8 @@ system/bin/time_daemon:qcom
 system/bin/usbhub_init:qcom
 system/bin/usbhub:qcom
 system/etc/Bluetooth_cal.acdb:moto
-system/etc/diag/FIT_V12.cfg:moto
-system/etc/diag/mdm/FIT_V12.cfg:moto
+system/etc/diag/mdm/FIT_V15_audio.cfg:moto
+system/etc/diag/mdm/FIT_V15.cfg:moto
 system/etc/diag/mdm/sensors_qxdm.cfg:moto
 system/etc/diag/sensors_qxdm.cfg:moto
 system/etc/firmware/cpp_firmware_v1_1_1.fw:qcom
@@ -114,8 +114,8 @@ system/vendor/firmware/adsp.b12:qcom
 system/vendor/firmware/adsp.mdt:qcom
 system/vendor/firmware/aonvr1.bin:qcom
 system/vendor/firmware/aonvr2.bin:qcom
-system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat:moto
-system/vendor/firmware/atmel-a432-14103001-0103aa-shamu.tdat:moto
+system/vendor/firmware/atmel-a432-*-shamu-p1.tdat:moto
+system/vendor/firmware/atmel-a432-*-shamu.tdat:moto
 system/vendor/firmware/bcm20795_firmware.ncd:broadcom
 system/vendor/firmware/bcm4354A2.hcd:broadcom
 system/vendor/firmware/keymaster/keymaster.b00:qcom
