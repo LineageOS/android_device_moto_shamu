@@ -18,8 +18,8 @@ PRODUCT_COPY_FILES := \
     vendor/moto/shamu/proprietary/ramdump:system/bin/ramdump:moto \
     vendor/moto/shamu/proprietary/tcmd_mini:system/bin/tcmd_mini:moto \
     vendor/moto/shamu/proprietary/Bluetooth_cal.acdb:system/etc/Bluetooth_cal.acdb:moto \
-    vendor/moto/shamu/proprietary/FIT_V12.cfg:system/etc/diag/FIT_V12.cfg:moto \
-    vendor/moto/shamu/proprietary/FIT_V12.cfg:system/etc/diag/mdm/FIT_V12.cfg:moto \
+    vendor/moto/shamu/proprietary/FIT_V15_audio.cfg:system/etc/diag/mdm/FIT_V15_audio.cfg:moto \
+    vendor/moto/shamu/proprietary/FIT_V15.cfg:system/etc/diag/mdm/FIT_V15.cfg:moto \
     vendor/moto/shamu/proprietary/sensors_qxdm.cfg:system/etc/diag/mdm/sensors_qxdm.cfg:moto \
     vendor/moto/shamu/proprietary/sensors_qxdm.cfg:system/etc/diag/sensors_qxdm.cfg:moto \
     vendor/moto/shamu/proprietary/vpu.b00:system/etc/firmware/vpu.b00:moto \
