@@ -2062,7 +2062,12 @@ int QCamera3HardwareInterface::processCaptureRequest(
 
         //Then start them.
         CDBG_HIGH("%s: Start META Channel", __func__);
-        mMetadataChannel->start();
+        rc = mMetadataChannel->start();
+        if (rc < 0) {
+            ALOGE("%s: META channel start failed", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
 
         if (mSupportChannel) {
             rc = mSupportChannel->start();
@@ -2077,7 +2082,12 @@ int QCamera3HardwareInterface::processCaptureRequest(
             it != mStreamInfo.end(); it++) {
             QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
             CDBG_HIGH("%s: Start Regular Channel mask=%d", __func__, channel->getStreamTypeMask());
-            channel->start();
+            rc = channel->start();
+            if (rc < 0) {
+                ALOGE("%s: channel start failed", __func__);
+                pthread_mutex_unlock(&mMutex);
+                return rc;
+            }
         }
 
         if (mRawDumpChannel) {
@@ -2578,20 +2588,41 @@ int QCamera3HardwareInterface::flush()
     mFlush = false;
 
     // Start the Streams/Channels
+    int rc = NO_ERROR;
     if (mMetadataChannel) {
         /* If content of mStreamInfo is not 0, there is metadata stream */
-        mMetadataChannel->start();
+        rc = mMetadataChannel->start();
+        if (rc < 0) {
+            ALOGE("%s: META channel start failed", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
     }
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
         QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
-        channel->start();
+        rc = channel->start();
+        if (rc < 0) {
+            ALOGE("%s: channel start failed", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
     }
     if (mSupportChannel) {
-        mSupportChannel->start();
+        rc = mSupportChannel->start();
+        if (rc < 0) {
+            ALOGE("%s: Support channel start failed", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
     }
     if (mRawDumpChannel) {
-        mRawDumpChannel->start();
+        rc = mRawDumpChannel->start();
+        if (rc < 0) {
+            ALOGE("%s: RAW dump channel start failed", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
     }
 
     pthread_mutex_unlock(&mMutex);
