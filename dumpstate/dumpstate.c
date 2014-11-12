@@ -27,6 +27,7 @@ void dumpstate_board()
     dump_file("SMB135x Config Regs", "/d/smb135x/config_registers");
     dump_file("SMB135x IRQ Count", "/d/smb135x/irq_count");
     dump_file("SMB135x Status Regs", "/d/smb135x/status_registers");
+    dump_file("wlan", "/sys/module/bcmdhd/parameters/info_string");
     dump_file("Battery Statistics", "/sys/class/power_supply/battery/uevent");
     dump_file("PCIe IPC Logging", "/d/ipc_logging/pcie0/log");
     dump_file("HSIC IPC Control Logging", "/d/xhci_msm_hsic_dbg/show_ctrl_events");
