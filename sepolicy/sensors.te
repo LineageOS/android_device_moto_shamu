@@ -6,7 +6,7 @@ type sensors_exec, exec_type, file_type;
 init_daemon_domain(sensors)
 
 # drop privileges
-allow sensors self:capability { dac_override sys_nice chown setuid setgid};
+allow sensors self:capability { dac_override sys_nice chown setuid setgid net_bind_service};
 
 allow sensors persist_sensors_file:dir setattr;
 
