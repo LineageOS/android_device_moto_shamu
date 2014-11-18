@@ -381,12 +381,11 @@ service imsqmidaemon /system/bin/imsqmidaemon
     socket ims_qmid stream 0660 system radio
     group radio log
 
-# TODO: remove net_raw and net_admin and add them to android_filesystem_config.h
 service imsdatadaemon /system/bin/imsdatadaemon
     class main
-    user system
+    user root
     socket ims_datad stream 0660 system radio
-    group system wifi radio inet net_raw log net_admin
+    group system wifi radio inet log
     disabled
 
 on property:sys.ims.QMI_DAEMON_STATUS=1
