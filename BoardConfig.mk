@@ -123,6 +123,7 @@ BOARD_SEPOLICY_UNION += \
         domain.te \
         file.te \
         gsiffd.te \
+        ims.te \
         irsc_util.te \
         mdm_helper.te \
         mediaserver.te \
@@ -130,6 +131,8 @@ BOARD_SEPOLICY_UNION += \
         netd.te \
         netmgrd.te \
         platform_app.te \
+        property.te \
+        property_contexts \
         qmux.te \
         radio.te \
         rild.te \

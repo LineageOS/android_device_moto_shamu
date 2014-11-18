@@ -10,3 +10,6 @@ allow radio ims_socket:sock_file write;
 allow radio persist_file:dir search;
 allow radio persist_hiddenmenu_file:dir rw_dir_perms;
 allow radio persist_hiddenmenu_file:file create_file_perms;
+
+# Connect to ims service.
+allow radio ims:unix_stream_socket connectto;
