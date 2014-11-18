@@ -543,13 +543,11 @@ QCamera3RegularChannel::~QCamera3RegularChannel()
  *              none-zero failure code
  *==========================================================================*/
 
-int32_t QCamera3RawChannel::initialize(cam_is_type_t isType,
-        uint8_t intent)
+int32_t QCamera3RawChannel::initialize(cam_is_type_t isType)
 {
-    return QCamera3RegularChannel::initialize(isType, intent);
+    return QCamera3RegularChannel::initialize(isType);
 }
-int32_t QCamera3RegularChannel::initialize(cam_is_type_t isType,
-        uint8_t intent)
+int32_t QCamera3RegularChannel::initialize(cam_is_type_t isType)
 {
     ATRACE_CALL();
     int32_t rc = NO_ERROR;
@@ -574,8 +572,6 @@ int32_t QCamera3RegularChannel::initialize(cam_is_type_t isType,
 
     mNumBufs = CAM_MAX_NUM_BUFS_PER_STREAM;
     mIsType  = isType;
-    mIntent = intent;
-    mMemory.setColorSpace(mIntent);
 
     if (mCamera3Stream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
         if (mStreamType ==  CAM_STREAM_TYPE_VIDEO) {
@@ -662,7 +658,7 @@ int32_t QCamera3RegularChannel::request(buffer_handle_t *buffer, uint32_t frameN
     }
 
     if(!m_bIsActive) {
-        rc = registerBuffer(buffer, mIsType, mIntent);
+        rc = registerBuffer(buffer, mIsType);
         if (NO_ERROR != rc) {
             ALOGE("%s: On-the-fly buffer registration failed %d",
                     __func__, rc);
@@ -679,7 +675,7 @@ int32_t QCamera3RegularChannel::request(buffer_handle_t *buffer, uint32_t frameN
 
     index = mMemory.getMatchBufIndex((void*)buffer);
     if(index < 0) {
-        rc = registerBuffer(buffer, mIsType, mIntent);
+        rc = registerBuffer(buffer, mIsType);
         if (NO_ERROR != rc) {
             ALOGE("%s: On-the-fly buffer registration failed %d",
                     __func__, rc);
@@ -717,12 +713,12 @@ int32_t QCamera3RegularChannel::request(buffer_handle_t *buffer, uint32_t frameN
  *              none-zero failure code
  *==========================================================================*/
 int32_t QCamera3RegularChannel::registerBuffer(buffer_handle_t *buffer,
-        cam_is_type_t isType,
-        uint8_t intent)
+        cam_is_type_t isType)
 {
     ATRACE_CALL();
     int rc = 0;
     mIsType = isType;
+    cam_stream_type_t streamType;
 
     if ((uint32_t)mMemory.getCnt() > (mNumBufs - 1)) {
         ALOGE("%s: Trying to register more buffers than initially requested",
@@ -731,7 +727,7 @@ int32_t QCamera3RegularChannel::registerBuffer(buffer_handle_t *buffer,
     }
 
     if (0 == m_numStreams) {
-        rc = initialize(mIsType, intent);
+        rc = initialize(mIsType);
         if (rc != NO_ERROR) {
             ALOGE("%s: Couldn't initialize camera stream %d",
                     __func__, rc);
@@ -739,7 +735,8 @@ int32_t QCamera3RegularChannel::registerBuffer(buffer_handle_t *buffer,
         }
     }
 
-    rc = mMemory.registerBuffer(buffer);
+    streamType = mStreams[0]->getMyType();
+    rc = mMemory.registerBuffer(buffer, streamType);
     if (ALREADY_EXISTS == rc) {
         return NO_ERROR;
     } else if (NO_ERROR != rc) {
@@ -850,8 +847,7 @@ QCamera3MetadataChannel::~QCamera3MetadataChannel()
     }
 }
 
-int32_t QCamera3MetadataChannel::initialize(cam_is_type_t isType,
-        uint8_t /*intent*/)
+int32_t QCamera3MetadataChannel::initialize(cam_is_type_t isType)
 {
     ATRACE_CALL();
     int32_t rc;
@@ -1291,8 +1287,7 @@ int32_t QCamera3RawDumpChannel::request(buffer_handle_t * /*buffer*/,
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera3RawDumpChannel::initialize(cam_is_type_t isType,
-        uint8_t /*intent*/)
+int32_t QCamera3RawDumpChannel::initialize(cam_is_type_t isType)
 {
     int32_t rc;
 
@@ -1534,8 +1529,7 @@ QCamera3PicChannel::~QCamera3PicChannel()
    }
 }
 
-int32_t QCamera3PicChannel::initialize(cam_is_type_t isType,
-        uint8_t intent)
+int32_t QCamera3PicChannel::initialize(cam_is_type_t isType)
 {
     int32_t rc = NO_ERROR;
     cam_dimension_t streamDim;
@@ -1566,8 +1560,6 @@ int32_t QCamera3PicChannel::initialize(cam_is_type_t isType,
         return rc;
     }
     mIsType = isType;
-    mIntent = intent;
-    mMemory.setColorSpace(mIntent);
 
     streamType = mStreamType;
     streamFormat = mStreamFormat;
@@ -1649,7 +1641,7 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
 
     index = mMemory.getMatchBufIndex((void*)buffer);
     if(index < 0) {
-        rc = registerBuffer(buffer, mIsType, mIntent);
+        rc = registerBuffer(buffer, mIsType);
         if (NO_ERROR != rc) {
             ALOGE("%s: On-the-fly buffer registration failed %d",
                     __func__, rc);
@@ -1704,7 +1696,7 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
 
         int input_index = mOfflineMemory.getMatchBufIndex((void*)pInputBuffer->buffer);
         if(input_index < 0) {
-            rc = mOfflineMemory.registerBuffer(pInputBuffer->buffer);
+            rc = mOfflineMemory.registerBuffer(pInputBuffer->buffer, mStreamType);
             if (NO_ERROR != rc) {
                 ALOGE("%s: On-the-fly input buffer registration failed %d",
                         __func__, rc);
@@ -1850,12 +1842,10 @@ void QCamera3PicChannel::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera3PicChannel::registerBuffer(buffer_handle_t *buffer, cam_is_type_t isType,
-        uint8_t intent)
+int32_t QCamera3PicChannel::registerBuffer(buffer_handle_t *buffer, cam_is_type_t isType)
 {
     int rc = 0;
     mIsType = isType;
-    mIntent = intent;
     if ((uint32_t)mMemory.getCnt() > (mNumBufsRegistered - 1)) {
         ALOGE("%s: Trying to register more buffers than initially requested",
                 __func__);
@@ -1863,14 +1853,15 @@ int32_t QCamera3PicChannel::registerBuffer(buffer_handle_t *buffer, cam_is_type_
     }
 
     if (0 == m_numStreams) {
-        rc = initialize(mIsType, intent);
+        rc = initialize(mIsType);
         if (rc != NO_ERROR) {
             ALOGE("%s: Couldn't initialize camera stream %d",
                     __func__, rc);
             return rc;
         }
     }
-    rc = mMemory.registerBuffer(buffer);
+
+    rc = mMemory.registerBuffer(buffer, mStreamType);
     if (ALREADY_EXISTS == rc) {
         return NO_ERROR;
     } else if (NO_ERROR != rc) {
@@ -2651,8 +2642,7 @@ QCamera3ReprocessChannel::QCamera3ReprocessChannel(uint32_t cam_handle,
  *
  * RETURN     : none
  *==========================================================================*/
-int32_t QCamera3ReprocessChannel::initialize(cam_is_type_t isType,
-        uint8_t /*intent*/)
+int32_t QCamera3ReprocessChannel::initialize(cam_is_type_t isType)
 {
     int32_t rc = NO_ERROR;
     mm_camera_channel_attr_t attr;
@@ -3334,8 +3324,7 @@ QCamera3SupportChannel::~QCamera3SupportChannel()
     }
 }
 
-int32_t QCamera3SupportChannel::initialize(cam_is_type_t isType,
-        uint8_t /*intent*/)
+int32_t QCamera3SupportChannel::initialize(cam_is_type_t isType)
 {
     int32_t rc;
 
