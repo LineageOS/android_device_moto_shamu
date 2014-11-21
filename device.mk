@@ -233,9 +233,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.telephony.default_network=10 \
     telephony.lteOnCdmaDevice=1
 
-# SIM based FSG loading default enabled
+# SIM based FSG loading & MCFG activation
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.fsg_reload_on=1 \
+    persist.radio.mcfg_enabled=1
 
 # Camera configuration
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
