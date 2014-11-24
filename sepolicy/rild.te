@@ -30,3 +30,8 @@ userdebug_or_eng(`
   allow rild diag_logs:dir rw_dir_perms;
   allow rild diag_logs:file create_file_perms;
 ')
+
+# Allow permissions for FSG
+allow rild fsg_file:dir search;
+allow rild fsg_file:file r_file_perms;
+
