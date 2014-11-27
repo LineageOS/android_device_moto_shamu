@@ -686,6 +686,37 @@ int QCamera3HardwareInterface::validateStreamDimensions(
     return rc;
 }
 
+/*==============================================================================
+ * FUNCTION   : isSupportChannelNeeded
+ *
+ * DESCRIPTION: Simple heuristic func to determine if support channels is needed
+ *
+ * PARAMETERS :
+ *   @stream_list : streams to be configured
+ *
+ * RETURN     : Boolen true/false decision
+ *
+ *==========================================================================*/
+bool QCamera3HardwareInterface::isSupportChannelNeeded(camera3_stream_configuration_t *streamList)
+{
+    uint32_t i;
+
+    /* Dummy stream needed if only raw or jpeg streams present */
+    for (i = 0;i < streamList->num_streams;i++) {
+        switch(streamList->streams[i]->format) {
+            case HAL_PIXEL_FORMAT_RAW_OPAQUE:
+            case HAL_PIXEL_FORMAT_RAW10:
+            case HAL_PIXEL_FORMAT_RAW16:
+            case HAL_PIXEL_FORMAT_BLOB:
+                break;
+            default:
+                return false;
+        }
+    }
+    return true;
+}
+
+
 /*===========================================================================
  * FUNCTION   : configureStreams
  *
@@ -945,12 +976,8 @@ int QCamera3HardwareInterface::configureStreams(
         return rc;
     }
 
-    /* Create dummy stream if there is one single raw or jpeg stream */
-    if (streamList->num_streams == 1 &&
-            (streamList->streams[0]->format == HAL_PIXEL_FORMAT_RAW_OPAQUE ||
-            streamList->streams[0]->format == HAL_PIXEL_FORMAT_RAW10 ||
-            streamList->streams[0]->format == HAL_PIXEL_FORMAT_RAW16 ||
-            streamList->streams[0]->format == HAL_PIXEL_FORMAT_BLOB)) {
+
+    if (isSupportChannelNeeded(streamList)) {
         mSupportChannel = new QCamera3SupportChannel(
                 mCameraHandle->camera_handle,
                 mCameraHandle->ops,
@@ -962,7 +989,7 @@ int QCamera3HardwareInterface::configureStreams(
             pthread_mutex_unlock(&mMutex);
             return -ENOMEM;
         }
-   }
+    }
 
     bool isRawStreamRequested = false;
     /* Allocate channel objects for the requested streams */
