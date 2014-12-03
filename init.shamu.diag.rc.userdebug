@@ -3,6 +3,4 @@
 on post-fs-data
     # Modem logging collection
     mkdir /data/diag_logs 0777 system system
-    mkdir /data/diag_logs/mdm 0777 system system
     chmod 666 /dev/diag
-    setprop ril.radio.voice_diag_logging true
