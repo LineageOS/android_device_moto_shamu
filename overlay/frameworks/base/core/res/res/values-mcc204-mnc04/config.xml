@@ -30,4 +30,5 @@
         <item>com.motorola.entitlement.EntitlementDialogActivity</item>
     </string-array>
 
+    <bool name="config_LTE_eri_for_network_name">false</bool>
 </resources>
