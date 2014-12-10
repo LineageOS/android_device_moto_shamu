@@ -761,7 +761,6 @@ int32_t QCamera3RegularChannel::registerBuffer(buffer_handle_t *buffer,
     ATRACE_CALL();
     int rc = 0;
     mIsType = isType;
-    cam_stream_type_t streamType;
 
     if ((uint32_t)mMemory.getCnt() > (mNumBufs - 1)) {
         ALOGE("%s: Trying to register more buffers than initially requested",
@@ -778,7 +777,6 @@ int32_t QCamera3RegularChannel::registerBuffer(buffer_handle_t *buffer,
         }
     }
 
-    streamType = mStreams[0]->getMyType();
     rc = mMemory.registerBuffer(buffer);
     if (ALREADY_EXISTS == rc) {
         return NO_ERROR;

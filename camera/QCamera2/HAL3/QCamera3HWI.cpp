@@ -1414,15 +1414,10 @@ void QCamera3HardwareInterface::deriveMinFrameDuration()
 int64_t QCamera3HardwareInterface::getMinFrameDuration(const camera3_capture_request_t *request)
 {
     bool hasJpegStream = false;
-    bool hasRawStream = false;
     for (uint32_t i = 0; i < request->num_output_buffers; i ++) {
         const camera3_stream_t *stream = request->output_buffers[i].stream;
         if (stream->format == HAL_PIXEL_FORMAT_BLOB)
             hasJpegStream = true;
-        else if (stream->format == HAL_PIXEL_FORMAT_RAW_OPAQUE ||
-                stream->format == HAL_PIXEL_FORMAT_RAW10 ||
-                stream->format == HAL_PIXEL_FORMAT_RAW16)
-            hasRawStream = true;
     }
 
     if (!hasJpegStream)
@@ -3078,6 +3073,11 @@ QCamera3HardwareInterface::translateFromHalMetadata(
     if (IS_META_AVAILABLE(CAM_INTF_META_JPEG_THUMB_SIZE, metadata)) {
         cam_dimension_t *thumb_size = (cam_dimension_t *)POINTER_OF_META(
                 CAM_INTF_META_JPEG_THUMB_SIZE, metadata);
+        // Note: cam_dimension_t should have the right layout, but for safety just copy it.
+        int32_t thumbnail_size[2];
+        thumbnail_size[0] = thumb_size->width;
+        thumbnail_size[1] = thumb_size->height;
+        camMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE, thumbnail_size, 2);
     }
     if (IS_META_AVAILABLE(CAM_INTF_META_PRIVATE_DATA, metadata)) {
         int32_t *privateData = (int32_t *)
@@ -3456,8 +3456,6 @@ void QCamera3HardwareInterface::dumpMetadataToFile(tuning_params_t &meta,
                                                    const char *type,
                                                    uint32_t frameNumber)
 {
-    uint32_t frm_num = 0;
-
     //Some sanity checks
     if (meta.tuning_sensor_data_size > TUNING_SENSOR_DATA_MAX) {
         ALOGE("%s : Tuning sensor data size bigger than expected %d: %d",
@@ -6387,8 +6385,6 @@ int QCamera3HardwareInterface::translateToHalMetadata
         char gps_methods[GPS_PROCESSING_METHOD_SIZE];
         const char *gps_methods_src = (const char *)
                 frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).data.u8;
-        uint32_t count = frame_settings.find(
-                ANDROID_JPEG_GPS_PROCESSING_METHOD).count;
         memset(gps_methods, '\0', sizeof(gps_methods));
         strncpy(gps_methods, gps_methods_src, sizeof(gps_methods)-1);
         rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_META_JPEG_GPS_PROC_METHODS, sizeof(gps_methods), gps_methods);
