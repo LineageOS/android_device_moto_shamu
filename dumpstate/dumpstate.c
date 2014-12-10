@@ -38,4 +38,6 @@ void dumpstate_board()
     dump_file("ION secure-comm heap", "/d/ion/heaps/qsecom");
     dump_file("ION system heap", "/d/ion/heaps/system");
     run_command("Subsystem Tombstone list", 5, SU_PATH, "root", "ls", "-l", "/data/tombstones/ramdump", NULL);
+    run_command("ION CLIENTS", 5, SU_PATH, "root", "/system/bin/sh", "-c", "for f in $(ls /d/ion/clients/*); do echo $f; cat $f; done", NULL);
+    run_command("ION HEAPS",   5, SU_PATH, "root", "/system/bin/sh", "-c", "for f in $(ls /d/ion/heaps/*);   do echo $f; cat $f; done", NULL);
 };
