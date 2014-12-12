@@ -252,7 +252,6 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
                                           void *user_data)
 {
 
-    int rc;
     int i = 0;
     mm_camera_test_obj_t *pme = (mm_camera_test_obj_t *)user_data;
     mm_camera_channel_t *channel = NULL;
@@ -270,7 +269,6 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
     }
     if (NULL == channel) {
         CDBG_ERROR("%s: Wrong channel id (%d)", __func__, bufs->ch_id);
-        rc = -1;
         goto EXIT;
     }
 
@@ -283,7 +281,6 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
     }
     if (NULL == m_stream) {
         CDBG_ERROR("%s: cannot find snapshot stream", __func__);
-        rc = -1;
         goto EXIT;
     }
 
@@ -296,7 +293,6 @@ static void mm_app_snapshot_notify_cb_raw(mm_camera_super_buf_t *bufs,
     }
     if (NULL == m_frame) {
         CDBG_ERROR("%s: main frame is NULL", __func__);
-        rc = -1;
         goto EXIT;
     }
 
