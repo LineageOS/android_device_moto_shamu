@@ -45,6 +45,12 @@
 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3  u:object_r:efs_block_device:s0
 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefsc  u:object_r:efs_block_device:s0
 
+/dev/block/platform/msm_sdcc\.1/by-name/system       u:object_r:system_block_device:s0
+/dev/block/platform/msm_sdcc\.1/by-name/recovery     u:object_r:recovery_block_device:s0
+/dev/block/platform/msm_sdcc\.1/by-name/userdata     u:object_r:userdata_block_device:s0
+/dev/block/platform/msm_sdcc\.1/by-name/metadata     u:object_r:metadata_block_device:s0
+/dev/block/platform/msm_sdcc\.1/by-name/cache        u:object_r:cache_block_device:s0
+
 # Customer Identifier
 /dev/block/platform/msm_sdcc.1/by-name/cid          u:object_r:cid_block_device:s0
 
