@@ -1,22 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <spnOverrides>
     <spnOverride numeric="310150" spn="AT&amp;T"/>
-    <spnOverride numeric="20416" spn="T-Mobile NL"/>
-    <spnOverride numeric="20420" spn="T-Mobile"/>
-    <spnOverride numeric="21630" spn="T-Mobile H"/>
-    <spnOverride numeric="21901" spn="T-Mobile"/>
-    <spnOverride numeric="22004" spn="T-Mobile CG"/>
-    <spnOverride numeric="23001" spn="T-Mobile CZ"/>
-    <spnOverride numeric="23102" spn="T-Mobile SK"/>
-    <spnOverride numeric="23104" spn="T-Mobile"/>
-    <spnOverride numeric="23203" spn="T-Mobile A"/>
-    <spnOverride numeric="23430" spn="T-Mobile UK"/>
-    <spnOverride numeric="23431" spn="T-Mobile UK"/>
-    <spnOverride numeric="23432" spn="T-Mobile UK"/>
-    <spnOverride numeric="26201" spn="T-Mobile D"/>
-    <spnOverride numeric="26206" spn="T-Mobile"/>
-    <spnOverride numeric="29401" spn="T-Mobile MK"/>
-    <spnOverride numeric="31031" spn="T-Mobile "/>
     <spnOverride numeric="310160" spn="T-Mobile "/>
     <spnOverride numeric="310170" spn="AT&amp;T"/>
     <spnOverride numeric="310200" spn="T-Mobile "/>
