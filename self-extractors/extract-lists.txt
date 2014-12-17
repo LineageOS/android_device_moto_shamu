@@ -150,7 +150,6 @@
             system/etc/firmware/cpp_firmware_v1_8_0.fw \
             system/etc/flp.conf \
             system/etc/qmi_fw.conf \
-            system/etc/sap.conf \
             system/etc/sensors/sensor_def_qcomdev.conf \
             system/etc/thermal-engine-shamu.conf \
             system/lib/hw/audio.primary.msm8084.so \
@@ -168,7 +167,6 @@
             system/lib/soundfx/libqcomvisualizer.so \
             system/lib/soundfx/libqcomvoiceprocessing.so \
             system/lib/soundfx/libspeakerbundle.so \
-            system/vendor/bin/gsiff_daemon \
             system/vendor/firmware/a420_pfp.fw \
             system/vendor/firmware/a420_pm4.fw \
             system/vendor/firmware/adsp.b00 \
