@@ -1,6 +1,5 @@
 /data/cam_socket[23]           u:object_r:camera_socket:s0
 /data/diag_logs(/.*)?          u:object_r:diag_logs:s0
-/data/misc/radio(/.*)?         u:object_r:radio_data_file:s0
 /data/nfc(/.*)?                u:object_r:nfc_data_file:s0
 /data/time(/.*)?               u:object_r:time_data_file:s0
 /data/misc/location/gsiff(/.*)? u:object_r:gsiffd_data_file:s0
