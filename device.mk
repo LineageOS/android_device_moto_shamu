@@ -35,7 +35,7 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_COPY_FILES += \
     device/moto/shamu/audio_policy.conf:system/etc/audio_policy.conf \
-    device/moto/shamu/audio_effects.conf:system/etc/audio_effects.conf
+    device/moto/shamu/audio_effects.conf:system/vendor/etc/audio_effects.conf
 
 PRODUCT_COPY_FILES += \
     device/moto/shamu/media_profiles.xml:system/etc/media_profiles.xml \
@@ -164,6 +164,12 @@ PRODUCT_PACKAGES += \
     libqcomvisualizer \
     libqcomvoiceprocessing \
     libqcomvoiceprocessingdescriptors
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    fmas.spkr_6ch=35,20,110 \
+    fmas.spkr_2ch=35,25 \
+    fmas.spkr_angles=10 \
+    fmas.spkr_sgain=0 \
 
 PRODUCT_PACKAGES += \
     libqomx_core \
