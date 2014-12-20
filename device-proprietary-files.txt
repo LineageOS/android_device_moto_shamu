@@ -235,12 +235,18 @@ etc/diag/sensors_qxdm.cfg
 
 # DRM
 bin/qseecomd
+vendor/lib/drm/libdrmwvmplugin.so
+vendor/lib/mediadrm/libwvdrmengine.so
 vendor/lib/libQSEEComAPI.so
 vendor/lib/libdrmdecrypt.so
 vendor/lib/libdrmfs.so
 vendor/lib/libdrmtime.so
 vendor/lib/liboemcrypto.so
 vendor/lib/librpmb.so
+vendor/lib/libwvdrm_L1.so
+vendor/lib/libwvm.so
+vendor/lib/libWVphoneAPI.so
+vendor/lib/libWVStreamControlAPI_L1.so
 
 # DRM firmware
 vendor/firmware/widevine.b00
