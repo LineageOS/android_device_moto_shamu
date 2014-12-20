@@ -24,10 +24,4 @@
         <!-- VZW -->
         <item>*86;BAE0000000000000</item>
     </string-array>
-
-    <string-array translatable="false" name="config_mobile_hotspot_provision_app">
-        <item>com.motorola.vzw.entitlement</item>
-        <item>com.motorola.vzw.entitlement.EntitlementDialogActivity</item>
-    </string-array>
-
 </resources>
