@@ -27,10 +27,12 @@ etc/Handset_cal.acdb
 etc/Hdmi_cal.acdb
 etc/Headset_cal.acdb
 etc/Speaker_cal.acdb
+etc/fmas_eq.dat
 lib/hw/audio.primary.msm8084.so
 lib/hw/sound_trigger.primary.shamu.so
 lib/libaudioroute.so
 lib/libtinycompress.so
+lib/soundfx/libfmas.so
 lib/soundfx/libqcomvisualizer.so
 lib/soundfx/libqcomvoiceprocessing.so
 lib/soundfx/libspeakerbundle.so
@@ -42,22 +44,28 @@ vendor/lib/libcsd-client.so
 
 # Audio firmware
 vendor/firmware/acdb.mbn
+vendor/firmware/left.boost.music.config
 vendor/firmware/left.boost.music.eq
 vendor/firmware/left.boost_music_table.preset
 vendor/firmware/left.boost_n1b12.patch
 vendor/firmware/left.boost_n1c2.patch
+vendor/firmware/left.boost.ringtone.config
 vendor/firmware/left.boost.ringtone.eq
 vendor/firmware/left.boost_ringtone_table.preset
 vendor/firmware/left.boost.speaker
+vendor/firmware/left.boost.voice.config
 vendor/firmware/left.boost.voice.eq
 vendor/firmware/left.boost_voice_table.preset
+vendor/firmware/right.boost.music.config
 vendor/firmware/right.boost.music.eq
 vendor/firmware/right.boost_music_table.preset
 vendor/firmware/right.boost_n1b12.patch
 vendor/firmware/right.boost_n1c2.patch
+vendor/firmware/right.boost.ringtone.config
 vendor/firmware/right.boost.ringtone.eq
 vendor/firmware/right.boost_ringtone_table.preset
 vendor/firmware/right.boost.speaker
+vendor/firmware/right.boost.voice.config
 vendor/firmware/right.boost.voice.eq
 vendor/firmware/right.boost_voice_table.preset
 vendor/moto/audiomonitor/sensory/lts_en_us_9_5_2b.raw
