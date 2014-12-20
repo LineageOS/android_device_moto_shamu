@@ -26,8 +26,8 @@
     </string-array>
 
     <string-array translatable="false" name="config_mobile_hotspot_provision_app">
-        <item>com.motorola.entitlement</item>
-        <item>com.motorola.entitlement.EntitlementDialogActivity</item>
+        <item>com.motorola.vzw.entitlement</item>
+        <item>com.motorola.vzw.entitlement.EntitlementDialogActivity</item>
     </string-array>
 
 </resources>
