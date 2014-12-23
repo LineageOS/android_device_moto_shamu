@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export VENDOR=moto
+export VENDOR=motorola
 export DEVICE=shamu
 
 # Check to see if the user passed a folder in to extract from rather than adb pull
