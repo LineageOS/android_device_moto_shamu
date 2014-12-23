@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export VENDOR=motorola
+export DEVICE_VENDOR=moto
 export DEVICE=shamu
 
 # Check to see if the user passed a folder in to extract from rather than adb pull
@@ -52,6 +53,6 @@ DEVICE_BASE=../../../vendor/$VENDOR/$DEVICE/proprietary
 rm -rf $DEVICE_BASE/*
 
 # Extract the device specific files
-extract ../../$VENDOR/$DEVICE/device-proprietary-files.txt $DEVICE_BASE
+extract ../../$DEVICE_VENDOR/$DEVICE/device-proprietary-files.txt $DEVICE_BASE
 
 ./setup-makefiles.sh
