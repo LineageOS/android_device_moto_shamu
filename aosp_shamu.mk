@@ -35,6 +35,6 @@ $(call inherit-product-if-exists, vendor/motorola/shamu/device-vendor.mk)
 
 PRODUCT_NAME := aosp_shamu
 
-PRODUCT_PACKAGES += \
-    Launcher3
+#PRODUCT_PACKAGES += \
+#    Launcher3
 
