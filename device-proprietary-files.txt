@@ -363,7 +363,6 @@ etc/permissions/org.simalliance.openmobileapi.xml
 -framework/org.simalliance.openmobileapi.jar
 lib/libdetectmodem.so
 lib/libmdmdetect.so
-lib/librmnetctl.so
 vendor/lib/libconfigdb.so
 vendor/lib/libmdmcutback.so
 vendor/lib/libnetmgr.so
