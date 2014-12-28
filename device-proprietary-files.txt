@@ -109,7 +109,6 @@ vendor/moto/audiomonitor/sensory/svsid_triggerogn_ptbr_2_1.raw
 
 # Camera
 bin/mm-qcamera-daemon
-lib/libmm-qcamera.so
 vendor/lib/libactuator_lc898122_camcorder.so
 vendor/lib/libactuator_lc898122_camera.so
 vendor/lib/libactuator_lc898122.so
