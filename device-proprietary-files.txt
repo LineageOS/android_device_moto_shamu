@@ -29,15 +29,10 @@ etc/Headset_cal.acdb
 etc/Speaker_cal.acdb
 etc/fmas_eq.dat
 lib/hw/audio.motvr.default.so
-lib/hw/audio.primary.msm8084.so
 lib/hw/sound_trigger.primary.shamu.so
-lib/libaudioroute.so
 lib/libflacencoder.so
 lib/libmotaudioutils.so
-lib/libtinycompress.so
 lib/soundfx/libfmas.so
-lib/soundfx/libqcomvisualizer.so
-lib/soundfx/libqcomvoiceprocessing.so
 lib/soundfx/libspeakerbundle.so
 vendor/lib/libacdbloader.so
 vendor/lib/libacdbrtac.so
