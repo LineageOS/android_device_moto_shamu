@@ -11,6 +11,11 @@ on charger
     write /sys/module/msm_pm/modes/cpu0/standalone_power_collapse/idle_enabled 1
     write /sys/module/msm_pm/modes/cpu0/retention/idle_enabled 1
 
+on early-init
+    # Switch to NOOP and performance mode while booting
+    setprop sys.perf.profile 2
+    write /sys/block/mmcblk0/queue/scheduler noop
+
 on boot
     # Shamu boots with performance governor.
     # Switch one core to interactive to set permissions, for power hal and system server.
@@ -92,3 +97,43 @@ on property:dev.bootcomplete=1
     write /sys/module/cpu_boost/parameters/input_boost_freq 1497600
     write /sys/module/cpu_boost/parameters/input_boost_ms 40
     write /dev/cpuctl/apps/cpu.notify_on_migrate 1
+
+on property:init.svc.bootanim=running
+    # Switch to NOOP and performance mode while booting
+    setprop sys.perf.profile 2
+    write /sys/block/mmcblk0/queue/scheduler noop
+
+on property:sys.boot_completed=1
+    # Switch back to cfq and balanced mode after boot
+    setprop sys.perf.profile 1
+    write /sys/block/mmcblk0/queue/scheduler cfq
+
+# CM Performance Profiles
+
+# Powersave
+on property:sys.perf.profile=0
+    start mpdecision
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor conservative
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor conservative
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor conservative
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor conservative
+
+# Balanced
+on property:sys.perf.profile=1
+    start mpdecision
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor interactive
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor interactive
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor interactive
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor interactive
+
+# High performance
+on property:sys.perf.profile=2
+    stop mpdecision
+    write /sys/devices/system/cpu/cpu0/online 1
+    write /sys/devices/system/cpu/cpu1/online 1
+    write /sys/devices/system/cpu/cpu2/online 1
+    write /sys/devices/system/cpu/cpu3/online 1
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor performance
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor performance
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor performance
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor performance
