@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7aa08908_c087c00d",
+        "filename": "init.shamu.power.rc",
+        "patchSetId": 1
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 7254
+      },
+      "writtenOn": "2015-01-02T19:16:56Z",
+      "side": 1,
+      "message": "wat",
+      "revId": "f6ad7c70fcfa2a32cd147996dc9f88d5a15ede8e",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
