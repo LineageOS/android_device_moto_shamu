@@ -1,0 +1,2 @@
+# Google Hotword Detection
+allow untrusted_app adspd_data_file:dir search;
