@@ -22,3 +22,6 @@ allow adspd sysfs_usb:file write;
 
 allow adspd sysfs_mmi_touch:dir search;
 allow adspd sysfs_mmi_touch:file r_file_perms;
+
+#missing permission for google everywhere
+allow untrusted_app adspd_data_file:dir search;
