@@ -139,4 +139,7 @@ BOARD_HAL_STATIC_LIBRARIES := libdumpstate.shamu
 # Include an expanded selection of fonts
 EXTENDED_FONT_FOOTPRINT := true
 
+# CMHW
+BOARD_HARDWARE_CLASS := device/moto/shamu/cmhw
+
 -include vendor/motorola/shamu/BoardConfigVendor.mk
