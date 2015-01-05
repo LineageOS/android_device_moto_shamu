@@ -147,3 +147,6 @@
 
 /sys/devices/cycapsense_prog.1/cycapsense_fw             u:object_r:sysfs_capsense_update:s0
 /sys/devices/mmi_sar_ctrl.[0-9]*/sar_wifi                u:object_r:sysfs_sar_wifi:s0
+
+# TapToWake
+/sys/bus/i2c/devices/1-004a/tsp	                         u:object_r:tap2wake_dev:s0

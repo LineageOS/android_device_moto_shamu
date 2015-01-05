@@ -2,3 +2,5 @@
 allow system_app shell_data_file:dir search;
 
 allow system_app time:unix_stream_socket connectto;
+
+allow system_app tap2wake_dev:file rw_file_perms;
