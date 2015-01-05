@@ -37,3 +37,5 @@ type sysfs_cpu_online, fs_type, sysfs_type;
 type sysfs_cpuboost, fs_type, sysfs_type;
 type sysfs_capsense_update, fs_type, sysfs_type;
 type sysfs_sar_wifi, fs_type, sysfs_type;
+
+type tap2wake_dev, fs_type, sysfs_type;
