@@ -261,6 +261,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.fsg_reload_on=1 \
     persist.radio.mcfg_enabled=1
 
+# Allow tethering without provisioning app
+PRODUCT_PROPERTY_OVERRIDES += \
+    net.tethering.noprovisioning=true
+
 # Camera configuration
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     camera.disable_zsl_mode=0
