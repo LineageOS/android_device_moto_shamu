@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7aa08908_49cacd6f",
+        "filename": "liblight/lights.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 7155
+      },
+      "writtenOn": "2015-01-07T23:24:47Z",
+      "side": 1,
+      "message": "Should probably rename from Ghost -\u003e Shamu.",
+      "revId": "4a0316cdbd777eaad9400dbffdd1b1f29468e2fe",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
