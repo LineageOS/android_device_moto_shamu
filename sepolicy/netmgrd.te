@@ -20,7 +20,8 @@ init_daemon_domain(netmgrd)
 allow netmgrd shared_log_device:chr_file rw_file_perms;
 
 # Access to /proc/sys/net/*
-allow netmgrd proc_net:file write;
+allow netmgrd proc_net:file rw_file_perms;
+allow netmgrd proc_net:dir r_dir_perms;
 
 # Runs /system/bin/toolbox
 allow netmgrd system_file:file rx_file_perms;
