@@ -2,6 +2,8 @@
 type firmware_file, fs_type, contextmount_type;
 type fsg_file, fs_type, contextmount_type;
 
+type cnd_socket, file_type;
+
 type adspd_socket, file_type;
 type camera_socket, file_type;
 type mpdecision_socket, file_type;
