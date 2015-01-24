@@ -4,7 +4,9 @@
 #
 #<src>                                                <mnt_point>  <type>  <mnt_flags and options>                     <fs_mgr_flags>
 /dev/block/platform/msm_sdcc.1/by-name/system         /system      ext4    ro,barrier=1                                wait,verify=/dev/block/platform/msm_sdcc.1/by-name/metadata
+/dev/block/platform/msm_sdcc.1/by-name/userdata     /data          f2fs    rw,nosuid,nodev,noatime,nodiratime,inline_xattr                 wait,formattable,forceencrypt=/dev/block/platform/msm_sdcc.1/by-name/metadata
 /dev/block/platform/msm_sdcc.1/by-name/userdata    /data        ext4    rw,nosuid,nodev,noatime,nodiratime,noauto_da_alloc,nobarrier    wait,check,formattable,forceencrypt=/dev/block/platform/msm_sdcc.1/by-name/metadata
+/dev/block/platform/msm_sdcc.1/by-name/cache        /cache         f2fs    rw,nosuid,nodev,noatime,nodiratime,inline_xattr                 wait,check,formattable
 /dev/block/platform/msm_sdcc.1/by-name/cache       /cache       ext4    rw,noatime,nosuid,nodev,barrier=1,data=ordered   wait,check,formattable
 /dev/block/platform/msm_sdcc.1/by-name/modem       /firmware    ext4    ro,barrier=1,context=u:object_r:firmware_file:s0    wait
 /dev/block/platform/msm_sdcc.1/by-name/persist     /persist     ext4    rw,nosuid,nodev,barrier=1                      wait,check,notrim
