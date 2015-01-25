@@ -419,8 +419,12 @@ etc/firmware/vpu.mbn
 etc/firmware/vpu.mdt
 
 # Voice recognition
+etc/permissions/com.motorola.triggerenroll.xml
+-priv-app/TriggerEnroll/TriggerEnroll.apk
+-priv-app/TriggerTrainingService/TriggerTrainingService.apk
 lib/librecoglib.so
 lib/libsupermodel.so
+lib/libtrainingcheck.so
 
 # Voice recognition firmware
 vendor/firmware/aonvr1.bin
