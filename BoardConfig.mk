@@ -101,6 +101,9 @@ BOARD_FLASH_BLOCK_SIZE := 131072
 
 BOARD_CHARGER_ENABLE_SUSPEND := true
 
+# CM Hardware
+BOARD_HARDWARE_CLASS := device/moto/shamu/cmhw
+
 TARGET_RECOVERY_FSTAB = device/moto/shamu/fstab.shamu
 
 # Ensure f2fstools are built
