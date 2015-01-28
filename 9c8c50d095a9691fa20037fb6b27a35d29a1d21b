@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fad55976_e12ada7d",
+        "filename": "cmhw/org/cyanogenmod/hardware/TapToWake.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 10094
+      },
+      "writtenOn": "2015-01-28T12:35:54Z",
+      "side": 1,
+      "message": "You can\u0027t cache the value in this class and rely on it in the isEnabled() call because it can be read by different processes.  You\u0027ll have to set the kernel to enable by default, and read the value from the kernel each time for things to work properly.  Of course, that\u0027s why I need to finish up the CmHardwareService:-)",
+      "revId": "9c8c50d095a9691fa20037fb6b27a35d29a1d21b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
