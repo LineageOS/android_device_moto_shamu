@@ -153,3 +153,7 @@
 
 # for Settings' access to VibratorHW
 /sys/vibrator/pwmvalue                                   u:object_r:sysfs_vibrator:s0
+
+# for Settings' access to DisplayColorCalibration
+/sys/devices/platform/kcal_ctrl.0/kcal                   u:object_r:sysfs_display:s0
+/sys/devices/platform/kcal_ctrl.0/kcal_ctrl              u:object_r:sysfs_display:s0
