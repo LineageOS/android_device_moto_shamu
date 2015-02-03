@@ -110,6 +110,8 @@ endif
 
 TARGET_RELEASETOOLS_EXTENSIONS := device/moto/shamu
 
+TARGET_HW_DISK_ENCRYPTION := true
+
 # Support Native Layer RF cutback
 BOARD_USES_CUTBACK_IN_RILD := true
 

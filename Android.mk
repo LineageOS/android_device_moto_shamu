@@ -29,4 +29,6 @@ LOCAL_PATH := $(call my-dir)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
 
+include device/qcom/common/cryptfs_hw/Android.mk
+
 endif
