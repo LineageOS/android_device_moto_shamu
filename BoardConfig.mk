@@ -116,6 +116,7 @@ BOARD_SEPOLICY_UNION += \
         device.te \
         domain.te \
         file.te \
+        fsck.te \
         gsiffd.te \
         init.te \
         irsc_util.te \
