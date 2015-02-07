@@ -122,6 +122,7 @@
 /system/bin/bdAddrLoader        u:object_r:bluetooth_loader_exec:s0
 /system/bin/bridgemgrd          u:object_r:bridge_exec:s0
 /system/vendor/bin/gsiff_daemon u:object_r:gsiffd_exec:s0
+/system/bin/init\.mmi\.touch\.sh u:object_r:mmi_touch_sh_exec:s0
 /system/bin/irsc_util           u:object_r:irsc_util_exec:s0
 /system/bin/ks                  u:object_r:mdm_helper_exec:s0
 /system/bin/mdm_helper          u:object_r:mdm_helper_exec:s0
@@ -146,6 +147,9 @@
 
 # Sysfs files used by qmuxd
 /sys/devices/virtual/smdpkt/smdcntl([0-9])+/open_timeout u:object_r:sysfs_smdcntl_open_timeout:s0
+
+# mmi_touch related /sys files
+/sys/devices/f9966000\.i2c/i2c-1/1-004a(/.*)?            u:object_r:sysfs_mmi_touch:s0
 
 # Context for mpdecision
 /sys/module/msm_thermal/core_control/cpus_offlined              u:object_r:sysfs_mpdecision:s0

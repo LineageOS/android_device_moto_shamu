@@ -122,6 +122,7 @@ BOARD_SEPOLICY_UNION += \
         irsc_util.te \
         mdm_helper.te \
         mediaserver.te \
+        mmi_touch_sh.te \
         mpdecision.te \
         netd.te \
         netmgrd.te \

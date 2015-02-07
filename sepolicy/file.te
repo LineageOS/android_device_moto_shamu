@@ -22,6 +22,7 @@ type sysfs_rmnet, fs_type, sysfs_type;
 type sysfs_smdcntl_open_timeout, fs_type, sysfs_type;
 type sysfs_xhci_msm_hsic, fs_type, sysfs_type;
 type sysfs_msm_hsic_host, fs_type, sysfs_type;
+type sysfs_mmi_touch, fs_type, sysfs_type;
 
 type persist_file, file_type;
 type persist_data_file, file_type;
