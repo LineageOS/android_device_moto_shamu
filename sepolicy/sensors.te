@@ -8,6 +8,13 @@ init_daemon_domain(sensors)
 # drop privileges
 allow sensors self:capability { dac_override sys_nice chown setuid setgid net_bind_service};
 
+# b/18417109
+# The kernel code does a permission check of both net_bind_service and
+# net_raw, and allows access if either one returns true.
+# It does the net_raw check first, triggering an SELinux denial.
+# No need to audit
+dontaudit sensors self:capability net_raw;
+
 allow sensors persist_sensors_file:dir setattr;
 
 allow sensors shared_log_device:chr_file rw_file_perms;
