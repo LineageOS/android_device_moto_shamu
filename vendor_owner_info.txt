@@ -94,6 +94,7 @@ system/lib/libtinycompress.so:qcom
 system/lib/soundfx/libqcomvisualizer.so:qcom
 system/lib/soundfx/libqcomvoiceprocessing.so:qcom
 system/lib/soundfx/libspeakerbundle.so:qcom
+system/priv-app/BuaContactAdapter/BuaContactAdapter.apk:moto
 system/vendor/firmware/a420_pfp.fw:qcom
 system/vendor/firmware/a420_pm4.fw:qcom
 system/vendor/firmware/acdb.mbn:moto

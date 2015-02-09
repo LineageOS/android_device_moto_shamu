@@ -42,6 +42,7 @@
             system/lib/libadspd.so \
             system/lib/librecoglib.so \
             system/lib/libsupermodel.so \
+            system/priv-app/BuaContactAdapter/BuaContactAdapter.apk \
             system/vendor/firmware/acdb.mbn \
             system/vendor/firmware/atmel-a432-*-shamu-p1.tdat \
             system/vendor/firmware/atmel-a432-*-shamu.tdat \
