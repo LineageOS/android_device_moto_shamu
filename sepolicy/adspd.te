@@ -17,3 +17,5 @@ allow adspd adspd_data_file:dir rw_dir_perms;
 # For now, allow writes to all of /sys.
 # TODO: scope down this access.
 allow adspd sysfs:file write;
+
+allow adspd sysfs_mmi_touch:dir search;
