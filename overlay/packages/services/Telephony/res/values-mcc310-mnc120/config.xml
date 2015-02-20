@@ -33,6 +33,8 @@
     <bool name="config_use_hfa_for_provisioning" translatable="false">true</bool>
     <!-- Display carrier settings -->
     <bool name="config_carrier_settings_enable">true</bool>
+    <!-- Don't display swap button after merging calls into Cdma conference. -->
+    <bool name="support_swap_after_merge">false</bool>
     <!-- carrier settings menu -->
     <string name="carrier_settings" translatable="false">com.android.sdm.plugins.sprintdm</string>
     <string name="carrier_settings_menu" translatable="false">com.android.sdm.plugins.sprintdm.SprintCarrierSettingsActivity</string>
