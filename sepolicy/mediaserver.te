@@ -14,6 +14,3 @@ unix_socket_send(mediaserver, camera, camera)
 unix_socket_connect(mediaserver, adspd, adspd)
 allow mediaserver audio_cutback_data_file:dir search;
 allow mediaserver audio_cutback_data_file:sock_file write;
-
-# TODO b/17015082
-allow mediaserver shell_data_file:dir search;
