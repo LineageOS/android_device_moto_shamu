@@ -19,7 +19,7 @@
 /dev/ttyHS3                    u:object_r:adspd_device:s0
 
 #Serial console
-/dev/ttyHSL0                   u:object_r:tty_device:s0
+/dev/ttyHSL0                   u:object_r:console_device:s0
 
 # STOPSHIP b/16455932
 /dev/vfsspi                    u:object_r:fingerprint_device:s0
