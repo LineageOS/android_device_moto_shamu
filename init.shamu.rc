@@ -255,8 +255,8 @@ on boot
     chmod 0644 /sys/vibrator/pwmvalue
 
     # Display color calibration
-    chown system system /sys/devices/platform/kcal_ctrl.0/kcal
-    chown system system /sys/devices/platform/kcal_ctrl.0/kcal_ctrl
+    chown system system /sys/devices/virtual/graphics/fb0/rgb
+    chmod 0660 /sys/devices/virtual/graphics/fb0/rgb
 
 # subsystem ramdump collection
 on property:persist.sys.qc.sub.rdump.on=*
