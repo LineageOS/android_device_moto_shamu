@@ -23,7 +23,7 @@ import java.io.File;
 public class DisplayColorCalibration {
 
     private static final String KCAL_TUNING_FILE = "/sys/devices/platform/kcal_ctrl.0/kcal";
-    private static final String KCAL_CTRL_FILE = "/sys/devices/platform/kcal_ctrl.0/kcal_ctrl";
+    private static final String KCAL_CTRL_FILE = "/sys/devices/platform/kcal_ctrl.0/kcal_enable";
 
     public static boolean isSupported() {
         File file = new File(KCAL_TUNING_FILE);
@@ -35,7 +35,7 @@ public class DisplayColorCalibration {
     }
 
     public static int getMinValue() {
-        return 0;
+        return 35;
     }
 
     public static int getDefValue() {
