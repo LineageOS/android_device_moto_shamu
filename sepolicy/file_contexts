@@ -157,3 +157,6 @@
 # for Settings' access to DisplayColorCalibration
 /sys/devices/platform/kcal_ctrl.0/kcal                   u:object_r:sysfs_display:s0
 /sys/devices/platform/kcal_ctrl.0/kcal_ctrl              u:object_r:sysfs_display:s0
+
+# Sunlight Mode
+/sys/devices/virtual/graphics/fb0/hbm                    u:object_r:sysfs_display:s0
