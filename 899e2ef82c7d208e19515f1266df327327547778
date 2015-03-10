@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9ad45d7e_25051bc2",
+        "filename": "cmhw/org/cyanogenmod/hardware/SunlightEnhancement.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 10094
+      },
+      "writtenOn": "2015-03-10T15:35:42Z",
+      "side": 1,
+      "message": "change it back.  This doesn\u0027t prevent anything.",
+      "revId": "899e2ef82c7d208e19515f1266df327327547778",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9ad45d7e_650f13e2",
+        "filename": "cmhw/org/cyanogenmod/hardware/SunlightEnhancement.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 10094
+      },
+      "writtenOn": "2015-03-10T15:35:42Z",
+      "side": 1,
+      "message": "return Integer.parseInt(.....) \u003d\u003d 1;",
+      "revId": "899e2ef82c7d208e19515f1266df327327547778",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9ad45d7e_45148ff4",
+        "filename": "cmhw/org/cyanogenmod/hardware/SunlightEnhancement.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 10094
+      },
+      "writtenOn": "2015-03-10T15:35:42Z",
+      "side": 1,
+      "message": "good spot for ternary.",
+      "revId": "899e2ef82c7d208e19515f1266df327327547778",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
