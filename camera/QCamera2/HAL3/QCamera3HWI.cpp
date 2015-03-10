@@ -54,8 +54,6 @@ using namespace android;
 
 namespace qcamera {
 
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 
 #define EMPTY_PIPELINE_DELAY 2
