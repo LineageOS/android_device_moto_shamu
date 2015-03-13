@@ -290,7 +290,6 @@ vendor/firmware/a420_pm4.fw
 
 # GPS
 etc/flp.conf
-etc/sap.conf
 lib/hw/gps.msm8084.so
 lib/libgps.utils.so
 lib/libloc_core.so
