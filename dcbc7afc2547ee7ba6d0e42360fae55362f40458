@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7ac969e8_9aed5d28",
+        "filename": "releasetools.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2015-03-13T11:46:23Z",
+      "side": 1,
+      "message": "wait a sec, is this the correct file?",
+      "revId": "dcbc7afc2547ee7ba6d0e42360fae55362f40458",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
