@@ -55,8 +55,8 @@
 /system/bin/usbhub
 /system/bin/usbhub_init
 /system/etc/Bluetooth_cal.acdb
-/system/etc/diag/FIT_V12.cfg
-/system/etc/diag/mdm/FIT_V12.cfg
+/system/etc/diag/mdm/FIT_V15_audio.cfg
+/system/etc/diag/mdm/FIT_V15.cfg
 /system/etc/diag/mdm/sensors_qxdm.cfg
 /system/etc/diag/sensors_qxdm.cfg
 /system/etc/firmware/cpp_firmware_v1_1_1.fw
@@ -87,7 +87,6 @@
 /system/etc/Headset_cal.acdb
 /system/etc/permissions/org.simalliance.openmobileapi.xml
 /system/etc/qmi_fw.conf
-/system/etc/sap.conf
 /system/etc/sensors/sensor_def_qcomdev.conf
 /system/etc/Speaker_cal.acdb
 /system/etc/thermal-engine-shamu.conf
@@ -111,7 +110,7 @@
 /system/lib/soundfx/libqcomvisualizer.so
 /system/lib/soundfx/libqcomvoiceprocessing.so
 /system/lib/soundfx/libspeakerbundle.so
-/system/vendor/bin/gsiff_daemon
+/system/priv-app/BuaContactAdapter/BuaContactAdapter.apk
 /system/vendor/firmware/a420_pfp.fw
 /system/vendor/firmware/a420_pm4.fw
 /system/vendor/firmware/acdb.mbn
@@ -130,8 +129,8 @@
 /system/vendor/firmware/adsp.mdt
 /system/vendor/firmware/aonvr1.bin
 /system/vendor/firmware/aonvr2.bin
-/system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat
-/system/vendor/firmware/atmel-a432-14101503-0103aa-shamu.tdat
+/system/vendor/firmware/atmel-a432-*-shamu-p1.tdat
+/system/vendor/firmware/atmel-a432-*-shamu.tdat
 /system/vendor/firmware/bcm20795_firmware.ncd
 /system/vendor/firmware/bcm4354A2.hcd
 /system/vendor/firmware/keymaster/keymaster.b00

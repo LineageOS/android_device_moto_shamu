@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2015, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -61,6 +61,7 @@ namespace qcamera {
 #define EMPTY_PIPELINE_DELAY 2
 #define PARTIAL_RESULT_COUNT 2
 #define FRAME_SKIP_DELAY     0
+#define CAM_MAX_SYNC_LATENCY 4
 
 #define VIDEO_4K_WIDTH  3840
 #define VIDEO_4K_HEIGHT 2160
@@ -686,6 +687,37 @@ int QCamera3HardwareInterface::validateStreamDimensions(
     return rc;
 }
 
+/*==============================================================================
+ * FUNCTION   : isSupportChannelNeeded
+ *
+ * DESCRIPTION: Simple heuristic func to determine if support channels is needed
+ *
+ * PARAMETERS :
+ *   @stream_list : streams to be configured
+ *
+ * RETURN     : Boolen true/false decision
+ *
+ *==========================================================================*/
+bool QCamera3HardwareInterface::isSupportChannelNeeded(camera3_stream_configuration_t *streamList)
+{
+    uint32_t i;
+
+    /* Dummy stream needed if only raw or jpeg streams present */
+    for (i = 0;i < streamList->num_streams;i++) {
+        switch(streamList->streams[i]->format) {
+            case HAL_PIXEL_FORMAT_RAW_OPAQUE:
+            case HAL_PIXEL_FORMAT_RAW10:
+            case HAL_PIXEL_FORMAT_RAW16:
+            case HAL_PIXEL_FORMAT_BLOB:
+                break;
+            default:
+                return false;
+        }
+    }
+    return true;
+}
+
+
 /*===========================================================================
  * FUNCTION   : configureStreams
  *
@@ -945,12 +977,8 @@ int QCamera3HardwareInterface::configureStreams(
         return rc;
     }
 
-    /* Create dummy stream if there is one single raw or jpeg stream */
-    if (streamList->num_streams == 1 &&
-            (streamList->streams[0]->format == HAL_PIXEL_FORMAT_RAW_OPAQUE ||
-            streamList->streams[0]->format == HAL_PIXEL_FORMAT_RAW10 ||
-            streamList->streams[0]->format == HAL_PIXEL_FORMAT_RAW16 ||
-            streamList->streams[0]->format == HAL_PIXEL_FORMAT_BLOB)) {
+
+    if (isSupportChannelNeeded(streamList)) {
         mSupportChannel = new QCamera3SupportChannel(
                 mCameraHandle->camera_handle,
                 mCameraHandle->ops,
@@ -962,7 +990,7 @@ int QCamera3HardwareInterface::configureStreams(
             pthread_mutex_unlock(&mMutex);
             return -ENOMEM;
         }
-   }
+    }
 
     bool isRawStreamRequested = false;
     /* Allocate channel objects for the requested streams */
@@ -2062,7 +2090,12 @@ int QCamera3HardwareInterface::processCaptureRequest(
 
         //Then start them.
         CDBG_HIGH("%s: Start META Channel", __func__);
-        mMetadataChannel->start();
+        rc = mMetadataChannel->start();
+        if (rc < 0) {
+            ALOGE("%s: META channel start failed", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
 
         if (mSupportChannel) {
             rc = mSupportChannel->start();
@@ -2077,7 +2110,12 @@ int QCamera3HardwareInterface::processCaptureRequest(
             it != mStreamInfo.end(); it++) {
             QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
             CDBG_HIGH("%s: Start Regular Channel mask=%d", __func__, channel->getStreamTypeMask());
-            channel->start();
+            rc = channel->start();
+            if (rc < 0) {
+                ALOGE("%s: channel start failed", __func__);
+                pthread_mutex_unlock(&mMutex);
+                return rc;
+            }
         }
 
         if (mRawDumpChannel) {
@@ -2578,20 +2616,41 @@ int QCamera3HardwareInterface::flush()
     mFlush = false;
 
     // Start the Streams/Channels
+    int rc = NO_ERROR;
     if (mMetadataChannel) {
         /* If content of mStreamInfo is not 0, there is metadata stream */
-        mMetadataChannel->start();
+        rc = mMetadataChannel->start();
+        if (rc < 0) {
+            ALOGE("%s: META channel start failed", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
     }
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
         QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
-        channel->start();
+        rc = channel->start();
+        if (rc < 0) {
+            ALOGE("%s: channel start failed", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
     }
     if (mSupportChannel) {
-        mSupportChannel->start();
+        rc = mSupportChannel->start();
+        if (rc < 0) {
+            ALOGE("%s: Support channel start failed", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
     }
     if (mRawDumpChannel) {
-        mRawDumpChannel->start();
+        rc = mRawDumpChannel->start();
+        if (rc < 0) {
+            ALOGE("%s: RAW dump channel start failed", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
     }
 
     pthread_mutex_unlock(&mMutex);
@@ -4282,6 +4341,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
         switch (scalar_formats[j]) {
         case ANDROID_SCALER_AVAILABLE_FORMATS_RAW16:
         case ANDROID_SCALER_AVAILABLE_FORMATS_RAW_OPAQUE:
+        case HAL_PIXEL_FORMAT_RAW10:
             for (int i = 0;
                 i < gCamCapability[cameraId]->supported_raw_dim_cnt; i++) {
                 available_min_durations[idx] = scalar_formats[j];
@@ -4309,7 +4369,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             break;
         }
     }
-    staticInfo.update(ANDROID_SCALER_AVAILABLE_PROCESSED_MIN_DURATIONS,
+    staticInfo.update(ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS,
                       &available_min_durations[0], idx);
 
     int32_t max_jpeg_size = calcMaxJpegSize(cameraId);
@@ -4543,6 +4603,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE;
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR;
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING;
+    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS;
+    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE;
     if (facingBack) {
         available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW;
     }
@@ -4559,7 +4621,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SCALER_AVAILABLE_INPUT_OUTPUT_FORMATS_MAP,
                       io_format_map, 0);
 
-    int32_t max_latency = (facingBack)? ANDROID_SYNC_MAX_LATENCY_PER_FRAME_CONTROL:ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
+    int32_t max_latency = (facingBack)? ANDROID_SYNC_MAX_LATENCY_PER_FRAME_CONTROL:CAM_MAX_SYNC_LATENCY;
     staticInfo.update(ANDROID_SYNC_MAX_LATENCY,
                       &max_latency,
                       1);
@@ -4598,23 +4660,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES,
                       available_hot_pixel_map_modes,
                       1);
-
-    int32_t avail_min_frame_durations_size = gCamCapability[cameraId]->picture_sizes_tbl_cnt *
-                                                 sizeof(scalar_formats)/sizeof(int32_t) * 4;
-    int64_t avail_min_frame_durations[avail_min_frame_durations_size];
-    int pos = 0;
-    for (int j = 0; j < scalar_formats_count; j++) {
-        for (int i = 0; i < gCamCapability[cameraId]->picture_sizes_tbl_cnt; i++) {
-           avail_min_frame_durations[pos]   = scalar_formats[j];
-           avail_min_frame_durations[pos+1] = gCamCapability[cameraId]->picture_sizes_tbl[i].width;
-           avail_min_frame_durations[pos+2] = gCamCapability[cameraId]->picture_sizes_tbl[i].height;
-           avail_min_frame_durations[pos+3] = gCamCapability[cameraId]->picture_min_duration[i];
-           pos+=4;
-        }
-    }
-    staticInfo.update(ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS,
-                      avail_min_frame_durations,
-                      avail_min_frame_durations_size);
 
     uint8_t fwkReferenceIlluminant = lookupFwkName(REFERENCE_ILLUMINANT_MAP,
         sizeof(REFERENCE_ILLUMINANT_MAP) / sizeof(REFERENCE_ILLUMINANT_MAP[0]),

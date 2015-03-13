@@ -63,5 +63,7 @@
         <item>com.motorola.entitlement</item>
         <item>com.motorola.entitlement.EntitlementDialogActivity</item>
     </string-array>
+    <string translatable="false" name="config_mobile_hotspot_provision_app_no_ui">com.motorola.entitlement.SILENT_ENTITLEMENT_CHECK</string>
+    <string translatable="false" name="config_mobile_hotspot_provision_response">com.motorola.entitlement.SILENT_ENTITLEMENT_CHECK_RESULT</string>
 
 </resources>

@@ -46,6 +46,10 @@ MAX_EGL_CACHE_KEY_SIZE := 12*1024
 # of the device.
 MAX_EGL_CACHE_SIZE := 2048*1024
 
+# Maximum dimension (width or height) of a virtual display that will be
+# handled by the hardware composer
+MAX_VIRTUAL_DISPLAY_DIMENSION := 2048
+
 BOARD_EGL_CFG := device/moto/shamu/egl.cfg
 
 BOARD_USES_ALSA_AUDIO := true
@@ -78,6 +82,8 @@ USE_OPENGL_RENDERER := true
 VSYNC_EVENT_PHASE_OFFSET_NS := 7500000
 SF_VSYNC_EVENT_PHASE_OFFSET_NS := 5000000
 TARGET_USES_ION := true
+TARGET_HW_DISK_ENCRYPTION := false
+TARGET_CRYPTFS_HW_PATH := device/moto/shamu/cryptfs_hw
 
 # Enable dex-preoptimization to speed up first boot sequence
 ifeq ($(HOST_OS),linux)
@@ -118,6 +124,7 @@ BOARD_SEPOLICY_DIRS += \
 
 BOARD_SEPOLICY_UNION += \
         adspd.te \
+        atfwd.te \
         bluetooth.te \
         bluetooth_loader.te \
         bootanim.te \
@@ -127,6 +134,7 @@ BOARD_SEPOLICY_UNION += \
         domain.te \
         file.te \
         gsiffd.te \
+        ims.te \
         irsc_util.te \
         mdm_helper.te \
         mediaserver.te \
@@ -134,10 +142,13 @@ BOARD_SEPOLICY_UNION += \
         netd.te \
         netmgrd.te \
         platform_app.te \
+        property.te \
+        property_contexts \
         qmux.te \
         radio.te \
         rild.te \
         sensors.te \
+        service.te \
         ss_ramdump.te \
         surfaceflinger.te \
         system_app.te \

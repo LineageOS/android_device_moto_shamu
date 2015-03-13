@@ -51,9 +51,12 @@ on fs
     # Keeping following partitions outside fstab file. As user may not have
     # these partition flashed on the device. Failure to mount any partition in fstab file
     # results in failure to launch late-start class.
+    wait /dev/block/platform/msm_sdcc.1/by-name/oem
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/oem /oem ro nosuid nodev context=u:object_r:oemfs:s0
 
-    wait /dev/block/platform/msm_sdcc.1/by-name/persist
-    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/persist /persist nosuid nodev barrier=1
+    mkdir /fsg 0755 root root
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3 /fsg ro nosuid nodev barrier=0 context=u:object_r:fsg_file:s0
+
     restorecon_recursive /persist
     mkdir /persist/data 0700 system system
     mkdir /persist/data/sfs 0700 system system
@@ -61,12 +64,6 @@ on fs
     mkdir /persist/public 0755 system radio
     mkdir /persist/public/hiddenmenu 0775 system radio
     mkdir /persist/public/hiddenmenu/data 0775 system radio
-
-    wait /dev/block/platform/msm_sdcc.1/by-name/oem
-    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/oem /oem ro nosuid nodev context=u:object_r:oemfs:s0
-
-    mkdir /fsg 0755 root root
-    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3 /fsg ro nosuid nodev barrier=0 context=u:object_r:fsg_file:s0
 
     # Enable rmnet data and aggregation
     setprop persist.rmnet.mux enabled
@@ -106,8 +103,10 @@ on post-fs-data
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864
+
     # Allow subsystem (modem etc) debugging
-    write /sys/module/subsystem_restart/parameters/enable_debug ${persist.sys.ssr.enable_debug}
+    # write /sys/module/subsystem_restart/parameters/enable_debug ${persist.sys.ssr.enable_debug}
+
     write /sys/kernel/boot_adsp/boot 1
 
     # Subsytem Restart
@@ -320,12 +319,16 @@ on post-fs-data
     mkdir /data/system 0775 system system
     #symlink /data/misc/wifi/wpa_supplicant /data/system/wpa_supplicant
 
+    #Create directories for gpsone_daemon services
+    mkdir /data/misc/gpsone_d 0770 system gps
+
+    #Create directories for QuIPS
+    mkdir /data/misc/quipc 0770 gps system
+
     #Create directories for Location services
     mkdir /data/misc/location 0770 gps gps
     mkdir /data/misc/location/mq 0770 gps gps
     mkdir /data/misc/location/xtwifi 0770 gps gps
-    mkdir /data/misc/location/quipc 0770 gps system
-    mkdir /data/misc/location/gsiff 0770 gps gps
 
     #Create directory from IMS services
     mkdir /data/shared 0755
@@ -509,12 +512,6 @@ service adspd /system/bin/adspd /dev/ttyHS3
    user media
    group media input
 
-#start GNSS/Sensor interface daemon
-service gsiff_daemon /system/vendor/bin/gsiff_daemon
-    class late_start
-    user gps
-    group gps net_raw
-
 on property:sys.boot_completed=1
     start qcom-post-boot
 
@@ -626,3 +623,8 @@ on property:ro.mdm_helper_proxy_req=true
 
 on property:init.svc.ril-daemon=running
     setprop ro.mdm_helper_proxy_req true
+
+service atfwd /system/bin/ATFWD-daemon
+    class late_start
+    user system
+    group system radio

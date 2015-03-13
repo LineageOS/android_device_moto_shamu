@@ -11,8 +11,8 @@
             system/bin/ramdump \
             system/bin/tcmd_mini \
             system/etc/Bluetooth_cal.acdb \
-            system/etc/diag/FIT_V12.cfg \
-            system/etc/diag/mdm/FIT_V12.cfg \
+            system/etc/diag/mdm/FIT_V15_audio.cfg \
+            system/etc/diag/mdm/FIT_V15.cfg \
             system/etc/diag/mdm/sensors_qxdm.cfg \
             system/etc/diag/sensors_qxdm.cfg \
             system/etc/firmware/vpu.b00 \
@@ -42,9 +42,10 @@
             system/lib/libadspd.so \
             system/lib/librecoglib.so \
             system/lib/libsupermodel.so \
+            system/priv-app/BuaContactAdapter/BuaContactAdapter.apk \
             system/vendor/firmware/acdb.mbn \
-            system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat \
-            system/vendor/firmware/atmel-a432-14101503-0103aa-shamu.tdat \
+            system/vendor/firmware/atmel-a432-*-shamu-p1.tdat \
+            system/vendor/firmware/atmel-a432-*-shamu.tdat \
             system/vendor/firmware/left.boost.music.eq \
             system/vendor/firmware/left.boost_music_table.preset \
             system/vendor/firmware/left.boost_n1b12.patch \
@@ -150,7 +151,6 @@
             system/etc/firmware/cpp_firmware_v1_8_0.fw \
             system/etc/flp.conf \
             system/etc/qmi_fw.conf \
-            system/etc/sap.conf \
             system/etc/sensors/sensor_def_qcomdev.conf \
             system/etc/thermal-engine-shamu.conf \
             system/lib/hw/audio.primary.msm8084.so \
@@ -168,7 +168,6 @@
             system/lib/soundfx/libqcomvisualizer.so \
             system/lib/soundfx/libqcomvoiceprocessing.so \
             system/lib/soundfx/libspeakerbundle.so \
-            system/vendor/bin/gsiff_daemon \
             system/vendor/firmware/a420_pfp.fw \
             system/vendor/firmware/a420_pm4.fw \
             system/vendor/firmware/adsp.b00 \

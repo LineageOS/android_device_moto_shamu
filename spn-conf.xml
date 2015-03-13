@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <spnOverrides>
+    <spnOverride numeric="310150" spn="AT&amp;T"/>
+    <spnOverride numeric="310160" spn="T-Mobile "/>
+    <spnOverride numeric="310170" spn="AT&amp;T"/>
+    <spnOverride numeric="310200" spn="T-Mobile "/>
+    <spnOverride numeric="310210" spn="T-Mobile "/>
+    <spnOverride numeric="310220" spn="T-Mobile "/>
+    <spnOverride numeric="310230" spn="T-Mobile "/>
+    <spnOverride numeric="310240" spn="T-Mobile "/>
+    <spnOverride numeric="310250" spn="T-Mobile "/>
+    <spnOverride numeric="310260" spn="T-Mobile "/>
+    <spnOverride numeric="310270" spn="T-Mobile "/>
+    <spnOverride numeric="310310" spn="T-Mobile "/>
+    <spnOverride numeric="310380" spn="AT&amp;T"/>
+    <spnOverride numeric="310410" spn="AT&amp;T"/>
+    <spnOverride numeric="310490" spn="T-Mobile USA"/>
+    <spnOverride numeric="310560" spn="AT&amp;T"/>
+    <spnOverride numeric="310660" spn="T-Mobile "/>
+    <spnOverride numeric="310680" spn="AT&amp;T"/>
+    <spnOverride numeric="310980" spn="AT&amp;T"/>
+    <spnOverride numeric="311180" spn="AT&amp;T"/>
     <spnOverride numeric="310120" spn="Sprint"/>
     <spnOverride numeric="40402" spn="airtel"/>
     <spnOverride numeric="40403" spn="airtel"/>

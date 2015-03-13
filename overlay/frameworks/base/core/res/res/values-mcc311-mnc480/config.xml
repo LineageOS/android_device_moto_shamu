@@ -54,6 +54,8 @@
         <item>com.motorola.entitlement</item>
         <item>com.motorola.entitlement.EntitlementDialogActivity</item>
     </string-array>
+    <string translatable="false" name="config_mobile_hotspot_provision_app_no_ui">com.motorola.entitlement.SILENT_ENTITLEMENT_CHECK</string>
+    <string translatable="false" name="config_mobile_hotspot_provision_response">com.motorola.entitlement.SILENT_ENTITLEMENT_CHECK_RESULT</string>
 
     <!-- Array of ConnectivityManager.TYPE_xxxx values allowable for tethering -->
     <!-- Common options are [1, 4] for TYPE_WIFI and TYPE_MOBILE_DUN or
@@ -64,4 +66,6 @@
         <item>7</item>
         <item>9</item>
     </integer-array>
+
+    <bool name="config_LTE_eri_for_network_name">false</bool>
 </resources>
