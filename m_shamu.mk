@@ -41,4 +41,4 @@ PRODUCT_PACKAGES += \
     DMService
 
 PRODUCT_PACKAGE_OVERLAYS += vendor/moto/shamu/overlay
-
+PRODUCT_PACKAGE_OVERLAYS += vendor/broadcom/shamu/overlay
