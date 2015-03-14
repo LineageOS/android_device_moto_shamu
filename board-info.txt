@@ -1,2 +1,2 @@
 require board=shamu
-require version-bootloader=moto-apq8084-71.05|0x7105
+require version-bootloader=moto-apq8084-71.05|0x7105|moto-apq8084-71.08|0x7108
