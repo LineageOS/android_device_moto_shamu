@@ -123,8 +123,7 @@ PRODUCT_PACKAGES := \
     hostapd \
     dhcpcd.conf \
     wpa_supplicant \
-    wpa_supplicant.conf \
-    sl4a
+    wpa_supplicant.conf
 
 PRODUCT_PACKAGES += atmel.fw.apq8084
 
