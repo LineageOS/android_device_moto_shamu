@@ -43,3 +43,10 @@ unix_socket_connect(ims, property, init)
 
 # Allow ims to tell init to start the ims data service via property=sys.ims.QMI_DAEMON_STATUS
 allow ims qcom_ims_prop:property_service set;
+
+allow ims wpa_socket:sock_file create_file_perms;
+allow ims wpa_socket:dir rw_dir_perms;
+
+allow ims wifi_data_file:dir r_dir_perms;
+
+unix_socket_send(ims, wpa, wpa)

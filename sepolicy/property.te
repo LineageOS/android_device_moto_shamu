@@ -1,1 +1,2 @@
  type qcom_ims_prop, property_type;
+ type qcom_netmgrd_prop, property_type;
