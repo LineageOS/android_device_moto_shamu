@@ -304,6 +304,45 @@ vendor/lib/liblbs_core.so
 vendor/lib/libloc_api_v02.so
 vendor/lib/libloc_ds_api.so
 
+# IMS/HD Voice
+-app/RCSBootstraputil/RCSBootstraputil.apk
+-app/RcsImsBootstraputil/RcsImsBootstraputil.apk
+-app/RcsService/RcsService.apk
+-app/atfwd/atfwd.apk
+-app/ims/ims.apk
+bin/ATFWD-daemon
+bin/imsdatadaemon
+bin/imsqmidaemon
+etc/permissions/com.motorola.ims.rcsmanager.xml
+etc/permissions/com.verizon.hardware.telephony.ehrpd.xml
+etc/permissions/com.verizon.hardware.telephony.lte.xml
+etc/permissions/com.verizon.ims.xml
+etc/permissions/rcsimssettings.xml
+etc/permissions/rcsservice.xml
+-framework/com.motorola.ims.rcsmanager.jar
+-framework/com.verizon.hardware.telephony.ehrpd.jar
+-framework/com.verizon.hardware.telephony.lte.jar
+-framework/com.verizon.ims.jar
+-framework/rcsimssettings.jar
+-framework/rcsservice.jar
+vendor/lib/lib-dplmedia.so
+vendor/lib/lib-ims-setting-jni.so
+vendor/lib/lib-ims-settings.so
+vendor/lib/lib-imsSDP.so
+vendor/lib/lib-imsdpl.so
+vendor/lib/lib-imsqimf.so
+vendor/lib/lib-imsrcs.so
+vendor/lib/lib-imss.so
+vendor/lib/lib-imsvt.so
+vendor/lib/lib-imsxml.so
+vendor/lib/lib-rcsimssjni.so
+vendor/lib/lib-rcsjni.so
+vendor/lib/lib-rtpcommon.so
+vendor/lib/lib-rtpcore.so
+vendor/lib/lib-rtpdaemoninterface.so
+vendor/lib/lib-rtpsl.so
+vendor/lib/libvcel.so
+
 # Keymaster firmware
 vendor/firmware/keymaster/keymaster.b00
 vendor/firmware/keymaster/keymaster.b01
