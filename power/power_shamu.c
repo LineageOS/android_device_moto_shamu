@@ -239,18 +239,15 @@ static void set_power_profile(int profile) {
     if (profile == PROFILE_BALANCED) {
         low_power(0);
         coresonline(1);
-        sync_thread(1);
         enc_boost(0);
         ALOGD("%s: set balanced mode", __func__);
     } else if (profile == PROFILE_HIGH_PERFORMANCE) {
         low_power(0);
         coresonline(1);
-        sync_thread(1);
         enc_boost(1);
         ALOGD("%s: set performance mode", __func__);
 
     } else if (profile == PROFILE_POWER_SAVE) {
-        sync_thread(0);
         coresonline(0);
         enc_boost(0);
         low_power(1);
