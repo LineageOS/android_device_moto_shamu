@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+TARGET_SPECIFIC_HEADER_PATH += device/moto/shamu/include
+
 TARGET_CPU_ABI := armeabi-v7a
 TARGET_CPU_ABI2 := armeabi
 TARGET_ARCH := arm
@@ -113,6 +115,8 @@ TARGET_RECOVERY_FSTAB = device/moto/shamu/fstab.shamu
 ifeq ($(HOST_OS),linux)
 TARGET_USERIMAGES_USE_F2FS := true
 endif
+
+BOARD_PROVIDES_LIBRIL := true
 
 TARGET_RELEASETOOLS_EXTENSIONS := device/moto/shamu
 
