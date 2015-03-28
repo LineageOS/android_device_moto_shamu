@@ -389,6 +389,7 @@ vendor/lib/libqmimotext.so
 bin/bridgemgrd
 bin/ks
 bin/mdm_helper
+bin/mdm_helper_proxy
 bin/netmgrd
 bin/qmi_motext_hook
 #bin/qmi_simple_ril_test
