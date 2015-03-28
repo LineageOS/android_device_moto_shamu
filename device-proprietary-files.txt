@@ -231,11 +231,6 @@ etc/firmware/cpp_firmware_v1_8_0.fw
 # Diagnostic
 bin/diag_klog
 bin/diag_mdlog
-bin/diag_qshrink4_daemon
-bin/PktRspTest
-bin/ramdump
-bin/rundiag
-bin/test_diag
 etc/diag/mdm/FIT_V15_audio.cfg
 etc/diag/mdm/FIT_V15.cfg
 etc/diag/mdm/sensors_qxdm.cfg
@@ -355,25 +350,10 @@ bin/mpdecision
 
 # Qualcomm framework
 bin/irsc_util
-bin/qmi-framework-tests/qmi_ping_clnt_test_0000
-bin/qmi-framework-tests/qmi_ping_clnt_test_0001
-bin/qmi-framework-tests/qmi_ping_clnt_test_1000
-bin/qmi-framework-tests/qmi_ping_clnt_test_1001
-bin/qmi-framework-tests/qmi_ping_clnt_test_2000
-bin/qmi-framework-tests/qmi_ping_svc
-bin/qmi-framework-tests/qmi_ping_test
-bin/qmi-framework-tests/qmi_test_service_clnt_test_0000
-bin/qmi-framework-tests/qmi_test_service_clnt_test_0001
-bin/qmi-framework-tests/qmi_test_service_clnt_test_1000
-bin/qmi-framework-tests/qmi_test_service_clnt_test_1001
-bin/qmi-framework-tests/qmi_test_service_clnt_test_2000
-bin/qmi-framework-tests/qmi_test_service_test
-etc/qmi_fw.conf
 vendor/lib/libdiag.so
 vendor/lib/libdsi_netctrl.so
 vendor/lib/libdsutils.so
 vendor/lib/libidl.so
-vendor/lib/libqcci_legacy.so
 vendor/lib/libqdi.so
 vendor/lib/libqdp.so
 vendor/lib/libqmi.so
@@ -476,4 +456,3 @@ vendor/firmware/aonvr2.bin
 # WiFi
 vendor/firmware/bcm20795_firmware.ncd
 vendor/firmware/bcm4354A2.hcd
-xbin/wlutil
