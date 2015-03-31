@@ -340,6 +340,8 @@ typedef struct{
 
     /* Max size supported by ISP viewfinder path */
     cam_dimension_t max_viewfinder_size;
+
+    uint8_t flash_dev_name[QCAMERA_MAX_FILEPATH_LENGTH];
 } cam_capability_t;
 
 typedef enum {
