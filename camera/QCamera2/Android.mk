@@ -21,6 +21,7 @@ LOCAL_CLANG_CFLAGS += \
 LOCAL_SRC_FILES := \
         util/QCameraCmdThread.cpp \
         util/QCameraQueue.cpp \
+        util/QCameraFlash.cpp \
         QCamera2Hal.cpp \
         QCamera2Factory.cpp
 
