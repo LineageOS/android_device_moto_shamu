@@ -40,6 +40,7 @@ void dumpstate_board()
     dump_file("HSIC control events", "/d/xhci_msm_hsic_dbg/show_ctrl_events");
     dump_file("HSIC data events", "/d/xhci_msm_hsic_dbg/show_data_events");
     dump_file("USB PM events", "/d/usb_pm_hsic_dbg/show_usb_pm_events");
+    dump_file("MDSS registers", "/d/mdp/reg_dump");
     run_command("Subsystem Tombstone list", 5, SU_PATH, "root", "ls", "-l", "/data/tombstones/ramdump", NULL);
     run_command("ION CLIENTS", 5, SU_PATH, "root", "/system/bin/sh", "-c", "for f in $(ls /d/ion/clients/*); do echo $f; cat $f; done", NULL);
     run_command("ION HEAPS",   5, SU_PATH, "root", "/system/bin/sh", "-c", "for f in $(ls /d/ion/heaps/*);   do echo $f; cat $f; done", NULL);
