@@ -55,8 +55,9 @@
 /system/bin/usbhub
 /system/bin/usbhub_init
 /system/etc/Bluetooth_cal.acdb
-/system/etc/diag/mdm/FIT_V15_audio.cfg
-/system/etc/diag/mdm/FIT_V15.cfg
+/system/etc/diag/mdm/FIT_V16_2_volte_full_ip.cfg
+/system/etc/diag/mdm/FIT_V16_3_audio.cfg
+/system/etc/diag/mdm/FIT_V16_1.cfg
 /system/etc/diag/mdm/sensors_qxdm.cfg
 /system/etc/diag/sensors_qxdm.cfg
 /system/etc/firmware/cpp_firmware_v1_1_1.fw
