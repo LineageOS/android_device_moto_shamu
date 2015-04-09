@@ -24,4 +24,8 @@
         <item>com.motorola.entitlement.EntitlementDialogActivity</item>
     </string-array>
 
+    <!--Overlay useragent to resolve MMS issues -->
+    <string name="config_mms_user_agent">Nexus6</string>
+    <string name="config_mms_user_agent_profile_url" translatable="false">http://uaprof.vtext.com/mot/nexus6/nexus6.xml</string>
+
 </resources>
