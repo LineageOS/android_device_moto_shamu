@@ -2,7 +2,7 @@
 
 			  L I B R M N E T C T L . H
 
-Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
+Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -65,69 +65,69 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 enum rmnetctl_error_codes_e {
 	/* API succeeded. This should always be the first element. */
-	RMNETCTL_API_SUCCESS,
+	RMNETCTL_API_SUCCESS = 0,
 
-	RMNETCTL_API_FIRST_ERR,
+	RMNETCTL_API_FIRST_ERR = 1,
 	/* API failed because not enough memory to create buffer to send
 	 * message */
 	RMNETCTL_API_ERR_REQUEST_INVALID = RMNETCTL_API_FIRST_ERR,
 	/* API failed because not enough memory to create buffer for the
 	 *  response message */
-	RMNETCTL_API_ERR_RESPONSE_INVALID,
+	RMNETCTL_API_ERR_RESPONSE_INVALID = 2,
 	/* API failed because could not send the message to kernel */
-	RMNETCTL_API_ERR_MESSAGE_SEND,
+	RMNETCTL_API_ERR_MESSAGE_SEND = 3,
 	/* API failed because could not receive message from the kernel */
-	RMNETCTL_API_ERR_MESSAGE_RECEIVE,
+	RMNETCTL_API_ERR_MESSAGE_RECEIVE = 4,
 
-	RMNETCTL_INIT_FIRST_ERR,
+	RMNETCTL_INIT_FIRST_ERR = 5,
 	/* Invalid process id. So return an error. */
 	RMNETCTL_INIT_ERR_PROCESS_ID = RMNETCTL_INIT_FIRST_ERR,
 	/* Invalid socket descriptor id. So return an error. */
-	RMNETCTL_INIT_ERR_NETLINK_FD,
+	RMNETCTL_INIT_ERR_NETLINK_FD = 6,
 	/* Could not bind the socket to the Netlink file descriptor */
-	RMNETCTL_INIT_ERR_BIND,
+	RMNETCTL_INIT_ERR_BIND = 7,
 	/* Invalid user id. Only root has access to this function. (NA) */
-	RMNETCTL_INIT_ERR_INVALID_USER,
+	RMNETCTL_INIT_ERR_INVALID_USER = 8,
 
-	RMNETCTL_API_SECOND_ERR,
+	RMNETCTL_API_SECOND_ERR = 9,
 	/* API failed because the RmNet handle for the transaction was NULL */
 	RMNETCTL_API_ERR_HNDL_INVALID = RMNETCTL_API_SECOND_ERR,
 	/* API failed because the request buffer for the transaction was NULL */
-	RMNETCTL_API_ERR_REQUEST_NULL,
+	RMNETCTL_API_ERR_REQUEST_NULL = 10,
 	/* API failed because the response buffer for the transaction was NULL*/
-	RMNETCTL_API_ERR_RESPONSE_NULL,
+	RMNETCTL_API_ERR_RESPONSE_NULL = 11,
 	/* API failed because the request and response type do not match*/
-	RMNETCTL_API_ERR_MESSAGE_TYPE,
+	RMNETCTL_API_ERR_MESSAGE_TYPE = 12,
 	/* API failed because the return type is invalid */
-	RMNETCTL_API_ERR_RETURN_TYPE,
+	RMNETCTL_API_ERR_RETURN_TYPE = 13,
 	/* API failed because the string was truncated */
-	RMNETCTL_API_ERR_STRING_TRUNCATION,
+	RMNETCTL_API_ERR_STRING_TRUNCATION = 14,
 
 	/* These error are 1-to-1 with rmnet_data config errors in rmnet_data.h
 	   for each conversion.
 	   please keep the enums synced.
 	*/
-	RMNETCTL_KERNEL_FIRST_ERR,
+	RMNETCTL_KERNEL_FIRST_ERR = 15,
 	/* No error */
 	RMNETCTL_KERNEL_ERROR_NO_ERR = RMNETCTL_KERNEL_FIRST_ERR,
 	/* Invalid / unsupported message */
-	RMNETCTL_KERNEL_ERR_UNKNOWN_MESSAGE,
-	/* Internal problem in the kernel modeule */
-	RMNETCTL_KERNEL_ERR_INTERNAL,
-	/* Kernel is temporarely out of memory */
-	RMNETCTL_KERNEL_ERR_OUT_OF_MEM,
+	RMNETCTL_KERNEL_ERR_UNKNOWN_MESSAGE = 16,
+	/* Internal problem in the kernel module */
+	RMNETCTL_KERNEL_ERR_INTERNAL = 17,
+	/* Kernel is temporarily out of memory */
+	RMNETCTL_KERNEL_ERR_OUT_OF_MEM = 18,
 	/* Device already exists / Still in use */
-	RMETNCTL_KERNEL_ERR_DEVICE_IN_USE,
+	RMETNCTL_KERNEL_ERR_DEVICE_IN_USE = 19,
 	/* Invalid request / Unsupported scenario */
-	RMNETCTL_KERNEL_ERR_INVALID_REQUEST,
+	RMNETCTL_KERNEL_ERR_INVALID_REQUEST = 20,
 	/* Device doesn't exist */
-	RMNETCTL_KERNEL_ERR_NO_SUCH_DEVICE,
+	RMNETCTL_KERNEL_ERR_NO_SUCH_DEVICE = 21,
 	/* One or more of the arguments is invalid */
-	RMNETCTL_KERNEL_ERR_BAD_ARGS,
+	RMNETCTL_KERNEL_ERR_BAD_ARGS = 22,
 	/* Egress device is invalid */
-	RMNETCTL_KERNEL_ERR_BAD_EGRESS_DEVICE,
+	RMNETCTL_KERNEL_ERR_BAD_EGRESS_DEVICE = 23,
 	/* TC handle is full */
-	RMNETCTL_KERNEL_ERR_TC_HANDLE_FULL,
+	RMNETCTL_KERNEL_ERR_TC_HANDLE_FULL = 24,
 
 	/* This should always be the last element */
 	RMNETCTL_API_ERR_ENUM_LENGTH
@@ -159,7 +159,7 @@ char rmnetctl_error_code_text
 	"ERROR: Kernel call succeeded\n",
 	"ERROR: Invalid / Unsupported directive\n",
 	"ERROR: Internal problem in the kernel module\n",
-	"ERROR: The kernel is temporarely out of memory\n",
+	"ERROR: The kernel is temporarily out of memory\n",
 	"ERROR: Device already exists / Still in use\n",
 	"ERROR: Invalid request / Unsupported scenario\n",
 	"ERROR: Device doesn't exist\n",

@@ -2,7 +2,7 @@
 
 			R M N E T C L I . C
 
-Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
+Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -151,17 +151,17 @@ static void rmnet_api_usage(void)
 	printf(_5TABS" bridged. dev_name");
 	printf(_5TABS" and egress_dev_name");
 	printf(_5TABS" cannot be larger");
-	printf(_5TABS" than 15 tcharacters");
+	printf(_5TABS" than 15 characters");
 	printf(_5TABS" Returns the status code\n\n");
 	printf("rmnetcli unsetlepc <logical_ep_id>       Un-sets the logical");
 	printf(_2TABS"  <dev_name>              endpoint configuration for");
 	printf(_5TABS" a particular link.");
 	printf(_5TABS" integers from -1 to 31.");
 	printf(_5TABS" dev_name cannot be larger");
-	printf(_5TABS" than 15 tcharacters");
+	printf(_5TABS" than 15 characters");
 	printf(_5TABS" Returns the status code\n\n");
 	printf("rmnetcli getlepc <logical_ep_id>         Sets the logical");
-	printf(_2TABS" <dev_name>              enpoint configuration for a");
+	printf(_2TABS" <dev_name>              endpoint configuration for a");
 	printf(_5TABS" particular link.");
 	printf(_5TABS" logical_ep_id are 32bit");
 	printf(_5TABS" integers from -1 to 31.");
@@ -241,7 +241,7 @@ static void print_rmnet_api_status(int return_code, uint16_t error_number)
 /*!
 * @brief Method to make the API calls
 * @details Checks for each type of parameter and calls the appropriate
-* function based on the number of parameters and paramter type
+* function based on the number of parameters and parameter type
 * @param argc Number of arguments which vary based on the commands
 * @param argv Value of the arguments which vary based on the commands
 * @return RMNETCTL_SUCCESS if successful. Relevant data might be printed
