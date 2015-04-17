@@ -4,6 +4,20 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
+# QCameraParameters.h has unused private field.
+# QCamera2Hal.cpp, QCamera3HWI.cpp, etc. use GNU old-style field designator extension.
+# QCamera3PostProc.cpp has unused label.
+# QCamera3HWI.cpp, QCamera3PostProc.cpp etc. have unused variable.
+# QCamera3Channel.cpp compares array to null pointer.
+# QCamera2Factory.cpp, QCamera3HWI.cpp, etc. have unused parameter.
+LOCAL_CLANG_CFLAGS += \
+        -Wno-error=unused-private-field \
+        -Wno-error=gnu-designator \
+        -Wno-error=unused-label \
+        -Wno-error=unused-variable \
+        -Wno-error=unused-parameter \
+        -Wno-error=tautological-pointer-compare \
+
 LOCAL_SRC_FILES := \
         util/QCameraCmdThread.cpp \
         util/QCameraQueue.cpp \
