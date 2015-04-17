@@ -21,9 +21,6 @@
 #Serial console
 /dev/ttyHSL0                   u:object_r:console_device:s0
 
-# STOPSHIP b/16455932
-/dev/vfsspi                    u:object_r:fingerprint_device:s0
-
 # GPU device
 /dev/kgsl-3d0                  u:object_r:gpu_device:s0
 /dev/kgsl                      u:object_r:gpu_device:s0
