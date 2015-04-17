@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2015, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -203,7 +203,7 @@ QCamera3Stream::~QCamera3Stream()
         int rc = mCamOps->unmap_stream_buf(mCamHandle,
                     mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO, 0, -1);
         if (rc < 0) {
-            ALOGE("Failed to map stream info buffer");
+            ALOGE("Failed to un-map stream info buffer");
         }
         mStreamInfoBuf->deallocate();
         delete mStreamInfoBuf;
@@ -496,36 +496,6 @@ void *QCamera3Stream::dataProcRoutine(void *data)
 }
 
 /*===========================================================================
- * FUNCTION   : getInternalFormatBuffer
- *
- * DESCRIPTION: return buffer in the internal format structure
- *
- * PARAMETERS :
- *   @index   : index of buffer to be returned
- *
- * RETURN     : int32_t type of status
- *              NO_ERROR  -- success
- *              none-zero failure code
- *==========================================================================*/
-mm_camera_buf_def_t* QCamera3Stream::getInternalFormatBuffer(int index)
-{
-    mm_camera_buf_def_t *rc = NULL;
-    if ((index >= mNumBufs) || (mBufDefs == NULL) ||
-            (NULL == mBufDefs[index].mem_info)) {
-        ALOGE("%s:Index out of range/no internal buffers yet", __func__);
-        return NULL;
-    }
-
-    rc = (mm_camera_buf_def_t*)malloc(sizeof(mm_camera_buf_def_t));
-    if(rc) {
-        memcpy(rc, &mBufDefs[index], sizeof(mm_camera_buf_def_t));
-    } else {
-        ALOGE("%s: Failed to allocate memory",__func__);
-    }
-    return rc;
-}
-
-/*===========================================================================
  * FUNCTION   : bufDone
  *
  * DESCRIPTION: return stream buffer to kernel
@@ -540,9 +510,11 @@ mm_camera_buf_def_t* QCamera3Stream::getInternalFormatBuffer(int index)
 int32_t QCamera3Stream::bufDone(int index)
 {
     int32_t rc = NO_ERROR;
+    Mutex::Autolock lock(mLock);
 
-    if (index >= mNumBufs || mBufDefs == NULL)
+    if ((index >= mNumBufs) || (mBufDefs == NULL)) {
         return BAD_INDEX;
+    }
 
     if( NULL == mBufDefs[index].mem_info) {
         if (NULL == mMemOps) {
@@ -566,8 +538,51 @@ int32_t QCamera3Stream::bufDone(int index)
     }
 
     rc = mCamOps->qbuf(mCamHandle, mChannelHandle, &mBufDefs[index]);
-    if (rc < 0)
+    if (rc < 0) {
         return FAILED_TRANSACTION;
+    }
+
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : bufRelease
+ *
+ * DESCRIPTION: release all resources associated with this buffer
+ *
+ * PARAMETERS :
+ *   @index   : index of buffer to be released
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3Stream::bufRelease(int32_t index)
+{
+    int32_t rc = NO_ERROR;
+    Mutex::Autolock lock(mLock);
+
+    if ((index >= mNumBufs) || (mBufDefs == NULL)) {
+        return BAD_INDEX;
+    }
+
+    if (NULL != mBufDefs[index].mem_info) {
+        if (NULL == mMemOps) {
+            ALOGE("%s: Camera operations not initialized", __func__);
+            return NO_INIT;
+        }
+
+        rc = mMemOps->unmap_ops(index, -1, mMemOps->userdata);
+        if (rc < 0) {
+            ALOGE("%s: Failed to un-map camera buffer %d", __func__, index);
+            return rc;
+        }
+
+        mBufDefs[index].mem_info = NULL;
+    } else {
+        ALOGE("%s: Buffer at index %d not registered", __func__);
+        return BAD_INDEX;
+    }
 
     return rc;
 }
@@ -597,6 +612,7 @@ int32_t QCamera3Stream::getBufs(cam_frame_len_offset_t *offset,
 {
     int rc = NO_ERROR;
     uint8_t *regFlags;
+    Mutex::Autolock lock(mLock);
 
     if (!ops_tbl) {
         ALOGE("%s: ops_tbl is NULL", __func__);
@@ -685,11 +701,13 @@ int32_t QCamera3Stream::getBufs(cam_frame_len_offset_t *offset,
 int32_t QCamera3Stream::putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl)
 {
     int rc = NO_ERROR;
+    Mutex::Autolock lock(mLock);
+
     for (int i = 0; i < mNumBufs; i++) {
         if (NULL != mBufDefs[i].mem_info) {
             rc = ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
             if (rc < 0) {
-                ALOGE("%s: map_stream_buf failed: %d", __func__, rc);
+                ALOGE("%s: un-map stream buf failed: %d", __func__, rc);
             }
         }
     }
