@@ -2957,6 +2957,11 @@ QCamera3HardwareInterface::translateFromHalMetadata(
             (uint8_t *)POINTER_OF_META(CAM_INTF_META_NOISE_REDUCTION_STRENGTH, metadata);
         camMetadata.update(ANDROID_NOISE_REDUCTION_STRENGTH, noiseRedStrength, 1);
     }
+    if (IS_META_AVAILABLE(CAM_INTF_META_EFFECTIVE_EXPOSURE_FACTOR, metadata)) {
+        float  *effectiveExposureFactor =
+            (float *)POINTER_OF_META(CAM_INTF_META_EFFECTIVE_EXPOSURE_FACTOR, metadata);
+        camMetadata.update(ANDROID_REPROCESS_EFFECTIVE_EXPOSURE_FACTOR, effectiveExposureFactor, 1);
+    }
     if (IS_META_AVAILABLE(CAM_INTF_META_SCALER_CROP_REGION, metadata)) {
         cam_crop_region_t  *hScalerCropRegion =(cam_crop_region_t *)
             POINTER_OF_META(CAM_INTF_META_SCALER_CROP_REGION, metadata);
@@ -4725,10 +4730,11 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       2);
 
     uint8_t available_noise_red_modes[] = {ANDROID_NOISE_REDUCTION_MODE_OFF,
-                                           ANDROID_NOISE_REDUCTION_MODE_FAST};
+                                           ANDROID_NOISE_REDUCTION_MODE_FAST,
+                                           ANDROID_NOISE_REDUCTION_MODE_MINIMAL};
     staticInfo.update(ANDROID_NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES,
                       available_noise_red_modes,
-                      2);
+                      3);
 
     uint8_t available_tonemap_modes[] = {ANDROID_TONEMAP_MODE_CONTRAST_CURVE,
                                          ANDROID_TONEMAP_MODE_FAST};
@@ -6266,6 +6272,14 @@ int QCamera3HardwareInterface::translateToHalMetadata
         rc = AddSetParmEntryToBatch(hal_metadata,
                 CAM_INTF_META_NOISE_REDUCTION_STRENGTH,
                 sizeof(noiseRedStrength), &noiseRedStrength);
+    }
+
+    if (frame_settings.exists(ANDROID_REPROCESS_EFFECTIVE_EXPOSURE_FACTOR)) {
+        float reprocessEffectiveExposureFactor =
+            frame_settings.find(ANDROID_REPROCESS_EFFECTIVE_EXPOSURE_FACTOR).data.f[0];
+        rc = AddSetParmEntryToBatch(hal_metadata,
+                CAM_INTF_META_EFFECTIVE_EXPOSURE_FACTOR,
+                sizeof(reprocessEffectiveExposureFactor), &reprocessEffectiveExposureFactor);
     }
 
     cam_crop_region_t scalerCropRegion;
