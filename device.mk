@@ -100,6 +100,10 @@ $(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4356
 PRODUCT_COPY_FILES += \
     device/moto/shamu/bcmdhd.cal:system/etc/wifi/bcmdhd.cal
 
+# BT FW
+PRODUCT_COPY_FILES += \
+    device/moto/shamu/bluetooth/BCM4356A2_001.003.015.0038.0059_ORC.hcd:$(TARGET_COPY_OUT_VENDOR)/firmware/bcm4354A2.hcd
+
 # For SPN display
 PRODUCT_COPY_FILES += \
     device/moto/shamu/spn-conf.xml:system/etc/spn-conf.xml
