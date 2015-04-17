@@ -595,7 +595,8 @@ typedef enum {
 typedef enum {
     CAM_NOISE_REDUCTION_MODE_OFF,
     CAM_NOISE_REDUCTION_MODE_FAST,
-    CAM_NOISE_REDUCTION_MODE_HIGH_QUALITY
+    CAM_NOISE_REDUCTION_MODE_HIGH_QUALITY,
+    CAM_NOISE_REDUCTION_MODE_MINIMAL
 } cam_noise_reduction_mode_t;
 
 typedef enum {
@@ -1344,7 +1345,7 @@ typedef enum {
 
     /* CAC */
     CAM_INTF_PARM_CAC,
-
+    CAM_INTF_META_EFFECTIVE_EXPOSURE_FACTOR,
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 
