@@ -669,16 +669,6 @@ int QCamera3HardwareInterface::validateStreamDimensions(
 
 
         case HAL_PIXEL_FORMAT_YCbCr_420_888:
-            if (inputStream) {
-                if (inputStream->format == newStream->format) {
-                    if ((int32_t)(newStream->width) ==
-                            gCamCapability[mCameraId]->active_array_size.width
-                            && (int32_t)(newStream->height)  ==
-                            gCamCapability[mCameraId]->active_array_size.height) {
-                        sizeFound = true;
-                    }
-                }
-            }
         case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
         default:
             /* ZSL stream will be full active array size validate that*/
@@ -950,7 +940,7 @@ int QCamera3HardwareInterface::configureStreams(
         return rc;
     }
 
-    camera3_stream_t *zslStream = NULL;
+    camera3_stream_t *zslStream = NULL; //Only use this for size and not actual handle!
     camera3_stream_t *jpegStream = NULL;
     cam_stream_size_info_t stream_config_info;
     memset(&stream_config_info, 0, sizeof(cam_stream_size_info_t));
@@ -1001,9 +991,14 @@ int QCamera3HardwareInterface::configureStreams(
                     && inputStream->width == newStream->width
                     && inputStream->height == newStream->height) {
                 if (zslStream != NULL) {
-                    ALOGE("%s: Multiple input/reprocess streams requested!", __func__);
-                    pthread_mutex_unlock(&mMutex);
-                    return BAD_VALUE;
+                    /* This scenario indicates multiple YUV streams with same size
+                     * as input stream have been requested, since zsl stream handle
+                     * is solely use for the purpose of overriding the size of streams
+                     * which share h/w streams we will just make a guess here as to
+                     * which of the stream is a ZSL stream, this will be refactored
+                     * once we make generic logic for streams sharing encoder output
+                     */
+                    CDBG_HIGH("%s: Warning, Multiple ip/reprocess streams requested!", __func__);
                 }
                 zslStream = newStream;
             }
@@ -1257,7 +1252,7 @@ int QCamera3HardwareInterface::configureStreams(
         /* This override is possible since the f/w gaurantees that the ZSL
            stream will always be the active array size in case of Bidirectional
            or will be limited to the max i/p stream size which we can control to
-           be equal to active array size
+           be equal to be the largest YUV/Opaque stream size
            */
         mPictureChannel->overrideYuvSize(zslStream->width, zslStream->height);
     } else if (mPictureChannel && m_bIs4KVideo) {
@@ -4378,16 +4373,11 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             }
             break;
 
-        /*For below to format we also support i/p streams for reprocessing advertise those*/
         case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
         case HAL_PIXEL_FORMAT_YCbCr_420_888:
-            available_stream_configs[idx] = scalar_formats[j];
-            available_stream_configs[idx+1] = gCamCapability[cameraId]->active_array_size.width;
-            available_stream_configs[idx+2] = gCamCapability[cameraId]->active_array_size.height;
-            available_stream_configs[idx+3] = ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_INPUT;
-            idx+=4;
-        /* Missing break;-) Continue to advertise o/p stream configs for these formats*/
         default:
+            cam_dimension_t largest_picture_size;
+            memset(&largest_picture_size, 0, sizeof(cam_dimension_t));
             for (int i = 0;
                 i < gCamCapability[cameraId]->picture_sizes_tbl_cnt; i++) {
                 available_stream_configs[idx] = scalar_formats[j];
@@ -4398,9 +4388,24 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                 available_stream_configs[idx+3] =
                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT;
                 idx+=4;
+
+                /* Book keep largest */
+                if (gCamCapability[cameraId]->picture_sizes_tbl[i].width
+                        >= largest_picture_size.width &&
+                        gCamCapability[cameraId]->picture_sizes_tbl[i].height
+                        >= largest_picture_size.height)
+                    largest_picture_size = gCamCapability[cameraId]->picture_sizes_tbl[i];
             }
 
-
+            /*For below 2 formats we also support i/p streams for reprocessing advertise those*/
+            if (scalar_formats[j] == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                    scalar_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) {
+                available_stream_configs[idx] = scalar_formats[j];
+                available_stream_configs[idx+1] = largest_picture_size.width;
+                available_stream_configs[idx+2] = largest_picture_size.height;
+                available_stream_configs[idx+3] = ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_INPUT;
+                idx+=4;
+            }
             break;
         }
     }
