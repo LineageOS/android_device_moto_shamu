@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2015, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -799,6 +799,11 @@ void QCamera3RegularChannel::streamCbRoutine(
     int32_t resultFrameNumber;
     camera3_stream_buffer_t result;
 
+    if (NULL == stream) {
+        ALOGE("%s: Invalid stream", __func__);
+        return;
+    }
+
     if(!super_frame) {
          ALOGE("%s: Invalid Super buffer",__func__);
          return;
@@ -817,9 +822,7 @@ void QCamera3RegularChannel::streamCbRoutine(
     frameIndex = (uint8_t)super_frame->bufs[0]->buf_idx;
     if(frameIndex >= mNumBufs) {
          ALOGE("%s: Error, Invalid index for buffer",__func__);
-         if(stream) {
-             stream->bufDone(frameIndex);
-         }
+         stream->bufDone(frameIndex);
          return;
     }
 
@@ -832,6 +835,17 @@ void QCamera3RegularChannel::streamCbRoutine(
     result.status = CAMERA3_BUFFER_STATUS_OK;
     result.acquire_fence = -1;
     result.release_fence = -1;
+    int32_t rc = stream->bufRelease(frameIndex);
+    if (NO_ERROR != rc) {
+        ALOGE("%s: Error %d releasing stream buffer %d",
+                __func__, rc, frameIndex);
+    }
+
+    rc = mMemory.unregisterBuffer(frameIndex);
+    if (NO_ERROR != rc) {
+        ALOGE("%s: Error %d unregistering stream buffer %d",
+                __func__, rc, frameIndex);
+    }
 
     mChannelCB(NULL, &result, resultFrameNumber, mUserData);
     free(super_frame);
@@ -1411,6 +1425,11 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
         ////Use below data to issue framework callback
         resultBuffer = (buffer_handle_t *)obj->mMemory.getBufferHandle(bufIdx);
         resultFrameNumber = obj->mMemory.getFrameNumber(bufIdx);
+        int32_t rc = obj->mMemory.unregisterBuffer(bufIdx);
+        if (NO_ERROR != rc) {
+            ALOGE("%s: Error %d unregistering stream buffer %d",
+                    __func__, rc, bufIdx);
+        }
 
         result.stream = obj->mCamera3Stream;
         result.buffer = resultBuffer;
