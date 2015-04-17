@@ -226,7 +226,8 @@ private:
     int queueReprocMetadata(metadata_buffer_t *metadata);
     void extractJpegMetadata(CameraMetadata& jpegMetadata,
             const camera3_capture_request_t *request);
-    bool isSupportChannelNeeded(camera3_stream_configuration_t *streamList);
+    bool isSupportChannelNeeded(camera3_stream_configuration_t *streamList,
+        size_t numStreamsOnEncoder, bool bUseCommonFeatureMask,uint32_t commonFeatureMask);
 public:
     cam_dimension_t calcMaxJpegDim();
     bool needOnlineRotation();
