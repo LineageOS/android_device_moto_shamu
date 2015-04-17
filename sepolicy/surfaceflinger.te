@@ -1,2 +1,0 @@
-# TODO - identify cause of this
-allow surfaceflinger shell_data_file:dir search;
