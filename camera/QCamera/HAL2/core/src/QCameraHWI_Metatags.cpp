@@ -33,7 +33,7 @@ namespace android {
 
 
 const uint32_t QCAvailableFormats[4] = {
-        HAL_PIXEL_FORMAT_RAW_SENSOR,
+        HAL_PIXEL_FORMAT_RAW16,
         HAL_PIXEL_FORMAT_BLOB,
         HAL_PIXEL_FORMAT_YV12,
         HAL_PIXEL_FORMAT_YCrCb_420_SP
