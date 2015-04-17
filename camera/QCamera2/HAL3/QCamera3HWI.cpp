@@ -44,6 +44,7 @@
 #include <utils/Trace.h>
 #include <ui/Fence.h>
 #include <gralloc_priv.h>
+#include "util/QCameraFlash.h"
 #include "QCamera3HWI.h"
 #include "QCamera3Mem.h"
 #include "QCamera3Channel.h"
@@ -481,6 +482,15 @@ int QCamera3HardwareInterface::openCamera()
         ALOGE("Failure: Camera already opened");
         return ALREADY_EXISTS;
     }
+
+    rc = QCameraFlash::getInstance().reserveFlashForCamera(mCameraId);
+    if (rc < 0) {
+        ALOGE("%s: Failed to reserve flash for camera id: %d",
+                __func__,
+                mCameraId);
+        return UNKNOWN_ERROR;
+    }
+
     mCameraHandle = camera_open(mCameraId);
     if (!mCameraHandle) {
         ALOGE("camera_open failed.");
@@ -531,6 +541,12 @@ int QCamera3HardwareInterface::closeCamera()
         }
     }
 #endif
+
+    if (QCameraFlash::getInstance().releaseFlashFromCamera(mCameraId) != 0) {
+        CDBG("%s: Failed to release flash for camera id: %d",
+                __func__,
+                mCameraId);
+    }
 
     return rc;
 }
@@ -6896,4 +6912,34 @@ void QCamera3HardwareInterface::getLogLevel()
     return;
 }
 
+
+/*===========================================================================
+* FUNCTION   : getFlashInfo
+*
+* DESCRIPTION: Retrieve information about whether the device has a flash.
+*
+* PARAMETERS :
+*   @cameraId  : Camera id to query
+*   @hasFlash  : Boolean indicating whether there is a flash device
+*                associated with given camera
+*   @flashNode : If a flash device exists, this will be its device node.
+*
+* RETURN     :
+*   None
+*==========================================================================*/
+void QCamera3HardwareInterface::getFlashInfo(const int cameraId,
+        bool& hasFlash,
+        char (&flashNode)[QCAMERA_MAX_FILEPATH_LENGTH])
+{
+    cam_capability_t* camCapability = gCamCapability[cameraId];
+    if (NULL == camCapability) {
+        hasFlash = false;
+        flashNode[0] = '\0';
+    } else {
+        hasFlash = camCapability->flash_available;
+        strlcpy(flashNode,
+                (char*)camCapability->flash_dev_name,
+                QCAMERA_MAX_FILEPATH_LENGTH);
+    }
+}
 }; //end namespace qcamera
