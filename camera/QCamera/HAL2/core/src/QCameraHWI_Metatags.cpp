@@ -175,21 +175,6 @@ extern "C" status_t getStaticInfo(camera_metadata_t **info,
             ANDROID_LENS_FACING_BACK : ANDROID_LENS_FACING_FRONT;
     ADD_OR_SIZE(ANDROID_LENS_FACING, &lensFacing, 1);
 
-    float lensPosition[3];
-    if (mFacingBack) {
-        // Back-facing camera is center-top on device
-        lensPosition[0] = 0;
-        lensPosition[1] = 20;
-        lensPosition[2] = -5;
-    } else {
-        // Front-facing camera is center-right on device
-        lensPosition[0] = 20;
-        lensPosition[1] = 20;
-        lensPosition[2] = 0;
-    }
-    ADD_OR_SIZE(ANDROID_LENS_POSITION, lensPosition, sizeof(lensPosition)/
-            sizeof(float));
-
 #if 0
     // android.sensor
 
