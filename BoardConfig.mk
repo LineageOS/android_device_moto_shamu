@@ -117,7 +117,6 @@ BOARD_SEPOLICY_UNION += \
         atfwd.te \
         bluetooth.te \
         bluetooth_loader.te \
-        bootanim.te \
         bridge.te \
         camera.te \
         device.te \
@@ -143,7 +142,6 @@ BOARD_SEPOLICY_UNION += \
         sensors.te \
         service.te \
         ss_ramdump.te \
-        surfaceflinger.te \
         system_app.te \
         system_server.te \
         tcmd.te \
@@ -153,7 +151,6 @@ BOARD_SEPOLICY_UNION += \
         time.te \
         ueventd.te \
         untrusted_app.te \
-        zygote.te \
         file_contexts \
         genfs_contexts \
         service_contexts
