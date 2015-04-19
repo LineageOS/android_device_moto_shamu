@@ -23,3 +23,4 @@
 /dev/block/platform/msm_sdcc.1/by-name/versions     /versions       emmc    defaults                                                        defaults
 /dev/block/platform/msm_sdcc.1/by-name/logo         /logo           emmc    defaults                                                        defaults
 /dev/block/platform/msm_sdcc.1/by-name/frp          /persistent     emmc    defaults                                                        defaults
+/devices/*/xhci-hcd.0.auto/usb*                     auto            auto    defaults                                                        voldmanaged=usb:auto
