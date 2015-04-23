@@ -730,22 +730,20 @@ int QCamera3HardwareInterface::validateStreamDimensions(
  *
  *==========================================================================*/
 bool QCamera3HardwareInterface::isSupportChannelNeeded(camera3_stream_configuration_t *streamList,
-        size_t numStreamsOnEncoder, bool bUseCommonFeatureMask,uint32_t commonFeatureMask)
+        cam_stream_size_info_t stream_config_info)
 {
     uint32_t i;
-    uint32_t numOutputStreams = 0;
-
-    /* Check for condition where PProc pipeline does not have any streams*/
-    for (i=0; i<streamList->num_streams; i++) {
-        if (streamList->streams[i]->stream_type != CAMERA3_STREAM_INPUT) {
-            numOutputStreams++;
+    bool bSuperSetPresent = false;
+    /* Check for conditions where PProc pipeline does not have any streams*/
+    for (i = 0; i < stream_config_info.num_streams; i++) {
+        if (stream_config_info.postprocess_mask[i] == CAM_QCOM_FEATURE_PP_SUPERSET) {
+            bSuperSetPresent = true;
+            break;
         }
     }
-    if (numStreamsOnEncoder == numOutputStreams &&
-            bUseCommonFeatureMask &&
-            commonFeatureMask == CAM_QCOM_FEATURE_NONE) {
+
+    if (bSuperSetPresent == false )
         return true;
-    }
 
     /* Dummy stream needed if only raw or jpeg streams present */
     for (i = 0;i < streamList->num_streams;i++) {
@@ -1051,22 +1049,6 @@ int QCamera3HardwareInterface::configureStreams(
         return rc;
     }
 
-
-    if (isSupportChannelNeeded(streamList, numStreamsOnEncoder, bUseCommonFeatureMask,
-            commonFeatureMask)) {
-        mSupportChannel = new QCamera3SupportChannel(
-                mCameraHandle->camera_handle,
-                mCameraHandle->ops,
-                &gCamCapability[mCameraId]->padding_info,
-                CAM_QCOM_FEATURE_NONE,
-                this);
-        if (!mSupportChannel) {
-            ALOGE("%s: dummy channel cannot be created", __func__);
-            pthread_mutex_unlock(&mMutex);
-            return -ENOMEM;
-        }
-    }
-
     bool isRawStreamRequested = false;
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
@@ -1171,6 +1153,8 @@ int QCamera3HardwareInterface::configureStreams(
                          (GRALLOC_USAGE_SW_READ_RARELY |
                          GRALLOC_USAGE_SW_WRITE_RARELY |
                          GRALLOC_USAGE_HW_CAMERA_WRITE);
+                else if (newStream->usage & GRALLOC_USAGE_HW_CAMERA_ZSL)
+                    CDBG("%s: ZSL usage flag skipping", __func__);
                 else
                     newStream->usage = GRALLOC_USAGE_HW_CAMERA_WRITE;
                 break;
@@ -1278,6 +1262,20 @@ int QCamera3HardwareInterface::configureStreams(
         mPictureChannel->overrideYuvSize(zslStream->width, zslStream->height);
     } else if (mPictureChannel && m_bIs4KVideo) {
         mPictureChannel->overrideYuvSize(videoWidth, videoHeight);
+    }
+
+    if (isSupportChannelNeeded(streamList, stream_config_info)) {
+        mSupportChannel = new QCamera3SupportChannel(
+                mCameraHandle->camera_handle,
+                mCameraHandle->ops,
+                &gCamCapability[mCameraId]->padding_info,
+                CAM_QCOM_FEATURE_NONE,
+                this);
+        if (!mSupportChannel) {
+            ALOGE("%s: dummy channel cannot be created", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return -ENOMEM;
+        }
     }
 
     //RAW DUMP channel
