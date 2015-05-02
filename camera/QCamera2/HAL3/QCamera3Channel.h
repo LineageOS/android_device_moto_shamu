@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2015, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -74,8 +74,7 @@ public:
 
     uint32_t getStreamTypeMask();
     uint32_t getStreamID(uint32_t streamMask);
-    virtual int32_t initialize(cam_is_type_t isType,
-            uint8_t intent) = 0;
+    virtual int32_t initialize(cam_is_type_t isType) = 0;
     virtual int32_t request(buffer_handle_t * /*buffer*/,
                 uint32_t /*frameNumber*/){ return 0;};
     virtual int32_t request(buffer_handle_t * /*buffer*/,
@@ -85,8 +84,7 @@ public:
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream) = 0;
 
-    virtual int32_t registerBuffer(buffer_handle_t *buffer, cam_is_type_t isType,
-            uint8_t intent) = 0;
+    virtual int32_t registerBuffer(buffer_handle_t *buffer, cam_is_type_t isType) = 0;
     virtual QCamera3Memory *getStreamBufs(uint32_t len) = 0;
     virtual void putStreamBufs() = 0;
 
@@ -147,16 +145,14 @@ public:
     virtual ~QCamera3RegularChannel();
 
     virtual int32_t start();
-    virtual int32_t initialize(cam_is_type_t isType,
-            uint8_t intent);
+    virtual int32_t initialize(cam_is_type_t isType);
     virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                                             QCamera3Stream *stream);
 
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
-    virtual int32_t registerBuffer(buffer_handle_t *buffer, cam_is_type_t isType,
-            uint8_t intent);
+    virtual int32_t registerBuffer(buffer_handle_t *buffer, cam_is_type_t isType);
 
 public:
     static int kMaxBuffers;
@@ -183,8 +179,7 @@ public:
                     void *userData);
     virtual ~QCamera3MetadataChannel();
 
-    virtual int32_t initialize(cam_is_type_t isType,
-            uint8_t intent);
+    virtual int32_t initialize(cam_is_type_t isType);
 
     virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
@@ -192,8 +187,7 @@ public:
 
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
-    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/, cam_is_type_t /*isType*/,
-            uint8_t /*intent*/)
+    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/, cam_is_type_t /*isType*/)
             { return NO_ERROR; };
 
 private:
@@ -215,8 +209,7 @@ public:
                     bool raw_16 = false);
     virtual ~QCamera3RawChannel();
 
-    virtual int32_t initialize(cam_is_type_t isType,
-            uint8_t intent);
+    virtual int32_t initialize(cam_is_type_t isType);
 
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream);
@@ -247,13 +240,12 @@ public:
                     void *userData,
                     uint32_t postprocess_mask);
     virtual ~QCamera3RawDumpChannel();
-    virtual int32_t initialize(cam_is_type_t isType, uint8_t intent);
+    virtual int32_t initialize(cam_is_type_t isType);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream);
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
-    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/, cam_is_type_t /*isType*/,
-            uint8_t /*intent*/)
+    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/, cam_is_type_t /*isType*/)
             { return NO_ERROR; };
     virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
     void dumpRawSnapshot(mm_camera_buf_def_t *frame);
@@ -283,8 +275,7 @@ public:
             QCamera3Channel *metadataChannel);
     ~QCamera3PicChannel();
 
-    virtual int32_t initialize(cam_is_type_t isType,
-            uint8_t intent);
+    virtual int32_t initialize(cam_is_type_t isType);
     virtual int32_t stop();
     virtual int32_t request(buffer_handle_t *buffer,
             uint32_t frameNumber,
@@ -309,8 +300,7 @@ public:
             void *userdata);
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
             void *userdata);
-    virtual int32_t registerBuffer(buffer_handle_t *buffer, cam_is_type_t isType,
-            uint8_t intent);
+    virtual int32_t registerBuffer(buffer_handle_t *buffer, cam_is_type_t isType);
     int32_t queueReprocMetadata(mm_camera_super_buf_t *metadata);
 
 private:
@@ -369,8 +359,7 @@ public:
     int32_t extractCrop(qcamera_fwk_input_pp_data_t *frame);
     virtual QCamera3Memory *getStreamBufs(uint32_t len);
     virtual void putStreamBufs();
-    virtual int32_t initialize(cam_is_type_t isType,
-            uint8_t intent);
+    virtual int32_t initialize(cam_is_type_t isType);
     int32_t unmapOfflineBuffers(bool all);
     virtual int32_t stop();
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
@@ -383,8 +372,7 @@ public:
            QCamera3Channel *pMetaChannel);
     QCamera3Stream *getStreamBySrcHandle(uint32_t srcHandle);
     QCamera3Stream *getSrcStreamBySrcHandle(uint32_t srcHandle);
-    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/, cam_is_type_t /*isType*/,
-            uint8_t /*intent*/)
+    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/, cam_is_type_t /*isType*/)
             { return NO_ERROR; };
 
 public:
@@ -417,8 +405,7 @@ public:
                     void *userData);
     virtual ~QCamera3SupportChannel();
 
-    virtual int32_t initialize(cam_is_type_t isType,
-            uint8_t intent);
+    virtual int32_t initialize(cam_is_type_t isType);
 
     virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
@@ -426,8 +413,7 @@ public:
 
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
-    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/, cam_is_type_t /*isType*/,
-            uint8_t /*intent*/)
+    virtual int32_t registerBuffer(buffer_handle_t * /*buffer*/, cam_is_type_t /*isType*/)
             { return NO_ERROR; };
 
     static cam_dimension_t kDim;

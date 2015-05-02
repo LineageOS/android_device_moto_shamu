@@ -31,7 +31,6 @@
 #define __QCAMERA3HWI_MEM_H__
 #include <hardware/camera3.h>
 #include <utils/Mutex.h>
-#include <qdMetaData.h>
 
 extern "C" {
 #include <sys/types.h>
@@ -114,7 +113,7 @@ public:
     QCamera3GrallocMemory();
     virtual ~QCamera3GrallocMemory();
 
-    int registerBuffer(buffer_handle_t *buffer);
+    int registerBuffer(buffer_handle_t *buffer, cam_stream_type_t type);
     int32_t unregisterBuffer(size_t idx);
     void unregisterBuffers();
     virtual int cacheOps(int index, unsigned int cmd);
@@ -124,7 +123,6 @@ public:
     int32_t markFrameNumber(int index, uint32_t frameNumber);
     int32_t getFrameNumber(int index);
     void *getBufferHandle(int index);
-    int32_t setColorSpace(uint8_t intent);
 protected:
     virtual void *getPtrLocked(int index);
 private:
@@ -133,7 +131,6 @@ private:
     buffer_handle_t *mBufferHandle[MM_CAMERA_MAX_NUM_FRAMES];
     struct private_handle_t *mPrivateHandle[MM_CAMERA_MAX_NUM_FRAMES];
     uint32_t mCurrentFrameNumbers[MM_CAMERA_MAX_NUM_FRAMES];
-    enum ColorSpace_t mColorSpace;
 };
 
 };

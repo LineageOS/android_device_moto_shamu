@@ -1040,7 +1040,7 @@ int QCamera3HardwareInterface::configureStreams(
         pthread_mutex_unlock(&mMutex);
         return rc;
     }
-    rc = mMetadataChannel->initialize(IS_TYPE_NONE, mCaptureIntent);
+    rc = mMetadataChannel->initialize(IS_TYPE_NONE);
     if (rc < 0) {
         ALOGE("%s: metadata channel initialization failed", __func__);
         delete mMetadataChannel;
@@ -2122,11 +2122,9 @@ int QCamera3HardwareInterface::processCaptureRequest(
             QCamera3Channel *channel = (QCamera3Channel *)output.stream->priv;
             /*for livesnapshot stream is_type will be DIS*/
             if (setEis && output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
-                rc = channel->registerBuffer(output.buffer,
-                        IS_TYPE_DIS, mCaptureIntent);
+                rc = channel->registerBuffer(output.buffer, IS_TYPE_DIS);
             } else {
-                rc = channel->registerBuffer(output.buffer,
-                        is_type, mCaptureIntent);
+                rc = channel->registerBuffer(output.buffer, is_type);
             }
             if (rc < 0) {
                 ALOGE("%s: registerBuffer failed",
@@ -2146,9 +2144,9 @@ int QCamera3HardwareInterface::processCaptureRequest(
             it != mStreamInfo.end(); it++) {
             QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
             if (setEis && (*it)->stream->format == HAL_PIXEL_FORMAT_BLOB) {
-                rc = channel->initialize(IS_TYPE_DIS, mCaptureIntent);
+                rc = channel->initialize(IS_TYPE_DIS);
             } else {
-                rc = channel->initialize(is_type, mCaptureIntent);
+                rc = channel->initialize(is_type);
             }
             if (NO_ERROR != rc) {
                 ALOGE("%s : Channel initialization failed %d", __func__, rc);
@@ -2158,7 +2156,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
         }
 
         if (mRawDumpChannel) {
-            rc = mRawDumpChannel->initialize(is_type, mCaptureIntent);
+            rc = mRawDumpChannel->initialize(is_type);
             if (rc != NO_ERROR) {
                 ALOGE("%s: Error: Raw Dump Channel init failed", __func__);
                 pthread_mutex_unlock(&mMutex);
@@ -2166,7 +2164,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
             }
         }
         if (mSupportChannel) {
-            rc = mSupportChannel->initialize(is_type, mCaptureIntent);
+            rc = mSupportChannel->initialize(is_type);
             if (rc < 0) {
                 ALOGE("%s: Support channel initialization failed", __func__);
                 pthread_mutex_unlock(&mMutex);
@@ -6989,7 +6987,7 @@ QCamera3ReprocessChannel *QCamera3HardwareInterface::addOfflineReprocChannel(
         return NULL;
     }
 
-    rc = pChannel->initialize(IS_TYPE_NONE, mCaptureIntent);
+    rc = pChannel->initialize(IS_TYPE_NONE);
     if (rc != NO_ERROR) {
         ALOGE("%s: init reprocess channel failed, ret = %d", __func__, rc);
         delete pChannel;
