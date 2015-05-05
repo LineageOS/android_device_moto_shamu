@@ -34,7 +34,7 @@
 
 #define MIN(a,b)  (((a) < (b)) ? (a) : (b))
 #define MAX(a,b)  (((a) > (b)) ? (a) : (b))
-#define CLAMP(x, min, max) x = MIN(MAX((x), (min)), (max))
+#define CLAMP(x, min, max) MIN(MAX((x), (min)), (max))
 
 #define TIME_IN_US(r) ((uint64_t)r.tv_sec * 1000000LL + r.tv_usec)
 struct timeval dtime[2];
@@ -48,9 +48,10 @@ struct timeval dtime[2];
  *  dump the image to the file
  **/
 #define DUMP_TO_FILE(filename, p_addr, len) ({ \
+  int rc = 0; \
   FILE *fp = fopen(filename, "w+"); \
   if (fp) { \
-    fwrite(p_addr, 1, len, fp); \
+    rc = fwrite(p_addr, 1, len, fp); \
     fclose(fp); \
   } else { \
     CDBG_ERROR("%s:%d] cannot dump image", __func__, __LINE__); \
@@ -66,6 +67,11 @@ typedef struct {
   char *out_filename;
   int format;
 } jpeg_test_input_t;
+
+static jpeg_test_input_t jpeg_input[] = {
+  {"/data/test.jpg", 5248, 3936, "/data/test.yuv",
+      MM_JPEG_COLOR_FORMAT_YCBCRLP_H2V2}
+};
 
 typedef struct {
   char *filename;

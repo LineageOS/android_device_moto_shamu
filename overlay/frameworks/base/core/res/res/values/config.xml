@@ -273,10 +273,6 @@
     <!-- Flag specifying whether VoLTE is availasble on device -->
     <bool name="config_device_volte_available">true</bool>
 
-    <!-- Flag specifying whether WFC over IMS is availasble on device -->
-    <!-- STOPSHIP if disabled -->
-    <bool name="config_device_wfc_ims_available">false</bool>
-
     <!-- Configure mobile tcp buffer sizes in the form:
          rat-name:rmem_min,rmem_def,rmem_max,wmem_min,wmem_def,wmem_max
          If no value is found for the rat-name in use, the system default will be applied.

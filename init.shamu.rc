@@ -25,20 +25,28 @@ on early-init
     chown system system /sys/kernel/debug/kgsl/proc
 
 on init
-    # Load persistent dm-verity state
-    verity_load_state
+    # See storage config details at http://source.android.com/tech/storage/
+    mkdir /mnt/shell/emulated 0700 shell shell
+    mkdir /storage/emulated 0555 root root
 
     mkdir /oem 0550 root root
 
     # Set permissions for persist partition
     mkdir /persist 0771 system system
 
+    export EXTERNAL_STORAGE /storage/emulated/legacy
+    export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
+    export EMULATED_STORAGE_TARGET /storage/emulated
+
     # Support legacy paths
-    symlink /sdcard /mnt/sdcard
-    symlink /sdcard /storage/sdcard0
+    symlink /storage/emulated/legacy /sdcard
+    symlink /storage/emulated/legacy /mnt/sdcard
+    symlink /storage/emulated/legacy /storage/sdcard0
+    symlink /mnt/shell/emulated/0 /storage/emulated/legacy
 
 on fs
     mount_all fstab.shamu
+    setprop ro.crypto.fuse_sdcard true
 
     # Keeping following partitions outside fstab file. As user may not have
     # these partition flashed on the device. Failure to mount any partition in fstab file
@@ -64,13 +72,8 @@ on fs
     setprop persist.data.df.agg.dl_pkt 10
     setprop persist.data.df.agg.dl_size 4096
 
-    # Adjust parameters for dm-verity device
-    write /sys/block/dm-0/queue/read_ahead_kb 2048
-
-    # Update dm-verity state and set partition.*.verified properties
-    verity_update_state
-
 on post-fs-data
+    mkdir /data/tombstones 0771 system system
     mkdir /tombstones/modem 0771 system system
     mkdir /tombstones/lpass 0771 system system
     mkdir /tombstones/wcnss 0771 system system
@@ -251,6 +254,10 @@ on property:persist.sys.qc.sub.rdump.on=*
 
 # msm specific files that need to be created on /data
 on post-fs-data
+    # we will remap this as /mnt/sdcard with the sdcard fuse tool
+    mkdir /data/media 0770 media_rw media_rw
+    chown media_rw media_rw /data/media
+
     mkdir /data/misc/bluetooth 0770 bluetooth bluetooth
 
     # Create the directories used by the Wireless subsystem
@@ -374,32 +381,6 @@ service netmgrd /system/bin/netmgrd
     class main
     group radio
 
-service imsqmidaemon /system/bin/imsqmidaemon
-    class main
-    user system
-    socket ims_qmid stream 0660 system radio
-    group radio log
-
-service imsdatadaemon /system/bin/imsdatadaemon
-    class main
-    user root
-    socket ims_datad stream 0660 system radio
-    group system wifi radio inet log
-    disabled
-
-on property:sys.ims.QMI_DAEMON_STATUS=1
-    start imsdatadaemon
-
-service ims_rtp_daemon /system/bin/ims_rtp_daemon
-    class main
-    user root
-    socket ims_rtpd stream 0660 system radio
-    group system radio inet log
-    disabled
-
-on property:sys.ims.DATA_DAEMON_STATUS=1
-   start ims_rtp_daemon
-
 service sensors /system/bin/sensors.qcom
     class core
     user root
@@ -503,7 +484,7 @@ service iprenew_eth0 /system/bin/dhcpcd -n
     oneshot
 
 service adspd /system/bin/adspd /dev/ttyHS3
-   class main
+   class late_start
    socket adspdsock stream 0660 media media
    user media
    group media input
@@ -517,6 +498,10 @@ on property:ro.debuggable=1
 on property:ro.data.large_tcp_window_size=true
     # Adjust socket buffer to enlarge TCP receive window for high bandwidth (e.g. DO-RevB)
     write /proc/sys/net/ipv4/tcp_adv_win_scale  2
+
+# virtual sdcard daemon running as media_rw (1023)
+service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emulated
+    class late_start
 
 on charger
     write /sys/class/leds/lcd-backlight/brightness 100
@@ -577,9 +562,6 @@ service bdAddrLoader /system/bin/bdAddrLoader -p ro.boot.btmacaddr -s -x
 on property:vold.decrypt=trigger_reset_main
     stop gnss-svcd
 
-on verity-logging
-    exec u:r:slideshow:s0 -- /sbin/slideshow warning/verity_red_1 warning/verity_red_2
-
 # When QCA1530 is known not to present
 on property:persist.qca1530=no
    stop gnss-svcd
@@ -589,7 +571,7 @@ on property:persist.qca1530=no
 on property:init.svc.surfaceflinger=stopped
     stop ppd
 
-service mmi-touch-sh /system/bin/init.mmi.touch.sh atmel
+service mmi-touch-sh /system/bin/sh /init.mmi.touch.sh atmel
     class main
     user root
     oneshot
@@ -623,8 +605,3 @@ service atfwd /system/bin/ATFWD-daemon
     class late_start
     user system
     group system radio
-
-# STOPSHIP: Required for WiFi Calling
-#service cnd /system/bin/cnd
-#    class late_start
-#    socket cnd stream 660 root inet

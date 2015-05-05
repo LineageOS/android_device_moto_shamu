@@ -6177,6 +6177,7 @@ void *QCamera2HardwareInterface::defferedWorkRoutine(void *obj)
 {
     int running = 1;
     int ret;
+    uint8_t is_active = FALSE;
 
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)obj;
     QCameraCmdThread *cmdThread = &pme->mDefferedWorkThread;
@@ -6196,9 +6197,11 @@ void *QCamera2HardwareInterface::defferedWorkRoutine(void *obj)
         switch (cmd) {
         case CAMERA_CMD_TYPE_START_DATA_PROC:
             CDBG_HIGH("%s: start data proc", __func__);
+            is_active = TRUE;
             break;
         case CAMERA_CMD_TYPE_STOP_DATA_PROC:
             CDBG_HIGH("%s: stop data proc", __func__);
+            is_active = FALSE;
             // signal cmd is completed
             cam_sem_post(&cmdThread->sync_sem);
             break;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -340,11 +340,6 @@ typedef struct{
 
     /* Max size supported by ISP viewfinder path */
     cam_dimension_t max_viewfinder_size;
-
-    uint8_t flash_dev_name[QCAMERA_MAX_FILEPATH_LENGTH];
-
-    /* maximum pixel bandwidth shared between cameras */
-    uint64_t max_pixel_bandwidth;
 } cam_capability_t;
 
 typedef enum {
@@ -639,7 +634,6 @@ typedef struct {
     INCLUDE(CAM_INTF_PARM_CAC,                          cam_aberration_mode_t,       1);
     INCLUDE(CAM_INTF_META_NEUTRAL_COL_POINT,            cam_neutral_col_point_t,     1);
     INCLUDE(CAM_INTF_PARM_ROTATION,                     cam_rotation_info_t,         1);
-    INCLUDE(CAM_INTF_META_EFFECTIVE_EXPOSURE_FACTOR,    float,                       1);
 } parm_data_t;
 
 typedef parm_data_t metadata_data_t;
