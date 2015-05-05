@@ -59,7 +59,7 @@
         <value>1958400</value> <!-- 1958.4 MHz CPU speed -->
         <value>2265600</value> <!-- 2265.6 MHz CPU speed -->
         <value>2457600</value> <!-- 2457.6 MHz CPU speed -->
-        <value>2496000</value> <!-- 2496.0 Mhz CPU speed -->
+        <value>2496000</value> <!-- 2496.0 MHz CPU speed -->
         <value>2572800</value> <!-- 2572.8 MHz CPU speed -->
         <value>2649600</value> <!-- 2649.6 MHz CPU speed -->
     </array>
@@ -73,16 +73,19 @@
         <value>97</value> <!-- 652.8 MHz CPU speed -->
         <value>106</value> <!-- 729.6 MHz CPU speed -->
         <value>115</value> <!-- 883.2 MHz CPU speed -->
-        <value>167</value> <!-- 960.0 MHz CPU speed -->
-        <value>213</value> <!-- 1036.8 MHz CPU speed -->
-        <value>249</value> <!-- 1190.4 MHz CPU speed -->
-        <value>263</value> <!-- 1267.2 MHz CPU speed -->
-        <value>288</value> <!-- 1497.6 MHz CPU speed -->
-        <value>324</value> <!-- 1574.0 MHz CPU speed -->
-        <value>377</value> <!-- 1728.0 MHz CPU speed -->
-        <value>405</value> <!-- 1958.4 MHz CPU speed -->
-        <value>413</value> <!-- 2265.6 MHz CPU speed -->
-        <value>414</value>
+        <value>146</value> <!-- 960.0 MHz CPU speed -->
+        <value>153</value> <!-- 1036.8 MHz CPU speed -->
+        <value>167</value> <!-- 1190.4 MHz CPU speed -->
+        <value>213</value> <!-- 1267.2 MHz CPU speed -->
+        <value>249</value> <!-- 1497.6 MHz CPU speed -->
+        <value>263</value> <!-- 1574.0 MHz CPU speed -->
+        <value>288</value> <!-- 1728.0 MHz CPU speed -->
+        <value>324</value> <!-- 1958.4 MHz CPU speed -->
+        <value>377</value> <!-- 2265.6 MHz CPU speed -->
+        <value>405</value> <!-- 2457.6 MHz CPU speed -->
+        <value>405</value> <!-- 2496.0 MHz CPU speed -->
+        <value>413</value> <!-- 2572.8 MHz CPU speed -->
+        <value>414</value> <!-- 2649.6 MHz CPU speed -->
     </array>
     <!-- This is the battery capacity in mAh -->
     <item name="battery.capacity">3220</item>
