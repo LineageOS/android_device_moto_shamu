@@ -1342,6 +1342,7 @@ typedef enum {
     /* CAC */
     CAM_INTF_PARM_CAC,
 
+    CAM_INTF_META_USE_AV_TIMER,
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 
