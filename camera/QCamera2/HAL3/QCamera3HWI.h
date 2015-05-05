@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -65,9 +65,6 @@ namespace qcamera {
 #ifndef FALSE
 #define FALSE 0
 #endif
-
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 /* Time related macros */
 typedef int64_t nsecs_t;
@@ -226,17 +223,12 @@ private:
     int queueReprocMetadata(metadata_buffer_t *metadata);
     void extractJpegMetadata(CameraMetadata& jpegMetadata,
             const camera3_capture_request_t *request);
-    bool isSupportChannelNeeded(camera3_stream_configuration_t *streamList,
-        size_t numStreamsOnEncoder, bool bUseCommonFeatureMask,uint32_t commonFeatureMask);
+    bool isSupportChannelNeeded(camera3_stream_configuration_t *streamList);
 public:
     cam_dimension_t calcMaxJpegDim();
     bool needOnlineRotation();
     int getJpegQuality();
     QCamera3Exif *getExifData();
-    static void getFlashInfo(const int cameraId,
-            bool& hasFlash,
-            char (&flashNode)[QCAMERA_MAX_FILEPATH_LENGTH]);
-
 private:
     camera3_device_t   mCameraDevice;
     uint8_t            mCameraId;
@@ -248,6 +240,7 @@ private:
 
     const camera3_callback_ops_t *mCallbackOps;
 
+    camera3_stream_t *mInputStream;
     QCamera3MetadataChannel *mMetadataChannel;
     QCamera3PicChannel *mPictureChannel;
     QCamera3RawChannel *mRawChannel;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -185,7 +185,7 @@ int32_t QCamera3PostProcessor::start(const reprocess_config_t &config,
     int32_t rc = NO_ERROR;
     QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)m_parent->mUserData;
 
-    if (hal_obj->needReprocess(mPostProcMask) || config.src_channel != m_parent) {
+    if (hal_obj->needReprocess(mPostProcMask)) {
         if (m_pReprocChannel != NULL) {
             m_pReprocChannel->stop();
             delete m_pReprocChannel;
@@ -260,6 +260,7 @@ int32_t QCamera3PostProcessor::getFWKJpegEncodeConfig(
         jpeg_settings_t *jpeg_settings)
 {
     CDBG("%s : E", __func__);
+    int32_t ret = NO_ERROR;
 
     if ((NULL == frame) || (NULL == jpeg_settings)) {
         return BAD_VALUE;
@@ -321,6 +322,10 @@ int32_t QCamera3PostProcessor::getFWKJpegEncodeConfig(
 
     CDBG("%s : X", __func__);
     return NO_ERROR;
+
+on_error:
+    CDBG("%s : X with error %d", __func__, ret);
+    return ret;
 }
 
 /*===========================================================================
@@ -384,7 +389,7 @@ int32_t QCamera3PostProcessor::getJpegEncodeConfig(
         ret = BAD_VALUE;
         goto on_error;
     }
-    encode_parm.num_src_bufs = MIN(pStreamMem->getCnt(), MM_JPEG_MAX_BUF);
+    encode_parm.num_src_bufs = pStreamMem->getCnt();
     for (uint32_t i = 0; i < encode_parm.num_src_bufs; i++) {
         if (pStreamMem != NULL) {
             encode_parm.src_main_buf[i].index = i;
@@ -408,8 +413,8 @@ int32_t QCamera3PostProcessor::getJpegEncodeConfig(
         cam_frame_len_offset_t thumb_offset;
         memset(&thumb_offset, 0, sizeof(cam_frame_len_offset_t));
         main_stream->getFrameOffset(thumb_offset);
-        encode_parm.num_tmb_bufs = MIN(pStreamMem->getCnt(), MM_JPEG_MAX_BUF);
-        for (size_t i = 0; i < encode_parm.num_tmb_bufs; i++) {
+        encode_parm.num_tmb_bufs = pStreamMem->getCnt();
+        for (int i = 0; i < pStreamMem->getCnt(); i++) {
             if (pStreamMem != NULL) {
                 encode_parm.src_thumb_buf[i].index = i;
                 encode_parm.src_thumb_buf[i].buf_size = pStreamMem->getSize(i);
@@ -459,6 +464,7 @@ on_error:
  *==========================================================================*/
 int32_t QCamera3PostProcessor::processData(mm_camera_super_buf_t *frame)
 {
+    QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)m_parent->mUserData;
     pthread_mutex_lock(&mReprocJobLock);
     // enqueue to post proc input queue
     m_inputPPQ.enqueue((void *)frame);
@@ -489,8 +495,7 @@ int32_t QCamera3PostProcessor::processData(mm_camera_super_buf_t *frame)
 int32_t QCamera3PostProcessor::processData(qcamera_fwk_input_pp_data_t *frame)
 {
     QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)m_parent->mUserData;
-    if (hal_obj->needReprocess(mPostProcMask) ||
-            frame->reproc_config.src_channel != m_parent) {
+    if (hal_obj->needReprocess(mPostProcMask)) {
         pthread_mutex_lock(&mReprocJobLock);
         // enqueu to post proc input queue
         m_inputFWKPPQ.enqueue((void *)frame);

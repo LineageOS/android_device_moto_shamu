@@ -16,6 +16,7 @@
 
 TARGET_CPU_ABI := armeabi-v7a
 TARGET_CPU_ABI2 := armeabi
+TARGET_CPU_SMP := true
 TARGET_ARCH := arm
 TARGET_ARCH_VARIANT := armv7-a-neon
 TARGET_CPU_VARIANT := krait
@@ -29,7 +30,7 @@ BOARD_RAMDISK_OFFSET     := 0x02000000
 
 BOARD_KERNEL_CMDLINE := console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=shamu msm_rtb.filter=0x37 ehci-hcd.park=3 utags.blkdev=/dev/block/platform/msm_sdcc.1/by-name/utags utags.backup=/dev/block/platform/msm_sdcc.1/by-name/utagsBackup coherent_pool=8M
 
-BOARD_MKBOOTIMG_ARGS := --ramdisk_offset $(BOARD_RAMDISK_OFFSET) --tags_offset $(BOARD_KERNEL_TAGS_OFFSET)
+BOARD_MKBOOTIMG_ARGS := --ramdisk_offset BOARD_RAMDISK_OFFSET --tags_offset BOARD_KERNEL_TAGS_OFFSET
 
 # Shader cache config options
 # Maximum size of the  GLES Shaders that can be cached for reuse.
@@ -109,7 +110,51 @@ TARGET_RELEASETOOLS_EXTENSIONS := device/moto/shamu
 # Support Native Layer RF cutback
 BOARD_USES_CUTBACK_IN_RILD := true
 
-BOARD_SEPOLICY_DIRS += device/moto/shamu/sepolicy
+BOARD_SEPOLICY_DIRS += \
+       device/moto/shamu/sepolicy
+
+BOARD_SEPOLICY_UNION += \
+        adspd.te \
+        atfwd.te \
+        bluetooth.te \
+        bluetooth_loader.te \
+        bootanim.te \
+        bridge.te \
+        camera.te \
+        device.te \
+        domain.te \
+        file.te \
+        gsiffd.te \
+        ims.te \
+        irsc_util.te \
+        mdm_helper.te \
+        mediaserver.te \
+        mpdecision.te \
+        netd.te \
+        netmgrd.te \
+        platform_app.te \
+        property.te \
+        property_contexts \
+        qmux.te \
+        radio.te \
+        rild.te \
+        sensors.te \
+        service.te \
+        ss_ramdump.te \
+        surfaceflinger.te \
+        system_app.te \
+        system_server.te \
+        tcmd.te \
+        tee.te \
+        te_macros \
+        thermald.te \
+        time.te \
+        ueventd.te \
+        untrusted_app.te \
+        zygote.te \
+        file_contexts \
+        genfs_contexts \
+        service_contexts
 
 HAVE_ADRENO_SOURCE:= false
 

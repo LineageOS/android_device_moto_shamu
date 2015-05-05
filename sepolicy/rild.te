@@ -26,5 +26,3 @@ dontaudit rild domain:dir r_dir_perms;
 # Allow permissions for FSG
 allow rild fsg_file:dir search;
 allow rild fsg_file:file r_file_perms;
-
-allow rild mediaserver_service:service_manager find;
