@@ -4,12 +4,6 @@ LOCAL_PATH := $(call my-dir)
 include $(LOCAL_PATH)/../../../common.mk
 include $(CLEAR_VARS)
 
-# cam_intf.c has type conversion discarding qualifiers.
-# mm_camera_interface.c has incomplete field initializer.
-LOCAL_CLANG_CFLAGS += \
-        -Wno-error=incompatible-pointer-types-discards-qualifiers \
-        -Wno-error=missing-field-initializers \
-
 MM_CAM_FILES := \
         src/mm_camera_interface.c \
         src/mm_camera.c \
@@ -52,6 +46,7 @@ LOCAL_CFLAGS += -Wall -Werror
 LOCAL_SRC_FILES := $(MM_CAM_FILES)
 
 LOCAL_MODULE           := libmmcamera_interface
+LOCAL_PRELINK_MODULE   := false
 LOCAL_SHARED_LIBRARIES := libdl libcutils liblog
 LOCAL_MODULE_TAGS := optional
 

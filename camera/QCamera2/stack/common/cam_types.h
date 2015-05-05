@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -31,7 +31,6 @@
 #define __QCAMERA_TYPES_H__
 
 #include <stdint.h>
-#include <string.h>
 #include <pthread.h>
 #include <inttypes.h>
 #include <media/msmb_camera.h>
@@ -57,6 +56,7 @@
  *  dump the image to the file
  **/
 #define CAM_DUMP_TO_FILE(path, name, index, extn, p_addr, len) ({ \
+  int rc = 0; \
   char filename[CAM_FN_CNT]; \
   if (index >= 0) \
     snprintf(filename, CAM_FN_CNT-1, "%s/%s%d.%s", path, name, index, extn); \
@@ -64,7 +64,7 @@
     snprintf(filename, CAM_FN_CNT-1, "%s/%s.%s", path, name, extn); \
   FILE *fp = fopen(filename, "w+"); \
   if (fp) { \
-    fwrite(p_addr, 1, len, fp); \
+    rc = fwrite(p_addr, 1, len, fp); \
     ALOGE("%s:%d] written size %d", __func__, __LINE__, len); \
     fclose(fp); \
   } else { \
@@ -111,16 +111,13 @@
 
 #define MAX_AF_BRACKETING_VALUES 5
 #define MAX_TEST_PATTERN_CNT     8
-#define MAX_AVAILABLE_CAPABILITIES 8
+#define MAX_AVAILABLE_CAPABILITIES 6
 
 #define GPS_PROCESSING_METHOD_SIZE 33
 #define GPS_PROCESSING_METHOD_SIZE_IN_WORD (33+3)/4
 
 #define MAX_INFLIGHT_REQUESTS  6
 #define MIN_INFLIGHT_REQUESTS  3
-#define MAX_INFLIGHT_REPROCESS_REQUESTS 1
-
-#define QCAMERA_MAX_FILEPATH_LENGTH 64
 
 typedef enum {
     CAM_HAL_V1 = 1,
@@ -595,8 +592,7 @@ typedef enum {
 typedef enum {
     CAM_NOISE_REDUCTION_MODE_OFF,
     CAM_NOISE_REDUCTION_MODE_FAST,
-    CAM_NOISE_REDUCTION_MODE_HIGH_QUALITY,
-    CAM_NOISE_REDUCTION_MODE_MINIMAL
+    CAM_NOISE_REDUCTION_MODE_HIGH_QUALITY
 } cam_noise_reduction_mode_t;
 
 typedef enum {
@@ -1345,7 +1341,7 @@ typedef enum {
 
     /* CAC */
     CAM_INTF_PARM_CAC,
-    CAM_INTF_META_EFFECTIVE_EXPOSURE_FACTOR,
+
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 

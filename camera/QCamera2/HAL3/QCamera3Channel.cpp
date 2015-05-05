@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -514,7 +514,45 @@ QCamera3RegularChannel::QCamera3RegularChannel(uint32_t cam_handle,
                                 paddingInfo, postprocess_mask, userData),
                         mCamera3Stream(stream),
                         mNumBufs(0),
-                        mStreamType(stream_type)
+                        mStreamType(stream_type),
+                        mWidth(stream->width),
+                        mHeight(stream->height)
+{
+}
+
+/*===========================================================================
+ * FUNCTION   : QCamera3RegularChannel
+ *
+ * DESCRIPTION: constructor of QCamera3RegularChannel
+ *
+ * PARAMETERS :
+ *   @cam_handle : camera handle
+ *   @cam_ops    : ptr to camera ops table
+ *   @cb_routine : callback routine to frame aggregator
+ *   @stream     : camera3_stream_t structure
+ *   @stream_type: Channel stream type
+ *   @postprocess_mask: bit mask for postprocessing
+ *   @width      : width overriding camera3_stream_t::width
+ *   @height     : height overriding camera3_stream_t::height
+ *
+ * RETURN     : none
+ *==========================================================================*/
+QCamera3RegularChannel::QCamera3RegularChannel(uint32_t cam_handle,
+                    mm_camera_ops_t *cam_ops,
+                    channel_cb_routine cb_routine,
+                    cam_padding_info_t *paddingInfo,
+                    void *userData,
+                    camera3_stream_t *stream,
+                    cam_stream_type_t stream_type,
+                    uint32_t postprocess_mask,
+                    uint32_t width, uint32_t height) :
+                        QCamera3Channel(cam_handle, cam_ops, cb_routine,
+                                paddingInfo, postprocess_mask, userData),
+                        mCamera3Stream(stream),
+                        mNumBufs(0),
+                        mStreamType(stream_type),
+                        mWidth(width),
+                        mHeight(height)
 {
 }
 
@@ -601,8 +639,8 @@ int32_t QCamera3RegularChannel::initialize(cam_is_type_t isType,
         return -EINVAL;
     }
 
-    streamDim.width = mCamera3Stream->width;
-    streamDim.height = mCamera3Stream->height;
+    streamDim.width = mWidth;
+    streamDim.height = mHeight;
 
     rc = QCamera3Channel::addStream(mStreamType,
             streamFormat,
@@ -723,6 +761,7 @@ int32_t QCamera3RegularChannel::registerBuffer(buffer_handle_t *buffer,
     ATRACE_CALL();
     int rc = 0;
     mIsType = isType;
+    cam_stream_type_t streamType;
 
     if ((uint32_t)mMemory.getCnt() > (mNumBufs - 1)) {
         ALOGE("%s: Trying to register more buffers than initially requested",
@@ -739,6 +778,7 @@ int32_t QCamera3RegularChannel::registerBuffer(buffer_handle_t *buffer,
         }
     }
 
+    streamType = mStreams[0]->getMyType();
     rc = mMemory.registerBuffer(buffer);
     if (ALREADY_EXISTS == rc) {
         return NO_ERROR;
@@ -761,11 +801,6 @@ void QCamera3RegularChannel::streamCbRoutine(
     int32_t resultFrameNumber;
     camera3_stream_buffer_t result;
 
-    if (NULL == stream) {
-        ALOGE("%s: Invalid stream", __func__);
-        return;
-    }
-
     if(!super_frame) {
          ALOGE("%s: Invalid Super buffer",__func__);
          return;
@@ -784,7 +819,9 @@ void QCamera3RegularChannel::streamCbRoutine(
     frameIndex = (uint8_t)super_frame->bufs[0]->buf_idx;
     if(frameIndex >= mNumBufs) {
          ALOGE("%s: Error, Invalid index for buffer",__func__);
-         stream->bufDone(frameIndex);
+         if(stream) {
+             stream->bufDone(frameIndex);
+         }
          return;
     }
 
@@ -797,17 +834,6 @@ void QCamera3RegularChannel::streamCbRoutine(
     result.status = CAMERA3_BUFFER_STATUS_OK;
     result.acquire_fence = -1;
     result.release_fence = -1;
-    int32_t rc = stream->bufRelease(frameIndex);
-    if (NO_ERROR != rc) {
-        ALOGE("%s: Error %d releasing stream buffer %d",
-                __func__, rc, frameIndex);
-    }
-
-    rc = mMemory.unregisterBuffer(frameIndex);
-    if (NO_ERROR != rc) {
-        ALOGE("%s: Error %d unregistering stream buffer %d",
-                __func__, rc, frameIndex);
-    }
 
     mChannelCB(NULL, &result, resultFrameNumber, mUserData);
     free(super_frame);
@@ -1387,11 +1413,6 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
         ////Use below data to issue framework callback
         resultBuffer = (buffer_handle_t *)obj->mMemory.getBufferHandle(bufIdx);
         resultFrameNumber = obj->mMemory.getFrameNumber(bufIdx);
-        int32_t rc = obj->mMemory.unregisterBuffer(bufIdx);
-        if (NO_ERROR != rc) {
-            ALOGE("%s: Error %d unregistering stream buffer %d",
-                    __func__, rc, bufIdx);
-        }
 
         result.stream = obj->mCamera3Stream;
         result.buffer = resultBuffer;
@@ -1604,14 +1625,12 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
     } else {
        reproc_cfg.padding->height_padding = reproc_cfg.padding->width_padding;
     }
-    if (NULL != pInputBuffer) {
-        reproc_cfg.input_stream_dim.width = pInputBuffer->stream->width;
-        reproc_cfg.input_stream_dim.height = pInputBuffer->stream->height;
-    } else {
-        reproc_cfg.input_stream_dim.width = mYuvWidth;
-        reproc_cfg.input_stream_dim.height = mYuvHeight;
+
+    reproc_cfg.input_stream_dim.width = mYuvWidth;
+    reproc_cfg.input_stream_dim.height = mYuvHeight;
+    if (NULL == pInputBuffer)
         reproc_cfg.src_channel = this;
-    }
+
     reproc_cfg.output_stream_dim.width = mCamera3Stream->width;
     reproc_cfg.output_stream_dim.height = mCamera3Stream->height;
     reproc_cfg.stream_type = mStreamType;

@@ -1664,6 +1664,7 @@ static int submain()
     menu_id_change_t current_menu_id = MENU_ID_MAIN, next_menu_id;
     camera_action_t action_id;
     int action_param;
+    uint8_t previewing = 0;
     int isZSL = 0;
     uint8_t wnr_enabled = 0;
     mm_camera_lib_handle lib_handle;
@@ -1748,6 +1749,7 @@ static int submain()
                     CDBG_ERROR("%s:mm_camera_lib_start_stream() err=%d\n", __func__, rc);
                     goto ERROR;
                 }
+                previewing = 1;
                 break;
 
             case ACTION_STOP_PREVIEW:
@@ -1757,6 +1759,7 @@ static int submain()
                     CDBG_ERROR("%s:mm_camera_lib_stop_stream() err=%d\n", __func__, rc);
                     goto ERROR;
                 }
+                previewing = 0;
                 break;
 
             case ACTION_SET_WHITE_BALANCE:

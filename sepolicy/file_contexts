@@ -19,7 +19,10 @@
 /dev/ttyHS3                    u:object_r:adspd_device:s0
 
 #Serial console
-/dev/ttyHSL0                   u:object_r:console_device:s0
+/dev/ttyHSL0                   u:object_r:tty_device:s0
+
+# STOPSHIP b/16455932
+/dev/vfsspi                    u:object_r:fingerprint_device:s0
 
 # GPU device
 /dev/kgsl-3d0                  u:object_r:gpu_device:s0
@@ -32,9 +35,6 @@
 # factory reset protection partition
 /dev/block/platform/msm_sdcc\.1/by-name/frp           u:object_r:frp_block_device:s0
 
-# /persist
-/dev/block/platform/msm_sdcc\.1/by-name/persist   u:object_r:persist_block_device:s0
-
 # mdm1hob, mdm1dhob
 /dev/block/platform/msm_sdcc.1/by-name/mdm1hob   u:object_r:modem_hob_block_device:s0
 /dev/block/platform/msm_sdcc.1/by-name/mdm1dhob  u:object_r:modem_hob_block_device:s0
@@ -44,13 +44,6 @@
 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs2  u:object_r:efs_block_device:s0
 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3  u:object_r:efs_block_device:s0
 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefsc  u:object_r:efs_block_device:s0
-
-/dev/block/platform/msm_sdcc\.1/by-name/system       u:object_r:system_block_device:s0
-/dev/block/platform/msm_sdcc\.1/by-name/recovery     u:object_r:recovery_block_device:s0
-/dev/block/platform/msm_sdcc\.1/by-name/boot         u:object_r:boot_block_device:s0
-/dev/block/platform/msm_sdcc\.1/by-name/userdata     u:object_r:userdata_block_device:s0
-/dev/block/platform/msm_sdcc\.1/by-name/metadata     u:object_r:metadata_block_device:s0
-/dev/block/platform/msm_sdcc\.1/by-name/cache        u:object_r:cache_block_device:s0
 
 # Customer Identifier
 /dev/block/platform/msm_sdcc.1/by-name/cid          u:object_r:cid_block_device:s0
@@ -87,7 +80,6 @@
 #Add context for IMS Socket node
 /dev/socket/ims_qmid            u:object_r:ims_socket:s0
 /dev/socket/ims_datad           u:object_r:ims_socket:s0
-/dev/socket/ims_rtpd            u:object_r:ims_socket:s0
 
 # Shared memory log
 /dev/smem_log                   u:object_r:shared_log_device:s0
@@ -126,7 +118,6 @@
 /system/bin/bdAddrLoader        u:object_r:bluetooth_loader_exec:s0
 /system/bin/bridgemgrd          u:object_r:bridge_exec:s0
 /system/vendor/bin/gsiff_daemon u:object_r:gsiffd_exec:s0
-/system/bin/init\.mmi\.touch\.sh u:object_r:mmi_touch_sh_exec:s0
 /system/bin/irsc_util           u:object_r:irsc_util_exec:s0
 /system/bin/ks                  u:object_r:mdm_helper_exec:s0
 /system/bin/mdm_helper          u:object_r:mdm_helper_exec:s0
@@ -153,9 +144,6 @@
 # Sysfs files used by qmuxd
 /sys/devices/virtual/smdpkt/smdcntl([0-9])+/open_timeout u:object_r:sysfs_smdcntl_open_timeout:s0
 
-# mmi_touch related /sys files
-/sys/devices/f9966000\.i2c/i2c-1/1-004a(/.*)?            u:object_r:sysfs_mmi_touch:s0
-
 # Context for mpdecision
 /sys/module/msm_thermal/core_control/cpus_offlined              u:object_r:sysfs_mpdecision:s0
 /sys/devices/system/cpu/cpu0/rq-stats(/.*)?                     u:object_r:sysfs_rqstats:s0
@@ -169,7 +157,3 @@
 
 /system/bin/imsdatadaemon                       u:object_r:ims_exec:s0
 /system/bin/imsqmidaemon                        u:object_r:ims_exec:s0
-/system/bin/ims_rtp_daemon                      u:object_r:ims_exec:s0
-
-/dev/socket/cnd  u:object_r:cnd_socket:s0
-/system/bin/cnd  u:object_r:cnd_exec:s0

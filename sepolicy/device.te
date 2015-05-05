@@ -4,12 +4,14 @@ type diag_device, dev_type;
 # eMMC rpmb - necessarily drm?
 type drm_block_device, dev_type;
 
+# STOPSHIP b/16455932
+type fingerprint_device, dev_type;
+
 type efs_block_device, dev_type;
 type mdm_helper_device, dev_type;
 type ramdump_device, dev_type;
 type modem_hob_block_device, dev_type;
 type cid_block_device, dev_type;
-type persist_block_device, dev_type;
 
 # Real Time Clock
 type rtc, dev_type;
