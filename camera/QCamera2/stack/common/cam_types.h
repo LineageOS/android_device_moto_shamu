@@ -122,6 +122,8 @@
 
 #define QCAMERA_MAX_FILEPATH_LENGTH 64
 
+#define MAX_REPROCESS_STALL 2
+
 typedef enum {
     CAM_HAL_V1 = 1,
     CAM_HAL_V3 = 3
