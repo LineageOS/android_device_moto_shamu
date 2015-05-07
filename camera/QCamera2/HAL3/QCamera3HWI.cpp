@@ -4711,6 +4711,9 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       &partial_result_count,
                        1);
 
+    int32_t max_stall_duration = MAX_REPROCESS_STALL;
+    staticInfo.update(ANDROID_REPROCESS_MAX_CAPTURE_STALL, &max_stall_duration, 1);
+
     uint8_t available_capabilities[MAX_AVAILABLE_CAPABILITIES];
     uint8_t available_capabilities_count = 0;
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE;
