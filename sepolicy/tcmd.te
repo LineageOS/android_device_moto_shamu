@@ -7,11 +7,8 @@ init_daemon_domain(tcmd)
 # Uses network sockets.
 net_domain(tcmd)
 
-# Set property.
-unix_socket_connect(tcmd, property, init)
-
 # Allow restart, fastboot, power off
-allow tcmd powerctl_prop:property_service set;
+set_prop(tcmd, powerctl_prop)
 
 # Uses /dev/ttydiag2
 allow tcmd diag_device:chr_file rw_file_perms;

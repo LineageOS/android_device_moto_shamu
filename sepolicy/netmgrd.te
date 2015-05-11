@@ -37,8 +37,7 @@ allow netmgrd self:socket {create ioctl read};
 dontaudit netmgrd self:capability sys_module;
 
 # Set net_radio properties
-unix_socket_connect(netmgrd, property, init)
-allow netmgrd net_radio_prop:property_service set;
+set_prop(netmgrd, net_radio_prop)
 
 # Permission to run netd commands
 allow netmgrd netd_socket:sock_file write;
