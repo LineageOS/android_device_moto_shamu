@@ -4721,7 +4721,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING;
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS;
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE;
-    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_OPAQUE_REPROCESSING;
+    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING;
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING;
     if (facingBack) {
         available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW;
