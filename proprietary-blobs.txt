@@ -86,12 +86,10 @@
 /system/etc/Handset_cal.acdb
 /system/etc/Hdmi_cal.acdb
 /system/etc/Headset_cal.acdb
-/system/etc/permissions/org.simalliance.openmobileapi.xml
 /system/etc/qmi_fw.conf
 /system/etc/sensors/sensor_def_qcomdev.conf
 /system/etc/Speaker_cal.acdb
 /system/etc/thermal-engine-shamu.conf
-/system/framework/org.simalliance.openmobileapi.jar
 /system/lib/hw/audio.primary.msm8084.so
 /system/lib/hw/gps.msm8084.so
 /system/lib/hw/sound_trigger.primary.shamu.so
