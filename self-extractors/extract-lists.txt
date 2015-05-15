@@ -36,9 +36,7 @@
             system/etc/Handset_cal.acdb \
             system/etc/Hdmi_cal.acdb \
             system/etc/Headset_cal.acdb \
-            system/etc/permissions/org.simalliance.openmobileapi.xml \
             system/etc/Speaker_cal.acdb \
-            system/framework/org.simalliance.openmobileapi.jar \
             system/lib/libadspd-jni.so \
             system/lib/libadspd.so \
             system/lib/librecoglib.so \

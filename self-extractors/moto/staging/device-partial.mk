@@ -43,9 +43,7 @@ PRODUCT_COPY_FILES := \
     vendor/moto/shamu/proprietary/Handset_cal.acdb:system/etc/Handset_cal.acdb:moto \
     vendor/moto/shamu/proprietary/Hdmi_cal.acdb:system/etc/Hdmi_cal.acdb:moto \
     vendor/moto/shamu/proprietary/Headset_cal.acdb:system/etc/Headset_cal.acdb:moto \
-    vendor/moto/shamu/proprietary/org.simalliance.openmobileapi.xml:system/etc/permissions/org.simalliance.openmobileapi.xml:moto \
     vendor/moto/shamu/proprietary/Speaker_cal.acdb:system/etc/Speaker_cal.acdb:moto \
-    vendor/moto/shamu/proprietary/org.simalliance.openmobileapi.jar:system/framework/org.simalliance.openmobileapi.jar:moto \
     vendor/moto/shamu/proprietary/libadspd-jni.so:system/lib/libadspd-jni.so:moto \
     vendor/moto/shamu/proprietary/libadspd.so:system/lib/libadspd.so:moto \
     vendor/moto/shamu/proprietary/librecoglib.so:system/lib/librecoglib.so:moto \
