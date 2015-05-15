@@ -70,12 +70,10 @@ system/etc/Global_cal.acdb:moto
 system/etc/Handset_cal.acdb:moto
 system/etc/Hdmi_cal.acdb:moto
 system/etc/Headset_cal.acdb:moto
-system/etc/permissions/org.simalliance.openmobileapi.xml:moto
 system/etc/qmi_fw.conf:qcom
 system/etc/sensors/sensor_def_qcomdev.conf:qcom
 system/etc/Speaker_cal.acdb:moto
 system/etc/thermal-engine-shamu.conf:qcom
-system/framework/org.simalliance.openmobileapi.jar:moto
 system/lib/hw/audio.primary.msm8084.so:qcom
 system/lib/hw/gps.msm8084.so:qcom
 system/lib/hw/sound_trigger.primary.shamu.so:qcom
