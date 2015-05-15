@@ -42,8 +42,7 @@ unix_socket_connect(netmgrd, cnd, cnd)
 dontaudit netmgrd self:capability sys_module;
 
 # Set net_radio properties
-unix_socket_connect(netmgrd, property, init)
-allow netmgrd net_radio_prop:property_service set;
+set_prop(netmgrd, net_radio_prop)
 
 #Set netmgrd properties
 allow netmgrd qcom_netmgrd_prop:property_service set;
