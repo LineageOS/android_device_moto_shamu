@@ -4,7 +4,7 @@ type fsg_file, fs_type, contextmount_type;
 
 type cnd_socket, file_type;
 
-type adspd_socket, file_type;
+type adspd_socket, file_type, mlstrustedobject;
 type camera_socket, file_type;
 type mpdecision_socket, file_type;
 type qmuxd_socket, file_type;
