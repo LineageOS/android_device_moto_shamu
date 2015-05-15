@@ -60,5 +60,4 @@ allow mdm_helper dropbox_data_file:dir rw_dir_perms;
 allow mdm_helper dropbox_data_file:file create_file_perms;
 
 # write radio properties
-unix_socket_connect(mdm_helper, property, init)
-allow mdm_helper radio_prop:property_service set;
+set_prop(mdm_helper, radio_prop)
