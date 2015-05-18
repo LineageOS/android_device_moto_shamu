@@ -100,9 +100,6 @@
 /dev/msm_acdb                      u:object_r:audio_device:s0
 /dev/msm_rtac                      u:object_r:audio_device:s0
 
-# Real-time clock
-/dev/rtc0                       u:object_r:rtc:s0
-
 # Qualcomm MSM Interface (QMI) devices
 /dev/socket/qmux_audio(/.*)?           u:object_r:qmuxd_socket:s0
 /dev/socket/qmux_bluetooth(/.*)?       u:object_r:qmuxd_socket:s0
