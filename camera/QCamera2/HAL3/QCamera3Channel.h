@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2015, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -65,6 +65,7 @@ public:
     int32_t addStream(cam_stream_type_t streamType,
                       cam_format_t streamFormat,
                       cam_dimension_t streamDim,
+                      cam_rotation_t streamRotation,
                       uint8_t minStreamBufnum,
                       uint32_t postprocessMask,
                       cam_is_type_t isType);
@@ -177,6 +178,7 @@ private:
     uint32_t mNumBufs;
     cam_stream_type_t mStreamType; // Stream type
     uint32_t mWidth, mHeight;
+    cam_rotation_t mRotation;
     uint8_t mIntent;
 };
 
