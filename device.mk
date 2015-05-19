@@ -161,6 +161,9 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.audio.fluence.speaker=false \
     ro.audio.monitorRotation=true
 
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.sys.isUsbOtgEnabled=1
+
 # Audio effects
 PRODUCT_PACKAGES += \
     libqcomvisualizer \

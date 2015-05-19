@@ -26,6 +26,9 @@ on early-init
 
 on init
     # See storage config details at http://source.android.com/tech/storage/
+    mkdir /mnt/media_rw/usbdisk 0700 media_rw media_rw
+    mkdir /storage/usbdisk 0700 root root
+
     mkdir /mnt/shell/emulated 0700 shell shell
     mkdir /storage/emulated 0555 root root
 
@@ -511,6 +514,11 @@ service adspd /system/bin/adspd /dev/ttyHS3
    socket adspdsock stream 0660 media media
    user media
    group media input
+
+#external storage
+service fuse_usbdisk /system/bin/sdcard -u 1023 -g 1023  /mnt/media_rw/usbdisk /storage/usbdisk
+    class late_start
+    disabled
 
 on property:sys.boot_completed=1
     start qcom-post-boot
