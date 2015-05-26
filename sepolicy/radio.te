@@ -13,3 +13,6 @@ allow radio persist_hiddenmenu_file:file create_file_perms;
 
 # Connect to ims service.
 allow radio ims:unix_stream_socket connectto;
+
+# Access RCS properties
+allow radio rcs_prop:property_service set;
