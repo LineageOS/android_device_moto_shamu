@@ -225,14 +225,21 @@ etc/firmware/cpp_firmware_v1_2_0.fw
 etc/firmware/cpp_firmware_v1_6_0.fw
 etc/firmware/cpp_firmware_v1_8_0.fw
 
+# CNE
+bin/cnd
+-priv-app/CNEService/CNEService.apk
+vendor/lib/libcne.so
+vendor/lib/libcneapiclient.so
+
 # Contacts adapter
 -priv-app/BuaContactAdapter/BuaContactAdapter.apk
 
 # Diagnostic
 bin/diag_klog
 bin/diag_mdlog
-etc/diag/mdm/FIT_V15_audio.cfg
-etc/diag/mdm/FIT_V15.cfg
+etc/diag/mdm/FIT_V16_1.cfg
+etc/diag/mdm/FIT_V16_2_volte_full_ip.cfg
+etc/diag/mdm/FIT_V16_3_audio.cfg
 etc/diag/mdm/sensors_qxdm.cfg
 etc/diag/sensors_qxdm.cfg
 
@@ -353,6 +360,7 @@ bin/irsc_util
 vendor/lib/libdiag.so
 vendor/lib/libdsi_netctrl.so
 vendor/lib/libdsutils.so
+vendor/lib/libqcci_legacy.so
 vendor/lib/libidl.so
 vendor/lib/libqdi.so
 vendor/lib/libqdp.so
