@@ -229,12 +229,17 @@ for PRIVAPK in `ls ../../../$OUTDIR/proprietary/priv-app/*/*apk`; do
   fi
     privapkname=`basename $PRIVAPK`
     privmodulename=`echo $privapkname|sed -e 's/\.apk$//gi'`
+  if [[ $privmodulename = CNEService ]]; then
+    signature="platform"
+  else
+    signature="PRESIGNED"
+  fi
     (cat << EOF) >> ../../../$OUTDIR/proprietary/priv-app/Android.mk
 include \$(CLEAR_VARS)
 LOCAL_MODULE := $privmodulename
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := $privmodulename/$privapkname
-LOCAL_CERTIFICATE := PRESIGNED
+LOCAL_CERTIFICATE := $signature
 LOCAL_MODULE_CLASS := APPS
 LOCAL_PRIVILEGED_MODULE := true
 LOCAL_MODULE_SUFFIX := \$(COMMON_ANDROID_PACKAGE_SUFFIX)
