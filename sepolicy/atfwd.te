@@ -15,3 +15,4 @@ binder_call(atfwd, system_app);
 binder_call(atfwd, servicemanager);
 
 allow atfwd atfwd_service:service_manager find;
+unix_socket_connect(atfwd, property, init)
