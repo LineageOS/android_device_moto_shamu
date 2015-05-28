@@ -13,3 +13,5 @@ allow atfwd qmux:unix_stream_socket connectto;
 binder_use(atfwd);
 binder_call(atfwd, system_app);
 binder_call(atfwd, servicemanager);
+
+unix_socket_connect(atfwd, property, init)

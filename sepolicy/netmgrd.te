@@ -45,3 +45,5 @@ allow netmgrd netd_socket:sock_file write;
 #Allow access to files associated with netd
 allow netmgrd net_data_file:dir r_dir_perms;
 
+allow netmgrd self:netlink_xfrm_socket nlmsg_write;
+allow netmgrd self:socket write;
