@@ -24,3 +24,16 @@ PRODUCT_BUILD_PROP_OVERRIDES += \
     PRODUCT_NAME=shamu \
     BUILD_FINGERPRINT=google/shamu/shamu:5.1.1/LYZ28E/1914015:user/release-keys \
     PRIVATE_BUILD_DESC="shamu-user 5.1.1 LYZ28E 1914015 release-keys"
+
+PRODUCT_PROPERTY_OVERRIDES += \
+	persist.rcs.supported=0 \
+	persist.audio.dualmic.config=endfire \
+	persist.audio.fluence.voicecall=true \
+	persist.audio.fluence.voicerec=false \
+	persist.audio.fluence.speaker=false \
+	persist.radio.sib16_support=1 \
+	persist.data.qmi.adb_logmask=0 \
+	persist.data.iwlan.enable=true \
+	persist.radio.ignore_ims_wlan=1 \
+	persist.radio.data_con_rprt=1 \
+	keyguard.no_require_sim=true
