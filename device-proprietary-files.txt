@@ -424,6 +424,15 @@ bin/port-bridge
 bin/usbhub
 bin/usbhub_init
 
+# Vzw
+-app/VZWAPNLib/VZWAPNLib.apk
+etc/permissions/com.motorola.DirectedSMSProxy.xml
+etc/permissions/com.vzw.vzwapnlib.xml
+-priv-app/AppDirectedSMSProxy/AppDirectedSMSProxy.apk
+-priv-app/appdirectedsmspermission/appdirectedsmspermission.apk
+-priv-app/MotoSignatureApp/MotoSignatureApp.apk
+-priv-app/VZWAPNService/VZWAPNService.apk
+
 # Venus (media) firmware
 vendor/firmware/venus.b00
 vendor/firmware/venus.b01
