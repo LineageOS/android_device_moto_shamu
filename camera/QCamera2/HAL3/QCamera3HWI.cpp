@@ -1259,7 +1259,9 @@ int QCamera3HardwareInterface::configureStreams(
            or will be limited to the max i/p stream size which we can control to
            be equal to be the largest YUV/Opaque stream size
            */
-        mPictureChannel->overrideYuvSize(zslStream->width, zslStream->height);
+        if (mPictureChannel) {
+           mPictureChannel->overrideYuvSize(zslStream->width, zslStream->height);
+        }
     } else if (mPictureChannel && m_bIs4KVideo) {
         mPictureChannel->overrideYuvSize(videoWidth, videoHeight);
     }
