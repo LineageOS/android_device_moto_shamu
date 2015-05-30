@@ -1,0 +1,12 @@
+#permissive cnd;
+type cnd, domain;
+type cnd_exec, exec_type, file_type;
+file_type_auto_trans(cnd, socket_device, cnd_socket);
+
+# cnd is started by init, type transit from init domain to cnd domain
+init_daemon_domain(cnd)
+# associate netdomain as an attribute of cnd domain
+net_domain(cnd)
+
+# allow cnd the following capability
+allow cnd self:capability { setuid setgid net_raw };

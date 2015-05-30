@@ -652,3 +652,7 @@ service atfwd /system/bin/ATFWD-daemon
     class late_start
     user system
     group system radio
+
+service cnd /system/bin/cnd
+    class late_start
+    socket cnd stream 660 root inet
