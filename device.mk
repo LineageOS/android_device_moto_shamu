@@ -229,6 +229,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.no_wait_for_card=1 \
     persist.radio.sib16_support=1
 
+# Include IMSEnabler
+PRODUCT_PACKAGES += \
+    IMSEnabler
+
 # WiFi calling
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.data.iwlan.enable=true \
