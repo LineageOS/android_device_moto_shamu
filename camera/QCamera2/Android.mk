@@ -10,6 +10,7 @@ include $(CLEAR_VARS)
 # QCamera3HWI.cpp, QCamera3PostProc.cpp etc. have unused variable.
 # QCamera3Channel.cpp compares array to null pointer.
 # QCamera2Factory.cpp, QCamera3HWI.cpp, etc. have unused parameter.
+# QCamera3HWI.cpp has print format error.
 LOCAL_CLANG_CFLAGS += \
         -Wno-error=unused-private-field \
         -Wno-error=gnu-designator \
@@ -17,6 +18,7 @@ LOCAL_CLANG_CFLAGS += \
         -Wno-error=unused-variable \
         -Wno-error=unused-parameter \
         -Wno-error=tautological-pointer-compare \
+        -Wno-error=format
 
 LOCAL_SRC_FILES := \
         util/QCameraCmdThread.cpp \
