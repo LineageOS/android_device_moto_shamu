@@ -368,9 +368,3 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Low latency audio buffer size in frames
 PRODUCT_PROPERTY_OVERRIDES += \
     audio_hal.period_size=192
-
-# Near-ultrasound support in the default audio and speaker paths.
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.audio.spkr.ultrasound=true \
-    persist.audio.mic.ultrasound=true
-
