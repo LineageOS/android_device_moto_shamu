@@ -344,6 +344,10 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 PRODUCT_PACKAGES += \
     power.shamu
 
+# For android_filesystem_config.h
+PRODUCT_PACKAGES += \
+   fs_config_files
+
 PRODUCT_PROPERTY_OVERRIDES += \
    ro.frp.pst=/dev/block/platform/msm_sdcc.1/by-name/frp
 
