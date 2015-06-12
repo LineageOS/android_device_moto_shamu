@@ -611,7 +611,7 @@ int QCamera3HardwareInterface::validateStreamDimensions(
     for (size_t i = 0; i< streamList->num_streams; i++) {
         if (streamList->streams[i]->stream_type == CAMERA3_STREAM_INPUT) {
             if (inputStream != NULL) {
-                ALOGE("%s: Error, Multiple input streams requested");
+                ALOGE("%s: Error, Multiple input streams requested", __func__);
                 return -EINVAL;
             }
             inputStream = streamList->streams[i];
