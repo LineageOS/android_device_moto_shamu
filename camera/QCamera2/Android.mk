@@ -77,7 +77,7 @@ LOCAL_C_INCLUDES += \
 LOCAL_C_INCLUDES += \
         hardware/qcom/display/$(TARGET_BOARD_PLATFORM)/libqdutils
 
-LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl
+LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl libsync
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface libui libcamera_metadata
 LOCAL_SHARED_LIBRARIES += libqdMetaData
 
