@@ -18,6 +18,5 @@
     <string name="app_label">Nexus 6 Home Screen</string>
     <string name="google_folder_title">Google</string>
     <string name="create_folder_title">Create</string>
-    <!--Play here refers to the brand -->
-    <string name="play_folder_title">Play</string>
+    <string name="play_folder_title" desc="Play is short for Google Play here">Play</string>
 </resources>
