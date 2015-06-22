@@ -905,10 +905,9 @@
 	</path>
 
 	<!-- Dual MIC devices -->
-	<path name="voice-dmic-ef">
-	    <!-- Port mixer is common bit for all voice verbs -->
+	<path name="dmic-endfire">
+	<!-- Port mixer is common bit for all voice verbs -->
 		<ctl name="QUAT_MI2S_RX Port Mixer SLIM_1_TX" value="1" />
-
 		<ctl name="AIF1_CAP Mixer SLIM TX7" value="1" />
 		<ctl name="AIF1_CAP Mixer SLIM TX8" value="1" />
 		<ctl name="AIF2_CAP Mixer SLIM TX9" value="1" />
@@ -928,20 +927,36 @@
 		<ctl name="ADC6 Volume" value="0" />
 	</path>
 
-	<path name="voice-speaker-dmic-ef">
-		<path name="voice-dmic-ef" />
+	<path name="speaker-dmic-endfire">
+		<path name="dmic-endfire" />
+	</path>
+
+	<path name="handset-stereo-dmic-ef">
+		<path name="speaker-dmic-endfire" />
+	</path>
+
+	<path name="speaker-stereo-dmic-ef">
+		<path name="speaker-dmic-endfire" />
 	</path>
 
 	<path name="voice-dmic-ef-tmus">
-		<path name="voice-dmic-ef" />
+		<path name="dmic-endfire" />
+	</path>
+
+	<path name="voice-dmic-ef">
+		<path name="dmic-endfire" />
+	</path>
+
+	<path name="voice-speaker-dmic-ef">
+		<path name="dmic-endfire" />
 	</path>
 
 	<path name="voice-rec-dmic-ef">
-		<path name="voice-dmic-ef" />
+		<path name="dmic-endfire" />
 	</path>
 
 	<path name="voice-rec-dmic-ef-fluence">
-		<path name="voice-dmic-ef" />
+		<path name="dmic-endfire" />
 	</path>
 
 	<!-- TTY devices -->
