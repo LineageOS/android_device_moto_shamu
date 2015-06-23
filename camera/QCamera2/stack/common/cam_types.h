@@ -618,6 +618,12 @@ typedef enum {
 } cam_black_level_lock_t;
 
 typedef enum {
+    CAM_HOTPIXEL_MODE_OFF,
+    CAM_HOTPIXEL_MODE_FAST,
+    CAM_HOTPIXEL_MODE_HIGH_QUALITY,
+} cam_hotpixel_mode_t;
+
+typedef enum {
     CAM_LENS_SHADING_MAP_MODE_OFF,
     CAM_LENS_SHADING_MAP_MODE_ON,
 } cam_lens_shading_map_mode_t;
