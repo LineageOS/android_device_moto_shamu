@@ -247,6 +247,11 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.fsg_reload_on=1 \
     persist.radio.mcfg_enabled=1
 
+# If data_no_toggle is 1 then active and dormancy enable at all times.
+# If data_no_toggle is 0 there are no reports if the screen is off.
+PRODUCT_PROPERTY_OVERRIDES += \
+     persist.radio.data_no_toggle=1
+
 # Camera configuration
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     camera.disable_zsl_mode=0
