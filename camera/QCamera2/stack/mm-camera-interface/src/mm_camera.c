@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -376,6 +376,35 @@ int32_t mm_camera_close(mm_camera_obj_t *my_obj)
     pthread_mutex_destroy(&my_obj->evt_lock);
     pthread_cond_destroy(&my_obj->evt_cond);
 
+    pthread_mutex_unlock(&my_obj->cam_lock);
+    return 0;
+}
+
+/*===========================================================================
+ * FUNCTION   : mm_camera_close_fd
+ *
+ * DESCRIPTION: close the ctrl_fd and socket fd in case of an error so that
+ *              the backend will close
+ *              Do NOT close or release any HAL resources since a close_camera
+ *              has not been called yet.
+ * PARAMETERS :
+ *   @my_obj   : ptr to a camera object
+ *   @event    : event to be queued
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_camera_close_fd(mm_camera_obj_t *my_obj)
+{
+    if(my_obj->ctrl_fd >= 0) {
+        close(my_obj->ctrl_fd);
+        my_obj->ctrl_fd = -1;
+    }
+    if(my_obj->ds_fd >= 0) {
+        mm_camera_socket_close(my_obj->ds_fd);
+        my_obj->ds_fd = -1;
+    }
     pthread_mutex_unlock(&my_obj->cam_lock);
     return 0;
 }

@@ -388,6 +388,50 @@ static int32_t mm_camera_intf_close(uint32_t camera_handle)
 }
 
 /*===========================================================================
+ * FUNCTION   : mm_camera_intf_error_close
+ *
+ * DESCRIPTION: close the daemon after an unrecoverable error
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+static int32_t mm_camera_intf_error_close(uint32_t camera_handle)
+{
+    int32_t rc = -1;
+    uint8_t cam_idx = camera_handle & 0x00ff;
+    mm_camera_obj_t * my_obj = NULL;
+
+    CDBG("%s E: camera_handler = %d ", __func__, camera_handle);
+
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
+
+    if (my_obj){
+        /*do not decrement the ref_count yet since that will happen during close*/
+        if((my_obj->ref_count - 1) > 0) {
+            /* still have reference to obj, return here */
+            CDBG("%s: ref_count=%d\n", __func__, my_obj->ref_count);
+            pthread_mutex_unlock(&g_intf_lock);
+            rc = 0;
+        } else {
+            /* need close camera here as no other reference*/
+            pthread_mutex_lock(&my_obj->cam_lock);
+            pthread_mutex_unlock(&g_intf_lock);
+
+            rc = mm_camera_close_fd(my_obj);
+        }
+    } else {
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : mm_camera_intf_add_channel
  *
  * DESCRIPTION: add a channel
@@ -1546,6 +1590,7 @@ static mm_camera_ops_t mm_camera_ops = {
     .query_capability = mm_camera_intf_query_capability,
     .register_event_notify = mm_camera_intf_register_event_notify,
     .close_camera = mm_camera_intf_close,
+    .error_close_camera = mm_camera_intf_error_close,
     .set_parms = mm_camera_intf_set_parms,
     .get_parms = mm_camera_intf_get_parms,
     .do_auto_focus = mm_camera_intf_do_auto_focus,
