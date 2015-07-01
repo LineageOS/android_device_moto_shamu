@@ -41,5 +41,10 @@
         <device name="SND_DEVICE_OUT_VOICE_TTY_HCO_HANDSET"     backend="handset" interface="QUAT_MI2S_RX"/>
     </backend_names>
 
+    <config_params>
+        <!-- If sound card name is not known, remove this entry -->
+        <param key="snd_card_name" value="apq8084-taiko-tfa9890_stereo_codec-snd-card"/>
+    </config_params>
+
 </audio_platform_info>
 
