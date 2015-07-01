@@ -471,6 +471,7 @@ uint8_t mm_camera_util_chip_is_a_family(void);
 /* mm-camera */
 extern int32_t mm_camera_open(mm_camera_obj_t *my_obj);
 extern int32_t mm_camera_close(mm_camera_obj_t *my_obj);
+extern int32_t mm_camera_close_fd(mm_camera_obj_t *my_obj);
 extern int32_t mm_camera_register_event_notify(mm_camera_obj_t *my_obj,
                                                mm_camera_event_notify_t evt_cb,
                                                void * user_data);
