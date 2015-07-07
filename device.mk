@@ -382,14 +382,14 @@ PRODUCT_PROPERTY_OVERRIDES += \
    ro.frp.pst=/dev/block/platform/msm_sdcc.1/by-name/frp
 
 # Delegation for OEM customization
-PRODUCT_OEM_PROPERTIES := \
-    ro.config.ringtone \
-    ro.config.notification_sound \
-    ro.config.alarm_alert \
-    ro.config.wallpaper \
-    ro.config.wallpaper_component \
-    ro.oem.* \
-    oem.*
+#PRODUCT_OEM_PROPERTIES := \
+#    ro.config.ringtone \
+#    ro.config.notification_sound \
+#    ro.config.alarm_alert \
+#    ro.config.wallpaper \
+#    ro.config.wallpaper_component \
+#    ro.oem.* \
+#    oem.*
 
 # Copy the qcril.db file from qcril to system. Useful to get the radio tech family for the camped operator
 PRODUCT_COPY_FILES += \
