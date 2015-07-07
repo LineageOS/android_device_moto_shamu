@@ -5247,8 +5247,8 @@ int32_t QCamera3HardwareInterface::getScalarFormat(int32_t format)
  *==========================================================================*/
 
 double QCamera3HardwareInterface::computeNoiseModelEntryS(int32_t sens) {
-   double s = 3.738032e-06 * sens + 3.651935e-04;
-   return s < 0.0 ? 0.0 : s;
+    double s = 4.290559e-06 * sens + 4.370087e-05;
+    return s < 0.0 ? 0.0 : s;
 }
 
 /*===========================================================================
@@ -5264,8 +5264,10 @@ double QCamera3HardwareInterface::computeNoiseModelEntryS(int32_t sens) {
  *==========================================================================*/
 
 double QCamera3HardwareInterface::computeNoiseModelEntryO(int32_t sens) {
-  double o = 4.499952e-07 * sens + -2.968624e-04;
-  return o < 0.0 ? 0.0 : o;
+    double digital_gain = sens / 320.0;
+    digital_gain = digital_gain < 1.0 ? 1.0 : digital_gain;
+    double o = 6.011498e-11 * sens * sens + 2.173219e-06 * digital_gain * digital_gain;
+    return o < 0.0 ? 0.0 : o;
 }
 
 /*===========================================================================
