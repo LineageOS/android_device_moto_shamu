@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5ff73747_e0c75c45",
+        "filename": "cm.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 6572
+      },
+      "writtenOn": "2015-07-07T22:32:47Z",
+      "side": 1,
+      "message": "start of already in device.mk",
+      "range": {
+        "startLine": 30,
+        "startChar": 1,
+        "endLine": 30,
+        "endChar": 37
+      },
+      "revId": "fa5bf428aa0c47ec75de772eb5abd01fdb308db8",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5ff73747_00cb6853",
+        "filename": "cm.mk",
+        "patchSetId": 2
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 6572
+      },
+      "writtenOn": "2015-07-07T22:32:47Z",
+      "side": 1,
+      "message": "end already in device.mk",
+      "range": {
+        "startLine": 33,
+        "startChar": 1,
+        "endLine": 33,
+        "endChar": 37
+      },
+      "revId": "fa5bf428aa0c47ec75de772eb5abd01fdb308db8",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
