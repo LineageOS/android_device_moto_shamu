@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5ff73747_2071c4e1",
+        "filename": "cm.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 8640
+      },
+      "writtenOn": "2015-07-08T00:51:04Z",
+      "side": 1,
+      "message": "https://github.com/CyanogenMod/android_device_moto_shamu/blob/cm-12.1/device.mk#L244",
+      "range": {
+        "startLine": 29,
+        "startChar": 13,
+        "endLine": 29,
+        "endChar": 22
+      },
+      "revId": "f737ae3a4929179aaf3134705c70a7eae04035ce",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5ff73747_0076c8d9",
+        "filename": "cm.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 8640
+      },
+      "writtenOn": "2015-07-08T00:51:04Z",
+      "side": 1,
+      "message": "https://github.com/CyanogenMod/android_device_moto_shamu/blob/cm-12.1/device.mk#L229",
+      "range": {
+        "startLine": 30,
+        "startChar": 9,
+        "endLine": 30,
+        "endChar": 14
+      },
+      "revId": "f737ae3a4929179aaf3134705c70a7eae04035ce",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5ff73747_804bf885",
+        "filename": "cm.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 8640
+      },
+      "writtenOn": "2015-07-08T00:51:04Z",
+      "side": 1,
+      "message": "This is the only one that is not currently in the build.  I find that for nightly and debugging builds it is helpful to have this.",
+      "range": {
+        "startLine": 31,
+        "startChar": 0,
+        "endLine": 31,
+        "endChar": 33
+      },
+      "revId": "f737ae3a4929179aaf3134705c70a7eae04035ce",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5ff73747_c07fc0a9",
+        "filename": "cm.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 8640
+      },
+      "writtenOn": "2015-07-08T00:51:04Z",
+      "side": 1,
+      "message": "https://github.com/CyanogenMod/android_device_moto_shamu/blob/cm-12.1/device.mk#L240",
+      "range": {
+        "startLine": 34,
+        "startChar": 15,
+        "endLine": 34,
+        "endChar": 28
+      },
+      "revId": "f737ae3a4929179aaf3134705c70a7eae04035ce",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5ff73747_a07cb4b5",
+        "filename": "cm.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 8640
+      },
+      "writtenOn": "2015-07-08T00:51:04Z",
+      "side": 1,
+      "message": "https://github.com/CyanogenMod/android_build/blob/cm-12.1/target/product/full_base_telephony.mk#L23",
+      "range": {
+        "startLine": 35,
+        "startChar": 10,
+        "endLine": 35,
+        "endChar": 24
+      },
+      "revId": "f737ae3a4929179aaf3134705c70a7eae04035ce",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
