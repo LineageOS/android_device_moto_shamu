@@ -872,8 +872,17 @@
 		<ctl name="BOOST_STUB Left Mixer left" value="1" />
 	</path>
 
+	<path name="speaker-safe-and-headphones">
+		<path name="speaker-safe" />
+		<path name="headphones" />
+	</path>
+
 	<path name="speaker-and-line">
 		<path name="speaker-and-headphones" />
+	</path>
+
+	<path name="speaker-safe-and-line">
+		<path name="speaker-safe-and-headphones" />
 	</path>
 
 	<path name="voice-rec-mic">
