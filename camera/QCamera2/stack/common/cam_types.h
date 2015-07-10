@@ -576,7 +576,8 @@ typedef enum {
 
 typedef enum {
     CAM_AEC_TRIGGER_IDLE,
-    CAM_AEC_TRIGGER_START
+    CAM_AEC_TRIGGER_START,
+    CAM_AEC_TRIGGER_CANCEL
 } cam_aec_trigger_type_t;
 
 typedef enum {
