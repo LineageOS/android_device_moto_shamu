@@ -104,7 +104,7 @@ PRODUCT_COPY_FILES += \
 
 # BT FW
 PRODUCT_COPY_FILES += \
-    device/moto/shamu/bluetooth/BCM4356A2_001.003.015.0071.0190_ORC.hcd:$(TARGET_COPY_OUT_VENDOR)/firmware/bcm4354A2.hcd
+    device/moto/shamu/bluetooth/BCM4356A2_001.003.015.0077.0214_ORC.hcd:$(TARGET_COPY_OUT_VENDOR)/firmware/bcm4354A2.hcd
 
 # For SPN display
 PRODUCT_COPY_FILES += \
