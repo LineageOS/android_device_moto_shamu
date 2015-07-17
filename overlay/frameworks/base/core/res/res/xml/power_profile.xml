@@ -28,7 +28,8 @@
     <item name="wifi.scan">100</item>
     <item name="dsp.audio">25</item>
     <item name="dsp.video">180</item>
-    <item name="camera.flashlight">153.33</item>
+    <item name="camera.avg">272.57</item>
+    <item name="camera.flashlight">149.28</item>
     <item name="gps.on">70</item>
     <item name="radio.active">350</item>
     <!-- The current consumed by the radio when it is scanning for a signal -->
