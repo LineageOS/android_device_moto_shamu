@@ -135,6 +135,7 @@
         <item>"bp-tools:rndis:rndis,diag,diag_mdm,serial_hsic,serial_tty,rmnet_hsic,usbnet,adb"</item>
         <item>"bp-tools:mtp,adb:diag,diag_mdm,serial_hsic,serial_tty,rmnet_hsic,usbnet,adb"</item>
         <item>"bp-tools:mtp:diag,diag_mdm,serial_hsic,serial_tty,rmnet_hsic,usbnet"</item>
+        <item>"bp-tools:adb:diag,diag_mdm,serial_hsic,serial_tty,rmnet_hsic,usbnet,adb"</item>
         <item>"mot-factory:rndis,adb:usbnet,adb"</item>
         <item>"mot-factory:rndis:usbnet"</item>
         <item>"mot-factory:mtp,adb:usbnet,adb"</item>
