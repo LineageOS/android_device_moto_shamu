@@ -224,7 +224,19 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 #Reduce IMS logging
 PRODUCT_PROPERTY_OVERRIDES += \
-    persist.ims.disableDebugLogs=1
+    persist.ims.disableDebugLogs=1 \
+    persist.ims.disableADBLogs=2 \
+    persist.ims.disableDebugLogs=0 \
+    persist.ims.disableQXDMLogs=0 \
+    persist.ims.disableIMSLogs=1 \
+    persist.camera.hal.debug.mask=7 \
+    persist.camera.ISP.debug.mask=0 \
+    persist.camera.pproc.debug.mask=7 \
+    persist.camera.stats.debug.mask=0 \
+    persit.camera.imglib.logs=1 \
+    persist.camera.mct.debug.mask=1 \
+    persist.camera.sensor.debug=0 \
+    vidc.debug.level=1
 
 #Disable QC Oem Hook
 PRODUCT_PROPERTY_OVERRIDES += \
