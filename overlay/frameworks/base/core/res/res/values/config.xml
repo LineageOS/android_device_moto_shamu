@@ -332,4 +332,8 @@
          don't support RIL_REQUEST_GET_RADIO_CAPABILITY
          format is UMTS|LTE|... -->
     <string translatable="false" name="config_radio_access_family">GSM | WCDMA | LTE | CDMA | EVDO</string>
+
+    <string-array name="config_cell_retries_per_error_code">
+        <item>36,3</item> <!-- REGULAR_DEACTIVATION, 3 retries -->
+    </string-array>
 </resources>
