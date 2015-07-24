@@ -140,6 +140,8 @@
         <item>"mot-factory:rndis:usbnet"</item>
         <item>"mot-factory:mtp,adb:usbnet,adb"</item>
         <item>"mot-factory:mtp:usbnet"</item>
+        <item>"mot-factory:none:usbnet"</item>
+        <item>"mot-factory:adb:usbnet,adb"</item>
     </string-array>
 
     <!-- List of regexpressions describing the interface (if any) that represent tetherable
