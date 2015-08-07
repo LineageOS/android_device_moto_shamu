@@ -39,7 +39,7 @@
         <item>GPS_LOCK=3</item>
         <item>LPP_PROFILE=3</item>
         <item>SUPL_MODE=0</item>
-        <item>SUPL_ES=0</item>
+        <item>SUPL_ES=1</item>
     </string-array>
 
     <string-array translatable="false" name="config_default_vm_number">
