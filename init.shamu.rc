@@ -339,6 +339,9 @@ on property:bluetooth.isEnabled=true
 on property:ro.bluetooth.ftm_enabled=true
     start ftmd
 
+on property:persist.env.fastdorm.enabled=true
+    setprop persist.radio.data_no_toggle 1
+
 service irsc_util /system/bin/irsc_util "/etc/sec_config"
     class main
     user root
