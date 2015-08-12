@@ -33,7 +33,7 @@
 #include <fcntl.h>
 #include <cutils/properties.h>
 #include <math.h>
-#if HAVE_ANDROID_OS
+#if __ANDROID__
 #include <linux/android_pmem.h>
 #endif
 #include <linux/ioctl.h>
