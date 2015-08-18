@@ -718,6 +718,15 @@
 		<ctl name="IIR1 INP1 MUX" value="DEC2" />
 	</path>
 
+        <!-- place holder for boosting gain in combo device -->
+        <path name="speaker-gain-default" />
+        <path name="spkr-gain-in-line-combo" />
+        <path name="spkr-gain-in-headphone-combo" />
+
+        <path name="speaker-safe-gain-default" />
+        <path name="spkr-safe-gain-in-line-combo" />
+        <path name="spkr-safe-gain-in-headphone-combo" />
+
 	<path name="speaker">
 		<ctl name="QUAT_MI2S_RX Channels" value="Two" />
 		<!-- Disable earpiece mode -->
@@ -729,6 +738,7 @@
 		<!-- Enable Mixers to power up Left and Right IC's -->
 		<ctl name="BOOST_STUB Right Mixer right" value="1" />
 		<ctl name="BOOST_STUB Left Mixer left" value="1" />
+                <path name="speaker-gain-default" />
 	</path>
 
 	<path name="speaker-reverse">
@@ -750,6 +760,7 @@
 		<ctl name="BOOST Right Ch Select" value="3" />
 		<!-- Enable Mixers to power up Right IC only -->
 		<ctl name="BOOST_STUB Right Mixer right" value="1" />
+                <path name="speaker-safe-gain-default" />
 	</path>
 
 	<path name="speaker-mic">
@@ -870,19 +881,23 @@
 		<ctl name="BOOST Right Ch Select" value="3" />
 		<ctl name="BOOST_STUB Right Mixer right" value="1" />
 		<ctl name="BOOST_STUB Left Mixer left" value="1" />
+                <path name="spkr-gain-in-headphone-combo" />
 	</path>
 
 	<path name="speaker-safe-and-headphones">
 		<path name="speaker-safe" />
 		<path name="headphones" />
+                <path name="spkr-safe-gain-in-headphone-combo" />
 	</path>
 
 	<path name="speaker-and-line">
 		<path name="speaker-and-headphones" />
+                <path name="spkr-gain-in-line-combo" />
 	</path>
 
 	<path name="speaker-safe-and-line">
 		<path name="speaker-safe-and-headphones" />
+                <path name="spkr-safe-gain-in-line-combo" />
 	</path>
 
 	<path name="voice-rec-mic">
