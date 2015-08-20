@@ -806,7 +806,12 @@ void QCamera3RegularChannel::streamCbRoutine(
                 __func__, rc, frameIndex);
     }
 
-    mChannelCB(NULL, &result, resultFrameNumber, mUserData);
+    if (0 <= resultFrameNumber){
+        mChannelCB(NULL, &result, (uint32_t)resultFrameNumber, mUserData);
+    } else {
+        ALOGE("%s: Bad frame number", __func__);
+    }
+
     free(super_frame);
     return;
 }
