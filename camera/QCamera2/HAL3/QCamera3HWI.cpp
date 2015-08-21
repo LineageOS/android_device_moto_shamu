@@ -1644,21 +1644,46 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
     mm_camera_super_buf_t *metadata_buf)
 {
     ATRACE_CALL();
-    metadata_buffer_t *metadata = (metadata_buffer_t *)metadata_buf->bufs[0]->buffer;
-    int32_t frame_number_valid = *(int32_t *)
-        POINTER_OF_META(CAM_INTF_META_FRAME_NUMBER_VALID, metadata);
-    uint32_t frame_number = *(uint32_t *)
-        POINTER_OF_META(CAM_INTF_META_FRAME_NUMBER, metadata);
-    nsecs_t capture_time = *(int64_t *)
-        POINTER_OF_META(CAM_INTF_META_SENSOR_TIMESTAMP, metadata);
-    cam_frame_dropped_t cam_frame_drop = *(cam_frame_dropped_t *)
-        POINTER_OF_META(CAM_INTF_META_FRAME_DROPPED, metadata);
-    camera3_notify_msg_t notify_msg;
 
-    int32_t urgent_frame_number_valid = *(int32_t *)
-        POINTER_OF_META(CAM_INTF_META_URGENT_FRAME_NUMBER_VALID, metadata);
-    uint32_t urgent_frame_number = *(uint32_t *)
-        POINTER_OF_META(CAM_INTF_META_URGENT_FRAME_NUMBER, metadata);
+    int32_t  frame_number_valid        = 0;
+    uint32_t frame_number              = 0;
+    int64_t  capture_time              = 0;
+    int32_t  urgent_frame_number_valid = 0;
+    uint32_t urgent_frame_number       = 0;
+
+    metadata_buffer_t   *metadata      = (metadata_buffer_t *)metadata_buf->bufs[0]->buffer;
+    cam_frame_dropped_t cam_frame_drop =
+            *(cam_frame_dropped_t *) POINTER_OF_META(CAM_INTF_META_FRAME_DROPPED, metadata);
+
+    int32_t  *p_frame_number_valid        =
+            (int32_t *) POINTER_OF_META(CAM_INTF_META_FRAME_NUMBER_VALID, metadata);
+    uint32_t *p_frame_number              =
+            (uint32_t *) POINTER_OF_META(CAM_INTF_META_FRAME_NUMBER, metadata);
+    int64_t  *p_capture_time              =
+            (int64_t *) POINTER_OF_META(CAM_INTF_META_SENSOR_TIMESTAMP, metadata);
+    int32_t  *p_urgent_frame_number_valid =
+            (int32_t *) POINTER_OF_META(CAM_INTF_META_URGENT_FRAME_NUMBER_VALID, metadata);
+    uint32_t *p_urgent_frame_number       =
+            (uint32_t *) POINTER_OF_META(CAM_INTF_META_URGENT_FRAME_NUMBER, metadata);
+
+    if ((NULL == p_frame_number_valid)        ||
+            (NULL == p_frame_number)              ||
+            (NULL == p_capture_time)              ||
+            (NULL == p_urgent_frame_number_valid) ||
+            (NULL == p_urgent_frame_number))
+    {
+        mMetadataChannel->bufDone(metadata_buf);
+        free(metadata_buf);
+        goto done_metadata;
+    }
+    else
+    {
+        frame_number_valid        = *p_frame_number_valid;
+        frame_number              = *p_frame_number;
+        capture_time              = *p_capture_time;
+        urgent_frame_number_valid = *p_urgent_frame_number_valid;
+        urgent_frame_number       = *p_urgent_frame_number;
+    }
 
     if (urgent_frame_number_valid) {
         CDBG("%s: valid urgent frame_number = %d, capture_time = %lld",
@@ -1688,6 +1713,17 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
                 // Extract 3A metadata
                 result.result =
                     translateCbUrgentMetadataToResultMetadata(metadata);
+
+                if (result.result == NULL)
+                {
+                    CameraMetadata dummyMetadata;
+                    dummyMetadata.update(ANDROID_SENSOR_TIMESTAMP,
+                            &i->timestamp, 1);
+                    dummyMetadata.update(ANDROID_REQUEST_ID,
+                            &(i->request_id), 1);
+                    result.result = dummyMetadata.release();
+                }
+
                 // Populate metadata result
                 result.frame_number = urgent_frame_number;
                 result.num_output_buffers = 0;
@@ -1775,8 +1811,8 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
                     &(i->request_id), 1);
             result.result = dummyMetadata.release();
         } else {
-
             // Send shutter notify to frameworks
+            camera3_notify_msg_t notify_msg;
             notify_msg.type = CAMERA3_MSG_SHUTTER;
             notify_msg.message.shutter.frame_number = i->frame_number;
             notify_msg.message.shutter.timestamp = capture_time;
@@ -2798,7 +2834,6 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
         notify_msg.message.shutter.frame_number = mLoopBackResult->frame_number;
         notify_msg.message.shutter.timestamp = mLoopBackTimestamp;
         mCallbackOps->notify(mCallbackOps, &notify_msg);
-
         /* Send capture result */
         mCallbackOps->process_capture_result(mCallbackOps, mLoopBackResult);
         free_camera_metadata((camera_metadata_t *)mLoopBackResult->result);
@@ -2811,7 +2846,6 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
     else
         handleBufferWithLock(buffer, frame_number);
     pthread_mutex_unlock(&mMutex);
-    return;
 }
 
 /*===========================================================================
