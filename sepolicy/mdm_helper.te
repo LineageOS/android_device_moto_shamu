@@ -37,6 +37,7 @@ allow mdm_helper persist_modem_file:file create_file_perms;
 # Runs commands via sh.
 allow mdm_helper shell_exec:file rx_file_perms;
 # TODO remove once the modem team removes system() calls to toolbox functions
+allow mdm_helper toolbox_exec:file rx_file_perms;
 allow mdm_helper system_file:file x_file_perms;
 
 allow mdm_helper sysfs_xhci_msm_hsic:dir r_dir_perms;
