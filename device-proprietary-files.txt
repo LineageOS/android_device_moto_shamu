@@ -307,21 +307,16 @@ vendor/lib/libloc_api_v02.so
 vendor/lib/libloc_ds_api.so
 
 # IMS/HD Voice
--app/RCSBootstraputil/RCSBootstraputil.apk
--app/RcsImsBootstraputil/RcsImsBootstraputil.apk
--app/RcsService/RcsService.apk
 -app/atfwd/atfwd.apk
 -app/ims/ims.apk
 bin/ATFWD-daemon
 bin/imsdatadaemon
 bin/imsqmidaemon
-etc/permissions/com.motorola.ims.rcsmanager.xml
 etc/permissions/com.verizon.hardware.telephony.ehrpd.xml
 etc/permissions/com.verizon.hardware.telephony.lte.xml
 etc/permissions/com.verizon.ims.xml
 etc/permissions/rcsimssettings.xml
 etc/permissions/rcsservice.xml
--framework/com.motorola.ims.rcsmanager.jar
 -framework/com.verizon.hardware.telephony.ehrpd.jar
 -framework/com.verizon.hardware.telephony.lte.jar
 -framework/com.verizon.ims.jar
@@ -384,8 +379,6 @@ bin/qmi_motext_hook
 bin/qmuxd
 bin/radish
 bin/tcmd_mini
-etc/permissions/org.simalliance.openmobileapi.xml
--framework/org.simalliance.openmobileapi.jar
 lib/libdetectmodem.so
 lib/libmdmdetect.so
 lib/librmnetctl.so
@@ -429,7 +422,6 @@ bin/usbhub_init
 etc/permissions/com.motorola.DirectedSMSProxy.xml
 etc/permissions/com.vzw.vzwapnlib.xml
 -priv-app/AppDirectedSMSProxy/AppDirectedSMSProxy.apk
--priv-app/appdirectedsmspermission/appdirectedsmspermission.apk
 -priv-app/MotoSignatureApp/MotoSignatureApp.apk
 -priv-app/VZWAPNService/VZWAPNService.apk
 
