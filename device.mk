@@ -228,7 +228,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.apm_sim_not_pwdn=1 \
     persist.radio.no_wait_for_card=1 \
-    persist.radio.sib16_support=1
+    persist.radio.sib16_support=1 \
+    persist.data.qmi.adb_logmask=0
 
 # never dexopt the MotoSignature
 $(call add-product-dex-preopt-module-config,MotoSignatureApp,disable)
