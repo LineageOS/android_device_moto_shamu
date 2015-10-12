@@ -113,6 +113,8 @@ BOARD_CHARGER_ENABLE_SUSPEND := true
 
 TARGET_RECOVERY_FSTAB = device/moto/shamu/fstab.shamu
 
+TARGET_NOT_USE_GZIP_RECOVERY_RAMDISK := true
+
 TARGET_RELEASETOOLS_EXTENSIONS := device/moto/shamu
 
 # Support Native Layer RF cutback
