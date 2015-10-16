@@ -411,3 +411,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Low latency audio buffer size in frames
 PRODUCT_PROPERTY_OVERRIDES += \
     audio_hal.period_size=192
+
+# tcmiface for tcm support
+PRODUCT_PACKAGES += tcmiface
