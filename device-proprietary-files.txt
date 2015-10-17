@@ -309,6 +309,8 @@ vendor/lib/libloc_ds_api.so
 # IMS/HD Voice
 -app/atfwd/atfwd.apk
 -app/ims/ims.apk
+lib/libimscamera_jni.so:app/ims/lib/arm/libimscamera_jni.so
+lib/libimsmedia_jni.so:app/ims/lib/arm/libimsmedia_jni.so
 bin/ATFWD-daemon
 bin/imsdatadaemon
 bin/imsqmidaemon
@@ -322,6 +324,8 @@ etc/permissions/rcsservice.xml
 -framework/com.verizon.ims.jar
 -framework/rcsimssettings.jar
 -framework/rcsservice.jar
+lib/libimscamera_jni.so
+lib/libimsmedia_jni.so
 vendor/lib/lib-dplmedia.so
 vendor/lib/lib-ims-setting-jni.so
 vendor/lib/lib-ims-settings.so
