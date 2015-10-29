@@ -386,7 +386,6 @@ bin/tcmd_mini
 lib/libdetectmodem.so
 lib/libmdmdetect.so
 lib/librmnetctl.so
-lib/libxml2.so
 vendor/lib/libconfigdb.so
 vendor/lib/libmdmcutback.so
 vendor/lib/libnetmgr.so

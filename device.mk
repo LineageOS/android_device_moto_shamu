@@ -209,6 +209,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     keystore.msm8084
 
+PRODUCT_PACKAGES += \
+    libxml2
+
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=196609
 
