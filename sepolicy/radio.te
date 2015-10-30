@@ -13,5 +13,3 @@ allow radio persist_hiddenmenu_file:file create_file_perms;
 
 # Connect to ims service.
 allow radio ims:unix_stream_socket connectto;
-
-allow radio tap2wake_dev:file r_file_perms;
