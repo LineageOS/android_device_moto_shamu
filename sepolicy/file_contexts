@@ -169,8 +169,5 @@
 /dev/socket/cnd  u:object_r:cnd_socket:s0
 /system/bin/cnd  u:object_r:cnd_exec:s0
 
-# TapToWake
-/sys/devices/f9966000.i2c/i2c-1/1-004a/tsp               u:object_r:tap2wake_dev:s0
-
 # for Settings' access to VibratorHW
 /sys/vibrator/pwmvalue                                   u:object_r:sysfs_vibrator:s0
