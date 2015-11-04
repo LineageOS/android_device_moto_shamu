@@ -1,5 +1,5 @@
 
-type tcmd, domain;
+type tcmd, domain, domain_deprecated;
 type tcmd_exec, exec_type, file_type;
 
 init_daemon_domain(tcmd)

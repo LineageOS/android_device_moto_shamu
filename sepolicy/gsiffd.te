@@ -1,4 +1,4 @@
-type gsiffd, domain;
+type gsiffd, domain, domain_deprecated;
 type gsiffd_exec, exec_type, file_type;
 
 # Started by init
