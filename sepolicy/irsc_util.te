@@ -1,5 +1,5 @@
 # IPC Router Security Configuration Tool
-type irsc_util, domain;
+type irsc_util, domain, domain_deprecated;
 type irsc_util_exec, exec_type, file_type;
 
 # Started by init

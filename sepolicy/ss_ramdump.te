@@ -1,4 +1,4 @@
-type ss_ramdump, domain;
+type ss_ramdump, domain, domain_deprecated;
 type ss_ramdump_exec, exec_type, file_type;
 
 # Started by init
