@@ -468,4 +468,3 @@ vendor/firmware/aonvr2.bin
 
 # WiFi
 vendor/firmware/bcm20795_firmware.ncd
-vendor/firmware/bcm4354A2.hcd
