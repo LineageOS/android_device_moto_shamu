@@ -51,6 +51,7 @@
 /dev/block/platform/msm_sdcc\.1/by-name/userdata     u:object_r:userdata_block_device:s0
 /dev/block/platform/msm_sdcc\.1/by-name/metadata     u:object_r:metadata_block_device:s0
 /dev/block/platform/msm_sdcc\.1/by-name/cache        u:object_r:cache_block_device:s0
+/dev/block/platform/msm_sdcc\.1/by-name/misc         u:object_r:misc_block_device:s0
 
 # Customer Identifier
 /dev/block/platform/msm_sdcc.1/by-name/cid          u:object_r:cid_block_device:s0
