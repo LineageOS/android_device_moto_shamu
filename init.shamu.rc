@@ -384,7 +384,7 @@ service imsdatadaemon /system/bin/imsdatadaemon
     class main
     user root
     socket ims_datad stream 0660 system radio
-    group system wifi radio inet log
+    group system wifi radio inet log readproc
     disabled
 
 on property:sys.ims.QMI_DAEMON_STATUS=1
