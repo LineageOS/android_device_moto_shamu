@@ -358,7 +358,7 @@ service irsc_util /system/bin/irsc_util "/etc/sec_config"
 
 service mdm_helper /system/bin/mdm_helper
     user root
-    group root system radio
+    group root system wakelock radio
     class core
     onrestart setprop ro.service.mdm_helper_restarted "true"
 
@@ -377,7 +377,7 @@ service bridgemgrd /system/bin/bridgemgrd
 service qmuxd /system/bin/qmuxd
     class main
     user radio
-    group radio audio bluetooth gps
+    group radio audio bluetooth wakelock gps
 
 service netmgrd /system/bin/netmgrd
     class main
@@ -412,7 +412,7 @@ on property:sys.ims.DATA_DAEMON_STATUS=1
 service sensors /system/bin/sensors.qcom
     class core
     user root
-    group root
+    group root wakelock
     writepid /dev/cpuset/system-background/tasks
 
 on property:ro.use_data_netmgrd=false
@@ -617,7 +617,7 @@ service bugreport /system/bin/dumpstate -d -p -B -z \
 service mdm_helper_proxy /system/bin/mdm_helper_proxy
     class core
     user system
-    group system
+    group system wakelock
     disabled
 
 # Stop mdm_helper_proxy in case of shutdown
