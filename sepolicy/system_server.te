@@ -8,6 +8,7 @@ unix_socket_send(system_server, mpdecision, mpdecision)
 unix_socket_connect(system_server, sensors, sensors)
 allow system_server sensors_socket:sock_file r_file_perms;
 
-allow system_server tap2wake_dev:file rw_file_perms;
+allow system_server sysfs_mmi_touch:file rw_file_perms;
+allow system_server sysfs_mmi_touch:dir search;
 allow system_server sysfs_vibrator:file rw_file_perms;
 allow system_server livedisplay_sysfs:file rw_file_perms;
