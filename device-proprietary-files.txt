@@ -131,6 +131,7 @@ vendor/lib/libchromatix_imx135_snapshot.so
 vendor/lib/libchromatix_imx135_video_hd.so
 vendor/lib/libchromatix_imx214_common.so
 vendor/lib/libchromatix_imx214_cpp.so
+vendor/lib/libchromatix_imx214_cpp_snap.so
 vendor/lib/libchromatix_imx214_default_video.so
 vendor/lib/libchromatix_imx214_hfr_120.so
 vendor/lib/libchromatix_imx214_hfr_60.so
@@ -225,6 +226,9 @@ etc/firmware/cpp_firmware_v1_2_0.fw
 etc/firmware/cpp_firmware_v1_6_0.fw
 etc/firmware/cpp_firmware_v1_8_0.fw
 
+# Capsense firmware
+vendor/firmware/cy8c20247_24lkxi.hex
+
 # CNE
 bin/cnd
 -priv-app/CNEService/CNEService.apk
@@ -242,6 +246,24 @@ etc/diag/mdm/FIT_V16_2_volte_full_ip.cfg
 etc/diag/mdm/FIT_V16_3_audio.cfg
 etc/diag/mdm/sensors_qxdm.cfg
 etc/diag/sensors_qxdm.cfg
+
+# DM/Sprint
+-app/DMConfigUpdate/DMConfigUpdate.apk
+-app/HiddenMenu/HiddenMenu.apk
+etc/permissions/com.android.omadm.service.xml
+lib/libdmengine.so
+lib/libdmjavaplugin.so
+-priv-app/CQATest/CQATest.apk
+-priv-app/ConnMO/ConnMO.apk
+-priv-app/DCMO/DCMO.apk
+-priv-app/DMService/DMService.apk
+lib/libdmengine.so:priv-app/DMService/arm/lib/libdmengine.so
+lib/libdmjavaplugin.so:priv-app/DMService/arm/lib/libdmjavaplugin.so
+-priv-app/DiagMon/DiagMon.apk
+-priv-app/GCS/GCS.apk
+-priv-app/LifetimeData/LifetimeData.apk
+-priv-app/SprintDM/SprintDM.apk
+
 
 # DRM
 bin/qseecomd
@@ -265,6 +287,9 @@ vendor/firmware/widevine.b01
 vendor/firmware/widevine.b02
 vendor/firmware/widevine.b03
 vendor/firmware/widevine.mdt
+
+# Project Fi
+-app/Tycho/Tycho.apk
 
 # Graphics
 vendor/lib/egl/eglsubAndroid.so
