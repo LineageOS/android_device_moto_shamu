@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <carrier_config_list>
-    <carrier_config mcc="204" mnc="04" gid1="BAE0000000000000">
-        <boolean name="disable_cdma_activation_code_bool" value="true" />
-    </carrier_config>
-    <carrier_config mcc="310" mnc="004">
-        <boolean name="disable_cdma_activation_code_bool" value="true" />
-    </carrier_config>
-    <carrier_config mcc="311" mnc="480">
+    <carrier_config">
         <boolean name="disable_cdma_activation_code_bool" value="true" />
     </carrier_config>
 </carrier_config_list>
