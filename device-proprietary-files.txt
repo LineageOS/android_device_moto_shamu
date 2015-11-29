@@ -251,6 +251,7 @@ etc/diag/sensors_qxdm.cfg
 -app/DMConfigUpdate/DMConfigUpdate.apk
 -app/HiddenMenu/HiddenMenu.apk
 etc/permissions/com.android.omadm.service.xml
+etc/sysconfig/whitelist_com.android.omadm.service.xml
 lib/libdmengine.so
 lib/libdmjavaplugin.so
 -priv-app/CQATest/CQATest.apk
