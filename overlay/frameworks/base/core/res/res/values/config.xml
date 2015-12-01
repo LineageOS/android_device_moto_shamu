@@ -339,4 +339,7 @@
     <string-array name="config_cell_retries_per_error_code">
         <item>36,3</item> <!-- REGULAR_DEACTIVATION, 3 retries -->
     </string-array>
+
+    <!-- enable doze powersaving mode -->
+    <bool name="config_enableAutoPowerModes">true</bool>
 </resources>
