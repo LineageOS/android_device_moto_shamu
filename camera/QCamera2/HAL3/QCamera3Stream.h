@@ -60,6 +60,7 @@ public:
     virtual int32_t init(cam_stream_type_t streamType,
                          cam_format_t streamFormat,
                          cam_dimension_t streamDim,
+                         cam_rotation_t streamRotation,
                          cam_stream_reproc_config_t* reprocess_config,
                          uint8_t minStreamBufNum,
                          uint32_t postprocess_mask,

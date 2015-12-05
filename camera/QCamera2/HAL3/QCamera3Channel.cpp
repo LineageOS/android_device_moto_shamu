@@ -193,12 +193,9 @@ int32_t QCamera3Channel::init(mm_camera_channel_attr_t *attr,
  * DESCRIPTION: add a stream into channel
  *
  * PARAMETERS :
- *   @allocator      : stream related buffer allocator
- *   @streamInfoBuf  : ptr to buf that constains stream info
+ *   @streamDim      : dimensions of the stream
+ *   @streamRotation : rotation of the stream
  *   @minStreamBufNum: number of stream buffers needed
- *   @paddingInfo    : padding information
- *   @stream_cb      : stream data notify callback
- *   @userdata       : user data ptr
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
@@ -207,6 +204,7 @@ int32_t QCamera3Channel::init(mm_camera_channel_attr_t *attr,
 int32_t QCamera3Channel::addStream(cam_stream_type_t streamType,
                                   cam_format_t streamFormat,
                                   cam_dimension_t streamDim,
+                                  cam_rotation_t streamRotation,
                                   uint8_t minStreamBufNum,
                                   uint32_t postprocessMask,
                                   cam_is_type_t isType)
@@ -233,8 +231,9 @@ int32_t QCamera3Channel::addStream(cam_stream_type_t streamType,
         return NO_MEMORY;
     }
 
-    rc = pStream->init(streamType, streamFormat, streamDim, NULL, minStreamBufNum,
-                       postprocessMask, isType, streamCbRoutine, this);
+    rc = pStream->init(streamType, streamFormat, streamDim, streamRotation,
+            NULL, minStreamBufNum, postprocessMask, isType, streamCbRoutine,
+            this);
     if (rc == 0) {
         mStreams[m_numStreams] = pStream;
         m_numStreams++;
@@ -514,7 +513,8 @@ QCamera3RegularChannel::QCamera3RegularChannel(uint32_t cam_handle,
                                 paddingInfo, postprocess_mask, userData),
                         mCamera3Stream(stream),
                         mNumBufs(0),
-                        mStreamType(stream_type)
+                        mStreamType(stream_type),
+                        mRotation(ROTATE_0)
 {
 }
 
@@ -597,12 +597,52 @@ int32_t QCamera3RegularChannel::initialize(cam_is_type_t isType)
         return -EINVAL;
     }
 
+    if ((mStreamType == CAM_STREAM_TYPE_VIDEO) ||
+            (mStreamType == CAM_STREAM_TYPE_PREVIEW)) {
+        if ((mCamera3Stream->rotation != CAMERA3_STREAM_ROTATION_0) &&
+                ((mPostProcMask & CAM_QCOM_FEATURE_ROTATION) == 0)) {
+            ALOGE("%s: attempting rotation %d when rotation is disabled",
+                    __func__,
+                    mCamera3Stream->rotation);
+            return -EINVAL;
+        }
+
+        switch (mCamera3Stream->rotation) {
+        case CAMERA3_STREAM_ROTATION_0:
+            mRotation = ROTATE_0;
+            break;
+        case CAMERA3_STREAM_ROTATION_90: {
+            mRotation = ROTATE_90;
+            break;
+        }
+        case CAMERA3_STREAM_ROTATION_180:
+            mRotation = ROTATE_180;
+            break;
+        case CAMERA3_STREAM_ROTATION_270: {
+            mRotation = ROTATE_270;
+            break;
+        }
+        default:
+            ALOGE("%s: Unknown rotation: %d",
+                    __func__,
+                    mCamera3Stream->rotation);
+            return -EINVAL;
+        }
+    } else if (mCamera3Stream->rotation != CAMERA3_STREAM_ROTATION_0) {
+        ALOGE("%s: Rotation %d is not supported by stream type %d",
+                __func__,
+                mCamera3Stream->rotation,
+                mStreamType);
+        return -EINVAL;
+    }
+
     streamDim.width = mCamera3Stream->width;
     streamDim.height = mCamera3Stream->height;
 
     rc = QCamera3Channel::addStream(mStreamType,
             streamFormat,
             streamDim,
+            mRotation,
             mNumBufs,
             mPostProcMask,
             mIsType);
@@ -872,7 +912,8 @@ int32_t QCamera3MetadataChannel::initialize(cam_is_type_t isType)
     streamDim.width = sizeof(metadata_buffer_t),
     streamDim.height = 1;
     rc = QCamera3Channel::addStream(CAM_STREAM_TYPE_METADATA, CAM_FORMAT_MAX,
-        streamDim, MIN_STREAMING_BUFFER_NUM, mPostProcMask, mIsType);
+            streamDim, ROTATE_0, MIN_STREAMING_BUFFER_NUM, mPostProcMask,
+            mIsType);
     if (rc < 0) {
         ALOGE("%s: addStream failed", __func__);
     }
@@ -1303,8 +1344,8 @@ int32_t QCamera3RawDumpChannel::initialize(cam_is_type_t isType)
     }
     mIsType = isType;
     rc = QCamera3Channel::addStream(CAM_STREAM_TYPE_RAW,
-        CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GBRG, mDim, kMaxBuffers,
-        mPostProcMask, mIsType);
+            CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GBRG, mDim, ROTATE_0, kMaxBuffers,
+            mPostProcMask, mIsType);
     if (rc < 0) {
         ALOGE("%s: addStream failed", __func__);
     }
@@ -1573,7 +1614,8 @@ int32_t QCamera3PicChannel::initialize(cam_is_type_t isType)
 
     mNumSnapshotBufs = mCamera3Stream->max_buffers;
     rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,
-            (uint8_t)mCamera3Stream->max_buffers, mPostProcMask, mIsType);
+            ROTATE_0, (uint8_t)mCamera3Stream->max_buffers, mPostProcMask,
+            mIsType);
 
     Mutex::Autolock lock(mFreeBuffersLock);
     mFreeBufferList.clear();
@@ -3280,7 +3322,7 @@ int32_t QCamera3ReprocessChannel::addReprocStreamsFromSource(cam_pp_feature_conf
     }
 
     rc = pStream->init(streamType, src_config.stream_format,
-            streamDim, &reprocess_config,
+            streamDim, ROTATE_0, &reprocess_config,
             num_buffers,
             reprocess_config.pp_feature_config.feature_mask,
             is_type,
@@ -3346,8 +3388,8 @@ int32_t QCamera3SupportChannel::initialize(cam_is_type_t isType)
     mIsType = isType;
     // Hardcode to VGA size for now
     rc = QCamera3Channel::addStream(CAM_STREAM_TYPE_CALLBACK,
-        CAM_FORMAT_YUV_420_NV21, kDim, MIN_STREAMING_BUFFER_NUM,
-        mPostProcMask, mIsType);
+            CAM_FORMAT_YUV_420_NV21, kDim, ROTATE_0, MIN_STREAMING_BUFFER_NUM,
+            mPostProcMask, mIsType);
     if (rc < 0) {
         ALOGE("%s: addStream failed", __func__);
     }

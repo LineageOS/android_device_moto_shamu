@@ -635,6 +635,14 @@ int QCamera3HardwareInterface::validateStreamDimensions(
         bool sizeFound = false;
         camera3_stream_t *newStream = streamList->streams[j];
 
+        uint32_t rotatedHeight = newStream->height;
+        uint32_t rotatedWidth = newStream->width;
+        if ((newStream->rotation == CAMERA3_STREAM_ROTATION_90) ||
+                (newStream->rotation == CAMERA3_STREAM_ROTATION_270)) {
+            rotatedHeight = newStream->width;
+            rotatedWidth = newStream->height;
+        }
+
         /*
         * Sizes are different for each type of stream format check against
         * appropriate table.
@@ -646,9 +654,9 @@ int QCamera3HardwareInterface::validateStreamDimensions(
             for (int i = 0;
                     i < gCamCapability[mCameraId]->supported_raw_dim_cnt; i++){
                 if (gCamCapability[mCameraId]->raw_dim[i].width
-                        == (int32_t) newStream->width
+                        == (int32_t) rotatedWidth
                     && gCamCapability[mCameraId]->raw_dim[i].height
-                        == (int32_t) newStream->height) {
+                        == (int32_t) rotatedHeight) {
                     sizeFound = true;
                     break;
                 }
@@ -669,8 +677,8 @@ int QCamera3HardwareInterface::validateStreamDimensions(
 
             /* Verify set size against generated sizes table */
             for (int i = 0;i < jpeg_sizes_cnt/2; i++) {
-                if ((int32_t)(newStream->width) == available_jpeg_sizes[i*2] &&
-                    (int32_t)(newStream->height) == available_jpeg_sizes[i*2+1]) {
+                if ((int32_t) rotatedWidth == available_jpeg_sizes[i*2] &&
+                    (int32_t) rotatedHeight == available_jpeg_sizes[i*2+1]) {
                     sizeFound = true;
                     break;
                 }
@@ -685,9 +693,9 @@ int QCamera3HardwareInterface::validateStreamDimensions(
             if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL
                 || newStream->stream_type == CAMERA3_STREAM_INPUT
                 || newStream->usage & GRALLOC_USAGE_HW_CAMERA_ZSL){
-                if ((int32_t)(newStream->width) ==
+                if ((int32_t) rotatedWidth ==
                     gCamCapability[mCameraId]->active_array_size.width
-                    && (int32_t)(newStream->height)  ==
+                    && (int32_t) rotatedHeight  ==
                     gCamCapability[mCameraId]->active_array_size.height) {
                     sizeFound = true;
                 }
@@ -702,9 +710,9 @@ int QCamera3HardwareInterface::validateStreamDimensions(
             /* Non ZSL stream still need to conform to advertised sizes*/
             for (int i = 0;
                 i < gCamCapability[mCameraId]->picture_sizes_tbl_cnt;i++){
-                if ((int32_t)(newStream->width) ==
+                if ((int32_t) rotatedWidth ==
                         gCamCapability[mCameraId]->picture_sizes_tbl[i].width
-                    && (int32_t)(newStream->height) ==
+                    && (int32_t) rotatedHeight ==
                         gCamCapability[mCameraId]->picture_sizes_tbl[i].height){
                     sizeFound = true;
                 break;
@@ -716,7 +724,7 @@ int QCamera3HardwareInterface::validateStreamDimensions(
         /* We error out even if a single stream has unsupported size set */
         if (!sizeFound) {
             ALOGE("%s: Error: Unsupported size of  %d x %d requested for stream"
-                  "type:%d", __func__, newStream->width, newStream->height,
+                  "type:%d", __func__, rotatedWidth, rotatedHeight,
                   newStream->format);
             ALOGE("%s: Active array size is  %d x %d", __func__,
                     gCamCapability[mCameraId]->active_array_size.width,
@@ -849,9 +857,10 @@ int QCamera3HardwareInterface::configureStreams(
 
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
-        CDBG_HIGH("%s: stream[%d] type = %d, format = %d, width = %d, height = %d",
+        CDBG_HIGH("%s: stream[%d] type = %d, format = %d, width = %d, "
+                "height = %d, rotation = %d",
                 __func__, i, newStream->stream_type, newStream->format,
-                newStream->width, newStream->height);
+                newStream->width, newStream->height, newStream->rotation);
 
         if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL ||
                 newStream->stream_type == CAMERA3_STREAM_INPUT){
@@ -956,6 +965,9 @@ int QCamera3HardwareInterface::configureStreams(
     }
 
     rc = validateStreamDimensions(streamList);
+    if (rc == NO_ERROR) {
+        rc = validateStreamRotations(streamList);
+    }
     if (rc != NO_ERROR) {
         ALOGE("%s: Invalid stream configuration requested!", __func__);
         pthread_mutex_unlock(&mMutex);
@@ -968,9 +980,10 @@ int QCamera3HardwareInterface::configureStreams(
     memset(&stream_config_info, 0, sizeof(cam_stream_size_info_t));
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
-        CDBG_HIGH("%s: newStream type = %d, stream format = %d stream size : %d x %d",
+        CDBG_HIGH("%s: newStream type = %d, stream format = %d "
+                "stream size : %d x %d, stream rotation = %d",
                 __func__, newStream->stream_type, newStream->format,
-                 newStream->width, newStream->height);
+                newStream->width, newStream->height, newStream->rotation);
         //if the stream is in the mStreamList validate it
         bool stream_exists = false;
         for (List<stream_info_t*>::iterator it=mStreamInfo.begin();
@@ -1096,6 +1109,14 @@ int QCamera3HardwareInterface::configureStreams(
                     stream_config_info.type[stream_config_info.num_streams] = CAM_STREAM_TYPE_PREVIEW;
                  }
                  stream_config_info.postprocess_mask[stream_config_info.num_streams] = CAM_QCOM_FEATURE_PP_SUPERSET;
+
+                 if ((newStream->rotation == CAMERA3_STREAM_ROTATION_90) ||
+                         (newStream->rotation == CAMERA3_STREAM_ROTATION_270)) {
+                     stream_config_info.stream_sizes[stream_config_info.num_streams].width =
+                             newStream->height;
+                     stream_config_info.stream_sizes[stream_config_info.num_streams].height =
+                             newStream->width;
+                 }
               }
               break;
             case HAL_PIXEL_FORMAT_YCbCr_420_888:
@@ -7149,7 +7170,6 @@ void QCamera3HardwareInterface::getLogLevel()
     return;
 }
 
-
 /*===========================================================================
 * FUNCTION   : getFlashInfo
 *
@@ -7179,4 +7199,48 @@ void QCamera3HardwareInterface::getFlashInfo(const int cameraId,
                 QCAMERA_MAX_FILEPATH_LENGTH);
     }
 }
+
+/*===========================================================================
+ * FUNCTION   : validateStreamRotations
+ *
+ * DESCRIPTION: Check if the rotations requested are supported
+ *
+ * PARAMETERS :
+ *   @stream_list : streams to be configured
+ *
+ * RETURN     : NO_ERROR on success
+ *              -EINVAL on failure
+ *
+ *==========================================================================*/
+int QCamera3HardwareInterface::validateStreamRotations(
+        camera3_stream_configuration_t *streamList)
+{
+    int rc = NO_ERROR;
+
+    /*
+    * Loop through all streams requested in configuration
+    * Check if unsupported rotations have been requested on any of them
+    */
+    for (size_t j = 0; j < streamList->num_streams; j++){
+        camera3_stream_t *newStream = streamList->streams[j];
+
+        bool isRotated = (newStream->rotation != CAMERA3_STREAM_ROTATION_0);
+        bool isImplDef = (newStream->format ==
+                HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED);
+        bool isZsl = (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL &&
+                isImplDef);
+
+        if (isRotated && (!isImplDef || isZsl)) {
+            ALOGE("%s: Error: Unsupported rotation of %d requested for stream"
+                    "type:%d and stream format:%d", __func__,
+                    newStream->rotation, newStream->stream_type,
+                    newStream->format);
+            rc = -EINVAL;
+            break;
+        }
+    }
+
+    return rc;
+}
+
 }; //end namespace qcamera
