@@ -47,7 +47,8 @@ enum qcamera3_ext_tags qcamera3_ext3_section_bounds[QCAMERA3_SECTIONS_END -
         QCAMERA3_CDS_END,
         QCAMERA3_OPAQUE_RAW_END,
         QCAMERA3_CROP_END,
-        QCAMERA3_TUNING_META_DATA_END
+        QCAMERA3_TUNING_META_DATA_END,
+        QCAMERA3_AV_TIMER_END
 } ;
 
 typedef struct vendor_tag_info {
@@ -61,7 +62,8 @@ const char *qcamera3_ext_section_names[QCAMERA3_SECTIONS_END -
     "org.codeaurora.qcamera3.CDS",
     "org.codeaurora.qcamera3.opaque_raw",
     "org.codeaurora.qcamera3.crop",
-    "org.codeaurora.qcamera3.tuning_meta_data"
+    "org.codeaurora.qcamera3.tuning_meta_data",
+    "org.codeaurora.qcamera3.av_timer"
 };
 
 vendor_tag_info_t qcamera3_privatedata[QCAMERA3_PRIVATEDATA_END - QCAMERA3_PRIVATEDATA_START] = {
@@ -89,13 +91,19 @@ vendor_tag_info_t qcamera3_tuning_meta_data[QCAMERA3_TUNING_META_DATA_END -
     { "tuning_meta_data_blob", TYPE_INT32 }
 };
 
+vendor_tag_info qcamera3_av_timer[QCAMERA3_AV_TIMER_END -
+                                  QCAMERA3_AV_TIMER_START] = {
+   {"use_av_timer", TYPE_BYTE }
+};
+
 vendor_tag_info_t *qcamera3_tag_info[QCAMERA3_SECTIONS_END -
         VENDOR_SECTION] = {
     qcamera3_privatedata,
     qcamera3_cds,
     qcamera3_opaque_raw,
     qcamera3_crop,
-    qcamera3_tuning_meta_data
+    qcamera3_tuning_meta_data,
+    qcamera3_av_timer
 };
 
 uint32_t qcamera3_all_tags[] = {
@@ -113,7 +121,10 @@ uint32_t qcamera3_all_tags[] = {
     (uint32_t)QCAMERA3_CROP_STREAM_ID_REPROCESS,
 
     // QCAMERA3_TUNING_META_DATA
-    (uint32_t)QCAMERA3_TUNING_META_DATA_BLOB
+    (uint32_t)QCAMERA3_TUNING_META_DATA_BLOB,
+
+    //QCAMERA3_AVTIMER
+    (uint32_t)QCAMERA3_USE_AV_TIMER
 };
 
 const vendor_tag_ops_t* QCamera3VendorTags::Ops = NULL;
