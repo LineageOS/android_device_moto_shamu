@@ -32,5 +32,6 @@ allow mpdecision mpdecision_socket:sock_file { create_file_perms unlink };
 allow mpdecision sysfs:file write;
 r_dir_file(mpdecision, system_server)
 r_dir_file(mpdecision, mediaserver)
+r_dir_file(mpdecision, audioserver)
 
 allow mpdecision self:capability sys_nice;
