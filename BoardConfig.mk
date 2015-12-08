@@ -20,6 +20,8 @@ TARGET_ARCH := arm
 TARGET_ARCH_VARIANT := armv7-a-neon
 TARGET_CPU_VARIANT := krait
 
+ENABLE_CPUSETS := true
+
 TARGET_NO_BOOTLOADER := true
 
 # Inline kernel building
