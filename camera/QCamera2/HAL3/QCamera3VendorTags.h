@@ -38,6 +38,7 @@ enum qcamera3_ext_section {
     QCAMERA3_OPAQUE_RAW,
     QCAMERA3_CROP,
     QCAMERA3_TUNING_META_DATA,
+    QCAMERA3_AV_TIMER,
     QCAMERA3_SECTIONS_END
 };
 
@@ -47,6 +48,7 @@ enum qcamera3_ext_section_ranges {
     QCAMERA3_OPAQUE_RAW_START = QCAMERA3_OPAQUE_RAW << 16,
     QCAMERA3_CROP_START = QCAMERA3_CROP << 16,
     QCAMERA3_TUNING_META_DATA_START = QCAMERA3_TUNING_META_DATA << 16,
+    QCAMERA3_AV_TIMER_START = QCAMERA3_AV_TIMER << 16
 };
 
 enum qcamera3_ext_tags {
@@ -54,7 +56,7 @@ enum qcamera3_ext_tags {
     QCAMERA3_PRIVATEDATA_END,
     QCAMERA3_CDS_MODE = QCAMERA3_CDS_START,
     QCAMERA3_CDS_END,
- 
+
     //Property Name:  org.codeaurora.qcamera3.opaque_raw.opaque_raw_strides
     //
     //Type: int32 * n * 3 [public]
@@ -113,7 +115,10 @@ enum qcamera3_ext_tags {
     QCAMERA3_CROP_END,
 
     QCAMERA3_TUNING_META_DATA_BLOB = QCAMERA3_TUNING_META_DATA_START,
-    QCAMERA3_TUNING_META_DATA_END
+    QCAMERA3_TUNING_META_DATA_END,
+
+    QCAMERA3_USE_AV_TIMER = QCAMERA3_AV_TIMER_START,
+    QCAMERA3_AV_TIMER_END
 };
 
 // QCAMERA3_OPAQUE_RAW_FORMAT

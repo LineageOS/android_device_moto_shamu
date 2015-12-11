@@ -640,6 +640,7 @@ typedef struct {
     INCLUDE(CAM_INTF_META_NEUTRAL_COL_POINT,            cam_neutral_col_point_t,     1);
     INCLUDE(CAM_INTF_PARM_ROTATION,                     cam_rotation_info_t,         1);
     INCLUDE(CAM_INTF_META_EFFECTIVE_EXPOSURE_FACTOR,    float,                       1);
+    INCLUDE(CAM_INTF_META_USE_AV_TIMER,                 uint8_t,                     1);
 } parm_data_t;
 
 typedef parm_data_t metadata_data_t;

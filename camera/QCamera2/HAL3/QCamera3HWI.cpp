@@ -6758,6 +6758,13 @@ int QCamera3HardwareInterface::translateToHalMetadata
                 sizeof(int32_t) * MAX_METADATA_PRIVATE_PAYLOAD_SIZE, privatedata);
     }
 
+    if (frame_settings.exists(QCAMERA3_USE_AV_TIMER)) {
+       uint8_t* use_av_timer =
+          frame_settings.find(QCAMERA3_USE_AV_TIMER).data.u8;
+       rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_META_USE_AV_TIMER,
+            sizeof(uint8_t), use_av_timer);
+    }
+
     // EV step
     rc = AddSetParmEntryToBatch(hal_metadata, CAM_INTF_PARM_EV_STEP,
             sizeof(cam_rational_type_t), &(gCamCapability[mCameraId]->exp_compensation_step));
