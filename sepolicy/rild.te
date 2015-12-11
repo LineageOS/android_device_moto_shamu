@@ -1,3 +1,4 @@
+binder_call(rild, audioserver)
 binder_call(rild, mediaserver)
 binder_use(rild)
 binder_service(rild)
@@ -27,4 +28,5 @@ dontaudit rild domain:dir r_dir_perms;
 allow rild fsg_file:dir search;
 allow rild fsg_file:file r_file_perms;
 
+allow rild audioserver_service:service_manager find;
 allow rild mediaserver_service:service_manager find;
