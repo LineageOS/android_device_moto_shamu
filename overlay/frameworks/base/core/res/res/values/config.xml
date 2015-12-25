@@ -280,7 +280,7 @@
     <!-- Flag specifying whether VoLTE is availasble on device -->
     <bool name="config_device_volte_available">true</bool>
 
-    <!-- Flag specifying whether VoLTE is availasble on device -->
+    <!-- Flag specifying whether VT is availasble on device -->
     <bool name="config_device_vt_available">false</bool>
 
     <!-- Flag specifying whether WFC over IMS is availasble on device -->
