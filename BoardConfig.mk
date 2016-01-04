@@ -86,15 +86,6 @@ TARGET_USES_ION := true
 TARGET_HW_DISK_ENCRYPTION := false
 TARGET_CRYPTFS_HW_PATH := device/moto/shamu/cryptfs_hw
 
-# Enable dex-preoptimization to speed up first boot sequence
-ifeq ($(HOST_OS),linux)
-  ifeq ($(TARGET_BUILD_VARIANT),user)
-    ifeq ($(WITH_DEXPREOPT),)
-      WITH_DEXPREOPT := true
-    endif
-  endif
-endif
-
 TARGET_TOUCHBOOST_FREQUENCY := 1500
 TARGET_USERIMAGES_USE_EXT4 := true
 BOARD_BOOTIMAGE_PARTITION_SIZE := 16777216
@@ -132,5 +123,8 @@ USE_DEVICE_SPECIFIC_CAMERA:= true
 BOARD_HAL_STATIC_LIBRARIES := libdumpstate.shamu
 
 USE_CLANG_PLATFORM_BUILD := true
+
+# Disable dex-preopt of prebuilts to save space.
+DONT_DEXPREOPT_PREBUILTS := true
 
 -include vendor/moto/shamu/BoardConfigVendor.mk
