@@ -1,0 +1,6 @@
+# Allow all possible gpu ioctl commands including known used
+# commands as well as values thought to be unused. Audit unused values
+# for removal.
+allowxperm { appdomain -isolated_app } gpu_device:chr_file ioctl { gpu_used_ioctls gpu_unused_ioctls };
+auditallow { appdomain -isolated_app } gpu_device:chr_file ioctl;
+auditallowxperm { appdomain -isolated_app } gpu_device:chr_file ioctl gpu_unused_ioctls;
