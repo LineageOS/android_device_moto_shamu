@@ -178,6 +178,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     fmas.spkr_angles=10 \
     fmas.spkr_sgain=0
 
+# Camera
+PRODUCT_PACKAGES += \
+    Snap
+
 PRODUCT_PACKAGES += \
     libqomx_core \
     libmm-qcamera \
