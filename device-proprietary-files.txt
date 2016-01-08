@@ -258,8 +258,8 @@ lib/libdmjavaplugin.so
 -priv-app/ConnMO/ConnMO.apk
 -priv-app/DCMO/DCMO.apk
 -priv-app/DMService/DMService.apk
-lib/libdmengine.so:priv-app/DMService/arm/lib/libdmengine.so
-lib/libdmjavaplugin.so:priv-app/DMService/arm/lib/libdmjavaplugin.so
+lib/libdmengine.so:priv-app/DMService/lib/arm/libdmengine.so
+lib/libdmjavaplugin.so:priv-app/DMService/lib/arm/libdmjavaplugin.so
 -priv-app/DiagMon/DiagMon.apk
 -priv-app/GCS/GCS.apk
 -priv-app/LifetimeData/LifetimeData.apk
