@@ -2,5 +2,9 @@
   {
     "repository": "android_kernel_moto_shamu",
     "target_path": "kernel/moto/shamu"
+  },
+  {
+    "repository": "android_packages_apps_Snap",
+    "target_path": "packages/apps/Snap"
   }
 ]
