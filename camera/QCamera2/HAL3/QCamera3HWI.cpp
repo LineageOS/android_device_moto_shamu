@@ -297,6 +297,8 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
     mEnableRawDump = atoi(prop);
     if (mEnableRawDump)
         CDBG("%s: Raw dump from Camera HAL enabled", __func__);
+
+    mPendingBuffersMap.num_buffers = 0;
 }
 
 /*===========================================================================
@@ -313,6 +315,7 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
     CDBG("%s: E", __func__);
     /* We need to stop all streams before deleting any stream */
 
+    bool hasPendingBuffers = (mPendingBuffersMap.num_buffers > 0);
 
     if (mRawDumpChannel) {
         mRawDumpChannel->stop();
@@ -355,6 +358,19 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
             delete mMetadataChannel;
             mMetadataChannel = NULL;
         }
+
+        memset(mParameters, 0, sizeof(parm_buffer_t));
+        // Check if there is still pending buffer not yet returned.
+        if (hasPendingBuffers) {
+            uint8_t restart = TRUE;
+            AddSetParmEntryToBatch(mParameters, CAM_INTF_META_DAEMON_RESTART,
+                    sizeof(restart), &restart);
+        }
+
+        int rc = mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
+        if (rc < 0) {
+            ALOGE("%s: set_parms failed for unconfigure", __func__);
+        }
         deinitParameters();
     }
 
@@ -372,6 +388,11 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
     pthread_cond_destroy(&mRequestCond);
 
     pthread_mutex_destroy(&mMutex);
+
+    if (hasPendingBuffers) {
+        ALOGE("%s: Not all buffers are returned. Aborting...", __func__);
+        abort();
+    }
     CDBG("%s: X", __func__);
 }
 
