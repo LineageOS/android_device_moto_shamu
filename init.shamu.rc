@@ -37,9 +37,6 @@ on init
     symlink /sdcard /mnt/sdcard
     symlink /sdcard /storage/sdcard0
 
-    # boost mmap ASLR from 8 to 16 bits
-    write /proc/sys/kernel/mmap_rnd_bits 16
-
 on fs
     mount_all fstab.shamu
 
