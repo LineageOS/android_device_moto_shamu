@@ -147,6 +147,8 @@ BOARD_HARDWARE_CLASS := \
     hardware/cyanogen   \
     device/moto/shamu/cmhw
 
+TARGET_TAP_TO_WAKE_NODE := "/sys/bus/i2c/devices/1-004a/tsp"
+
 USE_CLANG_PLATFORM_BUILD := true
 
 -include vendor/motorola/shamu/BoardConfigVendor.mk
