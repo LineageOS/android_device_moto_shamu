@@ -1,0 +1,16 @@
+# Grant access to Qualcomm MSM Interface (QMI) audio sockets to cameraserver
+qmux_socket(cameraserver)
+
+# Permit cameraserver to create sockets with no specific SELinux class.
+# TODO: Investigate the specific type of socket.
+allow cameraserver self:socket create_socket_perms;
+
+allow cameraserver mpdecision_socket:dir r_dir_perms;
+unix_socket_send(cameraserver, mpdecision, mpdecision)
+
+binder_call(cameraserver, rild)
+
+unix_socket_send(cameraserver, camera, camera)
+unix_socket_connect(cameraserver, adspd, adspd)
+allow cameraserver audio_cutback_data_file:dir search;
+allow cameraserver audio_cutback_data_file:sock_file write;
