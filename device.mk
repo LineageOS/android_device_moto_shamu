@@ -352,7 +352,8 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     ro.qualcomm.perf.cores_online=2
 
 PRODUCT_PACKAGES += \
-    power.shamu
+    power.shamu \
+    hardware_properties.shamu
 
 # For android_filesystem_config.h
 PRODUCT_PACKAGES += \
