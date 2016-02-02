@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2014 The Android Open Source Project
+<!-- Copyright (C) 2015 The PureNexus Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,13 +13,14 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-
-<!-- Phone app resources that may need to be customized
-     for different hardware or product builds. -->
 <resources>
-    <!-- Show APN Settings for some CDMA carriers -->
-    <bool name="config_show_apn_setting_cdma">true</bool>
+    <!-- Class name for the default in-call UI Service [DO NOT TRANSLATE] -->
+    <string-array name="incall_default_classes" translatable="false">
+        <item>com.android.dialer/com.android.incallui.InCallServiceImpl</item>
+        <item>com.google.android.dialer/com.android.incallui.InCallServiceImpl</item>
+    </string-array>
 
+    <!-- Class name for the default main dialer activity [DO NOT TRANSLATE] -->
     <string-array name="dialer_default_classes" translatable="false">
         <item>com.android.dialer/com.android.dialer.DialtactsActivity</item>
         <item>com.google.android.dialer/com.google.android.dialer.extensions.GoogleDialtactsActivity</item>
