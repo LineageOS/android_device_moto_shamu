@@ -56,6 +56,9 @@ BOARD_EGL_CFG := device/moto/shamu/egl.cfg
 
 BOARD_USES_ALSA_AUDIO := true
 
+# RIL
+BOARD_RIL_CLASS := ../../../device/moto/shamu/ril
+
 # Wifi related defines
 WPA_SUPPLICANT_VERSION      := VER_0_8_X
 BOARD_WLAN_DEVICE           := bcmdhd
