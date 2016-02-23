@@ -155,7 +155,7 @@ int buffer_invalidate(buffer_t *p_buffer)
   custom_data.cmd = ION_IOC_INV_CACHES;
   custom_data.arg = (unsigned long)&cache_inv_data;
 
-  lrc = ioctl(p_buffer->ion_info_fd.fd, ION_IOC_CUSTOM, &custom_data);
+  lrc = ioctl(p_buffer->ion_fd, ION_IOC_CUSTOM, &custom_data);
   if (lrc < 0)
     CDBG_ERROR("%s: Cache Invalidate failed: %s\n", __func__, strerror(errno));
 
