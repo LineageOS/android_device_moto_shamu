@@ -14,3 +14,8 @@ unix_socket_send(audioserver, camera, camera)
 unix_socket_connect(audioserver, adspd, adspd)
 allow audioserver audio_cutback_data_file:dir search;
 allow audioserver audio_cutback_data_file:sock_file write;
+
+# access files in /sys
+r_dir_file(audioserver, sysfs)
+# connect to rild for phone calls
+allow audioserver rild:unix_stream_socket connectto;
