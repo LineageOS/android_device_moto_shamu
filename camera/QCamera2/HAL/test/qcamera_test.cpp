@@ -46,7 +46,6 @@
 #include <system/camera.h>
 
 #include <camera/Camera.h>
-#include <camera/ICamera.h>
 #include <camera/CameraParameters.h>
 #include <media/mediarecorder.h>
 
