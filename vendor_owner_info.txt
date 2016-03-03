@@ -89,6 +89,7 @@ system/lib/libmm-qcamera.so:qcom
 system/lib/librecoglib.so:moto
 system/lib/librmnetctl.so:qcom
 system/lib/libsupermodel.so:moto
+system/lib/libxml2.so:moto
 system/lib/libtinycompress.so:qcom
 system/lib/soundfx/libqcomvisualizer.so:qcom
 system/lib/soundfx/libqcomvoiceprocessing.so:qcom
@@ -206,6 +207,7 @@ system/vendor/lib/libchromatix_imx214_preview.so:qcom
 system/vendor/lib/libchromatix_imx214_snapshot_hdr.so:qcom
 system/vendor/lib/libchromatix_imx214_snapshot.so:qcom
 system/vendor/lib/libchromatix_imx214_video_hdr.so:qcom
+system/vendor/lib/libcneapiclient.so:qcom
 system/vendor/lib/libconfigdb.so:qcom
 system/vendor/lib/libcsd-client.so:qcom
 system/vendor/lib/libdiag.so:qcom
@@ -324,6 +326,7 @@ system/vendor/lib/librs_adreno.so:qcom
 system/vendor/lib/libRSDriver_adreno.so:qcom
 system/vendor/lib/libsensor1.so:qcom
 system/vendor/lib/libsensor_reg.so:qcom
+system/vendor/lib/libsysutils_local.so:moto
 system/vendor/lib/libthermalclient.so:qcom
 system/vendor/lib/libthermalioctl.so:qcom
 system/vendor/lib/libtime_genoff.so:qcom

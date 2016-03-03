@@ -163,6 +163,7 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/shamu/proprietary/libchromatix_imx214_snapshot_hdr.so:system/vendor/lib/libchromatix_imx214_snapshot_hdr.so:qcom \
     vendor/qcom/shamu/proprietary/libchromatix_imx214_snapshot.so:system/vendor/lib/libchromatix_imx214_snapshot.so:qcom \
     vendor/qcom/shamu/proprietary/libchromatix_imx214_video_hdr.so:system/vendor/lib/libchromatix_imx214_video_hdr.so:qcom \
+    vendor/qcom/shamu/proprietary/libcneapiclient.so:system/vendor/lib/libcneapiclient.so:qcom \
     vendor/qcom/shamu/proprietary/libconfigdb.so:system/vendor/lib/libconfigdb.so:qcom \
     vendor/qcom/shamu/proprietary/libcsd-client.so:system/vendor/lib/libcsd-client.so:qcom \
     vendor/qcom/shamu/proprietary/libdiag.so:system/vendor/lib/libdiag.so:qcom \

@@ -41,6 +41,7 @@
             system/lib/libadspd.so \
             system/lib/librecoglib.so \
             system/lib/libsupermodel.so \
+            system/lib/libxml2.so \
             system/priv-app/BuaContactAdapter/BuaContactAdapter.apk \
             system/vendor/firmware/acdb.mbn \
             system/vendor/firmware/atmel-a432-*-shamu-p1.tdat \
@@ -67,6 +68,7 @@
             system/vendor/lib/libmdmcutback.so \
             system/vendor/lib/libmotext_inf.so \
             system/vendor/lib/libqmimotext.so \
+            system/vendor/lib/libsysutils_local.so \
             system/vendor/moto/audiomonitor/sensory/lts_en_us_9_5_2b.raw \
             system/vendor/moto/audiomonitor/sensory/nn_de_mfcc_16k_15_big_250_v3_4.raw \
             system/vendor/moto/audiomonitor/sensory/nn_en_uk_mfcc_16k_15_big_250_v2_2.raw \
@@ -255,6 +257,7 @@
             system/vendor/lib/libchromatix_imx214_snapshot_hdr.so \
             system/vendor/lib/libchromatix_imx214_snapshot.so \
             system/vendor/lib/libchromatix_imx214_video_hdr.so \
+            system/vendor/lib/libcneapiclient.so \
             system/vendor/lib/libconfigdb.so \
             system/vendor/lib/libcsd-client.so \
             system/vendor/lib/libdiag.so \
