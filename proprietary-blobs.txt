@@ -106,6 +106,7 @@
 /system/lib/librmnetctl.so
 /system/lib/libsupermodel.so
 /system/lib/libtinycompress.so
+/system/lib/libxml2.so
 /system/lib/soundfx/libqcomvisualizer.so
 /system/lib/soundfx/libqcomvoiceprocessing.so
 /system/lib/soundfx/libspeakerbundle.so
@@ -222,6 +223,7 @@
 /system/vendor/lib/libchromatix_imx214_snapshot_hdr.so
 /system/vendor/lib/libchromatix_imx214_snapshot.so
 /system/vendor/lib/libchromatix_imx214_video_hdr.so
+/system/vendor/lib/libcneapiclient.so
 /system/vendor/lib/libconfigdb.so
 /system/vendor/lib/libcsd-client.so
 /system/vendor/lib/libdiag.so
@@ -340,6 +342,7 @@
 /system/vendor/lib/libRSDriver_adreno.so
 /system/vendor/lib/libsensor1.so
 /system/vendor/lib/libsensor_reg.so
+/system/vendor/lib/libsysutils_local.so
 /system/vendor/lib/libthermalclient.so
 /system/vendor/lib/libthermalioctl.so
 /system/vendor/lib/libtime_genoff.so

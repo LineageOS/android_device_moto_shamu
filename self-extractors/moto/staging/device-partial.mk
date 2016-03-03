@@ -48,6 +48,7 @@ PRODUCT_COPY_FILES := \
     vendor/moto/shamu/proprietary/libadspd.so:system/lib/libadspd.so:moto \
     vendor/moto/shamu/proprietary/librecoglib.so:system/lib/librecoglib.so:moto \
     vendor/moto/shamu/proprietary/libsupermodel.so:system/lib/libsupermodel.so:moto \
+    vendor/moto/shamu/proprietary/libxml2.so:system/lib/libxml2.so:moto \
     vendor/moto/shamu/proprietary/acdb.mbn:system/vendor/firmware/acdb.mbn:moto \
     vendor/moto/shamu/proprietary/atmel-a432-14061601-0102aa-shamu-p1.tdat:system/vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat:moto \
     vendor/moto/shamu/proprietary/atmel-a432-14103001-0103aa-shamu.tdat:system/vendor/firmware/atmel-a432-14103001-0103aa-shamu.tdat:moto \
@@ -73,6 +74,7 @@ PRODUCT_COPY_FILES := \
     vendor/moto/shamu/proprietary/libmdmcutback.so:system/vendor/lib/libmdmcutback.so:moto \
     vendor/moto/shamu/proprietary/libmotext_inf.so:system/vendor/lib/libmotext_inf.so:moto \
     vendor/moto/shamu/proprietary/libqmimotext.so:system/vendor/lib/libqmimotext.so:moto \
+    vendor/moto/shamu/proprietary/libsysutils_local.so:system/vendor/lib/libsysutils_local.so:moto \
     vendor/moto/shamu/proprietary/lts_en_us_9_5_2b.raw:system/vendor/moto/audiomonitor/sensory/lts_en_us_9_5_2b.raw:moto \
     vendor/moto/shamu/proprietary/nn_de_mfcc_16k_15_big_250_v3_4.raw:system/vendor/moto/audiomonitor/sensory/nn_de_mfcc_16k_15_big_250_v3_4.raw:moto \
     vendor/moto/shamu/proprietary/nn_en_uk_mfcc_16k_15_big_250_v2_2.raw:system/vendor/moto/audiomonitor/sensory/nn_en_uk_mfcc_16k_15_big_250_v2_2.raw:moto \
