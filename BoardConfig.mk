@@ -130,6 +130,8 @@ BOARD_HAL_STATIC_LIBRARIES := libdumpstate.shamu
 
 USE_CLANG_PLATFORM_BUILD := true
 
+TARGET_FS_CONFIG_GEN += device/moto/shamu/config.fs
+
 # Disable dex-preopt of prebuilts to save space.
 DONT_DEXPREOPT_PREBUILTS := true
 
