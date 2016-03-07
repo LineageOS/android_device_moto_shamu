@@ -55,7 +55,7 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_C_INCLUDES += hardware/qcom/display/libgralloc \
         hardware/qcom/display/libgenlock \
-        hardware/qcom/media/libstagefrighthw \
+        hardware/qcom/media/msm8974/libstagefrighthw \
 	system/media/camera/include
 
 # if debug service layer and up , use stub camera!
