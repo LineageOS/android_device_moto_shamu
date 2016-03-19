@@ -364,7 +364,7 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 
 PRODUCT_PACKAGES += \
     power.shamu \
-    hardware_properties.shamu
+    thermal.shamu
 
 # For android_filesystem_config.h
 PRODUCT_PACKAGES += \
