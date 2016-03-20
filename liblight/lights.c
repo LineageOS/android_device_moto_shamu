@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-
 // #define LOG_NDEBUG 0
 
+#define LOG_TAG "shamu-lights"
 #include <cutils/log.h>
 
 #include <stdint.h>
@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <stdbool.h>
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -50,8 +51,20 @@ char const*const GREEN_LED_FILE
 char const*const BLUE_LED_FILE
         = "/sys/class/leds/blue/brightness";
 
+char const*const RED_BLINK_LED_FILE
+        = "/sys/class/leds/red/blink";
+
+char const*const GREEN_BLINK_LED_FILE
+        = "/sys/class/leds/green/blink";
+
+char const*const BLUE_BLINK_LED_FILE
+        = "/sys/class/leds/blue/blink";
+
 char const*const LCD_FILE
         = "/sys/class/leds/lcd-backlight/brightness";
+
+typedef struct { int red; int green; int blue;} LedIdentifier;
+typedef struct { bool red; bool green; bool blue;} LedIdentifierRGB;
 
 /**
  * device methods
@@ -70,7 +83,6 @@ static int
 write_int(char const* path, int value)
 {
     int fd;
-    static int already_warned = 0;
 
     fd = open(path, O_RDWR);
     if (fd >= 0) {
@@ -80,10 +92,52 @@ write_int(char const* path, int value)
         close(fd);
         return amt == -1 ? -errno : 0;
     } else {
-        if (already_warned == 0) {
-            ALOGE("write_int failed to open %s\n", path);
-            already_warned = 1;
+        ALOGE("write_int failed to open %s\n", path);
+        return -errno;
+    }
+}
+
+static int
+write_rgb_str(LedIdentifierRGB rgb_leds, char *value)
+{
+    LedIdentifier fd;
+
+    fd.red = open(RED_BLINK_LED_FILE, O_RDWR);
+    fd.green = open(GREEN_BLINK_LED_FILE, O_RDWR);
+    fd.blue = open(BLUE_BLINK_LED_FILE, O_RDWR);
+    if (fd.red >= 0 && fd.green >= 0 && fd.blue >= 0) {
+        LedIdentifier amt;
+        const char *nullbytes = "0,0";
+        if (rgb_leds.red) {
+            amt.red = write(fd.red, value, strlen(value) + 1);
+        } else {
+            amt.red = write(fd.red, nullbytes, strlen(nullbytes) + 1);
         }
+        if (rgb_leds.green) {
+            amt.green = write(fd.green, value, strlen(value) + 1);
+        } else {
+            amt.green = write(fd.green, nullbytes, strlen(nullbytes) + 1);
+        }
+        if (rgb_leds.blue) {
+            amt.blue = write(fd.blue, value, strlen(value) + 1);
+        } else {
+            amt.blue = write(fd.blue, nullbytes, strlen(nullbytes) + 1);
+        }
+        close(fd.red);
+        close(fd.green);
+        close(fd.blue);
+        return (amt.red == -1 || amt.green == -1 || amt.blue == -1) ? -errno : 0;
+    } else {
+        if (fd.red != -1) {
+            close(fd.red);
+        }
+        if (fd.green != -1) {
+            close(fd.green);
+        }
+        if (fd.blue != -1) {
+            close(fd.blue);
+        }
+        ALOGE("write_str failed to open LED Paths");
         return -errno;
     }
 }
@@ -130,23 +184,38 @@ set_speaker_light_locked(struct light_device_t* dev,
         struct light_state_t const* state)
 {
     unsigned int colorRGB = state->color;
-    int red = 0;
-    int green = 0;
-    int blue = 0;
+    LedIdentifier rgb_leds;
+    unsigned long onMS, offMS;
+    char blink_string[PAGE_SIZE];
 
-    red = (((colorRGB >> 16) & 0xFF) / 12.75);
-    green = (((colorRGB >> 8) & 0xFF) / 12.75);
-    blue = ((colorRGB & 0xFF) / 12.75);
+    rgb_leds.red = (((colorRGB >> 16) & 0xFF) / 12.75);
+    rgb_leds.green = (((colorRGB >> 8) & 0xFF) / 12.75);
+    rgb_leds.blue = ((colorRGB & 0xFF) / 12.75);
 
-    write_int(RED_LED_FILE, red);
-    write_int(GREEN_LED_FILE, green);
-    write_int(BLUE_LED_FILE, blue);
+    write_int(RED_LED_FILE, rgb_leds.red);
+    write_int(GREEN_LED_FILE, rgb_leds.green);
+    write_int(BLUE_LED_FILE, rgb_leds.blue);
 
-#if 0
-    ALOGD("set_speaker_light_locked colorRGB=%08X, red=%d, green=%d, blue=%d\n",
-            colorRGB, red, green, blue);
-#endif
+    LedIdentifierRGB rgb_leds_val = {rgb_leds.red > 5, rgb_leds.green > 5, rgb_leds.blue > 5};
 
+    switch (state->flashMode) {
+        case LIGHT_FLASH_TIMED:
+            onMS = state->flashOnMS;
+            offMS = state->flashOffMS;
+            break;
+        case LIGHT_FLASH_NONE:
+        default:
+            onMS = 0;
+            offMS = 0;
+            break;
+    }
+
+    if (!(onMS == 1 && offMS == 0)) {
+        // We can only blink at full brightness when someone doesn't want a blinking LED
+        // don't write the blink code, so all colors can be used.
+        sprintf(blink_string, "%lu,%lu", onMS, offMS);
+        write_rgb_str(rgb_leds_val, blink_string);
+    }
     return 0;
 }
 
