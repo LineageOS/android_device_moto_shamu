@@ -15,11 +15,6 @@
  * limitations under the License.
  */
 
-
-// #define LOG_NDEBUG 0
-
-#include <cutils/log.h>
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +22,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
+
+#define LOG_TAG "shamu-lights"
+#include <utils/Log.h>
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -49,6 +47,9 @@ char const*const GREEN_LED_FILE
 
 char const*const BLUE_LED_FILE
         = "/sys/class/leds/blue/brightness";
+
+char const*const BLINK_LED_FILE
+        = "/sys/class/leds/charging/blink";
 
 char const*const LCD_FILE
         = "/sys/class/leds/lcd-backlight/brightness";
@@ -82,6 +83,28 @@ write_int(char const* path, int value)
     } else {
         if (already_warned == 0) {
             ALOGE("write_int failed to open %s\n", path);
+            already_warned = 1;
+        }
+        return -errno;
+    }
+}
+
+static int
+write_str(char const* path, char *value)
+{
+    int fd;
+    static int already_warned = 0;
+
+    fd = open(path, O_RDWR);
+    if (fd >= 0) {
+        char buffer[PAGE_SIZE];
+        int bytes = sprintf(buffer, "%s\n", value);
+        int amt = write(fd, buffer, bytes);
+        close(fd);
+        return amt == -1 ? -errno : 0;
+    } else {
+        if (already_warned == 0) {
+            ALOGE("write_str failed to open %s\n", path);
             already_warned = 1;
         }
         return -errno;
@@ -133,6 +156,8 @@ set_speaker_light_locked(struct light_device_t* dev,
     int red = 0;
     int green = 0;
     int blue = 0;
+    unsigned long onMS, offMS;
+    char blink_string[PAGE_SIZE];
 
     red = (((colorRGB >> 16) & 0xFF) / 12.75);
     green = (((colorRGB >> 8) & 0xFF) / 12.75);
@@ -142,12 +167,24 @@ set_speaker_light_locked(struct light_device_t* dev,
     write_int(GREEN_LED_FILE, green);
     write_int(BLUE_LED_FILE, blue);
 
-#if 0
-    ALOGD("set_speaker_light_locked colorRGB=%08X, red=%d, green=%d, blue=%d\n",
-            colorRGB, red, green, blue);
-#endif
+    if (!dev) {
+        return -1;
+    }
 
-    return 0;
+    switch (state->flashMode) {
+        case LIGHT_FLASH_TIMED:
+            onMS = state->flashOnMS;
+            offMS = state->flashOffMS;
+            break;
+        case LIGHT_FLASH_NONE:
+        default:
+            onMS = 0;
+            offMS = 0;
+            break;
+    }
+
+    sprintf(blink_string, "%lu,%lu", onMS, offMS);
+    return write_str(BLINK_LED_FILE, blink_string);
 }
 
 static void
