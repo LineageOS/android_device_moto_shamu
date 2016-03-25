@@ -93,7 +93,8 @@ static ssize_t read_temperature(int sensor_num, int type, const char *name, floa
         .name = name,
         .current_value = temp * mult,
         .throttling_threshold = throttling_threshold,
-        .shutdown_threshold = shutdown_threshold
+        .shutdown_threshold = shutdown_threshold,
+        .vr_throttling_threshold = UNKNOWN_TEMPERATURE
     };
 
     return 0;
