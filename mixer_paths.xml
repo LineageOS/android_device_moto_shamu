@@ -799,6 +799,16 @@
 		<ctl name="ADC6 Volume" value="0" />
 	</path>
 
+    <path name="unprocessed-handset-mic">
+        <path name="adc3" />
+        <ctl name="ADC1 Volume" value="0" />
+        <ctl name="ADC2 Volume" value="0" />
+        <ctl name="ADC3 Volume" value="13" />
+        <ctl name="ADC4 Volume" value="0" />
+        <ctl name="ADC5 Volume" value="0" />
+        <ctl name="ADC6 Volume" value="0" />
+    </path>
+
 	<path name="headphones">
 		<ctl name="SLIM RX1 MUX" value="AIF1_PB" />
 		<ctl name="SLIM RX6 MUX" value="AIF2_PB" />
@@ -903,6 +913,10 @@
 	<path name="voice-rec-mic">
 		<path name="handset-mic" />
 	</path>
+
+    <path name="unprocessed-mic">
+        <path name="unprocessed-handset-mic" />
+    </path>
 
 	<path name="camcorder-mic">
 		<path name="adc3" />
