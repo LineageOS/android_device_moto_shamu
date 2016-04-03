@@ -16,6 +16,8 @@ allow camera sensors_socket:sock_file read;
 
 allow camera sensors_device:chr_file rw_file_perms;
 
+allow camera self:capability { sys_nice };
+
 # Create front and back camera sockets (/data/cam_socket[23])
 # TODO: create these sockets elsewhere, apps shouldn't be putting sockets
 # directly under /data.
