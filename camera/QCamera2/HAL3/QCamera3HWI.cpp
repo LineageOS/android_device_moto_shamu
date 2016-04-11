@@ -1370,21 +1370,7 @@ int QCamera3HardwareInterface::configureStreams(
         stream_config_info.num_streams++;
     }
 
-    // settings/parameters don't carry over for new configureStreams
-    int32_t hal_version = CAM_HAL_V3;
-    memset(mParameters, 0, sizeof(metadata_buffer_t));
-
-    AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
-            sizeof(hal_version), &hal_version);
-
-    AddSetParmEntryToBatch(mParameters, CAM_INTF_META_STREAM_INFO,
-            sizeof(cam_stream_size_info_t), &stream_config_info);
-
-    int32_t tintless_value = 1;
-    AddSetParmEntryToBatch(mParameters,CAM_INTF_PARM_TINTLESS,
-                sizeof(tintless_value), &tintless_value);
-
-    mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
+    mStreamConfigInfo = stream_config_info;
 
     /* Initialize mPendingRequestInfo and mPendnigBuffersMap */
     mPendingRequestsList.clear();
@@ -2171,6 +2157,29 @@ int QCamera3HardwareInterface::processCaptureRequest(
     // stream on all streams
     if (mFirstRequest) {
 
+        // settings/parameters don't carry over for new configureStreams
+        int32_t hal_version = CAM_HAL_V3;
+        memset(mParameters, 0, sizeof(metadata_buffer_t));
+
+        AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
+                sizeof(hal_version), &hal_version);
+
+        AddSetParmEntryToBatch(mParameters, CAM_INTF_META_STREAM_INFO,
+                sizeof(cam_stream_size_info_t), &mStreamConfigInfo);
+
+        for (uint32_t i = 0; i < mStreamConfigInfo.num_streams; i++) {
+		     CDBG_HIGH("%s STREAM INFO : type %d, wxh: %d x %d, pp_mask: 0x%x",
+                     __func__, mStreamConfigInfo.type[i],
+                     mStreamConfigInfo.stream_sizes[i].width,
+                     mStreamConfigInfo.stream_sizes[i].height,
+                     mStreamConfigInfo.postprocess_mask[i]);
+        }
+
+        int32_t tintless_value = 1;
+        AddSetParmEntryToBatch(mParameters,CAM_INTF_PARM_TINTLESS,
+                sizeof(tintless_value), &tintless_value);
+
+        mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
          /* get eis information for stream configuration */
         cam_is_type_t is_type;
         char is_type_value[PROPERTY_VALUE_MAX];
