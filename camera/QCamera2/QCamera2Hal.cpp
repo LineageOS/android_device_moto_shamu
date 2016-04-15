@@ -31,15 +31,15 @@
 #include "HAL3/QCamera3VendorTags.h"
 
 static hw_module_t camera_common = {
-    tag: HARDWARE_MODULE_TAG,
-    module_api_version: CAMERA_MODULE_API_VERSION_2_4,
-    hal_api_version: HARDWARE_HAL_API_VERSION,
-    id: CAMERA_HARDWARE_MODULE_ID,
-    name: "QCamera Module",
-    author: "Qualcomm Innovation Center Inc",
-    methods: &qcamera::QCamera2Factory::mModuleMethods,
-    dso: NULL,
-    reserved:  {0},
+    .tag = HARDWARE_MODULE_TAG,
+    .module_api_version = CAMERA_MODULE_API_VERSION_2_4,
+    .hal_api_version = HARDWARE_HAL_API_VERSION,
+    .id = CAMERA_HARDWARE_MODULE_ID,
+    .name = "QCamera Module",
+    .author = "Qualcomm Innovation Center Inc",
+    .methods = &qcamera::QCamera2Factory::mModuleMethods,
+    .dso = NULL,
+    .reserved = {0},
 };
 
 camera_module_t HAL_MODULE_INFO_SYM = {
