@@ -119,8 +119,6 @@ on early-boot
     write /sys/bus/msm_subsys/devices/subsys3/recovery_policy "skip_restart"
 
 on boot
-    insmod /system/lib/modules/adsprpc.ko
-    insmod /system/lib/modules/mhi.ko
     chown bluetooth net_bt_stack /sys/module/bluetooth_power/parameters/power
     chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/type
     chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/state
