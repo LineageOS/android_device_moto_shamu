@@ -67,7 +67,7 @@
     </array>
     <!-- Power consumption when CPU is idle -->
     <item name="cpu.idle">6</item>
-    <item name="cpu.awake">30</item>
+    <item name="cpu.awake">8</item>
     <!-- Power consumption at different speeds -->
     <array name="cpu.active">
         <value>71</value> <!-- 300 MHz CPU speed -->
