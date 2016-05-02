@@ -954,6 +954,12 @@ void CameraContext::postDataTimestamp(nsecs_t timestamp,
     printf("Recording cb: %d %lld %p\n", msgType, timestamp, dataPtr.get());
 }
 
+void CameraContext::postRecordingFrameHandleTimestamp(nsecs_t, native_handle_t*) {
+}
+
+void CameraContext::recordingFrameHandleCallbackTimestamp(nsecs_t, native_handle_t*) {
+}
+
 /*===========================================================================
  * FUNCTION   : dataCallbackTimestamp
  *
