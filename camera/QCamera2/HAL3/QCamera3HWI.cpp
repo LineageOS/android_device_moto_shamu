@@ -299,6 +299,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
         CDBG("%s: Raw dump from Camera HAL enabled", __func__);
 
     mPendingBuffersMap.num_buffers = 0;
+    mPendingBuffersMap.last_frame_number = -1;
 }
 
 /*===========================================================================
@@ -362,6 +363,13 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
         memset(mParameters, 0, sizeof(parm_buffer_t));
         // Check if there is still pending buffer not yet returned.
         if (hasPendingBuffers) {
+            for (auto& pendingBuffer : mPendingBuffersMap.mPendingBufferList) {
+                ALOGE("%s: Buffer not yet returned for stream. Frame number %d, format 0x%x, width %d, height %d",
+                        __func__, pendingBuffer.frame_number, pendingBuffer.stream->format, pendingBuffer.stream->width,
+                        pendingBuffer.stream->height);
+            }
+            ALOGE("%s: Last requested frame number is %d", __func__, mPendingBuffersMap.last_frame_number);
+
             uint8_t restart = TRUE;
             AddSetParmEntryToBatch(mParameters, CAM_INTF_META_DAEMON_RESTART,
                     sizeof(restart), &restart);
@@ -2448,6 +2456,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     CDBG("%s: mPendingBuffersMap.num_buffers = %d",
           __func__, mPendingBuffersMap.num_buffers);
 
+    mPendingBuffersMap.last_frame_number = frameNumber;
     mPendingRequestsList.push_back(pendingRequest);
 
     if(mFlush) {
