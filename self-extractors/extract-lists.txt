@@ -2,7 +2,6 @@
     TO_EXTRACT="\
             system/vendor/firmware/bcm20795_firmware.ncd \
             system/vendor/firmware/bcm4354A2.hcd \
-            system/xbin/wlutil \
             "
     ;;
   moto)
