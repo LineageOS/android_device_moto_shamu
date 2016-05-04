@@ -367,4 +367,3 @@ system/vendor/moto/audiomonitor/sensory/svsid_triggerogn1_itit_1_0.raw:moto
 system/vendor/moto/audiomonitor/sensory/svsid_triggerogn_enus_3_1.raw:moto
 system/vendor/moto/audiomonitor/sensory/svsid_triggerogn_frfr_1_0.raw:moto
 system/vendor/moto/audiomonitor/sensory/svsid_triggerogn_ptbr_2_1.raw:moto
-system/xbin/wlutil:broadcom
