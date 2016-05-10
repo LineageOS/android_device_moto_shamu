@@ -152,7 +152,7 @@ public:
     int flush();
 
     int setFrameParameters(camera3_capture_request_t *request,
-            cam_stream_ID_t streamID, uint32_t snapshotStreamId);
+            cam_stream_ID_t streamID, int blob_request, uint32_t snapshotStreamId);
     int32_t setReprocParameters(camera3_capture_request_t *request,
             metadata_buffer_t *reprocParam, uint32_t snapshotStreamId);
     int translateToHalMetadata(const camera3_capture_request_t *request,
@@ -261,6 +261,7 @@ private:
     bool mEnableRawDump;
     QCamera3HeapMemory *mParamHeap;
     metadata_buffer_t* mParameters;
+    metadata_buffer_t* mPrevParameters;
     bool m_bWNROn;
     bool m_bIsVideo;
     bool m_bIs4KVideo;
