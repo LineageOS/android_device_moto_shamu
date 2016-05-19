@@ -24,7 +24,7 @@ allow ims cnd:unix_stream_socket connectto;
 allow ims self:capability { setpcap setuid net_bind_service };
 
 # Allow ims to create and use netlink sockets.
-allow ims self:netlink_socket create_socket_perms;
+allow ims self:netlink_socket create_socket_perms_no_ioctl;
 
 # Allow access to smem log
 allow ims shared_log_device:chr_file rw_file_perms;
@@ -37,6 +37,7 @@ dontaudit ims domain:dir r_dir_perms;
 
 # Allow ims to create and use socket to communicate between ims processes.
 allow ims self:socket create_socket_perms;
+allowxperm ims self:socket ioctl msm_sock_ipc_ioctls;
 
 # Runs /system/bin/sh for executing ndc commands via popen
 allow ims shell_exec:file rx_file_perms;

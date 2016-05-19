@@ -4,6 +4,7 @@ qmux_socket(mediaserver)
 # Permit mediaserver to create sockets with no specific SELinux class.
 # TODO: Investigate the specific type of socket.
 allow mediaserver self:socket create_socket_perms;
+allowxperm mediaserver self:socket ioctl msm_sock_ipc_ioctls;
 
 allow mediaserver mpdecision_socket:dir r_dir_perms;
 unix_socket_send(mediaserver, mpdecision, mpdecision)

@@ -14,6 +14,7 @@ allow gsiffd quipc_data_file:sock_file create_file_perms;
 
 # Create sockets
 allow gsiffd self:socket create_socket_perms;
+allowxperm gsiffd self:socket ioctl msm_sock_ipc_ioctls;
 
 # Talk to qmux
 qmux_socket(gsiffd)

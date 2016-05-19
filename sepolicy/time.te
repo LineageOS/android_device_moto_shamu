@@ -14,4 +14,5 @@ allow time time_data_file:dir rw_dir_perms;
 allow time time_data_file:file create_file_perms;
 
 allow time self:socket *;
+allowxperm time self:socket ioctl msm_sock_ipc_ioctls;
 allow time self:capability { setuid setgid };

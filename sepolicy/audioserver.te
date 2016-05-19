@@ -4,6 +4,7 @@ qmux_socket(audioserver)
 # Permit audioserver to create sockets with no specific SELinux class.
 # TODO: Investigate the specific type of socket.
 allow audioserver self:socket create_socket_perms;
+allowxperm audioserver self:socket ioctl msm_sock_ipc_ioctls;
 
 allow audioserver mpdecision_socket:dir r_dir_perms;
 unix_socket_send(audioserver, mpdecision, mpdecision)
