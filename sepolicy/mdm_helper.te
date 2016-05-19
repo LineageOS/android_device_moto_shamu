@@ -1,5 +1,5 @@
 # Modem helper service. Spawns kickstart.
-type mdm_helper, domain, domain_deprecated;
+type mdm_helper, domain, device_domain_deprecated;
 type mdm_helper_exec, file_type, exec_type;
 
 init_daemon_domain(mdm_helper)

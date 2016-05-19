@@ -1,4 +1,4 @@
-type bluetooth_loader, domain, domain_deprecated;
+type bluetooth_loader, domain, device_domain_deprecated;
 type bluetooth_loader_exec, exec_type, file_type;
 
 # Started by init

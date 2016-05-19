@@ -1,4 +1,4 @@
-type mmi_touch_sh, domain, domain_deprecated;
+type mmi_touch_sh, domain, device_domain_deprecated;
 type mmi_touch_sh_exec, exec_type, file_type;
 
 # Started by init
