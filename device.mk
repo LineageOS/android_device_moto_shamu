@@ -396,10 +396,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     audio_hal.period_size=192
 
-# Enable boot.oat filtering of compiled classes to reduce boot.oat size. b/28026683
-PRODUCT_COPY_FILES += \
-    frameworks/base/compiled-classes-phone:system/etc/compiled-classes
-
 # OEM Unlock reporting
 ADDITIONAL_DEFAULT_PROPERTIES += \
     ro.oem_unlock_supported=1
