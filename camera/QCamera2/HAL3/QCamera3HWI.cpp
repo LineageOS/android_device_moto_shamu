@@ -2984,7 +2984,7 @@ QCamera3HardwareInterface::translateFromHalMetadata(
     if (IS_META_AVAILABLE(CAM_INTF_META_FACE_DETECTION, metadata)){
         cam_face_detection_data_t *faceDetectionInfo =
             (cam_face_detection_data_t *)POINTER_OF_META(CAM_INTF_META_FACE_DETECTION, metadata);
-        uint8_t numFaces = faceDetectionInfo->num_faces_detected;
+        uint8_t numFaces = MIN(faceDetectionInfo->num_faces_detected, MAX_ROI);
         int32_t faceIds[MAX_ROI];
         uint8_t faceScores[MAX_ROI];
         int32_t faceRectangles[MAX_ROI * 4];
