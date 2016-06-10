@@ -15,6 +15,7 @@
  */
 
 #include <dumpstate.h>
+#include <dumpstate_google.h>
 
 void dumpstate_board()
 {
@@ -44,4 +45,7 @@ void dumpstate_board()
     run_command("Subsystem Tombstone list", 5, SU_PATH, "root", "ls", "-l", "/data/tombstones/ramdump", NULL);
     run_command("ION CLIENTS", 5, SU_PATH, "root", "/system/bin/sh", "-c", "for f in $(ls /d/ion/clients/*); do echo $f; cat $f; done", NULL);
     run_command("ION HEAPS",   5, SU_PATH, "root", "/system/bin/sh", "-c", "for f in $(ls /d/ion/heaps/*);   do echo $f; cat $f; done", NULL);
+
+    // Dump Google-specific info.
+    dumpstate_google();
 };
