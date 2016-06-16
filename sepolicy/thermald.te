@@ -27,4 +27,5 @@ allow thermald sysfs_mpdecision:file rw_file_perms;
 
 # TODO specify specific labels for /sys/ files
 allow thermald sysfs:file write;
+allow thermald sysfs_usb:file write;
 allow thermald sysfs_batteryinfo:file r_file_perms;

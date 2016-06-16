@@ -18,5 +18,7 @@ allow adspd adspd_data_file:dir rw_dir_perms;
 # TODO: scope down this access.
 allow adspd sysfs:file write;
 
+allow adspd sysfs_usb:file write;
+
 allow adspd sysfs_mmi_touch:dir search;
 allow adspd sysfs_mmi_touch:file r_file_perms;

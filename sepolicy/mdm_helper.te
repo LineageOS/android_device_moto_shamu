@@ -46,6 +46,7 @@ allow mdm_helper sysfs_msm_hsic_host:file write;
 
 # host_ready not labeled correctly
 allow mdm_helper sysfs:file write;
+allow mdm_helper sysfs_usb:file write;
 
 wakelock_use(mdm_helper)
 
