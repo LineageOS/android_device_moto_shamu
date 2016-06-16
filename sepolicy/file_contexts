@@ -151,6 +151,8 @@
 # Sysfs files used by qmuxd
 /sys/devices/virtual/smdpkt/smdcntl([0-9])+/open_timeout u:object_r:sysfs_smdcntl_open_timeout:s0
 
+/sys/devices/f9200000\.ssusb(/.*)?                       u:object_r:sysfs_usb:s0
+
 # mmi_touch related /sys files
 /sys/devices/f9966000\.i2c/i2c-1/1-004a(/.*)?            u:object_r:sysfs_mmi_touch:s0
 
