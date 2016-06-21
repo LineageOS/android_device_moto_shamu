@@ -69,8 +69,8 @@
 /dev/ramdump_.*                 u:object_r:ramdump_device:s0
 
 # MSM camera related
-/dev/media([0-9])+              u:object_r:video_device:s0
-/dev/jpeg[0-9]*                 u:object_r:video_device:s0
+/dev/media([0-9])+              u:object_r:camera_device:s0
+/dev/jpeg[0-9]*                 u:object_r:camera_device:s0
 
 /dev/bcm2079x-i2c                  u:object_r:nfc_device:s0
 
