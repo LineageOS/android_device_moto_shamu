@@ -494,3 +494,4 @@ vendor/firmware/aonvr2.bin
 
 # WiFi
 vendor/firmware/bcm20795_firmware.ncd
+xbin/wlutil
