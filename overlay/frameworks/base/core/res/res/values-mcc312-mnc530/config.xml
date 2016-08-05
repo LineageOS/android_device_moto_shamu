@@ -22,7 +22,7 @@
 <resources>
     <!-- Values for GPS configuration (Sprint) -->
     <string-array translatable="false" name="config_gpsParameters">
-        <item>SUPL_HOST=supl.google.com</item>
+        <item>SUPL_HOST=NONE</item>
         <item>SUPL_PORT=7275</item>
         <item>XTRA_SERVER_1=http://xtrapath1.izatcloud.net/xtra2.bin</item>
         <item>XTRA_SERVER_2=http://xtrapath2.izatcloud.net/xtra2.bin</item>
