@@ -33,7 +33,7 @@ on init
     symlink /sdcard /storage/sdcard0
 
 on fs
-    mount_all fstab.shamu
+    mount_all fstab.shamu --early
 
     # Keeping following partitions outside fstab file. As user may not have
     # these partition flashed on the device. Failure to mount any partition in fstab file
@@ -58,6 +58,14 @@ on fs
     setprop persist.data.wda.enable true
     setprop persist.data.df.agg.dl_pkt 10
     setprop persist.data.df.agg.dl_size 4096
+
+on late-fs
+    # Start services for bootanim
+    start servicemanager
+    start surfaceflinger
+    start bootanim
+    # mount RW partitions which need run fsck
+    mount_all /fstab.shamu --late
 
 on post-fs-data
     # boot time fs tune
