@@ -128,11 +128,6 @@ PRODUCT_PACKAGES += atmel.fw.apq8084
 PRODUCT_PACKAGES += \
     qmi_motext_hook
 
-# Live Wallpapers
-PRODUCT_PACKAGES += \
-    LiveWallpapersPicker \
-    librs_jni
-
 PRODUCT_PACKAGES += \
     gralloc.msm8084 \
     hwcomposer.msm8084 \
@@ -197,10 +192,6 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     lights.shamu
-
-# Filesystem management tools
-PRODUCT_PACKAGES += \
-    e2fsck
 
 # for launcher layout
 #PRODUCT_PACKAGES += \
