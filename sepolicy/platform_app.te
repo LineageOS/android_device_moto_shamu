@@ -6,4 +6,6 @@ userdebug_or_eng(`
 
 allow platform_app time:unix_stream_socket connectto;
 
+allow platform_app nfc_service:service_manager find;
+
 unix_socket_connect(platform_app, adspd, adspd)

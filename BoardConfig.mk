@@ -24,6 +24,11 @@ ENABLE_CPUSETS := true
 
 TARGET_NO_BOOTLOADER := true
 
+# Inline kernel building
+TARGET_KERNEL_CONFIG := shamu_defconfig
+TARGET_KERNEL_SOURCE := kernel/moto/shamu
+BOARD_KERNEL_IMAGE_NAME := zImage-dtb
+
 BOARD_KERNEL_BASE := 0x00000000
 BOARD_KERNEL_PAGESIZE :=  2048
 BOARD_KERNEL_TAGS_OFFSET := 0x01E00000
@@ -47,9 +52,9 @@ MAX_EGL_CACHE_SIZE := 2048*1024
 # handled by the hardware composer
 MAX_VIRTUAL_DISPLAY_DIMENSION := 2048
 
-BOARD_EGL_CFG := device/moto/shamu/egl.cfg
-
 BOARD_USES_ALSA_AUDIO := true
+
+BOARD_SUPPORTS_SOUND_TRIGGER := true
 
 # Wifi related defines
 WPA_SUPPLICANT_VERSION      := VER_0_8_X
