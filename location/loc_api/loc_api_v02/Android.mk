@@ -1,3 +1,4 @@
+ifneq ($(QCPATH),)
 ifneq ($(BUILD_TINY_ANDROID),true)
 
 LOCAL_PATH := $(call my-dir)
@@ -57,3 +58,4 @@ LOCAL_C_INCLUDES := \
 include $(BUILD_SHARED_LIBRARY)
 
 endif # not BUILD_TINY_ANDROID
+endif # QCPATH
