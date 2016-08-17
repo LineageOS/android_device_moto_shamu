@@ -21,7 +21,6 @@ import init.shamu.diag.rc
 on early-init
     mkdir /firmware 0771 system system
     symlink /data/tombstones /tombstones
-    mount debugfs debugfs /sys/kernel/debug
     chown system system /sys/kernel/debug/kgsl/proc
 
 on init
