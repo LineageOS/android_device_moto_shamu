@@ -172,6 +172,9 @@
 /sys/devices/cycapsense_prog.1/cycapsense_fw             u:object_r:sysfs_capsense_update:s0
 /sys/devices/mmi_sar_ctrl.[0-9]*/sar_wifi                u:object_r:sysfs_sar_wifi:s0
 
+# sysfs files used by wifi
+/sys/module/bcmdhd/parameters/firmware_path u:object_r:sysfs_wlan_fwpath:s0
+
 # wifi mac address
 /sys/devices/virtual/net/wlan0/address                   u:object_r:sysfs_mac_address:s0
 
