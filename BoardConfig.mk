@@ -144,7 +144,7 @@ EXTENDED_FONT_FOOTPRINT := true
 # CMHW
 BOARD_USES_CYANOGEN_HARDWARE := true
 BOARD_HARDWARE_CLASS := \
-    hardware/cyanogen   \
+    hardware/cyanogen/cmhw   \
     device/moto/shamu/cmhw
 
 USE_CLANG_PLATFORM_BUILD := true
