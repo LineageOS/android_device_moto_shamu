@@ -7,6 +7,9 @@
         <device name="SND_DEVICE_OUT_VOICE_HANDSET_TMUS"    acdb_id="67"/>
         <device name="SND_DEVICE_IN_HEADSET_MIC_AEC"        acdb_id="47"/>
         <device name="SND_DEVICE_IN_VOICE_DMIC_TMUS"        acdb_id="89"/>
+        <device name="SND_DEVICE_IN_UNPROCESSED_HEADSET_MIC" acdb_id="70"/>
+        <device name="SND_DEVICE_IN_UNPROCESSED_MIC"         acdb_id="68"/>
+        <device name="SND_DEVICE_IN_UNPROCESSED_STEREO_MIC" acdb_id="69"/>
     </acdb_ids>
 
     <pcm_ids>
