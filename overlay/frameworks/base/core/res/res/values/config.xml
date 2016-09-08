@@ -343,4 +343,7 @@
     <string-array name="config_cell_retries_per_error_code">
         <item>36,3</item> <!-- REGULAR_DEACTIVATION, 3 retries -->
     </string-array>
+
+    <!-- True if Unprocessed audio source supports the required frequency range and level -->
+    <bool name="config_supportAudioSourceUnprocessed">true</bool>
 </resources>
