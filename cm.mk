@@ -22,5 +22,5 @@ TARGET_VENDOR := moto
 
 PRODUCT_BUILD_PROP_OVERRIDES += \
     PRODUCT_NAME=shamu \
-    BUILD_FINGERPRINT=google/shamu/shamu:6.0.1/MOB30W/3031100:user/release-keys \
-    PRIVATE_BUILD_DESC="shamu-user 6.0.1 MOB30W 3031100 release-keys"
+    BUILD_FINGERPRINT=google/shamu/shamu:6.0.1/MOB31E/3142026:user/release-keys \
+    PRIVATE_BUILD_DESC="shamu-user 6.0.1 MOB31E 3142026 release-keys"
