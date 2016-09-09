@@ -596,14 +596,6 @@ service mmi-touch-sh /system/bin/init.mmi.touch.sh atmel
     user root
     oneshot
 
-# bugreport is triggered by holding down volume down, volume up and power
-service bugreport /system/bin/dumpstate -d -p -B \
-        -o /data/data/com.android.shell/files/bugreports/bugreport
-    class main
-    disabled
-    oneshot
-    keycodes 114 115 116
-
 service mdm_helper_proxy /system/bin/mdm_helper_proxy
     class core
     user system
