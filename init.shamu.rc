@@ -110,25 +110,25 @@ on early-boot
     write /sys/bus/msm_subsys/devices/subsys3/recovery_policy "skip_restart"
 
 on boot
-    chown bluetooth net_bt_stack /sys/module/bluetooth_power/parameters/power
-    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/type
-    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/state
-    chown bluetooth net_bt_stack /proc/bluetooth/sleep/proto
-    chown bluetooth net_bt_stack /proc/bluetooth/sleep/lpm
-    chown bluetooth net_bt_stack /proc/bluetooth/sleep/btwrite
-    chown bluetooth net_bt_stack /sys/module/hci_uart/parameters/ath_lpm
-    chown bluetooth net_bt_stack /sys/module/hci_uart/parameters/ath_btwrite
+    chown bluetooth bluetooth /sys/module/bluetooth_power/parameters/power
+    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
+    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
+    chown bluetooth bluetooth /proc/bluetooth/sleep/proto
+    chown bluetooth bluetooth /proc/bluetooth/sleep/lpm
+    chown bluetooth bluetooth /proc/bluetooth/sleep/btwrite
+    chown bluetooth bluetooth /sys/module/hci_uart/parameters/ath_lpm
+    chown bluetooth bluetooth /sys/module/hci_uart/parameters/ath_btwrite
     chown system system /sys/module/sco/parameters/disable_esco
-    chown bluetooth net_bt_stack /sys/module/hci_smd/parameters/hcismd_set
+    chown bluetooth bluetooth /sys/module/hci_smd/parameters/hcismd_set
     chmod 0660 /sys/module/bluetooth_power/parameters/power
     chmod 0660 /sys/module/hci_smd/parameters/hcismd_set
     chmod 0660 /sys/class/rfkill/rfkill0/state
     chmod 0660 /proc/bluetooth/sleep/proto
-    chown bluetooth net_bt_stack /dev/ttyHS0
+    chown bluetooth bluetooth /dev/ttyHS0
     chmod 0660 /sys/module/hci_uart/parameters/ath_lpm
     chmod 0660 /sys/module/hci_uart/parameters/ath_btwrite
     chmod 0660 /dev/ttyHS0
-    chown bluetooth net_bt_stack /sys/devices/platform/msm_serial_hs.0/clock
+    chown bluetooth bluetooth /sys/devices/platform/msm_serial_hs.0/clock
     chmod 0660 /sys/devices/platform/msm_serial_hs.0/clock
 
     # add a cpuset for the camera daemon
@@ -149,7 +149,7 @@ on boot
     write /dev/cpuset/camera-daemon/cpus 0-3
 
     chmod 0660 /dev/ttyHS2
-    chown bluetooth net_bt_stack /dev/ttyHS2
+    chown bluetooth bluetooth /dev/ttyHS2
 
     #Create QMUX deamon socket area
     mkdir /dev/socket/qmux_radio 0770 radio radio
@@ -186,7 +186,7 @@ on boot
 
     #BT DUN port-bridge
     chmod 0660 /dev/smd7
-    chown bluetooth net_bt_stack /dev/smd7
+    chown bluetooth bluetooth /dev/smd7
 
     #For bridgemgr daemon to inform the USB driver of the correct transport
     chown radio radio /sys/class/android_usb/f_rmnet_smd_sdio/transport
