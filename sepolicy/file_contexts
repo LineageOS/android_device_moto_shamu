@@ -156,7 +156,10 @@
 # mmi_touch related /sys files
 /sys/devices/f9966000\.i2c/i2c-1/1-004a(/.*)?            u:object_r:sysfs_mmi_touch:s0
 
-/sys/devices/f9925000\.i2c/i2c-0/0-001c/power_supply/battery/capacity u:object_r:sysfs_batteryinfo:s0
+/sys/devices/f9925000\.i2c/i2c-0/0-001c/power_supply/battery/capacity    u:object_r:sysfs_batteryinfo:s0
+/sys/devices/f9925000\.i2c/i2c-0/0-001c/power_supply/battery/cycle_count u:object_r:sysfs_batteryinfo:s0
+/sys/devices/f9925000\.i2c/i2c-0/0-001c/power_supply/battery/temp        u:object_r:sysfs_batteryinfo:s0
+/sys/devices/f9964000\.i2c/i2c-8/8-0048/temp1_input                      u:object_r:sysfs_batteryinfo:s0
 
 # Context for mpdecision
 /sys/module/msm_thermal/core_control/cpus_offlined              u:object_r:sysfs_mpdecision:s0
