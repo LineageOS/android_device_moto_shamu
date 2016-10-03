@@ -32,7 +32,7 @@ LOCAL_SRC_FILES := mm_jpeg_test.c
 
 LOCAL_32_BIT_ONLY := true
 LOCAL_MODULE           := mm-jpeg-interface-test
-LOCAL_SHARED_LIBRARIES := libcutils libdl libmmjpeg_interface
+LOCAL_SHARED_LIBRARIES := liblog libcutils libdl libmmjpeg_interface
 
 include $(BUILD_EXECUTABLE)
 
@@ -69,7 +69,7 @@ LOCAL_SRC_FILES := mm_jpegdec_test.c
 
 LOCAL_32_BIT_ONLY := true
 LOCAL_MODULE           := mm-jpegdec-interface-test
-LOCAL_SHARED_LIBRARIES := libcutils libdl libmmjpeg_interface
+LOCAL_SHARED_LIBRARIES := liblog libcutils libdl libmmjpeg_interface
 
 include $(BUILD_EXECUTABLE)
 
