@@ -236,7 +236,7 @@ vendor/lib/libcne.so
 vendor/lib/libcneapiclient.so
 
 # Contacts adapter
--priv-app/BuaContactAdapter/BuaContactAdapter.apk
+-priv-app/BuaContactAdapter/BuaContactAdapter.apk:PRESIGNED
 
 # Diagnostic
 bin/diag_klog
@@ -261,7 +261,7 @@ lib/libdmjavaplugin.so
 lib/libdmengine.so:priv-app/DMService/lib/arm/libdmengine.so
 lib/libdmjavaplugin.so:priv-app/DMService/lib/arm/libdmjavaplugin.so
 -priv-app/DiagMon/DiagMon.apk
--priv-app/GCS/GCS.apk
+-priv-app/GCS/GCS.apk:PRESIGNED
 -priv-app/LifetimeData/LifetimeData.apk
 -priv-app/SprintDM/SprintDM.apk
 
@@ -290,7 +290,7 @@ vendor/firmware/widevine.b03
 vendor/firmware/widevine.mdt
 
 # Project Fi
--app/Tycho/Tycho.apk
+-app/Tycho/Tycho.apk:PRESIGNED
 
 # Graphics
 vendor/lib/egl/eglsubAndroid.so
@@ -345,11 +345,11 @@ etc/permissions/com.verizon.hardware.telephony.lte.xml
 etc/permissions/com.verizon.ims.xml
 etc/permissions/rcsimssettings.xml
 etc/permissions/rcsservice.xml
--framework/com.verizon.hardware.telephony.ehrpd.jar
--framework/com.verizon.hardware.telephony.lte.jar
--framework/com.verizon.ims.jar
--framework/rcsimssettings.jar
--framework/rcsservice.jar
+-framework/com.verizon.hardware.telephony.ehrpd.jar:PRESIGNED
+-framework/com.verizon.hardware.telephony.lte.jar:PRESIGNED
+-framework/com.verizon.ims.jar:PRESIGNED
+-framework/rcsimssettings.jar:PRESIGNED
+-framework/rcsservice.jar:PRESIGNED
 lib/libimscamera_jni.so
 lib/libimsmedia_jni.so
 vendor/lib/lib-dplmedia.so
@@ -448,12 +448,12 @@ bin/usbhub
 bin/usbhub_init
 
 # Vzw
--app/VZWAPNLib/VZWAPNLib.apk
+-app/VZWAPNLib/VZWAPNLib.apk:PRESIGNED
 etc/permissions/com.motorola.DirectedSMSProxy.xml
 etc/permissions/com.vzw.vzwapnlib.xml
 -priv-app/AppDirectedSMSProxy/AppDirectedSMSProxy.apk
--priv-app/MotoSignatureApp/MotoSignatureApp.apk
--priv-app/VZWAPNService/VZWAPNService.apk
+-priv-app/MotoSignatureApp/MotoSignatureApp.apk:PRESIGNED
+-priv-app/VZWAPNService/VZWAPNService.apk:PRESIGNED
 
 # Venus (media) firmware
 vendor/firmware/venus.b00
@@ -482,8 +482,8 @@ etc/firmware/vpu.mdt
 
 # Voice recognition
 etc/permissions/com.motorola.triggerenroll.xml
--priv-app/TriggerEnroll/TriggerEnroll.apk
--priv-app/TriggerTrainingService/TriggerTrainingService.apk
+-priv-app/TriggerEnroll/TriggerEnroll.apk:PRESIGNED
+-priv-app/TriggerTrainingService/TriggerTrainingService.apk:PRESIGNED
 lib/librecoglib.so
 lib/libsupermodel.so
 lib/libtrainingcheck.so
