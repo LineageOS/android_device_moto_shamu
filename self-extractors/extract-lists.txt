@@ -137,7 +137,6 @@
             system/bin/qmuxd \
             system/bin/qseecomd \
             system/bin/radish \
-            system/bin/rundiag \
             system/bin/sensors.qcom \
             system/bin/test_diag \
             system/bin/thermal-engine \

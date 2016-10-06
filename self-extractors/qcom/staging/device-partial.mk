@@ -44,7 +44,6 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/shamu/proprietary/qmuxd:system/bin/qmuxd:qcom \
     vendor/qcom/shamu/proprietary/qseecomd:system/bin/qseecomd:qcom \
     vendor/qcom/shamu/proprietary/radish:system/bin/radish:qcom \
-    vendor/qcom/shamu/proprietary/rundiag:system/bin/rundiag:qcom \
     vendor/qcom/shamu/proprietary/sensors.qcom:system/bin/sensors.qcom:qcom \
     vendor/qcom/shamu/proprietary/test_diag:system/bin/test_diag:qcom \
     vendor/qcom/shamu/proprietary/thermal-engine:system/bin/thermal-engine:qcom \
