@@ -352,6 +352,8 @@
 
 	<path name="deep-buffer-playback speaker-and-headphones">
 		<ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia1" value="1" />
+		<ctl name="BOOST_STUB Right Mixer right MM_DL1" value="1" />
+		<ctl name="BOOST_STUB Left Mixer left MM_DL1" value="1" />
 		<ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia1" value="1" />
 	</path>
 
@@ -401,6 +403,8 @@
 
 	<path name="low-latency-playback speaker-and-headphones">
 		<ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+		<ctl name="BOOST_STUB Right Mixer right MM_DL5" value="1" />
+		<ctl name="BOOST_STUB Left Mixer left MM_DL5" value="1" />
 		<ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia5" value="1" />
 	</path>
 
@@ -438,6 +442,8 @@
 
 	<path name="compress-offload-playback speaker-and-headphones">
 		<ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia4" value="1" />
+		<ctl name="BOOST_STUB Right Mixer right MM_DL4" value="1" />
+		<ctl name="BOOST_STUB Left Mixer left MM_DL4" value="1" />
 		<ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia4" value="1" />
 	</path>
 
