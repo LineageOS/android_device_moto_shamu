@@ -130,4 +130,10 @@ USE_CLANG_PLATFORM_BUILD := true
 # Disable dex-preopt of prebuilts to save space.
 DONT_DEXPREOPT_PREBUILTS := true
 
+# CMHW
+BOARD_USES_CYANOGEN_HARDWARE := true
+BOARD_HARDWARE_CLASS := \
+    hardware/cyanogen/cmhw   \
+    device/moto/shamu/cmhw
+
 -include vendor/motorola/shamu/BoardConfigVendor.mk
