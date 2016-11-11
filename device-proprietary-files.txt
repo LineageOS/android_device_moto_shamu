@@ -279,7 +279,6 @@ vendor/lib/librpmb.so
 vendor/lib/libssd.so
 vendor/lib/libwvdrm_L1.so
 vendor/lib/libwvm.so
-vendor/lib/libWVphoneAPI.so
 vendor/lib/libWVStreamControlAPI_L1.so
 
 # DRM firmware
@@ -353,8 +352,6 @@ etc/permissions/rcsservice.xml
 lib/libimscamera_jni.so
 lib/libimsmedia_jni.so
 vendor/lib/lib-dplmedia.so
-vendor/lib/lib-ims-setting-jni.so
-vendor/lib/lib-ims-settings.so
 vendor/lib/lib-imsSDP.so
 vendor/lib/lib-imsdpl.so
 vendor/lib/lib-imsqimf.so
