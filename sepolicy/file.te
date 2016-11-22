@@ -45,3 +45,6 @@ type sysfs_capsense_update, fs_type, sysfs_type;
 type sysfs_sar_wifi, fs_type, sysfs_type;
 
 type sysfs_socinfo, sysfs_type, fs_type, mlstrustedobject;
+
+#type for devstart
+type sysfs_audio, sysfs_type, fs_type;

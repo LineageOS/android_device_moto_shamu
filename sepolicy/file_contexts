@@ -107,7 +107,6 @@
 /dev/socket/qmux_bluetooth(/.*)?       u:object_r:qmuxd_socket:s0
 /dev/socket/qmux_gps(/.*)?             u:object_r:qmuxd_socket:s0
 /dev/socket/qmux_radio(/.*)?           u:object_r:qmuxd_socket:s0
-
 /dev/v4l-subdev[0-9]*           u:object_r:video_device:s0
 
 # Persist firmware filesystem
@@ -139,6 +138,9 @@
 /system/bin/time_daemon         u:object_r:time_exec:s0
 /system/bin/tcmd_mini           u:object_r:tcmd_exec:s0
 /system/bin/ATFWD-daemon        u:object_r:atfwd_exec:s0
+
+/system/vendor/bin/init\.qcom\.devstart\.sh            u:object_r:init-qcom-devstart-sh_exec:s0
+/system/vendor/bin/init\.qcom\.devwait\.sh             u:object_r:init-qcom-devwait-sh_exec:s0
 
 # Bluetooth
 /sys/class/rfkill/rfkill0/state u:object_r:sysfs_bluetooth_writable:s0
@@ -198,3 +200,6 @@
 # Sysfs files used by gralloc hal
 /sys/devices/virtual/graphics/fb[0-1]/msm_.*        u:object_r:sysfs_hal_gralloc:s0
 /sys/devices/fd900000.qcom,mdss_mdp/caps            u:object_r:sysfs_hal_gralloc:s0
+
+# Sysfs entry for audio
+/sys/kernel/boot_adsp/boot         u:object_r:sysfs_audio:s0

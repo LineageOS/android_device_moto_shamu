@@ -83,6 +83,10 @@ on late-fs
     write /sys/block/mmcblk0/queue/read_ahead_kb 2048
     write /sys/block/dm-0/queue/read_ahead_kb 2048
 
+on post-fs
+    # Start devices by sysfs trigger
+    start devstart_sh
+
 on post-fs-data
     mkdir /tombstones/modem 0771 system system
     mkdir /tombstones/lpass 0771 system system
@@ -192,8 +196,6 @@ on early-boot
     # Allow subsystem (modem etc) debugging
     # write /sys/module/subsystem_restart/parameters/enable_debug ${persist.sys.ssr.enable_debug}
 
-    write /sys/kernel/boot_adsp/boot 1
-
     # Subsytem Restart
     #venus
     write /sys/bus/msm_subsys/devices/subsys0/restart_level "related"
@@ -207,6 +209,9 @@ on early-boot
     #esoc0 (mdm)
     write /sys/bus/msm_subsys/devices/subsys3/restart_level "related"
     write /sys/bus/msm_subsys/devices/subsys3/recovery_policy "skip_restart"
+
+    # Busy loop to wait for devices booted by devstart_sh just in case device not ready
+    exec - root root system -- /vendor/bin/init.qcom.devwait.sh
 
 on boot
     chown bluetooth bluetooth /sys/module/bluetooth_power/parameters/power
@@ -556,3 +561,10 @@ service cnd /system/bin/cnd
     group system wifi inet radio wakelock net_admin
     socket cnd stream 660 root inet
     writepid /dev/cpuset/system-background/tasks
+
+service devstart_sh /vendor/bin/init.qcom.devstart.sh
+    class main
+    user root
+    group root system
+    disabled
+    oneshot
