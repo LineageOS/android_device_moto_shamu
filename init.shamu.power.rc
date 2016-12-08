@@ -85,3 +85,6 @@ on property:dev.bootcomplete=1
 
     # i/o scheduler
     setprop sys.io.scheduler "bfq"
+
+    # Set idle GPU to 240 Mhz
+    write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 4
