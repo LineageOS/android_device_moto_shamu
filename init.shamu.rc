@@ -131,6 +131,9 @@ on boot
     chown bluetooth bluetooth /sys/devices/platform/msm_serial_hs.0/clock
     chmod 0660 /sys/devices/platform/msm_serial_hs.0/clock
 
+    # Wifi firmware reload path
+    chown wifi wifi /sys/module/bcmdhd/parameters/firmware_path
+
     # add a cpuset for the camera daemon
     # we want all the cores for camera
     mkdir /dev/cpuset/camera-daemon
