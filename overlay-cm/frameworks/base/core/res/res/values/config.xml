@@ -75,9 +75,6 @@
     -->
     <bool name="config_enableWifiDisplay">true</bool>
 
-    <!-- enable doze powersaving mode -->
-    <bool name="config_enableAutoPowerModes">true</bool>
-
     <!-- set proper wifi power ratios -->
     <integer name="config_wifi_idle_receive_cur_ma">1</integer>
     <integer name="config_wifi_active_rx_cur_ma">100</integer>
