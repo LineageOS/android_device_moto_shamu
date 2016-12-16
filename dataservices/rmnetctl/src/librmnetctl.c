@@ -131,7 +131,6 @@ static uint16_t rmnetctl_transact(rmnetctl_hndl_t *hndl,
 
 	response_buf = (uint8_t *)malloc(MAX_BUF_SIZE * sizeof(uint8_t));
 	if (!response_buf) {
-		free(request_buf);
 		return_code = RMNETCTL_API_ERR_RESPONSE_NULL;
 		break;
 	}
@@ -161,8 +160,6 @@ static uint16_t rmnetctl_transact(rmnetctl_hndl_t *hndl,
 			(struct sockaddr*)saddr_ptr,
 			sizeof(struct sockaddr_nl)) < 0) {
 		return_code = RMNETCTL_API_ERR_MESSAGE_SEND;
-		free(request_buf);
-		free(response_buf);
 		break;
 	}
 
@@ -175,8 +172,6 @@ static uint16_t rmnetctl_transact(rmnetctl_hndl_t *hndl,
 			&addrlen);
 	if (bytes_read < 0) {
 		return_code = RMNETCTL_API_ERR_MESSAGE_RECEIVE;
-		free(request_buf);
-		free(response_buf);
 		break;
 	}
 
@@ -184,15 +179,11 @@ static uint16_t rmnetctl_transact(rmnetctl_hndl_t *hndl,
 	sizeof(struct rmnet_nl_msg_s));
 	if (sizeof(*response) < sizeof(struct rmnet_nl_msg_s)) {
 		return_code = RMNETCTL_API_ERR_RESPONSE_NULL;
-		free(request_buf);
-		free(response_buf);
 		break;
 	}
 
 	if (request->message_type != response->message_type) {
 		return_code = RMNETCTL_API_ERR_MESSAGE_TYPE;
-		free(request_buf);
-		free(response_buf);
 		break;
 	}
 	return_code = RMNETCTL_SUCCESS;
