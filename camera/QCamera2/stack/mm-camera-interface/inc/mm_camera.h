@@ -48,6 +48,8 @@
 #define MM_CAMERA_DEV_OPEN_TRIES 20
 #define MM_CAMERA_DEV_OPEN_RETRY_SLEEP 20
 
+#define WAIT_TIMEOUT_IN_SEC 5
+
 #ifndef TRUE
 #define TRUE 1
 #endif

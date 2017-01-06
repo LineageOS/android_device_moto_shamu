@@ -1576,11 +1576,26 @@ void mm_camera_util_wait_for_event(mm_camera_obj_t *my_obj,
                                    uint32_t evt_mask,
                                    int32_t *status)
 {
+    int32_t rc = 0;
+    struct timespec ts;
+
     pthread_mutex_lock(&my_obj->evt_lock);
     while (!(my_obj->evt_rcvd.server_event_type & evt_mask)) {
-        pthread_cond_wait(&my_obj->evt_cond, &my_obj->evt_lock);
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += WAIT_TIMEOUT_IN_SEC;
+        rc = pthread_cond_timedwait(&my_obj->evt_cond, &my_obj->evt_lock, &ts);
+        if (rc) {
+            ALOGE("%s: pthread_cond_timedwait of evt_mask 0x%x fails %d",
+                    __func__, evt_mask, rc);
+            break;
+        }
     }
-    *status = my_obj->evt_rcvd.status;
+    if (!rc) {
+        *status = my_obj->evt_rcvd.status;
+    } else {
+        *status = MSM_CAMERA_STATUS_FAIL;
+    }
+
     /* reset local storage for recieved event for next event */
     memset(&my_obj->evt_rcvd, 0, sizeof(mm_camera_event_t));
     pthread_mutex_unlock(&my_obj->evt_lock);

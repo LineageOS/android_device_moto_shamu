@@ -30,7 +30,6 @@ system/bin/qmuxd:qcom
 system/bin/qseecomd:qcom
 system/bin/radish:qcom
 system/bin/ramdump:moto
-system/bin/rundiag:qcom
 system/bin/sensors.qcom:qcom
 system/bin/tcmd_mini:moto
 system/bin/test_diag:qcom
