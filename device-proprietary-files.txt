@@ -491,3 +491,6 @@ vendor/firmware/aonvr2.bin
 
 # WiFi
 vendor/firmware/bcm20795_firmware.ncd
+
+#Carrier Services
+-priv-app/CarrierServices/CarrierServices.apk:priv-app/CarrierServices/CarrierServices.apk:PRESIGNED
