@@ -430,5 +430,5 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.audio.fluence.speaker=false
 
 # OEM Unlock reporting
-ADDITIONAL_DEFAULT_PROPERTIES += \
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     ro.oem_unlock_supported=1
