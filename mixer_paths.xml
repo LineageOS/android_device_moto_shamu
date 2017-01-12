@@ -156,36 +156,8 @@
 	<ctl name="AFE_PCM_RX Audio Mixer MultiMedia5" value="0" />
 	<!-- usb headset end -->
 	<ctl name="BOOST ENABLE Spkr Left Prot" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right MM_DL1" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right MM_DL2" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right MM_DL3" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right MM_DL4" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right MM_DL5" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right MM_DL6" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right MM_DL7" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right MM_DL8" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right VOIP_DL" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right CS-VOICE_DL1" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right VOICE2_DL" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right VoLTE_DL" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right VOLTE_STUB_DL" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right VOICE_STUB_DL" value="0" />
-	<ctl name="BOOST_STUB Right Mixer right VOICE2_STUB_DL" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left MM_DL1" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left MM_DL2" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left MM_DL3" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left MM_DL4" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left MM_DL5" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left MM_DL6" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left MM_DL7" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left MM_DL8" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left VOIP_DL" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left CS-VOICE_DL1" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left VOICE2_DL" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left VoLTE_DL" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left VOLTE_STUB_DL" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left VOICE_STUB_DL" value="0" />
-	<ctl name="BOOST_STUB Left Mixer left VOICE2_STUB_DL" value="0" />
+	<ctl name="BOOST_STUB Right Mixer right" value="0" />
+	<ctl name="BOOST_STUB Left Mixer left" value="0" />
 	<ctl name="BOOST earpiece mode" value="Off" />
 	<ctl name="QUAT_MI2S_RX Channels" value="One" />
 	<ctl name="BOOST Left Ch Select" value="1" />
@@ -342,8 +314,6 @@
 
 	<path name="deep-buffer-playback speaker">
 		<ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia1" value="1" />
-		<ctl name="BOOST_STUB Right Mixer right MM_DL1" value="1" />
-		<ctl name="BOOST_STUB Left Mixer left MM_DL1" value="1" />
 	</path>
 
 	<path name="deep-buffer-playback handset">
@@ -391,8 +361,6 @@
 
 	<path name="low-latency-playback speaker">
 		<ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia5" value="1" />
-		<ctl name="BOOST_STUB Right Mixer right MM_DL5" value="1" />
-		<ctl name="BOOST_STUB Left Mixer left MM_DL5" value="1" />
 	</path>
 
 	<path name="low-latency-playback handset">
@@ -428,8 +396,6 @@
 
 	<path name="compress-offload-playback speaker">
 		<ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia4" value="1" />
-		<ctl name="BOOST_STUB Right Mixer right MM_DL4" value="1" />
-		<ctl name="BOOST_STUB Left Mixer left MM_DL4" value="1" />
 	</path>
 
 	<path name="compress-offload-playback handset">
@@ -510,8 +476,6 @@
 		<ctl name="QUAT_MI2S_RX_Voice Mixer Voice Stub" value="1" />
 		<ctl name="Voice Stub Tx Mixer STUB_TX_HL" value="1" />
 		<ctl name="Voice Stub Tx Mixer STUB_1_TX_HL" value="1" />
-		<ctl name="BOOST_STUB Right Mixer right VOICE_STUB_DL" value="1" />
-		<ctl name="BOOST_STUB Left Mixer left VOICE_STUB_DL" value="1" />
 	</path>
 
 	<path name="voice-call speaker">
@@ -610,8 +574,6 @@
 		<ctl name="QUAT_MI2S_RX_Voice Mixer VoLTE Stub" value="1" />
 		<ctl name="VoLTE Stub Tx Mixer STUB_TX_HL" value="1" />
 		<ctl name="VoLTE Stub Tx Mixer STUB_1_TX_HL" value="1" />
-		<ctl name="BOOST_STUB Right Mixer right VOLTE_STUB_DL" value="1" />
-		<ctl name="BOOST_STUB Left Mixer left VOLTE_STUB_DL" value="1" />
 	</path>
 
 	<path name="volte-call speaker">
@@ -774,7 +736,9 @@
 		<!-- Select Right channel on Right IC bypass mode -->
 		<ctl name="BOOST Right Ch Select" value="2" />
 		<!-- Enable Mixers to power up Left and Right IC's -->
-		<path name="speaker-gain-default" />
+		<ctl name="BOOST_STUB Right Mixer right" value="1" />
+		<ctl name="BOOST_STUB Left Mixer left" value="1" />
+                <path name="speaker-gain-default" />
 	</path>
 
 	<path name="speaker-reverse">
@@ -785,6 +749,9 @@
 		<ctl name="BOOST Left Ch Select" value="2" />
 		<!-- Select Right channel on Right IC bypass mode -->
 		<ctl name="BOOST Right Ch Select" value="1" />
+		<!-- Enable Mixers to power up Left and Right IC's -->
+		<ctl name="BOOST_STUB Right Mixer right" value="1" />
+		<ctl name="BOOST_STUB Left Mixer left" value="1" />
 	</path>
 
 	<path name="speaker-safe">
@@ -792,7 +759,8 @@
 		<!-- Select mono channel on Right IC -->
 		<ctl name="BOOST Right Ch Select" value="3" />
 		<!-- Enable Mixers to power up Right IC only -->
-		<path name="speaker-safe-gain-default" />
+		<ctl name="BOOST_STUB Right Mixer right" value="1" />
+                <path name="speaker-safe-gain-default" />
 	</path>
 
 	<path name="speaker-mic">
@@ -812,6 +780,9 @@
 	<path name="handset">
 		<!-- Enable earpiece mode this toggles gpio -->
 		<ctl name="BOOST earpiece mode" value="On" />
+		<!-- Enable Mixer to power up Left IC -->
+		<ctl name="BOOST_STUB Left Mixer left" value="1" />
+		<ctl name="BOOST_STUB Right Mixer right" value="0" />
 		<!-- select (l + r)/2 -->
 		<ctl name="BOOST Left Ch Select" value="3" />
 		<!-- bypass dsp -->
@@ -886,6 +857,9 @@
 	<path name="voice-speaker">
 		<!-- Disable earpiece mode -->
 		<ctl name="BOOST earpiece mode" value="Off" />
+		<!-- Enable Mixer to power up Left IC -->
+		<ctl name="BOOST_STUB Left Mixer left" value="1" />
+		<ctl name="BOOST_STUB Right Mixer right" value="0" />
 		<!-- select (l + r)/2 -->
 		<ctl name="BOOST Left Ch Select" value="3" />
 	</path>
@@ -915,23 +889,25 @@
 		<ctl name="BOOST earpiece mode" value="Off" />
 		<ctl name="BOOST Left Ch Select" value="3" />
 		<ctl name="BOOST Right Ch Select" value="3" />
-		<path name="spkr-gain-in-headphone-combo" />
+		<ctl name="BOOST_STUB Right Mixer right" value="1" />
+		<ctl name="BOOST_STUB Left Mixer left" value="1" />
+                <path name="spkr-gain-in-headphone-combo" />
 	</path>
 
 	<path name="speaker-safe-and-headphones">
 		<path name="speaker-safe" />
 		<path name="headphones" />
-		<path name="spkr-safe-gain-in-headphone-combo" />
+                <path name="spkr-safe-gain-in-headphone-combo" />
 	</path>
 
 	<path name="speaker-and-line">
 		<path name="speaker-and-headphones" />
-		<path name="spkr-gain-in-line-combo" />
+                <path name="spkr-gain-in-line-combo" />
 	</path>
 
 	<path name="speaker-safe-and-line">
 		<path name="speaker-safe-and-headphones" />
-		<path name="spkr-safe-gain-in-line-combo" />
+                <path name="spkr-safe-gain-in-line-combo" />
 	</path>
 
 	<path name="voice-rec-mic">
