@@ -118,6 +118,10 @@ PRODUCT_PACKAGES := \
     wpa_supplicant \
     wpa_supplicant.conf
 
+# Bluetooth HAL
+PRODUCT_PACKAGES += \
+    android.hardware.bluetooth@1.0-impl
+
 PRODUCT_PACKAGES += atmel.fw.apq8084
 
 # OEM Package for RIL
