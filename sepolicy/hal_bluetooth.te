@@ -1,0 +1,2 @@
+allow hal_bluetooth sysfs:file rw_file_perms;
+allow hal_bluetooth sysfs_usb:file w_file_perms;
