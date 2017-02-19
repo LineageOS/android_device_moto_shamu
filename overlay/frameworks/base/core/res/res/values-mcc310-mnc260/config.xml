@@ -63,6 +63,4 @@
     <string-array translatable="false" name="config_tether_apndata">
         <item>T-Mobile Tethering,pcweb.tmobile.com,,,,,,,,,310,260,,DUN</item>
     </string-array>
-
 </resources>
-

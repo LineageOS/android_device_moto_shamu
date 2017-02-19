@@ -2,10 +2,11 @@
 <!--
 /*
 ** Copyright 2013, The Android Open Source Project
+** Copyright 2017-2018, The LineageOS Project
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
-** You my obtain a copy of the License at
+** You may obtain a copy of the License at
 **
 **     http://www.apache.org/licenses/LICENSE-2.0
 **
@@ -30,5 +31,14 @@
       <item>7</item>
       <item>9</item>
     </integer-array>
-</resources>
 
+    <!-- Values for GPS configuration (TELUS) -->
+    <string-array translatable="false" name="config_gpsParameters">
+        <item>NTP_SERVER=north-america.pool.ntp.org</item>
+        <item>SUPL_ES=0</item>
+        <item>SUPL_HOST=supl.telusmobility.com</item>
+        <item>SUPL_PORT=7275</item>
+        <item>SUPL_MODE=1</item>
+        <item>LPP_PROFILE=2</item>
+    </string-array>
+</resources>
