@@ -304,10 +304,10 @@ static void power_hint( __attribute__((unused)) struct power_module *module,
             process_video_encode_hint(data);
             break;
         case POWER_HINT_SET_PROFILE:
-            set_power_profile((int)data);
+            set_power_profile(*(int32_t *)data);
             break;
         case POWER_HINT_LOW_POWER:
-            if ((int)data == 1)
+            if (*(int32_t *)data == 1)
                 set_power_profile(PROFILE_POWER_SAVE);
             else
                 set_power_profile(PROFILE_BALANCED);
