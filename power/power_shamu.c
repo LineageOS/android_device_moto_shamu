@@ -293,6 +293,7 @@ static void power_hint( __attribute__((unused)) struct power_module *module,
 {
     switch (hint) {
         case POWER_HINT_INTERACTION:
+        case POWER_HINT_LAUNCH:
             if (current_power_profile == PROFILE_POWER_SAVE)
                 return;
             ALOGV("POWER_HINT_INTERACTION");
