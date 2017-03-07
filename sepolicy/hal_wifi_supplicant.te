@@ -1,2 +1,2 @@
 # permission for wpa socket which IMS use to communicate
-allow wpa ims:unix_dgram_socket sendto;
+allow hal_wifi_supplicant ims:unix_dgram_socket sendto;

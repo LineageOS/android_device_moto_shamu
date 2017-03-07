@@ -59,4 +59,4 @@ allow ims wpa_socket:dir rw_dir_perms;
 
 allow ims wifi_data_file:dir r_dir_perms;
 
-unix_socket_send(ims, wpa, wpa)
+unix_socket_send(ims, wpa, hal_wifi_supplicant_server)
