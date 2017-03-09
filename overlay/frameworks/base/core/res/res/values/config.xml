@@ -345,4 +345,10 @@
 
     <!-- True if Unprocessed audio source supports the required frequency range and level -->
     <bool name="config_supportAudioSourceUnprocessed">true</bool>
+
+    <!-- Default list of files pinned by the Pinner Service -->
+    <string-array translatable="false" name="config_defaultPinnerServiceFiles">
+        <item>"/data/dalvik-cache/arm/system@framework@boot.oat"</item>
+        <item>"/data/dalvik-cache/arm/system@framework@services.jar@classes.dex"</item>
+   </string-array>
 </resources>
