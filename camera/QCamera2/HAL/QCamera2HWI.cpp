@@ -35,7 +35,6 @@
 #include <stdlib.h>
 #include <utils/Errors.h>
 #include <gralloc_priv.h>
-#include <gui/Surface.h>
 
 #include "QCamera2HWI.h"
 #include "QCameraMem.h"
