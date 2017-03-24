@@ -8,7 +8,7 @@ init_daemon_domain(camera)
 # Interact with other media devices
 allow camera camera_device:dir search;
 allow camera { camera_device gpu_device video_device }:chr_file rw_file_perms;
-allow camera { audioserver cameraserver surfaceflinger mediaserver }:fd use;
+allow camera { audioserver cameraserver surfaceflinger mediaserver hal_graphics_allocator }:fd use;
 
 # Connect to sensor socket (/dev/sensor/sensor_ctl_socket)
 unix_socket_connect(camera, sensors, sensors)
