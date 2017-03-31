@@ -120,6 +120,7 @@ PRODUCT_PACKAGES := \
 
 # Bluetooth HAL
 PRODUCT_PACKAGES += \
+    libbt-vendor \
     android.hardware.bluetooth@1.0-impl
 
 PRODUCT_PACKAGES += atmel.fw.apq8084
