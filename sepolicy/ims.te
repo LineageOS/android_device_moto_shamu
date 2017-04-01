@@ -44,6 +44,7 @@ allow ims shell_exec:file rx_file_perms;
 
 # Runs /system/bin/ndc
 allow ims system_file:file rx_file_perms;
+allow ims vendor_file_type:file rx_file_perms;
 
 # XXX Run toolbox.  Might not be needed.
 allow ims toolbox_exec:file rx_file_perms;
