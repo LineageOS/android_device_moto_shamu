@@ -145,4 +145,7 @@ BOARD_HARDWARE_CLASS := \
 # Recovery
 LZMA_RAMDISK_TARGETS := recovery
 
+# Device manifest
+DEVICE_MANIFEST_FILE := device/moto/shamu/manifest.xml
+
 -include vendor/motorola/shamu/BoardConfigVendor.mk
