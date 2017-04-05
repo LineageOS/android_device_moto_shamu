@@ -215,6 +215,10 @@ PRODUCT_PACKAGES += \
     libxml2 \
     qmi_motext_hook
 
+# RRO
+PRODUCT_ENFORCE_RRO_TARGETS := \
+    framework-res
+
 # SEC config
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/sec_config:$(TARGET_COPY_OUT_VENDOR)/etc/sec_config
