@@ -65,7 +65,6 @@ on fs
 on late-fs
     # Start services for bootanim
     start hwservicemanager
-    start servicemanager
     start surfaceflinger
     start bootanim
     start hwcomposer-2-1
