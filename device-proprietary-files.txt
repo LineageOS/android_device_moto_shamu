@@ -140,6 +140,7 @@ vendor/lib/libchromatix_imx214_preview.so
 vendor/lib/libchromatix_imx214_snapshot_hdr.so
 vendor/lib/libchromatix_imx214_snapshot.so
 vendor/lib/libchromatix_imx214_video_hdr.so
+vendor/lib/libfrsdk.so
 vendor/lib/libjpegehw.so
 vendor/lib/libmmcamera2_c2d_module.so
 vendor/lib/libmmcamera2_cpp_module.so
