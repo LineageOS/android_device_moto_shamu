@@ -341,22 +341,26 @@ service qmuxd /system/bin/qmuxd
     class main
     user radio
     group radio audio bluetooth wakelock gps
+    writepid /dev/cpuset/system-background/tasks
 
 service netmgrd /system/bin/netmgrd
     class main
     group radio
+    writepid /dev/cpuset/system-background/tasks
 
 service imsqmidaemon /system/bin/imsqmidaemon
     class main
     user system
     socket ims_qmid stream 0660 system radio
     group radio log
+    writepid /dev/cpuset/system-background/tasks
 
 service imsdatadaemon /system/bin/imsdatadaemon
     class main
     user root
     socket ims_datad stream 0660 system radio
     group system wifi radio inet log readproc
+    writepid /dev/cpuset/system-background/tasks
     disabled
 
 on property:sys.ims.QMI_DAEMON_STATUS=1
@@ -401,6 +405,7 @@ service p2p_supplicant /system/bin/wpa_supplicant \
     socket wpa_wlan0 dgram 660 wifi wifi
     disabled
     oneshot
+    writepid /dev/cpuset/system-background/tasks
 
 service wpa_supplicant /system/bin/wpa_supplicant \
     -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
@@ -440,6 +445,7 @@ service charger /charger
     class charger
     group log
     seclabel u:r:healthd:s0
+    writepid /dev/cpuset/system-background/tasks
 
 # Allow usb charging to be disabled peristently
 on property:persist.usb.chgdisabled=1
@@ -452,6 +458,7 @@ service qseecomd /system/bin/qseecomd
    class core
    user root
    group root
+   writepid /dev/cpuset/system-background/tasks
 
 service mpdecision /system/bin/mpdecision --avg_comp
    class main
@@ -469,11 +476,13 @@ service thermal-engine /system/bin/thermal-engine
    class main
    user root
    group root
+   writepid /dev/cpuset/system-background/tasks
 
 service time_daemon /system/bin/time_daemon
    class late_start
    user root
    group root
+   writepid /dev/cpuset/system-background/tasks
 
 on property:init.svc.bootanim=stopped
     start usf-post-boot
@@ -531,3 +540,4 @@ service atfwd /system/bin/ATFWD-daemon
 service cnd /system/bin/cnd
     class late_start
     socket cnd stream 660 root inet
+    writepid /dev/cpuset/system-background/tasks
