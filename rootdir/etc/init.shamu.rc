@@ -1,6 +1,6 @@
 #
 # Copyright 2014 (C) The Android Open Source Project
-# Copyright 2018 (C) The LineageOS Project
+# Copyright 2018-2019 (C) The LineageOS Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 
-import init.shamu.usb.rc
-import init.shamu.power.rc
+import /system/vendor/etc/init/hw/init.shamu.usb.rc
+import /system/vendor/etc/init/hw/init.shamu.power.rc
 
 on early-init
     mkdir /firmware 0771 system system
