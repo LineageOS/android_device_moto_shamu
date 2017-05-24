@@ -101,6 +101,7 @@ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_FLASH_BLOCK_SIZE := 131072
 
 BOARD_CHARGER_ENABLE_SUSPEND := true
+BACKLIGHT_PATH := /sys/class/leds/lcd-backlight/brightness
 
 TARGET_RECOVERY_FSTAB = device/moto/shamu/fstab.shamu
 # Ensure f2fstools are built
