@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The LineageOS Project
+ * Copyright (C) 2017-2020 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,19 +32,23 @@
 namespace android {
 namespace hardware {
 namespace vibrator {
-namespace V1_0 {
+namespace V1_1 {
 namespace implementation {
 
 static constexpr int MAX_VOLTAGE = 127;
 static constexpr int MIN_VOLTAGE = 32;
 
-static constexpr uint32_t CLICK_TIMING_MS = 20;
+static constexpr uint32_t CLICK_TIMING_MS = 40;
+static constexpr uint32_t TICK_TIMING_MS = 20;
+
+using Status = ::android::hardware::vibrator::V1_0::Status;
+using EffectStrength = ::android::hardware::vibrator::V1_0::EffectStrength;
 
 Vibrator::Vibrator(std::ofstream&& enable, std::ofstream&& amplitude) :
         mEnable(std::move(enable)),
         mAmplitude(std::move(amplitude)) {}
 
-// Methods from ::android::hardware::vibrator::V1_0::IVibrator follow.
+// Methods from ::android::hardware::vibrator::V1_1::IVibrator follow.
 Return<Status> Vibrator::on(uint32_t timeout_ms) {
     mEnable << timeout_ms << std::endl;
     if (!mEnable) {
@@ -84,25 +88,29 @@ Return<Status> Vibrator::setAmplitude(uint8_t amplitude) {
     return Status::OK;
 }
 
+static uint8_t convertEffectStrength(EffectStrength strength) {
+    uint8_t amplitude;
+
+    switch (strength) {
+    case EffectStrength::LIGHT:
+        amplitude = 194;
+        break;
+    case EffectStrength::MEDIUM:
+        amplitude = 208;
+        break;
+    default:
+    case EffectStrength::STRONG:
+        amplitude = 255;
+        break;
+    }
+
+    return amplitude;
+}
+
 Return<void> Vibrator::perform(Effect effect, EffectStrength strength, perform_cb _hidl_cb) {
     if (effect == Effect::CLICK) {
-        uint8_t amplitude;
-        switch (strength) {
-        case EffectStrength::LIGHT:
-            amplitude = 194;
-            break;
-        case EffectStrength::MEDIUM:
-            amplitude = 208;
-            break;
-        case EffectStrength::STRONG:
-            amplitude = 255;
-            break;
-        default:
-            _hidl_cb(Status::UNSUPPORTED_OPERATION, 0);
-            return Void();
-        }
         on(CLICK_TIMING_MS);
-        setAmplitude(amplitude);
+        setAmplitude(convertEffectStrength(strength));
         _hidl_cb(Status::OK, CLICK_TIMING_MS);
     } else {
         _hidl_cb(Status::UNSUPPORTED_OPERATION, 0);
@@ -110,8 +118,23 @@ Return<void> Vibrator::perform(Effect effect, EffectStrength strength, perform_c
     return Void();
 }
 
+Return<void> Vibrator::perform_1_1(Effect_1_1 effect, EffectStrength strength,
+        perform_cb _hidl_cb) {
+    if (effect == Effect_1_1::TICK) {
+        on(TICK_TIMING_MS);
+        setAmplitude(convertEffectStrength(strength));
+        _hidl_cb(Status::OK, TICK_TIMING_MS);
+        return Void();
+    } else if (effect < Effect_1_1::TICK) {
+        return perform(static_cast<Effect>(effect), strength, _hidl_cb);
+    } else {
+        _hidl_cb(Status::UNSUPPORTED_OPERATION, 0);
+        return Void();
+    }
+}
+
 } // namespace implementation
-}  // namespace V1_0
+}  // namespace V1_1
 }  // namespace vibrator
 }  // namespace hardware
 }  // namespace android

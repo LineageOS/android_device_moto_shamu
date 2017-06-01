@@ -107,7 +107,7 @@ PRODUCT_PACKAGES += \
 
 # Vibrator
 PRODUCT_PACKAGES += \
-    android.hardware.vibrator@1.0-service.shamu
+    android.hardware.vibrator@1.1-service.shamu
 
 # Wi-Fi
 PRODUCT_PACKAGES += \
