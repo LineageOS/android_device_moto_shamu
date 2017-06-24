@@ -348,17 +348,6 @@ endif
 # Enable for volte call
 AUDIO_FEATURE_ENABLED_MULTI_VOICE_SESSIONS := true
 
-# In userdebug, add minidebug info the the boot image and the system server to support
-# diagnosing native crashes.
-ifneq (,$(filter userdebug, $(TARGET_BUILD_VARIANT)))
-    # Boot image.
-    PRODUCT_DEX_PREOPT_BOOT_FLAGS += --generate-mini-debug-info
-    # System server and some of its services.
-    # Note: we cannot use PRODUCT_SYSTEM_SERVER_JARS, as it has not been expanded at this point.
-    $(call add-product-dex-preopt-module-config,services,--generate-mini-debug-info)
-    $(call add-product-dex-preopt-module-config,wifi-service,--generate-mini-debug-info)
-endif
-
 PRODUCT_PROPERTY_OVERRIDES += \
    dalvik.vm.heapgrowthlimit=256m
 
