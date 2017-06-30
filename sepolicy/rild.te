@@ -31,6 +31,9 @@ allow rild fsg_file:file r_file_perms;
 allow rild audioserver_service:service_manager find;
 allow rild mediaserver_service:service_manager find;
 
+# rild needs 'lock' for /vendor/qcril.db
+allow rild vendor_file:file { lock };
+
 # whitelist qualcomm specific ioctls
 allow rild self:socket ioctl;
 allowxperm rild self:socket ioctl msm_sock_ipc_ioctls;
