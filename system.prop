@@ -23,6 +23,7 @@ persist.camera.mct.debug.mask=1
 persist.camera.sensor.debug=0
 
 # Display
+debug.hwui.use_buffer_age=false
 ro.opengles.version=196610
 ro.sf.lcd_density=560
 persist.hwc.mdpcomp.enable=true
