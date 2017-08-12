@@ -375,6 +375,9 @@ vendor/firmware/keymaster/keymaster.b02
 vendor/firmware/keymaster/keymaster.b03
 vendor/firmware/keymaster/keymaster.mdt
 
+# NFC firmware
+vendor/firmware/bcm20795_firmware.ncd
+
 # Perf
 bin/mpdecision
 
@@ -491,7 +494,9 @@ vendor/firmware/aonvr1.bin
 vendor/firmware/aonvr2.bin
 
 # WiFi
-vendor/firmware/bcm20795_firmware.ncd
+vendor/firmware/fw_bcmdhd.bin
+vendor/firmware/fw_bcmdhd_apsta.bin
+vendor/firmware/bcm4354A2.hcd
 
 #Carrier Services
 -priv-app/CarrierServices/CarrierServices.apk:priv-app/CarrierServices/CarrierServices.apk:PRESIGNED
