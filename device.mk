@@ -87,7 +87,7 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/init.mmi.touch.sh:system/bin/init.mmi.touch.sh
 
 # Add WiFi Firmware
-$(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4356/device-bcm.mk)
+#$(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4356/device-bcm.mk)
 
 # WiFi cal NVRAM file
 PRODUCT_COPY_FILES += \
