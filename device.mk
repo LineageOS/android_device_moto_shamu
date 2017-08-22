@@ -149,6 +149,7 @@ PRODUCT_PACKAGES += \
     libOmxVdecHevc \
     libOmxVenc
 
+# Audio
 PRODUCT_PACKAGES += \
     audio.primary.msm8084 \
     audio.a2dp.default \
@@ -172,6 +173,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Audio effects
 PRODUCT_PACKAGES += \
+    libqcompostprocbundle \
     libqcomvisualizer \
     libqcomvoiceprocessing \
     libqcomvoiceprocessingdescriptors
