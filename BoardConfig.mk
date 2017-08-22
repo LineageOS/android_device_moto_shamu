@@ -85,7 +85,9 @@ TARGET_NO_RPC := true
 
 TARGET_BOARD_INFO_FILE := device/moto/shamu/board-info.txt
 
-USE_OPENGL_RENDERER := true
+TARGET_USES_GRALLOC1 := true
+TARGET_USES_HWC2 := true
+TARGET_USES_NEW_ION_API :=true
 TARGET_USES_ION := true
 TARGET_HW_DISK_ENCRYPTION := false
 TARGET_CRYPTFS_HW_PATH := device/moto/shamu/cryptfs_hw
@@ -117,7 +119,6 @@ BOARD_SEPOLICY_DIRS += device/moto/shamu/sepolicy
 
 HAVE_ADRENO_SOURCE:= false
 
-OVERRIDE_RS_DRIVER:= libRSDriver_adreno.so
 TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
 
 BOARD_VENDOR_QCOM_GPS_LOC_API_HARDWARE := $(TARGET_BOARD_PLATFORM)
@@ -135,6 +136,10 @@ TARGET_FS_CONFIG_GEN += device/moto/shamu/config.fs
 
 # Disable dex-preopt of prebuilts to save space.
 DONT_DEXPREOPT_PREBUILTS := true
+
+# Render
+OVERRIDE_RS_DRIVER := libRSDriver_adreno.so
+USE_OPENGL_RENDERER := true
 
 # CMHW
 BOARD_USES_CYANOGEN_HARDWARE := true
