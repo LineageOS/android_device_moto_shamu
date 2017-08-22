@@ -78,6 +78,10 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.opengles.aep.xml:system/etc/permissions/android.hardware.opengles.aep.xml \
     frameworks/native/data/etc/android.software.midi.xml:system/etc/permissions/android.software.midi.xml
 
+# HIDL
+PRODUCT_COPY_FILES += \
+    device/moto/shamu/manifest.xml:system/vendor/manifest.xml
+
 # For GPS
 PRODUCT_COPY_FILES += \
     device/moto/shamu/sec_config:system/etc/sec_config
