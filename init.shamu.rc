@@ -438,7 +438,7 @@ on charger
 service charger /charger
     class charger
     group log
-    seclabel u:r:healthd:s0
+    seclabel u:r:charger:s0
     writepid /dev/cpuset/system-background/tasks
 
 # Allow usb charging to be disabled peristently
