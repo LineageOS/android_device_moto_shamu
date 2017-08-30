@@ -18,6 +18,11 @@
 PRODUCT_PACKAGES += \
     android.hardware.bluetooth@1.0-impl
 
+# GNSS
+PRODUCT_PACKAGES += \
+    android.hardware.gnss@1.0-impl \
+    android.hardware.gnss@1.0-service
+
 # Wi-Fi
 PRODUCT_PACKAGES += \
     android.hardware.wifi@1.0-service
