@@ -201,10 +201,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libion
 
-# for launcher layout
-#PRODUCT_PACKAGES += \
-#    ShamuLayout
-
 PRODUCT_PACKAGES += \
     bdAddrLoader
 
