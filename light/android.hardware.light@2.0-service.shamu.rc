@@ -3,7 +3,7 @@ on early-boot
     chmod 664 /sys/class/leds/green/brightness
     chmod 664 /sys/class/leds/blue/brightness
 
-service light-hal-2-0 /vendor/bin/hw/android.hardware.light@2.0-service.shamu
+service vendor.light-hal-2-0 /vendor/bin/hw/android.hardware.light@2.0-service.shamu
     class hal
     user system
     group system
