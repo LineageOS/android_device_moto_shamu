@@ -70,6 +70,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.thermal@1.0-impl
 
+# Vibrator
+PRODUCT_PACKAGES += \
+    android.hardware.vibrator@1.0-service.shamu
+
 # Wi-Fi
 PRODUCT_PACKAGES += \
     android.hardware.wifi@1.0-service
