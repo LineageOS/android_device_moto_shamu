@@ -140,4 +140,7 @@ BOARD_USES_CYANOGEN_HARDWARE := true
 BOARD_HARDWARE_CLASS := \
     hardware/cyanogen/cmhw
 
+# Recovery
+LZMA_RAMDISK_TARGETS := recovery
+
 -include vendor/motorola/shamu/BoardConfigVendor.mk
