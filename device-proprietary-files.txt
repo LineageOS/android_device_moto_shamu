@@ -320,10 +320,6 @@ vendor/firmware/a420_pm4.fw
 
 # GPS
 etc/flp.conf
-lib/hw/gps.msm8084.so
-lib/libgps.utils.so
-lib/libloc_core.so
-lib/libloc_eng.so
 vendor/lib/hw/activity_recognition.msm8084.so
 vendor/lib/hw/flp.msm8084.so
 vendor/lib/libgeofence.so
