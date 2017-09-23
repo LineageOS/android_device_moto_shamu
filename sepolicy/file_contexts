@@ -1,5 +1,4 @@
 /data/cam_socket[23]           u:object_r:camera_socket:s0
-/data/diag_logs(/.*)?          u:object_r:diag_logs:s0
 /data/misc/radio(/.*)?         u:object_r:radio_data_file:s0
 /data/nfc(/.*)?                u:object_r:nfc_data_file:s0
 /data/time(/.*)?               u:object_r:time_data_file:s0
@@ -64,8 +63,6 @@
 /dev/qseecom                   u:object_r:tee_device:s0
 
 # Should only be on userdebug device
-/dev/diag                       u:object_r:diag_device:s0
-/dev/ttydiag2                   u:object_r:diag_device:s0
 /dev/ramdump_.*                 u:object_r:ramdump_device:s0
 
 # MSM camera related
