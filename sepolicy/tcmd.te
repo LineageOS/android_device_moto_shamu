@@ -10,9 +10,6 @@ net_domain(tcmd)
 # Allow restart, fastboot, power off
 set_prop(tcmd, powerctl_prop)
 
-# Uses /dev/ttydiag2
-allow tcmd diag_device:chr_file rw_file_perms;
-
 # Uses raw socket
 allow tcmd self:capability net_raw;
 
