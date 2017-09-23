@@ -1,5 +1,4 @@
 type adspd_device, dev_type;
-type diag_device, dev_type, mlstrustedobject;
 
 # eMMC rpmb - necessarily drm?
 type drm_block_device, dev_type;
