@@ -49,6 +49,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.keymaster@3.0-impl
 
+# Light
+PRODUCT_PACKAGES += \
+    android.hardware.light@2.0-service.shamu
+
 # NFC
 PRODUCT_PACKAGES += \
     android.hardware.nfc@1.0-impl-bcm \

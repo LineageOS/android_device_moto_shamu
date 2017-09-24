@@ -160,6 +160,7 @@
 /sys/devices/f9925000\.i2c/i2c-0/0-001c/power_supply/battery/cycle_count u:object_r:sysfs_batteryinfo:s0
 /sys/devices/f9925000\.i2c/i2c-0/0-001c/power_supply/battery/temp        u:object_r:sysfs_batteryinfo:s0
 /sys/devices/f9964000\.i2c/i2c-8/8-0048/temp1_input                      u:object_r:sysfs_batteryinfo:s0
+/sys/devices/fd900000.qcom,mdss_mdp/qcom,mdss_fb_primary.164/leds/lcd-backlight/brightness u:object_r:sysfs_leds:s0
 
 # Context for mpdecision
 /sys/module/msm_thermal/core_control/cpus_offlined              u:object_r:sysfs_mpdecision:s0
@@ -170,6 +171,9 @@
 /sys/devices/msm_hsic_host/host_ready                    u:object_r:sysfs_msm_hsic_host:s0
 
 /sys/devices/cycapsense_prog.1/cycapsense_fw             u:object_r:sysfs_capsense_update:s0
+/sys/devices/leds-qpnp-11/leds/red/brightness            u:object_r:sysfs_leds:s0
+/sys/devices/leds-qpnp-12/leds/green/brightness          u:object_r:sysfs_leds:s0
+/sys/devices/leds-qpnp-13/leds/blue/brightness           u:object_r:sysfs_leds:s0
 /sys/devices/mmi_sar_ctrl.[0-9]*/sar_wifi                u:object_r:sysfs_sar_wifi:s0
 
 # sysfs files used by wifi
@@ -184,3 +188,6 @@
 
 /dev/socket/cnd  u:object_r:cnd_socket:s0
 /system/bin/cnd  u:object_r:cnd_exec:s0
+
+# HALs
+/system/vendor/bin/hw/android\.hardware\.light@2\.0-service.shamu        u:object_r:hal_light_default_exec:s0

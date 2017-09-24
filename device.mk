@@ -201,9 +201,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libion
 
-PRODUCT_PACKAGES += \
-    lights.shamu
-
 # for launcher layout
 #PRODUCT_PACKAGES += \
 #    ShamuLayout
