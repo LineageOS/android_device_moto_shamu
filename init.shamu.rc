@@ -286,9 +286,6 @@ on boot
     chmod 0660 /dev/smd7
     chown bluetooth bluetooth /dev/smd7
 
-    #For bridgemgr daemon to inform the USB driver of the correct transport
-    chown radio radio /sys/class/android_usb/f_rmnet_smd_sdio/transport
-
 #   Assign TCP buffer thresholds to be ceiling value of technology maximums
 #   Increased technology maximums should be reflected here.
     write /proc/sys/net/core/rmem_max  8388608
@@ -355,11 +352,6 @@ service tcmd /system/bin/tcmd_mini
     user radio
     group radio net_raw net_admin
     disabled
-
-service bridgemgrd /system/bin/bridgemgrd
-    class late_start
-    user radio
-    group radio
 
 # QMUX must be in multiple groups to support external process connections
 service qmuxd /system/bin/qmuxd

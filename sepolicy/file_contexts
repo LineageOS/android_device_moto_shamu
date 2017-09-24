@@ -122,7 +122,6 @@
 #/system binaries
 /system/bin/adspd               u:object_r:adspd_exec:s0
 /system/bin/bdAddrLoader        u:object_r:bluetooth_loader_exec:s0
-/system/bin/bridgemgrd          u:object_r:bridge_exec:s0
 /system/vendor/bin/gsiff_daemon u:object_r:gsiffd_exec:s0
 /system/bin/init\.mmi\.touch\.sh u:object_r:mmi_touch_sh_exec:s0
 /system/bin/irsc_util           u:object_r:irsc_util_exec:s0
