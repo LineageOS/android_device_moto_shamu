@@ -83,8 +83,5 @@ on property:dev.bootcomplete=1
     write /sys/module/cpu_boost/parameters/input_boost_ms 40
     write /dev/cpuctl/cpu.notify_on_migrate 0
 
-    # i/o scheduler
-    setprop sys.io.scheduler "bfq"
-
     # Set idle GPU to 240 Mhz
     write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 4
