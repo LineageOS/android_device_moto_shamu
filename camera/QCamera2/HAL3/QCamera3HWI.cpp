@@ -1288,6 +1288,7 @@ int QCamera3HardwareInterface::configureStreams(
                 newStream->max_buffers = MAX_INFLIGHT_REPROCESS_REQUESTS;
             } else {
                 ALOGE("%s: Error, Unknown stream type", __func__);
+                pthread_mutex_unlock(&mMutex);
                 return -EINVAL;
             }
 
@@ -2347,6 +2348,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     } else if (mFirstRequest || mCurrentRequestId == -1){
         ALOGE("%s: Unable to find request id field, \
                 & no previous id available", __func__);
+        pthread_mutex_unlock(&mMutex);
         return NAME_NOT_FOUND;
     } else {
         CDBG("%s: Re-using old request id", __func__);
