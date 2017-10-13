@@ -118,10 +118,9 @@ PRODUCT_PACKAGES := \
     wpa_supplicant \
     wpa_supplicant.conf
 
-# Bluetooth HAL
+# Bluetooth
 PRODUCT_PACKAGES += \
-    libbt-vendor \
-    android.hardware.bluetooth@1.0-impl
+    libbt-vendor
 
 PRODUCT_PACKAGES += atmel.fw.apq8084
 
@@ -427,3 +426,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # OEM Unlock reporting
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     ro.oem_unlock_supported=1
+
+# Treble packages
+$(call inherit-product, device/moto/shamu/treble.mk)
