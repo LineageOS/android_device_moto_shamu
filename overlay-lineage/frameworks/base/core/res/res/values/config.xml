@@ -54,9 +54,6 @@
     <!-- Default color for notification LED is green. -->
     <color name="config_defaultNotificationColor">#ff00ff00</color>
 
-    <!-- Is the battery LED intrusive? Used to decide if there should be a disable option
-    <bool name="config_intrusiveBatteryLed">true</bool> -->
-
     <!-- Default value for led color when battery is medium charged
          We set this to blue as low is red and charged is green -->
     <integer name="config_notificationsBatteryMediumARGB">0xFF0000FF</integer>
