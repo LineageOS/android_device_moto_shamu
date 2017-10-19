@@ -85,9 +85,6 @@ TARGET_NO_RPC := true
 
 TARGET_BOARD_INFO_FILE := device/moto/shamu/board-info.txt
 
-TARGET_USES_GRALLOC1 := true
-TARGET_USES_HWC2 := true
-TARGET_USES_NEW_ION_API :=true
 TARGET_USES_ION := true
 TARGET_HW_DISK_ENCRYPTION := false
 TARGET_CRYPTFS_HW_PATH := device/moto/shamu/cryptfs_hw
