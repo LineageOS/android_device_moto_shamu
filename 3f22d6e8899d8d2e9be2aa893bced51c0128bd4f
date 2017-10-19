@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "aca41d66_4bd5ba13",
+        "filename": "light/Light.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 17257
+      },
+      "writtenOn": "2017-10-19T15:24:44Z",
+      "side": 1,
+      "message": "You could have just used state.color \u0026 0xFF like it was in my hal, r, g, b values for the backlight case are equal.",
+      "revId": "3f22d6e8899d8d2e9be2aa893bced51c0128bd4f",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
