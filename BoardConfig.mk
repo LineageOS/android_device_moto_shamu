@@ -83,7 +83,6 @@ TARGET_BOARD_INFO_FILE := device/moto/shamu/board-info.txt
 
 TARGET_USES_ION := true
 TARGET_HW_DISK_ENCRYPTION := false
-TARGET_CRYPTFS_HW_PATH := device/moto/shamu/cryptfs_hw
 
 TARGET_TOUCHBOOST_FREQUENCY := 1500
 TARGET_USERIMAGES_USE_EXT4 := true
