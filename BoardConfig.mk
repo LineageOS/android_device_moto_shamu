@@ -71,11 +71,7 @@ WIFI_BUS := PCIE
 
 #Bluetooth defines
 BOARD_HAVE_BLUETOOTH_BCM := true
-ifeq ($(TARGET_PRODUCT),bt_shamu)
-BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/moto/shamu/bluetooth_extra
-else
 BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/moto/shamu/bluetooth
-endif
 BOARD_CUSTOM_BT_CONFIG := device/moto/shamu/bluetooth/vnd_shamu.txt
 
 TARGET_NO_RADIOIMAGE := true
