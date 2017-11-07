@@ -81,6 +81,7 @@ TARGET_NO_RPC := true
 TARGET_BOARD_INFO_FILE := device/moto/shamu/board-info.txt
 
 TARGET_USES_ION := true
+TARGET_USES_64_BIT_BINDER := true
 TARGET_HW_DISK_ENCRYPTION := false
 
 TARGET_USERIMAGES_USE_EXT4 := true
