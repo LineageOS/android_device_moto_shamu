@@ -1,0 +1,1 @@
+allow mediaextractor system_server:fifo_file write;
