@@ -1,2 +1,9 @@
 # permission for wpa socket which IMS use to communicate
 allow hal_wifi_supplicant ims:unix_dgram_socket sendto;
+
+allow hal_wifi_supplicant wifi_data_file:dir create_dir_perms;
+allow hal_wifi_supplicant wifi_data_file:file create_file_perms;
+
+# Create a socket for receiving info from wpa
+allow hal_wifi_supplicant wpa_socket:dir create_dir_perms;
+allow hal_wifi_supplicant wpa_socket:sock_file create_file_perms;
