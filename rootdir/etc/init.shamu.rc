@@ -490,7 +490,7 @@ service mpdecision /system/bin/mpdecision --avg_comp
    writepid /dev/cpuset/system-background/tasks
 
 service thermal-engine /system/vendor/bin/thermal-engine
-   class main
+   class hal
    user root
    group root system diag
    writepid /dev/cpuset/system-background/tasks
