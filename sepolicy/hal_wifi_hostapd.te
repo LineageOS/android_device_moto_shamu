@@ -1,0 +1,2 @@
+allow hal_wifi_hostapd_server sysfs_sar_wifi:dir search;
+allow hal_wifi_hostapd_server sysfs_sar_wifi:file r_file_perms;
