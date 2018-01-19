@@ -52,7 +52,6 @@ auditallow ims toolbox_exec:file rx_file_perms;
 
 # Allow ims to tell init to start the ims data service via property=sys.ims.QMI_DAEMON_STATUS
 set_prop(ims, qcom_ims_prop)
-allow ims qcom_ims_prop:property_service set;
 allow ims ims_socket:sock_file write;
 
 allow ims wpa_socket:sock_file create_file_perms;
