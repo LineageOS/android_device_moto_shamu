@@ -50,7 +50,7 @@ dontaudit netmgrd self:capability sys_module;
 set_prop(netmgrd, net_radio_prop)
 
 #Set netmgrd properties
-allow netmgrd qcom_netmgrd_prop:property_service set;
+set_prop(netmgrd, qcom_netmgrd_prop)
 
 # Permission to run netd commands
 allow netmgrd netd_socket:sock_file write;
