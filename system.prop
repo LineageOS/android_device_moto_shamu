@@ -47,6 +47,9 @@ persist.ims.disableDebugLogs=0
 persist.ims.disableQXDMLogs=0
 persist.ims.disableIMSLogs=1
 
+# Media
+persist.media.treble_omx=false
+
 # Radio
 persist.data.qmi.adb_logmask=0
 persist.radio.apm_sim_not_pwdn=1
