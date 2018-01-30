@@ -48,7 +48,7 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/default_volume_tables.xml:system/etc/default_volume_tables.xml
 
 PRODUCT_COPY_FILES += \
-    device/moto/shamu/media_profiles.xml:system/etc/media_profiles.xml \
+    device/moto/shamu/media_profiles_V1_0.xml:system/vendor/etc/media_profiles_V1_0.xml \
     device/moto/shamu/media_codecs.xml:system/etc/media_codecs.xml \
     device/moto/shamu/media_codecs_performance.xml:system/etc/media_codecs_performance.xml
 
@@ -271,10 +271,6 @@ PRODUCT_OEM_PROPERTIES := \
 # Copy the qcril.db file from qcril to system. Useful to get the radio tech family for the camped operator
 PRODUCT_COPY_FILES += \
     device/moto/shamu/qcril.db:system/etc/ril/qcril.db
-
-# Media
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.media.treble_omx=false
 
 # Treble packages
 $(call inherit-product, device/moto/shamu/treble.mk)
