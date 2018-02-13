@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2014 The Android Open-Source Project
+# Copyright (C) 2018 The LineageOS Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,8 +20,6 @@ TARGET_CPU_ABI2 := armeabi
 TARGET_ARCH := arm
 TARGET_ARCH_VARIANT := armv7-a-neon
 TARGET_CPU_VARIANT := krait
-
-ENABLE_CPUSETS := true
 
 TARGET_NO_BOOTLOADER := true
 
@@ -84,7 +83,6 @@ TARGET_BOARD_INFO_FILE := device/moto/shamu/board-info.txt
 TARGET_USES_ION := true
 TARGET_HW_DISK_ENCRYPTION := false
 
-TARGET_TOUCHBOOST_FREQUENCY := 1500
 TARGET_USERIMAGES_USE_EXT4 := true
 BOARD_BOOTIMAGE_PARTITION_SIZE := 16777216
 BOARD_RECOVERYIMAGE_PARTITION_SIZE := 16793600
