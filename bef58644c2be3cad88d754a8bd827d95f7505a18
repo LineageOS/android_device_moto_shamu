@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a36a1eea_7d777a83",
+        "filename": "BoardConfig.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2018-02-14T10:06:26Z",
+      "side": 1,
+      "message": "You don\u0027t need to define this on a single tree: https://github.com/LineageOS/android_build/blob/lineage-15.1/core/Makefile#L252-L256",
+      "range": {
+        "startLine": 86,
+        "startChar": 0,
+        "endLine": 86,
+        "endChar": 51
+      },
+      "revId": "bef58644c2be3cad88d754a8bd827d95f7505a18",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
