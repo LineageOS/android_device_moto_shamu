@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "fea44224_555ac94b",
+        "filename": "BoardConfig.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2018-02-14T12:17:20Z",
+      "side": 1,
+      "message": "What exactly do you mean with that?",
+      "parentUuid": "5c73fab5_d7d64400",
+      "revId": "bef58644c2be3cad88d754a8bd827d95f7505a18",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a36a1eea_7d777a83",
         "filename": "BoardConfig.mk",
         "patchSetId": 1
