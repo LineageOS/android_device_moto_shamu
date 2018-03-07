@@ -23,6 +23,9 @@
 <resources>
     <!-- Values for GPS configuration (China) -->
     <string-array translatable="false" name="config_gpsParameters">
+        <item>XTRA_SERVER_1=https://xtrapath1.izatcloud.net/xtra3grc.bin</item>
+        <item>XTRA_SERVER_2=https://xtrapath2.izatcloud.net/xtra3grc.bin</item>
+        <item>XTRA_SERVER_3=https://xtrapath3.izatcloud.net/xtra3grc.bin</item>
         <item>NTP_SERVER=asia.pool.ntp.org</item>
         <item>SUPL_ES=0</item>
         <item>SUPL_HOST=supl.nokia.com</item>
