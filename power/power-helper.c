@@ -103,12 +103,14 @@ static const char *rpm_master_param_names[] = {
     "xo_count"
 };
 
+#ifndef V1_0_HAL
 static const char *wlan_param_names[] = {
     "cumulative_sleep_time_ms",
     "cumulative_total_on_time_ms",
     "deep_sleep_enter_counter",
     "last_deep_sleep_enter_tstamp_ms"
 };
+#endif
 #else
 /* Use these stats on nougat kernels and forward */
 const char *rpm_stat_params[MAX_RPM_PARAMS] = {
@@ -316,7 +318,6 @@ void power_set_interactive(int on)
 {
     char governor[80];
     char tmp_str[NODE_MAX];
-    struct video_encode_metadata_t video_encode_metadata;
     int rc = 0;
 
     if (!on) {
@@ -536,37 +537,6 @@ void set_feature(feature_t feature, int state)
     set_device_specific_feature(feature, state);
 }
 
-static int parse_stats(const char **params, size_t params_size,
-                       uint64_t *list, FILE *fp) {
-    ssize_t nread;
-    size_t len = LINE_SIZE;
-    char *line;
-    size_t params_read = 0;
-    size_t i;
-    line = malloc(len);
-    if (!line) {
-        ALOGE("%s: no memory to hold line", __func__);
-        return -ENOMEM;
-    }
-    while ((params_read < params_size) &&
-        (nread = getline(&line, &len, fp) > 0)) {
-        char *key = line + strspn(line, " \t");
-        char *value = strchr(key, ':');
-        if (!value || (value > (line + len)))
-            continue;
-        *value++ = '\0';
-        for (i = 0; i < params_size; i++) {
-            if (!strcmp(key, params[i])) {
-                list[i] = strtoull(value, NULL, 0);
-                params_read++;
-                break;
-            }
-        }
-    }
-    free(line);
-    return 0;
-}
-
 #ifdef LEGACY_STATS
 static int extract_stats(uint64_t *list, char *file, const char**param_names,
                          unsigned int num_parameters, int isHex) {
@@ -644,6 +614,41 @@ int extract_wlan_stats(uint64_t *list) {
 }
 #endif
 #else
+
+static int parse_stats(const char **params, size_t params_size,
+                       uint64_t *list, FILE *fp) {
+    ssize_t nread;
+    size_t len = LINE_SIZE;
+    char *line;
+    size_t params_read = 0;
+    size_t i;
+
+    line = malloc(len);
+    if (!line) {
+        ALOGE("%s: no memory to hold line", __func__);
+        return -ENOMEM;
+    }
+
+    while ((params_read < params_size) &&
+        (nread = getline(&line, &len, fp) > 0)) {
+        char *key = line + strspn(line, " \t");
+        char *value = strchr(key, ':');
+        if (!value || (value > (line + len)))
+            continue;
+        *value++ = '\0';
+
+        for (i = 0; i < params_size; i++) {
+            if (!strcmp(key, params[i])) {
+                list[i] = strtoull(value, NULL, 0);
+                params_read++;
+                break;
+            }
+        }
+    }
+    free(line);
+
+    return 0;
+}
 
 static int extract_stats(uint64_t *list, char *file,
                          struct stat_pair *map, size_t map_size) {

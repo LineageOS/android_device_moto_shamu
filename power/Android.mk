@@ -42,6 +42,8 @@ LOCAL_SRC_FILES := \
 LOCAL_C_INCLUDES := external/libxml2/include \
                     external/icu/icu4c/source/common
 
+LOCAL_CFLAGS += -Wall -Wextra -Werror
+
 # Include target-specific files.
 LOCAL_SRC_FILES += power-8084.c
 
