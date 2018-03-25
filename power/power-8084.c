@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2018 The LineageOS Project
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -48,6 +49,171 @@
 #include "power-common.h"
 
 static int first_display_off_hint;
+
+static int current_power_profile = PROFILE_BALANCED;
+
+static int profile_high_performance[] = {
+    CPUS_ONLINE_MIN_4,
+    0x0901,
+    CPU0_MIN_FREQ_TURBO_MAX,
+    CPU1_MIN_FREQ_TURBO_MAX,
+    CPU2_MIN_FREQ_TURBO_MAX,
+    CPU3_MIN_FREQ_TURBO_MAX
+};
+
+static int profile_power_save[] = {
+    0x0A03,
+    CPUS_ONLINE_MAX_LIMIT_2,
+    CPU0_MAX_FREQ_NONTURBO_MAX,
+    CPU1_MAX_FREQ_NONTURBO_MAX,
+    CPU2_MAX_FREQ_NONTURBO_MAX,
+    CPU3_MAX_FREQ_NONTURBO_MAX
+};
+
+static int profile_bias_power[] = {
+    0x0A03,
+    CPU0_MAX_FREQ_NONTURBO_MAX,
+    CPU1_MAX_FREQ_NONTURBO_MAX,
+    CPU1_MAX_FREQ_NONTURBO_MAX,
+    CPU2_MAX_FREQ_NONTURBO_MAX
+};
+
+static int profile_bias_performance[] = {
+    CPU0_MIN_FREQ_NONTURBO_MAX + 1,
+    CPU1_MIN_FREQ_NONTURBO_MAX + 1,
+    CPU2_MIN_FREQ_NONTURBO_MAX + 1,
+    CPU2_MIN_FREQ_NONTURBO_MAX + 1
+};
+
+#ifdef INTERACTION_BOOST
+int get_number_of_profiles() {
+    return 5;
+}
+#endif
+
+static void set_power_profile(int profile) {
+
+    if (profile == current_power_profile)
+        return;
+
+    ALOGV("%s: Profile=%d", __func__, profile);
+
+    if (current_power_profile != PROFILE_BALANCED) {
+        undo_hint_action(DEFAULT_PROFILE_HINT_ID);
+        ALOGV("%s: Hint undone", __func__);
+    }
+
+    if (profile == PROFILE_POWER_SAVE) {
+        perform_hint_action(DEFAULT_PROFILE_HINT_ID, profile_power_save,
+                ARRAY_SIZE(profile_power_save));
+        ALOGD("%s: Set powersave mode", __func__);
+
+    } else if (profile == PROFILE_HIGH_PERFORMANCE) {
+        perform_hint_action(DEFAULT_PROFILE_HINT_ID, profile_high_performance,
+                ARRAY_SIZE(profile_high_performance));
+        ALOGD("%s: Set performance mode", __func__);
+
+    } else if (profile == PROFILE_BIAS_POWER) {
+        perform_hint_action(DEFAULT_PROFILE_HINT_ID, profile_bias_power,
+                ARRAY_SIZE(profile_bias_power));
+        ALOGD("%s: Set bias power mode", __func__);
+
+    } else if (profile == PROFILE_BIAS_PERFORMANCE) {
+        perform_hint_action(DEFAULT_PROFILE_HINT_ID, profile_bias_performance,
+                ARRAY_SIZE(profile_bias_performance));
+        ALOGD("%s: Set bias perf mode", __func__);
+
+    }
+
+    current_power_profile = profile;
+}
+
+static int resources_interaction_fling_boost[] = {
+    CPUS_ONLINE_MIN_3,
+    0x20F,
+    0x30F,
+    0x40F,
+    0x50F
+};
+
+static int resources_interaction_boost[] = {
+    CPUS_ONLINE_MIN_2,
+    0x20F,
+    0x30F,
+    0x40F,
+    0x50F
+};
+
+static int resources_launch[] = {
+    CPUS_ONLINE_MIN_3,
+    CPU0_MIN_FREQ_TURBO_MAX,
+    CPU1_MIN_FREQ_TURBO_MAX,
+    CPU2_MIN_FREQ_TURBO_MAX,
+    CPU3_MIN_FREQ_TURBO_MAX
+};
+
+int power_hint_override(power_hint_t hint, void *data)
+{
+    static struct timespec s_previous_boost_timespec;
+    struct timespec cur_boost_timespec;
+    long long elapsed_time;
+    static int s_previous_duration = 0;
+    int duration;
+
+    if (hint == POWER_HINT_SET_PROFILE) {
+        set_power_profile(*(int32_t *)data);
+        return HINT_HANDLED;
+    }
+
+    // Skip other hints in high/low power modes
+    if (current_power_profile == PROFILE_POWER_SAVE ||
+            current_power_profile == PROFILE_HIGH_PERFORMANCE) {
+        return HINT_HANDLED;
+    }
+
+    switch (hint) {
+        case POWER_HINT_INTERACTION:
+        {
+            duration = 500; // 500ms by default
+            if (data) {
+                int input_duration = *((int*)data);
+                if (input_duration > duration) {
+                    duration = (input_duration > 5000) ? 5000 : input_duration;
+                }
+            }
+
+            clock_gettime(CLOCK_MONOTONIC, &cur_boost_timespec);
+
+            elapsed_time = calc_timespan_us(s_previous_boost_timespec, cur_boost_timespec);
+            // don't hint if previous hint's duration covers this hint's duration
+            if ((s_previous_duration * 1000) > (elapsed_time + duration * 1000)) {
+                return HINT_HANDLED;
+            }
+            s_previous_boost_timespec = cur_boost_timespec;
+            s_previous_duration = duration;
+
+            if (duration >= 1500) {
+                interaction(duration, ARRAY_SIZE(resources_interaction_fling_boost),
+                        resources_interaction_fling_boost);
+            } else {
+                interaction(duration, ARRAY_SIZE(resources_interaction_boost),
+                        resources_interaction_boost);
+            }
+            return HINT_HANDLED;
+        }
+        case POWER_HINT_LAUNCH:
+        {
+            duration = 2000;
+
+            interaction(duration, ARRAY_SIZE(resources_launch),
+                    resources_launch);
+            return HINT_HANDLED;
+        }
+        default:
+            break;
+    }
+    return HINT_NONE;
+}
 
 int set_interactive_override(int on)
 {
