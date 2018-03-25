@@ -35,19 +35,13 @@ int get_scaling_governor(char governor[], int size);
 int get_scaling_governor_check_cores(char governor[], int size,int core_num);
 int is_interactive_governor(char*);
 int is_ondemand_governor(char*);
-int is_msmdcvs_governor(char*);
 
-void vote_ondemand_io_busy_off();
-void unvote_ondemand_io_busy_off();
-void vote_ondemand_sdf_low();
-void unvote_ondemand_sdf_low();
 void perform_hint_action(int hint_id, int resource_values[],
     int num_resources);
 void undo_hint_action(int hint_id);
 void undo_initial_hint_action();
 void release_request(int lock_handle);
 void interaction(int duration, int num_args, int opt_list[]);
-int interaction_with_handle(int lock_handle, int duration, int num_args, int opt_list[]);
 int perf_hint_enable(int hint_id, int duration);
 
 long long calc_timespan_us(struct timespec start, struct timespec end);

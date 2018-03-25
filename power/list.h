@@ -34,8 +34,6 @@ struct list_node {
     void (*dump)(void *data);
 };
 
-int init_list_head(struct list_node *head);
 struct list_node * add_list_node(struct list_node *head, void *data);
 int remove_list_node(struct list_node *head, struct list_node *del_node);
-void dump_list(struct list_node *head);
 struct list_node *find_node(struct list_node *head, void *comparison_data);
