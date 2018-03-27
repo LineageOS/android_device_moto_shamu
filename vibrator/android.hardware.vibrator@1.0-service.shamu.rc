@@ -1,4 +1,4 @@
-on boot
+on early-boot
     chown system system /sys/class/timed_output/vibrator/vtg_level
     chmod 0644 /sys/class/timed_output/vibrator/vtg_level
 

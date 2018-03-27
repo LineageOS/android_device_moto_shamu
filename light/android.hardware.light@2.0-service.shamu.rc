@@ -1,4 +1,4 @@
-on boot
+on early-boot
     chmod 664 /sys/class/leds/red/brightness
     chmod 664 /sys/class/leds/green/brightness
     chmod 664 /sys/class/leds/blue/brightness
