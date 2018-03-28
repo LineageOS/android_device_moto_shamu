@@ -148,6 +148,15 @@
         </interface>
     </hal>
     <hal format="hidl">
+        <name>android.hardware.memtrack</name>
+        <transport arch="32">passthrough</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IMemtrack</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl">
         <name>android.hardware.nfc</name>
         <transport>hwbinder</transport>
         <version>1.0</version>
