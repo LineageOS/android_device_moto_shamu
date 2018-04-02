@@ -1,5 +1,6 @@
 #
 # Copyright 2014 The Android Open Source Project
+# Copyright 2018 The LineageOS Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -72,7 +73,6 @@ on late-fs
     # Mount RW partitions which need run fsck
     mount_all /fstab.shamu --late
 
-on post-fs-data
     # boot time fs tune
     write /sys/block/mmcblk0/queue/iostats 0
     write /sys/block/mmcblk0/queue/scheduler cfq
@@ -80,6 +80,7 @@ on post-fs-data
     write /sys/block/mmcblk0/queue/read_ahead_kb 2048
     write /sys/block/dm-0/queue/read_ahead_kb 2048
 
+on post-fs-data
     mkdir /tombstones/modem 0771 system system
     mkdir /tombstones/lpass 0771 system system
     mkdir /tombstones/wcnss 0771 system system
