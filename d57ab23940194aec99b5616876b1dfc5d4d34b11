@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a9a13ce5_352c6c03",
+        "filename": "sepolicy/genfs_contexts",
+        "patchSetId": 1
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2018-04-03T19:28:12Z",
+      "side": 1,
+      "message": "You could label it `sysfs_socinfo`, just like QC does: https://github.com/LineageOS/android_device_qcom_sepolicy/blob/lineage-15.1/common/file_contexts#L449",
+      "range": {
+        "startLine": 6,
+        "startChar": 50,
+        "endLine": 6,
+        "endChar": 59
+      },
+      "revId": "d57ab23940194aec99b5616876b1dfc5d4d34b11",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
