@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3a842148_625f9f02",
+        "filename": "init.shamu.rc",
+        "patchSetId": 3
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2018-04-03T19:43:47Z",
+      "side": 1,
+      "message": "dmesg: do_start: Service hwcomposer-2-1 not found",
+      "revId": "b395ce3c99b0e854e70507f477aac7f6b7da2ab3",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
