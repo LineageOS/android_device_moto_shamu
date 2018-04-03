@@ -22,6 +22,30 @@
       "revId": "d57ab23940194aec99b5616876b1dfc5d4d34b11",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b765bfb1_31988510",
+        "filename": "sepolicy/genfs_contexts",
+        "patchSetId": 1
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2018-04-03T19:37:23Z",
+      "side": 1,
+      "message": "I grabbed that from marlin:\nhttps://github.com/LineageOS/android_device_google_marlin/blob/lineage-15.1/sepolicy/genfs_contexts#L45",
+      "parentUuid": "a9a13ce5_352c6c03",
+      "range": {
+        "startLine": 6,
+        "startChar": 50,
+        "endLine": 6,
+        "endChar": 59
+      },
+      "revId": "d57ab23940194aec99b5616876b1dfc5d4d34b11",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
