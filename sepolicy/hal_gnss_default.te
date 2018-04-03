@@ -1,1 +1,9 @@
 allow hal_gnss_default vndbinder_device:chr_file rw_file_perms;
+
+#access to /sys/devices/soc0/soc_id and /sys/devices/soc0/hw_platform
+allow hal_gnss sysfs_socinfo:dir search;
+allow hal_gnss sysfs_socinfo:file { read open getattr };
+
+userdebug_or_eng(`
+  allow hal_gnss diag_device:chr_file { read write open ioctl};
+')
