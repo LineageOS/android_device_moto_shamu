@@ -33,6 +33,8 @@ on init
     symlink /sdcard /storage/sdcard0
 
 on fs
+    # Start HW service manager early
+    start hwservicemanager
     mount_all fstab.shamu --early
 
     # Keeping following partitions outside fstab file. As user may not have
@@ -59,9 +61,6 @@ on fs
     setprop persist.data.df.agg.dl_pkt 10
     setprop persist.data.df.agg.dl_size 4096
 
-    # Start HW service manager early
-    start hwservicemanager
-
 on late-fs
     # Start services for bootanim
     start servicemanager
@@ -73,6 +72,10 @@ on late-fs
     start configstore-hal-1-0
     start gralloc-2-0
 
+    # Wait for hwservicemanager ready since fsck might be triggered in mount_all --late
+    # In such case, init won't responce the property_set from hwservicemanager and then
+    # cause services for bootanim not running.
+    wait_for_prop hwservicemanager.ready true
     # Mount RW partitions which need run fsck
     mount_all /fstab.shamu --late
 
