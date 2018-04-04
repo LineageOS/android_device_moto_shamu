@@ -69,6 +69,10 @@ PRODUCT_PACKAGES += \
     android.hardware.nfc@1.0-impl-bcm \
     android.hardware.nfc@1.0-service
 
+# Power
+PRODUCT_PACKAGES += \
+    android.hardware.power@1.0-impl
+
 # RenderScript
 PRODUCT_PACKAGES += \
     android.hardware.renderscript@1.0-impl
