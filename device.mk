@@ -236,7 +236,6 @@ $(call inherit-product, build/target/product/verity.mk)
 endif
 
 PRODUCT_PACKAGES += \
-    power.shamu \
     thermal.shamu
 
 # For android_filesystem_config.h
