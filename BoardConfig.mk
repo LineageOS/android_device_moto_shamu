@@ -100,6 +100,11 @@ BOARD_HAL_STATIC_LIBRARIES := libhealthd.shamu
 BACKLIGHT_PATH := /sys/class/leds/lcd-backlight/brightness
 WITH_LINEAGE_CHARGER := false
 
+# Power
+TARGET_HAS_NO_WIFI_STATS := true
+TARGET_USES_INTERACTION_BOOST := true
+TARGET_TAP_TO_WAKE_NODE := "/sys/bus/i2c/devices/1-004a/tsp"
+
 TARGET_RECOVERY_FSTAB = device/moto/shamu/fstab.shamu
 # Ensure f2fstools are built
 TARGET_USERIMAGES_USE_F2FS := true
