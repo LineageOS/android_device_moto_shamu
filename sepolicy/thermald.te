@@ -30,3 +30,6 @@ allow thermald sysfs_mpdecision:file rw_file_perms;
 allow thermald sysfs:file write;
 allow thermald sysfs_usb:file write;
 allow thermald sysfs_batteryinfo:file r_file_perms;
+
+allow thermald sysfs_socinfo:dir search;
+allow thermald sysfs_socinfo:file { read open getattr };

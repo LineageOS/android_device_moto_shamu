@@ -37,3 +37,6 @@ allow sensors persist_sensors_file:file create_file_perms;
 
 allow sensors self:socket *;
 allowxperm sensors self:socket ioctl msm_sock_ipc_ioctls;
+
+allow sensors sysfs_socinfo:dir r_dir_perms;
+allow sensors sysfs_socinfo:file { read open getattr };

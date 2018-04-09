@@ -41,3 +41,6 @@ allow mpdecision cameraserver:dir search;
 allow mpdecision cameraserver:file { read open };
 
 allow mpdecision self:capability sys_nice;
+
+allow mpdecision sysfs_socinfo:dir search;
+allow mpdecision sysfs_socinfo:file { read open getattr };
