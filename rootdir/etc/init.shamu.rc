@@ -272,6 +272,7 @@ on boot
     write /dev/cpuset/system-background/cpus 0-1
     write /dev/cpuset/top-app/cpus 0-3
     write /dev/cpuset/camera-daemon/cpus 0-3
+    write /dev/cpuset/restricted/cpus 0-1
 
     chmod 0660 /dev/ttyHS2
     chown bluetooth bluetooth /dev/ttyHS2
