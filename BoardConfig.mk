@@ -114,8 +114,6 @@ TARGET_RELEASETOOLS_EXTENSIONS := device/moto/shamu
 # Support Native Layer RF cutback
 BOARD_USES_CUTBACK_IN_RILD := true
 
-BOARD_SEPOLICY_DIRS += device/moto/shamu/sepolicy
-
 HAVE_ADRENO_SOURCE:= false
 
 TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
@@ -138,6 +136,10 @@ NUM_FRAMEBUFFER_SURFACE_BUFFERS := 3
 
 # Recovery
 LZMA_RAMDISK_TARGETS := recovery
+
+# Sepolicy
+BOARD_SEPOLICY_DIRS += device/moto/shamu/sepolicy \
+                       device/moto/shamu/sepolicy/vendor
 
 # Device manifest
 DEVICE_MANIFEST_FILE := device/moto/shamu/manifest.xml
