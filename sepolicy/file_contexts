@@ -191,9 +191,10 @@
 /system/bin/cnd  u:object_r:cnd_exec:s0
 
 # HALs
-/system/vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service.shamu    u:object_r:hal_dumpstate_default_exec:s0
-/system/vendor/bin/hw/android\.hardware\.light@2\.0-service.shamu        u:object_r:hal_light_default_exec:s0
-/system/vendor/bin/hw/android\.hardware\.vibrator@1\.0-service.shamu     u:object_r:hal_vibrator_default_exec:s0
+/system/vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.shamu    u:object_r:hal_dumpstate_default_exec:s0
+/system/vendor/bin/hw/android\.hardware\.light@2\.0-service\.shamu        u:object_r:hal_light_default_exec:s0
+/system/vendor/bin/hw/android\.hardware\.power@1\.0-service\.shamu        u:object_r:hal_power_default_exec:s0
+/system/vendor/bin/hw/android\.hardware\.vibrator@1\.0-service\.shamu     u:object_r:hal_vibrator_default_exec:s0
 
 # Sysfs files used by gralloc hal
 /sys/devices/virtual/graphics/fb[0-1]/msm_.*        u:object_r:sysfs_hal_gralloc:s0
