@@ -1,0 +1,8 @@
+allow hal_power_default debugfs_rpm:file { open read getattr };
+allow hal_power_default sysfs_mmi_touch:file rw_file_perms;
+allow hal_power_default sysfs_mmi_touch:dir search;
+
+allow hal_power_default mpctl_socket:dir search;
+allow hal_power_default mpctl_socket:sock_file write;
+
+allow hal_power_default mpdecision:unix_stream_socket connectto;

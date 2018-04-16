@@ -2,39 +2,44 @@
 type mpdecision, domain, device_domain_deprecated;
 type mpdecision_exec, exec_type, file_type;
 
-# Started by init
 init_daemon_domain(mpdecision)
 
-allow mpdecision sysfs_mpdecision:file rw_file_perms;
-allow mpdecision sysfs_devices_system_cpu:file rw_file_perms;
-allow mpdecision sysfs_rqstats:file rw_file_perms;
-allow mpdecision sysfs_rqstats:dir r_dir_perms;
-allow mpdecision sysfs_cpu_online:file rw_file_perms;
-allow mpdecision cpuctl_device:file rw_file_perms;
-allow mpdecision sysfs_cpuboost:dir r_dir_perms;
-allow mpdecision sysfs_cpuboost:file rw_file_perms;
+allow mpdecision {
+    cpuctl_device
+    sysfs_mpdecision
+    sysfs_devices_system_cpu
+    sysfs_cpu_online
+}:file rw_file_perms;
 
 #Allow mpdecision set cpu affinity
 allow mpdecision kernel:process setsched;
 
-allow mpdecision self:capability { dac_override net_admin fsetid chown };
 allow mpdecision self:netlink_kobject_uevent_socket { create read setopt bind };
 allow mpdecision self:socket create_socket_perms;
 allowxperm mpdecision self:socket ioctl msm_sock_ipc_ioctls;
 allow mpdecision power_control_device:chr_file w_file_perms;
-allow mpdecision mpdecision_socket:dir rw_dir_perms;
-allow mpdecision mpdecision_socket:sock_file { create_file_perms unlink };
 allow mpdecision sysfs_usb:file write;
 
-r_dir_file(mpdecision, system_server)
-r_dir_file(mpdecision, mediaserver)
 r_dir_file(mpdecision, audioserver)
+r_dir_file(mpdecision, mediaserver)
+r_dir_file(mpdecision, sysfs_rqstats)
 r_dir_file(mpdecision, sysfs_thermal)
+allow mpdecision sysfs_thermal:file write;
+r_dir_file(mpdecision, system_server)
 
 allow mpdecision cameraserver:dir search;
 allow mpdecision cameraserver:file { read open };
 
-allow mpdecision self:capability sys_nice;
-
 allow mpdecision sysfs_socinfo:dir search;
 allow mpdecision sysfs_socinfo:file { read open getattr };
+
+#policies for mpctl and mpctl socket
+allow mpdecision self:capability { chown dac_override fsetid net_admin sys_nice };
+allow mpdecision mpctl_socket:dir rw_dir_perms;
+allow mpdecision mpctl_socket:sock_file create_file_perms;
+
+#default_values file
+allow mpdecision mpctl_data_file:dir w_dir_perms;
+allow mpdecision mpctl_data_file:file create_file_perms;
+
+r_dir_file(mpdecision, hal_power_default)
