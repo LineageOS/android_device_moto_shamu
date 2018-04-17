@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f2cb2f63_f052da28",
+        "filename": "init.shamu.usb.rc",
+        "patchSetId": 4
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2018-04-17T05:22:45Z",
+      "side": 1,
+      "message": "on property:sys.usb.config\u003dserial_hsic,serial_tty,rmnet_hsic,usbnet,adb\n\nrule #1 Never trust a moepda edit :P",
+      "revId": "7240dc7289a5e3b08aef9a7219028602d3a10c10",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "12aebb13_2e904927",
+        "filename": "init.shamu.usb.rc",
+        "patchSetId": 4
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2018-04-17T05:22:45Z",
+      "side": 1,
+      "message": "on property:sys.usb.config\u003dserial_hsic,serial_tty,rmnet_hsic,usbnet\n\nrule #1\nNever trust a moepda edit :P",
+      "revId": "7240dc7289a5e3b08aef9a7219028602d3a10c10",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
