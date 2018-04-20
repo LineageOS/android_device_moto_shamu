@@ -66,6 +66,9 @@ on late-fs
     # Start services for bootanim
     start surfaceflinger
     start bootanim
+
+    # Make sure HW service manager started and start required HAL services
+    wait_for_prop hwservicemanager.ready true
     start configstore-hal-1-0
     start gralloc-2-0
 
