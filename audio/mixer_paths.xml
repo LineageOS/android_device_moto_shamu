@@ -999,9 +999,28 @@
     <ctl name="ADC6 Volume" value="0" />
 </path>
 
+	<path name="camcorder-stereo">
+		<ctl name="AIF1_CAP Mixer SLIM TX7" value="1" />
+		<ctl name="AIF1_CAP Mixer SLIM TX8" value="1" />
+		<ctl name="AIF2_CAP Mixer SLIM TX9" value="1" />
+		<ctl name="AIF2_CAP Mixer SLIM TX10" value="1" />
+		<ctl name="SLIM_0_TX Channels" value="Two" />
+		<ctl name="SLIM TX7 MUX" value="DEC3" />
+		<ctl name="SLIM TX8 MUX" value="DEC6" />
+		<ctl name="SLIM TX9 MUX" value="DEC3" />
+		<ctl name="SLIM TX10 MUX" value="DEC6" />
+		<ctl name="DEC6 MUX" value="ADC1" />
+		<ctl name="DEC3 MUX" value="ADC4" />
+		<ctl name="ADC1 Volume" value="16" />
+		<ctl name="ADC2 Volume" value="0" />
+		<ctl name="ADC3 Volume" value="0" />
+		<ctl name="ADC4 Volume" value="16" />
+		<ctl name="ADC5 Volume" value="0" />
+		<ctl name="ADC6 Volume" value="0" />
+	</path>
+
 	<path name="camcorder-mic">
-		<path name="adc3" />
-		<ctl name="ADC3 Volume" value="13" />
+		<path name="camcorder-stereo" />
 	</path>
 
 	<path name="bt-sco-headset">
