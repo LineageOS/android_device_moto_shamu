@@ -98,7 +98,6 @@ BOARD_FLASH_BLOCK_SIZE := 131072
 BOARD_CHARGER_ENABLE_SUSPEND := true
 BOARD_HAL_STATIC_LIBRARIES := libhealthd.shamu
 BACKLIGHT_PATH := /sys/class/leds/lcd-backlight/brightness
-WITH_LINEAGE_CHARGER := false
 
 TARGET_RECOVERY_FSTAB = device/moto/shamu/fstab.shamu
 # Ensure f2fstools are built
