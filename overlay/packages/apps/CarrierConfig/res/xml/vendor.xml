@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <carrier_config_list>
     <carrier_config>
+        <boolean name="allow_adding_apns_bool" value="true" />
+        <boolean name="apn_expand_bool" value="true" />
         <boolean name="disable_cdma_activation_code_bool" value="true" />
         <boolean name="show_apn_setting_cdma_bool" value="true" />
     </carrier_config>
