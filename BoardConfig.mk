@@ -103,6 +103,7 @@ WITH_LINEAGE_CHARGER := false
 # Power
 TARGET_HAS_NO_WIFI_STATS := true
 TARGET_USES_INTERACTION_BOOST := true
+TARGET_RPM_SYSTEM_STAT := /d/rpm_stats
 TARGET_TAP_TO_WAKE_NODE := "/sys/bus/i2c/devices/1-004a/tsp"
 
 TARGET_RECOVERY_FSTAB = device/moto/shamu/fstab.shamu
