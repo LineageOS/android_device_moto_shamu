@@ -18,7 +18,7 @@
 */
 -->
 <device name="Android">
-    <!-- All values are in mAh except as noted -->
+    <!-- All values are in mA except as noted -->
 
     <!-- Nothing -->
     <item name="none">0</item>
@@ -105,14 +105,12 @@
 
  <!-- mA.  Current figures based on .0801 s/c and 75.48mA while scanning -->
     <array name="wifi.batchedscan">
-        <value>0.015</value>    <!-- 1-8/hr -->
-        <value>0.122</value>    <!-- 9-64/hr -->
-        <value>0.962</value>    <!-- 65-512/hr -->
-        <value>7.682</value>    <!-- 513-4096/hr -->
-        <value>61.488</value>   <!-- 4097-?/hr -->
+        <value>0.0002</value>    <!-- 1-8/hr -->
+        <value>0.002</value>     <!-- 9-64/hr -->
+        <value>0.02</value>      <!-- 65-512/hr -->
+        <value>.2</value>        <!-- 513-4096/hr -->
+        <value>2</value>         <!-- 4097-?/hr -->
     </array>
-    <item name="bluetooth.active">30</item>
-    <item name="bluetooth.on">3</item>
 
     <!-- Additional power used when cellular radio is transmitting/receiving -->
     <item name="radio.active">350</item>
@@ -127,4 +125,22 @@
         <value>5</value>
         <value>5</value>
     </array>
+
+   <!-- Average current draw (mA) of the Bluetooth controller when idle -->
+    <item name="bluetooth.controller.idle">1</item>
+   <!-- Average current draw (mA) of the Bluetooth controller when receiving -->
+    <item name="bluetooth.controller.rx">25</item>
+   <!-- Average current draw (mA) of the Bluetooth controller when transmitting -->
+    <item name="bluetooth.controller.tx">25</item>
+   <!-- Average operating voltage (mV) of the Bluetooth controller -->
+    <item name="bluetooth.controller.voltage">3600</item>
+
+   <!-- Average current draw (mA) of the Wi-Fi controller when idle -->
+    <item name="wifi.controller.idle">1</item>
+   <!-- Average current draw (mA) of the Wi-Fi controller when receiving -->
+    <item name="wifi.controller.rx">113</item>
+   <!-- Average current draw (mA) of the Wi-Fi controller when transmitting -->
+    <item name="wifi.controller.tx">450</item>
+   <!-- Average operating voltage (mV) of the Wi-Fi controller -->
+    <item name="wifi.controller.voltage">3600</item>
 </device>
