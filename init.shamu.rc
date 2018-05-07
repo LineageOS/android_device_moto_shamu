@@ -556,5 +556,7 @@ service atfwd /system/bin/ATFWD-daemon
 
 service cnd /system/bin/cnd
     class late_start
+    user system
+    group system wifi inet radio wakelock net_admin
     socket cnd stream 660 root inet
     writepid /dev/cpuset/system-background/tasks
