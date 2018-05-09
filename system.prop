@@ -13,6 +13,9 @@ persist.audio.fluence.voicerec=false
 ro.config.vc_call_vol_steps=6
 ro.qc.sdk.audio.fluencetype=fluence
 
+# Bluetooth
+bluetooth.enable_timeout_ms=120000
+
 # Camera
 persist.camera.hal.debug.mask=7
 persist.camera.ISP.debug.mask=0
