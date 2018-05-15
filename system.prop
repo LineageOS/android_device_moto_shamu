@@ -78,3 +78,6 @@ net.tethering.noprovisioning=true
 persist.data.iwlan.enable=true
 persist.radio.ignore_ims_wlan=1
 persist.radio.data_con_rprt=1
+
+# ro.product.first_api_level indicates the first api level the device has commercially launched on.
+ro.product.first_api_level=21
