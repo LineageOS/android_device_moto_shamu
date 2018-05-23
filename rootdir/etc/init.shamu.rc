@@ -72,7 +72,7 @@ on late-fs
 
     # Make sure HW service manager started and start required HAL services
     wait_for_prop hwservicemanager.ready true
-    start vendor.configstore-hal-1-0
+    start vendor.configstore-hal
     start vendor.gralloc-2-0
 
     # Wait for hwservicemanager ready since fsck might be triggered in mount_all --late
