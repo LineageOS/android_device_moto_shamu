@@ -28,10 +28,10 @@ etc/Hdmi_cal.acdb
 etc/Headset_cal.acdb
 etc/Speaker_cal.acdb
 lib/hw/audio.motvr.default.so
-vendor/lib/hw/sound_trigger.primary.shamu.so:vendor/lib/hw/sound_trigger.primary.shamu.so
+lib/hw/sound_trigger.primary.shamu.so:vendor/lib/hw/sound_trigger.primary.shamu.so
 lib/libflacencoder.so
 lib/libmotaudioutils.so
-vendor/lib/soundfx/libspeakerbundle.so:vendor/lib/soundfx/libspeakerbundle.so
+lib/soundfx/libspeakerbundle.so:vendor/lib/soundfx/libspeakerbundle.so
 vendor/lib/libacdbloader.so
 vendor/lib/libacdbrtac.so
 vendor/lib/libadiertac.so
@@ -267,13 +267,18 @@ lib/libdmjavaplugin.so:priv-app/DMService/lib/arm/libdmjavaplugin.so
 
 # DRM
 bin/qseecomd
+vendor/lib/drm/libdrmwvmplugin.so
 vendor/lib/mediadrm/libwvdrmengine.so|66ba66d047044f92eb0eada1faf6a5799ded90ab
 vendor/lib/libQSEEComAPI.so
 vendor/lib/libdrmdecrypt.so
 vendor/lib/libdrmfs.so
 vendor/lib/libdrmtime.so
+vendor/lib/liboemcrypto.so
 vendor/lib/librpmb.so
 vendor/lib/libssd.so
+vendor/lib/libwvdrm_L1.so
+vendor/lib/libwvm.so
+vendor/lib/libWVStreamControlAPI_L1.so
 
 # DRM firmware
 vendor/firmware/widevine.b00
