@@ -82,7 +82,7 @@ on property:dev.bootcomplete=1
 
     # cpu-boost
     write /sys/module/cpu_boost/parameters/input_boost_freq 1497600
-    write /sys/module/cpu_boost/parameters/input_boost_ms 500
+    write /sys/module/cpu_boost/parameters/input_boost_ms 40
 
     write /dev/cpuctl/cpu.notify_on_migrate 0
 
