@@ -370,7 +370,9 @@ vendor/firmware/keymaster/keymaster.b03
 vendor/firmware/keymaster/keymaster.mdt
 
 # Perf
-bin/mpdecision
+# From oppo/msm8974-common
+bin/mpdecision|97FFB19A25CDB0CCF2E13E776FC7E8770FBF3901
+vendor/lib/libqc-opt.so|A8FBBCB13709C46F2461DD02F28344E581AAEB4F
 
 # Qualcomm framework
 bin/irsc_util
