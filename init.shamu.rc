@@ -434,7 +434,6 @@ service adspd /system/bin/adspd /dev/ttyHS3
    group media input
 
 on property:sys.boot_completed=1
-    start qcom-post-boot
     #end boot time fs tune
     write /sys/block/mmcblk0/queue/scheduler noop
     write /sys/block/mmcblk0/queue/rq_affinity 0
@@ -499,9 +498,6 @@ service time_daemon /system/bin/time_daemon
    user root
    group root
    writepid /dev/cpuset/system-background/tasks
-
-on property:init.svc.bootanim=stopped
-    start usf-post-boot
 
 service qcamerasvr /system/bin/mm-qcamera-daemon
     class late_start
