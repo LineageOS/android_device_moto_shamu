@@ -449,9 +449,6 @@ on property:sys.boot_completed=1
     # i/o scheduler
     setprop sys.io.scheduler "bfq"
 
-on property:ro.debuggable=1
-    start ss_ramdump
-
 on property:ro.data.large_tcp_window_size=true
     # Adjust socket buffer to enlarge TCP receive window for high bandwidth (e.g. DO-RevB)
     write /proc/sys/net/ipv4/tcp_adv_win_scale  2
@@ -485,12 +482,6 @@ service mpdecision /system/bin/mpdecision --avg_comp
    user root
    group root readproc
    writepid /dev/cpuset/system-background/tasks
-
-service ss_ramdump /system/bin/subsystem_ramdump
-    class main
-    user root
-    group root
-    disabled
 
 service thermal-engine /system/bin/thermal-engine
    class main
