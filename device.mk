@@ -277,3 +277,7 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 # Perf
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
    ro.qualcomm.perf.cores_online=2
+
+# Vendor security patch level
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.lineage.build.vendor_security_patch=2018-10-01
