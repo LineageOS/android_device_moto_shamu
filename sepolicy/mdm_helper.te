@@ -42,10 +42,7 @@ allow mdm_helper system_file:file x_file_perms;
 
 allow mdm_helper sysfs_xhci_msm_hsic:dir r_dir_perms;
 allow mdm_helper sysfs_xhci_msm_hsic:file rw_file_perms;
-allow mdm_helper sysfs_msm_hsic_host:file write;
-
-# host_ready not labeled correctly
-allow mdm_helper sysfs:file write;
+allow mdm_helper sysfs_msm_hsic_host_rdy:file rw_file_perms;
 allow mdm_helper sysfs_usb:file write;
 
 wakelock_use(mdm_helper)

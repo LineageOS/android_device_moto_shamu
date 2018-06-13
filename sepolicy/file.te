@@ -26,7 +26,7 @@ type audio_cutback_data_file, file_type, data_file_type;
 type sysfs_rmnet, fs_type, sysfs_type;
 type sysfs_smdcntl_open_timeout, fs_type, sysfs_type;
 type sysfs_xhci_msm_hsic, fs_type, sysfs_type;
-type sysfs_msm_hsic_host, fs_type, sysfs_type;
+type sysfs_msm_hsic_host_rdy, fs_type, sysfs_type;
 type sysfs_mmi_touch, fs_type, sysfs_type;
 
 type persist_file, file_type;
@@ -36,7 +36,7 @@ type persist_sensors_file, file_type;
 type persist_modem_file, file_type;
 type persist_hiddenmenu_file, file_type;
 
-#Define the files written during the operation of mpdecision    56
+#Define the files written during the operation of mpdecision
 type sysfs_mpdecision, fs_type, sysfs_type;
 type sysfs_rqstats, fs_type, sysfs_type;
 type sysfs_cpu_online, fs_type, sysfs_type;
@@ -47,4 +47,4 @@ type sysfs_sar_wifi, fs_type, sysfs_type;
 type sysfs_socinfo, sysfs_type, fs_type, mlstrustedobject;
 
 #type for devstart
-type sysfs_audio, sysfs_type, fs_type;
+type sysfs_audio, fs_type, sysfs_type;
