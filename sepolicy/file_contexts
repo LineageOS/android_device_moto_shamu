@@ -110,7 +110,6 @@
 /system/bin/qmuxd                                     u:object_r:qmux_exec:s0
 /system/bin/qseecomd                                  u:object_r:tee_exec:s0
 /system/bin/sensors\.qcom                             u:object_r:sensors_exec:s0
-/system/bin/subsystem_ramdump                         u:object_r:ss_ramdump_exec:s0
 /system/bin/tcmd_mini                                 u:object_r:tcmd_exec:s0
 /system/bin/time_daemon                               u:object_r:time_exec:s0
 /system/bin/thermal-engine                            u:object_r:thermald_exec:s0
