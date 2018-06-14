@@ -6,6 +6,7 @@ genfscon proc /bluetooth/sleep/lpm                                              
 genfscon sysfs /bus/platform/drivers/xhci_msm_hsic                                  u:object_r:sysfs_xhci_msm_hsic:s0
 genfscon sysfs /class/rfkill/rfkill0/state                                          u:object_r:sysfs_bluetooth_writable:s0
 genfscon sysfs /class/android_usb/f_rmnet_smd_sdio/transport                        u:object_r:sysfs_rmnet:s0
+genfscon sysfs /class/thermal                                                       u:object_r:sysfs_thermal:s0
 genfscon sysfs /devices/cycapsense_prog.1/cycapsense_fw                             u:object_r:sysfs_capsense_update:s0
 genfscon sysfs /devices/fd900000.qcom,mdss_mdp/caps                                 u:object_r:sysfs_hal_gralloc:s0
 genfscon sysfs /devices/fd900000.qcom,mdss_mdp/qcom,mdss_fb_primary.164/leds/lcd-backlight/brightness u:object_r:sysfs_leds:s0
@@ -13,7 +14,10 @@ genfscon sysfs /devices/f9200000.ssusb                                          
 genfscon sysfs /devices/f9925000.i2c/i2c-0/0-001c/power_supply/battery/capacity     u:object_r:sysfs_batteryinfo:s0
 genfscon sysfs /devices/f9925000.i2c/i2c-0/0-001c/power_supply/battery/cycle_count  u:object_r:sysfs_batteryinfo:s0
 genfscon sysfs /devices/f9925000.i2c/i2c-0/0-001c/power_supply/battery/temp         u:object_r:sysfs_batteryinfo:s0
-genfscon sysfs /devices/f9964000.i2c/i2c-8/8-0048/temp1_input                       u:object_r:sysfs_batteryinfo:s0
+genfscon sysfs /devices/f9925000.i2c/i2c-0/0-001c/power_supply/battery/system_temp_level u:object_r:sysfs_thermal:s0
+genfscon sysfs /devices/f9925000.i2c/i2c-0/0-001c/power_supply/dc/system_temp_level u:object_r:sysfs_thermal:s0
+genfscon sysfs /devices/f9964000.i2c/i2c-8/8-0048/temp1_input                       u:object_r:sysfs_thermal:s0
+genfscon sysfs /devices/fd510000.gpio/gpio/gpio60                                   u:object_r:sysfs_thermal:s0
 genfscon sysfs /devices/f9966000.i2c/i2c-1/1-004a                                   u:object_r:sysfs_mmi_touch:s0
 genfscon sysfs /devices/leds-qpnp-11/leds/red/brightness                            u:object_r:sysfs_leds:s0
 genfscon sysfs /devices/leds-qpnp-12/leds/green/brightness                          u:object_r:sysfs_leds:s0
@@ -27,4 +31,4 @@ genfscon sysfs /devices/virtual/thermal                                         
 genfscon sysfs /kernel/boot_adsp/boot                                               u:object_r:sysfs_audio:s0
 genfscon sysfs /module/bcmdhd/parameters/firmware_path                              u:object_r:sysfs_wlan_fwpath:s0
 genfscon sysfs /module/cpu_boost/parameters                                         u:object_r:sysfs_cpuboost:s0
-genfscon sysfs /module/msm_thermal/core_control/cpus_offlined                       u:object_r:sysfs_mpdecision:s0
+genfscon sysfs /module/msm_thermal                                                  u:object_r:sysfs_thermal:s0

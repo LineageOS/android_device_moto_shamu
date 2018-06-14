@@ -29,6 +29,7 @@ allow mpdecision sysfs_usb:file write;
 r_dir_file(mpdecision, system_server)
 r_dir_file(mpdecision, mediaserver)
 r_dir_file(mpdecision, audioserver)
+r_dir_file(mpdecision, sysfs_thermal)
 
 allow mpdecision cameraserver:dir search;
 allow mpdecision cameraserver:file { read open };
