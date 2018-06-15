@@ -4,3 +4,4 @@ genfscon proc /bluetooth/sleep/btwrite u:object_r:proc_bluetooth_writable:s0
 
 # sysfs
 genfscon sysfs /devices/soc0           u:object_r:sysfs_socinfo:s0
+genfscon sysfs /devices/fd900000.qcom,mdss_mdp/qcom,mdss_fb_primary.164/leds/lcd-backlight/max_brightness u:object_r:sysfs_leds:s0
