@@ -419,8 +419,7 @@ vendor/lib/libsensor1.so
 vendor/lib/libsensor_reg.so
 
 # Thermal
-bin/thermal-engine
-etc/thermal-engine-shamu.conf
+bin/thermal-engine:vendor/bin/thermal-engine|282461EB3B7BCB5B3BB1D0FFA33E6FB5E56C532F
 vendor/lib/libthermalclient.so
 vendor/lib/libthermalioctl.so
 

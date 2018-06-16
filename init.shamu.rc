@@ -480,7 +480,7 @@ service mpdecision /system/bin/mpdecision --avg_comp
    group root readproc
    writepid /dev/cpuset/system-background/tasks
 
-service thermal-engine /system/bin/thermal-engine
+service thermal-engine /system/vendor/bin/thermal-engine
    class main
    user root
    group root
