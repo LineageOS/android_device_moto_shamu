@@ -18,41 +18,30 @@
 # This file includes all definitions that apply to ALL shamu devices, and
 # are also specific to shamu devices
 #
-# Everything in this directory will become public
 
-
+# Input device files
 PRODUCT_COPY_FILES += \
-    device/moto/shamu/init.shamu.rc:root/init.shamu.rc \
-    device/moto/shamu/init.shamu.power.rc:root/init.shamu.power.rc \
-    device/moto/shamu/init.shamu.usb.rc:root/init.shamu.usb.rc \
-    device/moto/shamu/fstab.shamu:root/fstab.shamu \
-    device/moto/shamu/ueventd.shamu.rc:root/ueventd.shamu.rc \
-    device/moto/shamu/rootdir/etc/init.qcom.devwait.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.qcom.devwait.sh \
-    device/moto/shamu/rootdir/etc/init.qcom.devstart.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.qcom.devstart.sh
-
-# Input device files for shamu
-PRODUCT_COPY_FILES += \
-    device/moto/shamu/gpio-keys.kl:system/usr/keylayout/gpio-keys.kl \
-    device/moto/shamu/apq8084-taiko-tfa9890_stereo_co_Button_Jack.kl:system/usr/keylayout/apq8084-taiko-tfa9890_stereo_co_Button_Jack.kl \
-	device/moto/shamu/atmel_mxt_ts.idc:system/usr/idc/atmel_mxt_ts.idc
+    $(LOCAL_PATH)/keylayout/gpio-keys.kl:system/usr/keylayout/gpio-keys.kl \
+    $(LOCAL_PATH)/keylayout/apq8084-taiko-tfa9890_stereo_co_Button_Jack.kl:system/usr/keylayout/apq8084-taiko-tfa9890_stereo_co_Button_Jack.kl \
+    $(LOCAL_PATH)/configs/atmel_mxt_ts.idc:system/usr/idc/atmel_mxt_ts.idc
 
 # Audio
 PRODUCT_COPY_FILES += \
-    device/moto/shamu/audio/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml \
-    device/moto/shamu/audio/audio_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info.xml \
-    device/moto/shamu/audio/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
-    device/moto/shamu/audio/audio_policy_volumes_drc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes_drc.xml \
-    device/moto/shamu/audio/mixer_paths.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths.xml \
-    device/moto/shamu/audio/motvr_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/motvr_audio_policy_configuration.xml \
+    $(LOCAL_PATH)/audio/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml \
+    $(LOCAL_PATH)/audio/audio_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info.xml \
+    $(LOCAL_PATH)/audio/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
+    $(LOCAL_PATH)/audio/audio_policy_volumes_drc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes_drc.xml \
+    $(LOCAL_PATH)/audio/mixer_paths.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths.xml \
+    $(LOCAL_PATH)/audio/motvr_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/motvr_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/a2dp_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/a2dp_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml
 
 PRODUCT_COPY_FILES += \
-    device/moto/shamu/media_profiles_V1_0.xml:system/vendor/etc/media_profiles_V1_0.xml \
-    device/moto/shamu/media_codecs.xml:system/etc/media_codecs.xml \
-    device/moto/shamu/media_codecs_performance.xml:system/etc/media_codecs_performance.xml
+    $(LOCAL_PATH)/media/media_profiles_V1_0.xml:system/vendor/etc/media_profiles_V1_0.xml \
+    $(LOCAL_PATH)/media/media_codecs.xml:system/etc/media_codecs.xml \
+    $(LOCAL_PATH)/media/media_codecs_performance.xml:system/etc/media_codecs_performance.xml
 
 PRODUCT_COPY_FILES += \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
@@ -87,25 +76,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.opengles.aep.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.opengles.aep.xml \
     frameworks/native/data/etc/android.software.midi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.midi.xml
 
-# For GPS
-PRODUCT_COPY_FILES += \
-    device/moto/shamu/sec_config:system/etc/sec_config
-
-# Touch firmware updater
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/init.mmi.touch.sh:system/bin/init.mmi.touch.sh
-
-# Add WiFi Firmware
-$(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4356/device-bcm.mk)
-
-# WiFi cal NVRAM file
-PRODUCT_COPY_FILES += \
-    device/moto/shamu/bcmdhd.cal:system/etc/wifi/bcmdhd.cal
-
-# BT FW
-PRODUCT_COPY_FILES += \
-    device/moto/shamu/bluetooth/BCM4356A2_001.003.015.0077.0214_ORC.hcd:$(TARGET_COPY_OUT_VENDOR)/firmware/bcm4354A2.hcd
-
 PRODUCT_AAPT_CONFIG := normal
 PRODUCT_AAPT_PREF_CONFIG := 560dpi
 # A list of dpis to select prebuilt apk, in precedence order.
@@ -114,20 +84,8 @@ PRODUCT_AAPT_PREBUILT_DPI := xxxhdpi xxhdpi xhdpi hdpi
 PRODUCT_CHARACTERISTICS := nosdcard
 
 DEVICE_PACKAGE_OVERLAYS := \
-    device/moto/shamu/overlay
-
-PRODUCT_PACKAGES := \
-    libwpa_client \
-    hostapd \
-    wifilogd \
-    wpa_supplicant \
-    wpa_supplicant.conf
-
-# Bluetooth
-PRODUCT_PACKAGES += \
-    libbt-vendor
-
-PRODUCT_PACKAGES += atmel.fw.apq8084
+    $(LOCAL_PATH)/overlay \
+    $(LOCAL_PATH)/overlay-lineage
 
 # OEM Package for RIL
 PRODUCT_PACKAGES += \
@@ -166,6 +124,15 @@ PRODUCT_PACKAGES += \
     libqcomvoiceprocessing \
     libqcomvoiceprocessingdescriptors
 
+# Bluetooth
+PRODUCT_PACKAGES += \
+    bdAddrLoader \
+    libbt-vendor
+
+# Bluetooth firmware
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/bluetooth/BCM4356A2_001.003.015.0077.0214_ORC.hcd:$(TARGET_COPY_OUT_VENDOR)/firmware/bcm4354A2.hcd
+
 # Camera
 PRODUCT_PACKAGES += \
     Snap
@@ -179,29 +146,22 @@ PRODUCT_PACKAGES += \
     mm-jpeg-interface-test \
     mm-qcamera-app
 
+# GPS
 PRODUCT_PACKAGES += \
-    libion
+    gps.msm8084
 
-PRODUCT_PACKAGES += \
-    bdAddrLoader
+# GPS configuration
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/gps.conf:system/etc/gps.conf
 
+# Keystore
 PRODUCT_PACKAGES += \
     keystore.msm8084
 
 PRODUCT_PACKAGES += \
     librmnetctl \
+    libion \
     libxml2
-
-# never dexopt the MotoSignature
-$(call add-product-dex-preopt-module-config,MotoSignatureApp,disable)
-
-# GPS configuration
-PRODUCT_COPY_FILES += \
-    device/moto/shamu/gps.conf:system/etc/gps.conf
-
-# GPS
-PRODUCT_PACKAGES += \
-    gps.msm8084
 
 # NFC packages
 PRODUCT_PACKAGES += \
@@ -214,13 +174,63 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.nfc.xml:system/etc/permissions/android.hardware.nfc.xml \
     frameworks/native/data/etc/android.hardware.nfc.hce.xml:system/etc/permissions/android.hardware.nfc.hce.xml \
     frameworks/native/data/etc/android.hardware.nfc.hcef.xml:system/etc/permissions/android.hardware.nfc.hcef.xml \
-    device/moto/shamu/nfc/nfcee_access.xml:system/etc/nfcee_access.xml \
-    device/moto/shamu/nfc/libnfc-brcm.conf:system/vendor/etc/libnfc-brcm.conf \
-    device/moto/shamu/nfc/libnfc-brcm-20795a10.conf:system/vendor/etc/libnfc-brcm-20795a10.conf
+    $(LOCAL_PATH)/configs/nfcee_access.xml:system/etc/nfcee_access.xml \
+    $(LOCAL_PATH)/configs/libnfc-brcm.conf:system/vendor/etc/libnfc-brcm.conf \
+    $(LOCAL_PATH)/configs/libnfc-brcm-20795a10.conf:system/vendor/etc/libnfc-brcm-20795a10.conf
+
+# Power
+PRODUCT_PACKAGES += \
+    power.shamu
+
+# Ramdisk
+ PRODUCT_PACKAGES += \
+    fstab.shamu \
+    init.shamu.rc \
+    init.shamu.power.rc \
+    init.shamu.usb.rc \
+    ueventd.shamu.rc
+
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/rootdir/etc/init.qcom.devwait.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.qcom.devwait.sh \
+    $(LOCAL_PATH)/rootdir/etc/init.qcom.devstart.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.qcom.devstart.sh
+
+# Sec config
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/sec_config:system/etc/sec_config
+
+# Thermal
+PRODUCT_PACKAGES += \
+    thermal.shamu
 
 # Thermal config
 PRODUCT_COPY_FILES += \
-    device/moto/shamu/configs/thermal-engine-shamu.conf:$(TARGET_COPY_OUT_VENDOR)/etc/thermal-engine-shamu.conf
+    $(LOCAL_PATH)/configs/thermal-engine-shamu.conf:$(TARGET_COPY_OUT_VENDOR)/etc/thermal-engine-shamu.conf
+
+# Touch
+PRODUCT_PACKAGES += \
+    atmel.fw.apq8084
+
+# Touch firmware updater
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/init.mmi.touch.sh:system/bin/init.mmi.touch.sh
+
+# WiFi
+PRODUCT_PACKAGES += \
+    libwpa_client \
+    hostapd \
+    wifilogd \
+    wpa_supplicant \
+    wpa_supplicant.conf
+
+# WiFi Firmware
+$(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4356/device-bcm.mk)
+
+# WiFi cal NVRAM file
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/bcmdhd.cal:system/etc/wifi/bcmdhd.cal
+
+# never dexopt the MotoSignature
+$(call add-product-dex-preopt-module-config,MotoSignatureApp,disable)
 
 # Enable for volte call
 AUDIO_FEATURE_ENABLED_MULTI_VOICE_SESSIONS := true
@@ -241,10 +251,6 @@ PRODUCT_SYSTEM_VERITY_PARTITION := /dev/block/platform/msm_sdcc.1/by-name/system
 $(call inherit-product, build/target/product/verity.mk)
 endif
 
-PRODUCT_PACKAGES += \
-    power.shamu \
-    thermal.shamu
-
 # For android_filesystem_config.h
 PRODUCT_PACKAGES += \
    fs_config_files
@@ -261,7 +267,7 @@ PRODUCT_OEM_PROPERTIES := \
 
 # Copy the qcril.db file from qcril to system. Useful to get the radio tech family for the camped operator
 PRODUCT_COPY_FILES += \
-    device/moto/shamu/qcril.db:system/etc/ril/qcril.db
+    $(LOCAL_PATH)/qcril.db:system/etc/ril/qcril.db
 
 # Treble packages
 $(call inherit-product, device/moto/shamu/treble.mk)
@@ -281,7 +287,3 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 # Perf
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
    ro.qualcomm.perf.cores_online=2
-
-# Vendor security patch level
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.lineage.build.vendor_security_patch=2017-10-01

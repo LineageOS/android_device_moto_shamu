@@ -77,6 +77,9 @@ telephony.lteOnCdmaDevice=1
 # Tethering
 net.tethering.noprovisioning=true
 
+# Vendor security patch level
+ro.lineage.build.vendor_security_patch=2017-10-01
+
 # WiFi calling
 persist.data.iwlan.enable=true
 persist.radio.ignore_ims_wlan=1
