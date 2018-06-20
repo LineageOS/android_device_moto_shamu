@@ -18,8 +18,6 @@ on init
 on boot
     write /sys/class/android_usb/android0/iManufacturer ${ro.product.manufacturer}
     write /sys/class/android_usb/android0/iProduct ${ro.product.model}
-    write /sys/class/android_usb/android0/f_mass_storage/vendor ${ro.product.manufacturer}
-    write /sys/class/android_usb/android0/f_mass_storage/product ${ro.product.model}
     write /sys/class/android_usb/android0/iSerial ${ro.serialno}
     write /sys/module/dwc3_msm/parameters/prop_chg_detect 1
     mkdir /dev/bus 0755 root root
