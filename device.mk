@@ -241,9 +241,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # setup dalvik vm configs
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 
-# setup HWUI configs
-$(call inherit-product-if-exists, frameworks/native/build/phone-xxhdpi-3072-hwui-memory.mk)
-
 # only include verity on user builds for LineageOS
 ifeq ($(TARGET_BUILD_VARIANT),user)
 # setup dm-verity configs.
