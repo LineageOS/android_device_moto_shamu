@@ -279,7 +279,3 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     camera.disable_zsl_mode=0 \
     persist.camera.HAL3.enabled=1 \
     persist.camera.ois.disable=0
-
-# Perf
-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
-   ro.qualcomm.perf.cores_online=2
