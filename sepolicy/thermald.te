@@ -28,6 +28,7 @@ allow thermald sysfs_usb:file write;
 
 allow thermald {
     sysfs_batteryinfo
+    sysfs_kgsl_gpuclk
     sysfs_mpdecision
     sysfs_thermal
 }:file rw_file_perms;
