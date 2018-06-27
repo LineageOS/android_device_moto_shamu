@@ -370,7 +370,7 @@ vendor/firmware/keymaster/keymaster.b03
 vendor/firmware/keymaster/keymaster.mdt
 
 # Perf
-bin/mpdecision
+bin/mpdecision|98d60fa1a358c2222a9b775c603c789ace08a763
 
 # Qualcomm framework
 bin/irsc_util
