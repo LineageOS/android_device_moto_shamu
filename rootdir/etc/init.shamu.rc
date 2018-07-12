@@ -188,6 +188,10 @@ on post-fs-data
     mkdir /data/adspd 0770 media media
     mkdir /data/adspd/1 0770 media media
 
+    # Create PERFD deamon related dirs
+    mkdir /data/misc/perfd 02755 root system
+    mkdir /data/system/perfd 02770 root system
+
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864

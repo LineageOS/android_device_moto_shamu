@@ -8,6 +8,8 @@
 /data/misc/audio_cutback(/.*)?                        u:object_r:audio_cutback_data_file:s0
 /data/misc/location/gsiff(/.*)?                       u:object_r:gsiffd_data_file:s0
 /data/misc/location/quipc(/.*)?                       u:object_r:quipc_data_file:s0
+/data/misc/perfd(/.*)?                                u:object_r:mpctl_socket:s0
+/data/system/perfd(/.*)?                              u:object_r:mpctl_data_file:s0
 /data/misc/radio(/.*)?                                u:object_r:radio_data_file:s0
 /data/ss-ram-dumps(/.*)?                              u:object_r:ram_dump_logs:s0
 /data/system/dropbox-add(/.*)?                        u:object_r:dropbox_data_file:s0
