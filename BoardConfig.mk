@@ -78,8 +78,6 @@ TARGET_BOARD_PLATFORM := msm8084
 TARGET_BOOTLOADER_BOARD_NAME := shamu
 TARGET_NO_RPC := true
 
-TARGET_BOARD_INFO_FILE := device/moto/shamu/board-info.txt
-
 TARGET_USES_ION := true
 TARGET_USES_64_BIT_BINDER := true
 TARGET_HW_DISK_ENCRYPTION := false
@@ -110,8 +108,6 @@ TARGET_RECOVERY_FSTAB = device/moto/shamu/rootdir/etc/fstab.shamu
 
 # Ensure f2fstools are built
 TARGET_USERIMAGES_USE_F2FS := true
-
-TARGET_RELEASETOOLS_EXTENSIONS := device/moto/shamu
 
 # Support Native Layer RF cutback
 BOARD_USES_CUTBACK_IN_RILD := true
