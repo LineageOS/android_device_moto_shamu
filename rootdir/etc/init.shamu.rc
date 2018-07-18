@@ -177,8 +177,6 @@ on post-fs-data
 
     mkdir /data/audio/ 0770 media audio
 
-    setprop vold.post_fs_data_done 1
-
     # NFC local data and nfcee xml storage
     mkdir /data/nfc 0770 nfc nfc
     mkdir /data/nfc/param 0770 nfc nfc
@@ -191,6 +189,9 @@ on post-fs-data
     # Create PERFD deamon related dirs
     mkdir /data/misc/perfd 02755 root system
     mkdir /data/system/perfd 02770 root system
+
+    # keep that at the end of on post-fs-data
+    setprop vold.post_fs_data_done 1
 
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
