@@ -133,13 +133,21 @@ static void set_power_profile(int profile)
 
 static int resources_interaction_fling_boost[] = {
     CPUS_ONLINE_MIN_3,
-    CPU0_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU1_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU2_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU3_MIN_FREQ_NONTURBO_MAX + 5
+    CPU0_MIN_FREQ_NONTURBO_MAX + 1,
+    CPU1_MIN_FREQ_NONTURBO_MAX + 1,
+    CPU2_MIN_FREQ_NONTURBO_MAX + 1,
+    CPU3_MIN_FREQ_NONTURBO_MAX + 1
 };
 
 static int resources_interaction_boost[] = {
+    CPUS_ONLINE_MIN_2,
+    CPU0_MIN_FREQ_NONTURBO_MAX + 1,
+    CPU1_MIN_FREQ_NONTURBO_MAX + 1,
+    CPU2_MIN_FREQ_NONTURBO_MAX + 1,
+    CPU3_MIN_FREQ_NONTURBO_MAX + 1
+};
+
+static int resources_launch[] = {
     CPUS_ONLINE_MIN_2,
     CPU0_MIN_FREQ_NONTURBO_MAX + 5,
     CPU1_MIN_FREQ_NONTURBO_MAX + 5,
@@ -147,18 +155,10 @@ static int resources_interaction_boost[] = {
     CPU3_MIN_FREQ_NONTURBO_MAX + 5
 };
 
-static int resources_launch[] = {
-    CPUS_ONLINE_MIN_3,
-    CPU0_MIN_FREQ_TURBO_MAX,
-    CPU1_MIN_FREQ_TURBO_MAX,
-    CPU2_MIN_FREQ_TURBO_MAX,
-    CPU3_MIN_FREQ_TURBO_MAX
-};
-
-const int DEFAULT_INTERACTIVE_DURATION   =  500; /* ms */
+const int DEFAULT_INTERACTIVE_DURATION   =  200; /* ms */
 const int MIN_FLING_DURATION             = 1500; /* ms */
 const int MAX_INTERACTIVE_DURATION       = 5000; /* ms */
-const int LAUNCH_DURATION                = 2000; /* ms */
+const int LAUNCH_DURATION                = 1000; /* ms */
 
 int power_hint_override(power_hint_t hint, void *data)
 {
