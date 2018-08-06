@@ -147,18 +147,9 @@ static int resources_interaction_boost[] = {
     CPU3_MIN_FREQ_NONTURBO_MAX + 1
 };
 
-static int resources_launch[] = {
-    CPUS_ONLINE_MIN_2,
-    CPU0_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU1_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU2_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU3_MIN_FREQ_NONTURBO_MAX + 5
-};
-
 const int DEFAULT_INTERACTIVE_DURATION   =  200; /* ms */
 const int MIN_FLING_DURATION             = 1500; /* ms */
 const int MAX_INTERACTIVE_DURATION       = 5000; /* ms */
-const int LAUNCH_DURATION                = 1000; /* ms */
 
 int power_hint_override(power_hint_t hint, void *data)
 {
@@ -207,11 +198,6 @@ int power_hint_override(power_hint_t hint, void *data)
                 interaction(duration, ARRAY_SIZE(resources_interaction_boost),
                         resources_interaction_boost);
             }
-            return HINT_HANDLED;
-        case POWER_HINT_LAUNCH:
-            duration = LAUNCH_DURATION;
-            interaction(duration, ARRAY_SIZE(resources_launch),
-                    resources_launch);
             return HINT_HANDLED;
         default:
             break;
