@@ -53,6 +53,7 @@ static int first_display_off_hint;
 
 static int current_power_profile = PROFILE_BALANCED;
 
+/* power save mode: max 2 CPUs, max 1.2 GHz */
 static int profile_power_save[] = {
     0x0A03,
     CPUS_ONLINE_MAX_LIMIT_2,
@@ -62,6 +63,7 @@ static int profile_power_save[] = {
     CPU3_MAX_FREQ_NONTURBO_MAX + 1
 };
 
+/* efficiency mode: max 2 CPUs, max 2.4 GHz */
 static int profile_bias_power[] = {
     0x0A03,
     CPUS_ONLINE_MAX_LIMIT_2,
@@ -71,6 +73,7 @@ static int profile_bias_power[] = {
     CPU3_MAX_FREQ_NONTURBO_MAX + 14,
 };
 
+/* quick mode: min 2 CPUs, min 1.1 GHz */
 static int profile_bias_performance[] = {
     CPUS_ONLINE_MIN_2,
     CPU0_MIN_FREQ_NONTURBO_MAX + 1,
@@ -79,6 +82,7 @@ static int profile_bias_performance[] = {
     CPU3_MIN_FREQ_NONTURBO_MAX + 1
 };
 
+/* performance mode: min 4 CPUs, min 1.5 GHz */
 static int profile_high_performance[] = {
     0x0901,
     CPUS_ONLINE_MIN_4,
@@ -131,6 +135,7 @@ static void set_power_profile(int profile)
     current_power_profile = profile;
 }
 
+/* fling boost: min 3 CPUs, min 1.1 GHz */
 static int resources_interaction_fling_boost[] = {
     CPUS_ONLINE_MIN_3,
     CPU0_MIN_FREQ_NONTURBO_MAX + 1,
@@ -139,6 +144,7 @@ static int resources_interaction_fling_boost[] = {
     CPU3_MIN_FREQ_NONTURBO_MAX + 1
 };
 
+/* interactive boost: min 2 CPUs, min 1.1 GHz */
 static int resources_interaction_boost[] = {
     CPUS_ONLINE_MIN_2,
     CPU0_MIN_FREQ_NONTURBO_MAX + 1,
