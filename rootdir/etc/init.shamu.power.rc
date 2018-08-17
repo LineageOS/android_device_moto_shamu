@@ -34,7 +34,6 @@ on boot
     chown system system /sys/devices/system/cpu/cpufreq/interactive/io_is_busy
     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/io_is_busy
 
-on property:dev.bootcomplete=1
     write /sys/module/lpm_levels/enable_low_power/l2 4
     write /sys/module/msm_pm/modes/cpu0/power_collapse/suspend_enabled 1
     write /sys/module/msm_pm/modes/cpu1/power_collapse/suspend_enabled 1
@@ -62,7 +61,9 @@ on property:dev.bootcomplete=1
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor interactive
     write /sys/module/msm_thermal/core_control/enabled 1
     write /sys/devices/system/cpu/cpufreq/interactive/io_is_busy 1
+    rm /data/system/perfd/default_values
 
+on property:dev.bootcomplete=1
     # cpufreq settings
     write /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay "20000 883200:40000 1190400:80000 2496000:100000"
     write /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load 99
