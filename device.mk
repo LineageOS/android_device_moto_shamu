@@ -155,7 +155,7 @@ PRODUCT_PACKAGES += \
 # NFC packages
 PRODUCT_PACKAGES += \
     com.android.nfc_extras \
-    nfc_nci.bcm2079x.default \
+    nfc_nci.bcm2079x.msm8084 \
     NfcNci \
     Tag
 
