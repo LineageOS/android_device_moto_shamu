@@ -1,0 +1,46 @@
+subdirs = ["src"]
+cc_library_shared {
+    name: "nfc_nci.bcm2079x.default",
+    proprietary: true,
+    relative_install_path: "hw",
+    srcs: [
+        "halimpl/bcm2079x/gki/common/*.c",
+        "halimpl/bcm2079x/gki/ulinux/*.c",
+        "halimpl/bcm2079x/hal/hal/*.c",
+        "halimpl/bcm2079x/adaptation/*.cpp",
+        "halimpl/bcm2079x/adaptation/*.c",
+        "halimpl/bcm2079x/nfc_nci.c",
+        "src/adaptation/CrcChecksum.cpp",
+        "src/nfca_version.c",
+    ],
+    header_libs: [
+        "libhardware_headers",
+        "libhardware_legacy_headers",
+    ],
+    shared_libs: [
+        "libcutils",
+        "liblog",
+        "libhwbinder",
+    ],
+    local_include_dirs: [
+        "halimpl/bcm2079x/include",
+        "halimpl/bcm2079x/gki/ulinux",
+        "halimpl/bcm2079x/gki/common",
+        "halimpl/bcm2079x/adaptation",
+        "src/hal/include",
+        "src/hal/int",
+        "src/udrv/include",
+        "src/include",
+    ],
+    cflags: [
+        "-DBUILDCFG=1",
+        "-Wno-deprecated-register",
+        "-Wno-unused-parameter",
+        "-Wno-missing-field-initializers",
+        "-Wno-unused-function",
+        "-Wno-unused-variable",
+        "-Wno-macro-redefined",
+        "-DNFC_HAL_TARGET=TRUE",
+        "-DNFC_RW_ONLY=TRUE",
+    ],
+}
