@@ -30,8 +30,8 @@ const char* transport_config_paths[] = {"/odm/etc/", "/vendor/etc/", "/etc/"};
 const int transport_config_path_size =
     (sizeof(transport_config_paths) / sizeof(transport_config_paths[0]));
 
-#define config_name "libnfc-brcm.conf"
-#define extra_config_base "libnfc-brcm-"
+#define config_name "libnfc-nci.conf"
+#define extra_config_base "libnfc-nci-"
 #define extra_config_ext ".conf"
 #define IsStringValue 0x80000000
 
