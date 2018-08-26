@@ -137,4 +137,7 @@ WIFI_DRIVER_FW_PATH_AP      := "/vendor/firmware/fw_bcmdhd_apsta.bin"
 WIFI_DRIVER_FW_PATH_STA     := "/vendor/firmware/fw_bcmdhd.bin"
 WIFI_BUS := PCIE
 
+# gralloc1 bits
+TARGET_ADDITIONAL_GRALLOC_10_USAGE_BITS := 0x02000000U
+
 -include vendor/motorola/shamu/BoardConfigVendor.mk
