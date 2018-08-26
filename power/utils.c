@@ -279,49 +279,49 @@ void release_request(int lock_handle) {
         perf_lock_rel(lock_handle);
 }
 
-void perform_hint_action(int hint_id, int resource_values[], int num_resources)
+int perform_hint_action(int hint_id, int resource_values[], int num_resources)
 {
-    if (qcopt_handle) {
-        if (perf_lock_acq) {
-            /* Acquire an indefinite lock for the requested resources. */
-            int lock_handle = perf_lock_acq(0, 0, resource_values,
-                    num_resources);
+    if (qcopt_handle && perf_lock_acq) {
+        /* Acquire an indefinite lock for the requested resources. */
+        int lock_handle = perf_lock_acq(0, 0, resource_values,
+                num_resources);
 
-            if (lock_handle == -1) {
-                ALOGE("Failed to acquire lock.");
-            } else {
-                /* Add this handle to our internal hint-list. */
-                struct hint_data *new_hint =
-                    (struct hint_data *)malloc(sizeof(struct hint_data));
+        if (lock_handle == -1) {
+            ALOGE("Failed to acquire lock.");
+            return -EINVAL;
+        }
 
-                if (new_hint) {
-                    if (!active_hint_list_head.compare) {
-                        active_hint_list_head.compare =
-                            (int (*)(void *, void *))hint_compare;
-                        active_hint_list_head.dump = (void (*)(void *))hint_dump;
-                    }
+        /* Add this handle to our internal hint-list. */
+        struct hint_data *new_hint =
+            (struct hint_data *)malloc(sizeof(struct hint_data));
 
-                    new_hint->hint_id = hint_id;
-                    new_hint->perflock_handle = lock_handle;
+        if (!new_hint) {
+            /* Can't keep track of this lock. Release it. */
+            if (perf_lock_rel)
+                perf_lock_rel(lock_handle);
+            ALOGE("Failed to process hint.");
+            return -ENOMEM;
+        }
 
-                    if (add_list_node(&active_hint_list_head, new_hint) == NULL) {
-                        free(new_hint);
-                        /* Can't keep track of this lock. Release it. */
-                        if (perf_lock_rel)
-                            perf_lock_rel(lock_handle);
+        if (!active_hint_list_head.compare) {
+            active_hint_list_head.compare =
+                (int (*)(void *, void *))hint_compare;
+            active_hint_list_head.dump = (void (*)(void *))hint_dump;
+        }
 
-                        ALOGE("Failed to process hint.");
-                    }
-                } else {
-                    /* Can't keep track of this lock. Release it. */
-                    if (perf_lock_rel)
-                        perf_lock_rel(lock_handle);
+        new_hint->hint_id = hint_id;
+        new_hint->perflock_handle = lock_handle;
 
-                    ALOGE("Failed to process hint.");
-                }
-            }
+        if (add_list_node(&active_hint_list_head, new_hint) == NULL) {
+            free(new_hint);
+            /* Can't keep track of this lock. Release it. */
+            if (perf_lock_rel)
+                perf_lock_rel(lock_handle);
+            ALOGE("Failed to process hint.");
+            return -ENOMEM;
         }
     }
+    return 0;
 }
 
 void undo_hint_action(int hint_id)
