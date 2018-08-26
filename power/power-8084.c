@@ -99,40 +99,51 @@ int get_number_of_profiles()
 }
 #endif
 
-static void set_power_profile(int profile)
+static int set_power_profile(int profile)
 {
+    int ret = -EINVAL;
+    const char *profile_name = NULL;
+
     if (profile == current_power_profile)
-        return;
+        return 0;
 
     ALOGV("%s: Profile=%d", __func__, profile);
 
     if (current_power_profile != PROFILE_BALANCED) {
         undo_hint_action(DEFAULT_PROFILE_HINT_ID);
         ALOGV("%s: Hint undone", __func__);
+        current_power_profile = PROFILE_BALANCED;
     }
 
     if (profile == PROFILE_POWER_SAVE) {
-        perform_hint_action(DEFAULT_PROFILE_HINT_ID, profile_power_save,
+        ret = perform_hint_action(DEFAULT_PROFILE_HINT_ID, profile_power_save,
                 ARRAY_SIZE(profile_power_save));
-        ALOGD("%s: Set powersave mode", __func__);
+        profile_name = "powersave";
 
     } else if (profile == PROFILE_HIGH_PERFORMANCE) {
-        perform_hint_action(DEFAULT_PROFILE_HINT_ID, profile_high_performance,
-                ARRAY_SIZE(profile_high_performance));
-        ALOGD("%s: Set performance mode", __func__);
+        ret = perform_hint_action(DEFAULT_PROFILE_HINT_ID,
+                profile_high_performance, ARRAY_SIZE(profile_high_performance));
+        profile_name = "performance";
 
     } else if (profile == PROFILE_BIAS_POWER) {
-        perform_hint_action(DEFAULT_PROFILE_HINT_ID, profile_bias_power,
+        ret = perform_hint_action(DEFAULT_PROFILE_HINT_ID, profile_bias_power,
                 ARRAY_SIZE(profile_bias_power));
-        ALOGD("%s: Set bias power mode", __func__);
+        profile_name = "bias power";
 
     } else if (profile == PROFILE_BIAS_PERFORMANCE) {
-        perform_hint_action(DEFAULT_PROFILE_HINT_ID, profile_bias_performance,
-                ARRAY_SIZE(profile_bias_performance));
-        ALOGD("%s: Set bias perf mode", __func__);
+        ret = perform_hint_action(DEFAULT_PROFILE_HINT_ID,
+                profile_bias_performance, ARRAY_SIZE(profile_bias_performance));
+        profile_name = "bias perf";
+    } else if (profile == PROFILE_BALANCED) {
+        ret = 0;
+        profile_name = "balanced";
     }
 
-    current_power_profile = profile;
+    if (ret == 0) {
+        current_power_profile = profile;
+        ALOGD("%s: Set %s mode", __func__, profile_name);
+    }
+    return ret;
 }
 
 /* fling boost: min 3 CPUs, min 1.1 GHz */
@@ -166,7 +177,8 @@ int power_hint_override(power_hint_t hint, void *data)
     int duration;
 
     if (hint == POWER_HINT_SET_PROFILE) {
-        set_power_profile(*(int32_t *)data);
+        if (set_power_profile(*(int32_t *)data) < 0)
+            ALOGE("mpdecision not started in a timely manner.");
         return HINT_HANDLED;
     }
 
