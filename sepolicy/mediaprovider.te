@@ -1,0 +1,2 @@
+dontaudit mediaprovider cache_private_backup_file:dir getattr;
+dontaudit mediaprovider cache_recovery_file:dir getattr;
