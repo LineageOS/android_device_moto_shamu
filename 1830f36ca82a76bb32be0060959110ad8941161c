@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a821826c_86bd36fa",
+        "filename": "rootdir/etc/init.shamu.rc",
+        "patchSetId": 2
+      },
+      "lineNbr": 457,
+      "author": {
+        "id": 15402
+      },
+      "writtenOn": "2018-08-29T11:55:40Z",
+      "side": 0,
+      "message": "Doesn\u0027t removing this `rm\u0027 result in some new logcat spam?\nMaybe moving this into post-fs-data would avoid that.",
+      "range": {
+        "startLine": 457,
+        "startChar": 4,
+        "endLine": 457,
+        "endChar": 40
+      },
+      "revId": "1830f36ca82a76bb32be0060959110ad8941161c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
