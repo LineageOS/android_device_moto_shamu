@@ -6,10 +6,10 @@ ro.audio.flinger_standbytime_ms=300
 ro.audio.monitorRotation=true
 
 persist.audio.dualmic.config=endfire
-persist.audio.fluence.speaker=false
-persist.audio.fluence.voicecall=true
-persist.audio.fluence.voicecomm=false
-persist.audio.fluence.voicerec=false
+persist.vendor.audio.fluence.speaker=false
+persist.vendor.audio.fluence.voicecall=true
+persist.vendor.audio.fluence.voicecomm=false
+persist.vendor.audio.fluence.voicerec=false
 ro.config.vc_call_vol_steps=6
 ro.qc.sdk.audio.fluencetype=fluence
 
