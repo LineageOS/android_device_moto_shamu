@@ -229,11 +229,11 @@ $(call add-product-dex-preopt-module-config,MotoSignatureApp,disable)
 # Enable for volte call
 AUDIO_FEATURE_ENABLED_MULTI_VOICE_SESSIONS := true
 
-PRODUCT_PROPERTY_OVERRIDES += \
-   dalvik.vm.heapgrowthlimit=256m
-
 # setup dalvik vm configs
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
+
+PRODUCT_PROPERTY_OVERRIDES += \
+   dalvik.vm.heapgrowthlimit=256m
 
 # only include verity on user builds for LineageOS
 ifeq ($(TARGET_BUILD_VARIANT),user)
