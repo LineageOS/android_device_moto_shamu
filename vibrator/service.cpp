@@ -48,7 +48,7 @@ status_t registerVibratorService() {
     }
 
     sp<IVibrator> vibrator = new Vibrator(std::move(enable), std::move(amplitude));
-    vibrator->registerAsService();
+    (void) vibrator->registerAsService();
     return OK;
 }
 
