@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The LineageOS Project
+// Copyright (C) 2017-2018 The LineageOS Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,11 +12,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 cc_binary {
     name: "android.hardware.vibrator@1.0-service.shamu",
     relative_install_path: "hw",
     init_rc: ["android.hardware.vibrator@1.0-service.shamu.rc"],
     srcs: ["service.cpp", "Vibrator.cpp"],
+    cflags: ["-Wall", "-Werror"],
     shared_libs: [
         "libhidlbase",
         "libhidltransport",
