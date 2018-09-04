@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5616b0b4_67fcb692",
+        "filename": "device.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2018-09-04T05:03:03Z",
+      "side": 1,
+      "message": "Should be moved to treble.mk to be consistent.",
+      "revId": "4d27a741f823b7a0c0b2060ca0c71e5bce497330",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
