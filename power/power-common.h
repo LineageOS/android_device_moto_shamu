@@ -27,6 +27,9 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <hardware/power.h>
+
 #define NODE_MAX (64)
 
 #define SCALING_GOVERNOR_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
@@ -55,3 +58,6 @@ enum {
 };
 
 #define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
+
+// Custom Lineage hints
+const static power_hint_t POWER_HINT_SET_PROFILE = (power_hint_t)0x00000111;
