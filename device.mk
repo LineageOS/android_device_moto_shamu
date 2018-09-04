@@ -208,6 +208,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/init.mmi.touch.sh:system/bin/init.mmi.touch.sh
 
+# USB
+PRODUCT_PACKAGES += \
+    android.hardware.usb@1.0-service.basic
+
 # WiFi
 PRODUCT_PACKAGES += \
     libwpa_client \
