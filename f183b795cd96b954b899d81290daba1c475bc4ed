@@ -22,6 +22,30 @@
       "revId": "f183b795cd96b954b899d81290daba1c475bc4ed",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c4d2a2d4_0249c51c",
+        "filename": "overlay/frameworks/base/core/res/res/values/config.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 370,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2018-09-11T08:40:45Z",
+      "side": 0,
+      "message": "https://github.com/LineageOS/android_frameworks_base/blob/2a91e4aabccd260655ecd2e3dc7f00044e8ca250/core/java/com/android/internal/os/PowerProfile.java#L292\n\nAs far as I understand this code, yes.",
+      "parentUuid": "f37d8614_5836e842",
+      "range": {
+        "startLine": 370,
+        "startChar": 40,
+        "endLine": 370,
+        "endChar": 77
+      },
+      "revId": "f183b795cd96b954b899d81290daba1c475bc4ed",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
