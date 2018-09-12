@@ -146,13 +146,13 @@ static int set_power_profile(int profile)
     return ret;
 }
 
-/* fling boost: min 3 CPUs, min 1.1 GHz */
+/* fling boost: min 3 CPUs, min 1.3 GHz */
 static int resources_interaction_fling_boost[] = {
     CPUS_ONLINE_MIN_3,
-    CPU0_MIN_FREQ_NONTURBO_MAX + 1,
-    CPU1_MIN_FREQ_NONTURBO_MAX + 1,
-    CPU2_MIN_FREQ_NONTURBO_MAX + 1,
-    CPU3_MIN_FREQ_NONTURBO_MAX + 1
+    CPU0_MIN_FREQ_NONTURBO_MAX + 3,
+    CPU1_MIN_FREQ_NONTURBO_MAX + 3,
+    CPU2_MIN_FREQ_NONTURBO_MAX + 3,
+    CPU3_MIN_FREQ_NONTURBO_MAX + 3
 };
 
 /* interactive boost: min 2 CPUs, min 1.1 GHz */
