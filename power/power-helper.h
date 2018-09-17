@@ -71,23 +71,21 @@ enum stats_type {
     VOTER_SLPI,
     MAX_PLATFORM_STATS,
 
-#ifndef V1_0_HAL
+#ifndef NO_WLAN_STATS
     //WLAN Stats
     WLAN_POWER_DEBUG_STATS = 0,
     MAX_WLAN_STATS,
 #endif
 };
 
+#ifndef NO_WLAN_STATS
 enum subsystem_type {
-#ifndef V1_0_HAL
     SUBSYSTEM_WLAN = 0,
-#endif
 
     //Don't add any lines after this line
     SUBSYSTEM_COUNT
 };
 
-#ifndef V1_0_HAL
 enum wlan_sleep_states {
     WLAN_STATE_ACTIVE = 0,
     WLAN_STATE_DEEP_SLEEP,
@@ -130,7 +128,7 @@ void power_hint(power_hint_t hint, void *data);
 void power_set_interactive(int on);
 void set_feature(feature_t feature, int state);
 int extract_platform_stats(uint64_t *list);
-#ifndef V1_0_HAL
+#ifndef NO_WLAN_STATS
 int extract_wlan_stats(uint64_t *list);
 #endif
 int __attribute__ ((weak)) get_number_of_profiles();
