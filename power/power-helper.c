@@ -75,7 +75,7 @@
    Path for QCACLD2 and Prima: /d/wlan_wcnss/power_stats
  */
 
-#ifndef V1_0_HAL
+#ifndef NO_WLAN_STATS
 #ifndef WLAN_POWER_STAT
 #define WLAN_POWER_STAT "/d/wlan0/power_stats"
 #endif
@@ -103,7 +103,7 @@ static const char *rpm_master_param_names[] = {
     "xo_count"
 };
 
-#ifndef V1_0_HAL
+#ifndef NO_WLAN_STATS
 static const char *wlan_param_names[] = {
     "cumulative_sleep_time_ms",
     "cumulative_total_on_time_ms",
@@ -133,7 +133,7 @@ struct stat_pair rpm_stat_map[] = {
 };
 #endif
 
-#ifndef V1_0_HAL
+#ifndef NO_WLAN_STATS
 const char *wlan_power_stat_params[] = {
     "cumulative_sleep_time_ms",
     "cumulative_total_on_time_ms",
@@ -452,7 +452,7 @@ int extract_platform_stats(uint64_t *list) {
     return 0;
 }
 
-#ifndef V1_0_HAL
+#ifndef NO_WLAN_STATS
 int extract_wlan_stats(uint64_t *list) {
     int ret;
     ret = extract_stats(list, WLAN_POWER_STAT, wlan_param_names, WLAN_POWER_PARAMS_COUNT, false);
@@ -550,7 +550,7 @@ int extract_platform_stats(uint64_t *list) {
     return extract_stats(list, RPM_SYSTEM_STAT, rpm_stat_map, ARRAY_SIZE(rpm_stat_map));
 }
 
-#ifndef V1_0_HAL
+#ifndef NO_WLAN_STATS
 int extract_wlan_stats(uint64_t *list) {
     return extract_stats(list, WLAN_POWER_STAT, wlan_stat_map, ARRAY_SIZE(wlan_stat_map));
 }
