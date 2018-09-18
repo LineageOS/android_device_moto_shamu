@@ -73,13 +73,9 @@ static int profile_bias_power[] = {
     CPU3_MAX_FREQ_NONTURBO_MAX + 14,
 };
 
-/* quick mode: min 2 CPUs, min 1.1 GHz */
+/* quick mode: min 3 CPUs */
 static int profile_bias_performance[] = {
-    CPUS_ONLINE_MIN_2,
-    CPU0_MIN_FREQ_NONTURBO_MAX + 1,
-    CPU1_MIN_FREQ_NONTURBO_MAX + 1,
-    CPU2_MIN_FREQ_NONTURBO_MAX + 1,
-    CPU3_MIN_FREQ_NONTURBO_MAX + 1
+    CPUS_ONLINE_MIN_3
 };
 
 /* performance mode: min 4 CPUs, min 1.5 GHz */
@@ -155,16 +151,35 @@ static int resources_interaction_fling_boost[] = {
     CPU3_MIN_FREQ_NONTURBO_MAX + 3
 };
 
-/* interactive boost: min 2 CPUs, min 1.1 GHz */
+/* interactive boost: min 2 CPUs, min 1.2 GHz */
 static int resources_interaction_boost[] = {
     CPUS_ONLINE_MIN_2,
-    CPU0_MIN_FREQ_NONTURBO_MAX + 1,
-    CPU1_MIN_FREQ_NONTURBO_MAX + 1,
-    CPU2_MIN_FREQ_NONTURBO_MAX + 1,
-    CPU3_MIN_FREQ_NONTURBO_MAX + 1
+    CPU0_MIN_FREQ_NONTURBO_MAX + 2,
+    CPU1_MIN_FREQ_NONTURBO_MAX + 2,
+    CPU2_MIN_FREQ_NONTURBO_MAX + 2,
+    CPU3_MIN_FREQ_NONTURBO_MAX + 2
+};
+
+/* fling boost: min 3 CPUs, min 1.5 GHz */
+static int resources_interaction_fling_boost_perf[] = {
+    CPUS_ONLINE_MIN_3,
+    CPU0_MIN_FREQ_NONTURBO_MAX + 5,
+    CPU1_MIN_FREQ_NONTURBO_MAX + 5,
+    CPU2_MIN_FREQ_NONTURBO_MAX + 5,
+    CPU3_MIN_FREQ_NONTURBO_MAX + 5
+};
+
+/* interactive boost: min 2 CPUs, min 1.5 GHz */
+static int resources_interaction_boost_perf[] = {
+    CPUS_ONLINE_MIN_3,
+    CPU0_MIN_FREQ_NONTURBO_MAX + 5,
+    CPU1_MIN_FREQ_NONTURBO_MAX + 5,
+    CPU2_MIN_FREQ_NONTURBO_MAX + 5,
+    CPU3_MIN_FREQ_NONTURBO_MAX + 5
 };
 
 const int DEFAULT_INTERACTIVE_DURATION   =  200; /* ms */
+const int PERF_INTERACTIVE_DURATION      =  500; /* ms */
 const int MIN_FLING_DURATION             = 1500; /* ms */
 const int MAX_INTERACTIVE_DURATION       = 5000; /* ms */
 
@@ -190,7 +205,11 @@ int power_hint_override(power_hint_t hint, void *data)
 
     switch (hint) {
         case POWER_HINT_INTERACTION:
-            duration = DEFAULT_INTERACTIVE_DURATION;
+            if (current_power_profile == PROFILE_BIAS_POWER) {
+                duration = PERF_INTERACTIVE_DURATION;
+            } else {
+                duration = DEFAULT_INTERACTIVE_DURATION;
+            }
             if (data) {
                 int input_duration = *((int*)data);
                 if (input_duration > duration) {
@@ -209,12 +228,22 @@ int power_hint_override(power_hint_t hint, void *data)
             s_previous_boost_timespec = cur_boost_timespec;
             s_previous_duration = duration;
 
-            if (duration >= MIN_FLING_DURATION) {
-                interaction(duration, ARRAY_SIZE(resources_interaction_fling_boost),
-                        resources_interaction_fling_boost);
+            if (current_power_profile == PROFILE_BIAS_POWER) {
+                if (duration >= MIN_FLING_DURATION) {
+                    interaction(duration, ARRAY_SIZE(resources_interaction_fling_boost_perf),
+                            resources_interaction_fling_boost_perf);
+                } else {
+                    interaction(duration, ARRAY_SIZE(resources_interaction_boost_perf),
+                            resources_interaction_boost_perf);
+                }
             } else {
-                interaction(duration, ARRAY_SIZE(resources_interaction_boost),
-                        resources_interaction_boost);
+                if (duration >= MIN_FLING_DURATION) {
+                    interaction(duration, ARRAY_SIZE(resources_interaction_fling_boost),
+                            resources_interaction_fling_boost);
+                } else {
+                    interaction(duration, ARRAY_SIZE(resources_interaction_boost),
+                            resources_interaction_boost);
+                }
             }
             return HINT_HANDLED;
         default:
