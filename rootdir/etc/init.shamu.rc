@@ -1,6 +1,6 @@
 #
-# Copyright 2014 The Android Open Source Project
-# Copyright 2018 The LineageOS Project
+# Copyright 2014 (C) The Android Open Source Project
+# Copyright 2018 (C) The LineageOS Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -450,9 +450,6 @@ on property:sys.boot_completed=1
     write /sys/block/mmcblk0/queue/rq_affinity 0
     write /sys/block/mmcblk0/queue/read_ahead_kb 128
     write /sys/block/mmcblk0/queue/iostats 1
-
-    # i/o scheduler
-    setprop sys.io.scheduler "bfq"
 
 on property:ro.data.large_tcp_window_size=true
     # Adjust socket buffer to enlarge TCP receive window for high bandwidth (e.g. DO-RevB)
