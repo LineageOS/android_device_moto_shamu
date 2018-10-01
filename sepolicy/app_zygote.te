@@ -1,0 +1,2 @@
+allow webview_zygote ion_device:chr_file r_file_perms;
+
