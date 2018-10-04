@@ -71,7 +71,7 @@ PRODUCT_PACKAGES += \
 
 # Power
 PRODUCT_PACKAGES += \
-    android.hardware.power@1.0-service.shamu
+    android.hardware.power@1.1-service.shamu
 
 # RenderScript
 PRODUCT_PACKAGES += \
