@@ -86,8 +86,8 @@ endif
 ifeq ($(TARGET_HAS_NO_WLAN_STATS),true)
 LOCAL_CFLAGS += -DNO_WLAN_STATS
 endif
-LOCAL_MODULE := android.hardware.power@1.1-service-qti
-LOCAL_INIT_RC := android.hardware.power@1.1-service-qti.rc
+LOCAL_MODULE := android.hardware.power@1.1-service.shamu
+LOCAL_INIT_RC := android.hardware.power@1.1-service.shamu.rc
 LOCAL_SHARED_LIBRARIES += android.hardware.power@1.1 vendor.lineage.power@1.0
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_OWNER := qcom
