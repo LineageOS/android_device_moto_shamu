@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.power@1.1-service-qti"
+#define LOG_TAG "android.hardware.power@1.1-service.shamu"
 
 // #define LOG_NDEBUG 0
 

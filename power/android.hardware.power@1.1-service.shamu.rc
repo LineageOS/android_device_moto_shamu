@@ -1,0 +1,8 @@
+service power-hal-1-1 /vendor/bin/hw/android.hardware.power@1.1-service.shamu
+    class hal
+    user system
+    group system
+    disabled
+
+on property:init.svc.mpdecision=running
+    start power-hal-1-1
