@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2c991d6a_b14772b3",
+        "filename": "device.mk",
+        "patchSetId": 6
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 13026
+      },
+      "writtenOn": "2018-10-05T08:04:20Z",
+      "side": 1,
+      "message": "See https://android-review.googlesource.com/c/device/google/wahoo/+/631185. TARGET_COPY_OUT_SYSTEM might be better here.",
+      "range": {
+        "startLine": 170,
+        "startChar": 44,
+        "endLine": 170,
+        "endChar": 66
+      },
+      "revId": "85a1c03f7d900ce2458359d688b14ec57d6cb51b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
