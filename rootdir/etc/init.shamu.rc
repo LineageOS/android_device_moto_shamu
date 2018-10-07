@@ -19,7 +19,6 @@ import /system/vendor/etc/init/hw/init.shamu.usb.rc
 import /system/vendor/etc/init/hw/init.shamu.power.rc
 
 on early-init
-    mkdir /firmware 0771 system system
     mount debugfs debugfs /sys/kernel/debug
     chown system system /sys/kernel/debug/kgsl/proc
 
@@ -30,11 +29,6 @@ on init
     start vndservicemanager
     # vold needs keymaster that needs qseecomd
     start qseecomd
-
-    mkdir /oem 0550 root root
-
-    # Set permissions for persist partition
-    mkdir /persist 0771 system system
 
     write /sys/block/zram0/comp_algorithm lz4
     write /proc/sys/vm/page-cluster 0
@@ -47,8 +41,6 @@ on fs
     # results in failure to launch late-start class.
     wait /dev/block/platform/msm_sdcc.1/by-name/oem
     mount ext4 /dev/block/platform/msm_sdcc.1/by-name/oem /oem ro nosuid nodev context=u:object_r:oemfs:s0
-
-    mkdir /fsg 0755 root root
     mount ext4 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3 /fsg ro nosuid nodev barrier=0 context=u:object_r:fsg_file:s0
 
     restorecon_recursive /persist
