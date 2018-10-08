@@ -20,7 +20,6 @@ import /system/vendor/etc/init/hw/init.shamu.power.rc
 
 on early-init
     mkdir /firmware 0771 system system
-    symlink /data/tombstones /tombstones
     mount debugfs debugfs /sys/kernel/debug
     chown system system /sys/kernel/debug/kgsl/proc
 
@@ -94,10 +93,9 @@ on post-fs
     start devstart_sh
 
 on post-fs-data
-    mkdir /tombstones/modem 0771 system system
-    mkdir /tombstones/lpass 0771 system system
-    mkdir /tombstones/wcnss 0771 system system
-    mkdir /tombstones/dsps 0771 system system
+    mkdir /data/tombstones/modem 0771 system system
+    mkdir /data/tombstones/lpass 0771 system system
+    mkdir /data/tombstones/dsps 0771 system system
 
     # SENSORS
     #Create directory used by sensor subsystem(dsps)
