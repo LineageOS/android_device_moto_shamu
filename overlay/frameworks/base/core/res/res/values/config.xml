@@ -211,15 +211,20 @@
     <!-- string indicating the OUI that should be used when generating random mac addresses -->
     <string  translatable="false" name="config_wifi_random_mac_oui">92-68-C3</string>
 
-    <!-- Setting this true forces the headset jack switches to use the/dev/input/event subsystem
-         rather than the uevent framework. -->
-    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <!-- Control whether the always on display mode is available. This should only be enabled on
+         devices where the display has be tuned to be power efficient in DOZE and/or DOZE_SUSPEND
+         states. -->
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+
+    <!-- Whether the display blanks itself when transitioning from a doze to a non-doze state -->
+    <bool name="config_displayBlanksAfterDoze">true</bool>
 
     <!-- Indicate whether closing the lid causes the device to go to sleep and opening
          it causes the device to wake up.
          The default is false. -->
     <bool name="config_lidControlsSleep">true</bool>
 
+<<<<<<< HEAD
     <!-- Indicate whether to allow the device to suspend when the screen is off
          due to the proximity sensor.  This resource should only be set to true
          if the sensor HAL correctly handles the proximity sensor as a wake-up source.
@@ -227,6 +232,8 @@
          The default is false. -->
     <bool name="config_suspendWhenScreenOffDueToProximity">true</bool>
 
+=======
+>>>>>>> 82bd228db... nash: Enable Always-On-Display
     <!-- Vibrator pattern for feedback about a long screen/key press -->
     <integer-array name="config_longPressVibePattern">
         <item>0</item>
