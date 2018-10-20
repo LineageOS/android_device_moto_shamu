@@ -55,6 +55,9 @@ BOARD_CUSTOM_BT_CONFIG := device/moto/shamu/bluetooth/vnd_shamu.txt
 # Camera
 USE_DEVICE_SPECIFIC_CAMERA:= true
 
+TARGET_PROCESS_SDK_VERSION_OVERRIDE += \
+    /vendor/bin/mm-qcamera-daemon=26
+
 # Charger
 BOARD_CHARGER_ENABLE_SUSPEND := true
 BOARD_HAL_STATIC_LIBRARIES := libhealthd.shamu
@@ -138,4 +141,19 @@ WIFI_BUS := PCIE
 # gralloc1 bits
 TARGET_ADDITIONAL_GRALLOC_10_USAGE_BITS := 0x02000000U
 
+<<<<<<< HEAD
 -include vendor/motorola/shamu/BoardConfigVendor.mk
+=======
+ifeq ($(TARGET_PRODUCT),aosp_bullhead_svelte)
+BOARD_KERNEL_CMDLINE += mem=1024M maxcpus=2
+MALLOC_SVELTE := true
+endif
+ifeq ($(TARGET_PRODUCT),bullhead_svelte)
+BOARD_KERNEL_CMDLINE += mem=1024M
+MALLOC_SVELTE := true
+endif
+
+# Legacy blob support
+TARGET_PROCESS_SDK_VERSION_OVERRIDE += \
+    /vendor/bin/mm-qcamera-daemon=27
+>>>>>>> 0da2a671... bullhead: Set SDK API level for mm-qcamera-daemon
