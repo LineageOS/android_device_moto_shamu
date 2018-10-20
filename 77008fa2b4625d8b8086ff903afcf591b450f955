@@ -22,6 +22,30 @@
       "revId": "77008fa2b4625d8b8086ff903afcf591b450f955",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "be0a5676_d9e05e03",
+        "filename": "device.mk",
+        "patchSetId": 9
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 13026
+      },
+      "writtenOn": "2018-10-20T16:53:58Z",
+      "side": 1,
+      "message": "Yup, that\u0027s what I meant, and the assumption is that the \"standard\" config is chipset-agnostic (which is probably true here).",
+      "parentUuid": "38dd0879_1d3310a9",
+      "range": {
+        "startLine": 171,
+        "startChar": 0,
+        "endLine": 171,
+        "endChar": 105
+      },
+      "revId": "77008fa2b4625d8b8086ff903afcf591b450f955",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
     }
   ]
 }
