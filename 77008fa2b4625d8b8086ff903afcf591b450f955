@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "38dd0879_1d3310a9",
+        "filename": "device.mk",
+        "patchSetId": 9
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2018-10-20T16:33:56Z",
+      "side": 1,
+      "message": "this should still go in vendor\nlibnfc-nci.conf is meant to be a \"standard\" config for the impl\nWhile any other config shall be loaded by the vendor hal",
+      "range": {
+        "startLine": 171,
+        "startChar": 0,
+        "endLine": 171,
+        "endChar": 105
+      },
+      "revId": "77008fa2b4625d8b8086ff903afcf591b450f955",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
