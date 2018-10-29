@@ -1,7 +1,6 @@
 OLD_LOCAL_PATH := $(LOCAL_PATH)
 LOCAL_PATH := $(call my-dir)
 
-include $(LOCAL_PATH)/../../../common.mk
 include $(CLEAR_VARS)
 
 LOCAL_32_BIT_ONLY := true
@@ -12,8 +11,7 @@ LOCAL_CFLAGS += \
     -Wall \
     -Werror
 
-LOCAL_C_INCLUDES+= $(kernel_includes)
-LOCAL_ADDITIONAL_DEPENDENCIES := $(common_deps)
+LOCAL_HEADER_LIBRARIES := generated_kernel_headers
 
 LOCAL_C_INCLUDES += \
     frameworks/native/include/media/openmax \

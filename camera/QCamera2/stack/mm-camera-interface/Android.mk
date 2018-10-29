@@ -1,7 +1,6 @@
 OLD_LOCAL_PATH := $(LOCAL_PATH)
 LOCAL_PATH := $(call my-dir)
 
-include $(LOCAL_PATH)/../../../common.mk
 include $(CLEAR_VARS)
 
 # cam_intf.c has type conversion discarding qualifiers.
@@ -36,8 +35,7 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/../common \
     system/media/camera/include
 
-LOCAL_C_INCLUDES += $(kernel_includes)
-LOCAL_ADDITIONAL_DEPENDENCIES := $(common_deps)
+LOCAL_HEADER_LIBRARIES := generated_kernel_headers
 
 LOCAL_C_INCLUDES += $(call project-path-for,qcom-media)/mm-core/inc
 
