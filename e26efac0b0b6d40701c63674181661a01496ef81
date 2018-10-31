@@ -16,6 +16,24 @@
       "revId": "e26efac0b0b6d40701c63674181661a01496ef81",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fa2d0188_7074d8d7",
+        "filename": "sepolicy/file_contexts",
+        "patchSetId": 1
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2018-10-31T08:42:53Z",
+      "side": 1,
+      "message": "I am not aware of any default. But I\u0027m not importing qcom_sepolicy.",
+      "parentUuid": "8af4beee_eafed864",
+      "revId": "e26efac0b0b6d40701c63674181661a01496ef81",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
