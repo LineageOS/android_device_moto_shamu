@@ -216,8 +216,7 @@ PRODUCT_PACKAGES += \
     qmi_motext_hook
 
 # RRO
-PRODUCT_ENFORCE_RRO_TARGETS := \
-    framework-res
+PRODUCT_ENFORCE_RRO_TARGETS := *
 
 # SEC config
 PRODUCT_COPY_FILES += \
