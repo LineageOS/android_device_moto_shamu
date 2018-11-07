@@ -49,16 +49,7 @@ TARGET_PROCESS_SDK_VERSION_OVERRIDE += \
 BACKLIGHT_PATH := /sys/class/leds/lcd-backlight/brightness
 
 # Dexpreopt
-# Enable dex-preoptimization to speed up first boot sequence
-ifeq ($(HOST_OS),linux)
-  ifneq ($(TARGET_BUILD_VARIANT),eng)
-    ifeq ($(WITH_DEXPREOPT),)
-      DONT_DEXPREOPT_PREBUILTS := true
-      WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY := false
-      WITH_DEXPREOPT := true
-    endif
-  endif
-endif
+DONT_DEXPREOPT_PREBUILTS := true
 WITH_DEXPREOPT_DEBUG_INFO := false
 
 # EGL
