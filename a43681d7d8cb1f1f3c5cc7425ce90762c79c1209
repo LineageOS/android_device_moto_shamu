@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "92e4d3eb_775a84ea",
+        "filename": "BoardConfig.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2018-11-09T10:56:23Z",
+      "side": 1,
+      "message": "You might move it to a new #Font section a bit further down.\nAlso remove the blank line.",
+      "revId": "a43681d7d8cb1f1f3c5cc7425ce90762c79c1209",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
