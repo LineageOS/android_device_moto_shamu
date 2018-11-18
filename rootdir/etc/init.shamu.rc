@@ -250,6 +250,9 @@ on boot
     # Wifi firmware reload path
     chown wifi wifi /sys/module/bcmdhd/parameters/firmware_path
 
+    # Use the group Wi-Fi Direct interface on bcm43xx
+    setprop wifi.direct.interface p2p-dev-wlan0
+
     # add a cpuset for the camera daemon
     # we want all the cores for camera
     mkdir /dev/cpuset/camera-daemon
