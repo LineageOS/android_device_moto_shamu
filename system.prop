@@ -86,9 +86,6 @@ sys.use_fifo_ui=1
 # Vendor security patch level
 ro.lineage.build.vendor_security_patch=2017-10-01
 
-# WiFi
-wifi.direct.non-concurrent=true
-
 # WiFi calling
 persist.data.iwlan.enable=true
 persist.radio.ignore_ims_wlan=1
