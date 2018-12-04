@@ -530,7 +530,7 @@ on property:persist.qca1530=no
 on property:init.svc.surfaceflinger=stopped
     stop ppd
 
-service mmi-touch-sh /system/bin/init.mmi.touch.sh atmel
+service mmi-touch-sh /system/vendor/bin/init.mmi.touch.sh atmel
     class main
     user root
     oneshot

@@ -101,7 +101,6 @@
 /system/bin/imsdatadaemon                             u:object_r:ims_exec:s0
 /system/bin/imsqmidaemon                              u:object_r:ims_exec:s0
 /system/bin/ims_rtp_daemon                            u:object_r:ims_exec:s0
-/system/bin/init\.mmi\.touch\.sh                      u:object_r:mmi_touch_sh_exec:s0
 /system/bin/irsc_util                                 u:object_r:irsc_util_exec:s0
 /system/bin/ks                                        u:object_r:mdm_helper_exec:s0
 /system/bin/mdm_helper                                u:object_r:mdm_helper_exec:s0
@@ -117,6 +116,7 @@
 
 /system/vendor/bin/bdAddrLoader                       u:object_r:bluetooth_loader_exec:s0
 /system/vendor/bin/gsiff_daemon                       u:object_r:gsiffd_exec:s0
+/system/vendor/bin/init\.mmi\.touch\.sh               u:object_r:mmi_touch_sh_exec:s0
 /system/vendor/bin/init\.qcom\.devstart\.sh           u:object_r:init-qcom-devstart-sh_exec:s0
 /system/vendor/bin/init\.qcom\.devwait\.sh            u:object_r:init-qcom-devwait-sh_exec:s0
 /system/vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.shamu u:object_r:hal_dumpstate_default_exec:s0
