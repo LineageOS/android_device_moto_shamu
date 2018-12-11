@@ -122,7 +122,7 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/gps.conf:system/etc/gps.conf
 
 # HIDL
-$(call inherit-product, device/moto/shamu/hidl.mk)
+$(call inherit-product, $(DEVICE_PATH)/hidl.mk)
 
 # Keylayouts
 PRODUCT_COPY_FILES += \
