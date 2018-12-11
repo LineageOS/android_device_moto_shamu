@@ -26,7 +26,9 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
 
 # Inherit from hardware-specific part of the product configuration
 $(call inherit-product, device/moto/shamu/device.mk)
-$(call inherit-product-if-exists, vendor/motorola/shamu/shamu-vendor.mk)
+
+# Inherit proprietary files
+$(call inherit-product, vendor/motorola/shamu/shamu-vendor.mk)
 
 # Device identifier. This must come after all inclusions
 PRODUCT_NAME := lineage_shamu
@@ -34,8 +36,6 @@ PRODUCT_DEVICE := shamu
 PRODUCT_BRAND := google
 PRODUCT_MODEL := Nexus 6
 PRODUCT_MANUFACTURER := motorola
-
-TARGET_VENDOR := moto
 
 PRODUCT_BUILD_PROP_OVERRIDES += \
     PRODUCT_NAME=shamu \
