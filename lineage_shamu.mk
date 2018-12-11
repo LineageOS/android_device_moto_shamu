@@ -25,8 +25,10 @@ $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
 
 # Inherit from hardware-specific part of the product configuration
-$(call inherit-product, device/moto/shamu/device.mk)
-$(call inherit-product-if-exists, vendor/motorola/shamu/shamu-vendor.mk)
+$(call inherit-product, $(LOCAL_PATH)/device.mk)
+
+# Inherit proprietary files
+$(call inherit-product, vendor/motorola/shamu/shamu-vendor.mk)
 
 # Device identifier. This must come after all inclusions
 PRODUCT_NAME := lineage_shamu
