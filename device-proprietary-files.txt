@@ -402,6 +402,7 @@ bin/qmi_motext_hook
 bin/qmuxd
 bin/radish
 bin/tcmd_mini
+etc/ril/qcril.db
 lib/libdetectmodem.so
 lib/libmdmdetect.so
 vendor/lib/libconfigdb.so
