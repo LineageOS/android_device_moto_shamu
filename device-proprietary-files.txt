@@ -191,6 +191,9 @@ etc/firmware/cpp_firmware_v1_8_0.fw
 # Capsense firmware
 vendor/firmware/cy8c20247_24lkxi.hex
 
+# Carrier Services
+-priv-app/CarrierServices/CarrierServices.apk;PRESIGNED
+
 # CNE
 bin/cnd
 -priv-app/CNEService/CNEService.apk
@@ -361,7 +364,6 @@ bin/mdm_helper
 bin/mdm_helper_proxy
 bin/netmgrd
 bin/qmi_motext_hook
-#bin/qmi_simple_ril_test
 bin/qmuxd
 bin/radish
 bin/tcmd_mini
@@ -397,12 +399,12 @@ vendor/lib/libTimeService.so
 vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat
 vendor/firmware/atmel-a432-14103001-0103aa-shamu.tdat
 
-#USB
+# USB
 bin/port-bridge
 bin/usbhub
 bin/usbhub_init
 
-# Vzw
+# VZW
 -app/VZWAPNLib/VZWAPNLib.apk:app/VZWAPNLib/VZWAPNLib.apk;PRESIGNED
 etc/permissions/com.motorola.DirectedSMSProxy.xml
 etc/permissions/com.vzw.vzwapnlib.xml
@@ -439,8 +441,5 @@ etc/firmware/vpu.mdt
 vendor/firmware/aonvr1.bin
 vendor/firmware/aonvr2.bin
 
-# WiFi
+# Wi-Fi
 vendor/firmware/bcm20795_firmware.ncd
-
-#Carrier Services
--priv-app/CarrierServices/CarrierServices.apk;PRESIGNED
