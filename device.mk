@@ -238,10 +238,6 @@ PRODUCT_PACKAGES += \
     libxml2 \
     qmi_motext_hook
 
-# QCRIL: Copy the qcril.db file from qcril to system. Useful to get the radio tech family for the camped operator
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/qcril.db:system/etc/ril/qcril.db
-
 # SEC config
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/sec_config:$(TARGET_COPY_OUT_VENDOR)/etc/sec_config
