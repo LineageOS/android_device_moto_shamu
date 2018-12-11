@@ -27,13 +27,14 @@ PRODUCT_AAPT_PREF_CONFIG := 560dpi
 PRODUCT_AAPT_PREBUILT_DPI := xxxhdpi xxhdpi xhdpi hdpi
 
 # Audio
-USE_XML_AUDIO_POLICY_CONF := 1
 PRODUCT_PACKAGES += \
     audio.primary.msm8084 \
     audio.a2dp.default \
     audio.usb.default \
     audio.r_submix.default \
     libaudio-resampler
+
+USE_XML_AUDIO_POLICY_CONF := 1
 
 # Audio configs
 PRODUCT_COPY_FILES += \
