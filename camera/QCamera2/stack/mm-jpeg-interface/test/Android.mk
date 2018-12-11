@@ -16,7 +16,7 @@ LOCAL_CFLAGS += -DUSE_ION
 endif
 
 OMX_HEADER_DIR := frameworks/native/include/media/openmax
-OMX_CORE_DIR := device/moto/shamu/camera/mm-image-codec
+OMX_CORE_DIR :=  $(DEVICE_PATH)/camera/mm-image-codec
 
 LOCAL_C_INCLUDES := $(MM_JPEG_TEST_PATH)
 LOCAL_C_INCLUDES += $(MM_JPEG_TEST_PATH)/../inc
@@ -53,7 +53,7 @@ LOCAL_CFLAGS += -DUSE_ION
 endif
 
 OMX_HEADER_DIR := frameworks/native/include/media/openmax
-OMX_CORE_DIR := device/moto/shamu/camera/mm-image-codec
+OMX_CORE_DIR :=  $(DEVICE_PATH)/camera/mm-image-codec
 
 LOCAL_C_INCLUDES := $(MM_JPEG_TEST_PATH)
 LOCAL_C_INCLUDES += $(MM_JPEG_TEST_PATH)/../inc
