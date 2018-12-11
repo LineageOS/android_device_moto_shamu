@@ -31,8 +31,8 @@ TARGET_USES_64_BIT_BINDER := true
 
 # Bluetooth defines
 BOARD_HAVE_BLUETOOTH_BCM := true
-BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/moto/shamu/bluetooth
-BOARD_CUSTOM_BT_CONFIG := device/moto/shamu/bluetooth/vnd_shamu.txt
+BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR :=  $(DEVICE_PATH)/bluetooth
+BOARD_CUSTOM_BT_CONFIG :=  $(DEVICE_PATH)/vnd_shamu.txt
 
 # Board
 TARGET_NO_BOOTLOADER := true
@@ -71,7 +71,7 @@ BOARD_SYSTEMIMAGE_PARTITION_SIZE := 2147483648
 BOARD_USERDATAIMAGE_PARTITION_SIZE := 25253773312
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_USE_F2FS := true
-TARGET_FS_CONFIG_GEN += device/moto/shamu/config.fs
+TARGET_FS_CONFIG_GEN +=  $(DEVICE_PATH)/config.fs
 TARGET_USES_MKE2FS := true
 
 # Fonts (reduce system image size)
@@ -105,8 +105,8 @@ TARGET_KERNEL_CONFIG := shamu_defconfig
 TARGET_KERNEL_SOURCE := kernel/moto/shamu
 
 # Manifests
-DEVICE_MANIFEST_FILE := device/moto/shamu/manifest.xml
-DEVICE_MATRIX_FILE := device/moto/shamu/compatibility_matrix.xml
+DEVICE_MANIFEST_FILE :=  $(DEVICE_PATH)/manifest.xml
+DEVICE_MATRIX_FILE :=  $(DEVICE_PATH)/compatibility_matrix.xml
 
 # Power
 TARGET_HAS_LEGACY_POWER_STATS := true
@@ -116,7 +116,7 @@ TARGET_TAP_TO_WAKE_NODE := "/sys/bus/i2c/devices/1-004a/tsp"
 
 # Recovery
 LZMA_RAMDISK_TARGETS := recovery
-TARGET_RECOVERY_FSTAB = device/moto/shamu/rootdir/etc/fstab.shamu
+TARGET_RECOVERY_FSTAB =  $(DEVICE_PATH)/rootdir/etc/fstab.shamu
 
 # Render
 NUM_FRAMEBUFFER_SURFACE_BUFFERS := 3
@@ -128,7 +128,7 @@ TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
 BOARD_USES_CUTBACK_IN_RILD := true
 
 # Selinux
-BOARD_SEPOLICY_DIRS += device/moto/shamu/sepolicy
+BOARD_SEPOLICY_DIRS +=  $(DEVICE_PATH)/sepolicy
 
 # Wifi
 BOARD_WLAN_DEVICE           := bcmdhd
