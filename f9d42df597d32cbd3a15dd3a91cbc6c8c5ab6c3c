@@ -16,6 +16,23 @@
       "revId": "f9d42df597d32cbd3a15dd3a91cbc6c8c5ab6c3c",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b72c24de_6434b540",
+        "filename": "BoardConfig.mk",
+        "patchSetId": 4
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2018-12-12T07:25:42Z",
+      "side": 1,
+      "message": "I hope our hardware isn\u0027t rotting away. :P",
+      "revId": "f9d42df597d32cbd3a15dd3a91cbc6c8c5ab6c3c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
     }
   ]
 }
