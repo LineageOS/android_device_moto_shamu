@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "59460ea6_ecd1d9b3",
+        "filename": "device.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 229,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2018-12-12T02:06:08Z",
+      "side": 1,
+      "message": "power.shamu? Is this a leftover, considering you have the hidl service?",
+      "revId": "065f680ba4984c7211fcdff3412084dff56d0586",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
