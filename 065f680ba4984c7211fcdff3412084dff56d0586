@@ -16,6 +16,24 @@
       "revId": "065f680ba4984c7211fcdff3412084dff56d0586",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5641db9f_4f721046",
+        "filename": "device.mk",
+        "patchSetId": 3
+      },
+      "lineNbr": 229,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2018-12-12T02:10:30Z",
+      "side": 1,
+      "message": "Looks like it, yes",
+      "parentUuid": "59460ea6_ecd1d9b3",
+      "revId": "065f680ba4984c7211fcdff3412084dff56d0586",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
     }
   ]
 }
