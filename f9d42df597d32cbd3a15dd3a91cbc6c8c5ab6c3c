@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78e63da5_64cbd230",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 4
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 13648
+      },
+      "writtenOn": "2018-12-12T02:02:47Z",
+      "side": 1,
+      "message": "Where is this \"naming convention\" defined?",
+      "revId": "f9d42df597d32cbd3a15dd3a91cbc6c8c5ab6c3c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
