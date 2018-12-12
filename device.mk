@@ -192,10 +192,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.opengles.aep.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.opengles.aep.xml \
     frameworks/native/data/etc/android.software.midi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.midi.xml
 
-# Power
-PRODUCT_PACKAGES += \
-    power.shamu
-
 # Ramdisk
  PRODUCT_PACKAGES += \
     fstab.shamu \
