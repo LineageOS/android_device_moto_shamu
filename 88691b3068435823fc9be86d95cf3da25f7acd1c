@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "de6aa3f9_6edbdb42",
+        "filename": "device-proprietary-files.txt",
+        "patchSetId": 7
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2018-12-13T02:59:33Z",
+      "side": 1,
+      "message": "Isn\u0027t this soundtrigger related?",
+      "range": {
+        "startLine": 440,
+        "startChar": 0,
+        "endLine": 442,
+        "endChar": 26
+      },
+      "revId": "88691b3068435823fc9be86d95cf3da25f7acd1c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
