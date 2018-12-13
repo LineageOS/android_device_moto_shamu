@@ -1,0 +1,2 @@
+r_dir_file(healthd, sysfs_batteryinfo)
+allow healthd sysfs_batteryinfo:file w_file_perms;
