@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7edbe644_5e648a6b",
+        "filename": "device.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2018-12-13T12:59:04Z",
+      "side": 1,
+      "message": "I can\u0027t see an implementation in hardware_interfaces",
+      "revId": "a4e4e94289fd4d5b4216f203a91c6f95f83ecfda",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
