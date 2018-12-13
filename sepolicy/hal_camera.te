@@ -1,3 +1,5 @@
 allow hal_camera mpdecision_socket:dir r_dir_perms;
 unix_socket_send(hal_camera, camera, camera)
 unix_socket_send(hal_camera, mpdecision, mpdecision)
+
+vndbinder_use(hal_camera);
