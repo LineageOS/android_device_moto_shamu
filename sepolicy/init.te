@@ -2,3 +2,24 @@ allow init diag_device:chr_file unlink;
 allow init tmpfs:lnk_file create_file_perms;
 allow init userdata_block_device:blk_file rw_file_perms;
 allow init cache_block_device:blk_file rw_file_perms;
+
+# init chmod/chown access to /sys files
+allow init {
+    ## proc_slabinfo
+     sysfs_mmi_touch
+    # sysfs_msm_subsys
+    sysfs_usb
+    sysfs_wlan_fwpath
+}:file setattr;
+
+allow init {
+    # proc_cpu_alignment
+    # sysfs_block_iosched
+    # sysfs_block_read_ahead_kb
+    sysfs_devices_system_cpu
+    ## sysfs_mpdecision
+    ## sysfs_msm_subsys
+    # sysfs_net
+    ## sysfs_thermal
+    sysfs_xhci_msm_hsic
+}:file w_file_perms;
