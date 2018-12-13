@@ -1,0 +1,1 @@
+allow healthd sysfs_batteryinfo:file r_file_perms;
