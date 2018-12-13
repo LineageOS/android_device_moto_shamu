@@ -46,6 +46,8 @@ type sysfs_sar_wifi, fs_type, sysfs_type;
 type mpctl_socket, file_type, data_file_type, core_data_file_type, mlstrustedobject;
 type mpctl_data_file, file_type, data_file_type, core_data_file_type;
 
+type sysfs_block_iosched, fs_type, sysfs_type;
+type sysfs_kgsl, fs_type, sysfs_type;
 type sysfs_kgsl_gpuclk, fs_type, sysfs_type;
 type debugfs_rpm, debugfs_type, fs_type;
 type sysfs_socinfo, sysfs_type, fs_type, mlstrustedobject;
