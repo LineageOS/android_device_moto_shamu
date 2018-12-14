@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "221133af_e1c088d4",
+        "filename": "power/android.hardware.power@1.1-service.shamu.rc",
+        "patchSetId": 1
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2018-12-14T20:02:38Z",
+      "side": 1,
+      "message": "Stupid me!\nstart vendor.power-hal-1-1",
+      "revId": "14814471c9289ffe5d83bb5f4aa8e951e50fe84c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
