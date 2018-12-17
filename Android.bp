@@ -1,5 +1,0 @@
-subdirs = [
-    "light",
-    "thermal",
-    "vibrator",
-]
