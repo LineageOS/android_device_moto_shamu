@@ -56,7 +56,7 @@ BOARD_CUSTOM_BT_CONFIG := device/moto/shamu/bluetooth/vnd_shamu.txt
 USE_DEVICE_SPECIFIC_CAMERA:= true
 
 TARGET_PROCESS_SDK_VERSION_OVERRIDE += \
-    /system/bin/mm-qcamera-daemon=26
+    /system/bin/mm-qcamera-daemon=25
 
 # Charger
 BOARD_CHARGER_ENABLE_SUSPEND := true
