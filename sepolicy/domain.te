@@ -2,3 +2,5 @@ userdebug_or_eng(`
   allow domain diag_device:chr_file rw_file_perms;
 ')
 r_dir_file(domain, sysfs_devices_system_cpu)
+
+allow domain kgsl_debugfs:dir search;
