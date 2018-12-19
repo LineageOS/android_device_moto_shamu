@@ -1,4 +1,5 @@
 # debugfs
+genfscon debugfs /kgsl/proc                           u:object_r:kgsl_debugfs:s0
 genfscon debugfs /rpm_stats                           u:object_r:debugfs_rpm:s0
 genfscon debugfs /rpm_master_stats                    u:object_r:debugfs_rpm:s0
 genfscon debugfs /system_stats                        u:object_r:debugfs_rpm:s0

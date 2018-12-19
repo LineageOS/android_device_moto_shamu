@@ -52,3 +52,6 @@ type sysfs_socinfo, sysfs_type, fs_type, mlstrustedobject;
 
 #type for devstart
 type sysfs_audio, fs_type, sysfs_type;
+
+#kgsl
+type kgsl_debugfs, debugfs_type, fs_type;
