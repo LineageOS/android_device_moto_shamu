@@ -38,6 +38,10 @@ on init
 on fs
     # Start HW service manager early
     start hwservicemanager
+
+    # vold needs keymaster that needs qseecomd
+    start qseecomd
+
     mount_all fstab.shamu --early
 
     # Keeping following partitions outside fstab file. As user may not have
