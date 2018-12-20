@@ -25,6 +25,10 @@ on early-init
     chown system system /sys/kernel/debug/kgsl/proc
 
 on init
+    # We are mounting system(/vendor) early
+    # vold needs keymaster that needs qseecomd
+    start qseecomd
+
     mkdir /oem 0550 root root
 
     # Set permissions for persist partition
@@ -38,6 +42,7 @@ on init
 on fs
     # Start HW service manager early
     start hwservicemanager
+
     mount_all fstab.shamu --early
 
     # Keeping following partitions outside fstab file. As user may not have
