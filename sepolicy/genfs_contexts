@@ -14,7 +14,7 @@ genfscon sysfs /class/rfkill/rfkill0/state                                      
 genfscon sysfs /class/android_usb/f_rmnet_smd_sdio/transport                        u:object_r:sysfs_rmnet:s0
 genfscon sysfs /class/thermal                                                       u:object_r:sysfs_thermal:s0
 genfscon sysfs /devices/cycapsense_prog.1/cycapsense_fw                             u:object_r:sysfs_capsense_update:s0
-genfscon sysfs /devices/fd900000.qcom,mdss_mdp/caps                                 u:object_r:sysfs_hal_gralloc:s0
+genfscon sysfs /devices/fd900000.qcom,mdss_mdp/caps                                 u:object_r:sysfs_graphics:s0
 genfscon sysfs /devices/fd900000.qcom,mdss_mdp/qcom,mdss_fb_primary.164/leds/lcd-backlight/brightness u:object_r:sysfs_leds:s0
 genfscon sysfs /devices/fd900000.qcom,mdss_mdp/qcom,mdss_fb_primary.164/leds/lcd-backlight/max_brightness u:object_r:sysfs_leds:s0
 genfscon sysfs /devices/fdb00000.qcom,kgsl-3d0/kgsl/kgsl-3d0/max_gpuclk            u:object_r:sysfs_kgsl_gpuclk:s0
@@ -34,6 +34,7 @@ genfscon sysfs /devices/mmi_sar_ctrl.84/sar_wifi                                
 genfscon sysfs /devices/msm_hsic_host/host_ready                                    u:object_r:sysfs_msm_hsic_host_rdy:s0
 genfscon sysfs /devices/soc0                                                        u:object_r:sysfs_socinfo:s0
 genfscon sysfs /devices/virtual/android_usb/android0/f_rmnet_smd_sdio/transport     u:object_r:sysfs_rmnet:s0
+genfscon sysfs /devices/virtual/graphics                                            u:object_r:sysfs_graphics:s0
 genfscon sysfs /devices/virtual/net/wlan0/address                                   u:object_r:sysfs_mac_address:s0
 genfscon sysfs /devices/virtual/thermal                                             u:object_r:sysfs_thermal:s0
 genfscon sysfs /kernel/boot_adsp/boot                                               u:object_r:sysfs_audio:s0
