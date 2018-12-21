@@ -22,6 +22,30 @@
       "revId": "88691b3068435823fc9be86d95cf3da25f7acd1c",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c77c9521_3d853d5e",
+        "filename": "device-proprietary-files.txt",
+        "patchSetId": 7
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2018-12-21T08:47:58Z",
+      "side": 1,
+      "message": "It is, but I don\u0027t know if an unconfigured chip is a good thing to have",
+      "parentUuid": "de6aa3f9_6edbdb42",
+      "range": {
+        "startLine": 440,
+        "startChar": 0,
+        "endLine": 442,
+        "endChar": 26
+      },
+      "revId": "88691b3068435823fc9be86d95cf3da25f7acd1c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
     }
   ]
 }
