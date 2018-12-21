@@ -9,7 +9,7 @@ type camera_socket, file_type, data_file_type, core_data_file_type;
 type mpdecision_socket, file_type;
 type qmuxd_socket, file_type;
 type sensors_socket, file_type;
-type sysfs_hal_gralloc, sysfs_type, fs_type;
+type sysfs_graphics, sysfs_type, fs_type;
 type thermald_socket, file_type;
 # Socket node needed by ims_data daemon
 type ims_socket, file_type;
