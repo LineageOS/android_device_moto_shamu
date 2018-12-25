@@ -26,6 +26,9 @@ on early-init
 
 on init
     # We are mounting system(/vendor) early
+    start servicemanager
+    start hwservicemanager
+    start vndservicemanager
     # vold needs keymaster that needs qseecomd
     start qseecomd
 
@@ -40,9 +43,6 @@ on init
     write /proc/sys/vm/page-cluster 0
 
 on fs
-    # Start HW service manager early
-    start hwservicemanager
-
     mount_all fstab.shamu --early
 
     # Keeping following partitions outside fstab file. As user may not have
@@ -71,12 +71,8 @@ on fs
 
 on late-fs
     # Start services for bootanim
-    start servicemanager
     start surfaceflinger
     start bootanim
-
-    # Make sure HW service manager started and start required HAL services
-    wait_for_prop hwservicemanager.ready true
     start configstore-hal-1-0
     start gralloc-2-0
 
