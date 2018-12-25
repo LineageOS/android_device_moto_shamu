@@ -420,11 +420,6 @@ on property:ro.use_data_netmgrd=false
     # netmgr not supported on specific target
     stop netmgrd
 
-# Adjust socket buffer to enlarge TCP receive window for high bandwidth
-# but only if ro.data.large_tcp_window_size property is set.
-on property:ro.data.large_tcp_window_size=true
-    write /proc/sys/net/ipv4/tcp_adv_win_scale  2
-
 service wpa_supplicant /system/vendor/bin/hw/wpa_supplicant \
     -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
     -I/system/etc/wifi/p2p_supplicant_overlay.conf  \
