@@ -37,18 +37,19 @@ type sensors_socket,             file_type;
 type thermald_socket,            file_type;
 
 #### sysfs ###
+type sysfs_adsp,                 fs_type, sysfs_type;
 type sysfs_audio,                fs_type, sysfs_type;
 type sysfs_block_iosched,        fs_type, sysfs_type;
 type sysfs_capsense_update,      fs_type, sysfs_type;
 type sysfs_cpuboost,             fs_type, sysfs_type;
 type sysfs_cpu_online,           fs_type, sysfs_type;
-type sysfs_dsp_gpio,             fs_type, sysfs_type;
 type sysfs_esoc,                 fs_type, sysfs_type;
 type sysfs_graphics,             fs_type, sysfs_type;
 type sysfs_hsic_modem_wait,      fs_type, sysfs_type;
 type sysfs_hwmon,                fs_type, sysfs_type;
 type sysfs_kgsl,                 fs_type, sysfs_type;
 type sysfs_kgsl_gpuclk,          fs_type, sysfs_type;
+type sysfs_input,                fs_type, sysfs_type;
 type sysfs_mmi_touch,            fs_type, sysfs_type;
 type sysfs_mpdecision,           fs_type, sysfs_type;
 type sysfs_msm_power,            fs_type, sysfs_type;

@@ -11,21 +11,16 @@ allow adspd input_device:dir search;
 allow adspd input_device:chr_file rw_file_perms;
 
 # /data/adspd
-allow adspd adspd_data_file:file create_file_perms;
 allow adspd adspd_data_file:dir rw_dir_perms;
-
-# For now, allow writes to all of /sys.
-# TODO: scope down this access.
-allow adspd sysfs:file write;
+allow adspd adspd_data_file:file create_file_perms;
 
 allow adspd sysfs_usb:file write;
 
 allow adspd sysfs_mmi_touch:dir search;
 allow adspd sysfs_mmi_touch:file r_file_perms;
 
-allow adspd sysfs_dsp_gpio:dir r_dir_perms;
-allow adspd sysfs_dsp_gpio:file rw_file_perms;
+allow adspd sysfs_adsp:dir r_dir_perms;
+allow adspd sysfs_adsp:file rw_file_perms;
 
-#todo
-# adspd reads /sys/devices/virtual/input/input1 properly label it
-allow adspd sysfs:file r_file_perms;
+allow adspd sysfs_input:dir search;
+allow adspd sysfs_input:file r_file_perms;
