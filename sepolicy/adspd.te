@@ -1,4 +1,4 @@
-type adspd, domain, device_domain_deprecated, mlstrustedsubject;
+type adspd, domain, mlstrustedsubject;
 type adspd_exec, file_type, exec_type;
 
 init_daemon_domain(adspd)
@@ -11,14 +11,16 @@ allow adspd input_device:dir search;
 allow adspd input_device:chr_file rw_file_perms;
 
 # /data/adspd
-allow adspd adspd_data_file:file create_file_perms;
 allow adspd adspd_data_file:dir rw_dir_perms;
-
-# For now, allow writes to all of /sys.
-# TODO: scope down this access.
-allow adspd sysfs:file write;
+allow adspd adspd_data_file:file create_file_perms;
 
 allow adspd sysfs_usb:file write;
 
 allow adspd sysfs_mmi_touch:dir search;
 allow adspd sysfs_mmi_touch:file r_file_perms;
+
+allow adspd sysfs_adsp:dir r_dir_perms;
+allow adspd sysfs_adsp:file rw_file_perms;
+
+allow adspd sysfs_input:dir search;
+allow adspd sysfs_input:file r_file_perms;

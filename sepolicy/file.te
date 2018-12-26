@@ -35,11 +35,13 @@ type thermald_socket,            file_type;
 
 #### sysfs ###
 type sysfs_audio,                fs_type, sysfs_type;
+type sysfs_adsp,                 fs_type, sysfs_type;
 type sysfs_capsense_update,      fs_type, sysfs_type;
 type sysfs_cpuboost,             fs_type, sysfs_type;
 type sysfs_cpu_online,           fs_type, sysfs_type;
 type sysfs_graphics,             fs_type, sysfs_type;
 type sysfs_kgsl_gpuclk,          fs_type, sysfs_type;
+type sysfs_input,                fs_type, sysfs_type;
 type sysfs_mmi_touch,            fs_type, sysfs_type;
 type sysfs_mpdecision,           fs_type, sysfs_type;
 type sysfs_msm_hsic_host_rdy,    fs_type, sysfs_type;
