@@ -19,10 +19,11 @@ allow rild audio_cutback_data_file:sock_file create_file_perms;
 # why?
 allow rild audio_cutback_data_file:dir setattr;
 
-# rild needs to parse through /proc to obtain pid of netmgrd
+# rild reads proc/<pid> to check if process is netmgrd
+# Grant access if that's the case; don't log denials for other processes.
 r_dir_file(rild, netmgrd)
-# b/18352920 suppress denials until the procfs lookup is removed
-dontaudit rild domain:dir r_dir_perms;
+dontaudit rild { domain -netmgrd }:dir search;
+dontaudit rild { domain -netmgrd }:file { open read getattr };
 
 # Allow permissions for FSG
 allow rild fsg_file:dir search;
@@ -41,3 +42,5 @@ allow rild radio_data_file:file create_file_perms;
 
 # for /system/bin/qmi_motext_hook
 allow rild system_file:file execute_no_trans;
+
+allow rild proc_bootinfo:file r_file_perms;

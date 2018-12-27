@@ -7,6 +7,7 @@ genfscon debugfs /system_stats                        u:object_r:debugfs_rpm:s0
 # proc
 genfscon proc /bluetooth/sleep/btwrite                                              u:object_r:proc_bluetooth_writable:s0
 genfscon proc /bluetooth/sleep/lpm                                                  u:object_r:proc_bluetooth_writable:s0
+genfscon proc /bootinfo                                                             u:object_r:proc_bootinfo:s0
 genfscon proc /device-tree/firmware/android                                         u:object_r:sysfs_dt_firmware_android:s0
 
 # sysfs
