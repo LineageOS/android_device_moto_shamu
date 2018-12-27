@@ -5,6 +5,10 @@ allow init cache_block_device:blk_file rw_file_perms;
 
 # init chmod/chown access to /sys files
 allow init {
+    sysfs_bluetooth_writable
+    sysfs_dsp_gpio
+    sysfs_graphics
+    sysfs_hsic_modem_wait
     sysfs_mmi_touch
     sysfs_usb
     sysfs_wlan_fwpath
@@ -14,7 +18,11 @@ allow init {
     sysfs_block_iosched
     sysfs_devices_system_cpu
     sysfs_kgsl
+    sysfs_msm_power
     sysfs_rmnet
+    sysfs_ssr_recovery
     sysfs_ssr_toggle
+    sysfs_thermal
+    sysfs_usb_controller
     sysfs_xhci_msm_hsic
 }:file w_file_perms;
