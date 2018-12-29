@@ -193,8 +193,11 @@ on post-fs-data
     mkdir /data/adspd/1 0770 media media
 
     # Create PERFD deamon related dirs
-    mkdir /data/misc/perfd 02755 root system
-    mkdir /data/system/perfd 02770 root system
+    mkdir /data/misc/perfd 0755 root system
+    chmod 2755 /data/misc/perfd
+    mkdir /data/system/perfd 0770 root system
+    rm /data/system/perfd/default_values
+    chmod 2770 /data/system/perfd
 
     # keep that at the end of on post-fs-data
     setprop vold.post_fs_data_done 1
@@ -482,7 +485,7 @@ service qseecomd /system/bin/qseecomd
 service mpdecision /system/bin/mpdecision --avg_comp
    class main
    user root
-   group root readproc
+   group root system readproc diag
    writepid /dev/cpuset/system-background/tasks
 
 service thermal-engine /system/vendor/bin/thermal-engine
