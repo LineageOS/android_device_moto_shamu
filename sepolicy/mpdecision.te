@@ -1,5 +1,5 @@
 # CPU governor (root process)
-type mpdecision, domain, device_domain_deprecated;
+type mpdecision, domain;
 type mpdecision_exec, exec_type, file_type;
 
 init_daemon_domain(mpdecision)
@@ -34,12 +34,15 @@ allow mpdecision sysfs_socinfo:dir search;
 allow mpdecision sysfs_socinfo:file { read open getattr };
 
 #policies for mpctl and mpctl socket
-allow mpdecision self:capability { chown dac_override fsetid net_admin sys_nice };
+allow mpdecision self:capability { chown fsetid net_admin sys_nice };
 allow mpdecision mpctl_socket:dir rw_dir_perms;
 allow mpdecision mpctl_socket:sock_file create_file_perms;
 
 #default_values file
 allow mpdecision mpctl_data_file:dir w_dir_perms;
 allow mpdecision mpctl_data_file:file create_file_perms;
+
+# Allow reading /dev/cpuctl/cpu.notify_on_migrate
+allow mpdecision cgroup:file read;
 
 r_dir_file(mpdecision, hal_power_default)
