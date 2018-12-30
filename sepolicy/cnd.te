@@ -1,5 +1,5 @@
 #permissive cnd;
-type cnd, domain, device_domain_deprecated;
+type cnd, domain;
 type cnd_exec, exec_type, file_type;
 
 # cnd is started by init, type transit from init domain to cnd domain
@@ -11,3 +11,4 @@ allow cnd self:capability { net_raw setuid setgid };
 
 allow cnd netmgrd:dir search;
 allow cnd netmgrd:file r_file_perms;
+allow cnd proc_meminfo:file r_file_perms;
