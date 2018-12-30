@@ -1,5 +1,5 @@
 # Qualcomm Management Interface Multiplexer
-type qmux, domain, device_domain_deprecated;
+type qmux, domain;
 type qmux_exec, exec_type, file_type;
 
 # Started by init
@@ -25,3 +25,6 @@ allow qmux sysfs_hsic_modem_wait:file w_file_perms;
 
 # qmux currently runs as root: b/16988307
 allow qmux self:capability { dac_override };
+
+allow qmux sysfs_esoc:dir r_dir_perms;
+allow qmux sysfs_esoc:file r_file_perms;

@@ -1,4 +1,4 @@
-type adspd, domain, device_domain_deprecated, mlstrustedsubject;
+type adspd, domain, mlstrustedsubject;
 type adspd_exec, file_type, exec_type;
 
 init_daemon_domain(adspd)
@@ -23,5 +23,9 @@ allow adspd sysfs_usb:file write;
 allow adspd sysfs_mmi_touch:dir search;
 allow adspd sysfs_mmi_touch:file r_file_perms;
 
-allow adspd sysfs_dsp_gpio:dir search;
+allow adspd sysfs_dsp_gpio:dir r_dir_perms;
 allow adspd sysfs_dsp_gpio:file rw_file_perms;
+
+#todo
+# adspd reads /sys/devices/virtual/input/input1 properly label it
+allow adspd sysfs:file r_file_perms;
