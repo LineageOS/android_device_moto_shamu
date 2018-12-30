@@ -1,5 +1,5 @@
 # Qualcomm MSM camera
-type camera, domain, device_domain_deprecated;
+type camera, domain;
 type camera_exec, exec_type, file_type;
 
 # Started by init
@@ -29,3 +29,7 @@ type_transition camera system_data_file:sock_file camera_socket "cam_socket3";
 allow camera camera_socket:sock_file { create unlink };
 allow camera system_data_file:dir w_dir_perms;
 allow camera system_data_file:sock_file unlink;
+
+#for v4L node "name" access
+allow camera sysfs_graphics:file rw_file_perms;
+allow camera ion_device:chr_file rw_file_perms;

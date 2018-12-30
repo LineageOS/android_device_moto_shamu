@@ -5,3 +5,4 @@ allow priv_app adspd_data_file:dir r_dir_perms;
 allow priv_app adspd_data_file:file r_file_perms;
 
 allow priv_app device:dir { open read };
+dontaudit priv_app proc_interrupts:file r_file_perms;

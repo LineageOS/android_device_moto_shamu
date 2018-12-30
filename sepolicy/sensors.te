@@ -1,5 +1,5 @@
 # Integrated qualcomm sensor process
-type sensors, domain, device_domain_deprecated;
+type sensors, domain;
 type sensors_exec, exec_type, file_type;
 
 # Started by init
@@ -40,3 +40,5 @@ allowxperm sensors self:socket ioctl msm_sock_ipc_ioctls;
 
 allow sensors sysfs_socinfo:dir r_dir_perms;
 allow sensors sysfs_socinfo:file { read open getattr };
+
+allow sensors system_file:dir r_dir_perms;
