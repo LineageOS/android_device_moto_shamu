@@ -1,0 +1,2 @@
+# allow dnsmasq access to netd fifo_file
+allow dnsmasq netd:fifo_file getattr;
