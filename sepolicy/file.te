@@ -4,6 +4,7 @@ type fsg_file, fs_type, contextmount_type;
 
 type cnd_socket, file_type;
 
+<<<<<<< HEAD
 type adspd_socket, file_type, mlstrustedobject;
 type camera_socket, file_type;
 type mpdecision_socket, file_type;
@@ -13,6 +14,17 @@ type sysfs_hal_gralloc, sysfs_type, fs_type;
 type thermald_socket, file_type;
 # Socket node needed by ims_data daemon
 type ims_socket, file_type;
+=======
+type adspd_data_file,            file_type, data_file_type, core_data_file_type, mlstrustedobject;
+type audio_cutback_data_file,    file_type, data_file_type, core_data_file_type;
+type diag_logs,                  file_type, data_file_type, core_data_file_type, mlstrustedobject;
+type dropbox_data_file,          file_type, data_file_type, core_data_file_type;
+type quipc_data_file,            file_type, data_file_type, core_data_file_type;
+type mpctl_socket,               file_type, data_file_type, core_data_file_type, mlstrustedobject;
+type mpctl_data_file,            file_type, data_file_type, core_data_file_type;
+type ram_dump_logs,              file_type, data_file_type, core_data_file_type;
+type time_data_file,             file_type, data_file_type, core_data_file_type;
+>>>>>>> 87bfd57... shamu: sepolicy: Remove obsolete gsiffd
 
 type diag_logs, file_type, data_file_type, mlstrustedobject;
 type ram_dump_logs, file_type, data_file_type;
