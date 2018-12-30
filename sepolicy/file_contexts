@@ -6,7 +6,6 @@
 /data/diag_logs(/.*)?                                 u:object_r:diag_logs:s0
 /data/nfc(/.*)?                                       u:object_r:nfc_data_file:s0
 /data/misc/audio_cutback(/.*)?                        u:object_r:audio_cutback_data_file:s0
-/data/misc/location/gsiff(/.*)?                       u:object_r:gsiffd_data_file:s0
 /data/misc/location/quipc(/.*)?                       u:object_r:quipc_data_file:s0
 /data/misc/perfd(/.*)?                                u:object_r:mpctl_socket:s0
 /data/system/perfd(/.*)?                              u:object_r:mpctl_data_file:s0
@@ -115,7 +114,6 @@
 /system/bin/time_daemon                               u:object_r:time_exec:s0
 
 /system/vendor/bin/bdAddrLoader                       u:object_r:bluetooth_loader_exec:s0
-/system/vendor/bin/gsiff_daemon                       u:object_r:gsiffd_exec:s0
 /system/vendor/bin/init\.mmi\.touch\.sh               u:object_r:mmi_touch_sh_exec:s0
 /system/vendor/bin/init\.qcom\.devstart\.sh           u:object_r:init-qcom-devstart-sh_exec:s0
 /system/vendor/bin/init\.qcom\.devwait\.sh            u:object_r:init-qcom-devwait-sh_exec:s0
