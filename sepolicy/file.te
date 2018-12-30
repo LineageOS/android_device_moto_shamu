@@ -17,7 +17,6 @@ type ims_socket, file_type;
 type diag_logs, file_type, data_file_type, mlstrustedobject;
 type ram_dump_logs, file_type, data_file_type;
 type time_data_file, file_type, data_file_type;
-type gsiffd_data_file, data_file_type, file_type;
 type quipc_data_file, data_file_type, file_type;
 type dropbox_data_file, file_type, data_file_type;
 type adspd_data_file, file_type, data_file_type, mlstrustedobject;
