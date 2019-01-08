@@ -25,6 +25,7 @@ allow thermald sysfs_socinfo:dir search;
 allow thermald sysfs_socinfo:file { read open getattr };
 
 allow thermald {
+    sysfs
     sysfs_batteryinfo
     sysfs_esoc
     sysfs_hwmon
