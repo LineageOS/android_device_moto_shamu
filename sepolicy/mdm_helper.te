@@ -4,9 +4,6 @@ type mdm_helper_exec, file_type, exec_type;
 
 init_daemon_domain(mdm_helper)
 
-# access /sys/power/wakelock
-allow mdm_helper self:capability dac_override;
-
 # Spawn /system/bin/efsks and /system/bin/ks
 allow mdm_helper mdm_helper_exec:file rx_file_perms;
 

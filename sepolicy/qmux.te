@@ -20,6 +20,3 @@ allow qmux sysfs_smdcntl_open_timeout:file rw_file_perms;
 # e.g. allow qmux sysfs_hsicctl_modem_wait:file rw_file_perms;
 allow qmux sysfs:file rw_file_perms;
 allow qmux sysfs_usb:file w_file_perms;
-
-# qmux currently runs as root: b/16988307
-allow qmux self:capability { dac_override };
