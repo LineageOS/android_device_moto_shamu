@@ -31,17 +31,4 @@
       <item>7</item>
       <item>9</item>
     </integer-array>
-
-    <!-- Values for GPS configuration (TELUS) -->
-    <string-array translatable="false" name="config_gpsParameters">
-        <item>XTRA_SERVER_1=https://xtrapath1.izatcloud.net/xtra3grc.bin</item>
-        <item>XTRA_SERVER_2=https://xtrapath2.izatcloud.net/xtra3grc.bin</item>
-        <item>XTRA_SERVER_3=https://xtrapath3.izatcloud.net/xtra3grc.bin</item>
-        <item>NTP_SERVER=north-america.pool.ntp.org</item>
-        <item>SUPL_ES=1</item>
-        <item>SUPL_HOST=supl.telusmobility.com</item>
-        <item>SUPL_PORT=7275</item>
-        <item>SUPL_MODE=1</item>
-        <item>LPP_PROFILE=2</item>
-    </string-array>
 </resources>
