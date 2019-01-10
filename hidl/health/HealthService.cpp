@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2013 The Android Open Source Project
- * Copyright (C) 2017 The LineageOS Project
+ * Copyright (C) 2017-2019 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,19 @@
  * limitations under the License.
  */
 
-#include <healthd/healthd.h>
+#define LOG_TAG "android.hardware.health@2.0-service.shamu"
 
-void healthd_board_init(struct healthd_config*)
-{
-    // use defaults
+#include <healthd/healthd.h>
+#include <health2/service.h>
+
+void healthd_board_init(struct healthd_config*) {
 }
 
-int healthd_board_battery_update(struct android::BatteryProperties*)
-{
+int healthd_board_battery_update(struct android::BatteryProperties*) {
     // return 0 to log periodic polled battery status to kernel log
     return 1;
+}
+
+int main() {
+    return health_service_main();
 }
