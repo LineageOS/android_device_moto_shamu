@@ -89,6 +89,8 @@ on late-fs
     write /sys/block/mmcblk0/queue/iosched/slice_idle 0
     write /sys/block/mmcblk0/queue/read_ahead_kb 2048
 
+    restorecon_recursive /cache/recovery
+
 on post-fs
     # Start devices by sysfs trigger
     start devstart_sh
