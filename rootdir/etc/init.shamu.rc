@@ -513,15 +513,6 @@ service bdAddrLoader /system/vendor/bin/bdAddrLoader -p ro.boot.btmacaddr -s -x
     group system bluetooth
     oneshot
 
-on property:vold.decrypt=trigger_reset_main
-    stop gnss-svcd
-
-# When QCA1530 is known not to present
-on property:persist.qca1530=no
-   stop gnss-svcd
-   stop gnss-detect
-   write /sys/kernel/qca1530/chip_state 0
-
 on property:init.svc.surfaceflinger=stopped
     stop ppd
 
