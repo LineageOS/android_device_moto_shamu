@@ -106,7 +106,6 @@
 /system/bin/mdm_helper_proxy                          u:object_r:mdm_helper_exec:s0
 /system/bin/mm-qcamera-daemon                         u:object_r:camera_exec:s0
 /system/bin/mpdecision                                u:object_r:mpdecision_exec:s0
-/system/bin/netmgrd                                   u:object_r:netmgrd_exec:s0
 /system/bin/qmuxd                                     u:object_r:qmux_exec:s0
 /system/bin/qseecomd                                  u:object_r:tee_exec:s0
 /system/bin/sensors\.qcom                             u:object_r:sensors_exec:s0
@@ -117,6 +116,7 @@
 /system/vendor/bin/init\.mmi\.touch\.sh               u:object_r:mmi_touch_sh_exec:s0
 /system/vendor/bin/init\.qcom\.devstart\.sh           u:object_r:init-qcom-devstart-sh_exec:s0
 /system/vendor/bin/init\.qcom\.devwait\.sh            u:object_r:init-qcom-devwait-sh_exec:s0
+/system/vendor/bin/netmgrd                            u:object_r:netmgrd_exec:s0
 /system/vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.shamu u:object_r:hal_dumpstate_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.health@2\.0-service\.shamu    u:object_r:hal_health_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.light@2\.0-service\.shamu     u:object_r:hal_light_default_exec:s0
