@@ -483,7 +483,7 @@ service qseecomd /system/bin/qseecomd
    group root
    writepid /dev/cpuset/system-background/tasks
 
-service mpdecision /system/bin/mpdecision --avg_comp
+service mpdecision /system/vendor/bin/mpdecision --avg_comp
    class main
    user root
    group root system readproc diag

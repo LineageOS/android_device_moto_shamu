@@ -329,7 +329,7 @@ vendor/firmware/keymaster/keymaster.b03
 vendor/firmware/keymaster/keymaster.mdt
 
 # Perf
-bin/mpdecision|98d60fa1a358c2222a9b775c603c789ace08a763
+bin/mpdecision:vendor/bin/mpdecision|98d60fa1a358c2222a9b775c603c789ace08a763
 vendor/lib/libqc-opt.so|4ad4c9bfd1b7e10d863726213c80c4162aee19d4
 
 # Qualcomm framework
