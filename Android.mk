@@ -1,5 +1,6 @@
 #
 # Copyright 2014 The Android Open Source Project
+# Copyright (C) 2019 The The LineageOS Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,5 +29,25 @@ ifneq ($(filter shamu, $(TARGET_DEVICE)),)
 LOCAL_PATH := $(call my-dir)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
+
+DM_LIBS := libdmengine.so libdmjavaplugin.so
+DM_SYMLINKS := $(addprefix $(TARGET_OUT)/priv-app/DMService/lib/arm/,$(notdir $(DM_LIBS)))
+$(DM_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
+	@echo "DMService lib link: $@"
+	@mkdir -p $(dir $@)
+	@rm -rf $@
+	$(hide) ln -sf /system/lib/$(notdir $@) $@
+
+ALL_DEFAULT_INSTALLED_MODULES += $(DM_SYMLINKS)
+
+IMS_LIBS := libimscamera_jni.so libimsmedia_jni.so
+IMS_SYMLINKS := $(addprefix $(TARGET_OUT)/app/ims/lib/arm/,$(notdir $(IMS_LIBS)))
+$(IMS_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
+	@echo "IMS lib link: $@"
+	@mkdir -p $(dir $@)
+	@rm -rf $@
+	$(hide) ln -sf /system/lib/$(notdir $@) $@
+
+ALL_DEFAULT_INSTALLED_MODULES += $(IMS_SYMLINKS)
 
 endif

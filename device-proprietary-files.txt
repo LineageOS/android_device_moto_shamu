@@ -222,8 +222,6 @@ lib/libdmjavaplugin.so
 -priv-app/ConnMO/ConnMO.apk
 -priv-app/DCMO/DCMO.apk
 -priv-app/DMService/DMService.apk
-lib/libdmengine.so:priv-app/DMService/lib/arm/libdmengine.so
-lib/libdmjavaplugin.so:priv-app/DMService/lib/arm/libdmjavaplugin.so
 -priv-app/DiagMon/DiagMon.apk
 -priv-app/LifetimeData/LifetimeData.apk
 -priv-app/SprintDM/SprintDM.apk
@@ -290,8 +288,6 @@ vendor/lib/libloc_ds_api.so
 # IMS/HD Voice
 -app/atfwd/atfwd.apk
 -app/ims/ims.apk
-lib/libimscamera_jni.so:app/ims/lib/arm/libimscamera_jni.so
-lib/libimsmedia_jni.so:app/ims/lib/arm/libimsmedia_jni.so
 bin/ATFWD-daemon
 bin/imsdatadaemon
 bin/imsqmidaemon
