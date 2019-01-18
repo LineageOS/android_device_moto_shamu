@@ -350,13 +350,6 @@ on property:persist.sys.qc.sub.rdump.on=*
     chown radio radio /sys/devices/cycapsense_prog.1/cycapsense_fw
     chmod 0220 /sys/devices/cycapsense_prog.1/cycapsense_fw
 
-on property:bluetooth.isEnabled=true
-    start btwlancoex
-    write /sys/class/bluetooth/hci0/idle_timeout 7000
-
-on property:ro.bluetooth.ftm_enabled=true
-    start ftmd
-
 on property:persist.env.fastdorm.enabled=true
     setprop persist.radio.data_no_toggle 1
 
@@ -514,9 +507,6 @@ service bdAddrLoader /system/vendor/bin/bdAddrLoader -p ro.boot.btmacaddr -s -x
     user bluetooth
     group system bluetooth
     oneshot
-
-on property:init.svc.surfaceflinger=stopped
-    stop ppd
 
 service mmi-touch-sh /system/vendor/bin/init.mmi.touch.sh atmel
     class main
