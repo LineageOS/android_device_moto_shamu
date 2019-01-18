@@ -127,13 +127,8 @@ PRODUCT_PACKAGES += \
     Snap
 
 PRODUCT_PACKAGES += \
-    libqomx_core \
-    libmm-qcamera \
-    libmmcamera_interface \
-    libmmjpeg_interface \
     camera.msm8084 \
-    mm-jpeg-interface-test \
-    mm-qcamera-app
+    libmm-qcamera
 
 # GPS
 PRODUCT_PACKAGES += \
