@@ -75,13 +75,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     sys.use_fifo_ui=1
 
-# IMS logging
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.ims.disableADBLogs=2 \
-    persist.ims.disableDebugLogs=1 \
-    persist.ims.disableIMSLogs=1 \
-    persist.ims.disableQXDMLogs=0
-
 # OEM Unlock reporting
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     ro.oem_unlock_supported=1
@@ -107,10 +100,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.qcril_uim_vcc_feature=1 \
     rild.libpath=/system/vendor/lib/libril-qc-qmi-1.so
 
-# Rich Communications Service is disabled in 5.1
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.rcs.supported=0
-
 # Shipping API
 # ro.product.first_api_level indicates the first api level the device has commercially launched on.
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -130,9 +119,3 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Vendor security patch level
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.lineage.build.vendor_security_patch=2017-10-01
-
-# Wi-Fi calling
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.data.iwlan.enable=true \
-    persist.radio.data_con_rprt=1 \
-    persist.radio.ignore_ims_wlan=1
