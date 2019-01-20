@@ -170,10 +170,6 @@ on post-fs-data
     mkdir /data/misc/location/mq 0770 gps gps
     mkdir /data/misc/location/xtwifi 0770 gps gps
 
-    #Create directory from IMS services
-    mkdir /data/shared 0755
-    chown system system /data/shared
-
     #Create directory for FOTA
     mkdir /data/fota 0771
     chown system system /data/fota
@@ -381,34 +377,6 @@ service netmgrd /system/vendor/bin/netmgrd
     class main
     group radio
     writepid /dev/cpuset/system-background/tasks
-
-service imsqmidaemon /system/bin/imsqmidaemon
-    class main
-    user system
-    socket ims_qmid stream 0660 system radio
-    group radio log
-    writepid /dev/cpuset/system-background/tasks
-
-service imsdatadaemon /system/bin/imsdatadaemon
-    class main
-    user root
-    socket ims_datad stream 0660 system radio
-    group system wifi radio inet log readproc
-    writepid /dev/cpuset/system-background/tasks
-    disabled
-
-on property:sys.ims.QMI_DAEMON_STATUS=1
-    start imsdatadaemon
-
-service ims_rtp_daemon /system/bin/ims_rtp_daemon
-    class main
-    user root
-    socket ims_rtpd stream 0660 system radio
-    group system radio inet log
-    disabled
-
-on property:sys.ims.DATA_DAEMON_STATUS=1
-   start ims_rtp_daemon
 
 service sensors /system/bin/sensors.qcom
     class core
