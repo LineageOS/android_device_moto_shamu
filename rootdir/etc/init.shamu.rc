@@ -502,7 +502,7 @@ service qcamerasvr /system/bin/mm-qcamera-daemon
     group camera system inet input graphics
     writepid /dev/cpuset/camera-daemon/tasks
 
-service bdAddrLoader /system/vendor/bin/bdAddrLoader -p ro.boot.btmacaddr -s -x
+service bdAddrLoader /system/vendor/bin/bdAddrLoader_shamu -p ro.boot.btmacaddr -s -x
     class main
     user bluetooth
     group system bluetooth

@@ -24,7 +24,7 @@
 #include <sys/stat.h>
 #include <getopt.h>
 
-#define LOG_TAG "bdAddrLoader"
+#define LOG_TAG "bdAddrLoader_shamu"
 
 #include <cutils/log.h>
 #include <cutils/properties.h>
