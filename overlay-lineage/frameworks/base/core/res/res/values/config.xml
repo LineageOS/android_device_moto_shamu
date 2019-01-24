@@ -2,6 +2,7 @@
 <!--
 /*
 ** Copyright 2016, The Android Open Source Project
+** Copyright (C) 2019 The LineageOS Project
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -47,9 +48,4 @@
 
     <!-- Whether device supports double tap to wake -->
     <bool name="config_supportDoubleTapWake">true</bool>
-
-    <!-- Hide Project Fi app unless it is being used -->
-    <string-array name="config_disabledUntilUsedPreinstalledCarrierApps">
-        <item>com.google.android.apps.tycho</item>
-    </string-array>
 </resources>
