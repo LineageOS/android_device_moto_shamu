@@ -2,7 +2,7 @@
 <!--
 **
 ** Copyright 2014, The Android Open Source Project
-** Copyright (C) 2018 The LineageOS Project
+** Copyright (C) 2018-2019 The LineageOS Project
 **
 ** Licensed under the Apache License, Version 2.0 (the "License")
 ** you may not use this file except in compliance with the License.
@@ -27,13 +27,14 @@
     <item name="battery.capacity">3220</item>
 
     <!-- Power consumption when CPU is suspended -->
-    <item name="cpu.idle">6</item>
+    <item name="cpu.suspend">6</item>
     <!-- Additional power consumption when CPU is in a kernel idle loop -->
-    <item name="cpu.awake">8</item>
+    <item name="cpu.idle">8</item>
 
     <!-- Different CPU speeds as reported in
          /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies -->
-    <array name="cpu.speeds">
+    <item name="cpu.clusters.cores">4</item>
+    <array name="cpu.core_speeds.cluster0">
         <value>300000</value> <!-- 300 MHz CPU speed -->
         <value>422400</value> <!-- 422 MHz CPU speed -->
         <value>652800</value> <!-- 652 MHz CPU speed -->
@@ -55,7 +56,7 @@
     </array>
 
     <!-- Additional power used by CPUs when running at different speeds. -->
-    <array name="cpu.active">
+    <array name="cpu.core_power.cluster0">
         <value>71</value> <!-- 300 MHz CPU speed -->
         <value>83</value> <!-- 422 MHz CPU speed -->
         <value>97</value> <!-- 652 MHz CPU speed -->
