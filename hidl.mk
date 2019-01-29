@@ -65,6 +65,11 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.light@2.0-service.shamu
 
+# Netutils
+PRODUCT_PACKAGES += \
+    android.system.net.netd@1.0 \
+    netutils-wrapper-1.0
+
 # NFC
 PRODUCT_PACKAGES += \
     android.hardware.nfc@1.0-impl-bcm \
