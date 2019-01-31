@@ -116,7 +116,6 @@
 /system/vendor/bin/init\.qcom\.devstart\.sh           u:object_r:init-qcom-devstart-sh_exec:s0
 /system/vendor/bin/init\.qcom\.devwait\.sh            u:object_r:init-qcom-devwait-sh_exec:s0
 /system/vendor/bin/mpdecision                         u:object_r:mpdecision_exec:s0
-/system/vendor/bin/netmgrd                            u:object_r:netmgrd_exec:s0
 /system/vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.shamu u:object_r:hal_dumpstate_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.health@2\.0-service\.shamu    u:object_r:hal_health_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.light@2\.0-service\.shamu     u:object_r:hal_light_default_exec:s0

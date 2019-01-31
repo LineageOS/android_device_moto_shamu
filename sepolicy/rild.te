@@ -21,9 +21,8 @@ allow rild audio_cutback_data_file:dir setattr;
 
 # rild reads proc/<pid> to check if process is netmgrd
 # Grant access if that's the case; don't log denials for other processes.
-r_dir_file(rild, netmgrd)
-dontaudit rild { domain -netmgrd }:dir search;
-dontaudit rild { domain -netmgrd }:file { open read getattr };
+dontaudit rild { domain }:dir search;
+dontaudit rild { domain }:file { open read getattr };
 
 # Allow permissions for FSG
 allow rild fsg_file:dir search;
