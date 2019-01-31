@@ -15,6 +15,9 @@
 # limitations under the License.
 #
 
+# APEX
+TARGET_FLATTEN_APEX := true
+
 # Architecture
 TARGET_CPU_ABI := armeabi-v7a
 TARGET_CPU_ABI2 := armeabi
