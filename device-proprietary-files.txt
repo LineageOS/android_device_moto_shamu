@@ -353,7 +353,6 @@ bin/bridgemgrd
 bin/ks
 bin/mdm_helper
 bin/mdm_helper_proxy
-bin/netmgrd:vendor/bin/netmgrd
 bin/qmi_motext_hook
 bin/qmuxd
 bin/radish
