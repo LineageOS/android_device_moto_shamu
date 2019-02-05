@@ -1,5 +1,0 @@
-type motocit_app, domain;
-
-app_domain(motocit_app)
-
-allow motocit_app proc_bootinfo:file r_file_perms;
