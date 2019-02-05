@@ -2,7 +2,3 @@ service vendor.power-hal-1-1 /vendor/bin/hw/android.hardware.power@1.1-service.s
     class hal
     user system
     group system
-    disabled
-
-on property:init.svc.mpdecision=running
-    start vendor.power-hal-1-1
