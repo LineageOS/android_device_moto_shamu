@@ -54,4 +54,5 @@ enum {
     PROFILE_BIAS_PERFORMANCE
 };
 
+#define CHECK_HANDLE(x) ((x)>0)
 #define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
