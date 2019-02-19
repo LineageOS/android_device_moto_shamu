@@ -6,7 +6,7 @@ type thermald_exec, exec_type, file_type;
 init_daemon_domain(thermald)
 qmux_socket(thermald)
 
-allow thermald self:capability { dac_override fsetid chown };
+allow thermald self:capability { fsetid chown };
 
 # Create and access to /dev/socket/thermal-.*
 type_transition thermald socket_device:sock_file thermald_socket;
