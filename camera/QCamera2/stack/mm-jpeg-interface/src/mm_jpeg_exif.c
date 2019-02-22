@@ -298,7 +298,6 @@ int process_sensor_data(cam_sensor_params_t *p_sensor_params,
 {
   int rc = 0;
   rat_t val_rat;
-  double av;
 
   if (NULL == p_sensor_params) {
     ALOGE("%s %d: Sensor params are null", __func__, __LINE__);

@@ -9,7 +9,9 @@ LOCAL_32_BIT_ONLY := true
 LOCAL_CFLAGS += \
     -D_ANDROID_ \
     -DUSE_ION \
-    -DMM_JPEG_CONCURRENT_SESSIONS_COUNT=2
+    -DMM_JPEG_CONCURRENT_SESSIONS_COUNT=2 \
+    -Wall \
+    -Werror
 
 LOCAL_C_INCLUDES+= $(kernel_includes)
 LOCAL_ADDITIONAL_DEPENDENCIES := $(common_deps)
