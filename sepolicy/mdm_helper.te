@@ -60,3 +60,4 @@ set_prop(mdm_helper, radio_prop)
 
 allow mdm_helper sysfs_esoc:dir r_dir_perms;
 allow mdm_helper sysfs_esoc:file r_file_perms;
+
