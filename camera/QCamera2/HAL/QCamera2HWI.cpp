@@ -3586,7 +3586,7 @@ int32_t QCamera2HardwareInterface::processZoomEvent(cam_crop_data_t &crop_info)
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera2HardwareInterface::processHDRData(cam_asd_hdr_scene_data_t hdr_scene)
+int32_t QCamera2HardwareInterface::processHDRData(cam_asd_hdr_scene_data_t hdr_scene __unused)
 {
     int rc = NO_ERROR;
 
@@ -5271,7 +5271,7 @@ void QCamera2HardwareInterface::returnStreamBuffer(void *data,
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera2HardwareInterface::processHistogramStats(cam_hist_stats_t &stats_data)
+int32_t QCamera2HardwareInterface::processHistogramStats(cam_hist_stats_t &stats_data __unused)
 {
 #ifndef VANILLA_HAL
     if (!mParameters.isHistogramEnabled()) {
