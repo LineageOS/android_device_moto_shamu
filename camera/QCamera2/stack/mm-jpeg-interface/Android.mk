@@ -5,7 +5,10 @@ include $(LOCAL_PATH)/../../../common.mk
 include $(CLEAR_VARS)
 
 LOCAL_32_BIT_ONLY := true
-LOCAL_CFLAGS+= -D_ANDROID_
+
+LOCAL_CFLAGS += \
+    -D_ANDROID_ \
+    -DUSE_ION \
 
 LOCAL_C_INCLUDES+= $(kernel_includes)
 LOCAL_ADDITIONAL_DEPENDENCIES := $(common_deps)
@@ -41,8 +44,14 @@ LOCAL_SRC_FILES := \
     src/mm_jpegdec_interface.c \
     src/mm_jpegdec.c
 
-LOCAL_MODULE           := libmmjpeg_interface
-LOCAL_SHARED_LIBRARIES := libdl libcutils liblog libqomx_core
+LOCAL_MODULE := libmmjpeg_interface
+
+LOCAL_SHARED_LIBRARIES := \
+    libdl \
+    libcutils \
+    liblog \
+    libqomx_core
+
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_32_BIT_ONLY := true
