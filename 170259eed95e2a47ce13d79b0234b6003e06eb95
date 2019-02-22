@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9c136f36_b8daba93",
+        "filename": "sepolicy/system_app.te",
+        "patchSetId": 2
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2019-02-22T04:40:25Z",
+      "side": 1,
+      "message": "It doesn\u0027t seem right to \u0027fix\u0027 those denials here as it\u0027s nothing device specific.",
+      "revId": "170259eed95e2a47ce13d79b0234b6003e06eb95",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
