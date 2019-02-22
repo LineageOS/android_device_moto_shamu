@@ -43,9 +43,6 @@ static pthread_mutex_t g_dec_intf_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static mm_jpeg_obj* g_jpegdec_obj = NULL;
 
-static pthread_mutex_t g_dec_handler_lock = PTHREAD_MUTEX_INITIALIZER;
-
-
 /** mm_jpeg_intf_start_job:
  *
  *  Arguments:

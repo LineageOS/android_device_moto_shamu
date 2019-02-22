@@ -17,7 +17,7 @@ LOCAL_CFLAGS := \
 LOCAL_CLANG_CFLAGS += \
     -Wno-error=enum-conversion
 
-LOCAL_SRC_FILES:= \
+LOCAL_SRC_FILES := \
     src/mm_qcamera_main_menu.c \
     src/mm_qcamera_app.c \
     src/mm_qcamera_unit_test.c \

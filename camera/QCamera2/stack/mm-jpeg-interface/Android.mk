@@ -9,6 +9,8 @@ LOCAL_32_BIT_ONLY := true
 LOCAL_CFLAGS += \
     -D_ANDROID_ \
     -DUSE_ION \
+    -Wall \
+    -Werror
 
 LOCAL_C_INCLUDES+= $(kernel_includes)
 LOCAL_ADDITIONAL_DEPENDENCIES := $(common_deps)
