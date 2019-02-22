@@ -8,8 +8,10 @@ include $(CLEAR_VARS)
 LOCAL_PATH := $(OMX_CORE_PATH)
 LOCAL_MODULE_TAGS := optional
 
-omx_core_defines:= -Werror \
-                   -g -O0
+omx_core_defines := \
+    -Werror \
+    -g \
+    -O0
 
 LOCAL_CFLAGS := $(omx_core_defines)
 
@@ -20,8 +22,12 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/../qexif
 
 LOCAL_SRC_FILES := qomx_core.c
 
-LOCAL_MODULE           := libqomx_core
-LOCAL_SHARED_LIBRARIES := liblog libcutils libdl
+LOCAL_MODULE := libqomx_core
+
+LOCAL_SHARED_LIBRARIES := \
+    liblog \
+    libcutils \
+    libdl
 
 LOCAL_32_BIT_ONLY := true
 include $(BUILD_SHARED_LIBRARY)
