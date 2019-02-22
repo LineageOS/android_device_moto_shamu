@@ -177,8 +177,8 @@ int QCamera2Factory::set_callbacks(const camera_module_callbacks_t *callbacks)
  * RETURN     : 0  -- success
  *              none-zero failure code
  *==========================================================================*/
-int QCamera2Factory::open_legacy(const struct hw_module_t* module,
-            const char* id, uint32_t halVersion, struct hw_device_t** device)
+int QCamera2Factory::open_legacy(const struct hw_module_t* module  __unused,
+            const char* id __unused, uint32_t halVersion __unused, struct hw_device_t** device __unused)
 {
     return -ENOSYS;
 }
