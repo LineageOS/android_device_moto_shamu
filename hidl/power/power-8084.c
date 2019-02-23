@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
- * Copyright (C) 2018 The LineageOS Project
+ * Copyright (C) 2018-2019 The LineageOS Project
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -96,8 +96,9 @@ int get_number_of_profiles()
 }
 #endif
 
-static int set_power_profile(int profile)
+static int set_power_profile(void *data)
 {
+    int profile = data ? *((int*)data) : 0;
     int ret = -EINVAL;
     const char *profile_name = NULL;
 
@@ -202,7 +203,7 @@ int power_hint_override(power_hint_t hint, void *data)
     int duration;
 
     if (hint == POWER_HINT_SET_PROFILE) {
-        if (set_power_profile(*(int32_t *)data) < 0)
+        if (set_power_profile(data) < 0)
             ALOGE("mpdecision not started in a timely manner.");
         return HINT_HANDLED;
     }
