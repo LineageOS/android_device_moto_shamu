@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c307f05c_5aafba4d",
+        "filename": "camera/QCamera2/stack/mm-camera-interface/Android.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2019-02-25T20:01:25Z",
+      "side": 0,
+      "message": "you miss this?",
+      "range": {
+        "startLine": 27,
+        "startChar": 20,
+        "endLine": 27,
+        "endChar": 35
+      },
+      "revId": "c0b15716f0e551e88d644fda06f8adfb70bcccd2",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
