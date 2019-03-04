@@ -1,0 +1,142 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0257aa5d_277d1c76",
+        "filename": "device-proprietary-files.txt",
+        "patchSetId": 3
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2019-03-04T01:06:13Z",
+      "side": 1,
+      "message": "Do we need these now?",
+      "range": {
+        "startLine": 196,
+        "startChar": 0,
+        "endLine": 200,
+        "endChar": 29
+      },
+      "revId": "17cabc89363312f5bce2da3e3609809b1274166b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8c2fd1ba_407cd2cb",
+        "filename": "device-proprietary-files.txt",
+        "patchSetId": 3
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2019-03-04T01:06:13Z",
+      "side": 1,
+      "message": "Off topic: What does this do? Isn\u0027t this the VZW backup provider login?",
+      "range": {
+        "startLine": 203,
+        "startChar": 0,
+        "endLine": 203,
+        "endChar": 59
+      },
+      "revId": "17cabc89363312f5bce2da3e3609809b1274166b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d8eea13b_781bf1f9",
+        "filename": "device-proprietary-files.txt",
+        "patchSetId": 3
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2019-03-04T01:06:13Z",
+      "side": 1,
+      "message": "some of these may need edits to not include IMS",
+      "range": {
+        "startLine": 208,
+        "startChar": 0,
+        "endLine": 209,
+        "endChar": 32
+      },
+      "revId": "17cabc89363312f5bce2da3e3609809b1274166b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "28e8ed3d_8728a6e0",
+        "filename": "device-proprietary-files.txt",
+        "patchSetId": 3
+      },
+      "lineNbr": 300,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2019-03-04T01:06:13Z",
+      "side": 1,
+      "message": "not sure if these are IMS related (the VZW LTE one especially).",
+      "range": {
+        "startLine": 299,
+        "startChar": 0,
+        "endLine": 300,
+        "endChar": 59
+      },
+      "revId": "17cabc89363312f5bce2da3e3609809b1274166b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f41c3ac0_90f28fdb",
+        "filename": "device-proprietary-files.txt",
+        "patchSetId": 3
+      },
+      "lineNbr": 305,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2019-03-04T01:06:13Z",
+      "side": 1,
+      "message": "not sure these are needed",
+      "range": {
+        "startLine": 301,
+        "startChar": 0,
+        "endLine": 305,
+        "endChar": 21
+      },
+      "revId": "17cabc89363312f5bce2da3e3609809b1274166b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "221a286a_fc65b294",
+        "filename": "device-proprietary-files.txt",
+        "patchSetId": 3
+      },
+      "lineNbr": 316,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2019-03-04T01:06:13Z",
+      "side": 1,
+      "message": "There\u0027s a decent potential we don\u0027t need some of these too.",
+      "range": {
+        "startLine": 311,
+        "startChar": 0,
+        "endLine": 316,
+        "endChar": 28
+      },
+      "revId": "17cabc89363312f5bce2da3e3609809b1274166b",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
