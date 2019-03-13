@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7a06e820_3da0db60",
+        "filename": "audio/audio_platform_info.xml",
+        "patchSetId": 4
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 16208
+      },
+      "writtenOn": "2019-03-13T04:29:06Z",
+      "side": 0,
+      "message": "don\u0027t touch this file",
+      "revId": "949146f3c88fee3d141949299602579f9be57320",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f11b96c2_fa6bb03b",
+        "filename": "audio/mixer_paths.xml",
+        "patchSetId": 4
+      },
+      "lineNbr": 225,
+      "author": {
+        "id": 16208
+      },
+      "writtenOn": "2019-03-13T04:29:06Z",
+      "side": 0,
+      "message": "same",
+      "revId": "949146f3c88fee3d141949299602579f9be57320",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5a0ef828_a92ab971",
+        "filename": "device-proprietary-files.txt",
+        "patchSetId": 4
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 16208
+      },
+      "writtenOn": "2019-03-13T04:29:06Z",
+      "side": 0,
+      "message": "keep",
+      "revId": "949146f3c88fee3d141949299602579f9be57320",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "97151d09_e5aef751",
+        "filename": "device.mk",
+        "patchSetId": 4
+      },
+      "lineNbr": 238,
+      "author": {
+        "id": 16208
+      },
+      "writtenOn": "2019-03-13T04:29:06Z",
+      "side": 0,
+      "message": "keep it",
+      "revId": "949146f3c88fee3d141949299602579f9be57320",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
