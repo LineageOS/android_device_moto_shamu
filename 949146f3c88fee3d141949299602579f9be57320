@@ -67,6 +67,23 @@
       "revId": "949146f3c88fee3d141949299602579f9be57320",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "71c58536_6d8f8875",
+        "filename": "overlay/frameworks/base/core/res/res/values/config.xml",
+        "patchSetId": 4
+      },
+      "lineNbr": 181,
+      "author": {
+        "id": 16208
+      },
+      "writtenOn": "2019-03-13T04:32:35Z",
+      "side": 0,
+      "message": "keep",
+      "revId": "949146f3c88fee3d141949299602579f9be57320",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
     }
   ]
 }
