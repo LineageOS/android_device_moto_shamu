@@ -349,6 +349,7 @@
         <item>"/system/framework/arm/boot.vdex"</item>
         <item>"/system/framework/arm/boot-core-libart.oat"</item>
         <item>"/system/framework/arm/boot-core-libart.vdex"</item>
+        <item>"/system/lib/libsurfaceflinger.so"</item>
     </string-array>
 
     <!-- Flag indicating which package name can access the persistent data partition -->
