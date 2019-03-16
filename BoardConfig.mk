@@ -49,6 +49,17 @@ USE_DEVICE_SPECIFIC_CAMERA:= true
 BACKLIGHT_PATH := /sys/class/leds/lcd-backlight/brightness
 BOARD_CHARGER_ENABLE_SUSPEND := true
 
+# Dexpreopt
+# Enable dex-preoptimization to speed up first boot sequence
+ifeq ($(HOST_OS),linux)
+  ifneq ($(TARGET_BUILD_VARIANT),eng)
+    ifeq ($(WITH_DEXPREOPT),)
+      WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY := false
+      WITH_DEXPREOPT := true
+    endif
+  endif
+endif
+
 # EGL
 # Maximum GLES shader cache size for each app to store the compiled shader
 # binaries. Decrease the size if RAM or Flash Storage size is a limitation
