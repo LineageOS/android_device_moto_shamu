@@ -287,7 +287,6 @@ vendor/lib/libloc_ds_api.so
 
 # IMS/HD Voice
 -app/atfwd/atfwd.apk
--app/ims/ims.apk
 bin/ATFWD-daemon
 bin/imsdatadaemon
 bin/imsqmidaemon
