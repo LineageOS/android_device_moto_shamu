@@ -80,6 +80,10 @@ on post-fs
     # Start devices by sysfs trigger
     start devstart_sh
 
+    # avoid USB crash
+    setprop persist.adb.nonblocking_ffs 0
+    setprop ro.adb.nonblocking_ffs 0
+
 on post-fs-data
     mkdir /data/tombstones/modem 0771 system system
     mkdir /data/tombstones/lpass 0771 system system
