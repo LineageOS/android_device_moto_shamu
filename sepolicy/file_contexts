@@ -111,7 +111,7 @@
 /system/bin/tcmd_mini                                 u:object_r:tcmd_exec:s0
 /system/bin/time_daemon                               u:object_r:time_exec:s0
 
-/system/vendor/bin/bdAddrLoader                       u:object_r:bluetooth_loader_exec:s0
+/system/vendor/bin/bdAddrLoader_shamu                 u:object_r:bluetooth_loader_exec:s0
 /system/vendor/bin/init\.mmi\.touch\.sh               u:object_r:mmi_touch_sh_exec:s0
 /system/vendor/bin/init\.qcom\.devstart\.sh           u:object_r:init-qcom-devstart-sh_exec:s0
 /system/vendor/bin/init\.qcom\.devwait\.sh            u:object_r:init-qcom-devwait-sh_exec:s0

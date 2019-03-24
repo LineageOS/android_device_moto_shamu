@@ -57,7 +57,7 @@ PRODUCT_PACKAGES += \
 
 # Bluetooth
 PRODUCT_PACKAGES += \
-    bdAddrLoader \
+    bdAddrLoader_shamu \
     libbt-vendor
 
 # Bluetooth firmware
