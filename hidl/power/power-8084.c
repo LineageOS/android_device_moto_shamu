@@ -181,11 +181,11 @@ static int resources_interaction_boost_perf[] = {
 };
 
 static int resources_launch[] = {
-    CPUS_ONLINE_MIN_2,
-    CPU0_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU1_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU2_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU3_MIN_FREQ_NONTURBO_MAX + 5
+    CPUS_ONLINE_MIN_3,
+    CPU0_MIN_FREQ_TURBO_MAX,
+    CPU1_MIN_FREQ_TURBO_MAX,
+    CPU2_MIN_FREQ_TURBO_MAX,
+    CPU3_MIN_FREQ_TURBO_MAX
 };
 
 const int DEFAULT_INTERACTIVE_DURATION   =  200; /* ms */
