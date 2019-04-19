@@ -369,9 +369,5 @@ vendor/firmware/venus.b03
 vendor/firmware/venus.b04
 vendor/firmware/venus.mdt
 
-# Voice recognition firmware
-vendor/firmware/aonvr1.bin
-vendor/firmware/aonvr2.bin
-
 # Wi-Fi
 vendor/firmware/bcm20795_firmware.ncd
