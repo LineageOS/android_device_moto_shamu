@@ -373,23 +373,6 @@ vendor/firmware/venus.b03
 vendor/firmware/venus.b04
 vendor/firmware/venus.mdt
 
-# Video processing firmware
-etc/firmware/vpu.b00
-etc/firmware/vpu.b01
-etc/firmware/vpu.b02
-etc/firmware/vpu.b03
-etc/firmware/vpu.b04
-etc/firmware/vpu.b05
-etc/firmware/vpu.b06
-etc/firmware/vpu.b07
-etc/firmware/vpu.b08
-etc/firmware/vpu.b09
-etc/firmware/vpu.b10
-etc/firmware/vpu.b11
-etc/firmware/vpu.b12
-etc/firmware/vpu.mbn
-etc/firmware/vpu.mdt
-
 # Voice recognition firmware
 vendor/firmware/aonvr1.bin
 vendor/firmware/aonvr2.bin
