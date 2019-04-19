@@ -325,11 +325,6 @@ vendor/lib/libTimeService.so
 vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat
 vendor/firmware/atmel-a432-14103001-0103aa-shamu.tdat
 
-# USB
-bin/port-bridge
-bin/usbhub
-bin/usbhub_init
-
 # VZW
 -app/VZWAPNLib/VZWAPNLib.apk:app/VZWAPNLib/VZWAPNLib.apk;PRESIGNED
 etc/permissions/com.motorola.DirectedSMSProxy.xml
