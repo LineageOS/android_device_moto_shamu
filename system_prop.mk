@@ -6,6 +6,7 @@
 PRODUCT_PROPERTY_OVERRIDES += \
     af.fast_track_multiplier=1 \
     audio_hal.period_size=192 \
+    debug.stagefright.ccodec=0 \
     media.aac_51_output_enabled=true \
     persist.audio.dualmic.config=endfire \
     persist.audio.fluence.speaker=false \
