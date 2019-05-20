@@ -49,7 +49,7 @@
 
 static pthread_mutex_t g_intf_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static mm_camera_ctrl_t g_cam_ctrl = {0, {{0}}, {0}, {{0}}};
+static mm_camera_ctrl_t g_cam_ctrl = {0, {{0}}, {0}, {{0, 0, 0, 0, 0, 0, 0}}};
 
 static pthread_mutex_t g_handler_lock = PTHREAD_MUTEX_INITIALIZER;
 static uint16_t g_handler_history_count = 0; /* history count for handler */
