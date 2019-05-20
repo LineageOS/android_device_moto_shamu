@@ -2,12 +2,9 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-# QCameraParameters.h has unused private field.
 # QCamera3PostProc.cpp has unused label.
 # QCamera3Channel.cpp compares array to null pointer.
 LOCAL_CLANG_CFLAGS += \
-    -Wno-error=unused-private-field \
-    -Wno-error=unused-label \
     -Wno-error=tautological-pointer-compare
 
 LOCAL_SRC_FILES := \
