@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b111c97d_00007310",
+        "filename": "overlay/frameworks/base/core/res/res/xml/power_profile.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 20109
+      },
+      "writtenOn": "2019-05-29T07:55:36Z",
+      "side": 0,
+      "message": "This should be cpu.suspend",
+      "revId": "06382e1fc5dc1337d526480ba4b7b0194d95fbc7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
