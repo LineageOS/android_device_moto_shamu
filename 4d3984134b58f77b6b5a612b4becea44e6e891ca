@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9f06b318_345b7315",
+        "filename": "device-proprietary-files.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1053
+      },
+      "writtenOn": "2019-06-03T19:25:05Z",
+      "side": 0,
+      "message": "something still tries to load it.",
+      "revId": "4d3984134b58f77b6b5a612b4becea44e6e891ca",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
