@@ -31,8 +31,12 @@ allow netmgrd system_file:file rx_file_perms;
 allow netmgrd vendor_file_type:file rx_file_perms;
 
 #Allow operations on different types of sockets
-allow netmgrd self:netlink_socket create_socket_perms_no_ioctl;
-allow netmgrd self:rawip_socket create_socket_perms_no_ioctl;
+allow netmgrd self:{
+    netlink_socket
+    rawip_socket
+    netlink_generic_socket
+} create_socket_perms_no_ioctl;
+
 allow netmgrd self:netlink_route_socket nlmsg_write;
 allow netmgrd self:netlink_xfrm_socket { create_socket_perms_no_ioctl nlmsg_write nlmsg_read };
 
