@@ -121,6 +121,7 @@
 /system/vendor/bin/netmgrd                            u:object_r:netmgrd_exec:s0
 /system/vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.shamu u:object_r:hal_dumpstate_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.drm@1\.2-service\.clearkey    u:object_r:hal_drm_clearkey_exec:s0
+/system/vendor/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software    u:object_r:hal_gatekeeper_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.health@2\.0-service\.shamu    u:object_r:hal_health_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.light@2\.0-service\.shamu     u:object_r:hal_light_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.power@1\.2-service\.shamu     u:object_r:hal_power_default_exec:s0
