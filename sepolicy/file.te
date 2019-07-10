@@ -1,56 +1,51 @@
-# Default type for anything under /firmware
-type firmware_file, fs_type, contextmount_type;
-type fsg_file, fs_type, contextmount_type;
+type firmware_file,              fs_type, contextmount_type;
+type fsg_file,                   fs_type, contextmount_type;
 
-type cnd_socket, file_type;
+### debugfs ###
+type debugfs_rpm,                fs_type, debugfs_type;
+type kgsl_debugfs,               fs_type, debugfs_type;
 
-type adspd_socket, file_type, mlstrustedobject;
-type camera_socket, file_type;
-type mpdecision_socket, file_type;
-type qmuxd_socket, file_type;
-type sensors_socket, file_type;
-type sysfs_graphics, sysfs_type, fs_type;
-type thermald_socket, file_type;
-# Socket node needed by ims_data daemon
-type ims_socket, file_type;
+type adspd_data_file,            file_type, data_file_type, mlstrustedobject;
+type audio_cutback_data_file,    file_type, data_file_type;
+type diag_logs,                  file_type, data_file_type, mlstrustedobject;
+type dropbox_data_file,          file_type, data_file_type;
+type quipc_data_file,            file_type, data_file_type;
+type mpctl_socket,               file_type, data_file_type, mlstrustedobject;
+type mpctl_data_file,            file_type, data_file_type;
+type ram_dump_logs,              file_type, data_file_type;
+type time_data_file,             file_type, data_file_type;
 
-type diag_logs, file_type, data_file_type, mlstrustedobject;
-type ram_dump_logs, file_type, data_file_type;
-type time_data_file, file_type, data_file_type;
-type quipc_data_file, data_file_type, file_type;
-type dropbox_data_file, file_type, data_file_type;
-type adspd_data_file, file_type, data_file_type, mlstrustedobject;
-type audio_cutback_data_file, file_type, data_file_type;
+### persist ###
+type persist_data_file,          file_type;
+type persist_drm_file,           file_type;
+type persist_file,               file_type;
+type persist_hiddenmenu_file,    file_type;
+type persist_modem_file,         file_type;
+type persist_sensors_file,       file_type;
 
-type sysfs_rmnet, fs_type, sysfs_type;
+### sockets ###
+type adspd_socket,               file_type, mlstrustedobject;
+type camera_socket,              file_type;
+type cnd_socket,                 file_type;
+type mpdecision_socket,          file_type;
+type ims_socket,                 file_type;
+type qmuxd_socket,               file_type;
+type sensors_socket,             file_type;
+type thermald_socket,            file_type;
+
+#### sysfs ###
+type sysfs_audio,                fs_type, sysfs_type;
+type sysfs_capsense_update,      fs_type, sysfs_type;
+type sysfs_cpuboost,             fs_type, sysfs_type;
+type sysfs_cpu_online,           fs_type, sysfs_type;
+type sysfs_graphics,             fs_type, sysfs_type;
+type sysfs_kgsl_gpuclk,          fs_type, sysfs_type;
+type sysfs_mmi_touch,            fs_type, sysfs_type;
+type sysfs_mpdecision,           fs_type, sysfs_type;
+type sysfs_msm_hsic_host_rdy,    fs_type, sysfs_type;
+type sysfs_rmnet,                fs_type, sysfs_type;
+type sysfs_rqstats,              fs_type, sysfs_type;
+type sysfs_sar_wifi,             fs_type, sysfs_type;
 type sysfs_smdcntl_open_timeout, fs_type, sysfs_type;
-type sysfs_xhci_msm_hsic, fs_type, sysfs_type;
-type sysfs_msm_hsic_host_rdy, fs_type, sysfs_type;
-type sysfs_mmi_touch, fs_type, sysfs_type;
-
-type persist_file, file_type;
-type persist_data_file, file_type;
-type persist_drm_file, file_type;
-type persist_sensors_file, file_type;
-type persist_modem_file, file_type;
-type persist_hiddenmenu_file, file_type;
-
-#Define the files written during the operation of mpdecision
-type sysfs_mpdecision, fs_type, sysfs_type;
-type sysfs_rqstats, fs_type, sysfs_type;
-type sysfs_cpu_online, fs_type, sysfs_type;
-type sysfs_cpuboost, fs_type, sysfs_type;
-type sysfs_capsense_update, fs_type, sysfs_type;
-type sysfs_sar_wifi, fs_type, sysfs_type;
-type mpctl_socket, file_type, data_file_type, mlstrustedobject;
-type mpctl_data_file, file_type, data_file_type;
-
-type sysfs_kgsl_gpuclk, fs_type, sysfs_type;
-type debugfs_rpm, debugfs_type, fs_type;
-type sysfs_socinfo, sysfs_type, fs_type, mlstrustedobject;
-
-#type for devstart
-type sysfs_audio, fs_type, sysfs_type;
-
-#kgsl
-type kgsl_debugfs, debugfs_type, fs_type;
+type sysfs_socinfo,              fs_type, sysfs_type, mlstrustedobject;
+type sysfs_xhci_msm_hsic,        fs_type, sysfs_type;
