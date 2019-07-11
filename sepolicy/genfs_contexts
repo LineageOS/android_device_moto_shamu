@@ -10,6 +10,7 @@ genfscon proc /bluetooth/sleep/lpm                                              
 genfscon proc /bootinfo                                                             u:object_r:proc_bootinfo:s0
 
 # sysfs
+genfscon sysfs /bus/i2c/drivers/atmel_mxt_ts                                        u:object_r:sysfs_mmi_touch:s0
 genfscon sysfs /bus/esoc                                                            u:object_r:sysfs_esoc:s0
 genfscon sysfs /bus/platform/drivers/xhci_msm_hsic                                  u:object_r:sysfs_xhci_msm_hsic:s0
 genfscon sysfs /class/rfkill/rfkill0/state                                          u:object_r:sysfs_bluetooth_writable:s0

@@ -13,12 +13,12 @@ allow mmi_touch_sh kmsg_device:chr_file w_file_perms;
 
 # Write to /sys/path/to/firmware/forcereflash
 # Read from /sys/path/to/firmware/poweron (and others)
-allow mmi_touch_sh sysfs_mmi_touch:file rw_file_perms;
 allow mmi_touch_sh sysfs_mmi_touch:dir search;
+allow mmi_touch_sh sysfs_mmi_touch:file rw_file_perms;
+
+# init.mmi.touch.sh scans /sys/bus/i2c/drivers for a directory containing atmel
+# Grant access if that's the case; don't log denials for other directories
+allow mmi_touch_sh sysfs_mmi_touch:dir search;
+dontaudit mmi_touch_sh { sysfs }:dir r_dir_perms;
 
 allow mmi_touch_sh vendor_file:dir r_dir_perms;
-
-# init_mmi_touch.sh scans /sys/bus/i2c/drivers which is only labelled as sysfs
-# Avoid introducing unnecessary sepolicy complexity and grant sysfs read access
-
-allow mmi_touch_sh sysfs:dir r_dir_perms;
