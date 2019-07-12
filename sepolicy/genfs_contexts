@@ -9,6 +9,7 @@ genfscon proc /bluetooth/sleep/btwrite                                          
 genfscon proc /bluetooth/sleep/lpm                                                  u:object_r:proc_bluetooth_writable:s0
 
 # sysfs
+genfscon sysfs /bus/esoc                                                            u:object_r:sysfs_esoc:s0
 genfscon sysfs /bus/i2c/drivers/atmel_mxt_ts                                        u:object_r:sysfs_mmi_touch:s0
 genfscon sysfs /bus/platform/drivers/xhci_msm_hsic                                  u:object_r:sysfs_xhci_msm_hsic:s0
 genfscon sysfs /class/rfkill/rfkill0/state                                          u:object_r:sysfs_bluetooth_writable:s0
@@ -17,6 +18,7 @@ genfscon sysfs /class/input                                                     
 genfscon sysfs /class/thermal                                                       u:object_r:sysfs_thermal:s0
 genfscon sysfs /devices/c55_ctrl                                                    u:object_r:sysfs_adsp:s0
 genfscon sysfs /devices/cycapsense_prog.1/cycapsense_fw                             u:object_r:sysfs_capsense_update:s0
+genfscon sysfs /devices/qcom,mdm0.73/esoc0/                                         u:object_r:sysfs_esoc:s0
 genfscon sysfs /devices/fd510000.gpio/gpio/gpio76                                   u:object_r:sysfs_adsp:s0
 genfscon sysfs /devices/fd510000.gpio/gpio/gpio85                                   u:object_r:sysfs_adsp:s0
 genfscon sysfs /devices/fd510000.gpio/gpio/gpio91                                   u:object_r:sysfs_adsp:s0

@@ -24,10 +24,15 @@ allow thermald {
 allow thermald sysfs_socinfo:dir search;
 allow thermald sysfs_socinfo:file { read open getattr };
 allow thermald sysfs_thermal:dir r_dir_perms;
-allow thermald sysfs_usb:file write;
+
+allow thermald {
+    sysfs_usb
+    sysfs_esoc
+}:file w_file_perms;
 
 allow thermald {
     sysfs_batteryinfo
+    sysfs_esoc
     sysfs_kgsl_gpuclk
     sysfs_mpdecision
     sysfs_thermal

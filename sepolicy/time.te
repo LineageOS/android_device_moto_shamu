@@ -1,4 +1,4 @@
-type time, domain, device_domain_deprecated;
+type time, domain;
 type time_exec, exec_type, file_type;
 
 # Started by init
@@ -16,3 +16,6 @@ allow time time_data_file:file create_file_perms;
 allow time self:socket *;
 allowxperm time self:socket ioctl msm_sock_ipc_ioctls;
 allow time self:capability { setuid setgid };
+
+allow time sysfs_esoc:dir r_dir_perms;
+allow time sysfs_esoc:file r_file_perms;

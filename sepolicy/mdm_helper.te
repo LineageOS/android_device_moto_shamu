@@ -1,5 +1,5 @@
 # Modem helper service. Spawns kickstart.
-type mdm_helper, domain, device_domain_deprecated;
+type mdm_helper, domain;
 type mdm_helper_exec, file_type, exec_type;
 
 init_daemon_domain(mdm_helper)
@@ -57,3 +57,6 @@ allow mdm_helper dropbox_data_file:file create_file_perms;
 
 # write radio properties
 set_prop(mdm_helper, radio_prop)
+
+allow mdm_helper sysfs_esoc:dir r_dir_perms;
+allow mdm_helper sysfs_esoc:file r_file_perms;

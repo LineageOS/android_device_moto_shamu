@@ -1,5 +1,5 @@
 # Network utilities (radio process)
-type netmgrd, domain, device_domain_deprecated;
+type netmgrd, domain;
 type netmgrd_exec, exec_type, file_type;
 
 # Uses network sockets.
@@ -62,3 +62,6 @@ allow netmgrd netd_socket:sock_file write;
 #Allow access to files associated with netd
 allow netmgrd net_data_file:file r_file_perms;
 allow netmgrd net_data_file:dir r_dir_perms;
+
+allow netmgrd sysfs_esoc:dir r_dir_perms;
+allow netmgrd sysfs_esoc:file r_file_perms;
