@@ -38,6 +38,10 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     persist.camera.imglib.logs=1 \
     persist.camera.sensor.debug=0
 
+# Charger
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.charger.enable_suspend=true
+
 # Dalvik VM
 PRODUCT_PROPERTY_OVERRIDES += \
     dalvik.vm.heapstartsize=16m \
