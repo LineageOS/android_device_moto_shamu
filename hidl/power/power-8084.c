@@ -79,14 +79,10 @@ static int profile_bias_performance[] = {
     CPUS_ONLINE_MIN_3
 };
 
-/* performance mode: min 4 CPUs, min 1.5 GHz */
+/* performance mode: min 4 CPUs */
 static int profile_high_performance[] = {
     0x0901,
-    CPUS_ONLINE_MIN_4,
-    CPU0_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU1_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU2_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU3_MIN_FREQ_NONTURBO_MAX + 5
+    CPUS_ONLINE_MIN_4
 };
 
 #ifdef INTERACTION_BOOST
@@ -188,6 +184,14 @@ static int resources_launch[] = {
     CPU3_MIN_FREQ_NONTURBO_MAX + 5
 };
 
+static int resources_launch_perf[] = {
+    CPUS_ONLINE_MIN_4,
+    CPU0_MIN_FREQ_TURBO_MAX,
+    CPU1_MIN_FREQ_TURBO_MAX,
+    CPU2_MIN_FREQ_TURBO_MAX,
+    CPU3_MIN_FREQ_TURBO_MAX
+};
+
 const int DEFAULT_INTERACTIVE_DURATION   =  200; /* ms */
 const int PERF_INTERACTIVE_DURATION      =  500; /* ms */
 const int MIN_FLING_DURATION             = 1500; /* ms */
@@ -210,8 +214,13 @@ static int process_activity_launch_hint(void *data)
     }
 
     if (!launch_mode) {
-        launch_handle = interaction_with_handle(launch_handle, MAX_LAUNCH_DURATION,
+        if (current_power_profile == PROFILE_HIGH_PERFORMANCE) {
+            launch_handle = interaction_with_handle(launch_handle, MAX_LAUNCH_DURATION,
+                ARRAY_SIZE(resources_launch), resources_launch_perf);
+        } else {
+            launch_handle = interaction_with_handle(launch_handle, MAX_LAUNCH_DURATION,
                 ARRAY_SIZE(resources_launch), resources_launch);
+        }
         if (!CHECK_HANDLE(launch_handle)) {
             ALOGE("Failed to perform launch boost");
             return HINT_NONE;
@@ -236,14 +245,14 @@ int power_hint_override(power_hint_t hint, void *data)
     }
 
     // Skip other hints in high/low power modes
-    if (current_power_profile == PROFILE_POWER_SAVE ||
-            current_power_profile == PROFILE_HIGH_PERFORMANCE) {
+    if (current_power_profile == PROFILE_POWER_SAVE) {
         return HINT_HANDLED;
     }
 
     switch (hint) {
         case POWER_HINT_INTERACTION:
-            if (current_power_profile == PROFILE_BIAS_POWER) {
+            if (current_power_profile == PROFILE_BIAS_POWER ||
+                current_power_profile == PROFILE_HIGH_PERFORMANCE) {
                 duration = PERF_INTERACTIVE_DURATION;
             } else {
                 duration = DEFAULT_INTERACTIVE_DURATION;
