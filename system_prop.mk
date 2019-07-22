@@ -51,6 +51,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Display
 PRODUCT_PROPERTY_OVERRIDES += \
     debug.hwui.use_buffer_age=false \
+    debug.sf.enable_gl_backpressure=1 \
     persist.hwc.mdpcomp.enable=true \
     ro.opengles.version=196610 \
     ro.sf.lcd_density=560 \
