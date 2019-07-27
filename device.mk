@@ -193,6 +193,7 @@ PRODUCT_COPY_FILES += \
     fstab.shamu \
     init.shamu.rc \
     init.shamu.power.rc \
+    init.shamu.recovery.rc \
     init.shamu.usb.rc \
     ueventd.shamu.rc
 
