@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "582e8d72_ce04d83f",
+        "filename": "sepolicy/ims.te",
+        "patchSetId": 1
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 7118
+      },
+      "writtenOn": "2019-07-29T00:04:05Z",
+      "side": 1,
+      "message": "you can just add netlink_generic_socket to this rule.\nallow ims self:{ netlink_socket netlink_generic_socket } create_socket_perms_no_ioctl;",
+      "revId": "46a8fb2526795b79466c18acd29ebe7c6b5acb84",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
