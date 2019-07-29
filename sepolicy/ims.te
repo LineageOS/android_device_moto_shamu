@@ -24,7 +24,10 @@ allow ims cnd:unix_stream_socket connectto;
 allow ims self:capability { setpcap setuid net_bind_service };
 
 # Allow ims to create and use netlink sockets.
-allow ims self:netlink_socket create_socket_perms_no_ioctl;
+allow ims self:{
+    netlink_socket
+    netlink_generic_socket
+} create_socket_perms_no_ioctl;
 
 # Allow access to smem log
 allow ims shared_log_device:chr_file rw_file_perms;
@@ -60,3 +63,7 @@ allow ims wpa_socket:dir rw_dir_perms;
 allow ims wifi_data_file:dir r_dir_perms;
 
 unix_socket_send(ims, wpa, hal_wifi_supplicant_server)
+
+# Needed for imsdatadaemon
+allow ims sysfs_esoc:dir r_dir_perms;
+allow ims sysfs_esoc:file r_file_perms;
