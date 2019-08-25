@@ -27,12 +27,14 @@ etc/Handset_cal.acdb
 etc/Hdmi_cal.acdb
 etc/Headset_cal.acdb
 etc/Speaker_cal.acdb
+lib/libflacencoder.so
 lib/libmotaudioutils.so
 lib/soundfx/libspeakerbundle.so:vendor/lib/soundfx/libspeakerbundle.so
 vendor/lib/libacdbloader.so
 vendor/lib/libacdbrtac.so
 vendor/lib/libadiertac.so
 vendor/lib/libaudcal.so
+vendor/lib/libcsd-client.so
 
 # Audio firmware
 vendor/firmware/acdb.mbn
