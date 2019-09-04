@@ -226,6 +226,9 @@ PRODUCT_COPY_FILES += \
 # Shippig API
 $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_l.mk)
 
+# Soong
+PRODUCT_SOONG_NAMESPACES += $(LOCAL_PATH)
+
 # System Properties
 -include $(LOCAL_PATH)/system_prop.mk
 
