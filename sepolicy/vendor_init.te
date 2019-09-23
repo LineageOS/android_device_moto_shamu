@@ -1,0 +1,15 @@
+typeattribute vendor_init data_between_core_and_vendor_violators;
+
+allow vendor_init {
+    adspd_data_file
+    audio_cutback_data_file
+    audio_data_file
+    dhcp_data_file
+    mpctl_data_file 
+    mpctl_socket
+    ram_dump_logs
+    system_data_file
+    time_data_file
+    tombstone_data_file
+    wifi_data_file
+}:dir create_dir_perms;
