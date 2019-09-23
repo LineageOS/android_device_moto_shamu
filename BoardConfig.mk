@@ -151,7 +151,7 @@ TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
 BOARD_USES_CUTBACK_IN_RILD := true
 
 # Selinux
-BOARD_SEPOLICY_DIRS += device/moto/shamu/sepolicy
+BOARD_VENDOR_SEPOLICY_DIRS += device/moto/shamu/sepolicy
 
 # Wi-Fi
 BOARD_WLAN_DEVICE           := bcmdhd
