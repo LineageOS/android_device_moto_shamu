@@ -125,7 +125,6 @@ TARGET_KERNEL_SOURCE := kernel/moto/shamu
 # Manifests
 DEVICE_FRAMEWORK_MANIFEST_FILE += system/libhidl/vintfdata/manifest_healthd_exclude.xml
 DEVICE_MANIFEST_FILE := device/moto/shamu/manifest.xml
-DEVICE_MATRIX_FILE := device/moto/shamu/compatibility_matrix.xml
 
 # Power
 TARGET_HAS_LEGACY_POWER_STATS := true
