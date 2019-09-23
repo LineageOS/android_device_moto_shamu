@@ -396,6 +396,7 @@ on charger
 service charger /system/bin/charger
     class charger
     group log
+    capabilities SYS_BOOT
     seclabel u:r:charger:s0
     writepid /dev/cpuset/system-background/tasks
 
