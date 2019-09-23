@@ -131,20 +131,6 @@ ssize_t fillTemperatures(hidl_vec<Temperature> *temperatures) {
         current_index++;
     }
 
-    // Battery temperature.
-    if (current_index < temperatures->size()) {
-        // battery: temperature in millidegrees Celsius.
-        result = readTemperature(kBatterySensorNum, TemperatureType::BATTERY, kBatteryLabel,
-                                  0.001, UNKNOWN_TEMPERATURE, kBatteryShutdownThreshold,
-                                  &(*temperatures)[current_index]);
-        if (result < 0) {
-            return result;
-        }
-        current_index++;
-    }
-
-    return kTemperatureNum;
-
     // Skin temperature.
     if (current_index < temperatures->size()) {
         // battery: temperature in millidegrees Celsius.
