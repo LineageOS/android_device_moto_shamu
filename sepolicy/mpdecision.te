@@ -5,7 +5,6 @@ type mpdecision_exec, exec_type, file_type;
 init_daemon_domain(mpdecision)
 
 allow mpdecision {
-    cpuctl_device
     sysfs_mpdecision
     sysfs_devices_system_cpu
     sysfs_cpu_online
