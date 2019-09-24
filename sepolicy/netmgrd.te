@@ -56,9 +56,6 @@ set_prop(netmgrd, net_radio_prop)
 #Set netmgrd properties
 set_prop(netmgrd, qcom_netmgrd_prop)
 
-# Permission to run netd commands
-allow netmgrd netd_socket:sock_file write;
-
 #Allow access to files associated with netd
 allow netmgrd net_data_file:file r_file_perms;
 allow netmgrd net_data_file:dir r_dir_perms;
