@@ -26,3 +26,5 @@ allow init {
     sysfs_usb_controller
     sysfs_xhci_msm_hsic
 }:file w_file_perms;
+
+allow init sysfs_block_iosched :file relabelfrom;
