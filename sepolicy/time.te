@@ -5,7 +5,6 @@ type time_exec, exec_type, file_type;
 init_daemon_domain(time)
 
 allow time shared_log_device:chr_file rw_file_perms;
-allow time alarm_device:chr_file rw_file_perms;
 
 # Is r_file_perms sufficient for /dev/rtc0 ?
 allow time rtc_device:chr_file r_file_perms;
