@@ -1830,6 +1830,7 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
     case CAM_STREAM_TYPE_VIDEO:
         streamInfo->useAVTimer = mParameters.isAVTimerEnabled();
         streamInfo->dis_enable = mParameters.isDISEnabled();
+        [[fallthrough]];
     case CAM_STREAM_TYPE_PREVIEW:
         if (mParameters.getRecordingHintValue()) {
             const char* dis_param = mParameters.get(QCameraParameters::KEY_QC_DIS);
