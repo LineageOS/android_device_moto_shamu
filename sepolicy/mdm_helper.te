@@ -1,5 +1,5 @@
 # Modem helper service. Spawns kickstart.
-type mdm_helper, domain;
+type mdm_helper, coredomain, domain;
 type mdm_helper_exec, file_type, exec_type;
 
 init_daemon_domain(mdm_helper)
@@ -50,10 +50,6 @@ allow mdm_helper self:capability { fowner chown fsetid };
 # Write ram dump logs
 allow mdm_helper ram_dump_logs:dir create_dir_perms;
 allow mdm_helper ram_dump_logs:file create_file_perms;
-
-# write modem logs to dropbox
-allow mdm_helper dropbox_data_file:dir rw_dir_perms;
-allow mdm_helper dropbox_data_file:file create_file_perms;
 
 # write radio properties
 set_prop(mdm_helper, radio_prop)
