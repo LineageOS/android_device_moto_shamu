@@ -8,7 +8,6 @@ type kgsl_debugfs,               debugfs_type, fs_type;
 type adspd_data_file,            file_type, data_file_type, core_data_file_type, mlstrustedobject;
 type audio_cutback_data_file,    file_type, data_file_type, core_data_file_type;
 type diag_logs,                  file_type, data_file_type, core_data_file_type, mlstrustedobject;
-type dropbox_data_file,          file_type, data_file_type, core_data_file_type;
 type quipc_data_file,            file_type, data_file_type, core_data_file_type;
 type mpctl_socket,               file_type, data_file_type, core_data_file_type, mlstrustedobject;
 type mpctl_data_file,            file_type, data_file_type, core_data_file_type;
