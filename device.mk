@@ -25,6 +25,8 @@ PRODUCT_AAPT_CONFIG := normal
 PRODUCT_AAPT_PREF_CONFIG := 560dpi
 # A list of dpis to select prebuilt apk, in precedence order.
 PRODUCT_AAPT_PREBUILT_DPI := xxxhdpi xxhdpi xhdpi hdpi
+# The recovery partition is to small for xxxhdpi images
+TARGET_RECOVERY_DENSITY := xxhdpi
 
 # APEX
 PRODUCT_COPY_FILES += \
