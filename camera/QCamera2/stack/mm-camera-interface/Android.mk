@@ -37,7 +37,7 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_HEADER_LIBRARIES := generated_kernel_headers
 
-LOCAL_C_INCLUDES += $(call project-path-for,qcom-media)/mm-core/inc
+LOCAL_C_INCLUDES += hardware/qcom/media/$(TARGET_BOARD_PLATFORM)/mm-core/inc
 
 LOCAL_SRC_FILES := $(MM_CAM_FILES)
 
