@@ -32,8 +32,6 @@ cc_binary {
         "libcutils" ,
         "libdumpstateutil" ,
         "libhidlbase" ,
-        "libhidltransport" ,
-        "libhwbinder" ,
         "liblog" ,
         "libutils" ,
         "android.hardware.dumpstate@1.0" ,
