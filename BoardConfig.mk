@@ -103,11 +103,6 @@ TARGET_NO_RPC := true
 # Gralloc
 TARGET_ADDITIONAL_GRALLOC_10_USAGE_BITS := 0x02000000U
 
-# Hardware Composer
-# Maximum dimension (width or height) of a virtual display that will be
-# handled by the hardware composer
-MAX_VIRTUAL_DISPLAY_DIMENSION := 2048
-
 # ION
 TARGET_USES_ION := true
 
@@ -141,9 +136,7 @@ LZMA_RAMDISK_TARGETS := recovery
 TARGET_RECOVERY_FSTAB = device/moto/shamu/rootdir/etc/fstab.shamu
 
 # Render
-NUM_FRAMEBUFFER_SURFACE_BUFFERS := 3
 OVERRIDE_RS_DRIVER := libRSDriver_adreno.so
-TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
 
 # RIL
 # Support Native Layer RF cutback
