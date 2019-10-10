@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "101c1cd9_09cf05e5",
+        "filename": "system_prop.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 444
+      },
+      "writtenOn": "2019-10-10T17:41:34Z",
+      "side": 1,
+      "message": "Looks like the value is missing here.",
+      "revId": "eab7e6e80b7025838130f48cbdc04a5871914cde",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
