@@ -393,7 +393,7 @@ on charger
     mount ext4 /dev/block/platform/msm_sdcc.1/by-name/system /system ro barrier=1
     start thermal-engine
 
-service charger /charger
+service charger /system/bin/charger
     class charger
     group log
     seclabel u:r:charger:s0
