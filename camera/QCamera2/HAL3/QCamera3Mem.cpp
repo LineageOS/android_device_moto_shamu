@@ -32,7 +32,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include <utils/Log.h>
+#include <log/log.h>
 #include <utils/Errors.h>
 #include <gralloc_priv.h>
 #include <qdMetaData.h>

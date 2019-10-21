@@ -32,7 +32,7 @@
 #include <linux/media.h>
 #include <media/msmb_camera.h>
 #include <media/msm_cam_sensor.h>
-#include <utils/Log.h>
+#include <log/log.h>
 
 #include "HAL3/QCamera3HWI.h"
 #include "QCameraFlash.h"

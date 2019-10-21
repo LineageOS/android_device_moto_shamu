@@ -28,7 +28,7 @@
 */
 
 #include <utils/Errors.h>
-#include <utils/Log.h>
+#include <log/log.h>
 #include <malloc.h>
 #include <string.h>
 #include "QCameraQueue.h"
