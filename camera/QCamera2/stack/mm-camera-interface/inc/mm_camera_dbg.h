@@ -43,7 +43,7 @@ extern volatile uint32_t gMmCameraIntfLogLevel;
     #undef LOG_TAG
     #define LOG_NIDEBUG 0
     #define LOG_TAG "mm-camera-intf"
-    #include <utils/Log.h>
+    #include <log/log.h>
   #else
     #include <stdio.h>
     #define ALOGE CDBG
@@ -57,7 +57,7 @@ extern volatile uint32_t gMmCameraIntfLogLevel;
     #undef LOG_TAG
     #define LOG_NIDEBUG 0
     #define LOG_TAG "mm-camera-intf"
-    #include <utils/Log.h>
+    #include <log/log.h>
     #define CDBG(fmt, args...) ALOGD_IF(gMmCameraIntfLogLevel >= 2, fmt, ##args)
   #else
     #include <stdio.h>

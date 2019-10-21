@@ -32,7 +32,7 @@
 
 #include <hardware/camera.h>
 #include <hardware/power.h>
-#include <utils/Log.h>
+#include <log/log.h>
 #include <utils/Mutex.h>
 #include <utils/Condition.h>
 #include <QCameraParameters.h>

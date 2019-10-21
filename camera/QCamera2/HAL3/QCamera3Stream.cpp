@@ -30,7 +30,7 @@
 #define LOG_TAG "QCamera3Stream"
 //#define LOG_NDEBUG 0
 
-#include <utils/Log.h>
+#include <log/log.h>
 #include <utils/Errors.h>
 #include "QCamera3HWI.h"
 #include "QCamera3Stream.h"
