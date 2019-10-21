@@ -26,7 +26,7 @@
 
 #define LOG_TAG "bdAddrLoader_shamu"
 
-#include <cutils/log.h>
+#include <log/log.h>
 #include <cutils/properties.h>
 
 #define FILE_PATH_MAX   100
