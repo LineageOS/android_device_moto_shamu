@@ -66,8 +66,8 @@ LOCAL_HEADER_LIBRARIES := generated_kernel_headers
 
 #LOCAL_STATIC_LIBRARIES := libqcamera2_util
 LOCAL_C_INCLUDES += \
-    hardware/qcom/display/msm8974/libgralloc \
-    hardware/qcom/display/msm8974/libqdutils
+    hardware/qcom/display/$(TARGET_BOARD_PLATFORM)/libgralloc \
+    hardware/qcom/display/$(TARGET_BOARD_PLATFORM)/libqdutils
 
 LOCAL_SHARED_LIBRARIES := \
     libcamera_client \
