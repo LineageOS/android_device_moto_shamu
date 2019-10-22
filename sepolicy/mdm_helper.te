@@ -15,7 +15,7 @@ allow mdm_helper efs_block_device:blk_file rw_file_perms;
 allow mdm_helper block_device:dir { getattr write search };
 
 # Let qcks access /dev/mdm node (modem driver)??
-allow mdm_helper radio_device:chr_file r_file_perms;
+#allow mdm_helper radio_device:chr_file r_file_perms;
 # Access the modem Hand Over Block (HOB)
 allow mdm_helper modem_hob_block_device:blk_file rw_file_perms;
 # ks checks the writeback path (dir) for the EFS block devices to make sure it is valid
