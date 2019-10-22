@@ -78,7 +78,7 @@ static int profile_bias_performance[] = {
     CPUS_ONLINE_MIN_3
 };
 
-/* performance mode: min 4 CPUs */
+/* high performance mode: min 4 CPUs */
 static int profile_high_performance[] = {
     0x0901,
     CPUS_ONLINE_MIN_4
@@ -166,7 +166,7 @@ static int resources_interaction_fling_boost_perf[] = {
     CPU3_MIN_FREQ_NONTURBO_MAX + 5
 };
 
-/* interactive boost: min 2 CPUs, min 1.5 GHz */
+/* interactive boost: min 3 CPUs, min 1.5 GHz */
 static int resources_interaction_boost_perf[] = {
     CPUS_ONLINE_MIN_3,
     CPU0_MIN_FREQ_NONTURBO_MAX + 5,
@@ -176,15 +176,7 @@ static int resources_interaction_boost_perf[] = {
 };
 
 static int resources_launch[] = {
-    CPUS_ONLINE_MIN_2,
-    CPU0_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU1_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU2_MIN_FREQ_NONTURBO_MAX + 5,
-    CPU3_MIN_FREQ_NONTURBO_MAX + 5
-};
-
-static int resources_launch_perf[] = {
-    CPUS_ONLINE_MIN_4,
+    CPUS_ONLINE_MIN_3,
     CPU0_MIN_FREQ_TURBO_MAX,
     CPU1_MIN_FREQ_TURBO_MAX,
     CPU2_MIN_FREQ_TURBO_MAX,
@@ -213,13 +205,8 @@ static int process_activity_launch_hint(void *data)
     }
 
     if (!launch_mode) {
-        if (current_power_profile == PROFILE_HIGH_PERFORMANCE) {
-            launch_handle = interaction_with_handle(launch_handle, MAX_LAUNCH_DURATION,
-                ARRAY_SIZE(resources_launch), resources_launch_perf);
-        } else {
-            launch_handle = interaction_with_handle(launch_handle, MAX_LAUNCH_DURATION,
-                ARRAY_SIZE(resources_launch), resources_launch);
-        }
+        launch_handle = interaction_with_handle(launch_handle, MAX_LAUNCH_DURATION,
+            ARRAY_SIZE(resources_launch), resources_launch);
         if (!CHECK_HANDLE(launch_handle)) {
             ALOGE("Failed to perform launch boost");
             return HINT_NONE;
