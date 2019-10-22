@@ -78,6 +78,11 @@
 /dev/socket/sensor_ctl_socket                         u:object_r:sensors_socket:s0
 
 ###################################
+# firmware files
+#
+/firmware(/.*)?                                       u:object_r:firmware_file:s0
+
+###################################
 # persist files
 #
 /persist(/.*)?                                        u:object_r:persist_file:s0
