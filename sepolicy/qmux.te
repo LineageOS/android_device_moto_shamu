@@ -10,7 +10,7 @@ allow qmux qmuxd_socket:dir w_dir_perms;
 allow qmux qmuxd_socket:sock_file { create setattr getattr unlink };
 
 # /dev/hsicctl* node access
-allow qmux radio_device:chr_file rw_file_perms;
+# allow qmux radio_device:chr_file rw_file_perms;
 
 wakelock_use(qmux)
 
