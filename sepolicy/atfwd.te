@@ -1,5 +1,5 @@
 type atfwd, coredomain, domain;
-type atfwd_exec, exec_type, file_type;
+type atfwd_exec, exec_type, file_type, system_file_type;
 
 # Started by init
 init_daemon_domain(atfwd)

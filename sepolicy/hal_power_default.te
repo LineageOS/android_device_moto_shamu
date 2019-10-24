@@ -1,3 +1,4 @@
+typeattribute hal_power_default system_file_type;
 allow hal_power_default debugfs_rpm:file { open read getattr };
 allow hal_power_default sysfs_mmi_touch:file rw_file_perms;
 allow hal_power_default sysfs_mmi_touch:dir search;
