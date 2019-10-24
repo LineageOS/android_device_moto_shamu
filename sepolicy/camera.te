@@ -1,6 +1,6 @@
 # Qualcomm MSM camera
 type camera, coredomain, domain;
-type camera_exec, exec_type, file_type;
+type camera_exec, exec_type, file_type, system_file_type;
 
 # Started by init
 init_daemon_domain(camera)

@@ -1,6 +1,6 @@
 # IPC Router Security Configuration Tool
 type irsc_util, coredomain, domain;
-type irsc_util_exec, exec_type, file_type;
+type irsc_util_exec, exec_type, file_type, system_file_type;
 
 # Started by init
 init_daemon_domain(irsc_util)

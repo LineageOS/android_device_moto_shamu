@@ -1,6 +1,6 @@
 # Modem helper service. Spawns kickstart.
 type mdm_helper, coredomain, domain;
-type mdm_helper_exec, file_type, exec_type;
+type mdm_helper_exec, exec_type, file_type, system_file_type;
 
 init_daemon_domain(mdm_helper)
 

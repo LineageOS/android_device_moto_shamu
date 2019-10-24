@@ -1,6 +1,6 @@
 #permissive cnd;
 type cnd, coredomain, domain;
-type cnd_exec, exec_type, file_type;
+type cnd_exec, exec_type, file_type, system_file_type;
 
 # cnd is started by init, type transit from init domain to cnd domain
 init_daemon_domain(cnd)
