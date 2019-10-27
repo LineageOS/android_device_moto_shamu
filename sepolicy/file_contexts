@@ -13,6 +13,7 @@
 /data/ss-ram-dumps(/.*)?                              u:object_r:ram_dump_logs:s0
 /data/system/dropbox-add(/.*)?                        u:object_r:dropbox_data_file:s0
 /data/time(/.*)?                                      u:object_r:time_data_file:s0
+/data/vendor/mediadrm(/.*)?                           u:object_r:mediadrm_vendor_data_file:s0
 
 ###################################
 # Dev nodes
@@ -117,6 +118,7 @@
 /system/vendor/bin/mpdecision                         u:object_r:mpdecision_exec:s0
 /system/vendor/bin/netmgrd                            u:object_r:netmgrd_exec:s0
 /system/vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.shamu u:object_r:hal_dumpstate_default_exec:s0
+/system/vendor/bin/hw/android\.hardware\.drm@1\.2-service\.clearkey    u:object_r:hal_drm_clearkey_exec:s0
 /system/vendor/bin/hw/android\.hardware\.health@2\.0-service\.shamu    u:object_r:hal_health_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.light@2\.0-service\.shamu     u:object_r:hal_light_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.power@1\.1-service\.shamu     u:object_r:hal_power_default_exec:s0
