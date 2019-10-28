@@ -18,7 +18,7 @@ allow mmi_touch_sh sysfs_mmi_touch:file rw_file_perms;
 
 # init.mmi.touch.sh scans /sys/bus/i2c/drivers for a directory containing atmel
 # Grant access if that's the case; don't log denials for other directories
-allow mmi_touch_sh sysfs_mmi_touch:dir search;
+allow mmi_touch_sh sysfs_mmi_touch:dir r_dir_perms;
 dontaudit mmi_touch_sh { sysfs }:dir r_dir_perms;
 
 allow mmi_touch_sh vendor_file:dir r_dir_perms;
