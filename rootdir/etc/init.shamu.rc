@@ -36,8 +36,8 @@ on fs
     # these partition flashed on the device. Failure to mount any partition in fstab file
     # results in failure to launch late-start class.
     wait /dev/block/platform/msm_sdcc.1/by-name/oem
-    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/oem /oem ro nosuid nodev
-    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3 /fsg ro nosuid nodev barrier=0
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/oem /oem ro nosuid nodev context=u:object_r:oemfs:s0
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/mdm1m9kefs3 /fsg ro nosuid nodev barrier=0 context=u:object_r:fsg_file:s0
 
     restorecon_recursive /persist
     mkdir /persist/data 0700 system system
