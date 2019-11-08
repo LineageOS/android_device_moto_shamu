@@ -92,7 +92,6 @@
 # System files
 #
 /system/bin/adspd                                     u:object_r:adspd_exec:s0
-/system/bin/ATFWD-daemon                              u:object_r:atfwd_exec:s0
 /system/bin/cnd                                       u:object_r:cnd_exec:s0
 /system/bin/irsc_util                                 u:object_r:irsc_util_exec:s0
 /system/bin/ks                                        u:object_r:mdm_helper_exec:s0
