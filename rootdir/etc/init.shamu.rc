@@ -464,11 +464,6 @@ on property:ro.mdm_helper_proxy_req=true
 on property:init.svc.ril-daemon=running
     setprop ro.mdm_helper_proxy_req true
 
-service atfwd /system/bin/ATFWD-daemon
-    class late_start
-    user system
-    group system radio
-
 service cnd /system/bin/cnd
     class late_start
     user system
