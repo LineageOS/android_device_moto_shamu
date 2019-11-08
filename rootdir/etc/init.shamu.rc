@@ -30,7 +30,7 @@ on init
     write /proc/sys/vm/page-cluster 0
 
 on fs
-    mount_all fstab.shamu --early
+    mount_all /vendor/etc/fstab.shamu --early
 
     # Keeping following partitions outside fstab file. As user may not have
     # these partition flashed on the device. Failure to mount any partition in fstab file
@@ -66,7 +66,7 @@ on late-fs
     # cause services for bootanim not running.
     wait_for_prop hwservicemanager.ready true
     # Mount RW partitions which need run fsck
-    mount_all /fstab.shamu --late
+    mount_all /vendor/etc/fstab.shamu --late
 
     # boot time fs tune
     write /sys/block/mmcblk0/queue/iostats 0
@@ -380,7 +380,7 @@ on property:sys.boot_completed=1
     write /sys/block/mmcblk0/queue/read_ahead_kb 128
     write /sys/block/mmcblk0/queue/iostats 1
 
-    swapon_all ./fstab.shamu
+    swapon_all /vendor/etc/fstab.shamu
 
     restart cameraserver
 
