@@ -19,7 +19,6 @@
 # are also specific to shamu devices
 #
 
-
 # AAPT
 PRODUCT_AAPT_CONFIG := normal
 PRODUCT_AAPT_PREF_CONFIG := 560dpi
@@ -210,10 +209,6 @@ PRODUCT_PACKAGES += \
     librmnetctl \
     libxml2 \
     qmi_motext_hook
-
-# RRO
-PRODUCT_ENFORCE_RRO_TARGETS := *
-PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS += $(LOCAL_PATH)/overlay/lineage-sdk
 
 # SEC config
 PRODUCT_COPY_FILES += \
