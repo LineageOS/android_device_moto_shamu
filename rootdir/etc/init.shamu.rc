@@ -430,7 +430,7 @@ service time_daemon /system/bin/time_daemon
     writepid /dev/cpuset/system-background/tasks
 
 service qcamerasvr /system/bin/mm-qcamera-daemon
-    class main
+    class late_start
     user camera
     group camera system inet input graphics
     writepid /dev/cpuset/camera-daemon/tasks
@@ -481,9 +481,3 @@ service devstart_sh /vendor/bin/init.qcom.devstart.sh
     group root system
     disabled
     oneshot
-
-on property:init.svc.media=restarting
-    restart qcamerasvr
-
-on property:init.svc.servicemanager=restarting
-    restart qcamerasvr
