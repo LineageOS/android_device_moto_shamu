@@ -71,9 +71,6 @@ MAX_EGL_CACHE_SIZE := 2048*1024
 # Increase the size if shaders of size greater than 12KB are used.
 MAX_EGL_CACHE_KEY_SIZE := 12*1024
 
-# Encryption
-TARGET_KEYMASTER_SKIP_WAITING_FOR_QSEE := true
-
 # Filesystem
 BOARD_BOOTIMAGE_PARTITION_SIZE := 16777216
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
