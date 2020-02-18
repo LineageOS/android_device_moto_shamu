@@ -1,2 +1,3 @@
 net.r_rmnet     u:object_r:net_radio_prop:s0
 ctl.mpdecision  u:object_r:ctl_mpdecision:s0
+wifi.active.interface         u:object_r:exported_wifi_prop:s0
