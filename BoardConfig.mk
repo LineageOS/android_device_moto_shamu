@@ -60,6 +60,7 @@ ifeq ($(HOST_OS),linux)
     endif
   endif
 endif
+WITH_DEXPREOPT_DEBUG_INFO := false
 
 # EGL
 # Maximum GLES shader cache size for each app to store the compiled shader
