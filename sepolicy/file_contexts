@@ -35,6 +35,7 @@
 /dev/qseecom                                          u:object_r:tee_device:s0
 /dev/ramdump_.*                                       u:object_r:ramdump_device:s0
 /dev/sensors                                          u:object_r:sensors_device:s0
+/dev/stune(/.*)?                                      u:object_r:cgroup:s0
 /dev/smem_log                                         u:object_r:shared_log_device:s0
 /dev/subsys_esoc0                                     u:object_r:radio_device:s0
 /dev/ttydiag2                                         u:object_r:diag_device:s0
