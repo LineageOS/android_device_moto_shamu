@@ -73,6 +73,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.frp.pst=/dev/block/platform/msm_sdcc.1/by-name/frp
 
+# Fastbootd
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.fastbootd.available=true
+
 # FIFO
 PRODUCT_PROPERTY_OVERRIDES += \
     sys.use_fifo_ui=1

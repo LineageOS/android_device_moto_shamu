@@ -200,6 +200,10 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     Recorder
 
+# Recovery
+PRODUCT_PACKAGES += \
+    fastbootd
+
 # RIL
 PRODUCT_PACKAGES += \
     libion \
