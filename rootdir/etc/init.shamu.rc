@@ -390,7 +390,6 @@ on property:ro.data.large_tcp_window_size=true
 
 on charger
     write /sys/class/leds/lcd-backlight/brightness 100
-    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/system /system ro barrier=1
     start thermal-engine
 
 service charger /system/bin/charger
