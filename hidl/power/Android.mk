@@ -1,44 +1,60 @@
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
 # Copyright (C) 2017-2019 The LineageOS Project
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
+#       with the distribution.
+#     * Neither the name of The Linux Foundation nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
+# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_RELATIVE_PATH := hw
+
 LOCAL_SHARED_LIBRARIES := \
     liblog \
     libcutils \
     libdl \
-    libxml2 \
+    libbase \
     libhidlbase \
-    libhardware \
-    libutils
+    libhidltransport \
+    libhwbinder \
+    libutils \
+    android.hardware.power@1.2 \
+    vendor.lineage.power@1.0
+
+LOCAL_HEADER_LIBRARIES := \
+    libhardware_headers
 
 LOCAL_SRC_FILES := \
-    service.cpp \
-    Power.cpp \
-    power-helper.c \
+    power-common.c \
     metadata-parser.c \
     utils.c \
     list.c \
-    hint-data.c
-
-LOCAL_C_INCLUDES := external/libxml2/include \
-                    external/icu/icu4c/source/common
+    hint-data.c \
+    service.cpp \
+    Power.cpp
 
 LOCAL_CFLAGS += -Wall -Wextra -Werror
 
@@ -49,47 +65,26 @@ ifneq ($(TARGET_POWER_SET_FEATURE_LIB),)
     LOCAL_STATIC_LIBRARIES += $(TARGET_POWER_SET_FEATURE_LIB)
 endif
 
-ifeq ($(TARGET_USES_INTERACTION_BOOST),true)
-    LOCAL_CFLAGS += -DINTERACTION_BOOST
-endif
-
 ifneq ($(TARGET_POWERHAL_SET_INTERACTIVE_EXT),)
-LOCAL_CFLAGS += -DSET_INTERACTIVE_EXT
-LOCAL_SRC_FILES += ../../../$(TARGET_POWERHAL_SET_INTERACTIVE_EXT)
+    LOCAL_CFLAGS += -DSET_INTERACTIVE_EXT
+    LOCAL_SRC_FILES += ../../../$(TARGET_POWERHAL_SET_INTERACTIVE_EXT)
 endif
 
 ifneq ($(TARGET_TAP_TO_WAKE_NODE),)
     LOCAL_CFLAGS += -DTAP_TO_WAKE_NODE=\"$(TARGET_TAP_TO_WAKE_NODE)\"
 endif
 
-ifeq ($(TARGET_HAS_LEGACY_POWER_STATS),true)
-    LOCAL_CFLAGS += -DLEGACY_STATS
+ifeq ($(TARGET_USES_INTERACTION_BOOST),true)
+    LOCAL_CFLAGS += -DINTERACTION_BOOST
 endif
 
-ifneq ($(TARGET_RPM_STAT),)
-    LOCAL_CFLAGS += -DRPM_STAT=\"$(TARGET_RPM_STAT)\"
+ifeq ($(TARGET_ARCH),arm)
+    LOCAL_CFLAGS += -DARCH_ARM_32
 endif
 
-ifneq ($(TARGET_RPM_MASTER_STAT),)
-    LOCAL_CFLAGS += -DRPM_MASTER_STAT=\"$(TARGET_RPM_MASTER_STAT)\"
-endif
-
-ifneq ($(TARGET_RPM_SYSTEM_STAT),)
-    LOCAL_CFLAGS += -DRPM_SYSTEM_STAT=\"$(TARGET_RPM_SYSTEM_STAT)\"
-endif
-
-ifneq ($(TARGET_WLAN_POWER_STAT),)
-    LOCAL_CFLAGS += -DWLAN_POWER_STAT=\"$(TARGET_WLAN_POWER_STAT)\"
-endif
-
-ifeq ($(TARGET_HAS_NO_WLAN_STATS),true)
-LOCAL_CFLAGS += -DNO_WLAN_STATS
-endif
-LOCAL_MODULE := android.hardware.power@1.1-service.shamu
-LOCAL_INIT_RC := android.hardware.power@1.1-service.shamu.rc
-LOCAL_SHARED_LIBRARIES += android.hardware.power@1.1 vendor.lineage.power@1.0
+LOCAL_MODULE := android.hardware.power@1.2-service.shamu
+LOCAL_INIT_RC := android.hardware.power@1.2-service.shamu.rc
 LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_OWNER := qcom
 LOCAL_VENDOR_MODULE := true
-LOCAL_HEADER_LIBRARIES := libhardware_headers
+
 include $(BUILD_EXECUTABLE)

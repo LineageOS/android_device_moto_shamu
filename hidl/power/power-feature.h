@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 The CyanogenMod Project
+ * Copyright (C) 2019 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +20,14 @@
 
 #include <hardware/power.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void set_device_specific_feature(feature_t feature, int state);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

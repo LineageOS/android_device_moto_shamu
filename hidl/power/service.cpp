@@ -1,50 +1,69 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
- * Copyright (C) 2017-2018 The LineageOS Project
+ * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2017-2019 The LineageOS Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *     * Neither the name of The Linux Foundation nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define LOG_TAG "android.hardware.power@1.1-service-qti"
+#define LOG_TAG "android.hardware.power@1.2-service-shamu"
 
 // #define LOG_NDEBUG 0
 
-#include <android/log.h>
-#include <hidl/HidlTransportSupport.h>
 #include <hardware/power.h>
+#include <hidl/HidlTransportSupport.h>
+#ifdef ARCH_ARM_32
+#include <hwbinder/ProcessState.h>
+#endif
+#include <log/log.h>
 #include "Power.h"
 
+using android::OK;
 using android::sp;
 using android::status_t;
-using android::OK;
 
 // libhwbinder:
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 
 // Generated HIDL files
-using android::hardware::power::V1_1::implementation::Power;
+using android::hardware::power::V1_2::implementation::Power;
 
 int main() {
+#ifdef ARCH_ARM_32
+    android::hardware::ProcessState::initWithMmapSize((size_t)16384);
+#endif
 
     status_t status;
     android::sp<Power> service = nullptr;
 
-    ALOGI("Power HAL Service 1.1 for QCOM is starting.");
+    ALOGI("Power HAL Service 1.2 is starting.");
 
     service = new Power();
     if (service == nullptr) {
-        ALOGE("Can not create an instance of Power HAL Iface, exiting.");
+        ALOGE("Can not create an instance of Power HAL interface.");
 
         goto shutdown;
     }
@@ -53,13 +72,13 @@ int main() {
 
     status = service->registerAsSystemService();
     if (status != OK) {
-        ALOGE("Could not register service for Power HAL Iface (%d).", status);
+        ALOGE("Could not register service for Power HAL(%d).", status);
         goto shutdown;
     }
 
     ALOGI("Power Service is ready");
     joinRpcThreadpool();
-    //Should not pass this line
+    // Should not pass this line
 
 shutdown:
     // In normal operation, we don't expect the thread pool to exit

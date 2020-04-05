@@ -31,19 +31,16 @@
 
 #include "hint-data.h"
 
-int hint_compare(struct hint_data *first_hint,
-        struct hint_data *other_hint) {
+int hint_compare(struct hint_data* first_hint, struct hint_data* other_hint) {
     if (first_hint == other_hint) {
         return 0;
-    } else if ((first_hint && other_hint) &&
-            (first_hint->hint_id == other_hint->hint_id)) {
+    } else if ((first_hint && other_hint) && (first_hint->hint_id == other_hint->hint_id)) {
         return 0;
     } else {
         return 1;
     }
 }
 
-void hint_dump(struct hint_data *hint)
-{
+void hint_dump(struct hint_data* hint) {
     ALOGV("hint_id: %lu", hint->hint_id);
 }

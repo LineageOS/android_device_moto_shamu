@@ -119,8 +119,6 @@ TARGET_KERNEL_SOURCE := kernel/moto/shamu
 DEVICE_MANIFEST_FILE := device/moto/shamu/manifest.xml
 
 # Power
-TARGET_HAS_LEGACY_POWER_STATS := true
-TARGET_HAS_NO_WLAN_STATS := true
 TARGET_USES_INTERACTION_BOOST := true
 TARGET_TAP_TO_WAKE_NODE := "/sys/bus/i2c/devices/1-004a/tsp"
 

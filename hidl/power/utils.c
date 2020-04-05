@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013,2015-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013,2015-2018, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,19 +29,18 @@
 #define LOG_NIDEBUG 0
 
 #include <dlfcn.h>
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "utils.h"
-#include "list.h"
 #include "hint-data.h"
+#include "list.h"
 #include "power-common.h"
-#include "power-helper.h"
+#include "utils.h"
 
-#define LOG_TAG "QCOM PowerHAL"
+#define LOG_TAG "Shamu PowerHAL"
 #include <log/log.h>
 
 #define USINSEC 1000000L
@@ -50,49 +49,46 @@
 #define SOC_ID_0 "/sys/devices/soc0/soc_id"
 #define SOC_ID_1 "/sys/devices/system/soc/soc0/id"
 
-const char *scaling_gov_path[4] = {
-    "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor",
-    "/sys/devices/system/cpu/cpu1/cpufreq/scaling_governor",
-    "/sys/devices/system/cpu/cpu2/cpufreq/scaling_governor",
-    "/sys/devices/system/cpu/cpu3/cpufreq/scaling_governor"
-};
+const char* scaling_gov_path[8] = {"/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor",
+                                   "/sys/devices/system/cpu/cpu1/cpufreq/scaling_governor",
+                                   "/sys/devices/system/cpu/cpu2/cpufreq/scaling_governor",
+                                   "/sys/devices/system/cpu/cpu3/cpufreq/scaling_governor",
+                                   "/sys/devices/system/cpu/cpu4/cpufreq/scaling_governor",
+                                   "/sys/devices/system/cpu/cpu5/cpufreq/scaling_governor",
+                                   "/sys/devices/system/cpu/cpu6/cpufreq/scaling_governor",
+                                   "/sys/devices/system/cpu/cpu7/cpufreq/scaling_governor"};
 
 #define PERF_HAL_PATH "libqti-perfd-client.so"
-static void *qcopt_handle;
-static int (*perf_lock_acq)(unsigned long handle, int duration,
-    int list[], int numArgs);
-static int (*perf_lock_rel)(unsigned long handle);
-static int (*perf_hint)(int, char *, int, int);
+static void* qcopt_handle;
+static int (*perf_lock_acq)(int handle, int duration, int list[], int numArgs);
+static int (*perf_lock_rel)(int handle);
+static int (*perf_hint)(int, const char*, int, int);
 static struct list_node active_hint_list_head;
+const char* pkg = "Shamu PowerHAL";
 
-static void *get_qcopt_handle()
-{
+static void* get_qcopt_handle() {
     char qcopt_lib_path[PATH_MAX] = {0};
-    void *handle = NULL;
+    void* handle = NULL;
 
     dlerror();
 
-    if (property_get("ro.vendor.extension_library", qcopt_lib_path,
-                NULL)) {
+    if (property_get("ro.vendor.extension_library", qcopt_lib_path, NULL)) {
         handle = dlopen(qcopt_lib_path, RTLD_NOW);
         if (!handle) {
-            ALOGE("Unable to open %s: %s\n", qcopt_lib_path,
-                    dlerror());
+            ALOGE("Unable to open %s: %s\n", qcopt_lib_path, dlerror());
         }
     }
     if (!handle) {
         handle = dlopen(PERF_HAL_PATH, RTLD_NOW);
         if (!handle) {
-            ALOGE("Unable to open %s: %s\n", PERF_HAL_PATH,
-                    dlerror());
+            ALOGE("Unable to open %s: %s\n", PERF_HAL_PATH, dlerror());
         }
     }
 
     return handle;
 }
 
-static void __attribute__ ((constructor)) initialize(void)
-{
+static void __attribute__((constructor)) initialize(void) {
     qcopt_handle = get_qcopt_handle();
 
     if (!qcopt_handle) {
@@ -122,16 +118,13 @@ static void __attribute__ ((constructor)) initialize(void)
     }
 }
 
-static void __attribute__ ((destructor)) cleanup(void)
-{
+static void __attribute__((destructor)) cleanup(void) {
     if (qcopt_handle) {
-        if (dlclose(qcopt_handle))
-            ALOGE("Error occurred while closing qc-opt library.");
+        if (dlclose(qcopt_handle)) ALOGE("Error occurred while closing qc-opt library.");
     }
 }
 
-int sysfs_read(const char *path, char *s, int num_bytes)
-{
+int sysfs_read(const char* path, char* s, int num_bytes) {
     char buf[80];
     int count;
     int ret = 0;
@@ -158,8 +151,7 @@ int sysfs_read(const char *path, char *s, int num_bytes)
     return ret;
 }
 
-int sysfs_write(const char *path, char *s)
-{
+int sysfs_write(const char* path, char* s) {
     char buf[80];
     int len;
     int ret = 0;
@@ -168,7 +160,7 @@ int sysfs_write(const char *path, char *s)
     if (fd < 0) {
         strerror_r(errno, buf, sizeof(buf));
         ALOGE("Error opening %s: %s\n", path, buf);
-        return -1 ;
+        return -1;
     }
 
     len = write(fd, s, strlen(s));
@@ -184,30 +176,19 @@ int sysfs_write(const char *path, char *s)
     return ret;
 }
 
-int get_scaling_governor(char governor[], int size)
-{
-    if (sysfs_read(SCALING_GOVERNOR_PATH, governor,
-                size) == -1) {
-        // Can't obtain the scaling governor. Return.
-        return -1;
-    } else {
-        // Strip newline at the end.
-        int len = strlen(governor);
-
-        len--;
-
-        while (len >= 0 && (governor[len] == '\n' || governor[len] == '\r'))
-            governor[len--] = '\0';
+int get_scaling_governor(char governor[], int size) {
+    for (size_t i = 0; i < ARRAY_SIZE(scaling_gov_path); i++) {
+        if (get_scaling_governor_check_cores(governor, size, i) == 0) {
+            // Obtained the scaling governor. Return.
+            return 0;
+        }
     }
 
-    return 0;
+    return -1;
 }
 
-int get_scaling_governor_check_cores(char governor[], int size,int core_num)
-{
-
-    if (sysfs_read(scaling_gov_path[core_num], governor,
-                size) == -1) {
+int get_scaling_governor_check_cores(char governor[], int size, int core_num) {
+    if (sysfs_read(scaling_gov_path[core_num], governor, size) == -1) {
         // Can't obtain the scaling governor. Return.
         return -1;
     }
@@ -215,97 +196,88 @@ int get_scaling_governor_check_cores(char governor[], int size,int core_num)
     // Strip newline at the end.
     int len = strlen(governor);
     len--;
-    while (len >= 0 && (governor[len] == '\n' || governor[len] == '\r'))
-        governor[len--] = '\0';
+    while (len >= 0 && (governor[len] == '\n' || governor[len] == '\r')) governor[len--] = '\0';
 
     return 0;
 }
 
 int is_interactive_governor(char* governor) {
-   if (strncmp(governor, INTERACTIVE_GOVERNOR, (strlen(INTERACTIVE_GOVERNOR)+1)) == 0)
-      return 1;
-   return 0;
+    if (strncmp(governor, INTERACTIVE_GOVERNOR, (strlen(INTERACTIVE_GOVERNOR) + 1)) == 0) return 1;
+    return 0;
 }
 
-int is_ondemand_governor(char* governor) {
-   if (strncmp(governor, ONDEMAND_GOVERNOR, (strlen(ONDEMAND_GOVERNOR)+1)) == 0)
-      return 1;
-   return 0;
+int is_schedutil_governor(char* governor) {
+    if (strncmp(governor, SCHEDUTIL_GOVERNOR, (strlen(SCHEDUTIL_GOVERNOR) + 1)) == 0) return 1;
+    return 0;
 }
 
 #ifndef INTERACTION_BOOST
-void interaction(int UNUSED(duration), int UNUSED(num_args), int UNUSED(opt_list[]))
-{
+void interaction(int UNUSED(duration), int UNUSED(num_args), int UNUSED(opt_list[])) {
 #else
-void interaction(int duration, int num_args, int opt_list[])
-{
+void interaction(int duration, int num_args, int opt_list[]) {
     static int lock_handle = 0;
 
-    if (duration < 0 || num_args < 1 || opt_list[0] == 0)
-        return;
+    if (duration < 0 || num_args < 1 || opt_list[0] == 0) return;
 
     if (qcopt_handle) {
         if (perf_lock_acq) {
             lock_handle = perf_lock_acq(lock_handle, duration, opt_list, num_args);
-            if (lock_handle == -1)
-                ALOGE("Failed to acquire lock.");
+            if (lock_handle == -1) ALOGE("Failed to acquire lock.");
         }
     }
 #endif
 }
 
-#ifndef INTERACTION_BOOST
-int interaction_with_handle(int UNUSED(lock_handle), int UNUSED(duration), int UNUSED(num_args), int UNUSED(opt_list[]))
-{
-    return 0;
-#else
-int interaction_with_handle(int lock_handle, int duration, int num_args, int opt_list[])
-{
-    if (duration < 0 || num_args < 1 || opt_list[0] == 0)
-        return 0;
+int interaction_with_handle(int lock_handle, int duration, int num_args, int opt_list[]) {
+    if (duration < 0 || num_args < 1 || opt_list[0] == 0) return 0;
 
     if (qcopt_handle) {
         if (perf_lock_acq) {
             lock_handle = perf_lock_acq(lock_handle, duration, opt_list, num_args);
-            if (lock_handle == -1)
-                ALOGE("Failed to acquire lock.");
+            if (lock_handle == -1) ALOGE("Failed to acquire lock.");
         }
     }
     return lock_handle;
-#endif
 }
 
-//this is interaction_with_handle using perf_hint instead of
-//perf_lock_acq
-int perf_hint_enable(int hint_id , int duration)
-{
+// this is interaction_with_handle using perf_hint instead of
+// perf_lock_acq
+int perf_hint_enable(int hint_id, int duration) {
     int lock_handle = 0;
 
-    if (duration < 0)
-        return 0;
+    if (duration < 0) return 0;
 
     if (qcopt_handle) {
         if (perf_hint) {
-            lock_handle = perf_hint(hint_id, NULL, duration, -1);
-            if (lock_handle == -1)
-                ALOGE("Failed to acquire lock.");
+            lock_handle = perf_hint(hint_id, pkg, duration, -1);
+            if (lock_handle == -1) ALOGE("Failed to acquire lock for hint_id: %X.", hint_id);
         }
     }
     return lock_handle;
 }
 
+// Same as perf_hint_enable, but with the ability to
+// choose the type
+int perf_hint_enable_with_type(int hint_id, int duration, int type) {
+    int lock_handle = 0;
 
-void release_request(int lock_handle) {
-    if (qcopt_handle && perf_lock_rel)
-        perf_lock_rel(lock_handle);
+    if (qcopt_handle) {
+        if (perf_hint) {
+            lock_handle = perf_hint(hint_id, NULL, duration, type);
+            if (lock_handle == -1) ALOGE("Failed to acquire lock.");
+        }
+    }
+    return lock_handle;
 }
 
-int perform_hint_action(int hint_id, int resource_values[], int num_resources)
-{
+void release_request(int lock_handle) {
+    if (qcopt_handle && perf_lock_rel) perf_lock_rel(lock_handle);
+}
+
+int perform_hint_action(int hint_id, int resource_values[], int num_resources) {
     if (qcopt_handle && perf_lock_acq) {
         /* Acquire an indefinite lock for the requested resources. */
-        int lock_handle = perf_lock_acq(0, 0, resource_values,
-                num_resources);
+        int lock_handle = perf_lock_acq(0, 0, resource_values, num_resources);
 
         if (lock_handle == -1) {
             ALOGE("Failed to acquire lock.");
@@ -313,21 +285,18 @@ int perform_hint_action(int hint_id, int resource_values[], int num_resources)
         }
 
         /* Add this handle to our internal hint-list. */
-        struct hint_data *new_hint =
-            (struct hint_data *)malloc(sizeof(struct hint_data));
+        struct hint_data* new_hint = (struct hint_data*)malloc(sizeof(struct hint_data));
 
         if (!new_hint) {
             /* Can't keep track of this lock. Release it. */
-            if (perf_lock_rel)
-                perf_lock_rel(lock_handle);
+            if (perf_lock_rel) perf_lock_rel(lock_handle);
             ALOGE("Failed to process hint.");
             return -ENOMEM;
         }
 
         if (!active_hint_list_head.compare) {
-            active_hint_list_head.compare =
-                (int (*)(void *, void *))hint_compare;
-            active_hint_list_head.dump = (void (*)(void *))hint_dump;
+            active_hint_list_head.compare = (int (*)(void*, void*))hint_compare;
+            active_hint_list_head.dump = (void (*)(void*))hint_dump;
         }
 
         new_hint->hint_id = hint_id;
@@ -336,8 +305,7 @@ int perform_hint_action(int hint_id, int resource_values[], int num_resources)
         if (add_list_node(&active_hint_list_head, new_hint) == NULL) {
             free(new_hint);
             /* Can't keep track of this lock. Release it. */
-            if (perf_lock_rel)
-                perf_lock_rel(lock_handle);
+            if (perf_lock_rel) perf_lock_rel(lock_handle);
             ALOGE("Failed to process hint.");
             return -ENOMEM;
         }
@@ -345,23 +313,18 @@ int perform_hint_action(int hint_id, int resource_values[], int num_resources)
     return 0;
 }
 
-void undo_hint_action(int hint_id)
-{
+void undo_hint_action(int hint_id) {
     if (qcopt_handle) {
         if (perf_lock_rel) {
             /* Get hint-data associated with this hint-id */
-            struct list_node *found_node;
-            struct hint_data temp_hint_data = {
-                .hint_id = hint_id
-            };
+            struct list_node* found_node;
+            struct hint_data temp_hint_data = {.hint_id = hint_id};
 
-            found_node = find_node(&active_hint_list_head,
-                    &temp_hint_data);
+            found_node = find_node(&active_hint_list_head, &temp_hint_data);
 
             if (found_node) {
                 /* Release this lock. */
-                struct hint_data *found_hint_data =
-                    (struct hint_data *)(found_node->data);
+                struct hint_data* found_hint_data = (struct hint_data*)(found_node->data);
 
                 if (found_hint_data) {
                     if (perf_lock_rel(found_hint_data->perflock_handle) == -1)
@@ -385,8 +348,7 @@ void undo_hint_action(int hint_id)
  * Used to release initial lock holding
  * two cores online when the display is on
  */
-void undo_initial_hint_action()
-{
+void undo_initial_hint_action() {
     if (qcopt_handle) {
         if (perf_lock_rel) {
             perf_lock_rel(1);
@@ -394,19 +356,10 @@ void undo_initial_hint_action()
     }
 }
 
-long long calc_timespan_us(struct timespec start, struct timespec end)
-{
-    long long diff_in_us = 0;
-    diff_in_us += (end.tv_sec - start.tv_sec) * USINSEC;
-    diff_in_us += (end.tv_nsec - start.tv_nsec) / NSINUS;
-    return diff_in_us;
-}
-
-int get_soc_id(void)
-{
+int get_soc_id(void) {
     int fd;
     int soc_id = -1;
-    char buf[10] = { 0 };
+    char buf[10] = {0};
 
     if (!access(SOC_ID_0, F_OK))
         fd = open(SOC_ID_0, O_RDONLY);
@@ -422,4 +375,11 @@ int get_soc_id(void)
 
     close(fd);
     return soc_id;
+}
+
+long long calc_timespan_us(struct timespec start, struct timespec end) {
+    long long diff_in_us = 0;
+    diff_in_us += (end.tv_sec - start.tv_sec) * USINSEC;
+    diff_in_us += (end.tv_nsec - start.tv_nsec) / NSINUS;
+    return diff_in_us;
 }
