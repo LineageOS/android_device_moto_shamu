@@ -86,6 +86,24 @@ static ssize_t readTemperature(int sensor_num, TemperatureType type, const char 
     return 0;
 }
 
+static ssize_t getCpuTemperatures(hidl_vec<Temperature> *temperatures) {
+    size_t cpu;
+
+    for (cpu = 0; cpu < kCpuNum; cpu++) {
+        if (cpu >= temperatures->size()) {
+            break;
+        }
+        // tsens_tz_sensor[5-8]: temperature in Celsius
+        ssize_t result = readTemperature(cpu + kCpuSensorNum, TemperatureType::CPU, kCpuLabel[cpu],
+                                          1, kCpuThrottlingThreshold, kCpuShutdownThreshold,
+                                          &(*temperatures)[cpu]);
+        if (result != 0) {
+            return result;
+        }
+    }
+    return cpu;
+}
+
 ssize_t fillTemperatures(hidl_vec<Temperature> *temperatures) {
     ssize_t result = 0;
     size_t current_index = 0;
@@ -95,9 +113,15 @@ ssize_t fillTemperatures(hidl_vec<Temperature> *temperatures) {
         return -EINVAL;
     }
 
+    result = getCpuTemperatures(temperatures);
+    if (result < 0) {
+        return result;
+    }
+    current_index += result;
+
     // Battery temperature.
     if (current_index < temperatures->size()) {
-        // battery: temperature in millidegrees Celsius.
+        // battery: hwmon sensor: temperature in millidegrees Celsius
         result = readTemperature(kBatterySensorNum, TemperatureType::BATTERY, kBatteryLabel,
                                   0.001, UNKNOWN_TEMPERATURE, kBatteryShutdownThreshold,
                                   &(*temperatures)[current_index]);
@@ -107,23 +131,11 @@ ssize_t fillTemperatures(hidl_vec<Temperature> *temperatures) {
         current_index++;
     }
 
-    // CPU temperature.
-    if (current_index < temperatures->size()) {
-        // CPU_therm: temperature in millidegrees Celsius.
-        result = readTemperature(kCpuSensorNum, TemperatureType::CPU, kCpuLabel[0],
-                                  0.001, kCpuThrottlingThreshold, kCpuShutdownThreshold,
-                                  &(*temperatures)[current_index]);
-        if (result < 0) {
-            return result;
-        }
-        current_index++;
-    }
-
     // GPU temperature.
     if (current_index < temperatures->size()) {
-        // GPU_therm: temperature in millidegrees Celsius.
+        // GPU_therm: tsens_tz_sensor11: temperature in Celsius.
         result = readTemperature(kGpuSensorNum, TemperatureType::GPU, kGpuLabel,
-                                  0.001, UNKNOWN_TEMPERATURE, UNKNOWN_TEMPERATURE,
+                                  1, UNKNOWN_TEMPERATURE, UNKNOWN_TEMPERATURE,
                                   &(*temperatures)[current_index]);
         if (result < 0) {
             return result;
@@ -133,9 +145,9 @@ ssize_t fillTemperatures(hidl_vec<Temperature> *temperatures) {
 
     // Skin temperature.
     if (current_index < temperatures->size()) {
-        // battery: temperature in millidegrees Celsius.
+        // skin: quiet_therm: temperature in Celsius
         result = readTemperature(kSkinSensorNum, TemperatureType::SKIN, kSkinLabel,
-                                  0.001, kSkinTrottlingThreshold, UNKNOWN_TEMPERATURE,
+                                  1, kSkinTrottlingThreshold, UNKNOWN_TEMPERATURE,
                                   &(*temperatures)[current_index]);
         if (result < 0) {
             return result;

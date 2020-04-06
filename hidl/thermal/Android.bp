@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 The LineageOS Project
+ * Copyright (C) 2018-2020 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,30 @@
  */
 
 cc_binary {
-    name: "android.hardware.thermal@1.1-service.shamu",
-    relative_install_path: "hw",
-    init_rc: ["android.hardware.thermal@1.1-service.shamu.rc"],
-    srcs: ["service.cpp", "Thermal.cpp", "thermal-helper.cpp"],
-
-    cflags: [
-        "-Wall",
-        "-Werror",
-    ],
-
-    shared_libs: [
-        "libbase",
-        "libcutils",
-        "libhardware",
-        "libhidlbase",
-        "libutils",
-        "android.hardware.thermal@1.0",
-        "android.hardware.thermal@1.1",
-    ],
-    proprietary: true,
+  name: "android.hardware.thermal@1.1-service.shamu",
+  defaults: [
+    "hidl_defaults",
+  ],
+  vendor: true,
+  relative_install_path: "hw",
+  init_rc: [
+    "android.hardware.thermal@1.1-service.shamu.rc"],
+  srcs: [
+    "service.cpp",
+    "Thermal.cpp",
+    "thermal-helper.cpp"
+  ],
+  shared_libs: [
+    "libbase",
+    "libcutils",
+    "libhardware",
+    "libhidlbase",
+    "libutils",
+    "android.hardware.thermal@1.0",
+    "android.hardware.thermal@1.1",
+  ],
+  cflags: [
+    "-Wall",
+    "-Werror",
+  ],
 }
