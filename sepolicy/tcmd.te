@@ -24,3 +24,5 @@ allow tcmd radio_data_file:file r_file_perms;
 allow tcmd persist_file:dir search;
 allow tcmd persist_hiddenmenu_file:dir rw_dir_perms;
 allow tcmd persist_hiddenmenu_file:file create_file_perms;
+
+allow tcmd sysfs_net:file read;
