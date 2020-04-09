@@ -146,7 +146,7 @@
     </modules>
 
     <!-- Volume section -->
-    <xi:include href="/vendor/etc/audio_policy_volumes_drc.xml"/>
+    <xi:include href="/vendor/etc/audio_policy_volumes.xml"/>
     <xi:include href="/vendor/etc/default_volume_tables.xml"/>
 
 </audioPolicyConfiguration>
