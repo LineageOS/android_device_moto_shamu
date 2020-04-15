@@ -423,6 +423,12 @@ service mpdecision /system/vendor/bin/mpdecision --avg_comp
     group root system readproc diag
     writepid /dev/cpuset/system-background/tasks
 
+service msm_irqbalance /system/vendor/bin/msm_irqbalance -f /system/vendor/etc/irqbalance.conf
+    socket msm_irqbalance seqpacket 660 root system
+    class core
+    user root
+    group root
+
 service thermal-engine /system/vendor/bin/thermal-engine
     class hal
     user root

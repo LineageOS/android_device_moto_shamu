@@ -108,6 +108,13 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/keylayout/apq8084-taiko-tfa9890_stereo_co_Button_Jack.kl:$(TARGET_COPY_OUT_SYSTEM)/usr/keylayout/apq8084-taiko-tfa9890_stereo_co_Button_Jack.kl \
     $(LOCAL_PATH)/configs/atmel_mxt_ts.idc:$(TARGET_COPY_OUT_SYSTEM)/usr/idc/atmel_mxt_ts.idc
 
+# IRQ balancer
+$(call inherit-product-if-exists, vendor/qcom/msm_irqbalancer/irqbalancer.mk)
+
+
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/irqbalance.conf:$(TARGET_COPY_OUT_VENDOR)/etc/irqbalance.conf
+
 # Keystore
 PRODUCT_PACKAGES += \
     keystore.msm8084
