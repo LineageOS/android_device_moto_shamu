@@ -26,11 +26,13 @@ type persist_sensors_file,       file_type;
 
 ### proc ###
 type proc_bootinfo,              fs_type, proc_type;
+type proc_irq,                   fs_type, proc_type;
 
 ### sockets ###
 type adspd_socket,               file_type, mlstrustedobject;
 type camera_socket,              file_type, data_file_type, core_data_file_type;
 type cnd_socket,                 file_type;
+type irqbalance_socket,          file_type;
 type mpdecision_socket,          file_type;
 type qmuxd_socket,               file_type;
 type sensors_socket,             file_type;

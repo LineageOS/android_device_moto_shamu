@@ -16,6 +16,8 @@ allow init {
     sysfs_wlan_fwpath
 }:file setattr;
 
+allow init irqbalance_socket :sock_file setattr;
+
 allow init {
     sysfs_wlan_fwpath
 }:file w_file_perms;
@@ -41,3 +43,5 @@ allow init {
     oemfs
     persist_file
 }:dir mounton;
+
+allow init irqbalance_socket:sock_file create_file_perms;

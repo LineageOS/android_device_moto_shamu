@@ -73,6 +73,7 @@
 /dev/socket/adspdsock                                 u:object_r:adspd_socket:s0
 /dev/socket/cnd                                       u:object_r:cnd_socket:s0
 /dev/socket/mpdecision(/.*)?                          u:object_r:mpdecision_socket:s0
+/dev/socket/msm_irqbalance                            u:object_r:irqbalance_socket:s0
 /dev/socket/qmux_audio(/.*)?                          u:object_r:qmuxd_socket:s0
 /dev/socket/qmux_bluetooth(/.*)?                      u:object_r:qmuxd_socket:s0
 /dev/socket/qmux_gps(/.*)?                            u:object_r:qmuxd_socket:s0
@@ -127,6 +128,7 @@
 /system/vendor/bin/hw/android\.hardware\.power@1\.2-service\.shamu     u:object_r:hal_power_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.thermal@1\.1-service\.shamu   u:object_r:hal_thermal_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.vibrator@1\.1-service\.shamu  u:object_r:hal_vibrator_default_exec:s0
+/system/vendor/bin/msm_irqbalance                     u:object_r:irqbalance_exec:s0
 /system/vendor/bin/thermal-engine                     u:object_r:thermald_exec:s0
 
 ###################################
