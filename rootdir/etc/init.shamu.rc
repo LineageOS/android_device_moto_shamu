@@ -384,8 +384,9 @@ on property:sys.boot_completed=1
 
     stop cameraserver
     start qcamerasvr
+
+on property:init.svc.qcamerasvr=running
     start cameraserver
-    start mpdecision
 
 on property:ro.data.large_tcp_window_size=true
     # Adjust socket buffer to enlarge TCP receive window for high bandwidth (e.g. DO-RevB)
@@ -420,7 +421,6 @@ service mpdecision /system/vendor/bin/mpdecision --avg_comp
     class main
     user root
     group root system readproc diag
-    disabled
     writepid /dev/cpuset/system-background/tasks
 
 service thermal-engine /system/vendor/bin/thermal-engine
