@@ -19,8 +19,10 @@ cc_binary {
     init_rc: ["android.hardware.vibrator@1.1-service.shamu.rc"],
     srcs: ["service.cpp", "Vibrator.cpp"],
     cflags: ["-Wall", "-Werror"],
+
     shared_libs: [
         "libhidlbase",
+        "libhwbinder",
         "liblog",
         "libutils",
         "libhardware",

@@ -18,6 +18,7 @@
 #include <android/hardware/vibrator/1.1/IVibrator.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/HidlTransportSupport.h>
+#include <hwbinder/ProcessState.h>
 #include <utils/Errors.h>
 #include <utils/StrongPointer.h>
 
@@ -53,6 +54,7 @@ status_t registerVibratorService() {
 }
 
 int main() {
+    android::hardware::ProcessState::initWithMmapSize((size_t)8192);
     configureRpcThreadpool(1, true);
     status_t status = registerVibratorService();
 
