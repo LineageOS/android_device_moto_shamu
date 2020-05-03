@@ -392,10 +392,6 @@
 		<ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia3" value="1" />
 	</path>
 
-	<path name="audio-ull-playback handset">
-		<path name="audio-ull-playback speaker" />
-	</path>
-
 	<path name="audio-ull-playback speaker-protected">
 		<path name="audio-ull-playback" />
 	</path>
