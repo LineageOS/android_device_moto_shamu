@@ -72,6 +72,9 @@
 #
 /dev/socket/adspdsock                                 u:object_r:adspd_socket:s0
 /dev/socket/cnd                                       u:object_r:cnd_socket:s0
+/dev/socket/ims_qmid                                  u:object_r:ims_socket:s0
+/dev/socket/ims_datad                                 u:object_r:ims_socket:s0
+/dev/socket/ims_rtpd                                  u:object_r:ims_socket:s0
 /dev/socket/mpdecision(/.*)?                          u:object_r:mpdecision_socket:s0
 /dev/socket/qmux_audio(/.*)?                          u:object_r:qmuxd_socket:s0
 /dev/socket/qmux_bluetooth(/.*)?                      u:object_r:qmuxd_socket:s0
@@ -101,6 +104,9 @@
 #
 /system/bin/adspd                                     u:object_r:adspd_exec:s0
 /system/bin/cnd                                       u:object_r:cnd_exec:s0
+/system/bin/imsdatadaemon                             u:object_r:ims_exec:s0
+/system/bin/imsqmidaemon                              u:object_r:ims_exec:s0
+/system/bin/ims_rtp_daemon                            u:object_r:ims_exec:s0
 /system/bin/irsc_util                                 u:object_r:irsc_util_exec:s0
 /system/bin/ks                                        u:object_r:mdm_helper_exec:s0
 /system/bin/mdm_helper                                u:object_r:mdm_helper_exec:s0

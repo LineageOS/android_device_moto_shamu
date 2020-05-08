@@ -1,1 +1,2 @@
 cneservice                                u:object_r:cne_service:s0
+rcs                                       u:object_r:radio_service:s0

@@ -27,6 +27,11 @@
         <item>*86</item>
     </string-array>
 
+    <!-- If Voice Radio Technology is RIL_RADIO_TECHNOLOGY_LTE:14 this is the value
+         that should be used instead. A value of RIL_RADIO_TECHNOLOGY_UNKNOWN:0 means
+         there is no replacement value and VoLTE is assumed to be supported -->
+    <integer name="config_volte_replacement_rat">6</integer>
+
     <string-array translatable="false" name="config_mobile_hotspot_provision_app">
         <item>com.motorola.entitlement</item>
         <item>com.motorola.entitlement.EntitlementDialogActivity</item>

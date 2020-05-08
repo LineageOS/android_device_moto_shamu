@@ -185,6 +185,7 @@ vendor/lib/libcneapiclient.so
 bin/diag_klog
 bin/diag_mdlog
 etc/diag/mdm/FIT_V16_1.cfg
+etc/diag/mdm/FIT_V16_2_volte_full_ip.cfg
 etc/diag/mdm/FIT_V16_3_audio.cfg
 
 # DM/Sprint
@@ -256,6 +257,39 @@ vendor/lib/libizat_core.so
 vendor/lib/liblbs_core.so
 vendor/lib/libloc_api_v02.so
 vendor/lib/libloc_ds_api.so
+
+# IMS/HD Voice
+-app/atfwd/atfwd.apk
+bin/ATFWD-daemon
+bin/imsdatadaemon
+bin/imsqmidaemon
+etc/permissions/com.verizon.hardware.telephony.ehrpd.xml
+etc/permissions/com.verizon.hardware.telephony.lte.xml
+etc/permissions/com.verizon.ims.xml
+etc/permissions/rcsimssettings.xml
+etc/permissions/rcsservice.xml
+-framework/com.verizon.hardware.telephony.ehrpd.jar;PRESIGNED
+-framework/com.verizon.hardware.telephony.lte.jar;PRESIGNED
+-framework/com.verizon.ims.jar;PRESIGNED
+-framework/rcsimssettings.jar;PRESIGNED
+-framework/rcsservice.jar;PRESIGNED
+lib/libimscamera_jni.so
+lib/libimsmedia_jni.so
+vendor/lib/lib-dplmedia.so
+vendor/lib/lib-imsSDP.so
+vendor/lib/lib-imsdpl.so
+vendor/lib/lib-imsqimf.so
+vendor/lib/lib-imsrcs.so
+vendor/lib/lib-imss.so
+vendor/lib/lib-imsvt.so
+vendor/lib/lib-imsxml.so
+vendor/lib/lib-rcsimssjni.so
+vendor/lib/lib-rcsjni.so
+vendor/lib/lib-rtpcommon.so
+vendor/lib/lib-rtpcore.so
+vendor/lib/lib-rtpdaemoninterface.so
+vendor/lib/lib-rtpsl.so
+vendor/lib/libvcel.so
 
 # Keymaster firmware
 vendor/firmware/keymaster/keymaster.b00
