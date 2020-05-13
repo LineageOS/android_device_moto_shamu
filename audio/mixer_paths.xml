@@ -65,6 +65,7 @@
 	<ctl name="SLIMBUS_3_RX Port Mixer MI2S_TX" value="0" />
 	<ctl name="SLIMBUS_0_RX Port Mixer SLIM_0_TX" value="0" />
 	<ctl name="AUX_PCM_RX Audio Mixer MultiMedia1" value="0" />
+	<ctl name="AUX_PCM_RX Audio Mixer MultiMedia3" value="0" />
 	<ctl name="AUX_PCM_RX Audio Mixer MultiMedia4" value="0" />
 	<ctl name="AUX_PCM_RX Audio Mixer MultiMedia5" value="0" />
 	<ctl name="SLIMBUS_4_RX Audio Mixer MultiMedia1" value="0" />
@@ -152,6 +153,7 @@
 	<ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia4" value="0" />
 	<!-- usb headset -->
 	<ctl name="AFE_PCM_RX Audio Mixer MultiMedia1" value="0" />
+	<ctl name="AFE_PCM_RX Audio Mixer MultiMedia3" value="0" />
 	<ctl name="MultiMedia1 Mixer AFE_PCM_TX" value="0" />
 	<ctl name="AFE_PCM_RX Audio Mixer MultiMedia5" value="0" />
 	<!-- usb headset end -->
@@ -454,6 +456,52 @@
 		<ctl name="SLIM_1 SampleRate" value="16000" />
 		<path name="low-latency-record bt-sco" />
 	</path>
+
+	<!-- ULL start -->
+	<path name="audio-ull-playback">
+		<ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia3" value="1" />
+	</path>
+
+	<path name="audio-ull-playback speaker">
+		<ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia3" value="1" />
+	</path>
+
+	<path name="audio-ull-playback handset">
+		<path name="audio-ull-playback speaker" />
+	</path>
+
+	<path name="audio-ull-playback speaker-protected">
+		<path name="audio-ull-playback speaker" />
+	</path>
+
+	<path name="audio-ull-playback speaker-and-headphones">
+		<path name="audio-ull-playback speaker" />
+		<path name="audio-ull-playback" />
+	</path>
+
+	<path name="audio-ull-playback bt-sco">
+		<ctl name="AUX_PCM_RX Audio Mixer MultiMedia3" value="1" />
+	</path>
+
+	<path name="audio-ull-playback bt-sco-wb">
+		<ctl name="AUX PCM SampleRate" value="16000" />
+		<path name="audio-ull-playback bt-sco" />
+	</path>
+
+	<path name="audio-ull-playback speaker-and-bt-sco">
+		<path name="audio-ull-playback speaker" />
+		<path name="audio-ull-playback bt-sco"  />
+	</path>
+
+	<path name="audio-ull-playback speaker-and-bt-sco-wb">
+		<path name="audio-ull-playback speaker" />
+		<path name="audio-ull-playback bt-sco-wb"  />
+	</path>
+
+	<path name="audio-ull-playback afe-proxy">
+		<ctl name="AFE_PCM_RX Audio Mixer MultiMedia3" value="1" />
+	</path>
+	<!-- ULL end -->
 
 	<path name="afe-proxy-playback afe-proxy">
 	</path>
