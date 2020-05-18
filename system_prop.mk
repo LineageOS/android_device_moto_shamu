@@ -147,6 +147,5 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Wi-Fi calling
 PRODUCT_PROPERTY_OVERRIDES += \
-    persist.data.iwlan.enable=true \
     persist.radio.data_con_rprt=1 \
     persist.radio.ignore_ims_wlan=1
