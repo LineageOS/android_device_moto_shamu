@@ -169,9 +169,6 @@ on post-fs-data
     #Create directory for hostapd
     mkdir /data/hostapd 0770 system wifi
 
-    # Create /data/time folder for time-services
-    mkdir /data/time 0700 system system
-
     mkdir /data/audio 0770 media audio
 
     # NFC local data and nfcee xml storage
@@ -427,12 +424,6 @@ service thermal-engine /system/vendor/bin/thermal-engine
     class hal
     user root
     group root system diag
-    writepid /dev/cpuset/system-background/tasks
-
-service time_daemon /system/bin/time_daemon
-    class late_start
-    user root
-    group root
     writepid /dev/cpuset/system-background/tasks
 
 service qcamerasvr /system/bin/mm-qcamera-daemon

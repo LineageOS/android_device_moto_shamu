@@ -320,10 +320,7 @@ vendor/lib/libthermalclient.so
 vendor/lib/libthermalioctl.so
 
 # Time services
--app/TimeService/TimeService.apk
-bin/time_daemon
 -vendor/lib/libtime_genoff.so
-vendor/lib/libTimeService.so
 
 # Touch firmware
 vendor/firmware/atmel-a432-14061601-0102aa-shamu-p1.tdat
