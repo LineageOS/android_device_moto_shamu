@@ -10,7 +10,6 @@ allow rild persist_file:dir search;
 allow rild persist_modem_file:dir rw_dir_perms;
 allow rild persist_modem_file:file create_file_perms;
 
-allow rild time:unix_stream_socket connectto;
 allow rild sysfs_capsense_update:file { getattr w_file_perms};
 allow rild sysfs_sar_wifi:file { getattr w_file_perms};
 

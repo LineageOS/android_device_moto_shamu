@@ -1,5 +1,3 @@
-allow platform_app time:unix_stream_socket connectto;
-
 allow platform_app nfc_service:service_manager find;
 
 allow platform_app proc_bootinfo:file { getattr open read };

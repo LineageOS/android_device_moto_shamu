@@ -59,6 +59,7 @@ genfscon sysfs /devices/mmi_sar_ctrl.84/sar_wifi                                
 genfscon sysfs /devices/msm_hsic_host/host_ready                                    u:object_r:sysfs_msm_hsic_host_rdy:s0
 genfscon sysfs /devices/msm_hsic_host/usb1/1-1/1-1:1.8/net/rmnet_usb0               u:object_r:sysfs_net:s0
 genfscon sysfs /devices/msm_sdcc.1/mmc_host/mmc0/mmc0:0001/block/mmcblk0/queue/iosched/slice_idle u:object_r:sysfs_block_iosched:s0
+genfscon sysfs /devices/qpnp-rtc-9/rtc/rtc0                                         u:object_r:sysfs_rtc:s0
 genfscon sysfs /devices/qpnp-vadc-7                                                 u:object_r:sysfs_vadc_dev:s0
 genfscon sysfs /devices/soc0                                                        u:object_r:sysfs_socinfo:s0
 genfscon sysfs /devices/sound.44/sound/card0/input3/capabilities                    u:object_r:sysfs_input:s0

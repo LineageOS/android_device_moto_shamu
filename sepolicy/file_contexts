@@ -12,7 +12,7 @@
 /data/misc/radio(/.*)?                                u:object_r:radio_data_file:s0
 /data/ss-ram-dumps(/.*)?                              u:object_r:ram_dump_logs:s0
 /data/system/dropbox-add(/.*)?                        u:object_r:dropbox_data_file:s0
-/data/time(/.*)?                                      u:object_r:time_data_file:s0
+/data(/vendor)?/time(/.*)?                            u:object_r:time_data_file:s0
 /data/vendor/mediadrm(/.*)?                           u:object_r:mediadrm_vendor_data_file:s0
 
 ###################################
@@ -110,7 +110,6 @@
 /system/bin/qseecomd                                  u:object_r:tee_exec:s0
 /system/bin/sensors\.qcom                             u:object_r:sensors_exec:s0
 /system/bin/tcmd_mini                                 u:object_r:tcmd_exec:s0
-/system/bin/time_daemon                               u:object_r:time_exec:s0
 
 /system/etc/ril/qcril.db                              u:object_r:radio_data_file:s0
 
@@ -127,6 +126,7 @@
 /system/vendor/bin/hw/android\.hardware\.power@1\.2-service\.shamu     u:object_r:hal_power_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.thermal@1\.1-service\.shamu   u:object_r:hal_thermal_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.vibrator@1\.1-service\.shamu  u:object_r:hal_vibrator_default_exec:s0
+/system/vendor/bin/timekeep                           u:object_r:timekeep_exec:s0
 /system/vendor/bin/thermal-engine                     u:object_r:thermald_exec:s0
 
 ###################################
