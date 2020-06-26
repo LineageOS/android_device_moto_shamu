@@ -293,8 +293,10 @@ static void process_interaction_hint(void* data) {
     clock_gettime(CLOCK_MONOTONIC, &cur_boost_timespec);
 
     elapsed_time = calc_timespan_us(s_previous_boost_timespec, cur_boost_timespec);
-    // don't hint if previous hint's duration covers this hint's duration
-    if ((s_previous_duration * 1000) > (elapsed_time + duration * 1000)) {
+    // don't hint if it's been less than 250 ms since last boost
+    // also detect if we're doing anything resembling a fling
+    // support additional boosting in case of flings
+    if (elapsed_time < 250000 && duration <= 750) {
         return;
     }
     s_previous_boost_timespec = cur_boost_timespec;
