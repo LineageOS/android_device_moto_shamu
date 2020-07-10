@@ -2,11 +2,6 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-# QCamera3PostProc.cpp has unused label.
-# QCamera3Channel.cpp compares array to null pointer.
-LOCAL_CLANG_CFLAGS += \
-    -Wno-error=tautological-pointer-compare
-
 LOCAL_SRC_FILES := \
     util/QCameraCmdThread.cpp \
     util/QCameraQueue.cpp \
