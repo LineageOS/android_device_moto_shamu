@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "63852b84_7b42e841",
+        "filename": "system_prop.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2020-08-11T22:39:24Z",
+      "side": 1,
+      "message": "whitespace",
+      "range": {
+        "startLine": 137,
+        "startChar": 0,
+        "endLine": 137,
+        "endChar": 4
+      },
+      "revId": "ca1cde1044270401fc881da06a8e14c29e67ba17",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
