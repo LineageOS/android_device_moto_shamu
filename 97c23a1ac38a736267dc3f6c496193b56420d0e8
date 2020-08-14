@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "26367719_830660e2",
+        "filename": "device.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 180,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2020-08-14T04:33:45Z",
+      "side": 1,
+      "message": "uh, shouldn\u0027t this have been in the initial revert?",
+      "range": {
+        "startLine": 180,
+        "startChar": 0,
+        "endLine": 180,
+        "endChar": 144
+      },
+      "revId": "97c23a1ac38a736267dc3f6c496193b56420d0e8",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
