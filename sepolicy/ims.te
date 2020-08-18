@@ -10,9 +10,6 @@ net_domain(ims)
 # Grant access to Qualcomm MSM Interface (QMI) radio sockets to ims daemon
 qmux_socket(ims)
 
-# Allow ims to communicate with netd.
-allow ims netd_socket:sock_file write;
-
 # Allow ims to communicate with cnd.
 allow ims cnd_socket:sock_file write;
 
