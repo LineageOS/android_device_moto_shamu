@@ -1,5 +1,7 @@
 allow system_app time:unix_stream_socket connectto;
 
 allow system_app cne_service:service_manager add;
+allow system_app sysfs_zram:dir search;
+allow system_app sysfs_zram:file r_file_perms;
 
 unix_socket_connect(system_app, cnd, cnd)
