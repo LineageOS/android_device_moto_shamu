@@ -224,6 +224,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/sec_config:$(TARGET_COPY_OUT_VENDOR)/etc/sec_config
 
+# Shims
+PRODUCT_PACKAGES += \
+    libcutils_shim
+
 # Shippig API
 $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_l.mk)
 

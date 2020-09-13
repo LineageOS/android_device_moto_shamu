@@ -136,6 +136,10 @@ BOARD_USES_CUTBACK_IN_RILD := true
 BOARD_VENDOR_SEPOLICY_DIRS += device/moto/shamu/sepolicy
 SELINUX_IGNORE_NEVERALLOWS := true
 
+# Shims
+TARGET_LD_SHIM_LIBS := \
+    /system/vendor/lib/libcne.so|libcutils_shim.so
+
 # Wi-Fi
 BOARD_WLAN_DEVICE           := bcmdhd
 BOARD_WPA_SUPPLICANT_DRIVER := NL80211
