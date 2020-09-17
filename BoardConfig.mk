@@ -98,7 +98,7 @@ TARGET_USES_ION := true
 
 # Kernel
 BOARD_KERNEL_BASE := 0x00000000
-BOARD_KERNEL_CMDLINE := console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0
+BOARD_KERNEL_CMDLINE := console=none
 BOARD_KERNEL_CMDLINE += androidboot.hardware=shamu ehci-hcd.park=3
 BOARD_KERNEL_CMDLINE += utags.blkdev=/dev/block/platform/msm_sdcc.1/by-name/utags
 BOARD_KERNEL_CMDLINE += utags.backup=/dev/block/platform/msm_sdcc.1/by-name/utagsBackup
