@@ -105,6 +105,7 @@ PRODUCT_COPY_FILES += \
 
 # HIDL
 $(call inherit-product, $(LOCAL_PATH)/hidl.mk)
+PRODUCT_ENFORCE_VINTF_MANIFEST_OVERRIDE := true
 
 # Keylayouts
 PRODUCT_COPY_FILES += \
