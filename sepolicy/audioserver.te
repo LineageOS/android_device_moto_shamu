@@ -21,3 +21,5 @@ allow audioserver rild:unix_stream_socket connectto;
 
 allow audioserver sysfs_esoc:dir r_dir_perms;
 allow audioserver sysfs_esoc:file r_file_perms;
+
+allow audioserver hal_power_hwservice:hwservice_manager find;
