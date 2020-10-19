@@ -14,6 +14,12 @@
      limitations under the License.
 -->
 <resources>
+    <!-- Use the BPF offload for tethering when the kernel has support. True by default.
+         If the device doesn't want to support tether BPF offload, this should be false.
+         Note that this setting could be overridden by device config.
+    -->
+    <bool translatable="false" name="config_tether_enable_bpf_offload">false</bool>
+
     <!-- List of regexpressions describing the interface (if any) that represent tetherable
          USB interfaces.  If the device doesn't want to support tething over USB this should
          be empty.  An example would be "usb.*" -->
