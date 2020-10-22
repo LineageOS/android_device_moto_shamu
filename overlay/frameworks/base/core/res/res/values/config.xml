@@ -114,13 +114,6 @@
     <!-- reference volume index for music stream to limit headphone volume and display warning -->
     <integer name="config_safe_media_volume_index">8</integer>
 
-    <!-- List of regexpressions describing the interface (if any) that represent tetherable
-         USB interfaces.  If the device doesn't want to support tething over USB this should
-         be empty.  An example would be "usb.*" -->
-    <string-array translatable="false" name="config_tether_usb_regexs">
-        <item>"rndis\\d"</item>
-    </string-array>
-
     <string-array translatable="false" name="config_oemUsbModeOverride">
         <item>"bp-tools:rndis,adb:rndis,diag,diag_mdm,serial_hsic,serial_tty,rmnet_hsic,usbnet,adb"</item>
         <item>"bp-tools:rndis:rndis,diag,diag_mdm,serial_hsic,serial_tty,rmnet_hsic,usbnet,adb"</item>
@@ -133,21 +126,6 @@
         <item>"mot-factory:mtp:usbnet"</item>
         <item>"mot-factory:none:usbnet"</item>
         <item>"mot-factory:adb:usbnet,adb"</item>
-    </string-array>
-
-    <!-- List of regexpressions describing the interface (if any) that represent tetherable
-         Wifi interfaces.  If the device doesn't want to support tethering over Wifi this
-         should be empty.  An example would be "softap.*" -->
-    <string-array translatable="false" name="config_tether_wifi_regexs">
-        <item>"wlan0"</item>
-        <item>"softap.*"</item>
-    </string-array>
-
-    <!-- List of regexpressions describing the interface (if any) that represent tetherable
-         bluetooth interfaces.  If the device doesn't want to support tethering over bluetooth this
-         should be empty. -->
-    <string-array translatable="false" name="config_tether_bluetooth_regexs">
-           <item>"bt-pan"</item>
     </string-array>
 
     <!-- This string array should be overridden by the device to present a list of network
