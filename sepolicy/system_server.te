@@ -21,3 +21,6 @@ allowxperm system_server self:socket ioctl msm_sock_ipc_ioctls;
 allow system_server sysfs_graphics:file w_file_perms;
 
 allow system_server radio_device:chr_file {open read};
+
+get_prop(system_server, userspace_reboot_exported_prop);
+get_prop(system_server, userspace_reboot_config_prop);
