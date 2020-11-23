@@ -69,7 +69,6 @@ genfscon sysfs /devices/virtual/android_usb/android0/f_rmnet_smd_sdio/transport 
 genfscon sysfs /devices/virtual/graphics                                            u:object_r:sysfs_graphics:s0
 genfscon sysfs /devices/virtual/hsicctl/hsicctl0/modem_wait                         u:object_r:sysfs_hsic_modem_wait:s0
 genfscon sysfs /devices/virtual/hwmon/hwmon0                                        u:object_r:sysfs_hwmon:s0
-genfscon sysfs /devices/virtual/net/wlan0/address                                   u:object_r:sysfs_mac_address:s0
 genfscon sysfs /devices/virtual/thermal                                             u:object_r:sysfs_thermal:s0
 genfscon sysfs /kernel/boot_adsp/boot                                               u:object_r:sysfs_audio:s0
 genfscon sysfs /module/bcmdhd/parameters/firmware_path                              u:object_r:sysfs_wlan_fwpath:s0
