@@ -1,4 +1,7 @@
 service vendor.thermal-hal-1-1 /vendor/bin/hw/android.hardware.thermal@1.1-service.shamu
+    interface android.hardware.thermal@1.0::IThermal default
+    interface android.hardware.thermal@1.1::IThermal default
+    interface android.hardware.thermal@2.0::IThermal default
     class hal
     user system
     group system

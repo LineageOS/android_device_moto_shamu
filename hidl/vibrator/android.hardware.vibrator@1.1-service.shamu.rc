@@ -3,6 +3,8 @@ on early-boot
     chmod 0644 /sys/class/timed_output/vibrator/vtg_level
 
 service vendor.vibrator-1-1 /vendor/bin/hw/android.hardware.vibrator@1.1-service.shamu
+    interface android.hardware.vibrator@1.0::IVibrator default
+    interface android.hardware.vibrator@1.1::IVibrator default
     class hal
     user system
-group system
+    group system
