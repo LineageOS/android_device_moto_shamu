@@ -26,18 +26,12 @@ LOCAL_CFLAGS += \
     -Wall \
     -Werror
 
-LOCAL_COPY_HEADERS_TO := mm-camera-interface
-LOCAL_COPY_HEADERS += ../common/cam_intf.h
-LOCAL_COPY_HEADERS += ../common/cam_types.h
-LOCAL_COPY_HEADERS += ../common/cam_cond.h
-LOCAL_COPY_HEADERS += ../common/cam_semaphore.h
-
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/inc \
-    $(LOCAL_PATH)/../common \
     system/media/camera/include
 
 LOCAL_HEADER_LIBRARIES := generated_kernel_headers
+LOCAL_HEADER_LIBRARIES += camera_common_headers
 
 LOCAL_C_INCLUDES += hardware/qcom/media/msm8974/mm-core/inc
 
@@ -54,5 +48,10 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_32_BIT_ONLY := true
 include $(BUILD_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := camera_common_headers
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/../common
+include $(BUILD_HEADER_LIBRARY)
 
 LOCAL_PATH := $(OLD_LOCAL_PATH)
