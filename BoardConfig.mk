@@ -117,6 +117,9 @@ DEVICE_MANIFEST_FILE := device/moto/shamu/manifest.xml
 # Memfd
 TARGET_HAS_MEMFD_BACKPORT := true
 
+# Netmgrd
+TARGET_USES_PRE_UPLINK_FEATURES_NETMGRD := true
+
 # Power
 TARGET_USES_INTERACTION_BOOST := true
 TARGET_TAP_TO_WAKE_NODE := "/sys/bus/i2c/devices/1-004a/tsp"
