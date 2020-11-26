@@ -24,11 +24,11 @@ allow camera self:capability { sys_nice };
 # Create front and back camera sockets (/data/cam_socket[23])
 # TODO: create these sockets elsewhere, apps shouldn't be putting sockets
 # directly under /data.
-type_transition camera system_data_file:sock_file camera_socket "cam_socket2";
-type_transition camera system_data_file:sock_file camera_socket "cam_socket3";
+type_transition camera system_data_root_file:sock_file camera_socket "cam_socket2";
+type_transition camera system_data_root_file:sock_file camera_socket "cam_socket3";
 allow camera camera_socket:sock_file { create unlink };
-allow camera system_data_file:dir w_dir_perms;
-allow camera system_data_file:sock_file unlink;
+allow camera system_data_root_file:dir w_dir_perms;
+allow camera system_data_root_file:sock_file { create unlink };
 
 #for v4L node "name" access
 allow camera sysfs_graphics:file rw_file_perms;
