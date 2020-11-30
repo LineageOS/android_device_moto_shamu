@@ -4,6 +4,22 @@ allow hal_gnss_default vndbinder_device:chr_file rw_file_perms;
 allow hal_gnss sysfs_socinfo:dir search;
 allow hal_gnss sysfs_socinfo:file { read open getattr };
 
+allow hal_gnss_default netmgrd:unix_stream_socket connectto;
+allow hal_gnss_default self:{
+    netlink_socket
+    netlink_generic_socket
+} create_socket_perms_no_ioctl;
+
+allow hal_gnss_default self:socket create_socket_perms;
+
+allow hal_gnss_default radio_device:chr_file { open read };
+allow hal_gnss_default qmux:unix_stream_socket connectto;
+allow hal_gnss_default qmuxd_socket:dir { add_name search write};
+allow hal_gnss_default qmuxd_socket:sock_file { create setattr write };
+
+allow hal_gnss_default sysfs_esoc:dir r_dir_perms;
+allow hal_gnss_default sysfs_esoc:file r_file_perms;
+
 userdebug_or_eng(`
   allow hal_gnss diag_device:chr_file { read write open ioctl};
 ')
