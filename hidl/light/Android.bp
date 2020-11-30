@@ -17,6 +17,7 @@ cc_binary {
     init_rc: ["android.hardware.light@2.0-service.shamu.rc"],
     relative_install_path: "hw",
     name: "android.hardware.light@2.0-service.shamu",
+    vintf_fragments: ["android.hardware.light@2.0-service.shamu.xml"],
     srcs: ["service.cpp", "Light.cpp"],
     shared_libs: [
         "libbase",
