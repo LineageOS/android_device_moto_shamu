@@ -113,10 +113,6 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/keylayout/apq8084-taiko-tfa9890_stereo_co_Button_Jack.kl:$(TARGET_COPY_OUT_SYSTEM)/usr/keylayout/apq8084-taiko-tfa9890_stereo_co_Button_Jack.kl \
     $(LOCAL_PATH)/configs/atmel_mxt_ts.idc:$(TARGET_COPY_OUT_SYSTEM)/usr/idc/atmel_mxt_ts.idc
 
-# Keystore
-PRODUCT_PACKAGES += \
-    keystore.msm8084
-
 # NFC
 PRODUCT_PACKAGES += \
     com.android.nfc_extras \
