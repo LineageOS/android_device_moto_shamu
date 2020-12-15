@@ -4,3 +4,5 @@ allowxperm { appdomain -isolated_app } gpu_device:chr_file
 
 dontaudit appdomain hal_memtrack_hwservice:hwservice_manager find;
 dontaudit appdomain proc_vmstat:file r_file_perms;
+
+get_prop(appdomain, exported_camera_prop)
