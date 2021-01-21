@@ -119,9 +119,6 @@ TARGET_TAP_TO_WAKE_NODE := "/sys/bus/i2c/devices/1-004a/tsp"
 BOARD_RAMDISK_USE_XZ := true
 TARGET_RECOVERY_FSTAB = device/moto/shamu/rootdir/etc/fstab.shamu
 
-# Render
-OVERRIDE_RS_DRIVER := libRSDriver_adreno.so
-
 # RIL
 # Support Native Layer RF cutback
 BOARD_USES_CUTBACK_IN_RILD := true
