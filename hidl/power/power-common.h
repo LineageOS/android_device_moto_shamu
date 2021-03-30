@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013, 2018-2019 The Linux Foundation. All rights reserved.
- * Copyright (C) 2017-2019 The LineageOS Project
+ * Copyright (C) 2017-2021 The LineageOS Project
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -56,13 +56,10 @@ void power_init(void);
 void power_hint(power_hint_t hint, void* data);
 void set_interactive(int on);
 int get_number_of_profiles();
+void set_power_profile(int profile);
 
 #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #define CHECK_HANDLE(x) ((x) > 0)
-#define UNUSED(x) UNUSED_##x __attribute__((__unused__))
-
-// Custom Lineage hints
-const static power_hint_t POWER_HINT_SET_PROFILE = (power_hint_t)0x00000111;
 
 #ifdef __cplusplus
 }

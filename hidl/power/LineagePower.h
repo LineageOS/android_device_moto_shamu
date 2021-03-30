@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2015 The CyanogenMod Project
- * Copyright (C) 2019 The LineageOS Project
+ * Copyright (C) 2021 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef _QCOM_POWER_FEATURE_H
-#define _QCOM_POWER_FEATURE_H
+#pragma once
 
-#include <hardware/power.h>
+#include <aidl/vendor/lineage/power/BnPower.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace aidl {
+namespace vendor {
+namespace lineage {
+namespace power {
+namespace impl {
 
-void set_device_specific_feature(feature_t feature, int state);
+class Power : public BnPower {
+  public:
+    ndk::ScopedAStatus getFeature(Feature feature, int* _aidl_return) override;
+    ndk::ScopedAStatus setBoost(Boost type, int durationMs) override;
+};
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+}  // namespace impl
+}  // namespace power
+}  // namespace lineage
+}  // namespace vendor
+}  // namespace aidl

@@ -212,7 +212,7 @@ int is_schedutil_governor(char* governor) {
 }
 
 #ifndef INTERACTION_BOOST
-void interaction(int UNUSED(duration), int UNUSED(num_args), int UNUSED(opt_list[])) {
+void interaction(int duration, int num_args, int opt_list[]) {
 #else
 void interaction(int duration, int num_args, int opt_list[]) {
     static int lock_handle = 0;

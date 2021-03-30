@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
- * Copyright (C) 2017-2019 The LineageOS Project
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -28,114 +27,141 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define LOG_TAG "android.hardware.power@1.2-service.shamu"
-
-// #define LOG_NDEBUG 0
+#define LOG_TAG "android.hardware.power-service.shamu"
 
 #include "Power.h"
-#include <android-base/file.h>
-#include <log/log.h>
-#include "power-common.h"
-#include "power-feature.h"
 
+#include <android-base/file.h>
+#include <android-base/logging.h>
+
+#include <aidl/android/hardware/power/BnPower.h>
+
+#include <android-base/logging.h>
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
+
+using ::aidl::android::hardware::power::BnPower;
+using ::aidl::android::hardware::power::Boost;
+using ::aidl::android::hardware::power::IPower;
+using ::aidl::android::hardware::power::Mode;
+
+using ::ndk::ScopedAStatus;
+using ::ndk::SharedRefBase;
+
+namespace aidl {
 namespace android {
 namespace hardware {
 namespace power {
-namespace V1_2 {
-namespace implementation {
+namespace impl {
 
-using ::android::hardware::hidl_vec;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using ::android::hardware::power::V1_0::Feature;
-using ::android::hardware::power::V1_0::PowerHint;
-using ::android::hardware::power::V1_0::PowerStatePlatformSleepState;
-using ::android::hardware::power::V1_0::Status;
-using ::android::hardware::power::V1_1::PowerStateSubsystem;
-
-Power::Power() {
-    power_init();
-}
-
-Return<void> Power::setInteractive(bool interactive) {
-    set_interactive(interactive ? 1 : 0);
-    return Void();
-}
-
-Return<void> Power::powerHint(PowerHint_1_0 hint, int32_t data) {
-    power_hint(static_cast<power_hint_t>(hint), data ? (&data) : NULL);
-    return Void();
-}
-
-Return<void> Power::setFeature(Feature feature, bool activate) {
-    switch (feature) {
-#ifdef TAP_TO_WAKE_NODE
-        case Feature::POWER_FEATURE_DOUBLE_TAP_TO_WAKE:
-            ::android::base::WriteStringToFile(activate ? "AUTO" : "OFF", TAP_TO_WAKE_NODE, true);
-            break;
+#ifdef MODE_EXT
+extern bool isDeviceSpecificModeSupported(Mode type, bool* _aidl_return);
+extern bool setDeviceSpecificMode(Mode type, bool enabled);
 #endif
+
+void setInteractive(bool interactive) {
+    set_interactive(interactive ? 1 : 0);
+}
+
+ndk::ScopedAStatus Power::setMode(Mode type, bool enabled) {
+    LOG(INFO) << "Power setMode: " << static_cast<int32_t>(type) << " to: " << enabled;
+#ifdef MODE_EXT
+    if (setDeviceSpecificMode(type, enabled)) {
+        return ndk::ScopedAStatus::ok();
+    }
+#endif
+    switch (type) {
+#ifdef TAP_TO_WAKE_NODE
+        case Mode::DOUBLE_TAP_TO_WAKE:
+            ::android::base::WriteStringToFile(enabled ? "AUTO" : "OFF", TAP_TO_WAKE_NODE, true);
+            break;
+#else
+        case Mode::DOUBLE_TAP_TO_WAKE:
+#endif
+        case Mode::LOW_POWER:
+        case Mode::EXPENSIVE_RENDERING:
+        case Mode::DEVICE_IDLE:
+        case Mode::DISPLAY_INACTIVE:
+        case Mode::AUDIO_STREAMING_LOW_LATENCY:
+        case Mode::CAMERA_STREAMING_SECURE:
+        case Mode::CAMERA_STREAMING_LOW:
+        case Mode::CAMERA_STREAMING_MID:
+        case Mode::CAMERA_STREAMING_HIGH:
+        case Mode::VR:
+            LOG(INFO) << "Mode " << static_cast<int32_t>(type) << "Not Supported";
+            break;
+        case Mode::LAUNCH:
+            power_hint(POWER_HINT_LAUNCH, enabled ? &enabled : NULL);
+            break;
+        case Mode::INTERACTIVE:
+            setInteractive(enabled);
+            break;
+        case Mode::SUSTAINED_PERFORMANCE:
+        case Mode::FIXED_PERFORMANCE:
+            power_hint(POWER_HINT_SUSTAINED_PERFORMANCE, NULL);
+            break;
         default:
+            LOG(INFO) << "Mode " << static_cast<int32_t>(type) << "Not Supported";
             break;
     }
-    set_device_specific_feature(static_cast<feature_t>(feature), activate ? 1 : 0);
-    return Void();
+    return ndk::ScopedAStatus::ok();
 }
 
-Return<void> Power::getPlatformLowPowerStats(getPlatformLowPowerStats_cb _hidl_cb) {
-    hidl_vec<PowerStatePlatformSleepState> states;
-    states.resize(0);
+ndk::ScopedAStatus Power::isModeSupported(Mode type, bool* _aidl_return) {
+    LOG(INFO) << "Power isModeSupported: " << static_cast<int32_t>(type);
 
-    _hidl_cb(states, Status::SUCCESS);
-    return Void();
-}
-
-Return<void> Power::getSubsystemLowPowerStats(getSubsystemLowPowerStats_cb _hidl_cb) {
-    hidl_vec<PowerStateSubsystem> subsystems;
-
-    _hidl_cb(subsystems, Status::SUCCESS);
-    return Void();
-}
-
-Return<void> Power::powerHintAsync(PowerHint_1_0 hint, int32_t data) {
-    return powerHint(hint, data);
-}
-
-Return<void> Power::powerHintAsync_1_2(PowerHint_1_2 hint, int32_t data) {
-    return powerHint(static_cast<PowerHint_1_0>(hint), data);
-}
-
-Return<int32_t> Power::getFeature(LineageFeature feature) {
-    if (feature == LineageFeature::SUPPORTED_PROFILES) {
-        return get_number_of_profiles();
+#ifdef MODE_EXT
+    if (isDeviceSpecificModeSupported(type, _aidl_return)) {
+        return ndk::ScopedAStatus::ok();
     }
-    return -1;
+#endif
+
+    switch (type) {
+#ifdef TAP_TO_WAKE_NODE
+        case Mode::DOUBLE_TAP_TO_WAKE:
+#endif
+        case Mode::LAUNCH:
+        case Mode::INTERACTIVE:
+        case Mode::SUSTAINED_PERFORMANCE:
+        case Mode::FIXED_PERFORMANCE:
+            *_aidl_return = true;
+            break;
+        default:
+            *_aidl_return = false;
+            break;
+    }
+    return ndk::ScopedAStatus::ok();
 }
 
-status_t Power::registerAsSystemService() {
-    status_t ret = 0;
-
-    ret = IPower::registerAsService();
-    if (ret != 0) {
-        ALOGE("Failed to register IPower (%d)", ret);
-        goto fail;
-    } else {
-        ALOGI("Successfully registered IPower");
+ndk::ScopedAStatus Power::setBoost(Boost type, int32_t durationMs) {
+    LOG(VERBOSE) << "Power setBoost: " << static_cast<int32_t>(type)
+                 << ", duration: " << durationMs;
+    switch (type) {
+        case Boost::INTERACTION:
+            power_hint(POWER_HINT_INTERACTION, &durationMs);
+            break;
+        default:
+            LOG(INFO) << "Boost " << static_cast<int32_t>(type) << "Not Supported";
+            break;
     }
-
-    ret = ILineagePower::registerAsService();
-    if (ret != 0) {
-        ALOGE("Failed to register ILineagePower (%d)", ret);
-        goto fail;
-    } else {
-        ALOGI("Successfully registered ILineagePower");
-    }
-
-fail:
-    return ret;
+    return ndk::ScopedAStatus::ok();
 }
 
-}  // namespace implementation
-}  // namespace V1_2
+ndk::ScopedAStatus Power::isBoostSupported(Boost type, bool* _aidl_return) {
+    LOG(INFO) << "Power isBoostSupported: " << static_cast<int32_t>(type);
+    switch (type) {
+        case Boost::INTERACTION:
+            *_aidl_return = true;
+            break;
+        default:
+            *_aidl_return = false;
+            break;
+    }
+    return ndk::ScopedAStatus::ok();
+}
+
+}  // namespace impl
 }  // namespace power
 }  // namespace hardware
 }  // namespace android
+}  // namespace aidl
