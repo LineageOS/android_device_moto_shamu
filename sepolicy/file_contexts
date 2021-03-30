@@ -124,7 +124,7 @@
 /system/vendor/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software    u:object_r:hal_gatekeeper_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.health@2\.0-service\.shamu    u:object_r:hal_health_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.light@2\.0-service\.shamu     u:object_r:hal_light_default_exec:s0
-/system/vendor/bin/hw/android\.hardware\.power@1\.2-service\.shamu     u:object_r:hal_power_default_exec:s0
+/system/vendor/bin/hw/android\.hardware\.power-service\.shamu          u:object_r:hal_power_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.thermal@1\.1-service\.shamu   u:object_r:hal_thermal_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.vibrator@1\.1-service\.shamu  u:object_r:hal_vibrator_default_exec:s0
 /system/vendor/bin/timekeep                           u:object_r:timekeep_exec:s0
