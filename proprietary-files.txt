@@ -188,7 +188,6 @@ etc/diag/mdm/FIT_V16_1.cfg
 etc/diag/mdm/FIT_V16_3_audio.cfg
 
 # DM/Sprint
--app/DMConfigUpdate/DMConfigUpdate.apk
 -app/HiddenMenu/HiddenMenu.apk
 etc/permissions/com.android.omadm.service.xml
 etc/sysconfig/whitelist_com.android.omadm.service.xml
