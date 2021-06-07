@@ -37,8 +37,6 @@ PRODUCT_PACKAGES += \
     audio.r_submix.default \
     libaudio-resampler
 
-USE_XML_AUDIO_POLICY_CONF := 1
-
 # Audio configs
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/audio/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml \
