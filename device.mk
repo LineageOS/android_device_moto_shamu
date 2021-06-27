@@ -51,9 +51,7 @@ PRODUCT_COPY_FILES += \
 # Audio Effects
 PRODUCT_PACKAGES += \
     libqcompostprocbundle \
-    libqcomvisualizer \
-    libqcomvoiceprocessing \
-    libqcomvoiceprocessingdescriptors
+    libqcomvisualizer
 
 # Bluetooth
 PRODUCT_PACKAGES += \
