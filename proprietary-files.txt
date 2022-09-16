@@ -204,7 +204,7 @@ lib/libdmjavaplugin.so
 
 # DRM
 bin/qseecomd
-vendor/lib/mediadrm/libwvdrmengine.so|7cbb7381cb7bf1d92729af2bf43fda8063b13cd4
+vendor/lib/mediadrm/libwvdrmengine.so|244d14417ba15e3710b037affccfe732d896d350
 vendor/lib/libQSEEComAPI.so
 vendor/lib/libdrmfs.so
 vendor/lib/libdrmtime.so
@@ -213,6 +213,10 @@ vendor/lib/librpmb.so
 vendor/lib/libssd.so
 vendor/lib/libwvdrm_L1.so
 vendor/lib/libWVStreamControlAPI_L1.so
+
+# From https://github.com/a9rock64/rk_platform_vendor_Widevine.git
+vendor/lib/libwvhidl.so|afe0c4d859832989c0679d5ba3de774a735f30c7
+vendor/bin/hw/android.hardware.drm@1.1-service.widevine|afe0c4d859832989c0679d5ba3de774a735f30c7
 
 # DRM firmware
 vendor/firmware/widevine.b00

@@ -29,6 +29,9 @@ function blob_fixup() {
         vendor/lib/mediadrm/libwvdrmengine.so)
             patchelf --replace-needed "libprotobuf-cpp-lite.so" "libprotobuf-cpp-lite-v29.so" "${2}"
             ;;
+        vendor/lib/libwvhidl.so)
+            patchelf --replace-needed "libprotobuf-cpp-lite.so" "libprotobuf-cpp-lite-v29.so" "${2}"
+            ;;
     esac
 }
 
