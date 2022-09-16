@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c99d904e_87b445c8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 23949
+      },
+      "writtenOn": "2022-09-16T21:55:36Z",
+      "side": 1,
+      "message": "Hi, some blobs were borrowed from a github project. I don\u0027t how to submit them.",
+      "revId": "1ebf822ef7f9ca72611dc0cc7ec6385403effc34",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
