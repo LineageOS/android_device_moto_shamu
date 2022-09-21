@@ -50,6 +50,52 @@
       "message": "\u003e Patch Set 1:\n\u003e \n\u003e \u003e Patch Set 1:\n\u003e  \u003e \n\u003e  \u003e (1 comment)\n\u003e just try bacon\u0027s or victara\u0027s or something. msm8974 blobs should work just fine here.\n\nI cannot find these blobs in the factory images of the mentioned devices. From what I understand, they appeared in recent versions of Android DRM framework. I really would like to get this working, but I\u0027m running out of ideas...",
       "revId": "1ebf822ef7f9ca72611dc0cc7ec6385403effc34",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "522547cc_868450b0",
+        "filename": "proprietary-files.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2022-09-21T20:53:02Z",
+      "side": 1,
+      "message": "just take this from a newer msm8974 build",
+      "range": {
+        "startLine": 207,
+        "startChar": 0,
+        "endLine": 207,
+        "endChar": 78
+      },
+      "revId": "1ebf822ef7f9ca72611dc0cc7ec6385403effc34",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0d82276f_cc38135d",
+        "filename": "proprietary-files.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2022-09-21T20:53:02Z",
+      "side": 1,
+      "message": "we don\u0027t need this at all.",
+      "range": {
+        "startLine": 219,
+        "startChar": 0,
+        "endLine": 219,
+        "endChar": 96
+      },
+      "revId": "1ebf822ef7f9ca72611dc0cc7ec6385403effc34",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
