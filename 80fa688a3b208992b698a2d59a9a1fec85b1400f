@@ -16,6 +16,24 @@
       "message": "I tried getting libwvdrmengine.so from latest angler image: 8.1.0 (OPM7.181205.001, Dec 2018). It does not work, I have an illegal instruction error.\n\nSo, I went to the latest 8.0 from angler: 8.0.0 (OPR5.170623.014, Dec 2017). The sha1 are the same as in https://github.com/LineageOS/android_device_sony_msm8974-common/blob/lineage-18.1/proprietary-files.txt : 66ba66d047044f92eb0eada1faf6a5799ded90ab before patchelf, 2f70d96729bc35389d98ab3a1e8f48f4f7b659c2 after patchelf (I used patchelf from here: https://github.com/LineageOS/android_prebuilts_tools-lineage/blob/lineage-18.0/linux-x86/bin/patchelf)",
       "revId": "80fa688a3b208992b698a2d59a9a1fec85b1400f",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bd0b8399_b9247b40",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2022-09-22T21:45:36Z",
+      "side": 1,
+      "message": "perfect, that works.",
+      "parentUuid": "17b5b091_65843683",
+      "revId": "80fa688a3b208992b698a2d59a9a1fec85b1400f",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
