@@ -53,6 +53,24 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4b700974_de168dd2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 16185
+      },
+      "writtenOn": "2022-09-22T20:41:14Z",
+      "side": 1,
+      "message": "ahhhh you took it from the z3 muppets, but it is from angler - please download the newest angler image and pull the blob from there instead, grab a fresh sha1",
+      "parentUuid": "9a81edfb_e9baced2",
+      "revId": "3a6789d0781f3435cfee79b2e3c878017ce1d066",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "14710887_9f03c1e9",
