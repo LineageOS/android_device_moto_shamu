@@ -16,6 +16,24 @@
       "message": "does angler work? If so, awesome - that\u0027s perfect.",
       "revId": "3a6789d0781f3435cfee79b2e3c878017ce1d066",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eea3bb88_57721178",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 23949
+      },
+      "writtenOn": "2022-09-22T20:14:32Z",
+      "side": 1,
+      "message": "I took the blob from Sony Xperia Z3 image, and removed every other changes. Widevine is still missing from DRM Info, but it is present in DevCheck. Netflix is working, so I guess this is Ok. \n\nI still don\u0027t know if it is needed to upload the blob somewhere.",
+      "parentUuid": "cf7ab5f7_738d982c",
+      "revId": "3a6789d0781f3435cfee79b2e3c878017ce1d066",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }

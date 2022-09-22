@@ -75,6 +75,30 @@
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "10ff0455_24f93cef",
+        "filename": "proprietary-files.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 23949
+      },
+      "writtenOn": "2022-09-22T20:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "522547cc_868450b0",
+      "range": {
+        "startLine": 207,
+        "startChar": 0,
+        "endLine": 207,
+        "endChar": 78
+      },
+      "revId": "1ebf822ef7f9ca72611dc0cc7ec6385403effc34",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0d82276f_cc38135d",
@@ -88,6 +112,30 @@
       "writtenOn": "2022-09-21T20:53:02Z",
       "side": 1,
       "message": "we don\u0027t need this at all.",
+      "range": {
+        "startLine": 219,
+        "startChar": 0,
+        "endLine": 219,
+        "endChar": 96
+      },
+      "revId": "1ebf822ef7f9ca72611dc0cc7ec6385403effc34",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1227d8f9_f4bd5b18",
+        "filename": "proprietary-files.txt",
+        "patchSetId": 1
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 23949
+      },
+      "writtenOn": "2022-09-22T20:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0d82276f_cc38135d",
       "range": {
         "startLine": 219,
         "startChar": 0,
