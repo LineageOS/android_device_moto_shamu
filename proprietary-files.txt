@@ -204,7 +204,6 @@ lib/libdmjavaplugin.so
 
 # DRM
 bin/qseecomd
-vendor/lib/mediadrm/libwvdrmengine.so|7cbb7381cb7bf1d92729af2bf43fda8063b13cd4
 vendor/lib/libQSEEComAPI.so
 vendor/lib/libdrmfs.so
 vendor/lib/libdrmtime.so
@@ -213,6 +212,9 @@ vendor/lib/librpmb.so
 vendor/lib/libssd.so
 vendor/lib/libwvdrm_L1.so
 vendor/lib/libWVStreamControlAPI_L1.so
+
+# Widevine - from angler OPR6.170623.017
+vendor/lib/mediadrm/libwvdrmengine.so|2f70d96729bc35389d98ab3a1e8f48f4f7b659c2
 
 # DRM firmware
 vendor/firmware/widevine.b00
